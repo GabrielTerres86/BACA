@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 19/07/2018
+    Data    : Novembro/2007                  Ultima Atualizacao: 03/10/2018
     
     Dados referentes ao programa:
 
@@ -352,6 +352,10 @@
                 19/07/2018 - Remover a acentuacao das mensagens de retorno, para que todas fiquem
                              identicas. (PRJ 363 - Douglas Quisinski)
 
+                03/10/2018 - adicionado o parametro IDORIGEM nas procedures valida_senha,
+                             valida_senha_cartao_magnetico, valida_senha_cartao_cecred                
+                             para que seja possivel zerar a quantidade de senha incorretas quando
+                             estiver sendo executado pela URA (Douglas - Prj 427 URA)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -575,6 +579,7 @@ PROCEDURE valida_senha:
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_idtipcar    AS INT          NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
@@ -586,6 +591,7 @@ PROCEDURE valida_senha:
                                              INPUT par_nrcartao,
                                              INPUT par_dssencar,
                                              INPUT par_dtnascto,
+                                             INPUT par_idorigem,
                                              OUTPUT par_cdcritic,
                                              OUTPUT par_dscritic).
                                           
@@ -601,6 +607,7 @@ PROCEDURE valida_senha:
                                           INPUT par_nrcartao,
                                           INPUT par_dssencar,
                                           INPUT par_dtnascto,
+                                          INPUT par_idorigem,
                                           OUTPUT par_cdcritic,
                                           OUTPUT par_dscritic).
                                           
@@ -5480,6 +5487,7 @@ PROCEDURE valida_senha_cartao_cecred:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
@@ -5621,7 +5629,8 @@ PROCEDURE valida_senha_cartao_cecred:
        END.
 
     /* se acertou a senha e nao tem as letras, zera a quantidade de erros */
-    IF NOT aux_flgcadas  THEN
+    /* se for URA, também zera a quantidade de erros  */
+    IF NOT aux_flgcadas OR par_idorigem = 6 THEN
        DO:
            /* zera quantidade de erros de senha */
            ASSIGN crapcrd.qtsenerr = 0.
@@ -5640,6 +5649,7 @@ PROCEDURE valida_senha_cartao_magnetico:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
@@ -5792,7 +5802,8 @@ PROCEDURE valida_senha_cartao_magnetico:
 
 
     /* se acertou a senha e nao tem as letras, zera a quantidade de erros */
-    IF  NOT aux_flgcadas  THEN
+    /* se for URA, também zera a quantidade de erros */
+    IF  NOT aux_flgcadas OR par_idorigem = 6 THEN
         DO:
             /* zera quantidade de erros de senha */
             crapcrm.qtsenerr = 0.

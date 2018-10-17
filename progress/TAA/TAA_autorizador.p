@@ -318,7 +318,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             21/05/2018 - Inclusao de parametros devido a analise de fraude.
                          PRJ381 - Antifraude(Odirlei-AMcom)
                       
-			26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+            26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
@@ -329,6 +329,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			03/10/2018 - Corrigir validação do aux_token na validação de senha no saque
 			             e na alteração de senha (Douglas - Prj 363)
 			            
+            03/10/2018 - Na validação de senha foi separado o canal para enviar TAA (4) ou URA(6),
+                         para que seja possivel zerar a quantidade de senha incorreta quando
+                         estiver sendo executado pela URA (Douglas - Prj 427 URA)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -2185,12 +2188,21 @@ END PROCEDURE.
 PROCEDURE valida_senha:
 
     DEF VAR aux_token AS CHAR NO-UNDO.
+    DEF VAR aux_idorigem AS INTE NO-UNDO.
+    
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
     DO:
         /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
         ASSIGN aux_dssencar = ENCODE(aux_dssencar).
     END.
+    
+    /* Toda operacao do TAA é com origem no TAA, por isso por default o valor é 4 */
+    ASSIGN aux_idorigem = 4.
+    /* Operacao 200 é utilizada apenas na URA, com isso vamos alterar a origem  para 6.*/
+    IF aux_operacao = 200 THEN
+        ASSIGN aux_idorigem = 6.
+    
     
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
@@ -2200,6 +2212,7 @@ PROCEDURE valida_senha:
                                       INPUT aux_dssencar,
                                       INPUT aux_dtnascto,
                                       INPUT aux_idtipcar,
+                                      INPUT aux_idorigem,
                                      OUTPUT aux_cdcritic,
                                      OUTPUT aux_dscritic).
 
@@ -2237,11 +2250,11 @@ PROCEDURE valida_senha:
                    /* --------- OUT --------- */
                    ,OUTPUT ""           /* pr_token    --> Token gerado na transaçao */
                    ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
-
+                   
          /* Fechar o procedimento para buscarmos o resultado */ 
           CLOSE STORED-PROC pc_cria_autenticacao_cartao
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
-
+                            
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
       
         ASSIGN aux_token = pc_cria_autenticacao_cartao.pr_token
@@ -3916,11 +3929,11 @@ PROCEDURE verifica_transferencia:
 	/* Efetuar a chamada a rotina Oracle */ 
 	RUN STORED-PROCEDURE pc_valid_repre_legal_trans
 		aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_cdcooper, /* Código da Cooperativa */
-											 INPUT aux_nrdconta, /* Número da Conta */
-											 INPUT 1,            /* Titular da Conta */
-                                             INPUT 0,            
-											OUTPUT 0,            /* Código da crítica */
-											OUTPUT "").          /* Descrição da crítica */
+                                         INPUT aux_nrdconta, /* Número da Conta */
+                                         INPUT 1,            /* Titular da Conta */
+                                         INPUT 0,            
+                                        OUTPUT 0,            /* Código da crítica */
+                                        OUTPUT "").          /* Descrição da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_valid_repre_legal_trans
@@ -3930,11 +3943,11 @@ PROCEDURE verifica_transferencia:
 	
 	/* Busca possíveis erros */ 
 	ASSIGN aux_cdcritic = 0
-		   aux_dscritic = ""
-		   aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
-						  WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
-		   aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic 
-						  WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?.
+         aux_dscritic = ""
+         aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
+                          WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
+         aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic 
+                          WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?.
 
     IF aux_dscritic <> "" THEN
         RETURN "NOK".
@@ -5066,38 +5079,38 @@ PROCEDURE paga_titulo:
                                   RUN STORED-PROCEDURE pc_cadastrar_agendamento
                                       aux_handproc = PROC-HANDLE NO-ERROR
                                                   (INPUT aux_cdcooper,     
-                                                    INPUT 91,           /* par_cdagenci */
-                                                    INPUT 900,          /* par_nrdcaixa */
-                                                    INPUT "996",        /* par_cdoperad */
+                                                   INPUT 91,           /* par_cdagenci */
+                                                   INPUT 900,          /* par_nrdcaixa */
+                                                   INPUT "996",        /* par_cdoperad */
                                                    INPUT aux_nrdconta,                   
-                                                    INPUT 1,            /* par_idseqttl */
+                                                   INPUT 1,            /* par_idseqttl */
                                                    INPUT crapdat.dtmvtocd,                        
                                                    /* Projeto 363 - Novo ATM */
                                                    INPUT 4,            /* par_cdorigem */
-                                                    INPUT "TAA",        /* par_dsorigem */
+                                                   INPUT "TAA",        /* par_dsorigem */
                                                    INPUT "TAA",        /* par_nmdatela */
-                                                    INPUT 2,            /* par_cdtiptra */
-                                                    INPUT 2,            /* par_idtpdpag */
-                                                    INPUT aux_nmconban, /* par_dscedent */
-                                                    INPUT aux_dscodbar,           /* par_dscodbar */
-                                                    INPUT deci(aux_cdbarra1), /* par_lindigi1 */
-                                                    INPUT deci(aux_cdbarra2), /* par_lindigi2 */
-                                                    INPUT deci(aux_cdbarra3), /* par_lindigi3 */
-                                                    INPUT deci(aux_cdbarra4), /* par_lindigi4 */
-                                                    INPUT deci(aux_cdbarra5), /* par_lindigi5 */
-                                                    INPUT 856,          /* aux_cdhisdeb */
+                                                   INPUT 2,            /* par_cdtiptra */
+                                                   INPUT 2,            /* par_idtpdpag */
+                                                   INPUT aux_nmconban, /* par_dscedent */
+                                                   INPUT aux_dscodbar,           /* par_dscodbar */
+                                                   INPUT deci(aux_cdbarra1), /* par_lindigi1 */
+                                                   INPUT deci(aux_cdbarra2), /* par_lindigi2 */
+                                                   INPUT deci(aux_cdbarra3), /* par_lindigi3 */
+                                                   INPUT deci(aux_cdbarra4), /* par_lindigi4 */
+                                                   INPUT deci(aux_cdbarra5), /* par_lindigi5 */
+                                                   INPUT 856,          /* aux_cdhisdeb */
                                                    INPUT aux_datpagto,                      
                                                    INPUT aux_vldpagto,                      
-                                                    INPUT aux_dtvencto, /* Data de vencimento */
+                                                   INPUT aux_dtvencto, /* Data de vencimento */
                                                    INPUT 0, /* cddbanco */
                                                    INPUT 0, /* cdageban */
                                                    INPUT 0,             /* Conta destino */                        
                                                    INPUT aux_cdcoptfn,
                                                    INPUT aux_cdagetfn,
                                                    INPUT aux_nrterfin,
-                                                    INPUT 0,            /* par_nrcpfope */
-                                                    INPUT "0",          /* par_idtitdda */
-                                                    INPUT 0,            /* par_cdtrapen */
+                                                   INPUT 0,            /* par_nrcpfope */
+                                                   INPUT "0",          /* par_idtitdda */
+                                                   INPUT 0,            /* par_cdtrapen */
                                                    INPUT 0,
                                                    INPUT 0,
                                                    INPUT 0,
@@ -5108,11 +5121,11 @@ PROCEDURE paga_titulo:
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
                                                   OUTPUT 0,
-                                                   OUTPUT "",  /* pr_dstransa */
-                                                   OUTPUT "",
-                                                   OUTPUT 0,
-                                                   OUTPUT "",                         
-                                                   OUTPUT "").    /* pr_dscritic */
+                                                  OUTPUT "",  /* pr_dstransa */
+                                                  OUTPUT "",
+                                                  OUTPUT 0,
+                                                  OUTPUT "",                         
+                                                  OUTPUT "").    /* pr_dscritic */
                                                                                          
                                   CLOSE STORED-PROC pc_cadastrar_agendamento
                                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -6114,22 +6127,22 @@ PROCEDURE efetua_agendamento_mensal:
             
             RUN STORED-PROCEDURE pc_agendamento_recorrente
                 aux_handproc = PROC-HANDLE NO-ERROR
-                                                (INPUT aux_cdcooper,
+                                   (INPUT aux_cdcooper,
                                     INPUT 91,                           
                                     INPUT 900,          /* par_nrdcaixa */
                                     INPUT "996",        /* par_cdoperad */
-                                                 INPUT aux_nrdconta,
-                                                 INPUT 1,
-                                                 INPUT crapdat.dtmvtocd,
+                                    INPUT aux_nrdconta,
+                                    INPUT 1,
+                                    INPUT crapdat.dtmvtocd,
                                     INPUT 4, /* cdorigem */
                                     INPUT "TAA",                        
                                     INPUT "TAA", /* nmprogra */ 
                                     INPUT aux_lsdataqd,                 
-                                                 INPUT aux_cdhisdeb,
-                                                 INPUT aux_vltransf,
-                                                 INPUT aux_cddbanco,
-                                                 INPUT aux_cdagetra,
-                                                 INPUT aux_nrtransf, 
+                                    INPUT aux_cdhisdeb,
+                                    INPUT aux_vltransf,
+                                    INPUT aux_cddbanco,
+                                    INPUT aux_cdagetra,
+                                    INPUT aux_nrtransf, 
                                     INPUT aux_tpoperac,                 
                                     INPUT aux_cdcoptfn,                 
                                     INPUT aux_cdagetfn,                 
@@ -6500,7 +6513,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
                                               INPUT  0, /* Idlancto */
-											  INPUT  "TAA", /*Nome da tela*/
+                                              INPUT  "TAA", /*Nome da tela*/
                                               INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
@@ -10552,23 +10565,23 @@ PROCEDURE verifica_recarga:
 
 	RUN STORED-PROCEDURE pc_valida_recarga
 	  aux_handproc = PROC-HANDLE NO-ERROR
-						 (INPUT aux_cdcooper,  /* Cooperativa*/
-						  INPUT aux_nrdconta,  /* Nr. da conta */
-						  INPUT 0,             /* CPF Operador da conta */
-						  INPUT 1,             /* Titular da conta */
-						  INPUT aux_nrdddtel,  /* DDD */
-						  INPUT aux_nrcelular, /* Nr. do celular */
-						  INPUT aux_vlrecarga, /* Valor de recarga */
-						  INPUT DATE(aux_dtrecarga), /* Data de recarga */
-						  INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
-						  INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
-						  INPUT 4,             /* Id origem (4-TAA)*/
+                       (INPUT aux_cdcooper,  /* Cooperativa*/
+                        INPUT aux_nrdconta,  /* Nr. da conta */
+                        INPUT 0,             /* CPF Operador da conta */
+                        INPUT 1,             /* Titular da conta */
+                        INPUT aux_nrdddtel,  /* DDD */
+                        INPUT aux_nrcelular, /* Nr. do celular */
+                        INPUT aux_vlrecarga, /* Valor de recarga */
+                        INPUT DATE(aux_dtrecarga), /* Data de recarga */
+                        INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
+                        INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
+                        INPUT 4,             /* Id origem (4-TAA)*/
                         INPUT 91,            /* Agencia de Origem */ 
                         INPUT 900,           /* Caixa de Origem */ 
                         INPUT "TAA",         /* Programa que chamou */ 
-						  OUTPUT "",           /* Lista de datas para agendamento recorrente */
-						  OUTPUT 0,            /* Código da crítica.*/
-						  OUTPUT "").          /* Desc. da crítica */
+                        OUTPUT "",           /* Lista de datas para agendamento recorrente */
+                        OUTPUT 0,            /* Código da crítica.*/
+                        OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_valida_recarga
@@ -10625,36 +10638,36 @@ PROCEDURE efetua_recarga:
 
 	RUN STORED-PROCEDURE pc_manter_recarga
 	  aux_handproc = PROC-HANDLE NO-ERROR
-						 (INPUT aux_cdcooper,        /* Cooperativa*/
-              INPUT aux_nrdconta,        /* Nr. da conta */
-              INPUT 1,                   /* Titular da conta */
-              INPUT 0,                   /* CPF Operador da conta */
-              INPUT aux_vlrecarga,       /* Valor da recarga */
-              INPUT DATE(aux_dtrecarga), /* Data de recarga */              
-              INPUT aux_lsdatagd,        /* Lista de datas para agendamento de recarga */
-              INPUT aux_cddopcao,        /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */                            
-              INPUT aux_nrdddtel,        /* DDD */
-              INPUT aux_nrcelular,       /* Nr. do celular */
-              INPUT aux_cdoperadora,     /* Cod. operadora */
-              INPUT aux_cdproduto,       /* Cod. produto */
-              INPUT aux_cdcoptfn,        /* Cooperativa terminal financeiro */
-              INPUT aux_cdagetfn,        /* Agencia terminal financeiro */
-              INPUT aux_nrterfin,        /* Nr. terminal financeiro */
-              INPUT aux_nrcartao,        /* Nr. cartao */
-              INPUT aux_nrsequni,        /* Nr. sequencial unico */
-						  INPUT 4,             /* Id origem (4-TAA)*/
+                       (INPUT aux_cdcooper,        /* Cooperativa*/
+                        INPUT aux_nrdconta,        /* Nr. da conta */
+                        INPUT 1,                   /* Titular da conta */
+                        INPUT 0,                   /* CPF Operador da conta */
+                        INPUT aux_vlrecarga,       /* Valor da recarga */
+                        INPUT DATE(aux_dtrecarga), /* Data de recarga */              
+                        INPUT aux_lsdatagd,        /* Lista de datas para agendamento de recarga */
+                        INPUT aux_cddopcao,        /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */                            
+                        INPUT aux_nrdddtel,        /* DDD */
+                        INPUT aux_nrcelular,       /* Nr. do celular */
+                        INPUT aux_cdoperadora,     /* Cod. operadora */
+                        INPUT aux_cdproduto,       /* Cod. produto */
+                        INPUT aux_cdcoptfn,        /* Cooperativa terminal financeiro */
+                        INPUT aux_cdagetfn,        /* Agencia terminal financeiro */
+                        INPUT aux_nrterfin,        /* Nr. terminal financeiro */
+                        INPUT aux_nrcartao,        /* Nr. cartao */
+                        INPUT aux_nrsequni,        /* Nr. sequencial unico */
+                        INPUT 4,             /* Id origem (4-TAA)*/
                         INPUT 91,            /* Agencia de Origem */ 
                         INPUT 900,           /* Caixa de Origem */ 
                         INPUT "TAA",         /* Programa que chamou */ 
-              INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
-			  INPUT 0,             /* Indicador se origem é mobile (Não) */
+                        INPUT 0,             /* Indicador de aprovacao de transacao pendente */
+                        INPUT 0,             /* Indicador de operacao (transacao pendente) */
+                        INPUT 0,             /* Indicador se origem é mobile (Não) */
                         OUTPUT "",           /* ID dos lançamentos de agendamento de recarga */ 
-              OUTPUT 0,            /* Indicador de assinatura conjunta */
-              OUTPUT "",           /* Protocolo */
-              OUTPUT "",           /* NSU Operadora */
-						  OUTPUT 0,            /* Código da crítica.*/
-						  OUTPUT "").          /* Desc. da crítica */
+                        OUTPUT 0,            /* Indicador de assinatura conjunta */
+                        OUTPUT "",           /* Protocolo */
+                        OUTPUT "",           /* NSU Operadora */
+                        OUTPUT 0,            /* Código da crítica.*/
+                        OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_manter_recarga
