@@ -1076,9 +1076,145 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
   
   --Procedure para processamento dos ajustes/arquivos do projeto 421 - Melhorias nas ferramentas contabeis e fiscais
   PROCEDURE pc_processa_contabil IS
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
+    vr_cdcooper INTEGER := 3;
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    vr_dserro   VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+
+    vr_cdprogra    VARCHAR2(40) := 'CONT0002.PC_PROCESSA_CONTABIL';
+    vr_nomdojob    VARCHAR2(40) := 'JBCONTAB_PROCESSA_CONTABIL';
+
+    vr_intipmsg INTEGER := 1;
+    vr_dscrioco VARCHAR2(4000);
+
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                                   ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                                   ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                                   ,pr_tpexecuc IN NUMBER   DEFAULT 2   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                                   ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                                   ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                                   ,pr_cdcooper IN VARCHAR2 DEFAULT 3
+                                   ,pr_flgsuces IN NUMBER   DEFAULT 1    -- Indicador de sucesso da execução  
+                                   ,pr_flabrchd IN INTEGER  DEFAULT 0    -- Abre chamado 1 Sim/ 0 Não
+                                   ,pr_textochd IN VARCHAR2 DEFAULT NULL -- Texto do chamado
+                                   ,pr_desemail IN VARCHAR2 DEFAULT NULL -- Destinatario do email
+                                   ,pr_flreinci IN INTEGER  DEFAULT 0    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
+    ) 
+    IS
+      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;        
+    BEGIN   
+      -- Controlar geração de log de execução dos jobs
+      CECRED.pc_log_programa(pr_dstiplog           => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                            ,pr_tpocorrencia       => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                            ,pr_cdcriticidade      => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                            ,pr_tpexecucao         => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                            ,pr_dsmensagem         => pr_dscritic
+                            ,pr_cdmensagem         => pr_cdcritic
+                            ,pr_cdcooper           => pr_cdcooper 
+                            ,pr_flgsucesso         => pr_flgsuces
+                            ,pr_flabrechamado      => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
+                            ,pr_texto_chamado      => pr_textochd
+                            ,pr_destinatario_email => pr_desemail
+                            ,pr_flreincidente      => pr_flreinci
+                            ,pr_cdprograma         => vr_nomdojob
+                            ,pr_idprglog           => vr_idprglog);   
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+    END pc_controla_log_batch;
   BEGIN
-    NULL;
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
+    
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_dstiplog => 'I');
+    
+    --Verifica se o JOB pode rodar
+    gene0004.pc_trata_exec_job(pr_cdcooper => vr_cdcooper      --> Codigo da cooperativa
+                              ,pr_fldiautl => 0                --> Podem ser recebidos arquivos em dias nao uteis com movimentos de dias uteis
+                              ,pr_flproces => 1                --> Flag se deve validar se esta no processo
+                              ,pr_flrepjob => 1                --> Flag para reprogramar o job
+                              ,pr_flgerlog => 0                --> indicador se deve gerar log
+                              ,pr_nmprogra => vr_cdprogra      --> Nome do programa que esta sendo executado no job
+                              ,pr_intipmsg => vr_intipmsg
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dserro);
+
+    -- se nao retornou critica chama rotina
+    IF trim(vr_dserro) IS NULL THEN 
+
+      -- Retorna nome do módulo logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
+        
+      OPEN btch0001.cr_crapdat(vr_cdcooper);
+      FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      pc_processa_arquivo_bancoob(pr_cdcooper => vr_cdcooper
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+        pc_controla_log_batch(pr_dscritic => vr_dscritic
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_flgsuces => 0           -- Indicador de sucesso da execução
+                             );
+      END IF;
+
+      -- Retorna nome do módulo logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
+
+    ELSE
+      -- Processo noturno nao finalizado para cooperativa - Não gera critica
+      IF NVL(vr_intipmsg,1) = 1 THEN
+        vr_dscritic := vr_dserro;
+
+        --Incluída gravação de log aqui para evitar duplicidade na situação de retorno de crps652
+        --Log de erro de execucao
+        pc_controla_log_batch(pr_cdcritic => nvl(vr_cdcritic,0)
+                             ,pr_dscritic => vr_dscritic);
+        RAISE vr_exc_erro;
+      ELSE
+        vr_cdcritic := NVL(vr_cdcritic,0);
+        -- Buscar a descrição - Se foi retornado apenas código
+        vr_dscrioco := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic) ||
+                       ' '  || vr_cdprogra;
+
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'O'
+                             ,pr_tpocorre => 4
+                             ,pr_cdcricid => 0
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscrioco);
+      END IF;
+    END IF;
+
+    -- Log de fim de execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
+    -- Retorna nome do módulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+  EXCEPTION
+    WHEN vr_exc_erro THEN  
+      ROLLBACK;
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper, 
+                                   pr_compleme => vr_dscritic);
+      -- Monta mensagens
+      vr_cdcritic := 9999; -- 9999 -  Erro nao tratado: 
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     vr_cdprogra ||
+                     '. ' || SQLERRM;
+
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+
+      ROLLBACK;                             
   END;
 END cont0002;
 /
