@@ -7985,14 +7985,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           /*DELETE FROM craplcm
            WHERE craplcm.rowid = rw_craplcm.rowid;*/
            
-          lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_craplcm.cdcooper
-                                         , pr_dtmvtolt => rw_craplcm.dtmvtolt
+          lanc0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
+                                         , pr_dtmvtolt => NULL
                                          , pr_cdagenci => NULL
                                          , pr_cdbccxlt => NULL
                                          , pr_nrdolote => NULL
-                                         , pr_nrdctabb => rw_craplcm.nrdconta 
-                                         , pr_nrdocmto => rw_craplcm.nrdocmto
+                                         , pr_nrdctabb => NULL
+                                         , pr_nrdocmto => NULL
                                          , pr_cdhistor => NULL
+                                         , pr_nrctachq => NULL
+                                         , pr_nrdconta => NULL
+                                         , pr_cdpesqbb => NULL
                                          , pr_rowid    => rw_craplcm.rowid
                                          , pr_cdcritic => vr_cdcritic
                                          , pr_dscritic => vr_dscritic); 
