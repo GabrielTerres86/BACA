@@ -901,10 +901,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                     , pr_cdcritic => vr_cdcritic
                                     , pr_dscritic => vr_dscritic); 
                                          
-     /*IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+     IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
         vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
         RAISE vr_exc_erro;
-     END IF; */
+     END IF; 
 
      -- log
     vr_dstransa := 'Cancelamento de integralização de capital';
