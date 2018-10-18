@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 25/09/2017
 	 * OBJETIVO     : Rotina para salvar informações de mensagens automáticas da tela ENVNOT
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 18/10/2018 - Ajuste na validacao do arquivo apos o move_upload (Andrey Formigari - Mouts)
 	 * -------------- 
 	 */
 
@@ -171,7 +171,15 @@
 				exit;
 			}
 			
-		}		
+		}
+
+		$url = $_UP['srvImg'] . $nmarqimg;
+		$get_http_response_code = get_http_response_code($url);
+		if ($get_http_response_code <> 200) {
+			gerarErro(utf8_decode("Não foi possível enviar a imagem, repita o processo. Codigo HTTP: " . $get_http_response_code));
+			exit;
+		}
+		
 	}else{
 		$nmarqimg = end(explode("/", $_POST["nmimagem_banner"]));
 	}
