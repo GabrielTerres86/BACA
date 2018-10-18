@@ -2699,8 +2699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                 decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr)) 
                ,grv.dtenvgrv DESC
                ,grv.cdcooper 
+               ,grv.nrseqlot DESC
                ,grv.cdoperac 
-               ,grv.nrseqlot
                ,grv.nrdconta
                ,grv.nrctrpro
                ,grv.idseqbem ;

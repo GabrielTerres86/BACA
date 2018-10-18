@@ -5911,7 +5911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     ELSIF rw_crapbpr.cdsitgrv =  2 THEN
       pr_dssituac := 'Alienacao';
     ELSIF rw_crapbpr.cdsitgrv =  3 THEN
-      pr_dssituac := 'Processado com Critica';
+      pr_dssituac := 'Processado c/ Critica';
     ELSIF rw_crapbpr.cdsitgrv =  4 THEN
       pr_dssituac := 'Baixado';
     ELSIF rw_crapbpr.cdsitgrv =  5 THEN
