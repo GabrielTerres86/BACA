@@ -4,6 +4,7 @@
  * ALTERAÇÕES   :
  * --------------
  * 000: [25/09/2018] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
+ * 001: [18/10/2018] Lombardi (CECRED): Comentado tratamento para nao permitir solicitacao de novos Cartoes BB.
  */
 ?>
 
@@ -163,17 +164,17 @@
 $(document).ready(function(){
 	if(inpessoa != 1)
 		$("#bbcard").hide();
-	
+	/*
 	<?php // Tratamento para nao permitir solicitacao de novos Cartoes BB
 	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);
 	
-	if (($glbvars["cdcooper"] == 10 || // Credcomin 
+	if ((($glbvars["cdcooper"] == 10 || // Credcomin 
 		 $glbvars["cdcooper"] == 08 || // Credelesc 
 		 $glbvars["cdcooper"] == 05 || // Acentra 
 		 $glbvars["cdcooper"] == 06 || // Credifiesc 
 		 $glbvars["cdcooper"] == 02 || // Acredicoop 
 		 $glbvars["cdcooper"] == 11 || // Credifoz 
-		 $glbvars["cdcooper"] == 16 && // Alto Vale
+		 $glbvars["cdcooper"] == 16) && // Alto Vale
 		 strtotime($dtmvtolt) >= strtotime('2018-11-08') && strtotime($dtmvtolt) <= strtotime('2018-11-19')) ||
 		($glbvars["cdcooper"] == 01 && // Viacredi
 		 strtotime($dtmvtolt) >= strtotime('2018-11-14') && strtotime($dtmvtolt) <= strtotime('2018-11-23')) ||
@@ -185,7 +186,7 @@ $(document).ready(function(){
 		 strtotime($dtmvtolt) >= strtotime('2018-10-18') && strtotime($dtmvtolt) <= strtotime('2018-10-26'))) {		 
 		echo '$("#bbcard").hide();';
 	} 
-	?>
+	?> */
 });
 function goBB(opt){
 	var cc = opt == 0? "bb":"dbt";

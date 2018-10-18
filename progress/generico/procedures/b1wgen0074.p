@@ -271,6 +271,10 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Lombardi/Elton)
 
+                18/10/2018 - Comentado tratamento para nao permitir solicitacao 
+                             ou encerramento de conta ITG devido a migracao do BB. 
+                             (Lombardi/Elton)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -589,7 +593,7 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
-
+/*
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
         IF  (CAN-DO ("10,8,5,6,2,11,16", STRING(par_cdcooper)) AND /* Credcomin / Credelesc / Acentra / Credifiesc / Acredicoop / Credifoz / Alto Vale */
@@ -606,7 +610,7 @@ PROCEDURE Busca_Dados:
                ASSIGN tt-conta-corr.btencitg = NO
                       tt-conta-corr.btsolitg = NO.
             END.
-
+*/
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
                 PERSISTENT SET h-b1wgen0060.
