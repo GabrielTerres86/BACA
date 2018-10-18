@@ -104,6 +104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
   --              23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
 	--                         	 sobre o campo cdopecxa.(Carlos Rafael Tanholi). 				             
   --
+  --              17/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+  --                           pc_estorna_lancto_conta (Fabio Adriano - AMcom)
    ---------------------------------------------------------------------------------------------------------------*/
 
    PROCEDURE pc_valida_chq_captura(pr_cooper         IN VARCHAR2            --> Coop. Origem
@@ -1620,16 +1622,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                   END;
 
                                   BEGIN
-                                    DELETE craplcm lcm
+                                    /*DELETE craplcm lcm
                                      WHERE lcm.cdcooper = rw_verifica_lcm1.cdcooper
                                        AND lcm.dtmvtolt = rw_verifica_lcm1.dtmvtolt
                                        AND lcm.cdagenci = rw_verifica_lcm1.cdagenci
                                        AND lcm.cdbccxlt = rw_verifica_lcm1.cdbccxlt
                                        AND lcm.nrdolote = rw_verifica_lcm1.nrdolote
                                        AND lcm.nrctachq = rw_verifica_lcm1.nrctachq
-                                       AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;
-                                  EXCEPTION
-                                     WHEN OTHERS THEN
+                                       AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;*/
+                                       
+                                     lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_verifica_lcm1.cdcooper
+                                                                    , pr_dtmvtolt => rw_verifica_lcm1.dtmvtolt
+                                                                    , pr_cdagenci => rw_verifica_lcm1.cdagenci
+                                                                    , pr_cdbccxlt => rw_verifica_lcm1.cdbccxlt
+                                                                    , pr_nrdolote => rw_verifica_lcm1.nrdolote
+                                                                    , pr_nrdctabb => NULL
+                                                                    , pr_nrdocmto => rw_verifica_lcm1.nrdocmto
+                                                                    , pr_cdhistor => NULL
+                                                                    , pr_nrctachq => rw_verifica_lcm1.nrctachq
+                                                                    , pr_nrdconta => NULL
+                                                                    , pr_cdpesqbb => NULL
+                                                                    , pr_rowid    => NULL
+                                                                    , pr_cdcritic => vr_cdcritic
+                                                                    , pr_dscritic => vr_dscritic);   
+                                                                    
+                                     IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN  
+                                   
                                         pr_cdcritic := 0;
                                         pr_dscritic := 'Erro ao deletar CRAPLCM : '||sqlerrm;
 
@@ -1649,6 +1667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                         END IF;
 
                                         RAISE vr_exc_erro;
+                                     END IF;    
                                   END;
 
                                END IF;
@@ -1800,16 +1819,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                       END;
 
                                       BEGIN
-                                        DELETE craplcm lcm
+                                        /*DELETE craplcm lcm
                                          WHERE lcm.cdcooper = rw_verifica_lcm1.cdcooper
                                            AND lcm.dtmvtolt = rw_verifica_lcm1.dtmvtolt
                                            AND lcm.cdagenci = rw_verifica_lcm1.cdcmpchq
                                            AND lcm.cdbccxlt = rw_verifica_lcm1.cdbanchq
                                            AND lcm.nrdolote = rw_verifica_lcm1.cdagechq
                                            AND lcm.nrctachq = rw_verifica_lcm1.nrctachq
-                                           AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;
-                                      EXCEPTION
-                                         WHEN OTHERS THEN
+                                           AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;*/
+                                           
+                                        lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_verifica_lcm1.cdcooper
+                                                                       , pr_dtmvtolt => rw_verifica_lcm1.dtmvtolt
+                                                                       , pr_cdagenci => rw_verifica_lcm1.cdcmpchq
+                                                                       , pr_cdbccxlt => rw_verifica_lcm1.cdbanchq
+                                                                       , pr_nrdolote => rw_verifica_lcm1.cdagechq
+                                                                       , pr_nrdctabb => NULL
+                                                                       , pr_nrdocmto => rw_verifica_lcm1.nrdocmto
+                                                                       , pr_cdhistor => NULL
+                                                                       , pr_nrctachq => rw_verifica_lcm1.nrctachq
+                                                                       , pr_nrdconta => NULL
+                                                                       , pr_cdpesqbb => NULL
+                                                                       , pr_rowid    => NULL
+                                                                       , pr_cdcritic => vr_cdcritic
+                                                                       , pr_dscritic => vr_dscritic);   
+                                                                    
+                                         IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN 
+                                          
                                             pr_cdcritic := 0;
                                             pr_dscritic := 'Erro ao atualizar CRAPCHD : '||sqlerrm;
 
@@ -1829,6 +1864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                             END IF;
 
                                             RAISE vr_exc_erro;
+                                         END IF;   
                                       END;
 
                                    END IF;
@@ -1868,16 +1904,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                    END;
 
                    BEGIN
-                      DELETE craplcm lcm
+                      /*DELETE craplcm lcm
                        WHERE lcm.cdcooper = rw_verifica_lcm1.cdcooper
                          AND lcm.dtmvtolt = rw_verifica_lcm1.dtmvtolt
                          AND lcm.cdagenci = rw_verifica_lcm1.cdagenci
                          AND lcm.cdbccxlt = rw_verifica_lcm1.cdbccxlt
                          AND lcm.nrdolote = rw_verifica_lcm1.nrdolote
                          AND lcm.nrdctabb = rw_verifica_lcm1.nrdctabb
-                         AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;
-                    EXCEPTION
-                       WHEN OTHERS THEN
+                         AND lcm.nrdocmto = rw_verifica_lcm1.nrdocmto;*/
+                         
+                      lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_verifica_lcm1.cdcooper
+                                                     , pr_dtmvtolt => rw_verifica_lcm1.dtmvtolt
+                                                     , pr_cdagenci => rw_verifica_lcm1.cdagenci
+                                                     , pr_cdbccxlt => rw_verifica_lcm1.cdbccxlt
+                                                     , pr_nrdolote => rw_verifica_lcm1.nrdolote
+                                                     , pr_nrdctabb => rw_verifica_lcm1.nrdctabb
+                                                     , pr_nrdocmto => rw_verifica_lcm1.nrdocmto
+                                                     , pr_cdhistor => NULL
+                                                     , pr_nrctachq => NULL
+                                                     , pr_nrdconta => NULL
+                                                     , pr_cdpesqbb => NULL
+                                                     , pr_rowid    => NULL
+                                                     , pr_cdcritic => vr_cdcritic
+                                                     , pr_dscritic => vr_dscritic);   
+                                                                    
+                       IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN   
+                    
                           pr_cdcritic := 0;
                           pr_dscritic := 'Erro ao atualizar CRAPCHD : '||sqlerrm;
 
@@ -1897,6 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                           END IF;
 
                           RAISE vr_exc_erro;
+                        END IF;  
                     END;
 
                 END IF;
@@ -2467,19 +2520,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                 END;
 
                 BEGIN -- Deletando LCM
-                  DELETE craplcm lcm
+                  /*DELETE craplcm lcm
                    WHERE lcm.cdcooper = pr_cdcooper
                      AND lcm.dtmvtolt = rw_verifica_chd.dtmvtolt
                      AND lcm.cdagenci = rw_verifica_chd.cdagenci
                      AND lcm.cdbccxlt = rw_verifica_chd.cdbccxlt
                      AND lcm.nrdolote = rw_verifica_chd.nrdolote
                      AND lcm.nrctachq = TO_NUMBER(rw_verifica_chd.nrctachq)
-                     AND lcm.nrdocmto = vr_i_nro_docto;
-                EXCEPTION
-                   WHEN OTHERS THEN
-                      pr_cdcritic := 0;
-                      pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
-                      RAISE vr_exc_erro;
+                     AND lcm.nrdocmto = vr_i_nro_docto;*/
+                     
+                  lanc0001.pc_estorna_lancto_conta(pr_cdcooper => pr_cdcooper
+                                                 , pr_dtmvtolt => rw_verifica_chd.dtmvtolt
+                                                 , pr_cdagenci => rw_verifica_chd.cdagenci
+                                                 , pr_cdbccxlt => rw_verifica_chd.cdbccxlt
+                                                 , pr_nrdolote => rw_verifica_chd.nrdolote
+                                                 , pr_nrdctabb => NULL
+                                                 , pr_nrdocmto => vr_i_nro_docto
+                                                 , pr_cdhistor => NULL
+                                                 , pr_nrctachq => TO_NUMBER(rw_verifica_chd.nrctachq)
+                                                 , pr_nrdconta => NULL
+                                                 , pr_cdpesqbb => NULL
+                                                 , pr_rowid    => NULL
+                                                 , pr_cdcritic => vr_cdcritic
+                                                 , pr_dscritic => vr_dscritic);   
+                                                                      
+                   IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN   
+                        pr_cdcritic := 0;
+                        pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
+                        RAISE vr_exc_erro;
+                   END IF;    
                 END;
 
              CLOSE cr_verifica_lcm1;
@@ -3147,16 +3216,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                CLOSE cr_consulta_lot;
 
                BEGIN -- Deletando LCM
-                  DELETE craplcm lcm
+                  /*DELETE craplcm lcm
                    WHERE lcm.cdcooper = rw_cod_coop_dest.cdcooper
                      AND lcm.dtmvtolt = rw_existe_lcm1.dtmvtolt
                      AND lcm.cdagenci = rw_existe_lcm1.cdagenci
                      AND lcm.cdbccxlt = rw_existe_lcm1.cdbccxlt
                      AND lcm.nrdolote = rw_existe_lcm1.nrdolote
                      AND lcm.nrdctabb = rw_existe_lcm1.nrdctabb
-                     AND lcm.nrdocmto = TO_NUMBER(vr_c_docto);
-               EXCEPTION
-                  WHEN OTHERS THEN
+                     AND lcm.nrdocmto = TO_NUMBER(vr_c_docto);*/
+                     
+                  lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
+                                                 , pr_dtmvtolt => rw_existe_lcm1.dtmvtolt
+                                                 , pr_cdagenci => rw_existe_lcm1.cdagenci
+                                                 , pr_cdbccxlt => rw_existe_lcm1.cdbccxlt
+                                                 , pr_nrdolote => rw_existe_lcm1.nrdolote
+                                                 , pr_nrdctabb => rw_existe_lcm1.nrdctabb
+                                                 , pr_nrdocmto => TO_NUMBER(vr_c_docto)
+                                                 , pr_cdhistor => NULL
+                                                 , pr_nrctachq => NULL
+                                                 , pr_nrdconta => NULL
+                                                 , pr_cdpesqbb => NULL
+                                                 , pr_rowid    => NULL
+                                                 , pr_cdcritic => vr_cdcritic
+                                                 , pr_dscritic => vr_dscritic);   
+                                                                      
+                  IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN      
+                    
                      pr_cdcritic := 0;
                      pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
 
@@ -3176,6 +3261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                      END IF;
 
                      RAISE vr_exc_erro;
+                  END IF;    
                END;
 
             ELSE -- Nao encontrou Registro de LCM
@@ -3371,16 +3457,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
              pr_valor := pr_valor + rw_verifica_lcm.vllanmto;
 
              BEGIN -- Deletando LCM
-                DELETE craplcm lcm
+                /*DELETE craplcm lcm
                  WHERE lcm.cdcooper = rw_cod_coop_dest.cdcooper
                    AND lcm.dtmvtolt = rw_verifica_lcm.dtmvtolt
                    AND lcm.cdagenci = rw_verifica_lcm.cdagenci
                    AND lcm.cdbccxlt = rw_verifica_lcm.cdbccxlt
                    AND lcm.nrdolote = rw_verifica_lcm.nrdolote
                    AND lcm.nrdctabb = rw_verifica_lcm.nrdctabb
-                   AND lcm.nrdocmto = rw_verifica_lcm.nrdocmto;
-             EXCEPTION
-                WHEN OTHERS THEN
+                   AND lcm.nrdocmto = rw_verifica_lcm.nrdocmto;*/
+                   
+                lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
+                                               , pr_dtmvtolt => rw_verifica_lcm.dtmvtolt
+                                               , pr_cdagenci => rw_verifica_lcm.cdagenci
+                                               , pr_cdbccxlt => rw_verifica_lcm.cdbccxlt
+                                               , pr_nrdolote => rw_verifica_lcm.nrdolote
+                                               , pr_nrdctabb => rw_verifica_lcm.nrdctabb
+                                               , pr_nrdocmto => rw_verifica_lcm.nrdocmto
+                                               , pr_cdhistor => NULL
+                                               , pr_nrctachq => NULL
+                                               , pr_nrdconta => NULL
+                                               , pr_cdpesqbb => NULL
+                                               , pr_rowid    => NULL
+                                               , pr_cdcritic => vr_cdcritic
+                                               , pr_dscritic => vr_dscritic);   
+                                                                      
+                IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN      
+             
                    pr_cdcritic := 0;
                    pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
 
@@ -3400,6 +3502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                    END IF;
 
                    RAISE vr_exc_erro;
+                END IF;   
              END;
          END IF;
       END LOOP; -- Fim do Processo de LCM de DESTINO
