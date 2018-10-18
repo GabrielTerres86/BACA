@@ -6177,6 +6177,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                              , pr_nrdctabb => NULL
                                              , pr_nrdocmto => NULL
                                              , pr_cdhistor => NULL
+                                             , pr_nrctachq => NULL
+                                             , pr_nrdconta => NULL
+                                             , pr_cdpesqbb => NULL
                                              , pr_rowid    => rw_craplcm.rowid
                                              , pr_cdcritic => vr_cdcritic
                                              , pr_dscritic => vr_dscritic); 
