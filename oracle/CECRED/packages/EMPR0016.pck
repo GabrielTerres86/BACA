@@ -119,6 +119,20 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
        WHERE crapass.cdcooper = prc_cdcooper
          AND crapass.nrdconta = prc_nrdconta;
     rw_crapass cr_crapass%ROWTYPE; 
+    --
+    CURSOR cr_craplcm (prc_cdcooper IN crapcop.cdcooper%TYPE
+                      ,prc_nrdconta IN crapcop.nrdconta%TYPE
+                      ,prc_nrctremp IN crawepr.nrctremp%TYPE
+                      ,prc_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+    SELECT 1
+      FROM craplcm lcm 
+     WHERE lcm.cdcooper = prc_cdcooper 
+       AND lcm.nrdconta = prc_nrdconta
+       AND lcm.dtmvtolt = prc_dtmvtolt
+       AND to_number(TRIM(REPLACE(lcm.cdpesqbb,'.',''))) = prc_nrctremp 
+       AND lcm.cdhistor = 15
+       ; 
+        rw_craplcm cr_craplcm%ROWTYPE; 
 
     --
     -- Variáveis --
@@ -156,6 +170,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     
     -- Exceções e variaveis de erro--
     vr_exc_erro  EXCEPTION;
+    vr_exc_sair  EXCEPTION;    
     vr_cdcritic  crapcri.cdcritic%TYPE;
     vr_dscritic  crapcri.dscritic%TYPE;
 
@@ -248,6 +263,18 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapass;
+    --
+    OPEN cr_craplcm(prc_cdcooper => vr_cdcooper
+                   ,prc_nrdconta => vr_nrdconta
+                   ,prc_nrctremp => vr_nrctremp
+                   ,prc_dtmvtolt => rw_crapdat.dtmvtolt);
+    FETCH cr_craplcm INTO rw_craplcm;
+    -- Se encontrar portabilidade
+    IF cr_craplcm%FOUND THEN 
+      CLOSE cr_craplcm;
+      RAISE vr_exc_sair;
+    END IF;   
+    CLOSE cr_craplcm;
     --
     --Consulta o registro na tabela de portabilidade
     OPEN cr_portabilidade(prc_cdcooper => vr_cdcooper
@@ -662,6 +689,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     --COMMIT;
     
   EXCEPTION
+    WHEN vr_exc_sair THEN
+      NULL;
     WHEN vr_exc_erro THEN -- Exceção para tratar erros
       -- Apenas retornar a variavel de saida
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN

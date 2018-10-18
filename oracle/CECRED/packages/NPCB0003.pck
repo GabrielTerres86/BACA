@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 21/09/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -107,6 +107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
       Objetivo  : Rotinas de transações da Nova Plataforma de Cobrança de Boletos
 
       Alteracoes:
+                         
+      16/10/2018 - Substituir arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -189,7 +192,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Janeiro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Janeiro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -198,6 +201,10 @@ END;
                   caso afirmativo, retornar a mesma.
 
       Alteração :
+                         
+      16/10/2018 - Substituir arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
+                   
     ..........................................................................*/
   
     -- Extrair erros do XML
@@ -218,6 +225,9 @@ END;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
     vr_idlogarq     crapprm.dsvlrprm%TYPE;
+    
+    -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     
   BEGIN
     
@@ -251,29 +261,55 @@ END;
       IF NVL(vr_idlogarq,'0') = '1' THEN
         -- Bloco para escrever log de eventos NPB
         BEGIN
+          -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
           -- Se o XML da requisição foi informado
-          IF pr_dsxmlreq IS NOT NULL THEN
-            BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                        || 'FAULT PACKET --> '
-                                                        || '['||pr_cdctrlcs||'] '
-                                                        || pr_dsxmlreq
-                                       ,pr_nmarqlog     => vr_dsarqlg);
+          IF pr_dsxmlreq IS NOT NULL THEN                                       
+            -- Controlar geração de log de execução dos jobs                                
+            CECRED.pc_log_programa(
+                           pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'FAULT PACKET - ' ||
+                                               '['||pr_cdctrlcs||'] - xml: ' ||
+                                               SUBSTR(pr_dsxmlreq,1,3800) ||
+                                               ' - ' ||vr_dsarqlg
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => 3 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => 'NPCB0003'
+                          ,pr_idprglog      => vr_idprglog
+                          );              
           END IF;
-        
-          BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                      || 'FAULT PACKET --> '
-                                                      || '['||pr_cdctrlcs||'] '
-                                                      || vr_cdcritic||' - '
-                                                      || vr_dscritic
-                                     ,pr_nmarqlog     => vr_dsarqlg);
-        
+                                                    
+          -- Controlar geração de log de execução dos jobs                                
+          CECRED.pc_log_programa(
+                           pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'FAULT PACKET - descrição: ' ||
+                                               '['||pr_cdctrlcs||'] ' ||
+                                               SUBSTR(vr_cdcritic||' - '||vr_dscritic,1,3800)||
+                                               ' - ' ||vr_dsarqlg
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => 3 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => 'NPCB0003'
+                          ,pr_idprglog      => vr_idprglog
+                          );                      
         EXCEPTION
           WHEN OTHERS THEN
-            NULL; -- Não impactar no processo em caso de erro
+            -- No caso de erro de programa gravar tabela especifica de log  
+            CECRED.pc_internal_exception (pr_cdcooper => 3);  
         END;
       END IF;
       

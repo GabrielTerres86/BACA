@@ -8,12 +8,12 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
   --
-  --  Alteracoes: 14/06/2017 - Cria√ß√£o da rotina.
-  --              13/12/2017 - Cria√ß√£o da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
+  --  Alteracoes: 14/06/2017 - CriaÁ„o da rotina.
+  --              13/12/2017 - CriaÁ„o da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
   --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
    
-  --  Vari√°veis globais
+  --  Vari·veis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
   vr_horini_23_1cicl         VARCHAR2(15);
@@ -225,8 +225,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                           ,pr_dspara      IN VARCHAR2
                           ,pr_dsassunto   IN VARCHAR2
                           ,pr_dstexto     IN VARCHAR2
-                          ,pr_dscritic OUT VARCHAR2                       --> Descri√ß√£o da cr√≠tica
-                          );                --> Descri√ß√£o do erro
+                          ,pr_dscritic OUT VARCHAR2                       --> DescriÁ„o da crÌtica
+                          );                --> DescriÁ„o do erro
 
   PROCEDURE pc_efetiva_agendamentos(pr_dtprocesso IN DATE
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE
@@ -265,15 +265,15 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT VARCHAR2);
 
-  -- Rotina que far√° a conciliacao entre o que foi enviado nos movimentos LDL e LTR
-  -- com o que foi lan√ßado por conta na CRAPLCM pela procedure CCRD005.pc_processa_reg_pendente
+  -- Rotina que far· a conciliacao entre o que foi enviado nos movimentos LDL e LTR
+  -- com o que foi lanÁado por conta na CRAPLCM pela procedure CCRD005.pc_processa_reg_pendente
   -- gera lancamento por cooperativa na CRAPLCM
-  -- caso ocorra diferenca gera lan√ßammento cont√°bil
-  -- gera relat√≥rio
+  -- caso ocorra diferenca gera lanÁammento cont·bil
+  -- gera relatÛrio
   PROCEDURE pc_lancamentos_singulares(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT VARCHAR2);
 
-  -- faz lan√ßamento na craplcm
+  -- faz lanÁamento na craplcm
   PROCEDURE pc_gerar_lcto_singulares(pr_cdcooper     IN crapcop.cdcooper%TYPE
                                     ,pr_nrdconta     IN craplcm.nrdconta%TYPE
                                     ,pr_dtmvtolt     IN craplcm.dtmvtolt%TYPE
@@ -283,9 +283,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 
   
   -- Busca dados para popular combos de filtragem tela concip
-  PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informa√ß√µes de LOG
-                            ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                            ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+  PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informaÁıes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                            ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                             ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
@@ -294,17 +294,17 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
                              ,pr_dtfinal  IN VARCHAR2               --> Data final da consulta
-                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial Liquida√ß√£o da consulta
-                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final Liquida√ß√£o da consulta
+                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial LiquidaÁ„o da consulta
+                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final LiquidaÁ„o da consulta
                              ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                              ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                              ,pr_tparquivo IN VARCHAR2              --> Tipo de arquivo (CR/DB/AT)
                              ,pr_credenciadora IN VARCHAR2          --> Filtro credenciadora
                              ,pr_bcoliquidante IN VARCHAR2          --> Filtro Banco Liquidante
                              ,pr_formtran IN VARCHAR2               --> Filtro Forma de Transferencia
-                             ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                             ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                             ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                              ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2 );           --> Erros do processo
@@ -315,9 +315,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                            ,pr_tparquivo IN NUMBER                --> Tipo de arquivo
                            ,pr_bcoliquidante IN VARCHAR2          --> Filtro Banco Liquidante
                            ,pr_credenciadora IN VARCHAR2          --> Filtro credenciadora
-                           ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                           ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                           ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                           ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                           
@@ -337,9 +337,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                            ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                            ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                            ,pr_formtran IN VARCHAR2             --> Forma de transferencia
-                           ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                           ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                           ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                           ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
@@ -347,9 +347,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto IN VARCHAR2                 --> Data lcto consulta
                                 ,pr_ispb     IN VARCHAR2               --> Identificador da Credenciadora
-                                ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                         
@@ -357,9 +357,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   -- Rotina para retornar as regionais para a tela CONSLC
   PROCEDURE pc_lista_regional(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                              ,pr_cddregio IN crapreg.cddregio%TYPE --> Codigo da regional
-                             ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
-                             ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
+                             ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
+                             ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
@@ -474,9 +474,30 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 END CCRD0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
-  -- Rotina para o processamento do dos carquivos de domicilio bancario
 
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' in√≠cio; 'F' fim; 'E' erro
+/*---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa: CCRD0006
+  --  Autor   : Andrei Vieira
+  --  Data    : Junho/2017                     Ultima Atualizacao: 
+  --  Dados referentes ao programa:
+  --
+  --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
+  --
+  --  Alteracoes: 14/06/2017 - CriaÁ„o da rotina.
+  --              13/12/2017 - CriaÁ„o da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
+  --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
+  --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
+ 
+                  16/10/2018 - Ajustes efetuados:              
+                               > INC0025235: CorreÁ„o para considerar o inpessoa corretamente para contas
+                                             administrativas;
+                               > PRB0040361: N„o efetuar o envio do arquivo ASLC033 (quando possuir qualquer movimentaÁ„o
+                                             da CABAL) enquanto n„o for recebido todo o valor finaneiciro para demais bandeiras.
+                                             (Adriano).
+ 
+*/
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' inÌcio; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
 
 
@@ -484,10 +505,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_nomdojob             VARCHAR2(40) := 'JBDOMIC_PROCESSA_ARQ_SILOC';
     vr_flgerlog             BOOLEAN := FALSE;
 
-    --> Controla log proc_batch, para apenas exibir qnd realmente processar informa√ß√£o
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informaÁ„o
 
     BEGIN
-      --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs
+      --> Controlar geraÁ„o de log de execuÁ„o dos jobs
       BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
                                ,pr_nomdojob  => vr_nomdojob    --> Nome do job
@@ -515,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE inproces <> 1; -- Diferente de processo normal
     rw_crapdat cr_crapdat%ROWTYPE;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -530,7 +551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     BEGIN
 
-    -- Recebe a data enviada por par√¢metro
+    -- Recebe a data enviada por par‚metro
     vr_dtprocessoexec := pr_dtprocessoexec;
 
     -- Se for um feriado, nao deve executar o fonte
@@ -543,7 +564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CLOSE cr_crapfer;
 
     -- Verifica se alguma cooperativa esta em processo noturno
-    /* Comentado para n√£o fazer mais essa valida√ß√£o. Estamos usando a dtmvtopr
+    /* Comentado para n„o fazer mais essa validaÁ„o. Estamos usando a dtmvtopr
     OPEN cr_crapdat;
     FETCH cr_crapdat INTO rw_crapdat;
     IF cr_crapdat%FOUND THEN
@@ -553,7 +574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CLOSE cr_crapdat;
     */
 
-    -- Inicio processo completo de carga e gera√ß√£o do domicilio bancario
+    -- Inicio processo completo de carga e geraÁ„o do domicilio bancario
     -- *****************************************************************
     -- Log de inicio de execucao
     pc_controla_log_batch(pr_dstiplog => 'I');
@@ -664,11 +685,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     -- executa o processo CCRD0006.gera_arquivo_33
     if (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33,'ddmmyyyyhh24:mi')
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi') 
-       ) or     -- Primeiro ciclo do hor√°rio retorno arquivo 33
+       ) or     -- Primeiro ciclo do hor·rio retorno arquivo 33
        (
        sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi') 
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
-       )  -- Segundo ciclo do hor√°rio retorno arquivo 33
+       )  -- Segundo ciclo do hor·rio retorno arquivo 33
        then
       CCRD0006.gera_arquivo_xml_33(pr_dscritic => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
@@ -676,7 +697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END IF;
     END IF;
 
-    -- Verifica arquivos de antecipa√ß√£o n√£o processados h√° mais de 1 hora
+    -- Verifica arquivos de antecipaÁ„o n„o processados h· mais de 1 hora
     pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
                               ,pr_dscritic    => vr_dscritic);
 
@@ -697,8 +718,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        END IF;
     END IF;
 
-    -- executa o processo CCRD0006.gera_arquivo_33_cancel para enviar informa√ß√µes sobre as antecipa√ß√µes que n√£o foram liquidadas
-    -- somente √∫ltimos 10 minutos pois restante do tempo e usado para enviar retorno ainda 
+    -- executa o processo CCRD0006.gera_arquivo_33_cancel para enviar informaÁıes sobre as antecipaÁıes que n„o foram liquidadas
+    -- somente ˙ltimos 10 minutos pois restante do tempo e usado para enviar retorno ainda 
     IF (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')) or
        (to_char(sysdate,'hh24mi')>=to_char(to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440,'hh24mi') and
@@ -716,7 +737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                   ,pr_ind_tipo_log => 1 -- Aviso
                                   ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                   || 'Processado com sucesso as rotinas do Domic√≠lio Banc√°rio;'
+                                                   || 'Processado com sucesso as rotinas do DomicÌlio Banc·rio;'
                                   ,pr_nmarqlog => 'CONLDB');
 
 
@@ -733,9 +754,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -748,9 +769,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Efetuar rollback
       ROLLBACK;
-      raise_application_error(-20001, 'Erro na execu√ß√£o CCRD0006: '||pr_dscritic);
+      raise_application_error(-20001, 'Erro na execuÁ„o CCRD0006: '||pr_dscritic);
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -759,7 +780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Log de erro de execucao
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => pr_dscritic);
-      raise_application_error(-20001, 'Erro na execu√ß√£o CCRD0006: '||pr_dscritic);
+      raise_application_error(-20001, 'Erro na execuÁ„o CCRD0006: '||pr_dscritic);
   END;
 
   PROCEDURE pc_leitura_arquivos_xml (pr_cdcritic OUT crapcri.cdcritic%TYPE
@@ -769,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_dsdiretorio_recebidos   VARCHAR2(100);
     vr_listaarq                VARCHAR2(32000);     --> Lista de arquivos
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic                crapcri.cdcritic%TYPE;
     vr_dscritic                VARCHAR2(10000);
 
@@ -876,7 +897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END IF;
         -- Chama o procedimento que faz a leitura do arquivo
 
-        -- Carrega o arquivo XML para uma tabela em mem√≥ria
+        -- Carrega o arquivo XML para uma tabela em memÛria
         GENE0002.pc_arquivo_para_table_of (vr_dsdiretorio||'/'||vr_tab_arqtmp(vr_indice)
                                           ,wpr_table_of
                                           ,vr_ok_nok
@@ -1067,9 +1088,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     END  IF;
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -1083,7 +1104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -1171,7 +1192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- Inicializa o contador de consultas
     vr_contador := 1;
-    w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+    w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
     w_indice     := 1;                       -- Posiciona na primeira linha do arquivo XML
 
     LOOP
@@ -1192,7 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           EXIT;
         END IF;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -1201,7 +1222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         --Busca os campos do detalhe da consulta
         vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
         IF vr_nomarq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1209,7 +1230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            vr_iderro := 1;
         END IF;
 
-        -- valida se o arquivo com esse nome j√° foi processado.
+        -- valida se o arquivo com esse nome j· foi processado.
         vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
         IF vr_executado = 'S' THEN
@@ -1219,7 +1240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
         IF vr_NumCtrlEmis IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlEmis';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1230,7 +1251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
         IF vr_NumCtrlDestOr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlDestOr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1240,7 +1261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_linhaErro:=40;
         vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
         IF vr_ISPBEmissor IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBEmissor';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1251,7 +1272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
         IF vr_ISPBDestinatario IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBDestinatario';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1262,7 +1283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
         IF vr_DtHrArq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1273,7 +1294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
         IF vr_DtRef IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtRef';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1283,7 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       EXCEPTION
          WHEN OTHERS THEN
-           vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+           vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
            RAISE;
       END;
       vr_linhaErro:=100;
@@ -1310,12 +1331,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Posicionar o arquivo no inicio do arquivo XML
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
 
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<SISARQ';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -1342,13 +1363,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_NomCreddr            := NULL;
         vr_iderro               := 0;
 
-        -- Posiciona na TAG de in√≠cio do bloco
+        -- Posiciona na TAG de inÌcio do bloco
         BEGIN
-          w_idloop := 0; -- controle de execu√ß√£o do loop
+          w_idloop := 0; -- controle de execuÁ„o do loop
           w_indice := w_indice + 1;
           w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC022_LiquidTranscCred','S');
           IF w_dscampo IS NULL THEN
-            vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+            vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
             vr_idcampo := '<Grupo_ASLC022_LiquidTranscCred';
             pc_gera_critica(pr_nomearq => vr_nomarq
                            ,pr_idcampo => vr_idcampo
@@ -1362,7 +1383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           END IF;
         END;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -1371,7 +1392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartPrincipal := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartPrincipal','S');
         IF vr_IdentdPartPrincipal IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartPrincipal';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1385,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1395,7 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJBaseCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJBaseCreddr','S');
         IF vr_CNPJBaseCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJBaseCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1405,7 +1426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJCreddr','S');
         IF vr_CNPJCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1415,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFDevdr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFDevdr','S');
         IF vr_ISPBIFDevdr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFDevdr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1425,7 +1446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFCredr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFCredr','S');
         IF vr_ISPBIFCredr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFCredr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1435,7 +1456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_AgCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCreddr','S');
         IF vr_AgCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'AgCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1445,7 +1466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CtCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCreddr','S');
         IF vr_CtCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CtCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1455,7 +1476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NomCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomCreddr','S');
         IF vr_NomCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1501,11 +1522,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           -- Posiciona na TAG de final do bloco
           BEGIN
-            w_idloop := 0; -- controle de execu√ß√£o do loop
+            w_idloop := 0; -- controle de execuÁ„o do loop
             w_indice := w_indice + 1;
             w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC022_Centrlz','S');
             IF w_dscampo IS NULL THEN
-              vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+              vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
               vr_idcampo := 'Grupo_ASLC022_Centrlz';
               pc_gera_critica(pr_nomearq => vr_nomarq
                              ,pr_idcampo => vr_idcampo
@@ -1519,7 +1540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             END IF;
           END;
 
-          -- Controla a execu√ß√£o do loop
+          -- Controla a execuÁ„o do loop
           IF w_idloop = 1 THEN
             w_idloop := 0;
             EXIT;
@@ -1527,7 +1548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpPessoaCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaCentrlz','S');
           IF vr_TpPessoaCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpPessoaCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1537,7 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CNPJ_CPFCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFCentrlz','S');
           IF vr_CNPJ_CPFCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CNPJ_CPFCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1552,7 +1573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CodCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodCentrlz','S');
           IF vr_CodCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1562,7 +1583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpCt := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpCt','S');
           IF vr_TpCt IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpCt';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1572,7 +1593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_agcentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCentrlz','S');
           IF vr_agcentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'AgCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1582,7 +1603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_ctcentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCentrlz','S');
           IF vr_ctcentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CtCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1590,12 +1611,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              EXIT;
           END  IF;
 
-          -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+          -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
           IF NVL(vr_iderro,0) = 1 THEN
              pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                         ,pr_dscritic  => vr_dscritic);
              IF vr_dscritic IS NOT NULL THEN
-                -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                 NULL;
              END IF;
           END IF;
@@ -1640,17 +1661,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              vr_numctrlcipaceito         := NULL;
              vr_iderro                   := 0;
              vr_dscritic                 := NULL;
-             -- Posiciona na TAG de in√≠cio do bloco
+             -- Posiciona na TAG de inÌcio do bloco
              BEGIN
 
 
 
 
-               w_idloop := 0; -- controle de execu√ß√£o do loop
+               w_idloop := 0; -- controle de execuÁ„o do loop
                w_indice := w_indice + 1;
                w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC022_PontoVenda','S');
                IF w_dscampo IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'Grupo_ASLC022_PontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -1663,7 +1684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                  END IF;
                END IF;
              END;
-             -- Controla a execu√ß√£o do loop
+             -- Controla a execuÁ„o do loop
              IF w_idloop = 1 THEN
                w_idloop := 0;
                EXIT;
@@ -1672,7 +1693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
              IF vr_NULiquid IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'NULiquid';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -1688,7 +1709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_ISPBIFLiquidPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFLiquidPontoVenda','S');
              IF vr_ISPBIFLiquidPontoVenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'ISPBIFLiquidPontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -1699,7 +1720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_CodPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodPontoVenda','S');
              IF vr_CodPontoVenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'CodPontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1710,7 +1731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_NomePontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomePontoVenda','S');
              IF vr_NomePontoVenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'NomePontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1721,7 +1742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_TpPessoaPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaPontoVenda','S');
              IF vr_TpPessoaPontoVenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'TpPessoaPontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1732,7 +1753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_CNPJ_CPFPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFPontoVenda','S');
              IF vr_CNPJ_CPFPontoVenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'CNPJ_CPFPontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1743,7 +1764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_CodInstitdrArrajPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodInstitdrArrajPgto','S');
              IF vr_CodInstitdrArrajPgto IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'CodInstitdrArrajPgto';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -1754,7 +1775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_TpProdLiquidCred := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpProdLiquidCred','S');
              IF vr_TpProdLiquidCred IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'TpProdLiquidCred';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1765,7 +1786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_IndrFormaTransf := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IndrFormaTransf','S');
              IF vr_IndrFormaTransf IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'IndrFormaTransf';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1773,7 +1794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                 vr_iderro := 1;
              /*ELSE
                 IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
-                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n√£o √© aceito no processo de importa√ß√£o';
+                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n„o È aceito no processo de importaÁ„o';
                    vr_idcampo := 'IndrFormaTransf';
                    vr_codocorc:='32';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -1788,7 +1809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
              IF vr_CodMoeda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'CodMoeda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1799,7 +1820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_DtPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtPgto','S');
              IF vr_DtPgto IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'DtPgto';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -1813,7 +1834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              vr_linhaErro:=913;
 
              IF vr_VlrPgto IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'VlrPgto';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -1824,7 +1845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
              vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
              IF vr_DtHrManut IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'DtHrManut';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -1832,13 +1853,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                 vr_iderro := 1;
              END  IF;
 
-             -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+             -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
              IF NVL(vr_iderro,0) = 1 THEN
                 pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                            ,pr_dscritic  => vr_dscritic);
                 IF vr_dscritic IS NOT NULL THEN
 
-                   -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                   -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                    NULL;
                 END IF;
              END IF;
@@ -1880,11 +1901,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
          -- Posiciona na TAG de final do bloco
          BEGIN
-           w_idloop := 0; -- controle de execu√ß√£o do loop
+           w_idloop := 0; -- controle de execuÁ„o do loop
            w_indice := w_indice + 1;
            w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC022_Centrlz','S');
            IF w_dscampo IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := '/Grupo_ASLC022_Centrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -1904,11 +1925,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
        -- Posiciona na TAG de final do bloco
        BEGIN
-         w_idloop := 0; -- controle de execu√ß√£o do loop
+         w_idloop := 0; -- controle de execuÁ„o do loop
          w_indice := w_indice + 1;
          w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC022_LiquidTranscCred','S');
          IF w_dscampo IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := '/Grupo_ASLC022_LiquidTranscCred';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -1929,11 +1950,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
      -- Posiciona na TAG de final do bloco
      BEGIN
-       w_idloop := 0; -- controle de execu√ß√£o do loop
+       w_idloop := 0; -- controle de execuÁ„o do loop
        w_indice := w_indice + 1;
        w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/SISARQ','S');
        IF w_dscampo IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := '/SISARQ';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -1967,7 +1988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
      vr_dscritic     VARCHAR2(32000);          --> descricao do erro
      vr_exc_saida    EXCEPTION;               --> Excecao prevista
-     vr_tab_xml      gene0007.typ_tab_tagxml; --> PL Table para armazenar conte√∫do XML
+     vr_tab_xml      gene0007.typ_tab_tagxml; --> PL Table para armazenar conte˙do XML
 
   BEGIN
      -- Busca a informacao no XML
@@ -2020,9 +2041,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_arquivo := substr(pr_nomarq,1,7);
 
     IF vr_arquivo IN ('ASLC022','ASLC023') THEN
-       vr_tparquivo := 1; -- cr√©dito
+       vr_tparquivo := 1; -- crÈdito
     ELSIF vr_arquivo IN ('ASLC024','ASLC025') THEN
-       vr_tparquivo := 2; -- d√©bito
+       vr_tparquivo := 2; -- dÈbito
     ELSE
        vr_tparquivo := 3; -- antecipacao
     END  IF;
@@ -2110,7 +2131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                         ,NULL) RETURNING idlancto INTO pr_idlancto;
   EXCEPTION
     WHEN OTHERS THEN
-       pr_dscritic := 'Erro ao inserir o transa√ß√£o '||pr_idlancto||'. '||SQLERRM;
+       pr_dscritic := 'Erro ao inserir o transaÁ„o '||pr_idlancto||'. '||SQLERRM;
        RETURN;
   END insere_liquidacao_transacao;
 
@@ -2146,7 +2167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                             )  RETURNING idcentraliza INTO pr_idcentraliza;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'Erro ao inserir a transa√ß√£o centralizadora '||pr_idcentraliza||'. '||SQLERRM;
+        pr_dscritic := 'Erro ao inserir a transaÁ„o centralizadora '||pr_idcentraliza||'. '||SQLERRM;
         RETURN;
   END;
 
@@ -2212,7 +2233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                        ,pr_codocorc )  RETURNING idpdv INTO pr_idpdv ;
     EXCEPTION
       WHEN OTHERS THEN
-         pr_dscritic := 'Erro ao inserir o transa√ß√£o PDV '||pr_idcentraliza||'. '||SQLERRM;
+         pr_dscritic := 'Erro ao inserir o transaÁ„o PDV '||pr_idcentraliza||'. '||SQLERRM;
          RETURN;
   END;
 
@@ -2312,7 +2333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Monta documento XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?>');
@@ -2325,11 +2346,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
 
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC023',pr_posicao => NULL, pr_tag_nova => NULL, pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      -- Gera o cabe√ßalho do arquivo.
+      -- Gera o cabeÁalho do arquivo.
 
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC023',pr_posicao => 0, pr_tag_nova => 'BCARQ', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => NULL, pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      -- Gera o cabe√ßalho do arquivo.
+      -- Gera o cabeÁalho do arquivo.
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NomArq', pr_tag_cont => vr_arquivo, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlEmis', pr_tag_cont => r0.nrcontrole_emissor, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlDestOr', pr_tag_cont => r0.nrcontrole_dest_original, pr_des_erro => vr_dscritic);
@@ -2409,10 +2430,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            RAISE vr_exc_saida;
       END;
 
-      -- gera o arquivo no diret√≥rio padr√£o
-      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst√¢ncia do CLOB Type
-                                   ,pr_caminho   => vr_caminho --> Diret√≥rio para sa√≠da
-                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de sa√≠da
+      -- gera o arquivo no diretÛrio padr„o
+      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst‚ncia do CLOB Type
+                                   ,pr_caminho   => vr_caminho --> DiretÛrio para saÌda
+                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de saÌda
                                    ,pr_des_erro  => vr_dscritic );
       IF vr_dscritic IS NOT NULL THEN
          pc_gera_critica(pr_nomearq => vr_arquivo
@@ -2488,9 +2509,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_assunto                 VARCHAR2(1000);
     vr_mensagem                VARCHAR2(4000);
     vr_erro                   VARCHAR2(100);
-    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> Defini√ß√£o do documento DOM (XML)
+    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> DefiniÁ„o do documento DOM (XML)
 
-    -- V√°ri√°veis controle de aceitos / rejeitados
+    -- V·ri·veis controle de aceitos / rejeitados
     vr_fim_aceito             NUMBER(01) := 0;
     vr_fim_rejeitado          NUMBER(01) := 0;
     w_idloop                  NUMBER;
@@ -2499,7 +2520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     w_indice                  NUMBER;
     vr_exc_saida              EXCEPTION;
 
-    -- Busca o nome do arquivo de origem para atualiza√ß√£o do RET
+    -- Busca o nome do arquivo de origem para atualizaÁ„o do RET
     CURSOR c1 (pr_nomarq IN VARCHAR2) IS
       SELECT tla.nmarquivo_origem
         FROM tbdomic_liqtrans_arquivo  tla
@@ -2531,12 +2552,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     -- Inicializa o contador de consultas
     vr_contador := 1;
 
-    -- setar a data hora de rejei√ß√£o para busca na cria√ß√£o do e-mail
+    -- setar a data hora de rejeiÁ„o para busca na criaÁ„o do e-mail
     vr_dthorarejei := SYSDATE;
 
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       w_indice     := 1;                       -- Posiciona na primeira linha do arquivo XML
 
       -- Verifica se existe dados na consulta
@@ -2547,7 +2568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2555,7 +2576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -2564,7 +2585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
       IF vr_NumCtrlEmis IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlEmis';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2579,7 +2600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
       IF vr_NumCtrlDestOr IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlDestOr';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2589,7 +2610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
       IF vr_ISPBEmissor IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBEmissor';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2599,7 +2620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
       IF vr_ISPBDestinatario IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBDestinatario';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2609,7 +2630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
       IF vr_DtHrArq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtHrArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2619,7 +2640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
       IF vr_DtRef IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtRef';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -2629,7 +2650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     EXCEPTION
       WHEN OTHERS THEN
-         vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+         vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
          RAISE;
     END;
 
@@ -2656,12 +2677,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- Posicionar o arquivo no inicio do arquivo XML
     BEGIN
-      w_idloop := 0; -- controle de execu√ß√£o do loop
+      w_idloop := 0; -- controle de execuÁ„o do loop
 
       w_indice := w_indice + 1;
       w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
       IF w_dscampo IS NULL THEN
-        vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+        vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
         vr_idcampo := '<SISARQ';
         pc_gera_critica(pr_nomearq => vr_nomarq
                        ,pr_idcampo => vr_idcampo
@@ -2679,14 +2700,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       vr_iderro_ace := 0;
       vr_fim_rejeitado := 0;
       vr_fim_aceito := 0;
-      -- CART√ïES ACEITOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES ACEITOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC023RET_LiquidTranscCredActo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC023RET_LiquidTranscCredActo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -2701,10 +2722,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF nvl(vr_fim_aceito,0) = 0 THEN
-        --Busca os campos dos cart√µes aceitos
+        --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2714,7 +2735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlifacto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIFActo','S');
         IF vr_numctrlifacto IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIFActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2724,7 +2745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlcipaceito := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlCIPActo','S');
         IF vr_numctrlcipaceito IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlCIPActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2734,7 +2755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
         IF vr_NULiquid IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NULiquid';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2744,7 +2765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
         IF vr_DtHrManut IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrManut';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2765,16 +2786,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,pr_idcampo => vr_idcampo
                           ,pr_dscritic => vr_dscritic);
         END IF;
-      END IF; -- CART√ïES ACEITOS
+      END IF; -- CART’ES ACEITOS
 
-      -- CART√ïES REJEITADOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES REJEITADOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC023RET_LiquidTranscCredRecsdo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC023RET_LiquidTranscCredRecsdo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -2789,10 +2810,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF nvl(vr_fim_rejeitado,0) = 0 THEN
-        --Busca os campos dos cart√µes aceitos
+        --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtdRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtdRec IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2801,7 +2822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlIF := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIF','S');
         IF vr_NumCtrlIF IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIF';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -2816,7 +2837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- BUscar o erro que ocorreu no NULiquid
           vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid CodErro','S','S');
           IF vr_erro IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid CodErro';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -2826,7 +2847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar NULiquid sem erro
           vr_NULiquidRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
           IF vr_NULiquidRec IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -2840,7 +2861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           IF vr_erro IS NULL then
             vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc CodErro','S','S');
             IF vr_erro IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodOcorc CodErro';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -2851,7 +2872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar CodOcorc sem erro
           vr_codocorc := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc','S');
           IF vr_codocorc IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodOcorc';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -2874,7 +2895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,pr_dscritic => vr_dscritic
                           ,pr_cdocorr  => vr_codocorc );
         END IF;
-      END IF; -- CART√ïES REJEITADOS
+      END IF; -- CART’ES REJEITADOS
 
       IF nvl(vr_fim_rejeitado,0) = 1 AND
          nvl(vr_fim_aceito,0) = 1 THEN
@@ -2913,13 +2934,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     -- monta o e-mail de envio das divergencias (rejeitados).
     FOR r2 IN c2 (vr_nomarq) LOOP
       IF vr_mensagem IS NULL THEN
-         vr_mensagem := 'Abaixo a lista de registros com diverg√™ncia ap√≥s a execu√ß√£o do arquivo '||vr_nomarq||
+         vr_mensagem := 'Abaixo a lista de registros com divergÍncia apÛs a execuÁ„o do arquivo '||vr_nomarq||
                         ':<br /><br />';
       END IF;
 
       vr_mensagem := vr_mensagem ||'<br />'||
-                 'Liquida√ß√£o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
-                 'Ocorr√™ncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
+                 'LiquidaÁ„o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
+                 'OcorrÍncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
                  'Erro - '||lpad(r2.dsocorrencia_retorno,11,' ');
       IF length(vr_mensagem) > 3900 THEN
          pc_envia_email(pr_cdcooper   => 1
@@ -2964,14 +2985,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       UPDATE tbdomic_liqtrans_pdv d
          SET d.dhretorno = SYSDATE
        WHERE nrliquidacao = pr_nuliquid
-         AND d.idpdv = vr_idpdv;  -- no caso de cr√©dito pode estar retornando
+         AND d.idpdv = vr_idpdv;  -- no caso de crÈdito pode estar retornando
                                   -- o registro de agendamento efetivado
-                                  -- e ent√£o somente atualiza o que foi enviado
+                                  -- e ent„o somente atualiza o que foi enviado
                                   -- pois vai existir mais de um registro
                                   -- para o mesmo numero de liquidacao
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_nuliquid||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_nuliquid||'. '||SQLERRM;
   END processa_registro_23RET_aceito ;
 
   PROCEDURE processa_reg_23RET_rejeitado (pr_IdentdPartPrincipalRec IN VARCHAR2
@@ -2990,7 +3011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE nrliquidacao = pr_NULiquidRec;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_NULiquidRec||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_NULiquidRec||'. '||SQLERRM;
 
   END processa_reg_23RET_rejeitado ;
 
@@ -3034,7 +3055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       vr_iderro    := 0;
 
       -- Verifica se existe dados na consulta
@@ -3045,7 +3066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S','ERR');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -3053,7 +3074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -3062,14 +3083,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'CodErro','S');
       IF vr_erro IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'CodErro';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
       ELSE
-         --Busca descri√ß√£o do erro na tabela de motivos de erro
+         --Busca descriÁ„o do erro na tabela de motivos de erro
          OPEN cr_moterro(vr_erro);
          FETCH cr_moterro INTO rw_moterro;
          IF cr_moterro%NOTFOUND THEN
@@ -3130,7 +3151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       BEGIN
         vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                 ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET23');
-        vr_assunto  := 'Domic√≠lio Banc√°rio - arquivo '||vr_nomarq||' com erro';
+        vr_assunto  := 'DomicÌlio Banc·rio - arquivo '||vr_nomarq||' com erro';
         vr_mensagem := 'Erro no processamento do arquivo '||vr_nomarq||
                        ':<br /><br />'||
                        vr_erro;
@@ -3239,7 +3260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       vr_DtRef             := NULL;
       vr_iderro            := NULL;-------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
 
-      w_indice_cab         := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab         := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       w_indice             := 1;                       -- Posiciona na primeira linha do arquivo XML
 
       BEGIN
@@ -3248,7 +3269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           EXIT;
         END IF;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -3257,7 +3278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         --Busca os campos do detalhe da consulta
         vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
         IF vr_nomarq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3265,7 +3286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            vr_iderro := 1;
         END IF;
 
-        -- valida se o arquivo com esse nome j√° foi processado.
+        -- valida se o arquivo com esse nome j· foi processado.
 
         vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
@@ -3275,7 +3296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
         IF vr_NumCtrlEmis IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlEmis';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3285,7 +3306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
         IF vr_NumCtrlDestOr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlDestOr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3295,7 +3316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
         IF vr_ISPBEmissor IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBEmissor';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3305,7 +3326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
         IF vr_ISPBDestinatario IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBDestinatario';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3315,7 +3336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
         IF vr_DtHrArq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3325,7 +3346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
         IF vr_DtRef IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtRef';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3335,7 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       EXCEPTION
         WHEN OTHERS THEN
-           vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+           vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
            RAISE;
       END;
 
@@ -3360,12 +3381,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Posicionar o arquivo no inicio do arquivo XML
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
 
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<SISARQ';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -3391,13 +3412,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_NomCreddr            := NULL;
         vr_iderro               := NULL;
 
-        -- Posiciona na TAG de in√≠cio do bloco
+        -- Posiciona na TAG de inÌcio do bloco
         BEGIN
-          w_idloop := 0; -- controle de execu√ß√£o do loop
+          w_idloop := 0; -- controle de execuÁ„o do loop
           w_indice := w_indice + 1;
           w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC024_LiquidTranscDeb','S');
           IF w_dscampo IS NULL THEN
-            vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+            vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
             vr_idcampo := '<Grupo_ASLC024_LiquidTranscDeb';
             pc_gera_critica(pr_nomearq => vr_nomarq
                            ,pr_idcampo => vr_idcampo
@@ -3411,7 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           END IF;
         END;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -3419,7 +3440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartPrincipal := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartPrincipal','S');
         IF vr_IdentdPartPrincipal IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartPrincipal';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3434,7 +3455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3444,7 +3465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJBaseCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJBaseCreddr','S');
         IF vr_CNPJBaseCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJBaseCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3454,7 +3475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJCreddr','S');
         IF vr_CNPJCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3464,7 +3485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFDevdr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFDevdr','S');
         IF vr_ISPBIFDevdr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFDevdr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3474,7 +3495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFCredr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFCredr','S');
         IF vr_ISPBIFCredr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFCredr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3484,7 +3505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_AgCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCreddr','S');
         IF vr_AgCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'AgCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3494,7 +3515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CtCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCreddr','S');
         IF vr_CtCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CtCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3504,7 +3525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NomCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomCreddr','S');
         IF vr_NomCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -3546,11 +3567,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           -- Posiciona na TAG de final do bloco
           BEGIN
-            w_idloop := 0; -- controle de execu√ß√£o do loop
+            w_idloop := 0; -- controle de execuÁ„o do loop
             w_indice := w_indice + 1;
             w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC024_Centrlz','S');
             IF w_dscampo IS NULL THEN
-              vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+              vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
               vr_idcampo := 'Grupo_ASLC024_Centrlz';
               pc_gera_critica(pr_nomearq => vr_nomarq
                              ,pr_idcampo => vr_idcampo
@@ -3564,7 +3585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             END IF;
           END;
 
-          -- Controla a execu√ß√£o do loop
+          -- Controla a execuÁ„o do loop
           IF w_idloop = 1 THEN
             w_idloop := 0;
             EXIT;
@@ -3572,7 +3593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpPessoaCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaCentrlz','S');
           IF vr_TpPessoaCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpPessoaCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3582,7 +3603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CNPJ_CPFCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFCentrlz','S');
           IF vr_CNPJ_CPFCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CNPJ_CPFCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3597,7 +3618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CodCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodCentrlz','S');
           IF vr_CodCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3607,7 +3628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpCt := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpCt','S');
           IF vr_TpCt IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpCt';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3617,7 +3638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_AgCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCentrlz','S');
           IF vr_AgCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'AgCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3627,7 +3648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CtCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCentrlz','S');
           IF vr_CtCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CtCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3635,12 +3656,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              vr_iderro := 1;
           END IF;
 
-          -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+          -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
           IF NVL(vr_iderro,0) = 1 THEN
              pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                         ,pr_dscritic  => vr_dscritic);
              IF vr_dscritic IS NOT NULL THEN
-                -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                 NULL;
              END IF;
           END IF;
@@ -3685,13 +3706,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               vr_iderro                   := 0;
               vr_dscritic                 := null;
 
-              -- Posiciona na TAG de in√≠cio do bloco
+              -- Posiciona na TAG de inÌcio do bloco
               BEGIN
-                w_idloop := 0; -- controle de execu√ß√£o do loop
+                w_idloop := 0; -- controle de execuÁ„o do loop
                 w_indice := w_indice + 1;
                 w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC024_PontoVenda','S');
                 IF w_dscampo IS NULL THEN
-                  vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                  vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                   vr_idcampo := 'Grupo_ASLC024_PontoVenda';
                   pc_gera_critica(pr_nomearq => vr_nomarq
                                  ,pr_idcampo => vr_idcampo
@@ -3704,7 +3725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                   END IF;
                 END IF;
               END;
-              -- Controla a execu√ß√£o do loop
+              -- Controla a execuÁ„o do loop
               IF w_idloop = 1 THEN
                 w_idloop := 0;
                 EXIT;
@@ -3712,7 +3733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
               IF vr_NULiquid IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'NULiquid';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3727,7 +3748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_ISPBIFLiquidPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFLiquidPontoVenda','S');
               IF vr_ISPBIFLiquidPontoVenda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'ISPBIFLiquidPontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3737,7 +3758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_CodPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodPontoVenda','S');
               IF vr_CodPontoVenda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'CodPontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3747,7 +3768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_NomePontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomePontoVenda','S');
               IF vr_NomePontoVenda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'NomePontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3757,7 +3778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_TpPessoaPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaPontoVenda','S');
               IF vr_TpPessoaPontoVenda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'TpPessoaPontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3767,7 +3788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_CNPJ_CPFPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFPontoVenda','S');
               IF vr_CNPJ_CPFPontoVenda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'CNPJ_CPFPontoVenda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3777,7 +3798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_CodInstitdrArrajPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodInstitdrArrajPgto','S');
               IF vr_CodInstitdrArrajPgto IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'CodInstitdrArrajPgto';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3787,7 +3808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_TpProdLiquidDeb := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpProdLiquidDeb','S');
               IF vr_TpProdLiquidDeb IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'TpProdLiquidDeb';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3797,7 +3818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_IndrFormaTransf := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IndrFormaTransf','S');
               IF vr_IndrFormaTransf IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'IndrFormaTransf';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3805,7 +3826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                  vr_iderro := 1;
              /*ELSE
                 IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
-                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n√£o √© aceito no processo de importa√ß√£o';
+                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n„o È aceito no processo de importaÁ„o';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -3817,7 +3838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
               IF vr_CodMoeda IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'CodMoeda';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3827,7 +3848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_DtPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtPgto','S');
               IF vr_DtPgto IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'DtPgto';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3837,7 +3858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_VlrPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'VlrPgto','S');
               IF vr_VlrPgto IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'VlrPgto';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3847,7 +3868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
               IF vr_DtHrManut IS NULL THEN
-                 vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                 vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                  vr_idcampo := 'DtHrManut';
                  pc_gera_critica(pr_nomearq => vr_nomarq
                                 ,pr_idcampo => vr_idcampo
@@ -3855,12 +3876,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                  vr_iderro := 1;
               END IF;
 
-              -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+              -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
               IF NVL(vr_iderro,0) = 1 THEN
                  pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                             ,pr_dscritic  => vr_dscritic);
                  IF vr_dscritic IS NOT NULL THEN
-                    -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                    -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                     NULL;
                  END IF;
               END IF;
@@ -3900,11 +3921,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
            -- Posiciona na TAG de final do bloco
            BEGIN
-             w_idloop := 0; -- controle de execu√ß√£o do loop
+             w_idloop := 0; -- controle de execuÁ„o do loop
              w_indice := w_indice + 1;
              w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC024_Centrlz','S');
              IF w_dscampo IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := '/Grupo_ASLC024_Centrlz';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -3924,11 +3945,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
          -- Posiciona na TAG de final do bloco
          BEGIN
-           w_idloop := 0; -- controle de execu√ß√£o do loop
+           w_idloop := 0; -- controle de execuÁ„o do loop
            w_indice := w_indice + 1;
            w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC024_LiquidTranscDeb','S');
            IF w_dscampo IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := '/Grupo_ASLC024_LiquidTranscDeb';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -3948,11 +3969,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         -- Posiciona na TAG de final do bloco
         BEGIN
-          w_idloop := 0; -- controle de execu√ß√£o do loop
+          w_idloop := 0; -- controle de execuÁ„o do loop
           w_indice := w_indice + 1;
           w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/SISARQ','S');
           IF w_dscampo IS NULL THEN
-            vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+            vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
             vr_idcampo := '/ASLC024';
             pc_gera_critica(pr_nomearq => vr_nomarq
                            ,pr_idcampo => vr_idcampo
@@ -4049,7 +4070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Monta documento XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?>');
@@ -4057,15 +4078,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       vr_nomarq := 'ASLC025_'||r0.nrispb_destinatario||'_'||to_char(sysdate,'YYYYMMDD')||'_'||lpad(vr_nrsequencia,5,'0');
       vr_arquivo :=  vr_nomarq ||'.XML';
 
-/*      -- Cria o n√≥ inicial do XML
+/*      -- Cria o nÛ inicial do XML
       vr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><ASLC025/>');
 
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC025',pr_posicao => 0, pr_tag_nova => NULL, pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      -- Gera o cabe√ßalho do arquivo.
+      -- Gera o cabeÁalho do arquivo.
 
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC025',pr_posicao => 0, pr_tag_nova => 'BCARQ', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => NULL, pr_tag_cont => 0, pr_des_erro => vr_dscritic);
-      -- Gera o cabe√ßalho do arquivo.
+      -- Gera o cabeÁalho do arquivo.
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NomArq', pr_tag_cont => vr_arquivo, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlEmis', pr_tag_cont => r0.nrcontrole_emissor, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlDestOr', pr_tag_cont => r0.nrcontrole_dest_original, pr_des_erro => ll);
@@ -4143,10 +4164,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,pr_dscritic => vr_dscritic);
       END;
 
-      -- gera o arquivo no diret√≥rio padr√£o
-      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst√¢ncia do CLOB Type
-                                   ,pr_caminho   => vr_caminho --> Diret√≥rio para sa√≠da
-                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de sa√≠da
+      -- gera o arquivo no diretÛrio padr„o
+      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst‚ncia do CLOB Type
+                                   ,pr_caminho   => vr_caminho --> DiretÛrio para saÌda
+                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de saÌda
                                    ,pr_des_erro  => vr_dscritic );
 
       -- Atualiza arquivo origem com o nome do arquivo gerado.
@@ -4205,13 +4226,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_contador_trs           PLS_INTEGER;
     vr_executado              VARCHAR2(01);
     vr_iderro                 NUMBER(01);
-    -- V√°ri√°veis controle de aceitos / rejeitados
+    -- V·ri·veis controle de aceitos / rejeitados
     vr_fim_aceito             NUMBER(01) := 0;
     vr_fim_rejeitado          NUMBER(01) := 0;
 
     vr_nomarqorigem            VARCHAR2(1000);
     vr_erro                   VARCHAR2(100);
-    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> Defini√ß√£o do documento DOM (XML)
+    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> DefiniÁ„o do documento DOM (XML)
     vr_para                    VARCHAR2(1000);
     vr_assunto                 VARCHAR2(1000);
     vr_mensagem                VARCHAR2(4000);
@@ -4223,7 +4244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_exc_saida               EXCEPTION;
 
 
-    -- Busca o nome do arquivo de origem para atualiza√ß√£o do RET
+    -- Busca o nome do arquivo de origem para atualizaÁ„o do RET
     CURSOR c1 (pr_nomarq IN VARCHAR2) IS
       SELECT tla.nmarquivo_origem
         FROM tbdomic_liqtrans_arquivo  tla
@@ -4257,7 +4278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       w_indice     := 1;                       -- Posiciona na primeira linha do arquivo XML
 
       -- Verifica se existe dados na consulta
@@ -4268,7 +4289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4276,7 +4297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -4286,7 +4307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
       IF vr_NumCtrlEmis IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlEmis';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4301,7 +4322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
       IF vr_NumCtrlDestOr IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlDestOr';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4311,7 +4332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
       IF vr_ISPBEmissor IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBEmissor';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4321,7 +4342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
       IF vr_ISPBDestinatario IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBDestinatario';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4331,7 +4352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
       IF vr_DtHrArq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtHrArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4341,7 +4362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
       IF vr_DtRef IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtRef';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4351,7 +4372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+        vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
         RAISE;
     END;
 
@@ -4377,12 +4398,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- Posicionar o arquivo no inicio do arquivo XML
     BEGIN
-      w_idloop := 0; -- controle de execu√ß√£o do loop
+      w_idloop := 0; -- controle de execuÁ„o do loop
 
       w_indice := w_indice + 1;
       w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
       IF w_dscampo IS NULL THEN
-        vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+        vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
         vr_idcampo := '<SISARQ';
         pc_gera_critica(pr_nomearq => vr_nomarq
                        ,pr_idcampo => vr_idcampo
@@ -4400,14 +4421,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       vr_fim_rejeitado := 0;
       vr_fim_aceito := 0;
 
-      -- CART√ïES ACEITOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES ACEITOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC025RET_LiquidTranscDebActo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC025RET_LiquidTranscDebActo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -4422,10 +4443,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF nvl(vr_fim_aceito,0) = 0 THEN
-        --Busca os campos dos cart√µes aceitos
+        --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4434,7 +4455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlifacto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIFActo','S');
         IF vr_numctrlifacto IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIFActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4443,7 +4464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlcipaceito := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlCIPActo','S');
         IF vr_numctrlcipaceito IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlCIPActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4452,7 +4473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
         IF vr_NULiquid IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NULiquid';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4461,7 +4482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
         IF vr_DtHrManut IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrManut';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4483,14 +4504,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END IF;
       END IF;
 
-      -- CART√ïES REJEITADOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES REJEITADOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC025RET_LiquidTranscDebRecsdo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC025RET_LiquidTranscDebRecsdo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -4505,10 +4526,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF nvl(vr_fim_rejeitado,0) = 0 THEN
-        --Busca os campos dos cart√µes aceitos
+        --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtdRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtdRec IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4517,7 +4538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlIF := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIF','S');
         IF vr_NumCtrlIF IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIF';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -4532,7 +4553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- BUscar o erro que ocorreu no NULiquid
           vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid CodErro','S','S');
           IF vr_erro IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid CodErro';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -4542,7 +4563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar NULiquid sem erro
           vr_NULiquidRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
           IF vr_NULiquidRec IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -4556,7 +4577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           IF vr_erro IS NULL then
             vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc CodErro','S','S');
             IF vr_erro IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodOcorc CodErro';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -4567,7 +4588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar CodOcorc sem erro
           vr_codocorc := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc','S');
           IF vr_codocorc IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodOcorc';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -4628,13 +4649,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- monta o e-mail de envio das divergencias (rejeitados).
       FOR r2 IN c2 (vr_nomarq) LOOP
         IF vr_mensagem IS NULL THEN
-           vr_mensagem := 'Abaixo a lista de registros com diverg√™ncia ap√≥s a execu√ß√£o do arquivo '||vr_nomarq||
+           vr_mensagem := 'Abaixo a lista de registros com divergÍncia apÛs a execuÁ„o do arquivo '||vr_nomarq||
                           ':<br /><br />';
         END IF;
 
         vr_mensagem := vr_mensagem ||'<br />'||
-                   'Liquida√ß√£o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
-                   'Ocorr√™ncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
+                   'LiquidaÁ„o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
+                   'OcorrÍncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
                    'Erro - '||lpad(r2.dsocorrencia_retorno,11,' ');
         IF length(vr_mensagem) > 3900 THEN
            pc_envia_email(pr_cdcooper   => 1
@@ -4678,7 +4699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE nrliquidacao = pr_nuliquid;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_nuliquid||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_nuliquid||'. '||SQLERRM;
   END processa_registro_25RET_aceito ;
 
   PROCEDURE processa_reg_25RET_rejeitado (pr_IdentdPartPrincipalRec IN VARCHAR2
@@ -4697,7 +4718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE nrliquidacao = pr_NULiquidRec;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_NULiquidRec||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_NULiquidRec||'. '||SQLERRM;
 
   END processa_reg_25RET_rejeitado ;
 
@@ -4741,7 +4762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       vr_iderro    := 0;
 
       -- Verifica se existe dados na consulta
@@ -4752,7 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S','ERR');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -4760,7 +4781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -4769,14 +4790,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'CodErro','S');
       IF vr_erro IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'CodErro';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
       ELSE
-         --Busca descri√ß√£o do erro na tabela de motivos de erro
+         --Busca descriÁ„o do erro na tabela de motivos de erro
          OPEN cr_moterro(vr_erro);
          FETCH cr_moterro INTO rw_moterro;
          IF cr_moterro%NOTFOUND THEN
@@ -4838,7 +4859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       BEGIN
         vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                 ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET25');
-        vr_assunto  := 'Domic√≠lio Banc√°rio - arquivo '||vr_nomarq||' com erro';
+        vr_assunto  := 'DomicÌlio Banc·rio - arquivo '||vr_nomarq||' com erro';
         vr_mensagem := 'Erro no processamento do arquivo '||vr_nomarq||
                        ':<br /><br />'||
                        vr_erro||' - '||rw_moterro.dsmotivo_erro;
@@ -4878,7 +4899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_exc_saida                  EXCEPTION;
 
   BEGIN
-      -- BUSCA ID DO ARQUIVO PARA INCLUS√ÉO NA TABELA
+      -- BUSCA ID DO ARQUIVO PARA INCLUS√O NA TABELA
       OPEN c1 (pr_nomearq);
       FETCH c1 INTO r1;
       vr_idarquivo := r1.idarquivo;
@@ -5001,7 +5022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
     -- Inicializa o contador de consultas
     vr_contador := 1;
-    w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+    w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
     w_indice     := 1;                       -- Posiciona na primeira linha do arquivo XML
 
     LOOP
@@ -5023,7 +5044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           EXIT;
         END IF;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -5032,7 +5053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         --Busca os campos do detalhe da consulta
         vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
         IF vr_nomarq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5040,7 +5061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            vr_iderro := 1;
         END IF;
 
-        -- valida se o arquivo com esse nome j√° foi processado.
+        -- valida se o arquivo com esse nome j· foi processado.
         vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
         IF vr_executado = 'S' THEN
@@ -5049,7 +5070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
         IF vr_NumCtrlEmis IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlEmis';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5059,7 +5080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
         IF vr_NumCtrlDestOr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlDestOr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5069,7 +5090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
         IF vr_ISPBEmissor IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBEmissor';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5079,7 +5100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
         IF vr_ISPBDestinatario IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBDestinatario';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5089,7 +5110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
         IF vr_DtHrArq IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrArq';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5099,7 +5120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
         IF vr_DtRef IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtRef';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5109,7 +5130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+          vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
           RAISE;
       END;
 
@@ -5133,12 +5154,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Posicionar o arquivo no inicio do arquivo XML
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
 
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<SISARQ';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -5165,13 +5186,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_NomCreddr            := NULL;
         vr_iderro               := NULL;
 
-        -- Posiciona na TAG de in√≠cio do bloco
+        -- Posiciona na TAG de inÌcio do bloco
         BEGIN
-          w_idloop := 0; -- controle de execu√ß√£o do loop
+          w_idloop := 0; -- controle de execuÁ„o do loop
           w_indice := w_indice + 1;
           w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC032_LiquidTranscCarts','S');
           IF w_dscampo IS NULL THEN
-            vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+            vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
             vr_idcampo := '<Grupo_ASLC032_LiquidTranscCarts';
             pc_gera_critica(pr_nomearq => vr_nomarq
                            ,pr_idcampo => vr_idcampo
@@ -5185,7 +5206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           END IF;
         END;
 
-        -- Controla a execu√ß√£o do loop
+        -- Controla a execuÁ„o do loop
         IF w_idloop = 1 THEN
           w_idloop := 0;
           EXIT;
@@ -5193,7 +5214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartPrincipal := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartPrincipal','S');
         IF vr_IdentdPartPrincipal IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartPrincipal';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5208,7 +5229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5218,7 +5239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJBaseCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJBaseCreddr','S');
         IF vr_CNPJBaseCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJBaseCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5228,7 +5249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CNPJCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJCreddr','S');
         IF vr_CNPJCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CNPJCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5238,7 +5259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFDevdr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFDevdr','S');
         IF vr_ISPBIFDevdr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFDevdr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5248,7 +5269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_ISPBIFCredr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFCredr','S');
         IF vr_ISPBIFCredr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'ISPBIFCredr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5258,7 +5279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_AgCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCreddr','S');
         IF vr_AgCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'AgCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5268,7 +5289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_CtCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCreddr','S');
         IF vr_CtCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'CtCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5278,7 +5299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NomCreddr := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomCreddr','S');
         IF vr_NomCreddr IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NomCreddr';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -5320,11 +5341,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           -- Posiciona na TAG de final do bloco
           BEGIN
-            w_idloop := 0; -- controle de execu√ß√£o do loop
+            w_idloop := 0; -- controle de execuÁ„o do loop
             w_indice := w_indice + 1;
             w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC032_Centrlz','S');
             IF w_dscampo IS NULL THEN
-              vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+              vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
               vr_idcampo := 'Grupo_ASLC032_Centrlz';
               pc_gera_critica(pr_nomearq => vr_nomarq
                              ,pr_idcampo => vr_idcampo
@@ -5338,7 +5359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             END IF;
           END;
 
-          -- Controla a execu√ß√£o do loop
+          -- Controla a execuÁ„o do loop
           IF w_idloop = 1 THEN
             w_idloop := 0;
             EXIT;
@@ -5346,7 +5367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpPessoaCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaCentrlz','S');
           IF vr_TpPessoaCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpPessoaCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5356,7 +5377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CNPJ_CPFCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFCentrlz','S');
           IF vr_CNPJ_CPFCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CNPJ_CPFCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5371,7 +5392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CodCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodCentrlz','S');
           IF vr_CodCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5381,7 +5402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_TpCt := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpCt','S');
           IF vr_TpCt IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'TpCt';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5391,7 +5412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_AgCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'AgCentrlz','S');
           IF vr_AgCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'AgCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5401,7 +5422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_CtCentrlz := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CtCentrlz','S');
           IF vr_CtCentrlz IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CtCentrlz';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -5409,12 +5430,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              vr_iderro := 1;
           END IF;
 
-          -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+          -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
           IF NVL(vr_iderro,0) = 1 THEN
              pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                         ,pr_dscritic  => vr_dscritic);
              IF vr_dscritic IS NOT NULL THEN
-                -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                 NULL;
              END IF;
           END IF;
@@ -5457,13 +5478,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             vr_numctrlcipaceito         := null;
             vr_iderro                   := 0;
 
-            -- Posiciona na TAG de in√≠cio do bloco
+            -- Posiciona na TAG de inÌcio do bloco
             BEGIN
-              w_idloop := 0; -- controle de execu√ß√£o do loop
+              w_idloop := 0; -- controle de execuÁ„o do loop
               w_indice := w_indice + 1;
               w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC032_PontoVenda','S');
               IF w_dscampo IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+                vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                 vr_idcampo := 'Grupo_ASLC032_PontoVenda';
                 pc_gera_critica(pr_nomearq => vr_nomarq
                                ,pr_idcampo => vr_idcampo
@@ -5476,7 +5497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                 END IF;
               END IF;
             END;
-            -- Controla a execu√ß√£o do loop
+            -- Controla a execuÁ„o do loop
             IF w_idloop = 1 THEN
               w_idloop := 0;
               EXIT;
@@ -5484,7 +5505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
             IF vr_NULiquid IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'NULiquid';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5499,7 +5520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_ISPBIFLiquidPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'ISPBIFLiquidPontoVenda','S');
             IF vr_ISPBIFLiquidPontoVenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'ISPBIFLiquidPontoVenda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5509,7 +5530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_CodPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodPontoVenda','S');
             IF vr_CodPontoVenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodPontoVenda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5519,7 +5540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_NomePontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NomePontoVenda','S');
             IF vr_NomePontoVenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'NomePontoVenda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5529,7 +5550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_TpPessoaPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPessoaPontoVenda','S');
             IF vr_TpPessoaPontoVenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'TpPessoaPontoVenda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5539,7 +5560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_CNPJ_CPFPontoVenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CNPJ_CPFPontoVenda','S');
             IF vr_CNPJ_CPFPontoVenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CNPJ_CPFPontoVenda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5549,7 +5570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_CodInstitdrArrajPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodInstitdrArrajPgto','S');
             IF vr_CodInstitdrArrajPgto IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodInstitdrArrajPgto';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5559,7 +5580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_TpProdLiquidDed := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpProdLiquidCarts','S');
             IF vr_TpProdLiquidDed IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'TpProdLiquidCarts';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5569,7 +5590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_IndrFormaTransf := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IndrFormaTransf','S');
             IF vr_IndrFormaTransf IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'IndrFormaTransf';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5577,7 +5598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_iderro := 1;
           /*ELSE
                 IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo *\  THEN
-                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n√£o √© aceito no processo de importa√ß√£o';
+                   vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' n„o È aceito no processo de importaÁ„o';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5588,7 +5609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
             IF vr_CodMoeda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodMoeda';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5598,7 +5619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_DtPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtPgto','S');
             IF vr_DtPgto IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'DtPgto';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5608,7 +5629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_VlrPgto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'VlrPgto','S');
             IF vr_VlrPgto IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'VlrPgto';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5618,7 +5639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
             vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
             IF vr_DtHrManut IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'DtHrManut';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -5626,12 +5647,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_iderro := 1;
             END IF;
 
-            -- Verifica se algum campo tem problema e atualiza a tabela m√£e com situacao = 2 (Erro)
+            -- Verifica se algum campo tem problema e atualiza a tabela m„e com situacao = 2 (Erro)
             IF NVL(vr_iderro,0) = 1 THEN
                pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
                                           ,pr_dscritic  => vr_dscritic);
                IF vr_dscritic IS NOT NULL THEN
-                  -- @@ Verificar que a√ß√£o tomar neste caso, em erro n√£o tratado no sistema
+                  -- @@ Verificar que aÁ„o tomar neste caso, em erro n„o tratado no sistema
                   NULL;
                END IF;
             END IF;
@@ -5670,11 +5691,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           -- Posiciona na TAG de final do bloco
           BEGIN
-            w_idloop := 0; -- controle de execu√ß√£o do loop
+            w_idloop := 0; -- controle de execuÁ„o do loop
             w_indice := w_indice + 1;
             w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC032_Centrlz','S');
             IF w_dscampo IS NULL THEN
-              vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+              vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
               vr_idcampo := '/Grupo_ASLC032_Centrlz';
               pc_gera_critica(pr_nomearq => vr_nomarq
                              ,pr_idcampo => vr_idcampo
@@ -5695,11 +5716,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         -- Posiciona na TAG de final do bloco
         BEGIN
-          w_idloop := 0; -- controle de execu√ß√£o do loop
+          w_idloop := 0; -- controle de execuÁ„o do loop
           w_indice := w_indice + 1;
           w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/Grupo_ASLC032_LiquidTranscCarts','S');
           IF w_dscampo IS NULL THEN
-            vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+            vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
             vr_idcampo := '/Grupo_ASLC032_LiquidTranscCarts';
             pc_gera_critica(pr_nomearq => vr_nomarq
                            ,pr_idcampo => vr_idcampo
@@ -5720,11 +5741,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Posiciona na TAG de final do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'/SISARQ','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '/SISARQ';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -5818,7 +5839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Monta documento XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?>');
@@ -5884,10 +5905,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,pr_dscritic => vr_dscritic);
       END;
 
-      -- gera o arquivo no diret√≥rio padr√£o
-      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst√¢ncia do CLOB Type
-                                   ,pr_caminho   => vr_caminho --> Diret√≥rio para sa√≠da
-                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de sa√≠da
+      -- gera o arquivo no diretÛrio padr„o
+      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst‚ncia do CLOB Type
+                                   ,pr_caminho   => vr_caminho --> DiretÛrio para saÌda
+                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de saÌda
                                    ,pr_des_erro  => vr_dscritic );
 
       -- Atualiza arquivo origem com o nome do arquivo gerado.
@@ -5951,9 +5972,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     vr_nomarqorigem           VARCHAR2(1000);
     vr_erro                   VARCHAR2(100);
-    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> Defini√ß√£o do documento DOM (XML)
+    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> DefiniÁ„o do documento DOM (XML)
 
-    -- V√°ri√°veis controle de aceitos / rejeitados
+    -- V·ri·veis controle de aceitos / rejeitados
     vr_fim_aceito             NUMBER(01) := 0;
     vr_fim_rejeitado          NUMBER(01) := 0;
 
@@ -5967,7 +5988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     w_indice                   NUMBER;
     vr_exc_saida               EXCEPTION;
 
-    -- Busca o nome do arquivo de origem para atualiza√ß√£o do RET
+    -- Busca o nome do arquivo de origem para atualizaÁ„o do RET
     CURSOR c1 (pr_nomarq IN VARCHAR2) IS
       SELECT tla.nmarquivo_origem
         FROM tbdomic_liqtrans_arquivo  tla
@@ -6001,7 +6022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       w_indice     := 1;                       -- Posiciona na primeira linha do arquivo XML
 
       -- Verifica se existe dados na consulta
@@ -6012,7 +6033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6020,7 +6041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -6029,7 +6050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlEmis := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlEmis','S');
       IF vr_NumCtrlEmis IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlEmis';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6044,7 +6065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_NumCtrlDestOr := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NumCtrlDestOr','S');
       IF vr_NumCtrlDestOr IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NumCtrlDestOr';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6054,7 +6075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBEmissor := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBEmissor','S');
       IF vr_ISPBEmissor IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBEmissor';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6064,7 +6085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_ISPBDestinatario := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'ISPBDestinatario','S');
       IF vr_ISPBDestinatario IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'ISPBDestinatario';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6074,7 +6095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtHrArq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtHrArq','S');
       IF vr_DtHrArq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtHrArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6084,7 +6105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_DtRef := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'DtRef','S');
       IF vr_DtRef IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'DtRef';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6094,7 +6115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro processo TAB. Arquivo Liquida√ß√£o Transa√ß√µes de Cr√©dito-'||vr_contador||': '||SQLERRM;
+        vr_dscritic := 'Erro processo TAB. Arquivo LiquidaÁ„o TransaÁıes de CrÈdito-'||vr_contador||': '||SQLERRM;
         RAISE;
     END;
 
@@ -6120,12 +6141,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- Posicionar o arquivo no inicio do arquivo XML
     BEGIN
-      w_idloop := 0; -- controle de execu√ß√£o do loop
+      w_idloop := 0; -- controle de execuÁ„o do loop
 
       w_indice := w_indice + 1;
       w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<SISARQ','S');
       IF w_dscampo IS NULL THEN
-        vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+        vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
         vr_idcampo := '<SISARQ';
         pc_gera_critica(pr_nomearq => vr_nomarq
                        ,pr_idcampo => vr_idcampo
@@ -6142,14 +6163,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     LOOP
       vr_fim_rejeitado := 0;
 
-      -- CART√ïES ACEITOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES ACEITOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC033RET_LiquidTranscCartsActo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC033RET_LiquidTranscCartsActo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -6164,10 +6185,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF vr_fim_aceito = 0 THEN
-         --Busca os campos dos cart√µes aceitos
+         --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtd := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtd IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6176,7 +6197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlifacto := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIFActo','S');
         IF vr_numctrlifacto IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIFActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6185,7 +6206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_numctrlcipaceito := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlCIPActo','S');
         IF vr_numctrlcipaceito IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlCIPActo';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6194,7 +6215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NULiquid := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
         IF vr_NULiquid IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NULiquid';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6203,7 +6224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_DtHrManut := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'DtHrManut','S');
         IF vr_DtHrManut IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'DtHrManut';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6225,14 +6246,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END IF;
       END IF;
 
-      -- CART√ïES REJEITADOS
-      -- Posiciona na TAG de in√≠cio do bloco
+      -- CART’ES REJEITADOS
+      -- Posiciona na TAG de inÌcio do bloco
       BEGIN
-        w_idloop := 0; -- controle de execu√ß√£o do loop
+        w_idloop := 0; -- controle de execuÁ„o do loop
         w_indice := w_indice + 1;
         w_dscampo := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'<Grupo_ASLC033RET_LiquidTranscCartsRecsdo','S');
         IF w_dscampo IS NULL THEN
-          vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+          vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
           vr_idcampo := '<Grupo_ASLC033RET_LiquidTranscCartsRecsdo';
           pc_gera_critica(pr_nomearq => vr_nomarq
                          ,pr_idcampo => vr_idcampo
@@ -6247,11 +6268,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
       IF nvl(vr_fim_rejeitado,0) = 0 THEN
-         --Busca os campos dos cart√µes aceitos
-        --Busca os campos dos cart√µes aceitos
+         --Busca os campos dos cartıes aceitos
+        --Busca os campos dos cartıes aceitos
         vr_IdentdPartAdmtdRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'IdentdPartAdmtd','S');
         IF vr_IdentdPartAdmtdRec IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'IdentdPartAdmtd';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6260,7 +6281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         vr_NumCtrlIF := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NumCtrlIF','S');
         IF vr_NumCtrlIF IS NULL THEN
-           vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+           vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
            vr_idcampo := 'NumCtrlIF';
            pc_gera_critica(pr_nomearq => vr_nomarq
                           ,pr_idcampo => vr_idcampo
@@ -6275,7 +6296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- BUscar o erro que ocorreu no NULiquid
           vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid CodErro','S','S');
           IF vr_erro IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid CodErro';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -6285,7 +6306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar NULiquid sem erro
           vr_NULiquidRec := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'NULiquid','S');
           IF vr_NULiquidRec IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'NULiquid';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -6299,7 +6320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           IF vr_erro IS NULL then
             vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc CodErro','S','S');
             IF vr_erro IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+               vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
                vr_idcampo := 'CodOcorc CodErro';
                pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
@@ -6310,7 +6331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Buscar CodOcorc sem erro
           vr_codocorc := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodOcorc','S');
           IF vr_codocorc IS NULL THEN
-             vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+             vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
              vr_idcampo := 'CodOcorc';
              pc_gera_critica(pr_nomearq => vr_nomarq
                             ,pr_idcampo => vr_idcampo
@@ -6369,13 +6390,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         -- monta o e-mail de envio das divergencias (rejeitados).
         FOR r2 IN c2 (vr_nomarq) LOOP
           IF vr_mensagem IS NULL THEN
-             vr_mensagem := 'Abaixo a lista de registros com diverg√™ncia ap√≥s a execu√ß√£o do arquivo '||vr_nomarq||
+             vr_mensagem := 'Abaixo a lista de registros com divergÍncia apÛs a execuÁ„o do arquivo '||vr_nomarq||
                             ':<br /><br />';
           END IF;
 
           vr_mensagem := vr_mensagem ||'<br />'||
-                     'Liquida√ß√£o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
-                     'Ocorr√™ncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
+                     'LiquidaÁ„o - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
+                     'OcorrÍncia - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
                      'Erro - '||lpad(r2.dsocorrencia_retorno,11,' ');
           IF length(vr_mensagem) > 3900 THEN
              pc_envia_email(pr_cdcooper   => 1
@@ -6420,7 +6441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE nrliquidacao = pr_nuliquid;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_nuliquid||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_nuliquid||'. '||SQLERRM;
   END processa_registro_33RET_aceito ;
 
   PROCEDURE processa_reg_33RET_rejeitado (pr_IdentdPartPrincipalRec IN VARCHAR2
@@ -6439,7 +6460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE nrliquidacao = pr_NULiquidRec;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr Liquida√ß√£o = '||pr_NULiquidRec||'. '||SQLERRM;
+        pr_dscritic := 'ERRo ao atualizar PDV Aceito. Nr LiquidaÁ„o = '||pr_NULiquidRec||'. '||SQLERRM;
 
   END processa_reg_33RET_rejeitado ;
 
@@ -6483,7 +6504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
-      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabe√ßalho do arquivo XML
+      w_indice_cab := pr_table_of.count() - 1; -- Posiciona na TAG de cabeÁalho do arquivo XML
       vr_iderro    := 0;
 
       -- Verifica se existe dados na consulta
@@ -6494,7 +6515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       --Busca os campos do detalhe da consulta
       vr_nomarq := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'NomArq','S','ERR');
       IF vr_nomarq IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'NomArq';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
@@ -6502,7 +6523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_iderro := 1;
       END IF;
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -6511,14 +6532,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'CodErro','S');
       IF vr_erro IS NULL THEN
-         vr_dscritic:= vr_nomarq||' - Campo n√£o encontrado no XML';
+         vr_dscritic:= vr_nomarq||' - Campo n„o encontrado no XML';
          vr_idcampo := 'CodErro';
          pc_gera_critica(pr_nomearq => vr_nomarq
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
       ELSE
-         --Busca descri√ß√£o do erro na tabela de motivos de erro
+         --Busca descriÁ„o do erro na tabela de motivos de erro
          OPEN cr_moterro(vr_erro);
          FETCH cr_moterro INTO rw_moterro;
          IF cr_moterro%NOTFOUND THEN
@@ -6580,7 +6601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       BEGIN
         vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                 ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET33');
-        vr_assunto  := 'Domic√≠lio Banc√°rio - arquivo '||vr_nomarq||' com erro';
+        vr_assunto  := 'DomicÌlio Banc·rio - arquivo '||vr_nomarq||' com erro';
         vr_mensagem := 'Erro no processamento do arquivo '||vr_nomarq||
                        ':<br /><br />'||
                        vr_erro;
@@ -6614,7 +6635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
      WHERE idlancto = pr_idlancto;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRO ao Atualizar a situa√ß√£o para 2 no lancto - '||pr_idlancto||'. |'||SQLERRM;
+        pr_dscritic := 'ERRO ao Atualizar a situaÁ„o para 2 no lancto - '||pr_idlancto||'. |'||SQLERRM;
         RETURN;
 
   END;
@@ -6629,7 +6650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          SET a.nmarquivo_gerado = pr_nomearqatualizar
             ,a.dharquivo_gerado = SYSDATE
        WHERE a.idarquivo = pr_nomearqorigem;
-      --Elimina c√≥digo e descri√ß√£o de ocorr√™ncia de retorno para o caso de reprocessamento
+      --Elimina cÛdigo e descriÁ„o de ocorrÍncia de retorno para o caso de reprocessamento
       UPDATE tbdomic_liqtrans_pdv pdv
       SET pdv.cdocorrencia_retorno = null
          ,pdv.dsocorrencia_retorno = null
@@ -6658,8 +6679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,pr_dspara      IN VARCHAR2
                           ,pr_dsassunto   IN VARCHAR2
                           ,pr_dstexto     IN VARCHAR2
-                          ,pr_dscritic OUT VARCHAR2                       --> Descri√ß√£o da cr√≠tica
-                          ) IS                   --> Descri√ß√£o do erro
+                          ,pr_dscritic OUT VARCHAR2                       --> DescriÁ„o da crÌtica
+                          ) IS                   --> DescriÁ„o do erro
 
     vr_emaildst    VARCHAR2(200);    --> Endereco do e-mail de destino
     vr_dscritic    VARCHAR2(32000);
@@ -6702,9 +6723,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     --Se for banco de desenvolvimento vai usar a data passada na pr_dtprocesso
     --IF vr_database_name != 'AYLLOSD' THEN
-    --Alterado para utilizar a data do par√¢metro, se for diferente de NULL
+    --Alterado para utilizar a data do par‚metro, se for diferente de NULL
     IF pr_dtprocesso IS NULL THEN
-      IF rw_crapdat.inproces > 1 THEN  -- Est√° executando cadeia
+      IF rw_crapdat.inproces > 1 THEN  -- Est· executando cadeia
         vr_dtprocesso := rw_crapdat.dtmvtopr;
       ELSE
         vr_dtprocesso := rw_crapdat.dtmvtolt;
@@ -6756,7 +6777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     FETCH cr_crapprm_cred INTO rw_crapprm_cred;
     CLOSE cr_crapprm_cred;
 
-    IF rw_arq.tparquivo = 2 THEN  --arquivos de d√©bito
+    IF rw_arq.tparquivo = 2 THEN  --arquivos de dÈbito
        IF TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||substr(rw_arq.dharquivo_origem,12,8),'ddmmyyyyhh24:mi:ss')
           BETWEEN TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||rw_crapprm_deb.hr_inicio,'ddmmyyyyhh24:mi')
           AND TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||rw_crapprm_deb.hr_fim,'ddmmyyyyhh24:mi') THEN
@@ -6764,9 +6785,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        ELSE
           vr_ciclo := 2;
        END IF;
-    ELSIF rw_arq.tparquivo = 1 AND pr_nmarquivo like '%PGT' THEN  --arquivos de cr√©dito
+    ELSIF rw_arq.tparquivo = 1 AND pr_nmarquivo like '%PGT' THEN  --arquivos de crÈdito
        IF TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||substr(rw_arq.dharquivo_origem,12,8),'ddmmyyyyhh24:mi:ss')
---Usando o mesmo par√¢metro porque ele identifica o hor√°rio de envio de liquida√ß√£o financeira
+--Usando o mesmo par‚metro porque ele identifica o hor·rio de envio de liquidaÁ„o financeira
 --          BETWEEN TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||rw_crapprm_cred.hr_inicio,'ddmmyyyyhh24:mi')
 --          AND TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||rw_crapprm_cred.hr_fim,'ddmmyyyyhh24:mi') THEN
           BETWEEN TO_DATE(TO_CHAR(sysdate,'ddmmyyyy')||rw_crapprm_deb.hr_inicio,'ddmmyyyyhh24:mi')
@@ -6781,7 +6802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     RETURN(vr_ciclo);
   END;
 
-  -- Rotina para buscar os lan√ßamentos que foram jogados na CRAPLAU e ent√£o
+  -- Rotina para buscar os lanÁamentos que foram jogados na CRAPLAU e ent„o
   -- dar a baixa , jogando para a CRAPLCM e no final gerar um arquivo
   -- de retorno confirmando o pagamento da liquidacao
  PROCEDURE pc_efetiva_agendamentos(pr_dtprocesso IN DATE
@@ -6801,7 +6822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          ORDER BY cop.cdcooper;
 
       -- cursor para buscar os pagamentos agendados para gerar
-      -- um arquivo fict√≠cio ASLC22 a fim de processar as baixas
+      -- um arquivo fictÌcio ASLC22 a fim de processar as baixas
       -- dos agendamentos
       CURSOR cr_craplau(pr_cdcooper   crapcop.cdcooper%TYPE
                        ,pr_dtprocesso crapdat.dtmvtolt%TYPE) IS
@@ -6856,15 +6877,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               ,tbdomic_liqtrans_arquivo arq
          WHERE lau.cdcooper = pr_cdcooper
            AND trunc(lau.dtmvtopg) = trunc(nvl(pr_dtprocesso,sysdate))
-           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445,2546) --cr√©dito
+           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445,2546) --crÈdito
            AND lau.dtdebito IS NULL
-           AND lct.insituacao in (0,2)          --Altera√ß√£o necess√°ria para confirmar d√©bito apenas quando retorna arquivo com confirma√ß√£o
+           AND lct.insituacao in (0,2)          --AlteraÁ„o necess·ria para confirmar dÈbito apenas quando retorna arquivo com confirmaÁ„o
            AND pdv.nrliquidacao = substr(lau.cdseqtel,1,21)
            AND ctz.idcentraliza = pdv.idcentraliza
            AND lct.idlancto = ctz.idlancto
            AND arq.idarquivo = lct.idarquivo
            AND substr(arq.nmarquivo_origem,length(arq.nmarquivo_origem)-2) <> 'PGT'
-           AND nvl(pdv.dserro,'X') <> 'Agendamento' --Altera√ß√£o implementada para evitar gerar arquivo PGT em duplicidade
+           AND nvl(pdv.dserro,'X') <> 'Agendamento' --AlteraÁ„o implementada para evitar gerar arquivo PGT em duplicidade
            ORDER BY arq.idarquivo,lct.idlancto,ctz.idcentraliza,pdv.idpdv;
 
       CURSOR cr_arquivo(pr_nmarquivo   tbdomic_liqtrans_arquivo.nmarquivo_origem%TYPE) IS
@@ -6872,7 +6893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           FROM tbdomic_liqtrans_arquivo
          WHERE nmarquivo_origem = pr_nmarquivo;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -6908,9 +6929,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       --Se for banco de desenvolvimento vai usar a data passada na pr_dtprocesso
       --IF vr_database_name != 'AYLLOSD' THEN
-      --Alterado para utilizar a data do par√¢metro, se for diferente de NULL
+      --Alterado para utilizar a data do par‚metro, se for diferente de NULL
       IF pr_dtprocesso IS NULL THEN
-        IF rw_crapdat.inproces > 1 THEN  -- Est√° executando cadeia
+        IF rw_crapdat.inproces > 1 THEN  -- Est· executando cadeia
           vr_dtprocesso := rw_crapdat.dtmvtopr;
         ELSE
           vr_dtprocesso := rw_crapdat.dtmvtolt;
@@ -6926,8 +6947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       FOR rw_craplau IN cr_craplau(rw_crapcop.cdcooper,vr_dtprocesso) LOOP
         -- na quebra de arquivo mudando o nome para ao inves de ter o
         -- sequencial estar com PGTO (ASLC022_05463212_20170808_PGTO)
-        -- o IF √© o mesmo que est√° lendo no cursor
-        -- a data √© a data do processo (vr_dtprocesso) s√≥ que no formato YYYYMMDD
+        -- o IF È o mesmo que est· lendo no cursor
+        -- a data È a data do processo (vr_dtprocesso) sÛ que no formato YYYYMMDD
         -- insert tbdomic_liqtrans_arquivo
         -- na quebra de lancamento
         -- insert tbdomic_liqtrans_lancto
@@ -6935,7 +6956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         -- insert tbdomic_liqtrans_centraliza
         -- na quebra de ponto de venda
         -- insert tbdomic_liqtrans_pdv
-        -- gera√ß√£o da tabela tbdomic_liqtrans_arquivo
+        -- geraÁ„o da tabela tbdomic_liqtrans_arquivo
           IF vr_idarquivo_ant != rw_craplau.idarquivo THEN
              vr_idarquivo_ant := rw_craplau.idarquivo;
              vr_seq_arquivo   := 1;
@@ -6987,7 +7008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                            ,NULL ) RETURNING idarquivo INTO vr_idarquivo_novo;
              EXCEPTION
                 -- Pode tentar gerar o mesmo arquivo PGT, devido ao loop da cooperativa
-                -- Nesse caso simplesmente ignorar o erro de duplica√ß√£o de registro
+                -- Nesse caso simplesmente ignorar o erro de duplicaÁ„o de registro
                 WHEN DUP_VAL_ON_INDEX THEN
                    null;
                 WHEN OTHERS THEN
@@ -6996,7 +7017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              END;
           END IF;
 
-          -- gera√ß√£o da tabela tbdomic_liqtrans_lancto
+          -- geraÁ„o da tabela tbdomic_liqtrans_lancto
           IF vr_idlancto_ant != rw_craplau.idlancto THEN
              vr_idlancto_ant := rw_craplau.idlancto;
              BEGIN
@@ -7043,7 +7064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              END;
           END IF;
 
-          -- gera√ß√£o da tabela tbdomic_liqtrans_centraliza
+          -- geraÁ„o da tabela tbdomic_liqtrans_centraliza
           IF vr_idcentraliza_ant != rw_craplau.idcentraliza THEN
              vr_idcentraliza_ant := rw_craplau.idcentraliza;
              BEGIN
@@ -7074,7 +7095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              END;
           END IF;
 
-          -- gera√ß√£o da tabela tbdomic_liqtrans_centraliza
+          -- geraÁ„o da tabela tbdomic_liqtrans_centraliza
           IF vr_idpdv_ant != rw_craplau.idpdv THEN
              vr_idpdv_ant := rw_craplau.idpdv;
              BEGIN
@@ -7123,7 +7144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,NULL
                           ,NULL)  RETURNING idpdv INTO vr_idpdv_novo;
 
-               --Altera√ß√£o implementada para evitar gerar arquivo PGT em duplicidade
+               --AlteraÁ„o implementada para evitar gerar arquivo PGT em duplicidade
                UPDATE tbdomic_liqtrans_pdv
                   SET dserro = 'Agendamento'
                 WHERE idpdv  = rw_craplau.idpdv;
@@ -7163,7 +7184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            OR msg.dshistorico IS NULL)
           AND msg.insituacao = 0
           AND TRUNC(msg.dtmovimento) = trunc(pr_dtreferencia)
-          AND msg.cdmsg = 'LTR0005R2'  --antecipa√ß√£o
+          AND msg.cdmsg = 'LTR0005R2'  --antecipaÁ„o
         ;
 
     CURSOR cr_liq_antecip_sum IS
@@ -7173,7 +7194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            OR msg.dshistorico IS NULL)
           AND msg.insituacao = 0
           AND TRUNC(msg.dtmovimento) = trunc(pr_dtreferencia)
-          AND msg.cdmsg = 'LTR0005R2'  --antecipa√ß√£o
+          AND msg.cdmsg = 'LTR0005R2'  --antecipaÁ„o
         ;
 
     CURSOR cr_liq_antecip_sum_update IS
@@ -7183,7 +7204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            OR msg.dshistorico IS NULL)
           AND msg.insituacao = 0
           AND TRUNC(msg.dtmovimento) = trunc(pr_dtreferencia)
-          AND msg.cdmsg = 'LTR0005R2'  --antecipa√ß√£o
+          AND msg.cdmsg = 'LTR0005R2'  --antecipaÁ„o
         ;
 
     CURSOR cr_liq_transf5 IS
@@ -7193,7 +7214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND TRUNC(msg.dtmovimento) = pr_dtreferencia
           AND (pr_tpformatransf = 5 AND msg.cdmsg = 'STR0006R2')
-          AND pr_tparquivo IN (1,2,3); --cr√©dito e d√©bito
+          AND pr_tparquivo IN (1,2,3); --crÈdito e dÈbito
 
     CURSOR cr_liq_slc_sum IS
       SELECT count(*)
@@ -7202,7 +7223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND TRUNC(msg.dtliquidacao) = TRUNC(pr_dtreferencia)
           AND ((msg.nrseq_ciclo_liquidacao = pr_cicloliquidacao
-               AND pr_tparquivo = 2) /*Valida ciclo apenas para d√©bito*/
+               AND pr_tparquivo = 2) /*Valida ciclo apenas para dÈbito*/
                or pr_tparquivo=1)
           AND (pr_tpformatransf = 3 AND msg.cdmsg = 'SLC0001')
           AND MSG.CDPRODUTO=(SELECT MAX(TAP.SIGLAARRANJOPAGAMENTO)
@@ -7217,7 +7238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND TRUNC(msg.dtliquidacao) = TRUNC(pr_dtreferencia)
           AND ((msg.nrseq_ciclo_liquidacao = pr_cicloliquidacao
-               AND pr_tparquivo = 2) /*Valida ciclo apenas para d√©bito*/
+               AND pr_tparquivo = 2) /*Valida ciclo apenas para dÈbito*/
                or pr_tparquivo=1)
           AND (pr_tpformatransf = 3 AND msg.cdmsg = 'SLC0001')
           AND MSG.CDPRODUTO=(SELECT MAX(TAP.SIGLAARRANJOPAGAMENTO)
@@ -7231,7 +7252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND TRUNC(msg.dtliquidacao) = TRUNC(pr_dtreferencia)
           AND ((msg.nrseq_ciclo_liquidacao = pr_cicloliquidacao
-               AND pr_tparquivo = 2) /*Valida ciclo apenas para d√©bito*/
+               AND pr_tparquivo = 2) /*Valida ciclo apenas para dÈbito*/
                or pr_tparquivo=1)
           AND (pr_tpformatransf = 3 AND msg.cdmsg = 'SLC0001')
           AND MSG.CDPRODUTO=(SELECT MAX(TAP.SIGLAARRANJOPAGAMENTO)
@@ -7246,7 +7267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND TRUNC(msg.dtliquidacao) = TRUNC(pr_dtreferencia)
           AND ((msg.nrseq_ciclo_liquidacao = pr_cicloliquidacao
-               AND pr_tparquivo = 2) /*Valida ciclo apenas para d√©bito*/
+               AND pr_tparquivo = 2) /*Valida ciclo apenas para dÈbito*/
                or pr_tparquivo=1)
           AND (pr_tpformatransf = 3 AND msg.cdmsg = 'SLC0001')
           AND MSG.CDPRODUTO=(SELECT MAX(TAP.SIGLAARRANJOPAGAMENTO)
@@ -7257,7 +7278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
      vr_TotLancamento     number(15,2);
      vr_existe            number;
   BEGIN
-    -- Verifica se existe informa√ß√£o de liquida√ß√£o
+    -- Verifica se existe informaÁ„o de liquidaÁ„o
     --vr_sum_vl_pagamento := 0;
 
     IF pr_tpformatransf = 5 THEN
@@ -7275,7 +7296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           return('N');
        ELSIF vr_TotLancamento>=pr_vlrlancto THEN
-           -- tratar devolu√ß√£o cielo
+           -- tratar devoluÁ„o cielo
            btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                               ,pr_ind_tipo_log => 1 -- Aviso
                               ,pr_des_log      => 'retorno valida tipo 5 valor Maior vr_TotLancamento='||vr_TotLancamento||' pr_vlrlancto='||pr_vlrlancto
@@ -7285,7 +7306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        CLOSE cr_liq_transf5;
 */
    ELSE
-       IF pr_tparquivo = 3 THEN  --transfer√™ncia
+       IF pr_tparquivo = 3 THEN  --transferÍncia
 
           if trunc(pr_dtreferencia)=trunc(sysdate) then
               btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
@@ -7332,7 +7353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                END IF;
              end loop;
           END IF;
-      ELSE  --cr√©dito e d√©bito
+      ELSE  --crÈdito e dÈbito
           OPEN cr_liq_slc_sum;
           FETCH cr_liq_slc_sum INTO vr_existe;
           CLOSE cr_liq_slc_sum;
@@ -7377,10 +7398,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   END fn_valida_liquidacao;
 
   -- Rotina para processar os lancamentos pendentes
-  /* Nessa rotina ser√£o verificados apenas os lan√ßamentos de d√©bito e cr√©dito
-     Foi feita a divis√£o entre 1o e 2o ciclo porque a valida√ß√£o da liquida√ß√£o tem que ser feita por ciclo de pagamento
-     A valida√ß√£o ser√° feita apenas ap√≥s o in√≠cio de cada ciclo (por isso tem a valida√ß√£o do hor√°rio) porque precisa aguardar o fechamento da grade de liquida√ß√£o
-     para ter certeza se o valor financeiro veio ou n√£o
+  /* Nessa rotina ser„o verificados apenas os lanÁamentos de dÈbito e crÈdito
+     Foi feita a divis„o entre 1o e 2o ciclo porque a validaÁ„o da liquidaÁ„o tem que ser feita por ciclo de pagamento
+     A validaÁ„o ser· feita apenas apÛs o inÌcio de cada ciclo (por isso tem a validaÁ„o do hor·rio) porque precisa aguardar o fechamento da grade de liquidaÁ„o
+     para ter certeza se o valor financeiro veio ou n„o
   */
   PROCEDURE pc_valida_reg_pendentes(pr_idarquivo IN NUMBER
                                    ,pr_nmarquivo_origem IN VARCHAR2
@@ -7437,7 +7458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     rw_arranjos                       cr_arranjos%ROWTYPE;
     rw_arranjos_credenciador          cr_arranjos_credenciador%ROWTYPE;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -7445,7 +7466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_exc_saida     EXCEPTION;
     vr_erro          EXCEPTION;
   BEGIN
-    /* 23/11/2017 - Se for arquivo tipo 2 ou 3 verifica se tem cr√©dito SLC - LTR */
+    /* 23/11/2017 - Se for arquivo tipo 2 ou 3 verifica se tem crÈdito SLC - LTR */
     vr_ciclo := CCRD0006.fn_busca_ciclo_arquivo(pr_nmarquivo_origem);
 
     FOR rw_arranjos IN cr_arranjos LOOP
@@ -7464,7 +7485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                       ,pr_cdinst_arranjo_pagamento => rw_arranjos.cdinst_arranjo_pagamento
                                       ,pr_idatualiza => 'S') = 'N' THEN
         IF pr_tparquivo <> 3 and rw_arranjos.tpforma_transf<>5 THEN
-           --Se n√£o for antecipa√ß√£o e , atualiza ocorr√™ncia para 30
+           --Se n„o for antecipaÁ„o e , atualiza ocorrÍncia para 30
            --Atualiza cd_ocorrencia para 30
            FOR rw_arranjos_credenciador IN cr_arranjos_credenciador LOOP
 
@@ -7489,7 +7510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
                   UPDATE tbdomic_liqtrans_pdv pdv
                      SET pdv.cdocorrencia = '30'
-                        ,pdv.dserro = 'Lan√ßamento recusado por falta de transfer√™ncia financeira'
+                        ,pdv.dserro = 'LanÁamento recusado por falta de transferÍncia financeira'
                    WHERE pdv.tpforma_transf = rw_arranjos.tpforma_transf
                      AND pdv.cdinst_arranjo_pagamento = rw_arranjos.cdinst_arranjo_pagamento
                      AND pdv.idcentraliza IN
@@ -7511,9 +7532,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 --    COMMIT;
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -7522,7 +7543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -7539,9 +7560,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     -- Cursor sobre os registros pendentes
-    /* Nesse cursor foi colocada restri√ß√£o de hor√°rio apenas para garantir que a mudan√ßa da situa√ß√£o do lan√ßamento para 1
-       seja feita ap√≥s o inicio dos ciclos de envio dos arquivos, evitando com isso que sejam rejeitados lan√ßamentos por falta
-       de liquida√ß√£o financeira antes que as grades de envio sejam abertas
+    /* Nesse cursor foi colocada restriÁ„o de hor·rio apenas para garantir que a mudanÁa da situaÁ„o do lanÁamento para 1
+       seja feita apÛs o inicio dos ciclos de envio dos arquivos, evitando com isso que sejam rejeitados lanÁamentos por falta
+       de liquidaÁ„o financeira antes que as grades de envio sejam abertas
     */
     CURSOR cr_lancamento IS
       SELECT  arq.idarquivo
@@ -7563,7 +7584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND ctz.idlancto = lct.idlancto
           AND pdv.idcentraliza = ctz.idcentraliza
           AND lct.insituacao = 0 -- Pendente
-                                 -- No final ser√° alterado a situacao para 1-Processado
+                                 -- No final ser· alterado a situacao para 1-Processado
           AND ((sysdate >= to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_1cicl,'ddmmyyyyhh24:mi') AND arq.tparquivo = 1)
                OR
               (((to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12,6),'YYYY-MM-DDHH24:MI:SS') BETWEEN to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_rec_25_1cicl,'ddmmyyyyhh24:mi') AND to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_rec_25_1cicl,'ddmmyyyyhh24:mi')
@@ -7585,8 +7606,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               decode(arq.tparquivo,3,1,pdv.cdinst_arranjo_pagamento)
      ORDER BY arq.tparquivo,lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, to_date(arq.dtreferencia,'YYYY-MM-DD');
 
-    -- Cursor para informa√ß√µes dos lan√ßamentos
-    CURSOR cr_tabela(pr_idlancto tbdomic_liqtrans_lancto.idlancto%TYPE) IS
+    -- Cursor para informaÁıes dos lanÁamentos
+    CURSOR cr_tabela(pr_idlancto       tbdomic_liqtrans_lancto.idlancto%TYPE,
+                     pr_tpforma_transf tbdomic_liqtrans_pdv.tpforma_transf%TYPE) IS
       SELECT pdv.nrliquidacao
             ,ctz.nrcnpjcpf_centraliza
             ,ctz.tppessoa_centraliza
@@ -7598,10 +7620,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             ,pdv.tpforma_transf
         FROM tbdomic_liqtrans_centraliza ctz
             ,tbdomic_liqtrans_pdv pdv
-       WHERE ctz.idlancto = pr_idlancto
-         AND pdv.idcentraliza = ctz.idcentraliza
-         AND nvl(pdv.cdocorrencia,'00') <> '30'  -- 30 = Lancto recusado por falta de transfer√™ncia financeira
-       ORDER BY ctz.cdagencia_centraliza,ctz.nrcta_centraliza,to_date(pdv.dtpagamento,'YYYY-MM-DD');
+       WHERE ctz.idlancto               = pr_idlancto
+         AND pdv.idcentraliza           = ctz.idcentraliza
+         AND nvl(pdv.cdocorrencia,'00') <> '30'  -- 30 = Lancto recusado por falta de transferÍncia financeira
+         AND pdv.tpforma_transf         = pr_tpforma_transf 
+       ORDER BY ctz.cdagencia_centraliza,
+                ctz.nrcta_centraliza,
+                to_date(pdv.dtpagamento,'YYYY-MM-DD');
 
     -- Cursor sobre as agencias
     CURSOR cr_crapcop IS
@@ -7615,7 +7640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT nrcpfcgc,
-             inpessoa
+             decode(inpessoa,3,2,inpessoa) inpessoa
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta;
@@ -7637,7 +7662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
     vr_crapcop       typ_tab_crapcop;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -7651,8 +7676,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_nrseqdiglau   craplau.nrseqdig%TYPE;
     vr_dserro        VARCHAR2(100);         --> Variavel de erro
     vr_dserro_arq    VARCHAR2(100);         --> Variavel de erro do reg arquivo
-    vr_cdocorr       VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do pdv
-    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do reg arquivo
+    vr_cdocorr       VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do pdv
+    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do reg arquivo
     vr_inpessoa      crapass.inpessoa%TYPE; --> Indicador de tipo de pessoa
     vr_cdcooper      crapcop.cdcooper%TYPE; --> Codigo da cooperativa
     vr_qterros       PLS_INTEGER := 0;      --> Quantidade de registros com erro
@@ -7661,8 +7686,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
     vr_nrdconta      crapass.nrdconta%TYPE;
-    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
-    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
 
   BEGIN
@@ -7678,10 +7703,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     FOR rw_lancamento IN cr_lancamento LOOP
 
 
-      -- Executa procedure de valida√ß√£o para verificar se arquivos de d√©bito/cr√©dito j√° tem mensagem de liquida√ß√£o
-      -- N√£o valida arquivos de antecipa√ß√£o nesse momento, nem arquivos de agendamento de cr√©dito
-      -- Os arquivos de cr√©dito s√≥ ser√£o validados se forem PGT (liquida√ß√£o)
-      -- Os arquivos de antecipa√ß√£o n√£o s√£o validados aqui, porque nessa procedure, os arquivos que n√£o tiverem valor para liquida√ß√£o ser√£o devolvidos com ocorr√™ncia 30
+      -- Executa procedure de validaÁ„o para verificar se arquivos de dÈbito/crÈdito j· tem mensagem de liquidaÁ„o
+      -- N„o valida arquivos de antecipaÁ„o nesse momento, nem arquivos de agendamento de crÈdito
+      -- Os arquivos de crÈdito sÛ ser„o validados se forem PGT (liquidaÁ„o)
+      -- Os arquivos de antecipaÁ„o n„o s„o validados aqui, porque nessa procedure, os arquivos que n„o tiverem valor para liquidaÁ„o ser„o devolvidos com ocorrÍncia 30
       IF rw_lancamento.tparquivo = 2 --debito
       OR (rw_lancamento.tparquivo = 1 AND rw_lancamento.nmarquivo_origem LIKE '%PGT') THEN
 
@@ -7694,7 +7719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END IF;
       -- Limpa variaveis de controle de quebra para gravacao da craplcm e craplau
       -- Como trata-se de um novo tipo de arquivo precisa-se limpar pois o numero
-      -- do lote ser√° alterado.
+      -- do lote ser· alterado.
       vr_cdcooper_lcm := 0;
       vr_cdcooper_lau := 0;
 
@@ -7707,8 +7732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          vr_cdocorr_arq := '99';
       END IF;
 
-      /* 23/11/2017 - Se for arquivo tipo 2 ou 3 verifica se tem cr√©dito SLC - LTR
-      Se for tipo 1 ou 2, a valida√ß√£o j√° foi feita na procedure pc_valida_reg_pendentes */
+      /* 23/11/2017 - Se for arquivo tipo 2 ou 3 verifica se tem crÈdito SLC - LTR
+      Se for tipo 1 ou 2, a validaÁ„o j· foi feita na procedure pc_valida_reg_pendentes */
 
       IF rw_lancamento.tparquivo <> 3 OR
         (rw_lancamento.tparquivo = 3 AND
@@ -7723,14 +7748,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                       ,pr_idatualiza => 'S') = 'S') THEN
 
 
-        FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
+        FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto,
+                                   rw_lancamento.tpforma_transf) LOOP
           -- Limpa a variavel de erro
           vr_dserro  := NULL;
           vr_cdocorr := NULL;
 
           -- Efetua todas as consistencias dentro deste BEGIN
           BEGIN
-            -- se existe erro a n√≠vel de arquivo/lancamento jogar√° para todos os
+            -- se existe erro a nÌvel de arquivo/lancamento jogar· para todos os
             -- registros PDV este erro
             IF NVL(vr_cdocorr_arq,'00') <> '00' THEN
               vr_dserro  := vr_dserro_arq;
@@ -7766,7 +7792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                (rw_tabela.tpforma_transf = 5 AND rw_lancamento.nrcnpj_credenciador not in (01027058000191, /* Cielo */
                                                                                            01425787000104 /* RedeCard */
                                                                                           )) THEN
-               vr_dserro := 'Indicador de Forma de Transfer√™ncia 4 (D√©bito em conta) ou 5 (STR) n√£o tratado nesse processo';
+               vr_dserro := 'Indicador de Forma de TransferÍncia 4 (DÈbito em conta) ou 5 (STR) n„o tratado nesse processo';
                vr_cdocorr := '32';
                RAISE vr_erro;
             END IF;
@@ -7798,10 +7824,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             FETCH btch0001.cr_crapdat INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
 
-            --Alterado para utilizar a data do par√¢metro, se for diferente de NULL
+            --Alterado para utilizar a data do par‚metro, se for diferente de NULL
             --IF vr_database_name = 'AYLLOSD' THEN
             IF pr_dtprocesso IS NULL THEN
-              IF rw_crapdat.inproces > 1 THEN  -- Est√° executando cadeia
+              IF rw_crapdat.inproces > 1 THEN  -- Est· executando cadeia
                 vr_dtprocesso := rw_crapdat.dtmvtopr;
               ELSE
                 vr_dtprocesso := rw_crapdat.dtmvtolt;
@@ -7809,7 +7835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             ELSE
               vr_dtprocesso   := nvl(pr_dtprocesso,trunc(sysdate));
             END IF;
-            -- N√£o pode processar data de pagamento anterior
+            -- N„o pode processar data de pagamento anterior
 
 
             IF to_date(rw_tabela.dtpagamento) < trunc(to_date(vr_dtprocesso)) THEN
@@ -7868,8 +7894,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           IF nvl(vr_cdocorr,'00') = '00' THEN
             IF rw_tabela.dtpagamento > vr_dtprocesso THEN
-               IF rw_lancamento.tparquivo = 1 THEN    -- cr√©dito
-                  vr_cdocorr := '01'; -- agendamento de transa√ß√£o efetuado com sucesso --
+               IF rw_lancamento.tparquivo = 1 THEN    -- crÈdito
+                  vr_cdocorr := '01'; -- agendamento de transaÁ„o efetuado com sucesso --
                END IF;
             END IF;
           END IF;
@@ -7888,17 +7914,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         END LOOP;  -- loop cr_tabela
 
-        -- Efetua a atualizacao da situacao na tabela de lancamentos
-        BEGIN
-          UPDATE tbdomic_liqtrans_lancto
-             SET insituacao = 1 -- Enviado para CIP/Aguardando Aprova√ß√£o
-                ,dhprocessamento = SYSDATE
-           WHERE idlancto = rw_lancamento.idlancto;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+        IF rw_lancamento.tparquivo = 3 THEN
+        
+          -- Efetua a atualizacao da situacao na tabela de lancamentos
+          BEGIN
+
+            UPDATE tbdomic_liqtrans_lancto tllan
+               SET tllan.insituacao      = 1 -- Enviado para CIP/Aguardando AprovaÁ„o
+                  ,tllan.dhprocessamento = SYSDATE
+             WHERE tllan.idlancto = rw_lancamento.idlancto           
+               AND (SELECT COUNT(*)
+                      FROM tbdomic_liqtrans_pdv        tlpdv
+                          ,tbdomic_liqtrans_centraliza tlcen
+                     WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                       AND tlcen.idlancto = tllan.idlancto
+                       AND tlpdv.cdocorrencia IS NOT NULL -- n„o esteja mais pendente de processamento
+                    ) = (SELECT COUNT(*)
+                           FROM tbdomic_liqtrans_pdv        tlpdv
+                               ,tbdomic_liqtrans_centraliza tlcen
+                          WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                            AND tlcen.idlancto = tllan.idlancto);           
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+        ELSE
+                 
+          -- Efetua a atualizacao da situacao na tabela de lancamentos
+          BEGIN
+            UPDATE tbdomic_liqtrans_lancto
+               SET insituacao = 1 -- Enviado para CIP/Aguardando AprovaÁ„o
+                  ,dhprocessamento = SYSDATE
+             WHERE idlancto = rw_lancamento.idlancto;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+        END IF;
 
       END IF;
     END LOOP;  -- loop cr_lancamento
@@ -7918,9 +7974,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -7930,7 +7986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       ROLLBACK;
     WHEN OTHERS THEN
       raise_application_error(-20001,'pc_processa_reg_pendentes '||sqlerrm);
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -7966,8 +8022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         WHERE lct.idarquivo = arq.idarquivo
           AND ctz.idlancto = lct.idlancto
           AND pdv.idcentraliza = ctz.idcentraliza
-          -- Registros enviados para CIP/Aguardando Aprova√ß√£o
-          -- No final ser√° alterado a situacao para 2-Processado
+          -- Registros enviados para CIP/Aguardando AprovaÁ„o
+          -- No final ser· alterado a situacao para 2-Processado
           AND lct.insituacao = 1 
 /*          AND ((lct.insituacao = 1 and
                 pdv.tpforma_transf=3) or
@@ -7977,18 +8033,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                )
               )
 */
-         AND (nvl(pdv.cdocorrencia_retorno,'00') = '00'  --S√≥ vai atualizar os registros que n√£o tiveram erro no processa_reg_pendentes
+         AND (nvl(pdv.cdocorrencia_retorno,'00') = '00'  --SÛ vai atualizar os registros que n„o tiveram erro no processa_reg_pendentes
           OR (nvl(pdv.cdocorrencia_retorno,'00') = '01'
          AND arq.tparquivo = 1))
-         AND pdv.dserro IS NULL                          --S√≥ vai atualizar os registros que n√£o retornaram com erro da CIP
-         AND pdv.dsocorrencia_retorno IS NULL            --S√≥ vai atualizar os registros que n√£o retornaram com erro da CIP
+         AND pdv.dserro IS NULL                          --SÛ vai atualizar os registros que n„o retornaram com erro da CIP
+         AND pdv.dsocorrencia_retorno IS NULL            --SÛ vai atualizar os registros que n„o retornaram com erro da CIP
      GROUP BY arq.idarquivo,arq.nmarquivo_origem,
               lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, arq.tparquivo, to_date(arq.dtreferencia,'YYYY-MM-DD'), lct.dhprocessamento, lct.idlancto
               ,pdv.dtpagamento
               ,pdv.tpforma_transf
      ORDER BY arq.tparquivo,lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, to_date(arq.dtreferencia,'YYYY-MM-DD');
 
-    -- Cursor para informa√ß√µes dos lan√ßamentos
+    -- Cursor para informaÁıes dos lanÁamentos
     CURSOR cr_tabela(pr_idlancto tbdomic_liqtrans_lancto.idlancto%TYPE,pr_tpforma_transf tbdomic_liqtrans_pdv.tpforma_transf%TYPE) IS
       SELECT pdv.nrliquidacao
             ,ctz.nrcnpjcpf_centraliza
@@ -8011,12 +8067,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          AND lct.idarquivo = arq.idarquivo
          AND ctz.idlancto = lct.idlancto
          AND arq.nmarquivo_retorno IS NOT NULL
-         AND (nvl(pdv.cdocorrencia_retorno,'00') = '00'  --S√≥ vai atualizar os registros que n√£o tiveram erro no processa_reg_pendentes
+         AND (nvl(pdv.cdocorrencia_retorno,'00') = '00'  --SÛ vai atualizar os registros que n„o tiveram erro no processa_reg_pendentes
           OR (nvl(pdv.cdocorrencia_retorno,'00') = '01'
          AND arq.tparquivo = 1))
          AND pdv.tpforma_transf=pr_tpforma_transf
-         AND pdv.dserro IS NULL                          --S√≥ vai atualizar os registros que n√£o retornaram com erro da CIP
-         AND pdv.dsocorrencia_retorno IS NULL            --S√≥ vai atualizar os registros que n√£o retornaram com erro da CIP
+         AND pdv.dserro IS NULL                          --SÛ vai atualizar os registros que n„o retornaram com erro da CIP
+         AND pdv.dsocorrencia_retorno IS NULL            --SÛ vai atualizar os registros que n„o retornaram com erro da CIP
        ORDER BY ctz.cdagencia_centraliza,ctz.nrcta_centraliza,to_date(pdv.dtpagamento,'YYYY-MM-DD');
 
     -- Cursor sobre as agencias
@@ -8043,7 +8099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
     vr_crapcop       typ_tab_crapcop;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -8056,8 +8112,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_nrseqdiglau   craplau.nrseqdig%TYPE;
     vr_dserro        VARCHAR2(100);         --> Variavel de erro
     vr_dserro_arq    VARCHAR2(100);         --> Variavel de erro do reg arquivo
-    vr_cdocorr       VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do pdv
-    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do reg arquivo
+    vr_cdocorr       VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do pdv
+    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do reg arquivo
     vr_inpessoa      crapass.inpessoa%TYPE; --> Indicador de tipo de pessoa
     vr_cdcooper      crapcop.cdcooper%TYPE; --> Codigo da cooperativa
     vr_cdhistor      craphis.cdhistor%TYPE; --> Codigo do historico do lancamento
@@ -8069,12 +8125,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
     vr_nrdconta      crapass.nrdconta%TYPE;
-    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
-    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
     vr_qtproclancto  PLS_INTEGER := 0;      --> Quantidade de registros lidos do lancamento
 
-    -- Vari√°veis email
+    -- Vari·veis email
     vr_para              varchar2(300);
     vr_assunto           varchar2(300);
     vr_mensagem          varchar2(32767);
@@ -8093,7 +8149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Limpa variaveis de controle de quebra para gravacao da craplcm e craplau
       -- Como trata-se de um novo tipo de arquivo precisa-se limpar pois o numero
-      -- do lote ser√° alterado.
+      -- do lote ser· alterado.
       vr_cdcooper_lcm := 0;
       vr_cdcooper_lau := 0;
 
@@ -8134,8 +8190,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_nmarqlog => 'CONSLC');
 
                vr_para:='alexandre.borgmann@mouts.info;'; --vendascomcartoes@cecred.coop.br;spb@cecred.coop.br';
-               vr_assunto  := 'Domicilio Bancario - Mensagem STR0006R2 de liquida√ß√£o n√£o recebida at√© o momento';
-               vr_mensagem := 'Abaixo a lista de arquivos aguardando libera√ß√£o por liquida√ß√£o'||
+               vr_assunto  := 'Domicilio Bancario - Mensagem STR0006R2 de liquidaÁ„o n„o recebida atÈ o momento';
+               vr_mensagem := 'Abaixo a lista de arquivos aguardando liberaÁ„o por liquidaÁ„o'||
                               ':<br /><br />'||
                               'Arquivo - '||lpad(rw_lancamento.nmarquivo_origem,100,' ')||'<br /> '||
                               'Credenciador - '||lpad(rw_lancamento.nrcnpj_credenciador,14,' ')||'<br />'||
@@ -8163,7 +8219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                FOR rw_tabela_5 IN cr_tabela(rw_lancamento.idlancto,rw_lancamento.tpforma_transf) LOOP
                    UPDATE tbdomic_liqtrans_pdv pdv
                    SET cdocorrencia = '30'
-                      ,dserro = 'Lan√ßamento recusado por falta de transfer√™ncia financeira'
+                      ,dserro = 'LanÁamento recusado por falta de transferÍncia financeira'
                    WHERE pdv.idpdv=rw_tabela_5.idpdv;
                END LOOP;
                UPDATE tbdomic_liqtrans_lancto l
@@ -8192,7 +8248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           -- Efetua todas as consistencias dentro deste BEGIN
           BEGIN
 
-            -- se existe erro a n√≠vel de arquivo/lancamento jogar√° para todos os
+            -- se existe erro a nÌvel de arquivo/lancamento jogar· para todos os
             -- registros PDV este erro
             IF NVL(vr_cdocorr_arq,'00') <> '00' THEN
               vr_dserro  := vr_dserro_arq;
@@ -8227,10 +8283,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             FETCH btch0001.cr_crapdat INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
 
-            --Alterado para utilizar a data do par√¢metro, se for diferente de NULL
+            --Alterado para utilizar a data do par‚metro, se for diferente de NULL
             --IF vr_database_name = 'AYLLOSD' THEN
             IF pr_dtprocesso IS NULL THEN
-              IF rw_crapdat.inproces > 1 THEN  -- Est√° executando cadeia
+              IF rw_crapdat.inproces > 1 THEN  -- Est· executando cadeia
                 vr_dtprocesso := rw_crapdat.dtmvtopr;
               ELSE
                 vr_dtprocesso := rw_crapdat.dtmvtolt;
@@ -8247,7 +8303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
 
           -- Atualiza os historicos de lancamento
-          IF rw_lancamento.tparquivo = 1 THEN    -- cr√©dito
+          IF rw_lancamento.tparquivo = 1 THEN    -- crÈdito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2444;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -8283,7 +8339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
-          ELSIF rw_lancamento.tparquivo = 2 THEN -- d√©bito
+          ELSIF rw_lancamento.tparquivo = 2 THEN -- dÈbito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2448;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -8319,7 +8375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
-          ELSE                                 -- antecipa√ß√£o
+          ELSE                                 -- antecipaÁ„o
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2456;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -8422,7 +8478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                 RAISE vr_exc_saida;
             END;
 
-            -- Atualiza data de d√©bito na craplau
+            -- Atualiza data de dÈbito na craplau
             BEGIN
               UPDATE craplau
                  SET dtdebito = trunc(vr_dtprocesso)
@@ -8516,8 +8572,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           IF nvl(vr_cdocorr,'00') = '00' THEN
             IF rw_tabela.dtpagamento > vr_dtprocesso THEN
-               IF rw_lancamento.tparquivo = 1 THEN    -- cr√©dito
-                  vr_cdocorr := '01'; -- agendamento de transa√ß√£o efetuado com sucesso --
+               IF rw_lancamento.tparquivo = 1 THEN    -- crÈdito
+                  vr_cdocorr := '01'; -- agendamento de transaÁ„o efetuado com sucesso --
                END IF;
             END IF;
           END IF;
@@ -8525,8 +8581,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END LOOP;  -- loop cr_tabela
 
         -- Efetua a atualizacao da situacao na tabela de lancamentos
-        -- Se encontrar algum registro sem erro no lancto, atualiza situa√ß√£o para 2
-        -- Com isso, se tiver apenas 1 PDV sem erro dentro de um lan√ßamento considera todo o lan√ßamento como processado
+        -- Se encontrar algum registro sem erro no lancto, atualiza situaÁ„o para 2
+        -- Com isso, se tiver apenas 1 PDV sem erro dentro de um lanÁamento considera todo o lanÁamento como processado
         IF vr_qtproclancto > 0 THEN
           BEGIN
             UPDATE tbdomic_liqtrans_lancto
@@ -8559,9 +8615,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -8573,7 +8629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     WHEN OTHERS THEN
       raise_application_error(-20001,'pc_efetiva_reg_pendentes '||sqlerrm);
 
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -8619,7 +8675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
   WHEN OTHERS THEN
-    -- Efetuar retorno do erro n√£o tratado
+    -- Efetuar retorno do erro n„o tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
@@ -8664,18 +8720,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
   WHEN OTHERS THEN
-    -- Efetuar retorno do erro n√£o tratado
+    -- Efetuar retorno do erro n„o tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
     ROLLBACK;
   END; --pc_procura_ultseq_craplau
 
-  -- Rotina que far√° a conciliacao entre o que foi enviado nos movimentos LDL e LTR
-  -- com o que foi lan√ßado por conta na CRAPLCM pela procedure CCRD005.pc_processa_reg_pendente
+  -- Rotina que far· a conciliacao entre o que foi enviado nos movimentos LDL e LTR
+  -- com o que foi lanÁado por conta na CRAPLCM pela procedure CCRD005.pc_processa_reg_pendente
   -- gera lancamento por cooperativa na CRAPLCM
-  -- caso ocorra diferenca gera lan√ßammento cont√°bil
-  -- gera relat√≥rio
+  -- caso ocorra diferenca gera lanÁammento cont·bil
+  -- gera relatÛrio
   PROCEDURE pc_lancamentos_singulares(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT VARCHAR2) IS
     -- Registro de data
@@ -8694,7 +8750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND to_date(pdv.dtpagamento,'YYYY-MM-DD') = pr_dtmvtolt
-         AND pdv.cdocorrencia = '00'  -- foram lan√ßados na CRAPLCM
+         AND pdv.cdocorrencia = '00'  -- foram lanÁados na CRAPLCM
     GROUP BY ctz.cdagencia_centraliza;
 
     -- Cursor sobre as agencias
@@ -8714,7 +8770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
     vr_crapcop       typ_tab_crapcop;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -8748,7 +8804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- gera lancamento na craplcm para a cooperativa
       vr_cdcritic := NULL;
       vr_dscritic := NULL;
-      pc_gerar_lcto_singulares(pr_cdcooper     => 3  -- gera lan√ßamento na CECRED
+      pc_gerar_lcto_singulares(pr_cdcooper     => 3  -- gera lanÁamento na CECRED
                                                      -- passando conta da cooperativa dentro da CECRED
                               ,pr_nrdconta     => vr_crapcop(rw_lctos_pdv.cdagencia_centraliza).nrctactl
                               ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
@@ -8767,9 +8823,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -8778,7 +8834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -8786,7 +8842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
   END; -- procedure pc_lancamentos_singulares
 
-  -- faz lan√ßamento na craplcm
+  -- faz lanÁamento na craplcm
   PROCEDURE pc_gerar_lcto_singulares(pr_cdcooper     IN crapcop.cdcooper%TYPE
                                     ,pr_nrdconta     IN craplcm.nrdconta%TYPE
                                     ,pr_dtmvtolt     IN craplcm.dtmvtolt%TYPE
@@ -8801,13 +8857,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_nrdolote      craplcm.nrdolote%TYPE;
     vr_cdhistor      craplcm.cdhistor%TYPE;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
   BEGIN
 
-    -- o lan√ßamento ser√° a soma de cr√©dito + d√©bito + antecipa√ß√µes
+    -- o lanÁamento ser· a soma de crÈdito + dÈbito + antecipaÁıes
     vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
     vr_cdhistor := 2441;
 
@@ -8864,9 +8920,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     EXCEPTION
     WHEN vr_exc_volta THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -8875,7 +8931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -8883,9 +8939,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   END; -- procedure pc_gerar_lcto_singulares
   
   -- Busca dados para popular combos de filtragem tela concip
-  PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informa√ß√µes de LOG
-                            ,pr_cdcritic OUT PLS_INTEGER         --> C√≥digo da cr√≠tica
-                            ,pr_dscritic OUT VARCHAR2            --> Descri√ß√£o da cr√≠tica
+  PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informaÁıes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER         --> CÛdigo da crÌtica
+                            ,pr_dscritic OUT VARCHAR2            --> DescriÁ„o da crÌtica
                             ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
                             ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2) IS        --> Erros do processo
@@ -8896,7 +8952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
         
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(32000);
       vr_tab_erro      GENE0001.typ_tab_erro;
@@ -8939,7 +8995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           dbms_lob.createtemporary(vr_clob, TRUE);
           dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
             
-          -- Criar cabe√ßalho do XML
+          -- Criar cabeÁalho do XML
           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
                                  ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados><credenciadoras>');
@@ -9009,8 +9065,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := vr_dscritic;
 
-            -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-            -- Existe para satisfazer exig√™ncia da interface.
+            -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+            -- Existe para satisfazer exigÍncia da interface.
             pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -9019,8 +9075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := 'Erro geral em pc_lista_arquivos: ' || SQLERRM;
 
-            -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-            -- Existe para satisfazer exig√™ncia da interface.
+            -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+            -- Existe para satisfazer exigÍncia da interface.
             pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                       
                               
@@ -9029,17 +9085,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
                              ,pr_dtfinal  IN VARCHAR2               --> Data final da consulta
-                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial Liquida√ß√£o da consulta
-                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final Liquida√ß√£o da consulta                             
+                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial LiquidaÁ„o da consulta
+                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final LiquidaÁ„o da consulta                             
                              ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                              ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                              ,pr_tparquivo IN VARCHAR2              --> Tipo de arquivo (CR/DB/AT)
                              ,pr_credenciadora IN VARCHAR2          --> Filtro credenciadora (ispb)
                              ,pr_bcoliquidante IN VARCHAR2          --> Filtro Banco Liquidante (ispb)
                              ,pr_formtran IN VARCHAR2               --> Filtro Forma de Transferencia
-                             ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                             ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                             ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                              ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2 ) IS         --> Erros do processo          
@@ -9102,7 +9158,7 @@ from  (
              ,tbdomic_liqtrans_pdv pdv
              ,tbdomic_liqtrans_arquivo arq2
        WHERE lct.idarquivo = arq.idarquivo
-         AND lct.insituacao <> 3 -- n√£o pegar arquivos que vieram com problema no XML
+         AND lct.insituacao <> 3 -- n„o pegar arquivos que vieram com problema no XML
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND (pdv.tpforma_transf = pr_formtran OR (pr_formtran = '0' AND pdv.tpforma_transf IS NOT NULL)) --filtro forma transf
@@ -9128,7 +9184,7 @@ from  (
               and (y.bcoliquidante is not null OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante
              ORDER BY y.nmarquivo;
     
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic   
          VARCHAR2(32000);
@@ -9163,7 +9219,7 @@ from  (
       -- Monta documento XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados><servico>');
@@ -9182,14 +9238,14 @@ from  (
         vr_dtfinal := to_date(pr_dtfinal,'dd/mm/yyyy');
       END IF;
 
-      -- Popula a data de inicio Liquida√ß√£o
+      -- Popula a data de inicio LiquidaÁ„o
       IF TRIM(pr_dtinicioliq) IS NULL THEN
         vr_dtinicioliq := to_date('01/01/2000','dd/mm/yyyy');
       ELSE
         vr_dtinicioliq := to_date(pr_dtinicioliq,'dd/mm/yyyy');
       END IF;
 
-      -- Popula a data de termino Liquida√ß√£o
+      -- Popula a data de termino LiquidaÁ„o
       IF TRIM(pr_dtfinalliq) IS NULL THEN
         vr_dtfinalliq := to_date('31/12/2999','dd/mm/yyyy');
       ELSE
@@ -9278,8 +9334,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -9288,8 +9344,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em pc_lista_arquivos: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -9302,9 +9358,9 @@ from  (
                            ,pr_tparquivo IN NUMBER                --> Tipo de arquivo
                            ,pr_bcoliquidante IN VARCHAR2          --> Filtro Banco Liquidante
                            ,pr_credenciadora IN VARCHAR2          --> Filtro credenciadora
-                           ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                           ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                           ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                           ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo 
@@ -9317,7 +9373,7 @@ from  (
           vr_dtinicio    DATE;                 --> Data inicio periodo
           vr_dtfinal     DATE;                 --> Data final periodo
                   
-          -- Vari√°vel de cr√≠ticas
+          -- Vari·vel de crÌticas
           vr_cdcritic    crapcri.cdcritic%TYPE;
           vr_dscritic    VARCHAR2(32000);
           vr_tab_erro    GENE0001.typ_tab_erro;
@@ -9355,7 +9411,7 @@ from  (
                       , tbdomic_liqtrans_mensagem_slc slc
                       , crapban ban
                   WHERE lct.idarquivo = arq.idarquivo
-                    AND lct.insituacao <> 3 -- n√£o pegar arquivos que vieram com problema no XML
+                    AND lct.insituacao <> 3 -- n„o pegar arquivos que vieram com problema no XML
                     AND ctz.idlancto = lct.idlancto
                     AND pdv.idcentraliza = ctz.idcentraliza
                     AND (to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
@@ -9390,8 +9446,8 @@ from  (
                       , lct.dhinclusao AS dhinclusao
                       , lct.dhprocessamento AS dhprocessamento
                       , pdv.vlpagamento AS vllancamento
-                      , decode(NVL(pdv.cdocorrencia,'XX'),'XX','Pendente','00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',decode(lct.insituacao,1,'N√£o Efet.','Processado'),'Erro'),'01',decode(arq.tparquivo,1,'Agendado','Erro'),'Erro') AS dssituacao
-                      , decode(NVL(pdv.cdocorrencia,'XX'),'XX',decode(arq.tparquivo,3,'N√£o recebemos a mensagem de liquida√ß√£o LTR para pagamento da credenciadora.'),nvl(pdv.dserro,pdv.dsocorrencia_retorno||decode(pdv.dsocorrencia_retorno,null,null,' - ')||mte.dsmotivo_erro)) AS dserro
+                      , decode(NVL(pdv.cdocorrencia,'XX'),'XX','Pendente','00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',decode(lct.insituacao,1,'N„o Efet.','Processado'),'Erro'),'01',decode(arq.tparquivo,1,'Agendado','Erro'),'Erro') AS dssituacao
+                      , decode(NVL(pdv.cdocorrencia,'XX'),'XX',decode(arq.tparquivo,3,'N„o recebemos a mensagem de liquidaÁ„o LTR para pagamento da credenciadora.'),nvl(pdv.dserro,pdv.dsocorrencia_retorno||decode(pdv.dsocorrencia_retorno,null,null,' - ')||mte.dsmotivo_erro)) AS dserro
                    FROM tbdomic_liqtrans_arquivo arq
                       , tbdomic_liqtrans_lancto lct
                       , tbdomic_liqtrans_centraliza ctz
@@ -9558,8 +9614,8 @@ from  (
               pr_cdcritic := vr_cdcritic;
               pr_dscritic := vr_dscritic;
 
-              -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-              -- Existe para satisfazer exig√™ncia da interface.
+              -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+              -- Existe para satisfazer exigÍncia da interface.
               pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -9568,8 +9624,8 @@ from  (
               pr_cdcritic := vr_cdcritic;
               pr_dscritic := 'Erro geral em pc_exporta_arquivos: ' || SQLERRM;
 
-              -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-              -- Existe para satisfazer exig√™ncia da interface.
+              -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+              -- Existe para satisfazer exigÍncia da interface.
               pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -9592,9 +9648,9 @@ from  (
                            ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                            ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                            ,pr_formtran IN VARCHAR2             --> Forma de transferencia
-                           ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                           ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                           ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                           ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
@@ -9614,8 +9670,8 @@ from  (
               ,to_date(pdv.dtpagamento,'YYYY-MM-DD')           dtreferencia
               ,arq.nmarquivo_origem        nmarquivo
               ,pdv.cdocorrencia            insituacao
-              ,decode(NVL(pdv.cdocorrencia,'XX'),'XX','Pendente','00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',decode(lct.insituacao,1,'N√£o Efet.','Processado'),'Erro'),'01',decode(arq.tparquivo,1,'Agendado','Erro'),'Erro') dssituacao
-              ,decode(NVL(pdv.cdocorrencia,'XX'),'XX',decode(arq.tparquivo,3,'N√£o recebemos a mensagem de liquida√ß√£o LTR para pagamento da credenciadora.'),nvl(decode(pdv.dserro, 'Agendamento', '', pdv.dserro),pdv.dsocorrencia_retorno||decode(pdv.dsocorrencia_retorno,null,null,' - ')||mte.dsmotivo_erro)) dserro
+              ,decode(NVL(pdv.cdocorrencia,'XX'),'XX','Pendente','00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',decode(lct.insituacao,1,'N„o Efet.','Processado'),'Erro'),'01',decode(arq.tparquivo,1,'Agendado','Erro'),'Erro') dssituacao
+              ,decode(NVL(pdv.cdocorrencia,'XX'),'XX',decode(arq.tparquivo,3,'N„o recebemos a mensagem de liquidaÁ„o LTR para pagamento da credenciadora.'),nvl(decode(pdv.dserro, 'Agendamento', '', pdv.dserro),pdv.dsocorrencia_retorno||decode(pdv.dsocorrencia_retorno,null,null,' - ')||mte.dsmotivo_erro)) dserro
               ,0                           nrdolote
               ,0                           nrseqdig
               ,lct.dhinclusao              dhinclusao
@@ -9696,7 +9752,7 @@ from  (
                                 
       type typ_tab_resumo IS TABLE OF typ_resumo INDEX BY VARCHAR2(45);
       vr_resumo       typ_tab_resumo;
-      -- O √≠ndice da pl/table √© nmrescop(20)+cdregio(5)+cdagenci(5)+nrdconta(10)+sequencial(5)
+      -- O Ìndice da pl/table È nmrescop(20)+cdregio(5)+cdagenci(5)+nrdconta(10)+sequencial(5)
       vr_indice       VARCHAR2(45);
       vr_nrseq        PLS_INTEGER := 0;
 
@@ -9706,7 +9762,7 @@ from  (
       type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
       vr_crapcop       typ_tab_crapcop;
 
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(32000);
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -9875,7 +9931,7 @@ from  (
 
       -- Se for para gerar a saida no XML
       IF pr_insaida = 1 THEN
-        -- Criar cabe√ßalho do XML
+        -- Criar cabeÁalho do XML
         GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados><servico>');
@@ -9886,7 +9942,7 @@ from  (
         vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                     pr_cdacesso => 'ROOT_DOMICILIO')||'/relatorios';
         vr_nmarquivo := 'CONSLC_'||to_char(SYSDATE,'HHMISS')||'.csv';
-        -- Criar cabe√ßalho do CSV
+        -- Criar cabeÁalho do CSV
         GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => 'Cooperativa;Regional;PA;Conta;Nome;CPF/CNPJ;Lct;Bandeira;Forma Transf;Data Lct;Data Arq;Valor;Situacao;Erro'||chr(10));
@@ -10014,7 +10070,7 @@ from  (
                                    , pr_tab_erro => vr_tab_erro
                                    );
 
-        -- caso apresente erro na opera√ß√£o
+        -- caso apresente erro na operaÁ„o
         IF nvl(vr_des_reto,'OK') <> 'OK' THEN
           IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
             vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
@@ -10051,8 +10107,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -10061,8 +10117,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em pc_lista_contas: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -10071,9 +10127,9 @@ from  (
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto   IN VARCHAR2               --> Data lcto consulta
                                 ,pr_ispb     IN VARCHAR2               --> Identificador da Credenciadora
-                                ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
@@ -10085,7 +10141,7 @@ from  (
        -- Tratamento de erros
        vr_exc_saida     EXCEPTION;
       
-       -- Vari√°vel de cr√≠ticas
+       -- Vari·vel de crÌticas
        vr_cdcritic      crapcri.cdcritic%TYPE;
        vr_dscritic      VARCHAR2(32000);
        vr_tab_erro       GENE0001.typ_tab_erro;
@@ -10141,7 +10197,7 @@ from  (
          vr_tipo_msg := 'STR0004R2';-- REDECARD
        END IF;
        --
-       -- Criar cabe√ßalho do XML
+       -- Criar cabeÁalho do XML
        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                               ,pr_texto_completo => vr_xml_temp
                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
@@ -10178,8 +10234,8 @@ from  (
                  pr_cdcritic := vr_cdcritic;
                  pr_dscritic := vr_dscritic;
 
-                 -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-                 -- Existe para satisfazer exig√™ncia da interface.
+                 -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+                 -- Existe para satisfazer exigÍncia da interface.
                  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                                '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -10187,8 +10243,8 @@ from  (
                  pr_cdcritic := vr_cdcritic;
                  pr_dscritic := 'Erro geral em pc_lista_conciliacao: ' || SQLERRM;
 
-                 -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-                 -- Existe para satisfazer exig√™ncia da interface.
+                 -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+                 -- Existe para satisfazer exigÍncia da interface.
                  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                           
 
@@ -10200,9 +10256,9 @@ from  (
 
   PROCEDURE pc_lista_regional(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                              ,pr_cddregio IN crapreg.cddregio%TYPE --> Codigo da regional
-                             ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
-                             ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
+                             ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
+                             ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
@@ -10228,7 +10284,7 @@ from  (
 
     BEGIN
 
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados/></Root>');
 
       -- Loop sobre a tabela de regional
@@ -10246,8 +10302,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
@@ -10256,8 +10312,8 @@ from  (
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em pc_lista_regional: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
@@ -10277,13 +10333,13 @@ from  (
     vr_executado             VARCHAR2(01);
     vr_dscritic               VARCHAR2(32000);
     vr_nomarqorigem           VARCHAR2(1000);
-    -- V√°ri√°veis controle de aceitos / rejeitados
+    -- V·ri·veis controle de aceitos / rejeitados
     vr_fim_aceito             NUMBER(01) := 0;
     vr_fim_rejeitado          NUMBER(01) := 0;
     vr_erro                   VARCHAR2(100);
-    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> Defini√ß√£o do documento DOM (XML)
+    vr_domDoc                 DBMS_XMLDOM.DOMDocument;      --> DefiniÁ„o do documento DOM (XML)
 
-    -- Busca o nome do arquivo de origem para atualiza√ß√£o do RET
+    -- Busca o nome do arquivo de origem para atualizaÁ„o do RET
     CURSOR c1 (pr_nomarq IN VARCHAR2) IS
       SELECT tla.nmarquivo_origem
         FROM tbdomic_liqtrans_arquivo  tla
@@ -10298,7 +10354,7 @@ from  (
       --Busca os campos do detalhe da consulta
       pc_busca_conteudo_campo(pr_retxml, '//ASLCDOC/BCARQ/NomArq',  'S',vr_nomarq, vr_dscritic);
 
-      -- valida se o arquivo com esse nome j√° foi processado.
+      -- valida se o arquivo com esse nome j· foi processado.
       vr_executado := valida_arquivo_processado (pr_nomarq  => vr_nomarq);
 
       IF vr_executado = 'S' THEN
@@ -10310,7 +10366,7 @@ from  (
         -- Cria o documento DOM com base no XML enviado
         vr_domDoc := DBMS_XMLDOM.newDOMDocument(pr_retxml);
 
-        vr_erro := gene0007.fn_valor_atributo(pr_xml      => vr_domDoc     --> XML que ir√° receber o novo atributo
+        vr_erro := gene0007.fn_valor_atributo(pr_xml      => vr_domDoc     --> XML que ir· receber o novo atributo
                                              ,pr_tag      => 'NomArq'                             --> Nome da TAG XML
                                              ,pr_atrib    => 'CodErro'     --> Nome do atributo
                                              ,pr_numva    => 0) ;
@@ -10336,7 +10392,7 @@ from  (
     --                       ,pr_dscritic => vr_dscritic);
     --     END IF;
       END;
-      -- atualizar todos os pdvs do arquivo origem com o c√≥digo do erro do arquivo ERR
+      -- atualizar todos os pdvs do arquivo origem com o cÛdigo do erro do arquivo ERR
       BEGIN
         UPDATE TBDOMIC_LIQTRANS_PDV tlp
            SET tlp.dsocorrencia_retorno = vr_erro
@@ -10351,7 +10407,7 @@ from  (
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar tabela LIQTRANS_PDV '||SQLERRM;
             pc_gera_critica(pr_nomearq => vr_nomarq
-                           ,pr_idcampo => 'Atualiza√ß√£o vr_erro nos PDV¬¥s'
+                           ,pr_idcampo => 'AtualizaÁ„o vr_erro nos PDV¥s'
                            ,pr_dscritic => vr_dscritic);
       END;
    END processa_arquivo_erro;
@@ -10403,7 +10459,7 @@ from  (
              ELSE
                w_dsvalor := to_date(w_dsvalor,'yyyymmdd');
              END  IF;
-           --ELSE  /* Conforme verificado, utilizando as variaveis NLS no Job, essa mudan√ßa de ponto decimal n√£o ser√° necess√°ria
+           --ELSE  /* Conforme verificado, utilizando as variaveis NLS no Job, essa mudanÁa de ponto decimal n„o ser· necess·ria
            --  w_dsvalor := replace(w_dsvalor,'.',',');
            END  IF;
          END IF;
@@ -10421,7 +10477,7 @@ from  (
     vr_dsdiretorio     VARCHAR2(100);
     vr_listaarq        VARCHAR2(32000);     --> Lista de arquivos
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -10699,8 +10755,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
           AND TRUNC(msg.dhexecucao) = pr_dtreferencia
           AND pr_tpformatransf = 3
         ORDER BY idmensagem;
-/* Essa valida√ß√£o est√° suspensa por enquanto.
-   Est√° comentada porque pode voltar a ser necess√°ria ap√≥s a implanta√ß√£o em 23/10/2017
+/* Essa validaÁ„o est· suspensa por enquanto.
+   Est· comentada porque pode voltar a ser necess·ria apÛs a implantaÁ„o em 23/10/2017
      UNION ALL
      SELECT 'S' id_existe_liquid
             ,lmt.rowid
@@ -10712,7 +10768,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 */
      rw_msg               cr_msg%ROWTYPE;
   BEGIN
-    -- Verifica se existe informa√ß√£o de liquida√ß√£o
+    -- Verifica se existe informaÁ„o de liquidaÁ„o
     --vr_sum_vl_pagamento := 0;
     OPEN cr_msg;
     FETCH cr_msg INTO rw_msg;
@@ -10764,13 +10820,13 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
   BEGIN
     vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET33');
-    vr_assunto  := 'Domicilio Bancario - Arquivos de antecipa√ß√£o n√£o processados h√° mais de 1 hora ';
+    vr_assunto  := 'Domicilio Bancario - Arquivos de antecipaÁ„o n„o processados h· mais de 1 hora ';
     vr_mensagem := NULL;
 
     -- monta o e-mail de envio das divergencias (rejeitados).
     FOR rw_antecip IN cr_antecip LOOP
       IF vr_mensagem IS NULL THEN
-        vr_mensagem := 'Abaixo a lista de arquivos de antecipa√ß√£o aguardando libera√ß√£o LTR h√° mais de 1 hora'||
+        vr_mensagem := 'Abaixo a lista de arquivos de antecipaÁ„o aguardando liberaÁ„o LTR h· mais de 1 hora'||
                        ':<br /><br />';
       END IF;
 
@@ -10801,7 +10857,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipa√ß√£o em atraso: '||SQLERRM;
+        pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipaÁ„o em atraso: '||SQLERRM;
         RETURN;
 
   END;
@@ -10837,17 +10893,17 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
   BEGIN
     vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET33');
-    vr_assunto  := 'Domicilio Bancario - Arquivos SILOC n√£o recebidos';
+    vr_assunto  := 'Domicilio Bancario - Arquivos SILOC n„o recebidos';
     vr_mensagem := NULL;
 
-    -- monta o e-mail de envio dos arquivos n√£o enviados.
+    -- monta o e-mail de envio dos arquivos n„o enviados.
     IF sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi') THEN
       OPEN cr_cred;
       FETCH cr_cred INTO vr_qt_arq;
       IF cr_cred%NOTFOUND THEN
-        vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de cr√©dito no dia de hoje. <br /><br />';
+        vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de crÈdito no dia de hoje. <br /><br />';
       ELSIF vr_qt_arq = 0 THEN
-           vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de cr√©dito no dia de hoje. <br /><br />';
+           vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de crÈdito no dia de hoje. <br /><br />';
       END IF;
       CLOSE cr_cred;
     END IF;
@@ -10856,9 +10912,9 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
       OPEN cr_deb;
       FETCH cr_deb INTO vr_qt_arq;
       IF cr_deb%NOTFOUND THEN
-        vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de d√©bito no dia de hoje. <br /><br />';
+        vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de dÈbito no dia de hoje. <br /><br />';
       ELSIF vr_qt_arq = 0 THEN
-           vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de d√©bito no dia de hoje. <br /><br />';
+           vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de dÈbito no dia de hoje. <br /><br />';
       END IF;
       CLOSE cr_deb;
     END IF;
@@ -10867,9 +10923,9 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
       OPEN cr_ant;
       FETCH cr_ant INTO vr_qt_arq;
       IF cr_ant%NOTFOUND THEN
-        vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de antecipa√ß√£o no dia de hoje. <br /><br />';
+        vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de antecipaÁ„o no dia de hoje. <br /><br />';
       ELSIF vr_qt_arq = 0 THEN
-           vr_mensagem := vr_mensagem || 'N√£o foram recebidos arquivos de antecipa√ß√£o no dia de hoje. <br /><br />';
+           vr_mensagem := vr_mensagem || 'N„o foram recebidos arquivos de antecipaÁ„o no dia de hoje. <br /><br />';
       END IF;
       CLOSE cr_ant;
     END IF;
@@ -10891,7 +10947,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
     COMMIT;
   EXCEPTION
      WHEN OTHERS THEN
-        pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipa√ß√£o em atraso: '||SQLERRM;
+        pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipaÁ„o em atraso: '||SQLERRM;
         RETURN;
 
   END;
@@ -10923,11 +10979,11 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
           AND ctz.idlancto = lct.idlancto
           AND pdv.idcentraliza = ctz.idcentraliza
           AND lct.insituacao = 0 -- Pendente
-                                 -- No final ser√° alterado a situacao para 1-Processado
+                                 -- No final ser· alterado a situacao para 1-Processado
      GROUP BY arq.idarquivo, lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, arq.tparquivo, to_date(arq.dtreferencia,'YYYY-MM-DD'), lct.dhprocessamento, lct.idlancto, pdv.tpforma_transf
      ORDER BY arq.tparquivo,lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, to_date(arq.dtreferencia,'YYYY-MM-DD');
 
-    -- Cursor para informa√ß√µes dos lan√ßamentos
+    -- Cursor para informaÁıes dos lanÁamentos
     CURSOR cr_tabela(pr_idlancto tbdomic_liqtrans_lancto.idlancto%TYPE) IS
       SELECT pdv.nrliquidacao
             ,ctz.nrcnpjcpf_centraliza
@@ -10994,7 +11050,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
     type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
     vr_crapcop       typ_tab_crapcop;
 
-    -- Vari√°vel de cr√≠ticas
+    -- Vari·vel de crÌticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(32000);
 
@@ -11008,8 +11064,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
     vr_nrseqdiglau   craplau.nrseqdig%TYPE;
     vr_dserro        VARCHAR2(100);         --> Variavel de erro
     vr_dserro_arq    VARCHAR2(100);         --> Variavel de erro do reg arquivo
-    vr_cdocorr       VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do pdv
-    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> C√≥digo de ocorrencia do reg arquivo
+    vr_cdocorr       VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do pdv
+    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> CÛdigo de ocorrencia do reg arquivo
     vr_inpessoa      crapass.inpessoa%TYPE; --> Indicador de tipo de pessoa
     vr_cdcooper      crapcop.cdcooper%TYPE; --> Codigo da cooperativa
     vr_cdhistor      craphis.cdhistor%TYPE; --> Codigo do historico do lancamento
@@ -11021,8 +11077,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
     vr_nrdconta      crapass.nrdconta%TYPE;
-    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
-    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari√°vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Vari·vel para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
 
   BEGIN
@@ -11039,7 +11095,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
       -- Limpa variaveis de controle de quebra para gravacao da craplcm e craplau
       -- Como trata-se de um novo tipo de arquivo precisa-se limpar pois o numero
-      -- do lote ser√° alterado.
+      -- do lote ser· alterado.
       vr_cdcooper_lcm := 0;
       vr_cdcooper_lau := 0;
 
@@ -11062,7 +11118,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
           -- Efetua todas as consistencias dentro deste BEGIN
           BEGIN
-            -- se existe erro a n√≠vel de arquivo/lancamento jogar√° para todos os
+            -- se existe erro a nÌvel de arquivo/lancamento jogar· para todos os
             -- registros PDV este erro
             IF NVL(vr_cdocorr_arq,'00') <> '00' THEN
               vr_dserro  := vr_dserro_arq;
@@ -11121,10 +11177,10 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
             FETCH btch0001.cr_crapdat INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
 
-            --Alterado para utilizar a data do par√¢metro, se for diferente de NULL
+            --Alterado para utilizar a data do par‚metro, se for diferente de NULL
             --IF vr_database_name = 'AYLLOSD' THEN
             IF pr_dtprocesso IS NULL THEN
-              IF rw_crapdat.inproces > 1 THEN  -- Est√° executando cadeia
+              IF rw_crapdat.inproces > 1 THEN  -- Est· executando cadeia
                 vr_dtprocesso := rw_crapdat.dtmvtopr;
               ELSE
                 vr_dtprocesso := rw_crapdat.dtmvtolt;
@@ -11133,7 +11189,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
               vr_dtprocesso   := nvl(pr_dtprocesso,trunc(sysdate));
             END IF;
 
-            -- N√£o pode processar data de pagamento anterior
+            -- N„o pode processar data de pagamento anterior
             IF rw_tabela.dtpagamento < vr_dtprocesso THEN
               vr_dserro := 'Data de pagamento menor que a data da cooperativa';
               vr_cdocorr := '03';
@@ -11187,7 +11243,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
           vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
 
           -- Atualiza os historicos de lancamento
-          IF rw_lancamento.tparquivo = 1 THEN    -- cr√©dito
+          IF rw_lancamento.tparquivo = 1 THEN    -- crÈdito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2444;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -11205,7 +11261,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
-          ELSIF rw_lancamento.tparquivo = 2 THEN -- d√©bito
+          ELSIF rw_lancamento.tparquivo = 2 THEN -- dÈbito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2448;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -11223,7 +11279,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
-          ELSE                                 -- antecipa√ß√£o
+          ELSE                                 -- antecipaÁ„o
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2456;
              ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
@@ -11308,7 +11364,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                 RAISE vr_exc_saida;
             END;
 
-            -- Atualiza data de d√©bito na craplau
+            -- Atualiza data de dÈbito na craplau
             BEGIN
               UPDATE craplau
                  SET dtdebito = vr_dtprocesso
@@ -11403,8 +11459,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
           IF nvl(vr_cdocorr,'00') = '00' THEN
             IF rw_tabela.dtpagamento > vr_dtprocesso THEN
-               IF rw_lancamento.tparquivo = 1 THEN    -- cr√©dito
-                  vr_cdocorr := '01'; -- agendamento de transa√ß√£o efetuado com sucesso --
+               IF rw_lancamento.tparquivo = 1 THEN    -- crÈdito
+                  vr_cdocorr := '01'; -- agendamento de transaÁ„o efetuado com sucesso --
                END IF;
             END IF;
           END IF;
@@ -11455,9 +11511,9 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         pr_dscritic := vr_dscritic;
@@ -11466,7 +11522,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -11542,7 +11598,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
       -- Monta documento XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabe√ßalho do XML
+      -- Criar cabeÁalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?>');
@@ -11577,10 +11633,10 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                                                      '<CodOcorc>'   || '30'  ||'</CodOcorc>'||
                                                      '</Grupo_ASLC033_LiquidTranscCarts>');
 
-        --Atualiza para 30 a ocorr√™ncia do registro na tabela TBDOMIC_LIQTRANS_PDV
+        --Atualiza para 30 a ocorrÍncia do registro na tabela TBDOMIC_LIQTRANS_PDV
         UPDATE tbdomic_liqtrans_pdv
            SET cdocorrencia = '30'
-              ,dserro = 'Lan√ßamento recusado por falta de transfer√™ncia financeira'
+              ,dserro = 'LanÁamento recusado por falta de transferÍncia financeira'
          WHERE idpdv = r1.idpdv;
 
       END LOOP;
@@ -11614,10 +11670,10 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                           ,pr_dscritic => vr_dscritic);
       END;
 
-      -- gera o arquivo no diret√≥rio padr√£o
-      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst√¢ncia do CLOB Type
-                                   ,pr_caminho   => vr_caminho --> Diret√≥rio para sa√≠da
-                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de sa√≠da
+      -- gera o arquivo no diretÛrio padr„o
+      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Inst‚ncia do CLOB Type
+                                   ,pr_caminho   => vr_caminho --> DiretÛrio para saÌda
+                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de saÌda
                                    ,pr_des_erro  => vr_dscritic );
 
       -- Atualiza arquivo origem com o nome do arquivo gerado.
@@ -11660,14 +11716,14 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
   BEGIN
       for r in curAlteraHorario loop
         IF r.cdGrade NOT IN  ('PAGD3','PAGE3','PAG94') THEN
-           pr_dscritic := 'C√≥digo Grade LDL: '||r.cdGrade||' n√£o implementado';
+           pr_dscritic := 'CÛdigo Grade LDL: '||r.cdGrade||' n„o implementado';
            return;
         END IF;
         IF r.TipoInformacao NOT IN  ('E','P') THEN
-           pr_dscritic := 'Tipo Hor√°rio: '||r.TipoInformacao||' inv√°lido';
+           pr_dscritic := 'Tipo Hor·rio: '||r.TipoInformacao||' inv·lido';
            return;
         END IF;
-        --hor√°rio de envio dos retornos dos arquivos do 1¬∫ ciclo
+        --hor·rio de envio dos retornos dos arquivos do 1∫ ciclo
         IF r.cdGrade='PAGD3' THEN
            UPDATE crapprm c
            SET c.dsvlrprm=''
@@ -11676,7 +11732,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
            SET c.dsvlrprm=''
            WHERE c.cdacesso='HORARIO_SLC_25_1CICL';
         END IF;
-        --hor√°rio de envio dos retornos dos arquivos do 2¬∫ ciclo
+        --hor·rio de envio dos retornos dos arquivos do 2∫ ciclo
         IF r.cdGrade='PAGE3' THEN
            UPDATE crapprm c
            SET c.dsvlrprm=''
@@ -11685,8 +11741,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
            SET c.dsvlrprm=''
            WHERE c.cdacesso='HORARIO_SLC_25_2CICL';
         END IF;
-        --hor√°rio em que a grade estar√° aberta
-        --Liquida√ß√£o bruta em tempo real SLC
+        --hor·rio em que a grade estar· aberta
+        --LiquidaÁ„o bruta em tempo real SLC
         IF r.cdGrade='PAG94' THEN
            null;
         END IF;
