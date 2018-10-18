@@ -1,3 +1,15 @@
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : vw_parcelado_parcela_futura
+  --  Sistema  : View de pagamento davulso
+  --  Sigla    : CRED
+  --  Autor    : Ornelas - Amcom
+  --  Data     : 17/10/2018                  Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Alteracoes: 
+  ---------------------------------------------------------------------------------------------------------------
 create or replace view cecred.vw_parcelado_parcela_futura as
 select nr
      , nrdconta
@@ -249,4 +261,3 @@ where cop.cdcooper = ass.cdcooper
    --and  epr.nrdconta = 2259
    ---------------------------------------------------------------
 )
-;

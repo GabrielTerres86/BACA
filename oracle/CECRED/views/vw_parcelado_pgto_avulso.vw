@@ -59,4 +59,3 @@ group by
   trunc(lem.dtmvtolt)
 order by
   cnpjctrc, idfccli, nrctr
-;
