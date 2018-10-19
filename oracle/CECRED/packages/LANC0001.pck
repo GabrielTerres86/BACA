@@ -1398,44 +1398,107 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 	vr_nrdocmto craplcm.nrdocmto%TYPE;
   vr_nrdconta craplcm.nrdconta%TYPE; 
   
-BEGIN   
+  vr_comando   varchar2(4000); -- usado para montar o comando a ser usado pelo cursor de leitura, retornando
+                               -- os rowid conforme parametros passados
+
+  vr_and       varchar2(10);   -- lógica para decidir se gera a clausula AND ou não
+
+  wlinha rowid;                -- retorno do cursor, para poder fazer o DELETE na craplcm
+   
+  type t_cursor is ref cursor;
+  c_cursor t_cursor;           -- cursor dinamico
+ 
+  -- procedure usada para ir concatenando os parametros, respeitando clausula AND e ASPAS 
+  procedure pc_concatena(pr_comando in out varchar2, pr_conteudo in varchar2, pr_aspas in varchar2, pr_campo in varchar2) is
+    vr_aspas varchar2(4);
+  begin
+     if pr_aspas = 'S' then
+        vr_aspas := '''';
+     else
+        vr_aspas := null;
+     end if;
+
+     if pr_comando = 'SELECT ROWID FROM craplcm where ' then
+        vr_and := null;
+     else 
+        vr_and := ' and ';
+     end if;
+
+     pr_comando := pr_comando || vr_and || pr_campo || '=' || vr_aspas || pr_conteudo || vr_aspas;
+
+  end pc_concatena;
   
-  --Exclui o lançamento da CRAPLCM
-  DELETE FROM craplcm lcm
-	 WHERE ((lcm.cdcooper = nvl(pr_cdcooper, lcm.cdcooper)
-	   AND lcm.dtmvtolt = nvl(pr_dtmvtolt, lcm.dtmvtolt)
-		 AND lcm.cdagenci = nvl(pr_cdagenci, lcm.cdagenci)
-		 AND lcm.cdbccxlt = nvl(pr_cdbccxlt, lcm.cdbccxlt) 
-		 AND lcm.nrdolote = nvl(pr_nrdolote, lcm.nrdolote)  
-     AND lcm.nrdctabb = nvl(pr_nrdctabb, lcm.nrdctabb) 
-		 AND lcm.nrdocmto = nvl(pr_nrdocmto, lcm.nrdocmto) 
-     AND lcm.cdhistor = nvl(pr_cdhistor, lcm.cdhistor)
-     AND lcm.nrctachq = nvl(pr_nrctachq, lcm.nrctachq)
-     AND lcm.nrdconta = nvl(pr_nrdconta, lcm.nrdconta)
-     AND lcm.cdpesqbb = nvl(pr_cdpesqbb, lcm.cdpesqbb)
-     AND pr_rowid IS NULL) 
-      OR (lcm.rowid = pr_rowid)
-      )     
-	 RETURNING lcm.cdcooper, lcm.dtmvtolt, lcm.nrdocmto, lcm.nrdconta
-   INTO       vr_cdcooper,  vr_dtmvtolt, vr_nrdocmto,  vr_nrdconta;
-	 
-	 IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, vr_nrdconta) THEN 
-		 -- Exclui lançamento de estorno do crédito da conta corrente para movimentação para a conta transitória
-		 DELETE FROM craplcm lcm
-		  WHERE lcm.cdcooper   = vr_cdcooper
-			  AND lcm.dtmvtolt   = vr_dtmvtolt
-				AND lcm.nrdconta   = vr_nrdconta
-				AND lcm.nrdocmto   = vr_nrdocmto
-				AND lcm.cdhistor   = 2719;
-				
-		 -- Exclui lançamento de crédito da conta transitória
-		 DELETE FROM tbcc_prejuizo_lancamento prj
-		  WHERE prj.cdcooper = vr_cdcooper
-			  AND prj.nrdconta = vr_nrdconta
-				AND prj.dtmvtolt = vr_dtmvtolt
-				AND prj.nrdocmto = vr_nrdocmto
-				AND prj.cdhistor = 2720;	
-	 END IF;
+BEGIN   
+
+  -- inicia montagem do comando, se vier rowid como parametro já assume e não trata os outros parametros
+  if pr_rowid is not null then
+     vr_comando := 'SELECT ROWID FROM craplcm where rowid = '||''''||pr_rowid||'''';
+  else
+     vr_comando := 'SELECT ROWID FROM craplcm where ';
+     if nvl(pr_cdcooper,0) <> 0 then
+        pc_concatena(vr_comando,pr_cdcooper,'N','cdcooper');
+     end if;
+--     if nvl(pr_dtmvtolt,' ') <> ' ' then
+     if pr_dtmvtolt is not null then
+        pc_concatena(vr_comando,pr_dtmvtolt,'S','dtmvtolt');
+     end if;
+     if nvl(pr_cdagenci,0) <> 0 then
+        pc_concatena(vr_comando,pr_cdagenci,'N','cdagenci');
+     end if;
+     if nvl(pr_cdbccxlt,0) <> 0 then
+        pc_concatena(vr_comando,pr_cdbccxlt,'N','cdbccxlt');
+     end if;
+     if nvl(pr_nrdolote,0) <> 0 then
+        pc_concatena(vr_comando,pr_nrdolote,'N','nrdolote');
+     end if;
+     if nvl(pr_nrdctabb,0) <> 0 then
+        pc_concatena(vr_comando,pr_nrdctabb,'N','nrdctabb');
+     end if;
+     if nvl(pr_nrdocmto,0) <> 0 then
+        pc_concatena(vr_comando,pr_nrdocmto,'N','nrdocmto');
+     end if;
+     if nvl(pr_cdhistor,0) <> 0 then
+        pc_concatena(vr_comando,pr_cdhistor,'N','cdhistor');
+     end if;
+     if nvl(pr_nrctachq,0) <> 0 then
+        pc_concatena(vr_comando,pr_nrctachq,'N','nrctachq');
+     end if;
+     if nvl(pr_nrdconta,0) <> 0 then
+        pc_concatena(vr_comando,pr_nrdconta,'N','nrdconta');
+     end if;
+     if nvl(pr_cdpesqbb,' ') <> ' ' then
+        pc_concatena(vr_comando,pr_cdpesqbb,'S','cdpesqbb');
+     end if;
+  end if;
+
+  -- inicio lógica DELETE
+  open c_cursor for VR_comando;
+  fetch c_cursor into wlinha;
+  while c_cursor%FOUND loop
+     --Exclui o lançamento da CRAPLCM
+     DELETE FROM craplcm lcm
+   	 WHERE ROWID = wlinha
+	   RETURNING LCM.cdcooper, lcm.dtmvtolt, lcm.nrdocmto, lcm.nrdconta
+     INTO       vr_cdcooper,  vr_dtmvtolt, vr_nrdocmto,  vr_nrdconta;
+  	 IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, vr_nrdconta) THEN 
+	   	  -- Exclui lançamento de estorno do crédito da conta corrente para movimentação para a conta transitória
+		    DELETE FROM craplcm lcm
+		     WHERE lcm.cdcooper   = vr_cdcooper
+           AND lcm.dtmvtolt   = vr_dtmvtolt
+           AND lcm.nrdconta   = vr_nrdconta
+		  	 	 AND lcm.nrdocmto   = vr_nrdocmto
+		 	  	 AND lcm.cdhistor   = 2719;
+  	    -- Exclui lançamento de crédito da conta transitória
+	   	  DELETE FROM tbcc_prejuizo_lancamento prj
+		     WHERE prj.cdcooper = vr_cdcooper
+		 	     AND prj.nrdconta = vr_nrdconta
+  	 			 AND prj.dtmvtolt = vr_dtmvtolt
+	   			 AND prj.nrdocmto = vr_nrdocmto
+		   		 AND prj.cdhistor = 2720;	
+  	 END IF;
+     -- le proxima linha
+     fetch c_cursor into wlinha;
+  end loop;
 EXCEPTION
 	WHEN OTHERS THEN
 		pr_cdcritic := 0;
@@ -1457,7 +1520,6 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
 begin
-
    pc_estorna_lancto_conta(pr_cdcooper => pr_cdcooper
 	                       , pr_dtmvtolt => pr_dtmvtolt
 	                       , pr_cdagenci => pr_cdagenci 
