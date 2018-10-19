@@ -1420,8 +1420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
             ,bpr.nrrenava
             ,bpr.tpchassi
             ,bpr.ufdplaca
-            ,bpr.uflicenc             
-            ,grvm0001.fn_des_situa_gravames(bpr.cdsitgrv) dssitgrv
+            ,bpr.uflicenc
         FROM crapbpr bpr
        WHERE bpr.cdcooper = pr_cdcooper
          AND bpr.nrdconta = pr_nrdconta
