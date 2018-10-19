@@ -46,14 +46,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
   --
   --    Programa: TELA_IMPPRE
   --    Autor   : lucas Lombardi
-  --    Data    : Marco/2016                   Ultima Atualizacao: 
+  --    Data    : Marco/2016                   Ultima Atualizacao: 19/10/2018
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : Package ref. a tela IMPPRE (Ayllos Web)
   --
   --    Alteracoes:                              
-  --    
+  --                19/10/2018 - Ajuste para reduzir o nome do job dinamico. Saquetta (INC0025575)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Insere linha no Log
@@ -130,7 +130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : EMPR
     Autor   : Lucas Lombardi
-    Data    : Julho/2016                       Ultima atualizacao: 
+    Data    : Julho/2016                       Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -140,6 +140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
     Alteracoes: 10/07/2017 - Alterado para quando incluir uma carga setar o horário
                              23:59:59 na data final de vigencia
                              M441 - Melhoria Pré-aprovado - Roberto Holz (Mout´s)
+
+                19/10/2018 - Ajuste para reduzir o nome do job dinamico. Saquetta (INC0025575)
     ............................................................................. */
     
     -- Busca Carga Solicitada/Executando
@@ -290,7 +292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                  || 'END;';
                        
       -- Montar o prefixo do código do programa para o jobname
-      vr_jobname := 'IMPPRE_CARGA_'||vr_idcarga||'$';
+      vr_jobname := 'IMPPRE_C_'||vr_idcarga||'$';
       -- Faz a chamada ao programa paralelo atraves de JOB
       GENE0001.pc_submit_job(pr_cdcooper  => vr_cdcooper  --> Código da cooperativa
                             ,pr_cdprogra  => 'IMPPRE'     --> Código do programa
