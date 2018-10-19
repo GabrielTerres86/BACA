@@ -1018,6 +1018,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       vr_flgfirst PLS_INTEGER;
       vr_vlacumul NUMBER(17,2);
       vr_vldivnor NUMBER(17,2);
+      vr_vldivida_jur60 NUMBER(17,2);
       vr_stsnrcal BOOLEAN;
       vr_inpessoa INTEGER;
       vr_iddident VARCHAR2(04);
