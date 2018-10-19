@@ -1,3 +1,4 @@
+-- Created on 19/10/2018 by T0031667 
 declare 
   -- Local variables here
   CURSOR cr_crapprm(pr_cdcooper NUMBER) IS
@@ -45,7 +46,7 @@ BEGIN
 		-- Test statements here
 		UPDATE crapprm prm
 			 SET prm.dsvlrprm = 'S'
-		 WHERE prm.cdcooper = 0
+		 WHERE prm.cdcooper = 11
 			 AND prm.nmsistem = 'CRED'
 			 AND prm.cdacesso = 'IN_ATIVA_REGRAS_PREJU'
 		;
@@ -57,7 +58,7 @@ BEGIN
 			, dsvlrprm
 		)
 		VALUES (
-		    0
+		    11
 			, 'CRED'
 			, 'IN_ATIVA_REGRAS_PREJU'
 			, 'S'
@@ -68,4 +69,3 @@ BEGIN
 
 	COMMIT;
 end;
-
