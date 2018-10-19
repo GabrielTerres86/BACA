@@ -352,6 +352,7 @@ var inobriga = '';
 var booPrimeiroBen = false; //809763
 var booBoxMarcas = true;
 var bemCarregadoUfPa = false;
+var idlsbemfin = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -1305,17 +1306,30 @@ function controlaOperacao(operacao) {
 			mensagem = 'abrindo altera ...';
 			cddopcao = 'A';
             break;
+		case 'A_BENSINI' :
+			if ( idlsbemfin ) {
+				contAlienacao = contAlienacao-1;
+				idlsbemfin = false;
+			} else {
+				contAlienacao = contAlienacao-2;
+			}
+			if (contAlienacao < 0) {
+				controlaOperacao('AT');
+                return false;
+			}
+			
 		case 'A_BENS' :
 			if (arrayProposta['tplcremp'] == 2) {
                 if (contAlienacao < nrAlienacao) {
                     mensagem = 'abrindo altera ...';
                     cddopcao = 'A';
+					operacao = 'A_BENS';
                 } else {
                     if (contAlienacao == nrAlienacao) {
                         controlaOperacao('AI_BENS');
                         return false;
                     } else {
-                        contAlienacao = 0;
+                        contAlienacao <= 0;
                         controlaOperacao('I_INICIO');
                         return false;
                     }
@@ -3226,7 +3240,8 @@ function controlaLayout(operacao) {
 			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
 				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
 				$('#' + nomeForm).limpaFormulario();
-				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+				idlsbemfin = contAlienacao + 1;
+				rNrBem.html('( ' + idlsbemfin + 'º Bem )');
 			}
 		}
 
@@ -4783,26 +4798,10 @@ function atualizaTela() {
 		}
 		
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
-
 			urlPagina= "telas/manbem/fipe/busca_marcas.php";
 			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
 			data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax', dsmarbem: arrayAlienacoes[contAlienacao]['dsmarbem'], dsbemfin: arrayAlienacoes[contAlienacao]['dsbemfin'], nrmodbem: nrmodbemtmp });
 			buscaFipeServico(urlPagina,data);
-			/*
-			$("#"+idElementMarca).on("change", function () {
-				urlPagina= "telas/manbem/fipe/busca_modelos.php";
-				cdMarcaFipe = $("#"+idElementMarca).val();
-				data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax', dsbemfin:arrayAlienacoes[contAlienacao]['dsbemfin'] });
-				buscaFipeServico(urlPagina,data);
-			});
-
-			$("#"+idElementModelo).on("change", function () {
-				urlPagina= "telas/manbem/fipe/busca_anos.php";
-				cdModeloFipe = $(this).val();
-				data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax', vlrselec: nrmodbemtmp });
-				buscaFipeServico(urlPagina,data);
-			});
-			*/
 		} else {
 			$('#dsmarbemC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsmarbem'] );
 			$('#dsbemfinC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsbemfin'] );
@@ -4971,7 +4970,7 @@ function insereAvalista(OpContinua) {
         if (nomeAcaoCall == 'A_AVALISTA') {
             controlaOperacao('F_AVALISTA');
         } else {
-        controlaOperacao(OpContinua);
+			controlaOperacao(OpContinua);
         }
         return false;
     }
@@ -5738,7 +5737,7 @@ function validaHipoteca(nmfuncao, operacao) {
         if (dscatbem == '') {//809763
             showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Ayllos', 'focaCampoErro(\'dscatbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
             return false;//809763
-        } 
+        }
     }//809763
 
     if (operacao == 'AI_HIPOTECA' || operacao == 'I_HIPOTECA') {
@@ -10672,6 +10671,7 @@ function mostraAplicacao(tpaplica) {
 }
 
 function alteraSomenteBens() {
+	bloqueiaFundo(divRotina);
 	showMsgAguardo('Aguarde, salvando ...');
 
     //Bens alienação
@@ -10731,6 +10731,7 @@ function alteraSomenteBens() {
 		},
 		success: function(response) {
 			try {
+				bloqueiaFundo(divRotina);
 				eval(response);
 				return false;
 			} catch(error) {
