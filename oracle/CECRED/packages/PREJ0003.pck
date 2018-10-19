@@ -78,4 +78,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
   END fn_verifica_preju_conta;
 	
 END PREJ0003;
+-- Teste (Reginaldo/AMcom)
 /
