@@ -14526,6 +14526,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,craplau.cddbanco
               ,craplau.dslindig
               ,craplau.dscedent
+			  ,craplau.dscodbar
               ,craplau.vllanaut
               ,craplau.dttransa
               ,craplau.hrtransa
@@ -14540,7 +14541,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,craplau.nrseqagp
               ,craphis.cdhistor||'-'||craphis.dshistor dshistor
               ,craplau.cdctrlcs
-							,craphis.cdhistor
+			  ,craphis.cdhistor
         FROM craplau craplau
             ,crapass crapass
             ,craphis craphis 
