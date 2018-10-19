@@ -5583,7 +5583,7 @@ PROCEDURE valida_senha_cartao_cecred:
            IF crapcrd.qtsenerr = crapcop.taamaxer THEN
               DO:
                   IF aux_flgcadas  THEN
-                     ASSIGN par_cdcritic = 1390
+                     ASSIGN par_cdcritic = 1392
                             par_dscritic = "     Senha Invalida,      Acesso Bloqueado".
                   ELSE
                      ASSIGN par_cdcritic = 301
@@ -5752,7 +5752,7 @@ PROCEDURE valida_senha_cartao_magnetico:
                 DO:
                     IF  aux_flgcadas  THEN
                     DO:
-                      ASSIGN par_cdcritic = 1390
+                      ASSIGN par_cdcritic = 1392
                              par_dscritic = "     Senha Invalida,      Cartao Bloqueado".
                     END.
                     ELSE
