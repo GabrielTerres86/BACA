@@ -290,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                  || 'END;';
                        
       -- Montar o prefixo do código do programa para o jobname
-      vr_jobname := 'IMPPRE_CARGA_'||vr_idcarga||'$';
+      vr_jobname := 'IMPPRE_C_'||vr_idcarga||'$';
       -- Faz a chamada ao programa paralelo atraves de JOB
       GENE0001.pc_submit_job(pr_cdcooper  => vr_cdcooper  --> Código da cooperativa
                             ,pr_cdprogra  => 'IMPPRE'     --> Código do programa
