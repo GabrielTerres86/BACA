@@ -233,6 +233,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
                  
+							 13/09/2018 - Ajuste para identificação do pagamento com histórico 2386 (Recuperação de 
+							              prejuízo - empréstimo em prejuízo) a partir do extrato do prejuízo (TBCC_PREJUIZO_DETALHE)
+														(Reginaldo - AMcom - P450)
+							            
+
      ............................................................................. */
 
      DECLARE
@@ -691,7 +696,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Pagamento de Prejuizo
             AND craphis.cdhistor in (2386)
-         GROUP BY craplcm.cdhistor,craphis.dshistor;
+					GROUP BY craplcm.cdhistor,craphis.dshistor
+		 UNION
+		     /* P450 - Reginaldo/AMcom - Ajuste para processar corretamente 
+				           os prejuízos de empréstimo pagos via Conta Transitória */
+			   SELECT prj.vllanmto
+				      , prj.cdhistor 
+							, his.dshistor
+					 FROM tbcc_prejuizo_detalhe prj
+					    , craphis his
+					WHERE prj.cdcooper = pr_cdcooper
+					  AND prj.nrdconta = pr_nrdconta
+						AND prj.nrctremp = pr_nrctremp
+						AND prj.cdhistor = 2781 -- Recuperação de prejuízo
+						AND his.cdcooper = prj.cdcooper
+						AND his.cdhistor = prj.cdhistor;
          
        -- [Projeto 403] Busca o valor pago para desconto de títulos  
        CURSOR cr_valor_pago_dsct_tit (pr_cdcooper  IN crapcyb.cdcooper%type
@@ -2060,17 +2079,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,crapcyb.vlpreapg = 0
                                  ,crapcyb.vlsdevan = pr_rw_crapcyb.vlsdeved
                                  ,crapcyb.vlsdeved = 0
+																 -- Acrescido pelo projeto 450 para correto tratamento do prejuízo de conta corrente (Reginaldo/AMcom)
+																 ,crapcyb.vlsdprea = pr_rw_crapcyb.vlsdprej
+																 ,crapcyb.vlsdprej = 0
+																 ,crapcyb.flgpreju = 0
+																 -- Fim (P450)
                WHERE crapcyb.rowid = pr_rw_crapcyb.rowid
                RETURNING crapcyb.dtdbaixa
                         ,crapcyb.vlprapga
                         ,crapcyb.vlpreapg
                         ,crapcyb.vlsdevan
                         ,crapcyb.vlsdeved
+												,crapcyb.vlsdprea
+												,crapcyb.vlsdprej
+												,crapcyb.flgpreju
                INTO pr_rw_crapcyb.dtdbaixa
                    ,pr_rw_crapcyb.vlprapga
                    ,pr_rw_crapcyb.vlpreapg
                    ,pr_rw_crapcyb.vlsdevan
-                     ,pr_rw_crapcyb.vlsdeved;
+                   ,pr_rw_crapcyb.vlsdeved
+									 ,pr_rw_crapcyb.vlsdprea
+									 ,pr_rw_crapcyb.vlsdprej
+									 ,pr_rw_crapcyb.flgpreju;
              EXCEPTION
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
@@ -5713,14 +5743,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      END IF;
 
                END IF;
-						 ELSIF rw_crapcyb.cdorigem = 1 AND rw_crapcyb.flgpreju = 1 THEN -- Prejuízo de conta corrente
+						 ELSIF rw_crapcyb.cdorigem = 1
+						 AND (rw_crapcyb.flgpreju = 1
+						 OR PREJ0003.fn_verifica_liquidacao_preju(rw_crapcyb.cdcooper, rw_crapcyb.nrdconta, vr_dtatual))  THEN -- Prejuízo de conta corrente
 							 -- Se houve pagamentos no dia
 							 vr_vllammto := PREJ0003.fn_valor_pago_conta_prej(rw_crapcyb.cdcooper
 							                                                , rw_crapcyb.nrdconta
-																															, vr_dtatual
-																															, vr_cdcritic
-																															, vr_dscritic);
-							 
+																															, vr_dtatual);
 							 IF vr_vllammto > 0 THEN
 								 --Gerar Carga Pagamentos
 								 pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
@@ -5740,7 +5769,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 							 END IF;
 							 
 							 -- Se o prejuízo foi liquidado
-							 IF NOT PREJ0003.fn_verifica_preju_conta(rw_crapcyb.cdcooper, rw_crapcyb.nrdconta) THEN
+							 IF NOT PREJ0003.fn_verifica_preju_conta(rw_crapcyb.cdcooper
+								                                     , rw_crapcyb.nrdconta) THEN
+								
 								 --Gerar carga de Baixa
 								 pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb  --Registro Cyber
 																     ,pr_dtmvtolt => vr_dtatual    --Data Movimento
