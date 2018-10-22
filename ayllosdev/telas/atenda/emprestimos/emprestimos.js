@@ -3250,37 +3250,19 @@ function controlaLayout(operacao) {
 				busca_uf_pa_ass();
 			}
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 					if (cTpChassi.val()==""){
 						cTpChassi.val(2);
 					}
 					cTpBem.trigger("change");
-					//rTpBem.css('visibility', 'visible');
 					cTpBem.habilitaCampo(); //, 'width': '87px'
-					//rUfLicenc.css('visibility', 'visible');
-					cUfLicenc.habilitaCampo();
 					$("#btHistoricoGravame").show();
-					//if (booBoxMarcas) {
-					    $("#" + idElementMarca + "C").hide();
-					    $("#" + idElementMarca).show();
-					    $("#" + idElementModelo + "C").hide();
-					    $("#" + idElementModelo).show();
-					    $("#" + idElementAno + "C").hide();
-					    $("#" + idElementAno).show();
-					/*} else {
-					    $("#" + idElementMarca + "C").show();
-					    $("#" + idElementMarca).hide();
-					    $("#" + idElementModelo + "C").show();
-					    $("#" + idElementModelo).hide();
-					    $("#" + idElementAno + "C").show();
-					    $("#" + idElementAno).hide();
-					}*/
 					cChassi.addClass('alphanum').attr('maxlength', '17'); //.css('width', '162px')
 					cTpChassi.habilitaCampo();
 					cCor.habilitaCampo();
 					cUfLicenc.habilitaCampo();
 					cTpBem.unbind('change').bind('change', function() {
-						if (cTpBem.val() != 'USADO') {
+						if ( cTpBem.val() != 'USADO' ) {
 							cUfPlaca.val('').desabilitaCampo();
 							cNrPlaca.val('').desabilitaCampo();
 							cRenavan.val('').desabilitaCampo();
@@ -3290,26 +3272,47 @@ function controlaLayout(operacao) {
 							cRenavan.habilitaCampo();
 							busca_uf_pa_ass();
 						}
-						if($(this).val() == 'USADO'){ modeloBem = ''; }
-						$('#nrmodbem').val(-1).change();
-						var bemFin = $('#dsbemfin').val();
-						$('#dsbemfin').val(bemFin).change();
+						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) ) {
+							if ($(this).val() == 'USADO') { modeloBem = ''; }
+							$('#nrmodbem').val(-1).change();
+							var bemFin = $('#dsbemfin').val();
+							$('#dsbemfin').val(bemFin).change();
+						}
 					});
-					if (booBoxMarcas) {
-						trataCamposFipe($(this));
+
+					if (!in_array(cCateg.val(), ['OUTROS VEICULOS'])) {
+					    $("#" + idElementMarca + "C").hide();
+					    $("#" + idElementMarca).show();
+					    $("#" + idElementModelo + "C").hide();
+					    $("#" + idElementModelo).show();
+					    $("#" + idElementAno + "C").hide();
+					    $("#" + idElementAno).show();
+
+						if (booBoxMarcas) {
+							trataCamposFipe($(this));
+						}
+
+						if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+							var urlPagina= "telas/manbem/fipe/busca_marcas.php";
+							var tipoVeiculo = trataTipoVeiculo($(this).val());
+							var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
+							buscaFipeServico(urlPagina,data);
+						}
+
+						if (!booBoxMarcas) {
+							booBoxMarcas = true;
+						}
+					} else {
+					    $("#" + idElementMarca + "C").show();
+					    $("#" + idElementMarca).hide();
+					    $("#" + idElementModelo + "C").show();
+					    $("#" + idElementModelo).hide();
+					    $("#" + idElementAno + "C").show().habilitaCampo();
+					    $("#" + idElementAno).hide();
+						cVlFipe.val('');
 					}
 
-					if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
-						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
-						var tipoVeiculo = trataTipoVeiculo($(this).val());
-						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
-						buscaFipeServico(urlPagina,data);
-					}
-					//$("#"+idElementAno+"C").habilitaCampo();
-					if (!booBoxMarcas) {
-					    booBoxMarcas = true;
-					}
-				} else if ( cCateg.val()=="" ) {
+				} else if ( cCateg.val() == "" ) {
 					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.val('').desabilitaCampo();
 					$("#btHistoricoGravame").hide();
@@ -3411,7 +3414,7 @@ function controlaLayout(operacao) {
 			// Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
 			cChassi.unbind('keydown').bind('keydown', function(event) {
 				
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 				
 					var tecla = event.which || event.keyCode;
 					
@@ -3442,7 +3445,7 @@ function controlaLayout(operacao) {
 					cChassi.val(cChassi.val().replace(re, ''));
 				}
 				
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 					re = /[\Q\q\I\i\O\o\_]/g;
 
 					if(re.test(cChassi.val())){
@@ -3459,7 +3462,7 @@ function controlaLayout(operacao) {
 			cChassi.unbind('blur').bind('blur', function(){
 				cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
 
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 				  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
 				}
 
@@ -4383,7 +4386,7 @@ function attArray(novaOp, cdcooper) {
 
         arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
+        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().toUpperCase()));
         arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
@@ -4779,25 +4782,12 @@ function atualizaTela() {
 				$(this).attr('selected', 'selected');
 			}
 		});
-/*
-		if ( $("#dsmarbemC").val() != "" ) {
-			$("#dsmarbemC").show();
-			$("#dsmarbem").hide();
-		}
-		if ( $("#dsbemfinC").val() != "" ) {
-			$("#dsbemfinC").show();
-			$("#dsbemfin").hide();
-		}
-		if ( $("#nrmodbemC").val() != "" ) {
-			$("#nrmodbemC").show();
-			$("#nrmodbem").hide();
-		}
-*/
+
 		if (arrayAlienacoes[contAlienacao]['tpchassi'] != "") {
 			bemCarregadoUfPa = true;
 		}
 		
-		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
 			urlPagina= "telas/manbem/fipe/busca_marcas.php";
 			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
 			data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax', dsmarbem: arrayAlienacoes[contAlienacao]['dsmarbem'], dsbemfin: arrayAlienacoes[contAlienacao]['dsbemfin'], nrmodbem: nrmodbemtmp });
@@ -4808,7 +4798,7 @@ function atualizaTela() {
 			$('#nrmodbemC','#frmTipo').val( nrmodbemtmp );
 		}
 
-		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO'])) {
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO', 'OUTROS VEICULOS'])) {
 			$("#btHistoricoGravame").show();
 			$("#frmTipo #dstipbem option").each(function() {
 				if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
@@ -5897,7 +5887,7 @@ function validaAlienacao(nmfuncao, operacao) {
 
     var aux_retorno = false;
 
-    if (in_array(dscatbem, ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+    if (in_array(dscatbem, ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 
         var msgerro = '';
         var camperr = '';

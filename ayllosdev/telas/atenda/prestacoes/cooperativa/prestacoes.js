@@ -2247,7 +2247,7 @@ function atualizaTela(){
 		$("#dsbemfin").hide();
 		$("#nrmodbem").hide();
 
-		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO'])) {
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'], ['AUTOMOVEL', 'CAMINHAO', 'MOTO', 'OUTROS VEICULOS'])) {
 			$("#btHistoricoGravame").show();
 		}
 

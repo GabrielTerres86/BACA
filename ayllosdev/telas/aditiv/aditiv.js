@@ -83,7 +83,6 @@ $(document).ready(function() {
 	estadoInicial();
 });
 
-
 // seletores
 function estadoInicial() {
 	
@@ -146,7 +145,6 @@ function atualizaSeletor(){
 
 	return false;
 }
-
 
 // controle
 function controlaOperacao(nriniseq, nrregist) {
@@ -216,7 +214,6 @@ function verificarModBem(modBem){
 	return modBemVerificado;
 }
 
-
 function manterRotina( operacao ) {
 
 	if(cddopcao == "I" && cdaditiv == 5)
@@ -249,10 +246,10 @@ function manterRotina( operacao ) {
   
   if(cddopcao == "I" && cdaditiv == 5) {	
   
-	var dscatbem = $('#dscatbem', '#frmTipo').val();	
+	var dscatbem = $('#dscatbem', '#frmTipo').val();
 	var dstipbem = $('#dstipbem', '#frmTipo').val();
-    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text()); 
-	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
+    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text());
+	var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val()); // inteiro
 	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	
 	var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
@@ -271,6 +268,12 @@ function manterRotina( operacao ) {
 	var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
+
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
+		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
+		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
+	}
 
  	$.trim(dscatbem.toUpperCase());
 	$.trim(dstipbem.toUpperCase());
@@ -437,13 +440,9 @@ function manterRotina( operacao ) {
 			}
 		});
 	}
-	
-	
+
 	return false;
-
-
 }
-
 
 // imprimir
 function Gera_Impressao() {	
@@ -485,7 +484,6 @@ function Gera_Impressao() {
 			2000
 		);
 }
-
 
 // formata
 function formataCabecalho() {
@@ -553,7 +551,6 @@ function formataCabecalho() {
 		return false;
 
 	});
-
 
 	btnOK2.unbind('click').bind('click', function() {
 		if ( divError.css('display') == 'block' ) { return false; }
@@ -722,7 +719,6 @@ function formataCabecalho() {
 		}
 	});
 
-
 	layoutPadrao();
 	return false;
 }
@@ -796,10 +792,8 @@ function controlaLayout() {
 
 	}
 
-
 	return false;
 }
-
 
 // tipo
 function mostraTipo() {
@@ -813,7 +807,7 @@ function mostraTipo() {
 		url: UrlSite + 'telas/aditiv/tipo.php',
 		data: {
 			redirect: 'html_ajax'
-			},
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
@@ -845,7 +839,7 @@ function buscaTipo() {
 			cdaditiv: cdaditiv,
             tpctrato: tpctrato,
 			redirect: 'script_ajax'
-			},
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
@@ -884,7 +878,6 @@ function buscaTipo() {
 		}
 	});
 
-
 	return false;
 }
 
@@ -911,7 +904,6 @@ function formataTipo1( tpdescto ) {
 	cDtmvtolt.css({'width':'120px'});
 	cFlgpagto.css({'width':'120px'});
 	cDtdpagto.addClass('data').css({'width':'120px'});
-
 
 	if ( cddopcao == 'I' ) {
 		$('select, input', '#'+frmTipo1).habilitaCampo();
@@ -988,7 +980,6 @@ function formataTipo2() {
 		arrayAlinha[5] = 'right';
 		arrayAlinha[6] = 'right';
 	//	arrayAlinha[7] = 'right';
-		
 
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
@@ -1213,8 +1204,6 @@ function formataTipo4() {
 	return false;
 }
 
-
-
 function formataTipo5() {
 	var frmTipo5 = 'frmTipo';
 	var tabTipo5 = 'tabTipo';
@@ -1353,6 +1342,7 @@ function formataTipo5() {
 		cVlfipbem   = $('#vlfipbem','#'+frmTipo5);
 		cVlrdobem   = $('#vlrdobem','#'+frmTipo5);
 		cDssitgrv   = $('#dssitgrv','#'+frmTipo5);
+		cDscatbem	= $('#dscatbem','#'+frmTipo5);
 		
 		///========================================================== Tamanhos Campos
 		
@@ -1399,31 +1389,49 @@ function formataTipo5() {
 			cVlfipbem.desabilitaCampo();
 			cVlfipbem.addClass("campoTelaSemBorda");
 			cVlfipbem.removeClass("campo");
-			
-			
+
 			$("#nrrenava").val("");
 			$("#nrmodbem").val("");
 			$("#nranobem").val("");
-			
+
 			cVlfipbem.maskMoney();
 			cVlrdobem.maskMoney();
 			$("#dstipbem").change(function(){
-			 	bloqueiaCamposVeiculoZero($(this).val());				
-				if($(this).val() == 'USADO'){ modeloBem = ''; }
-				$('#nrmodbem').val(-1).change();
-				var bemFin = $('#dsbemfin').val();
-				$('#dsbemfin').val(bemFin).change();
+			 	bloqueiaCamposVeiculoZero($(this).val());
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
+					if($(this).val() == 'USADO'){ modeloBem = ''; }
+					$('#nrmodbem').val(-1).change();
+					var bemFin = $('#dsbemfin').val();
+					$('#dsbemfin').val(bemFin).change();
+				}
 			});
-			
+
 			busca_uf_pa(nrdconta);
 			$("#uflicenc").prop("readonly", true);
-			
+
+			$("#"+idElementTpVeiulo).change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
+					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca).show();
+					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo).show();
+					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno).show();
+				} else {
+					$("#" + idElementMarca + "C").show();
+					$("#" + idElementMarca).hide();
+					$("#" + idElementModelo + "C").show();
+					$("#" + idElementModelo).hide();
+					$("#" + idElementAno + "C").show().habilitaCampo();
+					$("#" + idElementAno).hide();
+					cVlfipbem.val('');
+				}
+			});
 
 		} else {
-
 			$('select, input', '#'+frmTipo5).desabilitaCampo();
 		}
-		if ( cddopcao == 'C' ) {
+		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) ) {
 			$("#dsmarbemC").show();
 			$("#dsbemfinC").show();
 			$("#nrmodbemC").show();
@@ -1562,8 +1570,6 @@ function formataTipo5() {
 		$('#divConteudo').css({'width':'1000px'});
 		$('#frmTipo').css({'text-align': 'center'});
 
-
-
 	}
 
 	$('#divRotina').centralizaRotinaH();
@@ -1579,8 +1585,8 @@ function verificarTipoVeiculo(){
 	var tipo = $('#dstipbem option:selected').val();
 	
 	var optionsModBem = $('#nrmodbem option');
-		$.each(optionsModBem, function(){
-			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+		$.each(optionsModBem, function() {
+			if($(this).text().toUpperCase().search('ZERO KM') != -1) {
 				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
 				$(this).remove();
 			}
@@ -2261,7 +2267,6 @@ function formataContrato() {
 	arrayLargura[4] = '80px';
 	arrayLargura[5] = '38px';
 
-
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'left';
@@ -2296,7 +2301,6 @@ function selecionaContrato() {
 	return false;
 
 }
-
 
 // senha
 function mostraSenha() {
@@ -2381,8 +2385,6 @@ function formataSenha() {
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();
     cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');
 
-
-
 	// centraliza a divRotina
 	$('#divUsoGenerico').css({'width':'355px'});
 	$('#divConteudoSenha').css({'width':'330px', 'height':'110px'});
@@ -2432,7 +2434,6 @@ function validarSenha() {
 
 }
 
-
 // substituir bem
 function substituirBem( i ) {
 
@@ -2462,7 +2463,6 @@ function substituirBem( i ) {
 
 	return false;
 }
-
 
 // botoes
 function btnVoltar() {
@@ -2543,7 +2543,6 @@ function GerenciaPesquisa(opcao) {
 	}
 }
 
-
 function buscaDadosGAROPC() {
 
     $('#codlinha,#vlropera','#'+frmCab).val(0);
@@ -2561,7 +2560,7 @@ function buscaDadosGAROPC() {
             tpctrato : tpctrato,
             nrctremp : nrctremp,
 			redirect : 'html_ajax'
-			},
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
@@ -2574,7 +2573,6 @@ function buscaDadosGAROPC() {
 	return false;
 
 }
-
 
 function abrirTelaGAROPC() {
 

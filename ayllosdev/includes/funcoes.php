@@ -575,6 +575,8 @@ function retornaCategorias() {
 	$categorias[1]["DESCRICAO"]   = "Caminhão";
 	$categorias[2]["IDENTIFICADOR"]  = "MOTO";
 	$categorias[2]["DESCRICAO"]   = "Moto";	
+	$categorias[3]["IDENTIFICADOR"]  = "OUTROS VEICULOS";
+	$categorias[3]["DESCRICAO"]   = "Outros Veículos";
 	
 	return $categorias;
 }

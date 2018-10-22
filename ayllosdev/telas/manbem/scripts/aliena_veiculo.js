@@ -74,11 +74,18 @@ function TrataDados(){
 function validaCamposAditiv(){
 	var invalidos=0;
 	errorMessage = "";
+	
 	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		if(!validaCampo('dsmarbemC', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('dsbemfinC', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('nrmodbemC', '#frmTipo')){invalidos=invalidos+1;}
+	} else {
+		if(!validaCampo('dsmarbem', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
+	}
 	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
-	if(!validaCampo('dsmarbem', '#frmTipo')){invalidos=invalidos+1;}
-	if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
-	if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nranobem', '#frmTipo')){invalidos=invalidos+1;}	
 	if(!validaCampo('vlrdobem', '#frmTipo')){invalidos=invalidos+1;}
 
