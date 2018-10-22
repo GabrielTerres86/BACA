@@ -6103,7 +6103,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                    ,pr_nrctrpro  => pr_nrctremp ) LOOP 
 
         vr_cdsitgrv := NULL;
-        vr_dssitgrv := NULL;
         vr_dscrigrv := NULL;
 
         GRVM0001.pc_valida_situacao_gravames (pr_cdcooper => pr_cdcooper           -- Cód. cooperativa
