@@ -80,7 +80,7 @@
 						<td width="1"></td>
 
                         <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
-						<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(2,1,1);return false;">Recebimento de Solicitação</a></td>
+						<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(2,1,'1');return false;">Recebimento de Solicitação</a></td>
 						<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
 						<td width="1"></td>
 						
@@ -91,7 +91,6 @@
               <tr>
                 <td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
                   <div id="divConteudoOpcao"></div>
-
                 </td>
               </tr>
             </table>
@@ -102,14 +101,11 @@
   </tr>
 </table>
 <script type="text/javascript">
-
   // Mostra div da rotina
   mostraRotina();
 
   // Esconde mensagem de aguardo
   hideMsgAguardo();
 
-  <?php
-       echo "acessaOpcaoAba(2,0,'0');";
-?>
+  <?php echo "acessaOpcaoAba(2,0,'0');"; ?>
 </script>

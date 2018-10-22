@@ -1,4 +1,4 @@
-﻿/**********************************************************************
+/**********************************************************************
   Fonte: portabilidade.js                                                
   Autor: Anderson-Alan													   
   Data : Setembro/2018                 Ultima Alteracao: 24/09/2018
@@ -12,19 +12,20 @@ var callafterCapital = '';
 
 var lstLancamentos = new Array();
 var lstEstorno = new Array();
-var glb_opcao = "";
+var glb_opcao = '';
+var nomeForm = '';
 
 var vintegra = 0;
 
 
-// Função para acessar opções da rotina
+// Fun??o para acessar op??es da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 	glb_opcao = opcao;
 	
-	if (opcao == "0") {	// Opção Principal
+	if (opcao == "0") {	// Op??o Principal
 		var msg = ", carregando dados de portabilidade";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/envio_solicitacao.php";
-	} else if (opcao == "1") { // Opção Subscrição Inicial
+	} else if (opcao == "1") { // Op??o Subscri??o Inicial
 		var msg = ", carregando subscri&ccedil;&atilde;o inicial";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/destinatario.php";
 	}
@@ -33,9 +34,9 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		// Mostra mensagem de aguardo
 		showMsgAguardo("Aguarde" + msg + " ...");
 	
-    // Atribui cor de destaque para aba da opção
+    // Atribui cor de destaque para aba da op??o
 	for (var i = 0; i < nrOpcoes; i++) {
-	    if (id == i) { // Atribui estilos para foco da opção
+	    if (id == i) { // Atribui estilos para foco da op??o
             $("#linkAba" + id).attr("class", "txtBrancoBold");
             $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
             $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
@@ -49,8 +50,8 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
 	}
 
-	if (opcao != "") { // Demais Opções		
-	    // Carrega conteúdo da opção através de ajax
+	if (opcao != "") { // Demais Op??es		
+	    // Carrega conte?do da op??o atrav?s de ajax
 		$.ajax({		
 			type: "POST", 
 			dataType: "html",
@@ -62,7 +63,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 			},
             error: function (objAjax, responseError, objExcept) {
 				hideMsgAguardo();
-				showError("error", "Não foi possível concluir a requisição..", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error", "N?o foi poss?vel concluir a requisi??o..", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
             success: function (response) {
 				$("#divConteudoOpcao").html(response);
@@ -73,12 +74,12 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 }
 
 
-//Função para controle de navegação
+//Fun??o para controle de navega??o
 function controlaFoco(opcao) {
     var IdForm = '';
     var formid;
 
-    if (opcao == "@") { //Envio de Solicitação
+    if (opcao == "@") { //Envio de Solicita??o
         $('.FirstInput:first ').focus();
 	}
 
@@ -87,16 +88,22 @@ function controlaFoco(opcao) {
 
 
 //
-function controlaLayout(operacao) {
+function controlaLayout(cddopcao) {
 	
     altura = '630px';
 	largura = '500px';
 	
-	if (in_array(operacao, ['ENVIO_SOLICITACAO'])) {
+	if (in_array(cddopcao, ['C','A','I'])) {
 		
 		nomeForm = 'frmDadosPortabilidade';		
-        altura = '425px';
-        largura = '555px';
+		if (glb_opcao == '0') {
+			altura = '435px';
+        	largura = '555px';
+		} else {
+			altura = '215px';
+        	largura = '555px';
+		}
+        
 		
         $('#' + nomeForm).css('margin-top', '2px');
 		
@@ -106,18 +113,19 @@ function controlaLayout(operacao) {
 		var rDsdemail = $('label[for="dsdemail"]', '#'+nomeForm);
 		var rDsdbanco = $('label[for="dsdbanco"]', '#'+nomeForm);
 		var rCdageban = $('label[for="cdageban"]', '#'+nomeForm);
-		var rNrispbif_ban = $('label[for="nrispbif_ban"]', '#'+nomeForm);
-		var rNrcnpjag = $('label[for="nrcnpjag"]', '#'+nomeForm);
+		var rNrispbif = $('label[for="nrispbif"]', '#'+nomeForm);
+		var rNrcnpjif = $('label[for="nrcnpjif"]', '#'+nomeForm);
 		var rNrdocnpj_emp = $('label[for="nrdocnpj_emp"]', '#'+nomeForm);
 		var rNmprimtl_emp = $('label[for="nmprimtl_emp"]', '#'+nomeForm);
 		var rNrispbif = $('label[for="nrispbif"]', '#'+nomeForm);
 		var rNrdocnpj = $('label[for="nrdocnpj"]', '#'+nomeForm);
 		var rTpconta = $('label[for="tpconta"]', '#'+nomeForm);
 		var rCdagectl = $('label[for="cdagectl"]', '#'+nomeForm);
-		var rNrconta = $('label[for="nrconta"]', '#'+nomeForm);
-		var rDscodigo = $('label[for="dscodigo"]', '#'+nomeForm);
-		var rDtsolicitacao = $('label[for="dtsolicitacao"]', '#'+nomeForm);
+		var rNrdconta = $('label[for="nrdconta"]', '#'+nomeForm);
+		var rDscodigo = $('label[for="dssituacao"]', '#'+nomeForm);
+		var rDtsolicitacao = $('label[for="dtsolicita"]', '#'+nomeForm);
 		var rDtretorno = $('label[for="dtretorno"]', '#'+nomeForm);
+		var rNrnu_portabilidade = $('label[for="nrnu_portabilidade"]', '#'+nomeForm);
 		var rDsmotivo = $('label[for="dsmotivo"]', '#'+nomeForm);
 		
 		var cNrcpfcgc = $('#nrcpfcgc', '#'+nomeForm);
@@ -126,80 +134,99 @@ function controlaLayout(operacao) {
 		var cDsdemail = $('#dsdemail', '#'+nomeForm);
 		var cDsdbanco = $('#dsdbanco', '#'+nomeForm);
 		var cCdageban = $('#cdageban', '#'+nomeForm);
-		var cNrispbif_ban = $('#nrispbif_ban', '#'+nomeForm);
-		var cNrcnpjag = $('#nrcnpjag', '#'+nomeForm);
+		var cNrispbif = $('#nrispbif', '#'+nomeForm);
+		var cNrcnpjif = $('#nrcnpjif', '#'+nomeForm);
 		var cNrdocnpj_emp = $('#nrdocnpj_emp', '#'+nomeForm);
 		var cNmprimtl_emp = $('#nmprimtl_emp', '#'+nomeForm);
 		var cNrispbif = $('#nrispbif', '#'+nomeForm);
 		var cNrdocnpj = $('#nrdocnpj', '#'+nomeForm);
 		var cTpconta = $('#tpconta', '#'+nomeForm);
 		var cCdagectl = $('#cdagectl', '#'+nomeForm);
-		var cNrconta = $('#nrconta', '#'+nomeForm);
-		var cDscodigo = $('#dscodigo', '#'+nomeForm);
-		var cDtsolicitacao = $('#dtsolicitacao', '#'+nomeForm);
+		var cNrdconta = $('#nrdconta', '#'+nomeForm);
+		var cDscodigo = $('#dssituacao', '#'+nomeForm);
+		var cDtsolicitacao = $('#dtsolicita', '#'+nomeForm);
 		var cDtretorno = $('#dtretorno', '#'+nomeForm);
+		var cNrnu_portabilidade = $('#nrnu_portabilidade', '#'+nomeForm);
 		var cDsmotivo = $('#dsmotivo', '#'+nomeForm);
 		
-		rNrcpfcgc.addClass('rotulo').css({ 'width': '90px' });
-		cNrcpfcgc.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrcpfcgc.addClass('rotulo').css({ 'width': '98px' });
+		cNrcpfcgc.css({ 'width': '110px' });
 		
 		rNmprimtl.css({ 'width': '50px' });
-		cNmprimtl.addClass('campoTelaSemBorda').css({ 'width': '250px' });
+		cNmprimtl.css({ 'width': '250px' });
 		
-		rNrtelefo.addClass('rotulo').css({ 'width': '90px' });
-		cNrtelefo.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrtelefo.addClass('rotulo').css({ 'width': '98px' });
+		cNrtelefo.css({ 'width': '110px' });
 		
 		rDsdemail.css({ 'width': '50px' });
-		cDsdemail.addClass('campoTelaSemBorda').css({ 'width': '250px' });
+		cDsdemail.css({ 'width': '250px' });
 		
-		rDsdbanco.addClass('rotulo').css({ 'width': '90px' });
-		cDsdbanco.addClass('campoTelaSemBorda').css({ 'width': '413px' });
+		rDsdbanco.addClass('rotulo').css({ 'width': '98px' });
+		cDsdbanco.css({ 'width': '413px' });
 		
 		rCdageban.css({ 'width': '80px' });
-		cCdageban.addClass('campoTelaSemBorda').css({ 'width': '80px' });
+		cCdageban.css({ 'width': '80px' });
 		
-		rNrispbif_ban.addClass('rotulo').css({ 'width': '90px' });
-		cNrispbif_ban.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrispbif.addClass('rotulo').css({ 'width': '98px' });
+		cNrispbif.css({ 'width': '110px' });
 		
-		rNrcnpjag.css({ 'width': '100px' });
-		cNrcnpjag.addClass('campoTelaSemBorda').css({ 'width': '200px' });
+		rNrcnpjif.css({ 'width': '100px' });
+		cNrcnpjif.css({ 'width': '200px' });
 		
-		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '90px' });
-		cNrdocnpj_emp.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '98px' });
+		cNrdocnpj_emp.css({ 'width': '110px' });
 		
 		rNmprimtl_emp.css({ 'width': '50px' });
-		cNmprimtl_emp.addClass('campoTelaSemBorda').css({ 'width': '250px' });
+		cNmprimtl_emp.css({ 'width': '250px' });
 		
-		rNrispbif.addClass('rotulo').css({ 'width': '90px' });
-		cNrispbif.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrispbif.addClass('rotulo').css({ 'width': '98px' });
+		cNrispbif.css({ 'width': '110px' });
 		
 		rNrdocnpj.css({ 'width': '50px' });
-		cNrdocnpj.addClass('campoTelaSemBorda').css({ 'width': '248px' });
+		cNrdocnpj.css({ 'width': '248px' });
 		
-		rTpconta.addClass('rotulo').css({ 'width': '90px' });
-		cTpconta.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rTpconta.addClass('rotulo').css({ 'width': '98px' });
+		cTpconta.css({ 'width': '110px' });
 		
 		rCdagectl.css({ 'width': '50px' });
-		cCdagectl.addClass('campoTelaSemBorda').css({ 'width': '75px' });
+		cCdagectl.css({ 'width': '75px' });
 		
-		rNrconta.css({ 'width': '60px' });
-		cNrconta.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rNrdconta.css({ 'width': '60px' });
+		cNrdconta.css({ 'width': '110px' });
 		
-		rDscodigo.addClass('rotulo').css({ 'width': '90px' });
-		cDscodigo.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rDscodigo.addClass('rotulo').css({ 'width': '98px' });
+		cDscodigo.css({ 'width': '110px' });
 		
-		rDtsolicitacao.addClass('rotulo').css({ 'width': '90px' });
-		cDtsolicitacao.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rDtsolicitacao.addClass('rotulo').css({ 'width': '98px' });
+		cDtsolicitacao.css({ 'width': '110px' });
 		
-		rDtretorno.css({ 'width': '189px' });
-		cDtretorno.addClass('campoTelaSemBorda').css({ 'width': '110px' });
+		rDtretorno.css({ 'width': '98px' });
+		cDtretorno.css({ 'width': '200px' });
+
+		rNrnu_portabilidade.css({ 'width': '98px' });
+		cNrnu_portabilidade.css({ 'width': '200px' });
 		
-		rDsmotivo.addClass('rotulo').css({ 'width': '90px' });
-		cDsmotivo.addClass('campoTelaSemBorda').css({ 'width': '412px' });
+		rDsmotivo.addClass('rotulo').css({ 'width': '98px' });
+		cDsmotivo.css({ 'width': '412px' });
+
+
+		if (cddopcao == 'C') {
+			$('input,select','#'+nomeForm).desabilitaCampo();
+		} else {
+			$('[readonly]','#'+nomeForm).desabilitaCampo();
+		}
+
+		$('#dsdbanco').bind('change', function (){
+			var $el = $(this).find(':selected'),
+				nrispbif = $el.data('nrispbif'),
+				nrcnpjif = $el.data('nrcnpjif');
+
+			$('#nrispbif').val(nrispbif);
+			$('#nrcnpjif').val(nrcnpjif);
+		});
 		
-    } else if (in_array(operacao, ['RECEBIMENTO_SOLICITACAO'])) {
-		
-		
+    } else if (cddopcao == 'S') {
+
     }
 	
 	callafterCapital = '';
@@ -217,9 +244,126 @@ function controlaLayout(operacao) {
 
 	return false;
 }
-
-
     
-function senhaCoordenador(executaDepois) {
-	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+function controlaOperacao(cddopcao) {
+	switch(cddopcao) {
+		// Solicita portabilidade
+		case 'S':
+			var cDsdbanco = $('#dsdbanco', '#'+nomeForm);
+			var vCdbccxlt = cDsdbanco.val();
+			if (!vCdbccxlt) {
+				showError("error", "O campo Banco Folha deve ser selecionado", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				cDsdbanco.focus();
+				return;
+			}
+			solicitaPortabilidade(false);
+		break;
+
+		// Cancela portabilidade
+		case 'E':
+			exibeCancelamento();
+		break;
+	}
+	return;
+}
+
+function solicitaPortabilidade(skipConfirm) {
+	if (!skipConfirm) {
+		showConfirmacao('Confirma a solicita&ccedil;&atilde;o de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Ayllos', 'solicitaPortabilidade(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		return;
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, solicitando portabilidade...");
+
+	var cdbccxlt = $('#dsdbanco', '#'+nomeForm).val();
+	var nrispbif = $('#nrispbif', '#'+nomeForm).val();
+	var nrcnpjif = $('#nrcnpjif', '#'+nomeForm).val();
+
+	// Carrega conte?do da op??o atrav?s de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/solicita_portabilidade.php",
+		data: {
+			nrdconta: nrdconta,
+            cdbccxlt: cdbccxlt,
+		  	nrispbif: nrispbif,
+			nrcnpjif: normalizaNumero(nrcnpjif),
+			cddopcao: 'S',
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
+function exibeCancelamento() {
+	exibeRotina($('#divUsoGenerico'));
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, solicitando portabilidade...");
+
+	// Carrega conte?do da op??o atrav?s de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/form_cancela_portabilidade.php",
+		data: {
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			fechaRotina($('#divRotina'));
+			$("#divUsoGenerico").html(response);
+		}
+	});
+}
+
+function confirmaCancelamento(skipConfirm) {
+	if (!skipConfirm) {
+		showConfirmacao('Confirma o cancelamento de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaCancelamento(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		return;
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, solicitando cancelamento...");
+
+	var cdmotivo = $('#cdmotivo', '#frmCancelaPortabilidade').val();
+
+	// Carrega conte?do da op??o atrav?s de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/cancela_portabilidade.php",
+		data: {
+			nrdconta: nrdconta,
+            cdmotivo: cdmotivo,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
+function imprimirTermoAdesao(dsrowid) {
+    $("#dsrowid", "#frmTermo").val(dsrowid);
+
+    var action = $("#frmTermo").attr("action");
+    var callafter = "";
+
+    carregaImpressaoAyllos("frmTermo", action, callafter);
 }
