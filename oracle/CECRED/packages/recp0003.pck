@@ -60,6 +60,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                 com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
                               (Reginaldo - AMcom)
                               
+                 23/07/2018 - Quando é feito um acordo de cobrança pelo CYBER, o acordo é fechado com um valor específico.
+                              Ao longo do pagamento deste acordo, podem incidir novos valores na conta,
+                              como taxas de atraso ou juros de mora, por exemplo.
+                              Quando o acordo é quitado, é feita uma verificação se o valor pago no acordo não foi
+                              suficiente para pagar todo o saldo devedor da conta. Neste caso, é feito um lançamento
+                              de abono (abatimento), para liquidar este saldo residual.
+                              Para este abono/abatimento, atualmente, é feito um lançamento com o histórico 2181.
+                              Alterado para que no momento de fazer o lançamento do abono,
+                              verificar se a conta está em prejuízo.
+                              Se estiver, ao invés de lançar com o histórico 2181, vamos usar o histórico 2723.
+                             (Renato Cordeiro - AMcom)
+
+
             07/08/2018 - 9318:Pagamento de Emprestimo  Alterar a chamada para : 
                                                 -pc_pagar_emprestimo_tr
                                                 -pc_pagar_emprestimo_prejuizo
@@ -606,6 +619,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_nracordo NUMBER;
       vr_dtquitac DATE;
 
+      vr_cdhistor craplcm.cdhistor%type;
+			
+			vr_vlrabono tbcc_prejuizo.vlrabono%TYPE;
+
       -- Consulta contratos em acordo
       CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
         WITH acordo_contrato AS (
@@ -642,6 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,ass.vllimcre
               ,ass.cdcooper
               ,ass.nrdconta
+              ,ass.inprejuz
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -1202,7 +1220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_vlsdevat => rw_crapepr.vlsdevat
                                                        ,pr_vlparcel => 0
                                                        ,pr_idorigem => 7
-                                                       ,pr_nmtelant => vr_nmdatela
+                                                       ,pr_nmtelant => CASE WHEN rw_crapass.inprejuz = 0 THEN vr_nmdatela ELSE 'BLQPREJU' END
                                                        ,pr_cdoperad => vr_cdoperad
                                                        ,pr_inliqaco => 'S'
                                                        ,pr_idvlrmin => vr_idvlrmin
@@ -1271,6 +1289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                  IF rw_nracordo.vlbloqueado > 0 THEN
 
+                    IF rw_crapass.inprejuz = 0 THEN   
                     EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                   ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
                                                   ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
@@ -1306,6 +1325,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                       ROLLBACK; -- Desfaz acoes
                       EXIT LEITURA_TXT;
                     END IF;
+										ELSE
+											PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_crapass.cdcooper
+				                            , pr_nrdconta => rw_crapass.nrdconta
+																		, pr_vlrlanc  => rw_nracordo.vlbloqueado
+																		, pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt
+																		, pr_cdcritic => vr_cdcritic
+																		, pr_dscritic => vr_dscritic); 
+														
+											IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+												-- Log de erro de execucao
+												pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+																						 ,pr_dstiplog => 'E'
+																						 ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
+
+												pr_flgemail := TRUE;
+												ROLLBACK; -- Desfaz acoes
+												EXIT LEITURA_TXT;
+											END IF;
+										END IF;
 
                  END IF;
 
@@ -1315,8 +1353,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    /* Se ainda houver saldo devedor nas operações vinculadas ao acordo,
                       o sistema Ayllos deverá efetuar o abatimento do saldo devedor das operações
                       vinculadas ao acordo cujo ainda existem saldo(s) devedor(es), de forma automatica.
-                      Para este procedimento, utilizar o histórico: 2181 */
+                      Para este procedimento, utilizar o histórico: 2181
+                      Para contas em prejuizo usar historico 2723 */
 
+                   -- Renato Cordeiro
+                   vr_cdhistor := 2181;
+									 
+									 IF rw_crapass.inprejuz = 1 THEN
+										 -- Se a conta está em prejuízo, lança como abono somente o valor referente ao saldo do prejuízo de c/c
+										 vr_vlrabono := PREJ0003.fn_obtem_saldo_prejuizo_cc(rw_crapass.cdcooper, rw_crapass.nrdconta);
+									 ELSE
+										 vr_vlrabono := vr_vllancam - nvl(rw_nracordo.vlbloqueado,0);
+									 END IF;
+
+                   IF vr_vlrabono > 0 THEN
+										 -- Lança crédito do abono na conta corrente
                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                  ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
                                                  ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
@@ -1325,8 +1376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                  ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
                                                  ,pr_nrdolote => 650001                                       --> Numero do Lote
                                                  ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
-                                                 ,pr_cdhistor => 2181                                         --> Codigo historico
-                                                 ,pr_vllanmto => vr_vllancam - rw_nracordo.vlbloqueado        --> Valor do credito
+																									 ,pr_cdhistor => vr_cdhistor                                  --> Codigo historico
+																									 ,pr_vllanmto => vr_vlrabono                                  --> Valor do credito
                                                  ,pr_nrparepr => 0                                            --> Número do Acordo
                                                  ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
                                                  ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
@@ -1351,8 +1402,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      EXIT LEITURA_TXT;
                    END IF;
 
+										 -- Se a conta está em prejuízo
+										 IF rw_crapass.inprejuz = 1 THEN
+												-- Abate o valor do abono do saldo do prejuízo da conta corrente
+												UPDATE tbcc_prejuizo
+													 SET vlsdprej = vlsdprej - vr_vlrabono
+														 , vlrabono = vlrabono + vr_vlrabono
+													WHERE cdcooper = rw_crapass.cdcooper
+														AND nrdconta = rw_crapass.nrdconta
+														AND dtliquidacao IS NULL;
+                 END IF;
+									 END IF;
                  END IF;
 
+                 -- Atualiza a situação do acordo
                  BEGIN
                    UPDATE tbrecup_acordo
                       SET vlbloqueado = 0,
