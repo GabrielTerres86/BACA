@@ -228,9 +228,14 @@ function SubstituiBem(){
 	var dscatbem = $('#dscatbem', '#frmTipo') .val();	
 	var dstipbem = $('#dstipbem', '#frmTipo') .val();
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text(); 
+	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text();
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
+		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
+		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
+	}
 	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
-	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	var vlrdobem =  $('#vlrdobem', '#frmTipo') .val();
 	var vlfipbem =  $('#vlfipbem', '#frmTipo') .val();
 	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro

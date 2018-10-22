@@ -3470,7 +3470,7 @@ function controlaLayout(operacao) {
 			});
 
 			bemCarregadoUfPa = false;
-			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
+			if ($("#"+idElementMarca+"C").val()=="" && (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO']))){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
 			if ($("#"+idElementAno+"C").val()=="" && (!in_array(cCateg.val(), ['MAQUINA DE COSTURA', 'EQUIPAMENTO']))){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
 		} else {
