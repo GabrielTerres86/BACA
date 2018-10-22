@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0179tt.i
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 27/09/2013                     Ultima atualizacao: 11/03/2016
+    Data    : 27/09/2013                     Ultima atualizacao: 19/07/2018
   
     Dados referentes ao programa:
   
@@ -21,6 +21,8 @@
                 
                 15/05/2018 - 364 - SM 5- Incluir campo inperdes - Rafael Mouts
 
+                19/07/2018 - P450 - Incluído novo campo indebprj - Diego Simas (AMcom)
+                
 .............................................................................*/
 
 DEF TEMP-TABLE tt-histor NO-UNDO
@@ -72,7 +74,8 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD vltarint AS DECI
     FIELD txcpmfcc AS DECI
     FIELD inestocc AS INTE
-	FIELD idmonpld AS INTE.
+	FIELD idmonpld AS INTE
+    FIELD indebprj AS INTE.
     
 DEF TEMP-TABLE tt-crapthi NO-UNDO
     FIELD cdcooper AS INTE

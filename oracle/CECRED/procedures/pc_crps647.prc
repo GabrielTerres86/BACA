@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 04/07/2018
+  Data    : Setembro/2013                        Ultima atualizacao: 06/08/2018
 
   Dados referentes ao programa:
 
@@ -165,6 +165,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            inclusoes de debitos(Lucas Ranghetti #849505)
                            
               04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
+
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                           Alteração específica neste programa acrescentando o tratamento para a origem
+                           BLQPREJU
+                           (Renato Cordeiro - AMcom)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -1180,7 +1186,7 @@ BEGIN
                      AND (nrdocmto  = rw_crapatr.cdrefere
                       OR nrcrcard  = rw_crapatr.cdrefere)
                      AND insitlau  = 1               
-                     AND dsorigem NOT IN('INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS');
+                     AND dsorigem NOT IN('INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS','BLQPREJU');
                 EXCEPTION
                   WHEN OTHERS THEN 
                   vr_dscritic := 'Erro ao atualizar lançamentos futuros da nova autorizacao --> '||sqlerrm;

@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0179.p
      Autor   : Jéssica Laverde Gracino (DB1)
-     Data    : 02/10/2013                    Ultima atualizacao: 10/03/2016
+     Data    : 02/10/2013                    Ultima atualizacao: 18/07/2018
 
      Objetivo  : BO de Comunicacao XML x BO - Tela HISTOR
 
@@ -23,6 +23,9 @@
                  16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
                               
                  15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
+                              
+                 18/07/2018 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
+  							  PJ 450 - Diego Simas - AMcom
                               
 ............................................................................*/
 
@@ -77,6 +80,7 @@ DEF VAR aux_tplotmov AS INTE                                         NO-UNDO.
 DEF VAR aux_tpctbcxa AS INTE                                         NO-UNDO.
 DEF VAR aux_ingercre AS INTE                                         NO-UNDO.
 DEF VAR aux_inestocc AS INTE                                         NO-UNDO.
+DEF VAR aux_indebprj AS INTE                                         NO-UNDO.
 DEF VAR aux_ingerdeb AS INTE                                         NO-UNDO.
 DEF VAR aux_flgsenha AS INTE                                         NO-UNDO.
 DEF VAR aux_indutblq AS CHAR                                         NO-UNDO.
@@ -155,6 +159,7 @@ PROCEDURE valores_entrada:
              WHEN "tpctbcxa" THEN aux_tpctbcxa = INTE(tt-param.valorCampo).
              WHEN "ingercre" THEN aux_ingercre = INTE(tt-param.valorCampo).
              WHEN "inestocc" THEN aux_inestocc = INTE(tt-param.valorCampo).
+             WHEN "indebprj" THEN aux_indebprj = INTE(tt-param.valorCampo).
              WHEN "ingerdeb" THEN aux_ingerdeb = INTE(tt-param.valorCampo).
              WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
 			 WHEN "indutblq" THEN aux_indutblq = tt-param.valorCampo.
@@ -384,6 +389,7 @@ PROCEDURE Grava_Dados:
                      
                      INPUT aux_ingercre,     
                      INPUT aux_inestocc,       
+                     INPUT aux_indebprj,
                      INPUT aux_ingerdeb,     
                      
                      INPUT aux_cdgrphis,

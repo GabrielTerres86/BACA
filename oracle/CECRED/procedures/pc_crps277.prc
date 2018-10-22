@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair 
-   Data    : Outubro/1999                    Ultima atualizacao: 20/05/2016
+   Data    : Outubro/1999                    Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -69,6 +69,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
 
                02/03/2017 - Incluido nas consultas da craplau 
                             craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                           Alteração específica neste programa acrescentando o tratamento para a origem
+                           BLQPREJU
+                           (Renato Cordeiro - AMcom)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -153,6 +159,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
                                 ,'BLOQJUD'
                                 ,'DAUT BANCOOB'
                                 ,'TRMULTAJUROS'
+                                ,'BLQPREJU'
                                 ,'ADIOFJUROS')
         ORDER BY lau.cdhistor;
   

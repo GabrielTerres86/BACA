@@ -11,7 +11,7 @@ BEGIN
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Edson
-    Data    : Abril/2003                      Ultima atualizacao: 07/07/2017
+    Data    : Abril/2003                      Ultima atualizacao: 06/08/2018
 
     Dados referentes ao programa:
 
@@ -109,6 +109,13 @@ BEGIN
                 07/07/2017 - #703725 Uso da variável vr_dscritic no lugar de pr_dscritic para logar as críticas
                              corretamente; e tratamento para ir para o próximo registro do cr_craplau ao invés de 
                              sair do looping (Carlos)
+                             
+                06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                             após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                             Alteração específica neste programa acrescentando o tratamento para a origem
+                             BLQPREJU. Tratamento crítica 695 para também verificar conta em prejuízo
+                             (Renato Cordeiro - AMcom)
+
   ............................................................................. */
   DECLARE
     --Busca os dados da cooperativa
@@ -150,7 +157,8 @@ BEGIN
                                   'CARTAOBB',
                                   'BLOQJUD',
                                   'DAUT BANCOOB',
-                                  'TRMULTAJUROS')
+                                  'TRMULTAJUROS',
+                                  'BLQPREJU')
        order by cdcooper, nrdconta, dtmvtopg, cdhistor, nrdocmto; -- índice craplau2
     rw_craplau cr_craplau%ROWTYPE;
     --Cursor para buscar o associado

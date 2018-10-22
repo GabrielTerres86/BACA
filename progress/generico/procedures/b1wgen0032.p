@@ -7,7 +7,7 @@
   | b1wgen0032.p/verifica-letras-seguranca | CADA0004.fn_verif_letras_seguranca     |
   | b1wgen0032.obtem-cartoes-magnetico     | CADA0004.pc_obtem_cartoes_magneticos   |
   | b1wgen0032.verifica-situacao-cartao    | CADA0004.fn_situacao_cartao_mag        |
-  
+  | b1wgen0032.bloquear-cartao-magnetico   | CADA0004.pc_bloquear_cartao_magnetico  |
   +----------------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -24,7 +24,7 @@
 
     Programa: b1wgen0032.p
     Autor   : Guilherme/David
-    Data    : Agosto/2008                     Ultima Atualizacao: 19/04/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 14/08/2018
            
     Dados referentes ao programa:
                 
@@ -151,6 +151,8 @@
 							 
 				03/08/2018 - Ajuste na grava-senha-letras, para	alterar a situação
 				             da senha letras para ativo. INC0019451 (Wagner - Sustentação)
+
+                14/08/2018 - P450 - Procedimentos realizados na c/c para a transferência(Rangel/AMcom)
 
 ..............................................................................*/
 
@@ -1951,114 +1953,51 @@ PROCEDURE bloquear-cartao-magnetico:
             
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
-    
-    DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrcartao AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Bloquear cartao magnetico"
-           aux_flgtrans = FALSE.
+    ASSIGN aux_nrcartao = STRING(par_nrcartao).
 
-    TRANSACAO:
-    
-    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
-    
-        DO aux_contador = 1 TO 10:
-        
-            ASSIGN aux_dscritic = "".
-            
-            FIND crapcrm WHERE crapcrm.cdcooper = par_cdcooper AND
-                               crapcrm.nrdconta = par_nrdconta AND
-                               crapcrm.nrcartao = par_nrcartao
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+              
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-            IF  NOT AVAILABLE crapcrm  THEN
-                DO:
-                    IF  LOCKED crapcrm  THEN
-                        DO:
-                            aux_dscritic = "Registro do cartao magnetico esta" +
-                                           " sendo alterado.".
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                    ELSE
-                        aux_dscritic = "Cartao magnetico nao cadastrado.".
-                END.
-        
-            LEAVE.
-            
-        END. /** Fim do DO .. TO **/
-        
-        IF  aux_dscritic <> ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0.
-
-                RUN gera_erro (INPUT par_cdcooper,
+   RUN STORED-PROCEDURE pc_bloquear_cartao_magnetico
+         aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT  par_cdcooper, 
                                INPUT par_cdagenci,
                                INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                                   
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-        
-        IF  crapcrm.cdsitcar <> 2  THEN
-            DO:
-                ASSIGN aux_cdcritic = 538
-                       aux_dscritic = "".
-
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                                   
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-
-        ASSIGN crapcrm.cdsitcar = 4
-               crapcrm.dtcancel = par_dtmvtolt
-               crapcrm.dttransa = par_dtmvtolt
-               crapcrm.hrtransa = TIME
-               crapcrm.cdoperad = par_cdoperad               
-               aux_flgtrans     = TRUE.
-    
-    END. /** Fim do DO TRANSACTION - TRANSACAO **/
-    
-    /** Verifica se transacao foi executada com sucesso **/
-    IF  NOT aux_flgtrans  THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-            
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:                
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Nao foi possivel bloquear o cartao" +
-                                          " magnetico.".
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                END.
-                                                
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
                                     INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
+                       INPUT  par_nmdatela,
+                       INPUT  par_idorigem,
+                       INPUT  par_nrdconta, 
                                     INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
+                       INPUT  par_dtmvtolt,
+                       INPUT  aux_nrcartao,
+                       INPUT  IF par_flgerlog THEN "S" ELSE "N", 
+                       
+                       OUTPUT 0,
+                       OUTPUT "",
+                       OUTPUT "").
+                       
+    CLOSE STORED-PROC pc_bloquear_cartao_magnetico 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.   
+          
+   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }  
+   
+     ASSIGN aux_cdcritic = pc_bloquear_cartao_magnetico.pr_cdcritic
+                             WHEN pc_bloquear_cartao_magnetico.pr_cdcritic <> ?
+           aux_dscritic  = pc_bloquear_cartao_magnetico.pr_dscritic 
+                             WHEN pc_bloquear_cartao_magnetico.pr_dscritic <> ?.
+ 
+     IF  aux_cdcritic <> 0   OR
+        aux_dscritic <> ""  THEN
+        DO:                                  
+            CREATE tt-erro.
+            ASSIGN tt-erro.cdcritic = aux_cdcritic
+                   tt-erro.dscritic = aux_dscritic.
                    
             RETURN "NOK".
         END.

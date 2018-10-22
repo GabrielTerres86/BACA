@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: sistema/generico/procedures/b1wgen0179.p
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 27/09/2013                     Ultima atualizacao: 11/04/2018
+    Data    : 27/09/2013                     Ultima atualizacao: 18/07/2018
 
     Objetivo  : Tranformacao BO tela HISTOR.
 
@@ -27,6 +27,10 @@
                 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
         
                 15/05/2018 - 364 - SM 5 - Ajuste para considerar o novo parâmetro inperdes (Rafael - Mouts).
+
+                18/07/2018 - P450 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
+                             (Diego Simas - AMcom)
+        
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -592,6 +596,7 @@ PROCEDURE Busca_Historico:
                                     1
                                 ELSE
                                     0
+           tt-histor.indebprj = craphis.indebprj
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
 		   /*PJ 416 - Início */
@@ -845,6 +850,7 @@ PROCEDURE Grava_Dados:
     
     DEF  INPUT PARAM par_ingercre AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inestocc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_indebprj AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_ingerdeb AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
@@ -1277,6 +1283,7 @@ PROCEDURE Grava_Dados:
                                        INPUT par_nrctadeb,
                                        INPUT par_ingercre,
                                        INPUT aux_inestocc,
+                                       INPUT par_indebprj,
                                        INPUT par_ingerdeb,
                                        INPUT par_nrctatrc,
                                        INPUT par_nrctatrd,
@@ -1328,6 +1335,7 @@ PROCEDURE Grava_Dados:
                            craphis.txdoipmf  =  0 
                            craphis.ingercre  =  par_ingercre
                            craphis.inestoura_conta  =  aux_inestocc
+                           craphis.indebprj  =  par_indebprj 
                            craphis.ingerdeb  =  par_ingerdeb
                            craphis.cdprodut  =  par_cdprodut
                            craphis.cdagrupa  =  par_cdagrupa
@@ -1614,6 +1622,7 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.nrctadeb,
                                INPUT craphis.ingercre,
                                INPUT craphis.inestoura_conta,
+                               INPUT craphis.indebprj,
                                INPUT craphis.ingerdeb,
                                INPUT craphis.nrctatrc,
                                INPUT craphis.nrctatrd,
@@ -2090,6 +2099,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_nrctadeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_ingercre AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_inestocc AS LOGI                            NO-UNDO.
+    DEF INPUT PARAM par_indebprj AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_ingerdeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrc AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrd AS INTE                            NO-UNDO.
@@ -2343,6 +2353,21 @@ PROCEDURE gera_item_log:
                                     ELSE
                                         "Nao" ),
                       INPUT ( IF par_inestocc = TRUE THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" )).
+                                       
+    IF par_indebprj <> b-craphis.indebprj THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Debita apos transferencia da conta para prejuizo",
+                      INPUT ( IF b-craphis.indebprj = 1 THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" ),
+                      INPUT ( IF par_indebprj = 1 THEN
                                         "Sim" 
                                     ELSE
                                         "Nao" )).
