@@ -162,7 +162,8 @@ BEGIN
 						prej.vljur60_ctneg +
 			      prej.vljur60_lcred +
 		        prej.vljuprej +
-						nvl(sld.vliofmes,0)    vlsdprej,
+						nvl(sld.vliofmes,0) +
+						PREJ0003.fn_juros_remun_prov(prej.cdcooper, prej.nrdconta) vlsdprej,
             0                      cdfinemp,
 						sld.dtrisclq           dtmvtolt, --
             prej.vldivida_original vlemprst, --
@@ -636,6 +637,17 @@ BEGIN
                       pr_dscritic := 'Erro ao atualizar a tabela CRAPCYB: ' || SQLERRM;
                       RAISE vr_erro_exec;
                   END;
+								ELSIF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+									BEGIN
+                    -- Atualização do registro encontrado
+                    UPDATE crapcyb cyb
+                    SET cyb.dtdpagto = vr_tab_crapepr(vr_index).dtmvtolt
+                    WHERE cyb.rowid = vr_rowidcyb;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      pr_dscritic := 'Erro ao atualizar a tabela CRAPCYB: ' || SQLERRM;
+                      RAISE vr_erro_exec;
+                  END;
                 END IF;
               END IF;
             EXCEPTION
@@ -774,6 +786,16 @@ BEGIN
                   pr_dscritic := 'Erro ao atualizar na tabela CRAPCYB: ' || SQLERRM;
                   RAISE vr_exc_saida;
               END;
+
+							IF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+								UPDATE crapcyb cyb
+                SET cyb.dtdpagto = vr_tab_crapepr(vr_index).dtmvtolt
+                WHERE cyb.cdcooper = vr_tab_crapepr(vr_index).cdcooper
+                  AND cyb.cdorigem = vr_cdorigem
+                  AND cyb.nrdconta = vr_tab_crapepr(vr_index).nrdconta
+                  AND cyb.nrctremp = vr_tab_crapepr(vr_index).nrctremp
+                  AND cyb.dtdbaixa IS NULL;
+            END IF;
             END IF;
           END IF;
 
