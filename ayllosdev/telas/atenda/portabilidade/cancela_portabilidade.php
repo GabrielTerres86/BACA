@@ -39,4 +39,4 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 }
 
-exibirErro('inform','Portabilidade cancelada com sucesso.','Alerta - Ayllos','acessaOpcaoAba(2,0,\"0\");bloqueiaFundo(divRotina)',false);
+exibirErro('inform','Portabilidade cancelada com sucesso.','Alerta - Ayllos','fechaRotina($(\"#divUsoGenerico\")); acessaOpcaoAba(2,0,\"0\"); exibeRotina($(\"#divRotina\"));',false);
