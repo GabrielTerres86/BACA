@@ -8,10 +8,10 @@ select nr
      , NrCtr
      , cdproduto
      , PercPclAnt
-     , QtPclPgr
-     , DtVnctPrxPcl
-     , VlPrxPcl
-     , QtPclVncr
+     , sum(QtPclPgr)     as QtPclPgr
+     , max(DtVnctPrxPcl) as DtVnctPrxPcl
+     , sum(VlPrxPcl)     as VlPrxPcl
+     , sum(QtPclVncr)    as QtPclVncr
 from (
 -- Contratos do tipo  1-PP ou 2-POS
 select 1 as nr,
@@ -80,8 +80,8 @@ where cop.cdcooper = ass.cdcooper
    and epr.tpemprst IN (1, 2) -- 0-TR, 1-PP ou 2-POS
    and pep.inliquid = 0   -- indica se foi efetuado pagamento total (0-pendente; 1-liquidada).
    ---------------------------------------------------------------
-   --and  cop.cdcooper = 13
-   --and  epr.nrdconta = 2259
+   and  cop.cdcooper = 13
+   --and  epr.nrdconta = 712094
    ---------------------------------------------------------------
 union
 -- Contratos do tipo  0 - TR
@@ -135,10 +135,10 @@ where cop.cdcooper = ass.cdcooper
    and epr.tpemprst = 0    -- 0-TR, 1-PP ou 2-POS
    and epr.INLIQUID = 0    -- indica se foi efetuado pagamento total (0-pendente; 1-liquidada).
    and epr.dtliquid is null
-   and add_months(epr.Dtmvtolt,epr.qtmesdec) > sysdate
+   and add_months(epr.Dtmvtolt,epr.qtpreemp - epr.qtmesdec) > sysdate
    ---------------------------------------------------------------
-   --and  cop.cdcooper = 13
-   --and  epr.nrdconta = 2259
+   and  cop.cdcooper = 13
+   --and  epr.nrdconta = 712094
    ---------------------------------------------------------------
 Union
 -- Contratos liquidados ou que estão em prejuizo
@@ -191,8 +191,8 @@ where cop.cdcooper = ass.cdcooper
         epr.inprejuz = 1)        -- Se a conta estiver em prejuizo, liquida o contrato e tranfere a conta, mas o saldo continua
 
    ---------------------------------------------------------------
-   --and  cop.cdcooper = 13
-   --and  epr.nrdconta = 2259
+   and  cop.cdcooper = 13
+   --and  epr.nrdconta = 712094
    ---------------------------------------------------------------
 Union
 -- Contratos em aberto vencidos e não pagos em dia
@@ -231,7 +231,7 @@ select 4 as nr,
   from crapcop cop,
        crapass ass,
        crapepr epr    -- Cadastro de emprestimos. (D-05)
-       
+
 where cop.cdcooper = ass.cdcooper
    --------------------------
    and ass.cdcooper = epr.cdcooper
@@ -245,8 +245,18 @@ where cop.cdcooper = ass.cdcooper
    and epr.INLIQUID = 0    -- indica se foi efetuado pagamento total (0-pendente; 1-liquidada).
    and epr.inprejuz = 0    -- Se a conta não estiver em prejuizo
    ---------------------------------------------------------------
-   --and  cop.cdcooper = 13
-   --and  epr.nrdconta = 2259
+   and  cop.cdcooper = 13
+   --and  epr.nrdconta = 712094
    ---------------------------------------------------------------
 )
+group by 
+       nr
+     , nrdconta
+     , DtAprc
+     , CNPJCtrc
+     , TipCli
+     , IdfcCli
+     , NrCtr
+     , cdproduto
+     , PercPclAnt
 ;
