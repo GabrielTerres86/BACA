@@ -179,6 +179,9 @@ PROCEDURE exclui-registro:
       ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
       ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
       ,INPUT craplcm.cdhistor               /* par_cdhistor */
+      ,INPUT craplcm.nrctachq               /* PAR_nrctachq */
+      ,INPUT craplcm.nrdconta               /* PAR_nrdconta */
+      ,INPUT craplcm.cdpesqbb               /* PAR_cdpesqbb */
       ,INPUT ""                             /* par_rowid */
       ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
       ,OUTPUT par_dscritic).                /* Descricao da critica                          */
