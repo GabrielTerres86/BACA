@@ -194,6 +194,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
     vr_cdfvlcop   INTEGER;
     vr_rowid_craplat ROWID;
     
+    vr_incrineg  INTEGER;
+    
+    vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+    vr_tab_retorno lanc0001.typ_reg_retorno;
     --------------------------- SUBROTINAS INTERNAS --------------------------
 
   BEGIN
@@ -268,29 +272,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
         IF cr_craplot%NOTFOUND THEN
           CLOSE cr_craplot;
           BEGIN
-            INSERT INTO craplot
-                        (craplot.dtmvtolt
-                        ,craplot.cdagenci
-                        ,craplot.cdbccxlt
-                        ,craplot.nrdolote
-                        ,craplot.tpdmoeda
-                        ,craplot.cdoperad
-                        ,craplot.tplotmov
-                        ,craplot.cdcooper)
-                 VALUES (rw_crapdat.dtmvtolt     -- craplot.dtmvtolt
-                        ,1                       -- craplot.cdagenci
-                        ,100                     -- craplot.cdbccxlt
-                        ,8463                    -- craplot.nrdolote
-                        ,1                       -- craplot.tpdmoeda
-                        ,'1'                     -- craplot.cdoperad
-                        ,1                       -- craplot.tplotmov
-                        ,pr_cdcooper)             -- craplot.cdcooper
-              RETURNING craplot.rowid,    craplot.dtmvtolt,
-                        craplot.cdagenci, craplot.cdbccxlt,
-                        craplot.nrdolote
-                   INTO rw_craplot.rowid ,  rw_craplot.dtmvtolt,
-                        rw_craplot.cdagenci,rw_craplot.cdbccxlt,
-                        rw_craplot.nrdolote;
+             lanc0001.pc_incluir_lote( pr_cdcooper => pr_cdcooper,
+                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                       pr_cdagenci => 1,
+                                       pr_cdbccxlt => 100,
+                                       pr_nrdolote => 8463,
+                                       pr_tpdmoeda => 1,
+                                       pr_cdoperad => '1',
+                                       pr_tplotmov => 1,
+                                       pr_rw_craplot => vr_rw_craplot,
+                                       pr_cdcritic   => pr_cdcritic,
+                                       pr_dscritic   => pr_dscritic
+                                       );
+                                       
+              if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                 RAISE vr_exc_saida;
+              end if;
+              
+              rw_craplot.rowid    := vr_rw_craplot.rowid;
+              rw_craplot.dtmvtolt := vr_rw_craplot.dtmvtolt;
+              rw_craplot.cdagenci := vr_rw_craplot.cdagenci;
+              rw_craplot.cdbccxlt := vr_rw_craplot.cdbccxlt;
+              rw_craplot.nrdolote := vr_rw_craplot.nrdolote;
+    
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir lote 8463: '||SQLERRM;
@@ -347,35 +351,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
         
         -- incluir craplcm
         BEGIN
-          INSERT INTO craplcm
-                      (craplcm.dtmvtolt
-                      ,craplcm.cdagenci
-                      ,craplcm.cdbccxlt
-                      ,craplcm.nrdolote
-                      ,craplcm.nrdconta
-                      ,craplcm.nrdctabb
-                      ,craplcm.nrdctitg
-                      ,craplcm.cdcooper
-                      ,craplcm.nrdocmto
-                      ,craplcm.cdhistor
-                      ,craplcm.nrseqdig
-                      ,craplcm.vllanmto
-                      ,craplcm.cdpesqbb)
-               VALUES( rw_craplot.dtmvtolt                               -- craplcm.dtmvtolt 
-                      ,rw_craplot.cdagenci                               -- craplcm.cdagenci 
-                      ,rw_craplot.cdbccxlt                               -- craplcm.cdbccxlt 
-                      ,rw_craplot.nrdolote                               -- craplcm.nrdolote 
-                      ,rw_craplcb.nrdconta                               -- craplcm.nrdconta 
-                      ,rw_craplcb.nrdctabb                               -- craplcm.nrdctabb 
-                      ,gene0002.fn_mask(rw_craplcb.nrdctabb,'99999999')  -- craplcm.nrdctitg
-                      ,pr_cdcooper                                       -- craplcm.cdcooper 
-                      ,vr_nrdocmt2                                       -- craplcm.nrdocmto 
-                      ,266                                               -- craplcm.cdhistor 
-                      ,rw_craplot.nrseqdig                               -- craplcm.nrseqdig 
-                      ,rw_craplcb.vllanmto                               -- craplcm.vllanmto
-                      ,gene0002.fn_mask(rw_craplcb.nrcnvcob,'999999999') -- craplcm.cdpesqbb
+           lanc0001.pc_gerar_lancamento_conta(
+                                              pr_cdcooper => pr_cdcooper
+                                             ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                             ,pr_cdagenci => rw_craplot.cdagenci
+                                             ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                             ,pr_nrdolote => rw_craplot.nrdolote
+                                             ,pr_nrdconta => rw_craplcb.nrdconta 
+                                             ,pr_nrdctabb => rw_craplcb.nrdctabb
+                                             ,pr_nrdctitg => gene0002.fn_mask(rw_craplcb.nrdctabb,'99999999')
+                                             ,pr_nrdocmto => vr_nrdocmt2
+                                             ,pr_cdhistor => 266
+                                             ,pr_nrseqdig => rw_craplot.nrseqdig
+                                             ,pr_vllanmto => rw_craplcb.vllanmto
+                                             ,pr_cdpesqbb => gene0002.fn_mask(rw_craplcb.nrcnvcob,'999999999')
+                                             ,pr_tab_retorno => vr_tab_retorno
+                                             ,pr_incrineg => vr_incrineg
+                                             ,pr_cdcritic => pr_cdcritic
+                                             ,pr_dscritic => pr_dscritic
                       );
+
+           if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+              RAISE vr_exc_saida;
+           end if;
+          
         EXCEPTION
+          WHEN vr_exc_saida THEN  
+            raise vr_exc_saida;
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir lancamento nrdconta = '||rw_craplcb.nrdconta||
                                                      ' vllanmto = '||rw_craplcb.vllanmto||' : '||SQLERRM;
@@ -561,4 +563,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
 
   END pc_crps215;
 /
-

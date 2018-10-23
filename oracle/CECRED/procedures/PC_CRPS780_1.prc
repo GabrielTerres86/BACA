@@ -386,7 +386,8 @@ BEGIN
           vr_vldpagto := vr_vldpagto - vr_vlpiofpr;
           -- Se mesmo assim houver pagamento
           IF vr_vldpagto > 0 THEN
-            -- Lançar em C/C o Pagamento
+					-- Lança débito na conta corrente somente se não está em prejuízo
+					IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) = FALSE THEN
             empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_cdagenci => 1 --rw_craplot_8457.cdagenci
@@ -415,7 +416,25 @@ BEGIN
                 raise vr_exc_erro;
               END IF; 
             END IF;  
-            -- Lançar o credito do pagamento no Emprestimo
+					ELSE
+						-- Lança débito no extrato do prejuízo (para correto processamento do pagamento pelo CYBER)
+            PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                                            , pr_nrdconta => rw_crapepr.nrdconta
+                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            , pr_cdhistor => 2386
+                                            , pr_vllanmto => vr_vldpagto
+																	          , pr_nrctremp => rw_crapepr.nrctremp
+                                            , pr_cdcritic => vr_cdcritic
+                                            , pr_dscritic => vr_dscritic);
+					END IF;
+
+          IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
+            rw_crapepr.txjuremp := rw_crapepr.vltaxa_juros;
+            vr_inusatab := TRUE;
+          ELSE
+            vr_inusatab := FALSE;
+          END IF;
+          --
             empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                            ,pr_cdagenci => pr_cdagenci

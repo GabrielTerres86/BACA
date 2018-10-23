@@ -246,6 +246,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                
                14/05/2018 - Ajustar para atualizar a sobras e capital para a situação 8
                             (Rafael - Mouts).
+                            
+               28/06/2018 - P450 Criação de procedure para efetuar lançamentos - LANC0001.PC_GERAR_LANCAMENTO_CONTA 
+                           (Anderson Heckmann/AMcom) 
+  
 ............................................................................. */
 
       -- Código do programa
@@ -426,6 +430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
       -- variaveis utilizadas no relatorio
       vr_rel_dsagenci VARCHAR2(100);
+
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -923,32 +930,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_nrdocaux := lpad(pr_nrseqdig,10,'0');
             vr_nrdocmto := '8005'||lpad(substr(vr_nrdocaux,length(vr_nrdocaux)-4,length(vr_nrdocaux)),5,'0'); --Em tela existe o limite de 9 caracteres
             BEGIN
-              INSERT INTO craplcm
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdctabb,
-                 nrdctitg,
-                 nrdocmto,
-                 cdhistor,
-                 vllanmto,
-                 nrseqdig,
-                 cdcooper)
-              VALUES
-                (vr_dtmvtolt,
-                 vr_cdagenci,
-                 vr_cdbccxlt,
-                 vr_nrdolote,
-                 pr_nrdconta,
-                 pr_nrdconta,
-                 gene0002.fn_mask(pr_nrdconta,'99999999'), -- nrdctitg
-                 vr_nrdocmto,
-                 vr_cdhistor,
-                 pr_vlcapital,
-                 pr_nrseqdig,
-                 pr_cdcooper);
+
+               LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctabb => pr_nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+                         ,pr_nrdocmto => vr_nrdocmto
+                         ,pr_cdhistor => vr_cdhistor
+                         ,pr_vllanmto => pr_vlcapital                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+               END IF; 
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -1923,32 +1927,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               -- Lançamento em C/C  
               IF vr_tab_crrl048(vr_indice).vlretcrd_cta > 0 THEN
                 BEGIN
-                  INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
-                       nrdctabb,
-                       nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                     VALUES
-                      (vr_dtmvtolt,
-                       vr_cdagenci,
-                       vr_cdbccxlt,
-                       vr_nrdolote,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       8005||vr_cdhisopc_cta,
-                       vr_cdhisopc_cta,
-                       vr_tab_crrl048(vr_indice).vlretcrd_cta,
-                       rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
+            
+                      LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisopc_cta
+                         ,pr_cdhistor => vr_cdhisopc_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vlretcrd_cta                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;   
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2063,32 +2064,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
                   BEGIN
-                    INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
-                       nrdctabb,
-                       nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
-                      (vr_dtmvtolt,
-                       vr_cdagenci,
-                       vr_cdbccxlt,
-                       vr_nrdolote,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       8005||vr_cdhisdep_cta,
-                       vr_cdhisdep_cta,
-                       vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta,
-                       rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
+  
+                     LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdep_cta
+                         ,pr_cdhistor => vr_cdhisdep_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2201,32 +2199,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta > 0 THEN
                   BEGIN
-                    INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
-                       nrdctabb,
-                       nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
-                        (vr_dtmvtolt,
-                         vr_cdagenci,
-                         vr_cdbccxlt,
-                         vr_nrdolote,
-                         vr_tab_crrl048(vr_indice).nrdconta,
-                         vr_tab_crrl048(vr_indice).nrdconta,
-                         gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                         8005||vr_cdhisdpa_cta,
-                         vr_cdhisdpa_cta,
-                         vr_tab_crrl048(vr_indice).vljursdm_cta,
-                         rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
+              
+                      LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdpa_cta
+                         ,pr_cdhistor => vr_cdhisdpa_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljursdm_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;    
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2336,32 +2331,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
                   BEGIN
-                      INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
-                       nrdctabb,
-                       nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
-                        (vr_dtmvtolt,
-                         vr_cdagenci,
-                         vr_cdbccxlt,
-                         vr_nrdolote,
-                         vr_tab_crrl048(vr_indice).nrdconta,
-                         vr_tab_crrl048(vr_indice).nrdconta,
-                         gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                         8005||vr_cdhisdpp_cta,
-                         vr_cdhisdpp_cta,
-                         vr_tab_crrl048(vr_indice).vljurapl_cta,
-                         rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
+              
+                     LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdpp_cta
+                         ,pr_cdhistor => vr_cdhisdpp_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljurapl_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
                         vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2590,32 +2582,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljurtar_cta > 0 THEN
               BEGIN
-                INSERT INTO craplcm
-                  (dtmvtolt,
-                   cdagenci,
-                   cdbccxlt,
-                   nrdolote,
-                   nrdconta,
-                   nrdctabb,
-                   nrdctitg,
-                   nrdocmto,
-                   cdhistor,
-                   vllanmto,
-                   nrseqdig,
-                   cdcooper)
-                VALUES
-                  (vr_dtmvtolt,
-                   vr_cdagenci,
-                   vr_cdbccxlt,
-                   vr_nrdolote,
-                   vr_tab_crrl048(vr_indice).nrdconta,
-                   vr_tab_crrl048(vr_indice).nrdconta,
-                   gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   8005||vr_cdhistar_cta,
-                   vr_cdhistar_cta,
-                   vr_tab_crrl048(vr_indice).vljurtar_cta,
-                   rw_craplot.nrseqdig + 1,
-                   pr_cdcooper);
+             
+                 LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhistar_cta
+                         ,pr_cdhistor => vr_cdhistar_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljurtar_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;    
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2722,32 +2711,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljuraut_cta > 0 THEN
               BEGIN
-                INSERT INTO craplcm
-                  (dtmvtolt,
-                   cdagenci,
-                   cdbccxlt,
-                   nrdolote,
-                   nrdconta,
-                   nrdctabb,
-                   nrdctitg,
-                   nrdocmto,
-                   cdhistor,
-                   vllanmto,
-                   nrseqdig,
-                   cdcooper)
-                VALUES
-                  (vr_dtmvtolt,
-                   vr_cdagenci,
-                   vr_cdbccxlt,
-                   vr_nrdolote,
-                   vr_tab_crrl048(vr_indice).nrdconta,
-                   vr_tab_crrl048(vr_indice).nrdconta,
-                   gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   8005||vr_cdhisaut_cta,
-                   vr_cdhisaut_cta,
-                   vr_tab_crrl048(vr_indice).vljuraut_cta,
-                   rw_craplot.nrseqdig + 1,
-                   pr_cdcooper);
+         
+                 LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisaut_cta
+                         ,pr_cdhistor => vr_cdhisaut_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljuraut_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                      END IF;   
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;

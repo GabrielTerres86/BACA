@@ -633,7 +633,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			   11/06/2018 - Adicionar filtro para data de liberação diferente de null (Pedro Cruz GFT)
 
                16/08/2018 - Forçado indice no cursor cr_craplcm5 pois estava fazendo o programa
-                            ficar lento no processo batch (Tiago )
+                            ficar lento no processo batch (Tiago )	
+
+               30/08/2018 - Correção bug não contabiliza histórico 2408
+                             (Renato Cordeiro - AMCom)		
+
+               12/09/2018 - Correções após homologação keyt (comentários com #Homol_prej)
+                             (Renato Cordeiro - AMcom)
 
                20/09/2018 - Considerar o valor dos juros de mora na carteira de desconto de titulos do cooperado. (Paulo Penteado GFT)
 ............................................................................ */
@@ -670,7 +676,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- e das estruturas listadas abaixo
   cursor cr_craphis (pr_cdcooper in craphis.cdcooper%TYPE) is
     select upper(craphis.nmestrut) nmestrut,
-           craphis.cdhistor,
+           craphis.cdhistor cdhistor,
+--           decode(craphis.cdhistor,2412,2408,craphis.cdhistor) cdhistor,
            craphis.tpctbcxa,
            craphis.tpctbccu,
            craphis.nrctacrd,
@@ -694,7 +701,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                        'CRAPLFT',
                                        'CRAPTVL',
                                        'CRAPLAC',
-                                       'TBDSCT_LANCAMENTO_BORDERO');
+                                       'TBDSCT_LANCAMENTO_BORDERO',
+                                       'TBCC_PREJUIZO_DETALHE');
   rw_craphis    cr_craphis%rowtype;
   -- Buscar as tarifas do histórico
   cursor cr_crapthi (pr_cdcooper in crapthi.cdcooper%type,
@@ -2435,7 +2443,54 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
               nvl(crapass.cdagenci, craplft.cdagenci)              
      order by craplft.cdempcon,
               craplft.cdsegmto,
-			  craplft.cdagenci;
+			  craplft.cdagenci;	 
+
+    cursor cr_principal (pr_cdcooper in craplft.cdcooper%type,
+                       pr_dtmvtolt in craplft.dtmvtolt%type) is
+
+             select SUM(pd.vllanmto) vllanmto
+             from tbcc_prejuizo p,
+                  tbcc_prejuizo_detalhe pd
+             where p.cdcooper  = pd.cdcooper
+             and   p.nrdconta  = pd.nrdconta
+             and   pd.cdcooper = pr_cdcooper
+             and   pd.cdhistor IN(2408,2412)
+             and   pd.dtmvtolt = pr_dtmvtolt
+             and   p.incontabilizado = 0;
+
+   rw_principal     cr_principal%rowtype;
+
+ cursor cr_juros60 (pr_cdcooper in craplft.cdcooper%type,
+                    pr_dtmvtolt in craplft.dtmvtolt%type) is
+
+             select SUM(pd.vllanmto) vllanmto
+             from tbcc_prejuizo p,
+                  tbcc_prejuizo_detalhe pd
+             where p.cdcooper  = pd.cdcooper
+             and   p.nrdconta  = pd.nrdconta
+             and   pd.cdcooper = pr_cdcooper
+             and   pd.cdhistor IN(2716,2717)
+             and   pd.dtmvtolt = pr_dtmvtolt
+             and   p.incontabilizado = 0;
+
+  rw_juros60     cr_juros60%rowtype;
+
+
+  cursor cr_compensa (pr_cdcooper in craphis.cdcooper%type,
+                      pr_dtmvtolt in craplcm.dtmvtolt%type,
+                      pr_cdhistor in craphis.cdhistor%type) is
+
+             select SUM(pd.vllanmto) vllanmto
+             from tbcc_prejuizo p,
+                  tbcc_prejuizo_detalhe pd
+             where p.cdcooper  = pd.cdcooper
+             and   p.nrdconta  = pd.nrdconta
+             and   pd.cdcooper = pr_cdcooper
+             and   pd.cdhistor = pr_cdhistor
+             and   pd.dtmvtolt = pr_dtmvtolt
+             and   p.incontabilizado = 0;
+
+  rw_compensa     cr_compensa%rowtype;
              
     CURSOR cr_craplcm_tdb(pr_cdcooper IN crapcop.cdcooper%TYPE
                          ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
@@ -6182,6 +6237,27 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(37).nrctades_jur := 7013;
         vr_tab_historico(37).dsrefere_jur := 'TAXA SOBRE SALDO EM C/C NEGATIVO - PESSOA JURIDICA';   
 
+        vr_tab_historico(2408).nrctaori_fis := 8447;
+        vr_tab_historico(2408).nrctades_fis := 8442;
+        vr_tab_historico(2408).dsrefere_fis := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2408).nrctaori_jur := 8448;
+        vr_tab_historico(2408).nrctades_jur := 8442;
+        vr_tab_historico(2408).dsrefere_jur := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2716).nrctaori_fis := 7012;
+        vr_tab_historico(2716).nrctades_fis := 7113;
+        vr_tab_historico(2716).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2716).nrctaori_jur := 7013;
+        vr_tab_historico(2716).nrctades_jur := 7113;
+        vr_tab_historico(2716).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2717).nrctaori_fis := 7014;
+        vr_tab_historico(2717).nrctades_fis := 7118;
+        vr_tab_historico(2717).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2717).nrctaori_jur := 7015;
+        vr_tab_historico(2717).nrctades_jur := 7118;
+        vr_tab_historico(2717).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
         vr_tab_historico(57).nrctaori_fis := 7113;
         vr_tab_historico(57).nrctades_fis := 7012;
         vr_tab_historico(57).dsrefere_fis := 'JUROS SOBRE SAQUE DE DEPOSITO BLOQUEADO - PESSOA FISICA';
@@ -9018,6 +9094,8 @@ BEGIN
       vr_cdestrut := '50';
     elsif UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'COMPBB' then
       vr_cdestrut := '51';
+    elsif UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'TBCC_PREJUIZO_DETALHE' then
+      vr_cdestrut := '50';    --Rangel Decker
     end if;
     -- Salva informações no arquivo
     if rw_craprej.cdagenci = 0 then
@@ -14007,6 +14085,164 @@ BEGIN
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);  
   end if;  
   --
+   --Rangel Decker
+   open cr_principal (pr_cdcooper,
+                    vr_dtmvtolt);
+    fetch cr_principal into rw_principal;
+    -- Se não encontrar
+    if cr_principal%notfound then
+      close cr_principal;
+      RETURN; -- Retorna
+    else
+     vr_vllanmto := vr_vllanmto + rw_principal.vllanmto;
+    end if;
+    close cr_principal;
+
+
+   if nvl(vr_vllanmto,0) > 0  then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '9261,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) SALDO DEVEDOR C/C TRANSFERIDO PARA PREJUIZO"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+   end if;
+
+ vr_vllanmto := 0;
+
+ open cr_juros60 (pr_cdcooper,
+                    vr_dtmvtolt);
+
+    fetch cr_juros60 into rw_juros60;
+    -- Se não encontrar
+    if cr_juros60%notfound then
+      close cr_juros60;
+      RETURN; -- Retorna
+    else
+     vr_vllanmto := vr_vllanmto + rw_juros60.vllanmto;
+    end if;
+    close cr_juros60;
+
+
+   if nvl(vr_vllanmto,0) > 0  then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3866,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) REVERSAO JUROS +60 C/C P/ PREJUIZO"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+   end if;
+
+ /* Historicos serao gerados pelo programa de forma dinamica
+
+ vr_cdhistor := 2726;
+ vr_vllanmto :=0;
+
+ open cr_compensa (pr_cdcooper,
+                  vr_dtmvtolt,
+                  vr_cdhistor);
+
+    fetch cr_compensa into rw_compensa;
+    -- Se não encontrar
+    if cr_compensa%notfound then
+      close cr_compensa;
+      RETURN; -- Retorna
+    else
+     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
+    end if;
+    close cr_compensa;
+
+
+   if nvl(vr_vllanmto,0) > 0  then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '9261,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) ESTORNO BAIXA DE PREJUIZO C/C VALOR PRINCIPAL"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+   end if;
+
+
+ vr_cdhistor := 2728;
+ vr_vllanmto :=0;
+
+ open cr_compensa (pr_cdcooper,
+                  vr_dtmvtolt,
+                  vr_cdhistor);
+
+    fetch cr_compensa into rw_compensa;
+    -- Se não encontrar
+    if cr_compensa%notfound then
+      close cr_compensa;
+      RETURN; -- Retorna
+    else
+     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
+    end if;
+    close cr_compensa;
+
+
+   if nvl(vr_vllanmto,0) > 0  then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '3866,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) ESTORNO BAIXA DE PREJUIZO C/C JUROS +60"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+   end if;
+
+
+  vr_cdhistor := 2730;
+  vr_vllanmto :=0;
+
+ open cr_compensa (pr_cdcooper,
+                  vr_dtmvtolt,
+                  vr_cdhistor);
+
+    fetch cr_compensa into rw_compensa;
+    -- Se não encontrar
+    if cr_compensa%notfound then
+      close cr_compensa;
+      RETURN; -- Retorna
+    else
+     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
+    end if;
+    close cr_compensa;
+
+
+   if nvl(vr_vllanmto,0) > 0  then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '3963,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249)ESTORNO BAIXA DE PREJUIZO JUROS ATUALIZACAO"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+   end if;
+
   
    -- Transferencia para prejuizo Financiamento PP
   vr_cdhistor := 2396;
@@ -14169,7 +14405,7 @@ BEGIN
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
    end if;
 
-  vr_cdhistor := 2386;
+ /*vr_cdhistor := 2386;
   vr_vllanmto := 0;
   --
   FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
@@ -14195,13 +14431,70 @@ BEGIN
                    '"(crps249) Pagamento Prejuizo"';
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
    end if;
+   */
+   
+  --> contabilizar a partir da lem, pois em caso de prejuizo de CC não haverá lanc na conta
+  vr_cdhistor := 2701;
+   vr_vllanmto := 0;
    --
-   vr_cdhistor := 2387;
+  FOR rw_craplcm_prej IN cr_craplem2 (pr_cdcooper,
+                                           vr_dtmvtolt,
+                                      vr_cdhistor,
+                                      0) LOOP 
+
+    vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+    --
+
+   END LOOP;
+  vr_vllanmto := abs(vr_vllanmto);
+
+
+  if nvl(vr_vllanmto,0) > 0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '3962,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;
+   
+   --
+  /* vr_cdhistor := 2387;
    vr_vllanmto := 0;
    --
    FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
                                            vr_dtmvtolt,
                                            vr_cdhistor) LOOP -- Financiamento
+
+     vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+     --
+   END LOOP;
+   vr_vllanmto := abs(vr_vllanmto);
+   IF nvl(vr_vllanmto,0) > 0 THEN
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3865,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno de Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END IF;*/
+   
+   --> contabilizar a partir da lem, pois em caso de prejuizo de CC não haverá lanc na conta
+   vr_cdhistor := 2702;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm_prej IN cr_craplem2 (pr_cdcooper,
+                                       vr_dtmvtolt,
+                                       vr_cdhistor,
+                                       0) LOOP -- Financiamento
                                  
      vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
      --

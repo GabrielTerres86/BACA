@@ -80,7 +80,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 
                25/08/2018 - Adicionado contabilização das operações de créditos dos borderôs de desconto de titulos
                             (Paulo Penteado GFT ) 
-
+												  
+               30/08/2018 - Correção bug não contabiliza histórico 2408
+                             (Renato Cordeiro - AMCom)
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
   cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
@@ -719,7 +721,22 @@ BEGIN
                    '   AND lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
                    '   AND ass.cdcooper = lcb.cdcooper '||
                    '   AND ass.nrdconta = lcb.nrdconta ';
-
+  ELSIF upper(pr_nmestrut) = 'TBCC_PREJUIZO_DETALHE'  THEN
+    vr_cursor :=   ' select c.cdagenci,  '||
+                   '       100 cdbccxlt, '||
+                   '       pd.nrdconta,   '|| 
+                   '       9999 nrdolote,   '||
+                   '       1  nrdocmto,   '||
+                   '       pd.vllanmto,  '|| 
+                   '       c.cdagenci,   '||
+                   '       c.inpessoa    '||
+                   ' from  tbcc_prejuizo_detalhe pd, '||
+                   '     crapass  c '||
+                   ' where  pd.cdcooper  = '||pr_cdcooper||
+                   '  and   pd.cdhistor  = '||pr_cdhistor||
+                   '  and   pd.cdcooper  = c.cdcooper '||
+                   '  and    pd.nrdconta = c.nrdconta  '|| 
+                   '  and   pd.dtmvtolt  = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')';
   ELSE
   -- Define a query do cursor dinâmico
   vr_cursor := 'select x.cdagenci,'||

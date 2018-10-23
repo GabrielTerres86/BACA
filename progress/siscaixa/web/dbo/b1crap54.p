@@ -75,6 +75,8 @@
                24/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                             norturno rodando (Douglas Pagel - AMcom).
                             
+               24/08/2018 - P450 - Permitir saque conta em prejuizo (Guilherme/AMcom)	
+
                28/08/2018 - Alteraçoes para Prj. Acelera, tratamento do histórico 2553
                             (Jean Michel / Kledir Dalçóquio).
                             
@@ -162,6 +164,7 @@ PROCEDURE valida-cheque-avulso-conta:
     DEF OUTPUT       PARAM p-transferencia-conta AS CHAR.
     DEF OUTPUT       PARAM p-nrcartao            AS DECI.
     DEF OUTPUT       PARAM p-idtipcar            AS INTE.
+    DEF OUTPUT       PARAM p-inprejuz            AS LOGICAL.
                       
     DEF VAR h-b1wgen0032 AS HANDLE               NO-UNDO.
     DEF VAR h-b1wgen0025 AS HANDLE               NO-UNDO.
@@ -290,7 +293,8 @@ PROCEDURE valida-cheque-avulso-conta:
     FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper      AND
                        crapass.nrdconta = INTEGER(p-nro-conta)  NO-LOCK.
 
-    ASSIGN p-nome-titular = crapass.nmprimtl.
+    ASSIGN p-nome-titular = crapass.nmprimtl
+           p-inprejuz     = crapass.inprejuz.
    
     RETURN "OK".
 
@@ -334,9 +338,12 @@ PROCEDURE valida-saldo-conta:
     DEF INPUT  PARAM p-nro-caixa        AS INTE.
     DEF INPUT  PARAM p-nro-conta        AS DEC.
     DEF INPUT  PARAM p-valor            AS DEC.
+    DEF INPUT  PARAM p-inprejuz         AS LOGICAL.
     DEF OUTPUT PARAM p-mensagem         AS CHAR.
     DEF OUTPUT PARAM p-valor-disponivel AS DEC.
     
+    DEF VAR aux_dscritic AS CHAR                 NO-UNDO.
+
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
     ASSIGN p-nro-conta = DEC(REPLACE(string(p-nro-conta),".","")).
@@ -364,6 +371,75 @@ PROCEDURE valida-saldo-conta:
 
     IF aux_nrdconta <> 0 THEN
         ASSIGN p-nro-conta = aux_nrdconta.
+
+
+    IF p-inprejuz THEN DO:
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_cred_disp_prj
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
+                                             INPUT p-nro-conta, /* nrdconta */
+                                             OUTPUT 0,      /* pr_vlrsaldo */
+                                             OUTPUT 0,      /* pr_cdcritic */
+                                             OUTPUT "").      /* pr_dscritic */
+        
+        CLOSE STORED-PROC pc_cred_disp_prj
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN de-valor-liberado = 0
+               aux_dscritic      = ""
+               de-valor-liberado = pc_cred_disp_prj.pr_vlrsaldo
+                                     WHEN pc_cred_disp_prj.pr_vlrsaldo <> ?
+               aux_dscritic      = pc_cred_disp_prj.pr_dscritic 
+                                     WHEN pc_cred_disp_prj.pr_dscritic <> ?.
+        
+        IF aux_dscritic <> "" THEN 
+            ASSIGN de-valor-liberado = 0.
+
+        /* Disponivel MENOR Valor Saque */
+        IF  de-valor-liberado < p-valor THEN DO:
+                
+            ASSIGN p-valor-disponivel = 
+                        de-valor-liberado
+                   de-valor-libera    = 
+                        (de-valor-liberado - p-valor) * -1.
+ 
+            ASSIGN p-mensagem         = 
+                        "CTA PREJUIZO - Excedido " + 
+                        TRIM(STRING(de-valor-libera,
+                             "zzz,zzz,zzz,zz9.99-")) +
+                        " Saldo PRJ:" +
+                        TRIM(STRING(de-valor-liberado,
+                             "zzz,zzz,zzz,zz9.99-")) 
+                        .
+            /* Se valor do saque superior ao disponivel
+              nao permite sacar (return nok) */
+             ASSIGN i-cod-erro  = 0
+                    c-desc-erro = p-mensagem.           
+             RUN cria-erro (INPUT p-cooper,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT i-cod-erro,
+                            INPUT c-desc-erro,
+                            INPUT YES).
+            ASSIGN p-mensagem         = 
+                        "CTA EM PREJUIZO - Saldo Prj:" +
+                        TRIM(STRING(de-valor-liberado,
+                             "zzz,zzz,zzz,zz9.99-")).
+            RETURN "NOK". 
+        END.
+        ELSE
+            ASSIGN p-mensagem         = 
+                        "CTA EM PREJUIZO - Saldo Prj:" +
+                        TRIM(STRING(de-valor-liberado,
+                             "zzz,zzz,zzz,zz9.99-")).
+
+    END.
+    ELSE DO:
+        /* Faz o que ja fazia */
 
     RUN consulta-conta IN h-b1crap02(INPUT p-cooper,
                                      INPUT p-cod-agencia,
@@ -411,6 +487,7 @@ PROCEDURE valida-saldo-conta:
                     
                 END.
         END.    
+    END.
        
     RETURN "OK".
 END PROCEDURE.
@@ -1397,6 +1474,563 @@ PROCEDURE valida-permissao-provisao:
       END.
       RETURN "OK".         
 END PROCEDURE.
+
+PROCEDURE atualiza-cheque-avulso-prejuizo:
+    
+    DEF INPUT  PARAM p-cooper                  AS CHAR.
+    DEF INPUT  PARAM p-cod-agencia             AS INTEGER. /* Cod. Agencia */
+    DEF INPUT  PARAM p-nro-caixa               AS INTEGER. /* Numero Caixa */
+    DEF INPUT  PARAM p-cod-operador            AS CHAR.
+    DEF INPUT  PARAM p-cod-liberador           AS CHAR.
+    DEF INPUT  PARAM p-opcao                   AS CHAR.
+    DEF INPUT  PARAM p-nrcartao                AS DECI.
+    DEF INPUT  PARAM p-idtipcar                AS INTE.
+    DEF INPUT  PARAM p-nro-conta               AS DEC.   
+    DEF INPUT  PARAM p-valor                   AS DEC.
+    DEF OUTPUT PARAM p-nrdocmto                AS DEC.
+    DEF OUTPUT PARAM p-literal-autentica       AS CHAR.
+    DEF OUTPUT PARAM p-ult-sequencia-autentica AS INTE.
+ 
+    DEF VAR aux_cdcritic AS INTE NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
+    DEF VAR aux_idtipcar AS INTE NO-UNDO.
+    DEF VAR aux_nrcartao AS DECI NO-UNDO.
+    DEF VAR aux_cdhistor AS INTE NO-UNDO.
+	DEF VAR aux_dscampos AS CHAR NO-UNDO.
+
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+
+    ASSIGN c-docto    = STRING(time) + "1".  
+
+    ASSIGN p-nrdocto  = INTE(c-docto)
+           p-nrdocmto = p-nrdocto.
+
+    ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
+
+    RUN elimina-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa).
+
+    ASSIGN i-nro-lote = 11000 + p-nro-caixa.
+  
+    FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
+                       NO-LOCK NO-ERROR.
+
+    RUN dbo/b1crap02.p PERSISTENT SET h-b1crap02.
+
+    RUN retornaCtaTransferencia IN h-b1crap02 (p-cooper,
+                                               p-cod-agencia, 
+                                               p-nro-caixa, 
+                                               p-nro-conta, 
+                                               OUTPUT aux_nrdconta).
+
+    IF  RETURN-VALUE = "NOK" THEN 
+        DO:
+            DELETE PROCEDURE h-b1crap02.
+            RETURN "NOK".
+        END.
+
+    IF aux_nrdconta <> 0 THEN
+        ASSIGN p-nro-conta = aux_nrdconta.
+
+    DELETE PROCEDURE h-b1crap02.
+
+    FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper AND
+                             craplot.dtmvtolt = crapdat.dtmvtocd AND
+                             craplot.cdagenci = p-cod-agencia    AND
+                             craplot.cdbccxlt = 11               AND /* Fixo */
+                             craplot.nrdolote = i-nro-lote       NO-ERROR.
+         
+    IF  NOT AVAIL craplot THEN 
+        DO:
+            CREATE craplot.
+            ASSIGN craplot.cdcooper = crapcop.cdcooper
+                   craplot.dtmvtolt = crapdat.dtmvtocd
+                   craplot.cdagenci = p-cod-agencia   
+                   craplot.cdbccxlt = 11              
+                   craplot.nrdolote = i-nro-lote
+                   craplot.tplotmov = 1
+                   craplot.cdoperad = p-cod-operador
+                   craplot.cdhistor = 0 /* 22 */
+                   craplot.nrdcaixa = p-nro-caixa
+                   craplot.cdopecxa = p-cod-operador.
+        END.
+
+    FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd    AND 
+                             craplcm.cdagenci = p-cod-agencia       AND
+                             craplcm.cdbccxlt = 11                  AND
+                             craplcm.nrdolote = i-nro-lote          AND
+                             craplcm.nrdctabb = inte(p-nro-conta)   AND
+                             craplcm.nrdocmto = p-nrdocto           
+                             USE-INDEX craplcm1 NO-ERROR.
+         
+    IF  AVAIL craplcm  THEN DO:
+        ASSIGN i-cod-erro  = 0
+               c-desc-erro = "CRAPLCM(1)Existe - Avise INF " +
+                             STRING(p-nro-conta) + " - " +
+                             STRING(p-nrdocto).
+                             
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
+
+    FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd    AND 
+                             craplcm.cdagenci = p-cod-agencia       AND
+                             craplcm.cdbccxlt = 11                  AND
+                             craplcm.nrdolote = i-nro-lote          AND
+                             craplcm.nrseqdig = craplot.nrseqdig + 1  
+                             USE-INDEX craplcm3 NO-ERROR.   
+         
+    IF  AVAIL craplcm  THEN DO:
+        ASSIGN i-cod-erro  = 0
+               c-desc-erro = "CRAPLCM(2)Existe - Avise INF " + 
+                             STRING(i-nro-lote) + " - " + 
+                             STRING(craplot.nrseqdig + 1).
+                             
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
+
+    CREATE craplcm.
+    ASSIGN craplcm.cdcooper = crapcop.cdcooper
+           craplcm.dtmvtolt = crapdat.dtmvtocd
+           craplcm.cdagenci = p-cod-agencia
+           craplcm.cdbccxlt  = 11
+           craplcm.nrdolote = i-nro-lote
+           craplcm.nrdconta = p-nro-conta
+           craplcm.nrdocmto = p-nrdocto
+           craplcm.vllanmto = p-valor 
+           craplcm.cdhistor = IF   (p-opcao = "R" )   THEN   
+                       22
+                   ELSE  
+                                   1030
+           craplcm.nrseqdig = craplot.nrseqdig + 1 
+           craplcm.nrdctabb = p-nro-conta
+           craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
+           craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+   
+    ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
+           craplot.qtcompln  = craplot.qtcompln + 1
+           craplot.qtinfoln  = craplot.qtinfoln + 1
+           craplot.vlcompdb  = craplot.vlcompdb + p-valor
+           craplot.vlinfodb  = craplot.vlinfodb + p-valor.
+
+
+
+   
+
+
+    /* ATUALIZA SALDO DA CONTA PREJUIZO */
+    RUN STORED-PROCEDURE pc_atualiza_sld_lib_prj
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
+                                 INPUT p-nro-conta,      /* Numero da Conta */
+                                 INPUT p-valor,          /* Valor do Saque */
+                                OUTPUT 0,                /* Codigo da critica */
+                                OUTPUT "",               /* Descricao da critica */
+                                OUTPUT "").              /* PR_DES_ERRO */
+    
+    CLOSE STORED-PROC pc_atualiza_sld_lib_prj
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_atualiza_sld_lib_prj.pr_cdcritic 
+                          WHEN pc_atualiza_sld_lib_prj.pr_cdcritic <> ?
+           aux_dscritic = pc_atualiza_sld_lib_prj.pr_dscritic
+                          WHEN pc_atualiza_sld_lib_prj.pr_dscritic <> ?.
+    
+    IF aux_cdcritic <> 0 OR (aux_dscritic <> "" AND aux_dscritic <> ?) THEN DO:
+        IF aux_dscritic = "" THEN DO:
+           FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                              NO-LOCK NO-ERROR.
+        
+           IF AVAIL crapcri THEN
+              ASSIGN aux_dscritic = crapcri.dscritic.
+        
+        END.
+        
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT aux_cdcritic,
+                       INPUT aux_dscritic,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
+    /* FIM - ATUALIZA SALDO DA CONTA PREJUIZO */
+
+
+
+    RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
+    RUN grava-autenticacao  IN h-b1crap00 (INPUT p-cooper,
+                                           INPUT p-cod-agencia,
+                                           INPUT p-nro-caixa,
+                                           INPUT p-cod-operador,
+                                           INPUT p-valor,
+                                           INPUT dec(p-nrdocto),
+                                           INPUT yes, /* YES (PG), NO (REC) */
+                                           INPUT "1",  
+                                           INPUT NO,   /* Nao estorno        */
+                                           INPUT craplcm.cdhistor, /*Historico */ 
+                                           INPUT ?, /* Data off-line */
+                                           INPUT 0, /* Sequencia off-line */
+                                           INPUT 0, /* Hora off-line */
+                                           INPUT 0, /* Seq.orig.Off-line */
+                                           OUTPUT p-literal,
+                                           OUTPUT p-ult-sequencia,
+                                           OUTPUT p-registro).
+      DELETE PROCEDURE h-b1crap00.
+      
+      IF  RETURN-VALUE = "NOK" THEN
+          RETURN "NOK".
+      
+      /* Atualiza sequencia Autenticacao */
+    ASSIGN  craplcm.nrautdoc = p-ult-sequencia.   
+
+     
+      /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/
+      ASSIGN c-nome-titular1 = " "
+             c-nome-titular2 = " "
+             c-cgc-cpf1      = " "
+             c-cgc-cpf2      = " ".
+             
+      FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper
+                     AND crapass.nrdconta = p-nro-conta
+                 NO-LOCK NO-ERROR.
+           
+      IF  AVAIL crapass THEN DO:
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+          FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper
+                         AND crapttl.nrdconta = crapass.nrdconta
+                         AND crapttl.idseqttl = 2 NO-LOCK NO-ERROR.
+              
+          IF  crapass.inpessoa = 1 THEN DO:
+             ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999")
+                    c-cgc-cpf1 = STRING(c-cgc-cpf1,"999.999.999-99").
+                 
+             IF AVAIL crapttl THEN
+                ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
+                       c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
+                       c-nome-titular2 = crapttl.nmextttl. 
+          END.
+          ELSE 
+              ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")
+                     c-cgc-cpf1 = STRING(c-cgc-cpf1,"99.999.999/9999-99").
+      END.
+
+      RUN dbo/pcrap12.p (INPUT  p-valor,
+                         INPUT  47,
+                         INPUT  47,
+                         INPUT  "M",
+                         OUTPUT c-linha1,
+                         OUTPUT c-linha2).
+    
+      ASSIGN c-valor =
+       FILL(" ",14 - LENGTH(TRIM(STRING(p-valor,"zzz,zzz,zz9.99")))) + "*" + 
+                           (TRIM(STRING(p-valor,"zzz,zzz,zz9.99"))).
+    
+      ASSIGN c-literal = " ".
+      ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
+       " - " + TRIM(crapcop.nmextcop) 
+             c-literal[2]  = " "
+             c-literal[3]  = string(crapdat.dtmvtocd,"99/99/99") +
+              " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
+                             string(p-cod-agencia,"999") +
+                              "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
+                             substr(p-cod-operador,1,10)  
+             c-literal[4]  = " " 
+             c-literal[5]  = "     ** RECIBO DE SAQUE AVULSO " +
+              string(p-nrdocto,"ZZZ,ZZ9")  + " **" 
+             c-literal[6]  = " " 
+             c-literal[7]  = "CONTA: "    +   
+             trim(string(p-nro-conta,"zzzz,zzz,9"))
+             c-literal[8]  = "       "    +   trim(c-nome-titular1)
+             c-literal[9]  = "       "    +   trim(c-nome-titular2)
+             c-literal[10] = " "
+             c-literal[11] = "RECEBI(EMOS) DA " +  
+             STRING(crapcop.nmrescop,"X(11)") + ", A DEBITO  DA  CONTA"
+             c-literal[12] = "CORRENTE ACIMA, O VALOR DE R$    " + c-valor
+             c-literal[13] = "(" + trim(c-linha1)
+             c-literal[14] = trim(c-linha2) + ")"
+             c-literal[15] = "AUTENTICADO ABAIXO. " 
+             c-literal[16] = " "
+             c-literal[17] = " "
+             c-literal[18] = " "
+             c-literal[19] = "ASSINATURA: _________________________________" 
+             c-literal[20] = "            " + TRIM(c-nome-titular1)
+             c-literal[21] = "            " + TRIM(c-cgc-cpf1) 
+             c-literal[22] = "            " + TRIM(c-nome-titular2)
+             c-literal[23] = "            " + TRIM(c-cgc-cpf2) 
+             c-literal[24] = " "       
+             c-literal[25] = p-literal
+             c-literal[26] = " "
+             c-literal[27] = " "
+             c-literal[28] = " "
+             c-literal[29] = " "
+             c-literal[30] = " "
+             c-literal[31] = " "
+             c-literal[32] = " "
+             c-literal[33] = " ".
+    
+      ASSIGN p-literal-autentica = STRING(c-literal[1],"x(48)")   + 
+                                   STRING(c-literal[2],"x(48)")   + 
+                                   STRING(c-literal[3],"x(48)")   + 
+                                   STRING(c-literal[4],"x(48)")   + 
+                                   STRING(c-literal[5],"x(48)")   + 
+                                   STRING(c-literal[6],"x(48)")   + 
+                                   STRING(c-literal[7],"x(48)")   + 
+                                   STRING(c-literal[8],"x(48)")   + 
+                                   STRING(c-literal[9],"x(48)")   + 
+                                   STRING(c-literal[10],"x(48)")  + 
+                                   STRING(c-literal[11],"x(48)")  + 
+                                   STRING(c-literal[12],"x(48)")  +
+                                   STRING(c-literal[13],"x(48)")  + 
+                                   STRING(c-literal[14],"x(48)")  + 
+                                   STRING(c-literal[15],"x(48)")  + 
+                                   STRING(c-literal[16],"x(48)")  + 
+                                   STRING(c-literal[17],"x(48)")  +
+                                   STRING(c-literal[18],"x(48)")  + 
+                                   STRING(c-literal[19],"x(48)")  + 
+                                   STRING(c-literal[20],"x(48)")  + 
+                                   STRING(c-literal[21],"x(48)")  + 
+                                   STRING(c-literal[22],"x(48)")  + 
+                                   STRING(c-literal[23],"x(48)")  + 
+                                   STRING(c-literal[24],"x(48)")  + 
+                                   STRING(c-literal[25],"x(48)")  + 
+                                   STRING(c-literal[26],"x(48)")  +
+                                   STRING(c-literal[27],"x(48)")  + 
+                                   STRING(c-literal[28],"x(48)")  + 
+                                   STRING(c-literal[29],"x(48)")  + 
+                                   STRING(c-literal[30],"x(48)")  + 
+                                   STRING(c-literal[31],"x(48)")  + 
+                                   STRING(c-literal[32],"x(48)")  + 
+                                   STRING(c-literal[33],"x(48)").
+    
+      ASSIGN p-ult-sequencia-autentica = p-ult-sequencia.
+      
+      ASSIGN in99 = 0. 
+      DO  WHILE TRUE:
+          
+          ASSIGN in99 = in99 + 1.
+          FIND FIRST crapaut WHERE RECID(crapaut) = p-registro 
+                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    
+          IF  NOT AVAIL   crapaut   THEN DO:
+                  
+              IF LOCKED crapaut   THEN DO:
+              
+                  IF  in99 <  100  THEN DO:
+                      PAUSE 1 NO-MESSAGE.
+                      NEXT.
+                  END.
+                  ELSE DO:
+                      ASSIGN i-cod-erro  = 0
+                             c-desc-erro = "Tabela CRAPAUT em uso ".
+                      RUN cria-erro (INPUT p-cooper,
+                                     INPUT p-cod-agencia,
+                                     INPUT p-nro-caixa,
+                                     INPUT i-cod-erro,
+                                     INPUT c-desc-erro,
+                                     INPUT YES).
+                      RETURN "NOK".
+                  END.
+              END.
+          END.
+          ELSE DO:
+              
+                  ASSIGN  crapaut.dslitera = p-literal-autentica.
+                  ASSIGN  crapaut.nrdconta = p-nro-conta.
+                  RELEASE crapaut.
+                  LEAVE.
+              END.
+      END. /* fim do DO  WHILE TRUE */
+      
+
+
+      IF  crapcop.flsaqpre = FALSE THEN DO:
+      
+          /*VERIFICACAO TARIFAS DE SAQUE*/
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+          
+          RUN STORED-PROCEDURE pc_verifica_tarifa_operacao
+              aux_handproc = PROC-HANDLE NO-ERROR
+                                      (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
+                                       INPUT p-cod-operador,   /* Codigo do Operador */
+                                       INPUT 1,                /* Codigo Agencia */
+                                       INPUT 100,              /* Codigo banco caixa */
+                                       INPUT crapdat.dtmvtocd, /* Data de Movimento */
+                                       INPUT "",               /* Nome da Tela */
+                                       INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */   
+                                       INPUT p-nro-conta,      /* Numero da Conta */
+                                       INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
+                                       INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
+                                       INPUT 0,                /* Quantidade de registros da operacao (Custodia, contra-ordem, folhas de cheque) */
+                                      OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operacao */
+                                      OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Nao isenta,1-Isenta */
+                                      OUTPUT 0,                /* Codigo da critica */
+                                      OUTPUT "").              /* Descricao da critica */
+          
+          CLOSE STORED-PROC pc_verifica_tarifa_operacao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = pc_verifica_tarifa_operacao.pr_cdcritic 
+                                WHEN pc_verifica_tarifa_operacao.pr_cdcritic <> ?
+                 aux_dscritic = pc_verifica_tarifa_operacao.pr_dscritic
+                                WHEN pc_verifica_tarifa_operacao.pr_dscritic <> ?.
+          
+          IF  aux_cdcritic <> 0 OR (aux_dscritic <> "" AND aux_dscritic <> ?) THEN DO:
+              IF aux_dscritic = "" THEN DO:
+                  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                     NO-LOCK NO-ERROR.
+                  IF  AVAIL crapcri THEN
+                      ASSIGN aux_dscritic = crapcri.dscritic.
+      
+              END.
+               
+              RUN cria-erro (INPUT p-cooper,
+                             INPUT p-cod-agencia,
+                             INPUT p-nro-caixa,
+                             INPUT aux_cdcritic,
+                             INPUT aux_dscritic,
+                             INPUT YES).
+      
+              RETURN "NOK".
+
+          END.
+      /*FIM VERIFICACAO TARIFAS DE SAQUE*/
+      END.
+
+      /* GERACAO DE LOG */
+      IF (p-opcao = "R" )   THEN
+          ASSIGN aux_cdhistor = 22
+                 aux_idtipcar = 0
+                 aux_nrcartao = 0.
+      ELSE  
+          ASSIGN aux_cdhistor = 1030
+                 aux_idtipcar = p-idtipcar
+                 aux_nrcartao = p-nrcartao.
+                 
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+      
+      RUN STORED-PROCEDURE pc_gera_log_ope_cartao
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
+                                   INPUT p-nro-conta,      /* Numero da Conta */ 
+                                   INPUT 1,                /* Saque */
+                                   INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */ 
+                                   INPUT aux_idtipcar, 
+                                   INPUT p-nrdocto,        /* Nrd Documento */               
+                                   INPUT aux_cdhistor,
+                                   INPUT STRING(aux_nrcartao),
+                                   INPUT p-valor,
+                                   INPUT p-cod-operador,   /* Codigo do Operador */
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT p-cod-agencia,
+                                   INPUT 0,
+                                   INPUT "",
+                                   INPUT 0,
+                                  OUTPUT "").              /* Descricao da critica */
+    
+      /* Codigo da critica */    
+      CLOSE STORED-PROC pc_gera_log_ope_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = ""           
+             aux_dscritic = pc_gera_log_ope_cartao.pr_dscritic
+                            WHEN pc_gera_log_ope_cartao.pr_dscritic <> ?.
+                            
+      IF  (aux_dscritic <> "" AND aux_dscritic <> ?) THEN DO:                 
+          RUN cria-erro (INPUT p-cooper,
+                         INPUT p-cod-agencia,
+                         INPUT p-nro-caixa,
+                         INPUT aux_cdcritic,
+                         INPUT aux_dscritic,
+                         INPUT YES).
+
+          RETURN "NOK".            
+      END.
+        
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      RUN STORED-PROCEDURE pc_atualiza_operacao_especie
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
+                                               INPUT crapdat.dtmvtocd,
+                                               INPUT p-nro-conta,
+                                               INPUT p-valor,
+                                               INPUT "", /**CMC7**/
+                                               OUTPUT 0,
+                                               OUTPUT "").
+    
+      CLOSE STORED-PROC pc_atualiza_operacao_especie
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = ""
+             aux_dscritic = pc_atualiza_operacao_especie.pr_dscritic
+                            WHEN pc_atualiza_operacao_especie.pr_dscritic <> ?.
+             
+      IF  (aux_dscritic <> "" AND aux_dscritic <> ?) THEN DO:
+          RUN cria-erro(INPUT p-cooper,
+                        INPUT p-cod-agencia,
+                        INPUT p-nro-caixa,
+                        INPUT aux_cdcritic,
+                        INPUT aux_dscritic,
+                        INPUT YES).
+          RETURN "NOK".
+      END.
+    
+      /* inicio NOTIF*/
+     
+      aux_dscampos = "#valorsaque=" + STRING(p-valor,"zzz,zz9.99") + ";#datasaque=" + STRING(crapdat.dtmvtolt,"99/99/9999"). 
+      
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      
+      /* Efetuar a chamada a rotina Oracle */ 
+      RUN STORED-PROCEDURE pc_cria_notif_prgs
+      aux_handproc = PROC-HANDLE NO-ERROR 
+          ( INPUT 9                 /* pr_cdorigem_mensagem  */
+           ,INPUT 1                 /* pr_cdmotivo_mensagem  */
+           ,INPUT TODAY             /* pr_dhenvio  */
+           ,INPUT crapcop.cdcooper  /* pr_cdcooper */
+           ,INPUT p-nro-conta       /* pr_nrdconta  */
+           ,INPUT 0                 /* pr_idseqttl  */
+           ,INPUT aux_dscampos ).   /* pr_variaveis  */
+                                  
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_cria_notif_prgs
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                         
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      /* fim NOTIF */
+    
+    RETURN "OK".
+END PROCEDURE.
+
 
 /* b1crap54.p */
 

@@ -145,7 +145,10 @@ PROCEDURE gerar_lancamento_conta_comple:
                           WHEN pc_gerar_lancto_conta_prog.pr_cdcritic <> ?
            par_dscritic = ""
            par_dscritic = pc_gerar_lancto_conta_prog.pr_dscritic
-                          WHEN pc_gerar_lancto_conta_prog.pr_dscritic <> ?.    
+                          WHEN pc_gerar_lancto_conta_prog.pr_dscritic <> ?
+           par_incrineg = 0
+           par_incrineg = pc_gerar_lancto_conta_prog.pr_incrineg
+                          WHEN pc_gerar_lancto_conta_prog.pr_incrineg <> ?               .    
                           
     IF par_cdcritic > 0 OR 
       par_dscritic <> "" THEN                       
@@ -223,6 +226,8 @@ PROCEDURE gerar_lancamento_conta_comple:
     RETURN "OK".    
     
 END.    
+
+  
 
 /******************************************************************************/
 /**        Procedure para gerar lancamento parametros reduzidos              **/

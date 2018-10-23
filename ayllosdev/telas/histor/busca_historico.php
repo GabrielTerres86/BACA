@@ -15,11 +15,14 @@
  *                05/04/2018 - Incluido no retorno o campo de histórico no bloqueio judicial (indutblq) - Mateus Z (Mouts)
  *
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
- *                             Diego Simas - AMcom  
+ *                             PJ 450 - Diego Simas - AMcom  
  *
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  *
  *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
+ *
+ *                20/07/2018 - Incluído novo campo "Debita após transferência da conta para prejuízo" (indebprj)
+ *                             PJ 450 - Diego Simas - AMcom 
  * -------------- 
  */
 ?>
@@ -112,8 +115,8 @@
 	echo "$('#nrctatrd','#frmHistorico').val('" . getByTagName($historico,'nrctatrd') . "');";
 	if($cddopcao == 'A'){
 		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";		
+		echo "$('#indebprj','#frmHistorico').val('" . getByTagName($historico,'indebprj') . "');";		
 	}	
-	
 	
 	// LABEL - Tarifas
 	$vltarayl = number_format(str_replace(',','.',getByTagName($historico,'vltarayl')),2,',','.');

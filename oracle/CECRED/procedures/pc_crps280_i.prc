@@ -4601,6 +4601,10 @@ BEGIN
             vr_flgpac01 := TRUE;
           END IF;
 
+          -- Exclui do relatório os contratos de ADP de contas que foram transferidas para prejuízo
+          IF NOT (vr_tab_crapris(vr_des_chave_crapris).inprejuz = 1
+          AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101) THEN
+
           -- Enviar registro para o XML 1
           vr_des_xml_gene := '<atraso>'
                            ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
@@ -4641,6 +4645,7 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+          END IF;
           
         END IF;
 
@@ -4656,6 +4661,10 @@ BEGIN
             -- Ativar flag para não enviar mais a tag de agência
             vr_flgpac02 := true;
           END IF;
+
+          -- Exclui do relatório os contratos de ADP de contas que foram transferidas para prejuízo
+          IF NOT (vr_tab_crapris(vr_des_chave_crapris).inprejuz = 1
+          AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101) THEN
 
           -- Enviar registro para o XML 2
           vr_des_xml_gene :='<divida>'
@@ -4697,6 +4706,7 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
                                    ,pr_texto_completo => vr_txtauxi_354
                                    ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+          END IF;
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
@@ -4813,7 +4823,14 @@ BEGIN
               END IF; -- IF vr_indice IS NOT NULL THEN
 
             -- Origem de conta corrente e Adiant. a Depositante
-               ELSIF vr_dsorigem = 'C' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101  THEN  
+            -- Somente se a conta não está em prejuízo (e se não foi liquidada na data atual)
+            -- Contas em prejuízo são procesadas na PC_CRPS656 (Reginaldo/AMcom - P450)
+               ELSIF vr_dsorigem = 'C'
+                 AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101 
+                 AND nvl(vr_tab_crapris(vr_des_chave_crapris).inprejuz,0) = 0 
+                 AND NOT PREJ0003.fn_verifica_liquidacao_preju(pr_cdcooper => pr_cdcooper
+                                                             , pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                                                             , pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) THEN
 
               -- Grupo economico
                   IF vr_pertenge = '*'  THEN

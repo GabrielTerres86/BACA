@@ -80,6 +80,9 @@
                23/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                             norturno rodando (Douglas Pagel - AMcom).
 
+               07/06/2018 - P450 - Regulatório de crédito - Substituiçao do insert na 
+                            craplcm pela rotina gerar_lancamento_conta   Josiane Stiehler AMcom
+
 ............................................................................. **/                           
  
 DEF TEMP-TABLE w-compel                                                NO-UNDO
@@ -163,6 +166,7 @@ DEF VAR c-nome-titular2         AS CHAR FORMAT "x(40)"                 NO-UNDO.
 
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 DEF VAR h-b1wgen0001 AS HANDLE                                         NO-UNDO.
 
 DEF VAR glb_nrcalcul            AS DECI                                NO-UNDO.
@@ -1316,6 +1320,11 @@ PROCEDURE atualiza-pagto-cheque-liberado:
     DEF VAR flg_ci       AS LOG INIT NO         NO-UNDO.
     DEF VAR i-tplotmov   LIKE craplot.tplotmov  NO-UNDO.
     DEF VAR aux_dtrefere AS DATE                NO-UNDO.
+    /* P450 - Regulatório de crédito */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
@@ -1503,6 +1512,13 @@ PROCEDURE atualiza-pagto-cheque-liberado:
     IF   RETURN-VALUE = "NOK"   THEN
          RETURN "NOK".
     
+    /* P450 - Regulatório de crédito */
+    /* Identificar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p
+        PERSISTENT SET h-b1wgen0200.
+    
+    
     IF   p-valor1 <> 0   THEN
          DO: /* criacao do deposito em dinheiro */
              ASSIGN c-docto    = c-docto-salvo + "1"  
@@ -1511,26 +1527,67 @@ PROCEDURE atualiza-pagto-cheque-liberado:
              RUN fontes/digbbx.p (INPUT  p-nro-conta,
                                   OUTPUT glb_dsdctitg,
                                   OUTPUT glb_stsnrcal).
-             CREATE craplcm.
-             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                    craplcm.dtmvtolt = crapdat.dtmvtocd
-                    craplcm.cdagenci = p-cod-agencia
-                    craplcm.cdbccxlt  = 11
-                    craplcm.dsidenti  = p-identifica
-                    craplcm.nrdolote = i-nro-lote
-                    craplcm.nrdconta = aux_nrdconta
-                    craplcm.nrdctitg = glb_dsdctitg
-                    craplcm.nrdocmto = p-nrdocmto
-                    craplcm.vllanmto = p-valor1
-                    craplcm.cdhistor = 1
-                    craplcm.nrseqdig = craplot.nrseqdig + 1 
-                    craplcm.nrdctabb = p-nro-conta
-                    craplcm.cdpesqbb = "CRAP55"
-                    craplcm.nrautdoc = p-ult-sequencia
+             /* P450 - Credito unificado */
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                        ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
+                         ,INPUT p-cod-agencia         /* par_cdagenci */
+                         ,INPUT 11                    /* par_cdbccxlt */
+                         ,INPUT i-nro-lote            /* par_nrdolote */
+                         ,INPUT aux_nrdconta          /* par_nrdconta */
+                         ,INPUT p-nrdocmto            /* par_nrdocmto */
+                         ,INPUT 1                     /* par_cdhistor */
+                         ,INPUT craplot.nrseqdig + 1  /* par_nrseqdig */
+                         ,INPUT p-valor1              /* par_vllanmto */
+                         ,INPUT p-nro-conta           /* par_nrdctabb */
+                         ,INPUT "CRAP55"              /* par_cdpesqbb */
+                         ,INPUT 0                     /* par_vldoipmf */
+                         ,INPUT p-ult-sequencia       /* par_nrautdoc */
+                         ,INPUT 0                     /* par_nrsequni */
+                         ,INPUT 0                     /* par_cdbanchq */
+                         ,INPUT 0                     /* par_cdcmpchq */
+                         ,INPUT 0                     /* par_cdagechq */
+                         ,INPUT 0                     /* par_nrctachq */
+                         ,INPUT 0                     /* par_nrlotchq */
+                         ,INPUT 0                     /* par_sqlotchq */
+                         ,INPUT ""                    /* par_dtrefere */
+                         ,INPUT ""                    /* par_hrtransa */
+                         ,INPUT 0                     /* par_cdoperad */                               
+                         ,INPUT p-identifica          /* par_dsidenti */
+                         ,INPUT crapcop.cdcooper      /* par_cdcooper */
+                         ,INPUT glb_dsdctitg          /* par_nrdctitg */
+                         ,INPUT ""                    /* par_dscedent */
+                         ,INPUT 0                     /* par_cdcoptfn */
+                         ,INPUT 0                     /* par_cdagetfn */
+                         ,INPUT 0                     /* par_nrterfin */
+                         ,INPUT 0                     /* par_nrparepr */
+                         ,INPUT 0                     /* par_nrseqava */
+                         ,INPUT 0                     /* par_nraplica */
+                         ,INPUT 0                     /* par_cdorigem */
+                         ,INPUT 0                     /* par_idlautom */
+                         ,INPUT 0                     /* par_inprolot */ 
+                         ,INPUT 0                     /* par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+
+                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                            DO:  
+									ASSIGN i-cod-erro  = aux_cdcritic
+										   c-desc-erro = aux_dscritic.           
+									RUN cria-erro (INPUT p-cooper,
+												INPUT p-cod-agencia,
+												INPUT p-nro-caixa,
+												INPUT i-cod-erro,
+												INPUT c-desc-erro,
+												INPUT YES).
+									RETURN "NOK".
+                            END. 
+         
+               ASSIGN
                     craplot.nrseqdig  = craplot.nrseqdig + 1 
                     craplot.qtcompln  = craplot.qtcompln + 1
                     craplot.qtinfoln  = craplot.qtinfoln + 1.
-             VALIDATE craplcm.
          END.
          
     IF   p-valor <> 0  AND      /* Cheque */
@@ -1543,27 +1600,72 @@ PROCEDURE atualiza-pagto-cheque-liberado:
              RUN fontes/digbbx.p (INPUT  p-nro-conta,
                                   OUTPUT glb_dsdctitg,
                                   OUTPUT glb_stsnrcal).
-             CREATE craplcm.
-             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                    craplcm.dtmvtolt = crapdat.dtmvtocd
-                    craplcm.cdagenci = p-cod-agencia
-                    craplcm.cdbccxlt  = 11
-                    craplcm.dsidenti  = p-identifica
-                    craplcm.nrdolote = i-nro-lote
-                    craplcm.nrdconta = aux_nrdconta
-                    craplcm.nrdctitg = glb_dsdctitg
-                    craplcm.nrdocmto = p-nrdocmto
-                    craplcm.vllanmto = p-valor
-                    craplcm.cdhistor = 372
-                    craplcm.nrseqdig = craplot.nrseqdig + 1 
-                    craplcm.nrdctabb = p-nro-conta
-                    craplcm.cdpesqbb = "CRAP55"
-                    craplcm.nrautdoc = p-ult-sequencia
+             /* P450 - Credito unificado */                    
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                        ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
+                         ,INPUT p-cod-agencia         /* par_cdagenci */
+                         ,INPUT 11                    /* par_cdbccxlt */
+                         ,INPUT i-nro-lote            /* par_nrdolote */
+                         ,INPUT aux_nrdconta          /* par_nrdconta */
+                         ,INPUT p-nrdocmto            /* par_nrdocmto */
+                         ,INPUT 372                   /* par_cdhistor */
+                         ,INPUT craplot.nrseqdig + 1  /* par_nrseqdig */
+                         ,INPUT p-valor               /* par_vllanmto */
+                         ,INPUT p-nro-conta           /* par_nrdctabb */
+                         ,INPUT "CRAP55"              /* par_cdpesqbb */
+                         ,INPUT 0                     /* par_vldoipmf */
+                         ,INPUT p-ult-sequencia       /* par_nrautdoc */
+                         ,INPUT 0                     /* par_nrsequni */
+                         ,INPUT 0                     /* par_cdbanchq */
+                         ,INPUT 0                     /* par_cdcmpchq */
+                         ,INPUT 0                     /* par_cdagechq */
+                         ,INPUT 0                     /* par_nrctachq */
+                         ,INPUT 0                     /* par_nrlotchq */
+                         ,INPUT 0                     /* par_sqlotchq */
+                         ,INPUT ""                    /* par_dtrefere */
+                         ,INPUT ""                    /* par_hrtransa */
+                         ,INPUT 0                     /* par_cdoperad */                               
+                         ,INPUT p-identifica          /* par_dsidenti */
+                         ,INPUT crapcop.cdcooper      /* par_cdcooper */
+                         ,INPUT glb_dsdctitg          /* par_nrdctitg */
+                         ,INPUT ""                    /* par_dscedent */
+                         ,INPUT 0                     /* par_cdcoptfn */
+                         ,INPUT 0                     /* par_cdagetfn */
+                         ,INPUT 0                     /* par_nrterfin */
+                         ,INPUT 0                     /* par_nrparepr */
+                         ,INPUT 0                     /* par_nrseqava */
+                         ,INPUT 0                     /* par_nraplica */
+                         ,INPUT 0                     /* par_cdorigem */
+                         ,INPUT 0                     /* par_idlautom */
+                         ,INPUT 0                     /* par_inprolot */ 
+                         ,INPUT 0                     /* par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+
+                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                            DO:  
+                              		ASSIGN i-cod-erro  = aux_cdcritic
+										   c-desc-erro = aux_dscritic.           
+									RUN cria-erro (INPUT p-cooper,
+												INPUT p-cod-agencia,
+												INPUT p-nro-caixa,
+												INPUT i-cod-erro,
+												INPUT c-desc-erro,
+												INPUT YES).
+									RETURN "NOK".
+                                
+                            END. 
+                           
+             ASSIGN
                     craplot.nrseqdig  = craplot.nrseqdig + 1 
                     craplot.qtcompln  = craplot.qtcompln + 1
                     craplot.qtinfoln  = craplot.qtinfoln + 1.
-             VALIDATE craplcm.
          END.
+
+       
+        DELETE PROCEDURE h-b1wgen0200. 
 
     IF   p-valor <> 0   AND      /* Cheque */
          flg_ci = YES   THEN 
