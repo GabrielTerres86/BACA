@@ -14,10 +14,11 @@ var flgVoltarGeral = 1;
 $(document).ready(function() {
 	// Estado Inicial da tela
 	estadoInicial();
-	formataTabCad();
 	formataTabCon();
 	formataTabHis();
 	formataTabExc();
+	formataTabCad();
+	
 	
 });
 
@@ -77,7 +78,8 @@ function formataExclusaoParametro(){
 	$("#fsexcpar","#frmExcParametro").css({"display":"none"});
 
 
-	$("#cdtransa","#frmExcParametro").keydown(function(e){   		
+	$("#cdtransa","#frmExcParametro").unbind('keydown').bind('keydown', function(e){   		
+        
         /* 
          * verifica se o evento é Keycode (para IE e outros browsers)
          * se não for pega o evento Which (Firefox)
@@ -94,11 +96,17 @@ function formataExclusaoParametro(){
     /*
     //  Define ação para o campo de código da historico ailos
 	$("#cdtransa","#frmExcParametro").unbind('keypress').bind('keypress', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
+		
+		var tecla = (e.keyCode?e.keyCode:e.which);
+		
+		
+		
+		if (tecla == 9 || tecla == 13) {
 			IniciaExclusao();
 			return false;
 		}
     });	
+    
     */
 
 	return false;
@@ -268,14 +276,16 @@ function controlaExcluir(){
 function confirmouExclusao(){
 	
 	var cdtransa = $("#cdtransa","#frmExcParametro").val();
-	if (!cdtransa){
+
+	if (cdtransa != ""){
+		
 		manterParametro("E",cdtransa,"","","","");	
 	}
 	
 
 }
 
-function finalizaExclusao(msgerro){
+function finalizaExclusao(){
 
 	showError('inform','Exclus&atilde;o efetuada com sucesso!','Alerta - Aimaro','estadoInicialExclusao();');
 
@@ -380,7 +390,9 @@ function formataCadastroParametro(){
     $("#fscadhis","#frmCadParametro").css({"display":"none"});
     $("#tbCadpar > tbody").html("");
     
-    $("#cdhistor","#frmCadParametro").keydown(function(e){   		
+    
+
+    $("#cdhistor","#frmCadParametro").unbind('keydown').bind('keydown', function(e){   		
         /* 
          * verifica se o evento é Keycode (para IE e outros browsers)
          * se não for pega o evento Which (Firefox)
@@ -403,8 +415,8 @@ function formataCadastroParametro(){
 		}
     });*/
 
-
 	return false;
+
 }
 
 function buscaDesHistoricoAilos(cdhistor){
@@ -574,7 +586,7 @@ function formataOpcaoParametrizacao(){
     $("#fscadtra","#frmCadParametro").css({"display":"block"});  
 
 
-   $("#cdtransa","#frmCadParametro").keydown(function(e){   		
+   $("#cdtransa","#frmCadParametro").unbind('keydown').bind('keydown', function(e){   		
         /* 
          * verifica se o evento é Keycode (para IE e outros browsers)
          * se não for pega o evento Which (Firefox)
@@ -611,7 +623,17 @@ function setarDestransacaoBancoob(cddopcao,cdtransa,dstransa,indebcre){
 		$("#btnIncluirTransacao","#frmCadParametro").hide();  	
         $("#btnAlterarTransacao","#frmCadParametro").show();
 
-        carregaHistoricoAilos(cdtransa);
+        var cddopcaohist;
+
+        // se for buscar da transacao da opção exclusao 
+        if (cddopcao == "BTE"){
+        	cddopcaohist = "BLHE";
+        }
+        if (cddopcao == "BT"){
+        	cddopcaohist = "BLH";	
+        }
+
+        carregaHistoricoAilos(cdtransa,cddopcaohist);
            
 	}else{	
 		// gera mesnagem apenas se for busca transacao pela opcao excluir
@@ -649,7 +671,7 @@ function alterarTransacaoBancoob(){
 }
 
 
-function carregaHistoricoAilos(cdtransa){
+function carregaHistoricoAilos(cdtransa,cddopcao){
 		
 		              
         $("#cdtransa","#frmCadParametro").desabilitaCampo();
@@ -662,8 +684,8 @@ function carregaHistoricoAilos(cdtransa){
 
         IniciaHistoricoAilos();
         //caso já cadastrado, deve carregar os historicos ailos na tabela
-        limpaTabelaHistorico();
-        buscaLinhaCadastroHistorico(cdtransa);        
+        
+        buscaLinhaCadastroHistorico(cdtransa,cddopcao);        
 
 }
 
@@ -675,6 +697,8 @@ function confirmouOperacaoParametro(){
 	var cdtransa = $("#cdtransa","#frmCadParametro").val();
     var dstransa = $("#dstransa","#frmCadParametro").val();
     var indebcre_transa = $("#indebcre","#frmCadParametro").val();    
+    var lscdhistor = '';
+    var lsindebcre = '';
 
 	//Atualiza a mensagem que será exibida
 	if(cddopcao == "I") {
@@ -691,18 +715,77 @@ function confirmouOperacaoParametro(){
 	if (cddopcao == "I") {
 		//devemos deletar os historicos ailos e inserilos novamente		
 		// neste caso devemos chamar primeiro a exclusao 
-		manterParametro("EH",cdtransa,"","","","");
+				
 		showMsgAguardo( mensagem );	
 		$('#tbCadpar > tbody > tr').each(function(){	
-			//apos excluir devemos inserir conforme parametrizado na tela		
-			manterParametro(cddopcao,cdtransa,$("td:eq(0)", $(this)).html(),dstransa,indebcre_transa,$("td:eq(2)", $(this)).html());
+			//concatena cada linha da tabela de historicos ailos
+		    // EX: 1566;1548  e D;C	
+			if (lscdhistor == ''){
+				lscdhistor = $("td:eq(0)", $(this)).html();
+			}else{
+ 				lscdhistor = lscdhistor + ';' + $("td:eq(0)", $(this)).html();
+			}
+
+			if (lsindebcre == ''){
+				lsindebcre = $("td:eq(2)", $(this)).html();
+			}else{
+				lsindebcre = lsindebcre + ';' + $("td:eq(2)", $(this)).html();
+			}
+						
 		});
+		
+		InserirParametro(cddopcao,cdtransa,"",dstransa,indebcre_transa,"",lscdhistor,lsindebcre);
+		
 		
 		showError('inform','Inclu&iacute;do com sucesso.','Alerta - Aimaro','estadoInicialCadastro();');
 
 	}
 
 }
+
+function InserirParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,indebcre_histor,lscdhistor,lsindebcre){
+
+	$.ajax({
+        type: "POST",
+        url: UrlSite + "telas/parcba/incluir_historico.php",
+        data: {
+            cddopcao:     cddopcao,
+			cdtransa:     cdtransa,
+			cdhistor:     cdhistor,	
+			indebcre_transa:     indebcre_transa,
+			indebcre_histor:     indebcre_histor,
+			lscdhistor:          lscdhistor,
+			lsindebcre:          lsindebcre,
+			dstransa:            dstransa,			
+			redirect:     "script_ajax"
+		},
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        },
+        success: function(response) {
+           hideMsgAguardo();
+			try {
+				eval(response);
+			} catch (error) {
+					hideMsgAguardo();
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+			}
+		}
+    });
+
+    return false;
+
+}
+
+function ExcluirTransacao (cdtransa){
+	
+	if (cdtransa != ""){
+	   manterParametro("EH",cdtransa,"","","","");	
+	}
+	
+}
+
 
 function criaLinhaHistorico(cdhistor,dshistor,indebcre){	
 	// Criar a linha na tabela
@@ -767,8 +850,9 @@ function criaLinhaTransacao(cdtransa,dstransa,indebcre){
 
 }
 
-function criaLinhaCadastroHistorico(cdhistor,dshistor,indebcre){
+function criaLinhaCadastroHistorico(cddopcao,cdhistor,dshistor,indebcre){
 
+	if (cddopcao == "BLH"){
 	// Criar a linha na tabela
 	$("#tbCadpar > tbody")
 		.append($('<tr>') // Linha
@@ -793,6 +877,9 @@ function criaLinhaCadastroHistorico(cdhistor,dshistor,indebcre){
 			)	
 					
 		);
+	}
+
+	if (cddopcao == "BLHE"){
 
     $("#tbExcpar > tbody")
 		.append($('<tr>') // Linha
@@ -812,6 +899,7 @@ function criaLinhaCadastroHistorico(cdhistor,dshistor,indebcre){
 					
 		);
 
+}
 }
 
 
@@ -834,7 +922,7 @@ function limpaTabelaTransacao(){
 
 function limpaTabelaExlcusao(){
 	$("#tbExcpar > tbody").html("");
-	limpaTabelaHistorico();
+
 }
 
 function selecionaLinhaConsulta(linha) {
@@ -858,6 +946,8 @@ function setarDesHistoricoAilos(dshistor){
 
 function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,indebcre_histor){
     //Requisição para processar a opção que foi selecionada
+    var lscdhistor = '';
+    var lsindebcre = '';
 
 	$.ajax({
         type: "POST",
@@ -868,6 +958,8 @@ function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,ind
 			cdhistor:     cdhistor,	
 			indebcre_transa:     indebcre_transa,
 			indebcre_histor:     indebcre_histor,
+	        lscdhistor:          lscdhistor,
+			lsindebcre:          lsindebcre,
 			dstransa:     dstransa,			
 			redirect:     "script_ajax"
 		},
@@ -903,19 +995,17 @@ function incluirTransacaoBancoob() {
     var cdtransa = $("#cdtransa","#frmCadParametro").val();
     var dstransa = $("#dstransa","#frmCadParametro").val();
      
-    limpaTabelaHistorico(); 
     if (dstransa == ""){       
     	buscaDesTrasacaoBancoob("BT",cdtransa);
     }else{
-    	carregaHistoricoAilos(cdtransa);
+    	carregaHistoricoAilos(cdtransa,"BLH");
     	$("#cdhistor","#frmCadParametro").focus();
     }
        
 }
 
 function IniciaExclusao(){	
-	limpaTabelaExlcusao();
-	formataTabExc();
+		
 	var cdtransa = $("#cdtransa","#frmExcParametro").val();
     
 	if (cdtransa != ""){
@@ -930,10 +1020,10 @@ function IniciaHistoricoAilos(){
 	$("#fsexcpar","#frmExcParametro").css({"display":"block"});
 }
 
-function buscaLinhaCadastroHistorico(cdtransa){
+function buscaLinhaCadastroHistorico(cdtransa,cddopcao){
 	
 	if (cdtransa != ""){
-		manterParametro("BLH",cdtransa,"","","","");
+		manterParametro(cddopcao,cdtransa,"","","","");
 	}
 
 }
@@ -953,7 +1043,7 @@ function incluirHistoricoAilos(){
 	var indebcre = $("#indebcre1","#frmCadParametro").val();
 
 	if (cdhistor != "" && dshistor != "" && indebcre != ""){	 	
-	    criaLinhaCadastroHistorico(cdhistor,dshistor,indebcre);	
+	    criaLinhaCadastroHistorico("BLH",cdhistor,dshistor,indebcre);
 	    formataTabCad();	
         limpaCamposHistorico();
 	}

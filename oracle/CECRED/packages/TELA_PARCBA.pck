@@ -45,6 +45,8 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
                              ,pr_cdhistor IN tbcontab_conc_bancoob.cdhistor%TYPE
                              ,pr_indebcre_transa IN tbcontab_conc_bancoob.indebcre%TYPE
                              ,pr_indebcre_histor IN tbcontab_conc_bancoob.indebcre%TYPE
+                             ,pr_lscdhistor IN VARCHAR2
+                             ,pr_lsindebcre IN VARCHAR2
                              ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG 
                              ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -454,12 +456,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
       ROLLBACK;
   END pc_consulta_historico_ailos;
      
+PROCEDURE pc_deleta_transacao (pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TYPE,
+                               pr_cdcritic OUT NUMBER,
+                               pr_dscritic OUT VARCHAR2) IS 
+/* .............................................................................
+    
+  Programa: pc_deleta_transacao
+  Sistema : CECRED
+  Sigla   : TELA_PARCBA
+  Autor   : Alcemir Junior - Mout's
+  Data    : 21/09/2018.                    Ultima atualizacao: --/--/----
+    
+  Dados referentes ao programa:
+    
+  Frequencia: Sempre que for chamado
+    
+  Objetivo  : deletar transacao bancoob
+    
+  Observacao: -----
+    
+  Alteracoes:
+..............................................................................*/
+BEGIN
+   BEGIN
+        
+    DELETE tbcontab_conc_bancoob
+    WHERE cdtransa = pr_cdtransa;
+        
+    DELETE tbcontab_transa_bancoob
+    WHERE cdtransa = pr_cdtransa;
+        
+    COMMIT;                    
+        
+   EXCEPTION
+     WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao deletar transação bancoob. Tente novamente!';        
+   
+   END;   
+    
+END pc_deleta_transacao;     
 
 PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TYPE  
                              ,pr_dstransa IN tbcontab_transa_bancoob.dstransa%TYPE  
                              ,pr_cdhistor IN tbcontab_conc_bancoob.cdhistor%TYPE
                              ,pr_indebcre_transa IN tbcontab_conc_bancoob.indebcre%TYPE
                              ,pr_indebcre_histor IN tbcontab_conc_bancoob.indebcre%TYPE
+                             ,pr_lscdhistor IN VARCHAR2
+                             ,pr_lsindebcre IN VARCHAR2
                              ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG 
                              ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -514,9 +558,8 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
       vr_des_xml         CLOB;  
       vr_texto_completo  VARCHAR2(32600); 
       vr_flgexist        BOOLEAN;
-      
-      -- teste 
-      vr_farquivo utl_file.file_type;
+      vr_tab_lscdhistor gene0002.typ_split;
+      vr_tab_lsindebcre gene0002.typ_split;      
       
       ---------->> CURSORES <<--------
       
@@ -547,22 +590,31 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
         RAISE vr_exc_erro;
       END IF;
      
+      -- antes de inserir devemos deletar a transação
+      pc_deleta_transacao(pr_cdtransa => pr_cdtransa, 
+                          pr_cdcritic => vr_cdcritic,
+                          pr_dscritic => vr_dscritic);
     
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF; 
+
+     vr_tab_lscdhistor := gene0002.fn_quebra_string(pr_lscdhistor,';');
+     vr_tab_lsindebcre := gene0002.fn_quebra_string(pr_lsindebcre,';');
     
      BEGIN
        
        IF pr_cdtransa IS NOT NULL THEN 
           
-          
-              
            UPDATE tbcontab_transa_bancoob
             SET  dstransa = pr_dstransa,
                  indebcre = pr_indebcre_transa          
             WHERE cdtransa = pr_cdtransa;
             
-            IF SQL%ROWCOUNT = 0 THEN
           
                  
+        IF SQL%ROWCOUNT = 0 THEN                                             
+          COMMIT;
                   
                   INSERT INTO tbcontab_transa_bancoob 
                   (cdtransa,
@@ -575,26 +627,30 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
                 
             END IF;
                              
+        COMMIT;
+                           
         END IF;      
        
-        IF (pr_cdhistor IS NOT NULL) AND (pr_cdtransa IS NOT NULL)  THEN  
+      IF vr_tab_lscdhistor.count() > 0 THEN 
                                                                
+        FOR idx IN vr_tab_lscdhistor.first..vr_tab_lscdhistor.last LOOP
           
          
            UPDATE tbcontab_conc_bancoob
-           SET cdhistor = pr_cdhistor,
-               indebcre = pr_indebcre_histor        
-           WHERE cdhistor = pr_cdhistor
+           SET cdhistor = vr_tab_lscdhistor(idx),
+               indebcre = vr_tab_lsindebcre(idx)        
+           WHERE cdhistor = vr_tab_lscdhistor(idx)
             AND  cdtransa = pr_cdtransa;   
                        
            IF SQL%ROWCOUNT = 0 THEN 
                                     
+             COMMIT;                           
+                 
              OPEN cr_transacao (pr_cdtransa => pr_cdtransa);
               FETCH cr_transacao INTO rw_transacao;
              
              IF cr_transacao%NOTFOUND THEN
                 
-    
                   CLOSE cr_transacao;
                   
                   INSERT INTO tbcontab_transa_bancoob 
@@ -606,6 +662,8 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
                    pr_dstransa,
                    pr_indebcre_transa);
                      
+                COMMIT;                                 
+                        
              END IF;
              
              CLOSE cr_transacao;  
@@ -616,20 +674,25 @@ PROCEDURE pc_insere_parametro(pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TY
                 indebcre)    
              VALUES
                 (pr_cdtransa,
-                 pr_cdhistor,
-                 pr_indebcre_histor);
+                 vr_tab_lscdhistor(idx),
+                 vr_tab_lsindebcre(idx));                                                                                                                          
+                
            END IF;
            
+           COMMIT;
+               
+        END LOOP;
+            
          END IF;  
          
+     COMMIT;
+       
      EXCEPTION
        WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao parametrizar. Tente novamente!';
+          vr_dscritic := 'Erro ao parametrizar. Tente novamente!' || SQLERRM;
           RAISE vr_exc_erro;          
      END; 
-        
-     COMMIT;                           
      
   EXCEPTION
     WHEN vr_exc_erro THEN
