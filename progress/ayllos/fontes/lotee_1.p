@@ -195,6 +195,9 @@
 
 			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
 							(Jonata RKAM M311)
+              
+              18/10/2018 - PJ450 Regulatório de Credito - Substituído o delete na craplcm e crablcm pela chamada 
+                            da rotina h-b1wgen0200.estorna_lancamento_conta. (Heckmann - AMcom)
 
 ............................................................................. */
 
@@ -257,6 +260,10 @@ DEF VAR h-b1wgen9998          AS HANDLE                                   NO-UND
 DEF VAR aux_flgretativo       AS INTEGER                                  NO-UNDO.
 DEF VAR aux_flgretquitado     AS INTEGER                                  NO-UNDO.
 DEF VAR aux_cdrefere          LIKE crapatr.cdrefere                       NO-UNDO.
+
+DEF VAR aux_cdcritic          AS INTEGER                                  NO-UNDO.        
+DEF VAR aux_dscritic          AS CHAR                                     NO-UNDO.
+DEF VAR h-b1wgen0200          AS HANDLE                                   NO-UNDO.
 
 /*   Leitura da tabela de parametros para indentificar o Nro. da conta do
      tipo de registro 2   */
@@ -442,8 +449,7 @@ DO WHILE TRUE:
                          LEAVE.
                      END.
             END.
-
-        
+       
        IF   craplcm.cdhistor = 354   OR    /* credito cotas */
             craplcm.cdhistor = 451   OR    /* credito de estorno de cotas */
             craplcm.cdhistor = 275   OR    /* pagto emprestimo */
@@ -586,7 +592,37 @@ DO WHILE TRUE:
                                                   "zzz,zzz,zzz,zz9.99") +
                                            " >> log/landpv.log").
                         
-                         DELETE crablcm.
+                         /*DELETE crablcm.*/
+                         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                             RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                           
+                         RUN estorna_lancamento_conta IN h-b1wgen0200 
+                             (INPUT crablcm.cdcooper               /* par_cdcooper */
+                             ,INPUT crablcm.dtmvtolt               /* par_dtmvtolt */
+                             ,INPUT crablcm.cdagenci               /* par_cdagenci*/
+                             ,INPUT crablcm.cdbccxlt               /* par_cdbccxlt */
+                             ,INPUT crablcm.nrdolote               /* par_nrdolote */
+                             ,INPUT crablcm.nrdctabb               /* par_nrdctabb */
+                             ,INPUT crablcm.nrdocmto               /* par_nrdocmto */
+                             ,INPUT crablcm.cdhistor               /* par_cdhistor */           
+                             ,INPUT crablcm.nrctachq               /* par_nrctachq */
+                             ,INPUT crablcm.nrdconta               /* par_nrdconta */
+                             ,INPUT crablcm.cdpesqbb               /* par_cdpesqbb */
+                             ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                             ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                                             
+                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                             DO: 
+                                 /* Tratamento de erros conforme anteriores */                           
+                                 glb_cdcritic = aux_cdcritic.
+                                 aux_flgerros = TRUE.
+                                 par_situacao = FALSE.
+                                 LEAVE.
+                             END.
+                                   
+                         IF  VALID-HANDLE(h-b1wgen0200) THEN
+                             DELETE PROCEDURE h-b1wgen0200.
+                         /* Fim do DELETE */
                      END.
                 ELSE
                 IF   craplcm.cdhistor = 354   OR
@@ -1585,8 +1621,40 @@ DO WHILE TRUE:
                                  crablcm.nrdocmto = glb_nrcalcul
                                  USE-INDEX craplcm1 EXCLUSIVE-LOCK NO-ERROR.
                             IF   AVAILABLE crablcm   THEN
-                                 DELETE crablcm.
-                        END.    
+                                DO:
+                                    /*DELETE crablcm.*/
+                                    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                                        RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                                      
+                                    RUN estorna_lancamento_conta IN h-b1wgen0200 
+                                        (INPUT crablcm.cdcooper               /* par_cdcooper */
+                                        ,INPUT crablcm.dtmvtolt               /* par_dtmvtolt */
+                                        ,INPUT crablcm.cdagenci               /* par_cdagenci*/
+                                        ,INPUT crablcm.cdbccxlt               /* par_cdbccxlt */
+                                        ,INPUT crablcm.nrdolote               /* par_nrdolote */
+                                        ,INPUT crablcm.nrdctabb               /* par_nrdctabb */
+                                        ,INPUT crablcm.nrdocmto               /* par_nrdocmto */
+                                        ,INPUT crablcm.cdhistor               /* par_cdhistor */           
+                                        ,INPUT crablcm.nrctachq               /* par_nrctachq */
+                                        ,INPUT crablcm.nrdconta               /* par_nrdconta */
+                                        ,INPUT crablcm.cdpesqbb               /* par_cdpesqbb */
+                                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                                                        
+                                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                        DO: 
+                                            /* Tratamento de erros conforme anteriores */                           
+                                            glb_cdcritic = aux_cdcritic.
+                                            aux_flgerros = TRUE.
+                                            par_situacao = FALSE.
+                                            LEAVE.
+                                        END.   
+                                              
+                                        IF  VALID-HANDLE(h-b1wgen0200) THEN
+                                            DELETE PROCEDURE h-b1wgen0200.
+                                    /* Fim do DELETE */
+                                END. 
+                        END.   
                     
                     DELETE crapchd.
                 END.
@@ -1622,7 +1690,7 @@ DO WHILE TRUE:
 									WHEN pc_excluir_lanaut.pr_dscritic <> ?.
 
 
-                IF  glb_dscritic = "" OR glb_dscritic = ? THEN
+        IF  glb_dscritic = "" OR glb_dscritic = ? THEN
 				    DO:
 
 						/* Buscar nome do supervisor */
@@ -1687,10 +1755,41 @@ DO WHILE TRUE:
              
 						DELETE PROCEDURE h-b1wgen0014.
                 
-						DELETE craplcm.
+						/*DELETE craplcm.*/
+            IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                    RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                  
+            RUN estorna_lancamento_conta IN h-b1wgen0200 
+                (INPUT craplcm.cdcooper               /* par_cdcooper */
+                ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+                ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+                ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+                ,INPUT craplcm.nrdolote               /* par_nrdolote */
+                ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+                ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+                ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+                ,INPUT craplcm.nrctachq               /* par_nrctachq */
+                ,INPUT craplcm.nrdconta               /* par_nrdconta */
+                ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+                ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                                
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                DO: 
+                    /* Tratamento de erros conforme anteriores */                           
+                    glb_cdcritic = aux_cdcritic.
+                    aux_flgerros = TRUE.
+                    par_situacao = FALSE.
+                    LEAVE.
+                END.   
+                      
+            IF  VALID-HANDLE(h-b1wgen0200) THEN
+                DELETE PROCEDURE h-b1wgen0200.
+            /* Fim do DELETE */
+            
 				  END.
 
-            END.
+       END.
 
        IF   AVAILABLE crapavs   THEN
             DELETE crapavs.

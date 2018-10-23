@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 12/06/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 18/10/2018
            
     Dados referentes ao programa:
                 
@@ -558,6 +558,9 @@
 
                12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
                             [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+                            
+               18/10/2018 - PJ450 Regulatório de Credito - Substituído o delete na craplcm pela chamada 
+                            da rotina h-b1wgen0200.estorna_lancamento_conta. (Heckmann - AMcom)
 
 ..............................................................................*/
 
@@ -16092,6 +16095,9 @@ PROCEDURE efetua_estorno_baixa_titulo:
     DEF VAR aux_flgdsair AS LOGICAL NO-UNDO.
     DEF VAR flg_notfound AS LOGICAL NO-UNDO.
     
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dscritic = ""
@@ -16259,7 +16265,40 @@ PROCEDURE efetua_estorno_baixa_titulo:
                 IF  craplot.qtcompln = 0  THEN
                     DELETE craplot.
 
-                DELETE craplcm.
+                /*DELETE craplcm.*/
+                IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                    RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                  
+                RUN estorna_lancamento_conta IN h-b1wgen0200 
+                    (INPUT craplcm.cdcooper               /* par_cdcooper */
+                    ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+                    ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+                    ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+                    ,INPUT craplcm.nrdolote               /* par_nrdolote */
+                    ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+                    ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+                    ,INPUT craplcm.cdhistor               /* par_cdhistor */
+                    ,INPUT craplcm.nrctachq               /* par_nrctachq */
+                    ,INPUT craplcm.nrdconta               /* par_nrdconta */
+                    ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+                    ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                    ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                                    
+                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                    DO: 
+                        /* Tratamento de erros conforme anteriores */                           
+                        RUN cria-erro (INPUT par_cdcooper,
+                                       INPUT par_cdagenci,
+                                       INPUT par_nrdcaixa,
+                                       INPUT aux_cdcritic,
+                                       INPUT aux_dscritic,
+                                       INPUT YES).
+                        UNDO ESTORNO, RETURN "NOK".
+                    END.   
+                          
+                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+                /* Fim do DELETE */
                 
                 LEAVE.
             
