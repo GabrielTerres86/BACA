@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 04/04/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 22/10/2018
    
    Projeto:  Chamado 714566.
 
@@ -43,7 +43,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
      ( Paulo Penteado GFT - 03/08/2018)
                     
    08/10/2018 - Retorno de versão por sikmples suspeita de problema
-              (Belli - Envolti - Chamado REQ0029352)  
+              (Belli - Envolti - Chamado REQ0029352)  			   
+
+   22/10/2018 - Ajuste no cursor da rotina de protesto automático (P352 - Cechet)
               
    .............................................................................*/
 
@@ -1338,7 +1340,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
           AND   crapcob.nrcnvcob = crapceb.nrconven
           AND   crapcob.dtvencto = pr_dtvencto
           AND   crapcob.qtdiaprt = pr_qtdiaprt
-          AND   crapcob.incobran = 0;
+          AND   crapcob.incobran = 0
+		  AND   crapcob.insitcrt = 0; -- boletos sem instrucao de protesto comandada
 
        --Selecionar titulos baixa decurso prazo
        CURSOR cr_crapcob_aberto (pr_cdcooper IN crapcco.cdcooper%type
