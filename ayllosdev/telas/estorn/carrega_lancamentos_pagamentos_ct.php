@@ -15,7 +15,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> ''){
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'ECT')) <> ''){
 		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
 	}
 

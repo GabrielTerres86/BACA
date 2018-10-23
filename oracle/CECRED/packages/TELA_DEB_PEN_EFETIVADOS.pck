@@ -787,7 +787,7 @@ DECLARE
           FROM craplau
              , craphis his
              , crapass ass
-         WHERE craplau.cdcooper = 1--pr_cdcooper
+         WHERE craplau.cdcooper = pr_cdcooper
            AND craplau.insitlau = 1 -- Pendente
            AND craplau.cdbccxlt = 100
            AND craplau.nrdolote = 600033
@@ -1494,7 +1494,7 @@ BEGIN
           FROM craplau
              , craphis his
              , crapass ass
-         WHERE craplau.cdcooper = 1--pr_cdcooper
+         WHERE craplau.cdcooper = pr_cdcooper
            AND craplau.insitlau = 1 -- Pendente
            AND craplau.cdbccxlt = 100
            AND craplau.nrdolote = 600033

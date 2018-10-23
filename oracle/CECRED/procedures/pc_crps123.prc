@@ -1793,6 +1793,8 @@ BEGIN
 
           -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
         EXCEPTION
+          WHEN vr_exc_saida THEN
+            raise vr_exc_saida; 
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao inserir na tabela CRAPLCM: ' || sqlerrm;
             --Chamado 709894

@@ -19,16 +19,22 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
 	$operacao		 = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 	$nrdconta		 = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrctremp 		 = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
 	$qtdlacto 		 = (isset($_POST['qtdlacto'])) ? $_POST['qtdlacto'] : 0;
 	$totalest        = (isset($_POST['totalest'])) ? $_POST['totalest'] : 0;
 	$dsjustificativa = (isset($_POST['dsjustificativa'])) ? $_POST['dsjustificativa'] : '';
+    
+    if ($operacao == 'ESTORNO_CT') {
+        if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'ECT')) <> ''){
+            exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        }        
+    }else {
+        if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> ''){
+            exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        }
+    }
 	
 	switch ($operacao){
 		
