@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Demetrius Wolff - Mouts
-  --  Data     : Abril/2017.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Abril/2017.                   Ultima atualizacao: 02/02/2018
   --
   -- Objetivo  : Rotinas referente a Instruções Bancárias para Títulos
   --
@@ -23,8 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                               pr_vlabatim     IN crapcob.vlabatim%TYPE,
                               pr_dtvencto     IN crapcob.dtvencto%TYPE,
                               pr_vldescto     IN crapcob.vldescto%TYPE,
-                              pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,
+                              pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,	
                               pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
+                              pr_qtdiaprt     IN crapcob.qtdiaprt%TYPE,                              
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2);
@@ -39,6 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                                   pr_nrdocmto IN INTEGER,     --> Boleto
                                   pr_vlabatim IN NUMBER,      --> Valor de Abatimento
                                   pr_dtvencto IN DATE,        --> Data de Vencimetno
+                                  pr_qtdiaprt IN NUMBER,      --> Quantidade de dias para protesto
                                   pr_cdcritic OUT INTEGER,    --> Codigo da Critica
                                   pr_dscritic OUT VARCHAR2);  --> Descricao da Critica
 
@@ -47,6 +49,17 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                                         pr_dtmvtolt IN DATE,         --> Data
                                         pr_cdcritic OUT INTEGER,     --> Codigo da Critica
                                         pr_dscritic OUT VARCHAR2);   --> Descricao da Critica                                  
+
+  PROCEDURE pc_imp_carta_anuencia(pr_cdcooper     IN crapcop.cdcooper%TYPE,
+                                  pr_nrdconta     IN crapass.nrdconta%TYPE,
+                                  pr_nrcnvcob     IN crapcob.nrcnvcob%TYPE,
+                                  pr_nrdocmto     IN crapcob.nrdocmto%TYPE,
+                                  pr_dtmvtolt     IN crapcob.dtmvtolt%TYPE,
+                                  pr_cdoperad     IN crapcob.cdoperad%TYPE,
+                                  pr_dtliqdiv     IN DATE, -- data de liquidacao da divida
+                                  pr_xml_dsmsgerr OUT VARCHAR2,
+                                  pr_cdcritic     OUT INTEGER,
+                                  pr_dscritic     OUT VARCHAR2);                                        
 
 END COBR0010;
 /
@@ -66,6 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                               pr_vldescto     IN crapcob.vldescto%TYPE,
                               pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,
                               pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
+                              pr_qtdiaprt     IN crapcob.qtdiaprt%TYPE,
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2) IS
@@ -125,7 +139,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                                     
                   08/12/2017 - Inclusão de commit/rollback para finalizar a transação
                                e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-                               (SD#791193 - AJFink)
+                               (SD#791193 - AJFink)											   
+
+                  04/05/2018 - Inclusao de parametro qtdiaprt referente a quantidade de dias 
+                               para protesto automatico - instrução 80. PRJ352 - Protesto (Supero)
 
                   01/06/2018 - Adicionar o Numero de Celular do Sacado como parametro, para que seja 
                                processado na instrução 95. PRJ285 - Nova Conta Online (Douglas)
@@ -319,7 +336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).nrcepsac := rw_crapcob.nrcepsac;
     vr_tab_instrucao(1).nmcidsac := rw_crapcob.nmcidsac;
     vr_tab_instrucao(1).cdufsaca := rw_crapcob.cdufsaca;
-    vr_tab_instrucao(1).qtdiaprt := rw_crapcob.qtdiaprt;
+    vr_tab_instrucao(1).qtdiaprt := pr_qtdiaprt; -- rw_crapcob.qtdiaprt;
     vr_tab_instrucao(1).dsdoccop := rw_crapcob.dsdoccop;
     vr_tab_instrucao(1).cdbandoc := rw_crapcob.cdbandoc;
     vr_tab_instrucao(1).nrdctabb := rw_crapcob.nrdctabb;
@@ -461,8 +478,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                                   pr_nrdocmto IN INTEGER,      --> Boleto
                                   pr_vlabatim IN NUMBER,       --> Valor de Abatimento
                                   pr_dtvencto IN DATE,         --> Data de Vencimetno
+                                  pr_qtdiaprt IN NUMBER,       --> Quantidade de dias para protesto
                                   pr_cdcritic OUT INTEGER,     --> Codigo da Critica
-                                  pr_dscritic OUT VARCHAR2) IS --> Descricao da Critica
+                                  pr_dscritic OUT VARCHAR2     --> Descricao da Critica
+                                 ) IS 
   
     /* ..........................................................................
     
@@ -481,6 +500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                               e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                               (SD#791193 - AJFink)
     
+                 02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto    
     .................................................................................*/
   
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -670,7 +690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).nrcepsac := rw_crapcob.nrcepsac;
     vr_tab_instrucao(1).nmcidsac := rw_crapcob.nmcidsac;
     vr_tab_instrucao(1).cdufsaca := rw_crapcob.cdufsaca;
-    vr_tab_instrucao(1).qtdiaprt := rw_crapcob.qtdiaprt;
+    
     vr_tab_instrucao(1).dsdoccop := rw_crapcob.dsdoccop;
     vr_tab_instrucao(1).cdbandoc := rw_crapcob.cdbandoc;
     vr_tab_instrucao(1).nrdctabb := rw_crapcob.nrdctabb;
@@ -681,6 +701,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).insmsvct := rw_crapcob.insmsvct;
     vr_tab_instrucao(1).insmspos := rw_crapcob.insmspos;
     vr_tab_instrucao(1).nrcelsac := NULL; -- Celular do Sacado   rw_crapsab.nrcelsac;
+  	
+    IF NVL(pr_qtdiaprt,0) > 0 THEN
+    vr_tab_instrucao(1).qtdiaprt := pr_qtdiaprt;
+    ELSE
+       vr_tab_instrucao(1).qtdiaprt := rw_crapcob.qtdiaprt;
+    END IF;		
   
     -- Carregar todas as informacoes do Header
     vr_rec_header.nrremass := 0; --vr_nrremass;
@@ -907,6 +933,335 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
       pr_dscritic := 'Erro inesperado ao pc_gera_baixa_eft_interbca:' || SQLERRM;
     
   END pc_gera_baixa_eft_interbca;
+
+  /* Procedimento para registrar impressao de carta de anuencia */
+  PROCEDURE pc_imp_carta_anuencia(pr_cdcooper     IN crapcop.cdcooper%TYPE,
+                                  pr_nrdconta     IN crapass.nrdconta%TYPE,
+                                  pr_nrcnvcob     IN crapcob.nrcnvcob%TYPE,
+                                  pr_nrdocmto     IN crapcob.nrdocmto%TYPE,
+                                  pr_dtmvtolt     IN crapcob.dtmvtolt%TYPE,
+                                  pr_cdoperad     IN crapcob.cdoperad%TYPE,
+                                  pr_dtliqdiv     IN DATE, -- data de liquidacao da divida
+                                  pr_xml_dsmsgerr OUT VARCHAR2,
+                                  pr_cdcritic     OUT INTEGER,
+                                  pr_dscritic     OUT VARCHAR2) IS
+
+    /* ..........................................................................
+    
+      Programa : pc_Imp_Carta_Anutencia
+      Sistema : Internet - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Rafael Cechet
+      Data    : Março/2018.
+   
+      Dados referentes ao programa:
+       
+      Frequencia: Sempre que for chamado (On-Line)
+      Objetivo  : Registrar movimentação de impressão de carta de anuência
+          
+      Alteracoes:                   
+
+     .................................................................................*/
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.dsdircop,
+             cop.cdbcoctl,
+             cop.cdagectl
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+    -- Parâmetros do cadastro de cobrança
+    CURSOR cr_crapcco(pr_cdcooper IN crapcob.cdcooper%type,
+                      pr_nrconven IN crapcco.nrconven%TYPE) IS
+      SELECT cco.cddbanco,
+             cco.cdagenci,
+             cco.cdbccxlt,
+             cco.nrdolote,
+             cco.cdhistor,
+             cco.nrdctabb,
+             cco.flgutceb,
+             cco.flgregis
+        FROM crapcco cco
+       WHERE cco.cdcooper = pr_cdcooper
+         AND cco.nrconven = pr_nrconven;
+      rw_crapcco cr_crapcco%ROWTYPE;
+
+      --Selecionar Ultimo Controle Cobranca
+    CURSOR cr_crapceb(pr_cdcooper IN crapceb.cdcooper%type,
+                      pr_nrdconta IN crapceb.nrdconta%type,
+                      pr_nrconven IN crapceb.nrconven%type) IS
+      SELECT ceb.flceeexp, ceb.flserasa, ceb.flgregon, ceb.flgpgdiv
+          FROM crapceb ceb
+         WHERE ceb.cdcooper = pr_cdcooper
+           AND ceb.nrdconta = pr_nrdconta
+           AND ceb.nrconven = pr_nrconven
+         ORDER BY ceb.progress_recid DESC;
+      rw_crapceb cr_crapceb%ROWTYPE;
+
+    -- Buscar dados do associado
+    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT ass.nrcpfcgc, ass.inpessoa
+       FROM crapass ass
+      WHERE ass.cdcooper = pr_cdcooper
+        AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+
+    --> Busca as informacoes da cobranca
+    CURSOR cr_crapcob (pr_cdcooper crapcob.cdcooper%TYPE,
+                       pr_nrdconta crapcob.nrdconta%TYPE,
+                       pr_cdbandoc crapcob.cdbandoc%TYPE,
+                       pr_nrdctabb crapcob.nrdctabb%TYPE,
+                       pr_nrcnvcob crapcob.nrcnvcob%TYPE,
+                       pr_nrdocmto crapcob.nrdocmto%TYPE) IS
+      SELECT cob.vltitulo,
+             cob.nrnosnum,
+             cob.nrinssac,
+             cob.dsendsac,
+             cob.nmbaisac,
+             cob.nrcepsac,
+             cob.nmcidsac,
+             cob.cdufsaca,
+             cob.qtdiaprt,
+             cob.dsdoccop,
+             cob.cdbandoc,
+             cob.nrdctabb,
+             cob.inemiten,
+             cob.dtretcob,
+             cob.inavisms,
+             cob.insmsant,
+             cob.insmsvct,
+             cob.insmspos,
+             cob.insrvprt, -- servico de protesto (0-Nenhum,1-IEPTB,2-BB)
+             cob.rowid
+        FROM crapcob cob
+       WHERE cob.cdcooper = pr_cdcooper 
+         AND cob.cdbandoc = pr_cdbandoc 
+         AND cob.nrdctabb = pr_nrdctabb 
+         AND cob.nrcnvcob = pr_nrcnvcob 
+         AND cob.nrdconta = pr_nrdconta 
+         AND cob.nrdocmto = pr_nrdocmto;
+      rw_crapcob cr_crapcob%ROWTYPE;
+
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+    vr_tab_lat_consolidada  PAGA0001.typ_tab_lat_consolidada;    
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;    
+    
+    ----------------> VARIAVEIS <---------------
+    --Variaveis de Erro
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  VARCHAR2(4000);
+    vr_index_lat VARCHAR2(60);    
+    
+    --Variaveis de Excecao
+    vr_des_erro VARCHAR2(10);
+    vr_exc_erro  EXCEPTION;
+        
+  BEGIN
+    
+    --Inicializa variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;   
+    
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+       CLOSE btch0001.cr_crapdat;
+
+      vr_cdcritic := 0;
+      vr_dscritic := 'Sistema sem data de movimento.';
+      RAISE vr_exc_erro;
+    ELSE
+       CLOSE btch0001.cr_crapdat;
+    END IF;     
+       
+    --> Verificar cooperativa
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop
+      INTO rw_crapcop;
+    IF cr_crapcop%NOTFOUND THEN
+      CLOSE cr_crapcop;
+      vr_dscritic := 'Cooperativa de destino nao cadastrada.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;
+      
+    --> Verificar cobrança
+    OPEN cr_crapcco(pr_cdcooper => pr_cdcooper, pr_nrconven => pr_nrcnvcob);
+
+    FETCH cr_crapcco
+      INTO rw_crapcco;
+    IF cr_crapcco%NOTFOUND THEN
+      CLOSE cr_crapcco;
+      vr_dscritic := 'Registro de cobranca nao cadastrado.';
+      RAISE vr_exc_erro;
+      
+    ELSE
+      CLOSE cr_crapcco;
+    END IF;
+
+    --> Verificar cobrança
+    OPEN cr_crapceb(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrconven => pr_nrcnvcob);
+
+    FETCH cr_crapceb
+      INTO rw_crapceb;
+    IF cr_crapceb%NOTFOUND THEN
+      CLOSE cr_crapceb;
+      vr_dscritic := 'Registro de emissao de boleto nao cadastrado.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapceb;
+    END IF;
+
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass
+      INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_dscritic := 'Conta/DV Informado Header Arquivo nao pertence a um cooperado cadastrado.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+
+    --> Busca as informacoes da cobranca
+    OPEN cr_crapcob(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_cdbandoc => rw_crapcco.cddbanco,
+                    pr_nrdctabb => rw_crapcco.nrdctabb,
+                    pr_nrcnvcob => pr_nrcnvcob,
+                    pr_nrdocmto => pr_nrdocmto);
+    FETCH cr_crapcob
+      INTO rw_crapcob;
+    IF cr_crapcob%NOTFOUND THEN
+      CLOSE cr_crapcob;
+      vr_dscritic := 'Informacoes da cobranca nao encontrado.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapcob;
+    END IF;
+
+    -- não permitir geracao de carta de anuencia para boletos protestados pelo BB 
+    -- ou sem servico de protesto    
+    IF rw_crapcob.insrvprt <> 1 THEN
+      vr_dscritic := 'Servico temporariamente indisponivel para este tipo de boleto.';
+      RAISE vr_exc_erro;      
+    END IF;
+                              
+     -- Se ocorreu critica escreve no proc_message.log
+     -- Não para o processo
+    IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_nmarqlog     => gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                                    ' - ERRO no processamento da impressao de carta de anuencia: ' || 
+                                                   vr_cdcritic || ' - ' || vr_dscritic);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      RAISE vr_exc_erro;
+          
+    END IF;
+    
+    -- 98 - Registro de impressao de carta de anuencia
+    COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                       ,pr_cdocorre => 98   -- 98 - Registro de impressao de carta de anuencia
+                                       ,pr_cdmotivo => 'F2' -- Motivo 
+                                       ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                       ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                       ,pr_cdagectl => rw_crapcop.cdagectl
+                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                       ,pr_cdoperad => pr_cdoperad
+                                       ,pr_nrremass => 0
+                                       ,pr_dtcatanu => pr_dtliqdiv -- data de liquidacao da divida
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+    -- Verifica se ocorreu erro durante a execucao
+    IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --Montar Indice para lancamento tarifa
+    vr_index_lat:= lpad(pr_cdcooper,10,'0')||
+                   lpad(pr_nrdconta,10,'0')||
+                   lpad(pr_nrcnvcob,10,'0')||
+                   lpad(98,10,'0')||
+                   lpad('0',10,'0')||
+                   lpad(vr_tab_lat_consolidada.Count+1,10,'0');
+    -- Gerar registro Tarifa 
+    vr_tab_lat_consolidada(vr_index_lat).cdcooper:= pr_cdcooper;
+    vr_tab_lat_consolidada(vr_index_lat).nrdconta:= pr_nrdconta;
+    vr_tab_lat_consolidada(vr_index_lat).nrdocmto:= pr_nrdocmto;
+    vr_tab_lat_consolidada(vr_index_lat).nrcnvcob:= pr_nrcnvcob;
+    vr_tab_lat_consolidada(vr_index_lat).dsincide:= 'RET';
+    vr_tab_lat_consolidada(vr_index_lat).cdocorre:= 98;    -- 98 - Registro de impressao de carta de anuencia
+    vr_tab_lat_consolidada(vr_index_lat).cdmotivo:= 'F2';  -- Motivo
+    vr_tab_lat_consolidada(vr_index_lat).vllanmto:= rw_crapcob.vltitulo;       
+                                                                            
+    PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper            => pr_cdcooper,
+                                          pr_dtmvtolt            => rw_crapdat.dtmvtolt,
+                                          pr_tab_lat_consolidada => vr_tab_lat_consolidada,
+                                          pr_cdcritic            => vr_cdcritic,
+                                          pr_dscritic            => vr_dscritic);
+                                             
+    -- Se ocorreu critica escreve no proc_message.log
+    -- Não para o processo
+    IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_nmarqlog     => gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                                        ' - ERRO no lancamento de tarifas: ' || 
+                                                        vr_cdcritic || ' - ' || vr_dscritic);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      RAISE vr_exc_erro;
+          
+    END IF;
+    
+    PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+                                , pr_cdoperad => pr_cdoperad
+                                , pr_dtmvtolt => pr_dtmvtolt
+                                , pr_dsmensag => 'Impressao de carta de anuencia. Liquidacao da divida em ' || to_char(pr_dtliqdiv,'DD/MM/RRRR')
+                                , pr_des_erro => vr_des_erro
+                                , pr_dscritic => vr_dscritic);
+                                
+    IF trim(vr_des_erro) <> 'OK' OR trim(vr_dscritic) IS NOT NULL THEN
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF;
+ 
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      -- se possui codigo, porém não possui descrição     
+      IF nvl(vr_cdcritic, 0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        -- buscar descrição
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+         
+      END IF; 
+      
+      -- definir retorno
+      pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
+                                
+    WHEN OTHERS THEN
+      
+      -- definir retorno
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro inesperado no registro de impressao de carta de anuencia. Tente novamente ou contacte seu PA';
+      pr_xml_dsmsgerr := '<dsmsgerr>' || pr_dscritic || ' - ' || SQLERRM || '</dsmsgerr>';
+      
+  END pc_imp_carta_anuencia;  
 
 END COBR0010;
 /
