@@ -2336,8 +2336,8 @@ function verificaAguardoImpressao(callback) {
 
 	return true;
 }
-
-function carregaImpressaoAimaro(form,action,callback) {	
+/*Não pode alterar para Aimaro*/
+function carregaImpressaoAyllos(form,action,callback) {	
 	
 	try {
 		showMsgAguardo('Aguarde, carregando impress&atilde;o ...');
