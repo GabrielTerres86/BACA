@@ -606,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 15/10/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 23/10/2018
   
    Dados referentes ao programa:
   
@@ -647,10 +647,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         02/10/2108 - inc0024681 Na rotina pc_busca_dados_cto_58, repassagem das críticas com detalhe
                      de conta e CPF para o usuário; Na rotina pc_busca_dados_ass_58, melhoria na crítica
                      de obrigatoriedade de endereço (Carlos)
-
+                     
         15/10/2018 - inc0025288 Tratamento na pc_busca_dados_58 para não retornar crítica nas exceptions 
                      vr_exc_filtro e vr_exc_busca quando esta não for chamada pela tela LOTPRC (Carlos)
-
+                     
+        23/10/2018 - inc0025900 Tratamento na pc_busca_dados_cto_72 para truncar os campos crapenc.complend
+                     e crapenc.nmcidade para se adequar aos tamanhos dos campos da tabela crapcrl; identificação 
+                     de exceptions nas rotinas principais (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Type para os motivos de demissões
@@ -2042,6 +2045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_ass_80: ' || SQLERRM;
     END;
@@ -2305,6 +2309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_id_80: ' || SQLERRM;
     END;
@@ -2506,6 +2511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_cto_80: ' || SQLERRM;
     END;
@@ -2702,6 +2708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_80: ' || SQLERRM;
     END;
@@ -2898,6 +2905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_cto_73: ' || SQLERRM;
     END;
@@ -3057,6 +3065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_id_73: ' || SQLERRM;
     END;
@@ -3305,6 +3314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_73, Conta: '||pr_nrdconta||'. Erro: ' || SQLERRM;
     END;
@@ -3676,11 +3686,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Se Encontrou
       IF cr_crapenc%FOUND THEN
         pr_tab_crapcrl(vr_index).nrendres:= rw_crapenc.nrendere;
-        pr_tab_crapcrl(vr_index).dscomres:= rw_crapenc.complend;
+        pr_tab_crapcrl(vr_index).dscomres:= SUBSTR(rw_crapenc.complend, 1, 40);
         pr_tab_crapcrl(vr_index).cdcepres:= rw_crapenc.nrcepend;
         pr_tab_crapcrl(vr_index).dsendres:= rw_crapenc.dsendere;
         pr_tab_crapcrl(vr_index).dsbaires:= rw_crapenc.nmbairro;
-        pr_tab_crapcrl(vr_index).dscidres:= rw_crapenc.nmcidade;
+        pr_tab_crapcrl(vr_index).dscidres:= SUBSTR(rw_crapenc.nmcidade, 1, 25);
         pr_tab_crapcrl(vr_index).dsdufres:= rw_crapenc.cdufende;
         pr_tab_crapcrl(vr_index).nrcxpost:= rw_crapenc.nrcxapst;
       END IF;
@@ -3724,6 +3734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_cto_72: ' || SQLERRM;
     END;
@@ -3919,6 +3930,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_id_72: ' || SQLERRM;
     END;
@@ -4428,6 +4440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_72: ' || SQLERRM;
     END;
@@ -4982,6 +4995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_cto_58: ' || SQLERRM;
     END;
@@ -5360,6 +5374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_id_58: ' || SQLERRM;
     END;
@@ -5557,8 +5572,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         EXCEPTION
           WHEN vr_exc_filtro THEN
             IF UPPER(pr_nmdatela) = 'LOTPRC' THEN
-            pr_cdcritic := vr_cdcritic;
-            pr_dscritic := vr_dscritic;
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
             ELSE
               NULL;
             END IF;
@@ -5634,10 +5649,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
         END LOOP; --rw_crapavt
       EXCEPTION
-        WHEN vr_exc_busca THEN
+        WHEN vr_exc_busca THEN          
           IF UPPER(pr_nmdatela) = 'LOTPRC' THEN
-          pr_cdcritic := vr_cdcritic;
-          pr_dscritic := vr_dscritic;
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
           ELSE
             NULL;
           END IF;
