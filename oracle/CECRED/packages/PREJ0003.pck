@@ -573,7 +573,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     SELECT vlsldlib
       FROM tbcc_prejuizo
      WHERE cdcooper = pr_cdcooper
-       AND nrdconta = pr_nrdconta;
+       AND nrdconta = pr_nrdconta
+	   AND dtliquidacao IS NULL;
 
     vr_vlcreddisp NUMBER; -- Valor dos créditos disponíveis para uso no pagamento
   BEGIN
