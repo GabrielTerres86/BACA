@@ -2453,6 +2453,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor IN(2408,2412)
              and   pd.dtmvtolt = pr_dtmvtolt
@@ -2468,6 +2469,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor IN(2716,2717)
              and   pd.dtmvtolt = pr_dtmvtolt
@@ -2485,6 +2487,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor = pr_cdhistor
              and   pd.dtmvtolt = pr_dtmvtolt
@@ -6048,6 +6051,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1071).nrctades_jur := 7019;
         vr_tab_historico(1071).dsrefere_jur := 'JUROS DE MORA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA JURIDICA';
 
+        --> CRAPLEM
+        vr_tab_historico(1077).nrctaori_fis := 7123;
+        vr_tab_historico(1077).nrctades_fis := 7018;
+        vr_tab_historico(1077).dsrefere_fis := 'JUROS DE MORA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA FISICA';
+        vr_tab_historico(1077).nrctaori_jur := 7123;
+        vr_tab_historico(1077).nrctades_jur := 7019;
+        vr_tab_historico(1077).dsrefere_jur := 'JUROS DE MORA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA JURIDICA';
+
+
         vr_tab_historico(1543).nrctaori_fis := 7123;
         vr_tab_historico(1543).nrctades_fis := 7018;
         vr_tab_historico(1543).dsrefere_fis := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
@@ -6055,6 +6067,14 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1543).nrctades_jur := 7019;
         vr_tab_historico(1543).dsrefere_jur := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
         
+        --> CRAPLEM
+        vr_tab_historico(1619).nrctaori_fis := 7123;
+        vr_tab_historico(1619).nrctades_fis := 7018;
+        vr_tab_historico(1619).dsrefere_fis := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1619).nrctaori_jur := 7123;
+        vr_tab_historico(1619).nrctades_jur := 7019;
+        vr_tab_historico(1619).dsrefere_jur := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
         vr_tab_historico(2346).nrctaori_fis := 7593;
         vr_tab_historico(2346).nrctades_fis := 7591;
         vr_tab_historico(2346).dsrefere_fis := 'APROPR. JUROS DE MORA EMPRESTIMO POS FIXADO - PESSOA FISICA';
@@ -6069,12 +6089,27 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1060).nrctades_jur := 7021;
         vr_tab_historico(1060).dsrefere_jur := 'MULTA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA JURIDICA';
 
+        vr_tab_historico(1047).nrctaori_fis := 7124;
+        vr_tab_historico(1047).nrctades_fis := 7020;
+        vr_tab_historico(1047).dsrefere_fis := 'MULTA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA FISICA';
+        vr_tab_historico(1047).nrctaori_jur := 7124;
+        vr_tab_historico(1047).nrctades_jur := 7021;
+        vr_tab_historico(1047).dsrefere_jur := 'MULTA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA JURIDICA';
+        
         vr_tab_historico(1541).nrctaori_fis := 7124;
         vr_tab_historico(1541).nrctades_fis := 7020;
         vr_tab_historico(1541).dsrefere_fis := 'MULTA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
         vr_tab_historico(1541).nrctaori_jur := 7124;
         vr_tab_historico(1541).nrctades_jur := 7021;
         vr_tab_historico(1541).dsrefere_jur := 'MULTA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
+        --CRAPLEM
+        vr_tab_historico(1540).nrctaori_fis := 7124;
+        vr_tab_historico(1540).nrctades_fis := 7020;
+        vr_tab_historico(1540).dsrefere_fis := 'MULTA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1540).nrctaori_jur := 7124;
+        vr_tab_historico(1540).nrctades_jur := 7021;
+        vr_tab_historico(1540).dsrefere_jur := 'MULTA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
 
         vr_tab_historico(2348).nrctaori_fis := 7596;
         vr_tab_historico(2348).nrctades_fis := 7594;
@@ -6132,6 +6167,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1072).nrctades_jur := 7031;
         vr_tab_historico(1072).dsrefere_jur := 'JUROS DE MORA CONTRATO FINANCIAMENTO TX.PRE-FIXADA - PESSOA JURIDICA';
 
+        --> CRAPLEM
+        vr_tab_historico(1078).nrctaori_fis := 7136;
+        vr_tab_historico(1078).nrctades_fis := 7030;
+        vr_tab_historico(1078).dsrefere_fis := 'JUROS DE MORA CONTRATO FINANCIAMENTO TX.PRE-FIXADA - PESSOA FISICA';
+        vr_tab_historico(1078).nrctaori_jur := 7136;
+        vr_tab_historico(1078).nrctades_jur := 7031;
+        vr_tab_historico(1078).dsrefere_jur := 'JUROS DE MORA CONTRATO FINANCIAMENTO TX.PRE-FIXADA - PESSOA JURIDICA';
+
+
         vr_tab_historico(1544).nrctaori_fis := 7136;
         vr_tab_historico(1544).nrctades_fis := 7030;
         vr_tab_historico(1544).dsrefere_fis := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
@@ -6139,6 +6183,14 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1544).nrctades_jur := 7031;
         vr_tab_historico(1544).dsrefere_jur := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
         
+        --> CRAPLEM
+        vr_tab_historico(1620).nrctaori_fis := 7136;
+        vr_tab_historico(1620).nrctades_fis := 7030;
+        vr_tab_historico(1620).dsrefere_fis := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1620).nrctaori_jur := 7136;
+        vr_tab_historico(1620).nrctades_jur := 7031;
+        vr_tab_historico(1620).dsrefere_jur := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
         vr_tab_historico(2347).nrctaori_fis := 7563;
         vr_tab_historico(2347).nrctades_fis := 7561;
         vr_tab_historico(2347).dsrefere_fis := 'APROPR. JUROS DE MORA FINANCIAMENTO POS FIXADO - PESSOA FISICA';
@@ -6160,6 +6212,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
         
+        --> CRAPLEM
+        vr_tab_historico(1618).nrctaori_fis := 7138;
+        vr_tab_historico(1618).nrctades_fis := 7032;
+        vr_tab_historico(1618).dsrefere_fis := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1618).nrctaori_jur := 7138;
+        vr_tab_historico(1618).nrctades_jur := 7033;
+        vr_tab_historico(1618).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
+
         vr_tab_historico(2349).nrctaori_fis := 7566;
         vr_tab_historico(2349).nrctades_fis := 7564;
         vr_tab_historico(2349).dsrefere_fis := 'APROPR. MULTA FINANCINANCIAMENTO POS FIXADO - PESSOA FISICA';
@@ -6181,12 +6242,28 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1712).nrctades_jur := 7123;
         vr_tab_historico(1712).dsrefere_jur := 'ESTORNO JUROS EMPRESTIMOS PRE-FIXADO - PESSOA JURIDICA';
 
+        --> CRAPLEM
+        vr_tab_historico(1711).nrctaori_fis := 7018;
+        vr_tab_historico(1711).nrctades_fis := 7123;
+        vr_tab_historico(1711).dsrefere_fis := 'ESTORNO JUROS EMPRESTIMOS PRE-FIXADO - PESSOA FISICA';
+        vr_tab_historico(1711).nrctaori_jur := 7019;
+        vr_tab_historico(1711).nrctades_jur := 7123;
+        vr_tab_historico(1711).dsrefere_jur := 'ESTORNO JUROS EMPRESTIMOS PRE-FIXADO - PESSOA JURIDICA';
+        
         vr_tab_historico(1713).nrctaori_fis := 7030;
         vr_tab_historico(1713).nrctades_fis := 7136;
         vr_tab_historico(1713).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA FISICA';
         vr_tab_historico(1713).nrctaori_jur := 7031;
         vr_tab_historico(1713).nrctades_jur := 7136;
         vr_tab_historico(1713).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA JURIDICA';
+
+        --> CRAPLEM
+        vr_tab_historico(1711).nrctaori_fis := 7030;
+        vr_tab_historico(1711).nrctades_fis := 7136;
+        vr_tab_historico(1711).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA FISICA';
+        vr_tab_historico(1711).nrctaori_jur := 7031;
+        vr_tab_historico(1711).nrctades_jur := 7136;
+        vr_tab_historico(1711).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA JURIDICA';
 
         vr_tab_historico(1722).nrctaori_fis := 7030;
         vr_tab_historico(1722).nrctades_fis := 7136;
@@ -6195,12 +6272,29 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1722).nrctades_jur := 7136;
         vr_tab_historico(1722).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';        
 
+        --> CRAPLEM
+        vr_tab_historico(1720).nrctaori_fis := 7030;
+        vr_tab_historico(1720).nrctades_fis := 7136;
+        vr_tab_historico(1720).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1720).nrctaori_jur := 7031;
+        vr_tab_historico(1720).nrctades_jur := 7136;
+        vr_tab_historico(1720).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
         vr_tab_historico(1721).nrctaori_fis := 7018;
         vr_tab_historico(1721).nrctades_fis := 7123;
         vr_tab_historico(1721).dsrefere_fis := 'ESTORNO JUROS EMPRESTIMO PRE-FIXADO AVAL - PESSOA FISICA';
         vr_tab_historico(1721).nrctaori_jur := 7019;
         vr_tab_historico(1721).nrctades_jur := 7123;
         vr_tab_historico(1721).dsrefere_jur := 'ESTORNO JUROS EMPRESTIMO PRE-FIXADO AVAL - PESSOA JURIDICA';     
+
+        --> CRAPLEM 
+        vr_tab_historico(1720).nrctaori_fis := 7018;
+        vr_tab_historico(1720).nrctades_fis := 7123;
+        vr_tab_historico(1720).dsrefere_fis := 'ESTORNO JUROS EMPRESTIMO PRE-FIXADO AVAL - PESSOA FISICA';
+        vr_tab_historico(1720).nrctaori_jur := 7019;
+        vr_tab_historico(1720).nrctades_jur := 7123;
+        vr_tab_historico(1720).dsrefere_jur := 'ESTORNO JUROS EMPRESTIMO PRE-FIXADO AVAL - PESSOA JURIDICA';
+
 
         vr_tab_historico(1507).nrctaori_fis := 7020;
         vr_tab_historico(1507).nrctades_fis := 7124;
@@ -6216,12 +6310,29 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1709).nrctades_jur := 7124;
         vr_tab_historico(1709).dsrefere_jur := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO - PESSOA JURIDICA';     
 
+        --CRAPLEM
+        vr_tab_historico(1708).nrctaori_fis := 7020;
+        vr_tab_historico(1708).nrctades_fis := 7124;
+        vr_tab_historico(1708).dsrefere_fis := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO - PESSOA FISICA';
+        vr_tab_historico(1708).nrctaori_jur := 7021;
+        vr_tab_historico(1708).nrctades_jur := 7124;
+        vr_tab_historico(1708).dsrefere_jur := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO - PESSOA JURIDICA';
+
         vr_tab_historico(1718).nrctaori_fis := 7020;
         vr_tab_historico(1718).nrctades_fis := 7124;
         vr_tab_historico(1718).dsrefere_fis := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO AVAL - PESSOA FISICA';
         vr_tab_historico(1718).nrctaori_jur := 7021;
         vr_tab_historico(1718).nrctades_jur := 7124;
         vr_tab_historico(1718).dsrefere_jur := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO AVAL - PESSOA JURIDICA';       
+
+        --CRAPLEM
+        vr_tab_historico(1717).nrctaori_fis := 7020;
+        vr_tab_historico(1717).nrctades_fis := 7124;
+        vr_tab_historico(1717).dsrefere_fis := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO AVAL - PESSOA FISICA';
+        vr_tab_historico(1717).nrctaori_jur := 7021;
+        vr_tab_historico(1717).nrctades_jur := 7124;
+        vr_tab_historico(1717).dsrefere_jur := 'ESTORNO MULTA EMPRESTIMO PRE-FIXADO AVAL - PESSOA JURIDICA';
+
 
         vr_tab_historico(1710).nrctaori_fis := 7032;
         vr_tab_historico(1710).nrctades_fis := 7138;
@@ -6356,6 +6467,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(1719).nrctades_jur := 7138;
         vr_tab_historico(1719).dsrefere_jur := 'ESTORNO MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
 
+        --> CRAPLEM
+        vr_tab_historico(1717).nrctaori_fis := 7032;
+        vr_tab_historico(1717).nrctades_fis := 7138;
+        vr_tab_historico(1717).dsrefere_fis := 'ESTORNO MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
+        vr_tab_historico(1717).nrctaori_jur := 7033;
+        vr_tab_historico(1717).nrctades_jur := 7138;
+        vr_tab_historico(1717).dsrefere_jur := 'ESTORNO MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+
+
         vr_cdhistor := 2667;
         pc_dados_historico(pr_cdcooper => pr_cdcooper
                           ,pr_cdhistor => vr_cdhistor
@@ -6477,12 +6597,29 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico_mic(1070).nrctades_jur := 7087;
         vr_tab_historico_mic(1070).dsrefere_jur := 'AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
            
+        --> CRAPLEM
+        vr_tab_historico_mic(1076).nrctaori_fis := 7138;
+        vr_tab_historico_mic(1076).nrctades_fis := 7086;
+        vr_tab_historico_mic(1076).dsrefere_fis := 'AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA FISICA';
+        vr_tab_historico_mic(1076).nrctaori_jur := 7138;
+        vr_tab_historico_mic(1076).nrctades_jur := 7087;
+        vr_tab_historico_mic(1076).dsrefere_jur := 'AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
+
+
         vr_tab_historico_mic(1710).nrctaori_fis := 7086;
         vr_tab_historico_mic(1710).nrctades_fis := 7138;
         vr_tab_historico_mic(1710).dsrefere_fis := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA FISICA';
         vr_tab_historico_mic(1710).nrctaori_jur := 7087;
         vr_tab_historico_mic(1710).nrctades_jur := 7138;
         vr_tab_historico_mic(1710).dsrefere_jur := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
+
+        --> CRAPLEM 
+        vr_tab_historico_mic(1708).nrctaori_fis := 7086;
+        vr_tab_historico_mic(1708).nrctades_fis := 7138;
+        vr_tab_historico_mic(1708).dsrefere_fis := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA FISICA';
+        vr_tab_historico_mic(1708).nrctaori_jur := 7087;
+        vr_tab_historico_mic(1708).nrctades_jur := 7138;
+        vr_tab_historico_mic(1708).dsrefere_jur := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
 
         vr_tab_historico_mic(1510).nrctaori_fis := 7083;
         vr_tab_historico_mic(1510).nrctades_fis := 7136;
