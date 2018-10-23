@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 19/02/2018
+   Data    : 19/07/2016                        Ultima atualizacao: 18/10/2018
   
    Dados referentes ao programa: 
   
@@ -418,6 +418,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        12/04/2018 - Alterada chamada do processo de monitoracao para 
                     AFRA0004.pc_monitora_tributos
                     PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
+
+       09/05/2018 - Incluido a chamada da rotina gen_debitador_unico.pc_qt_hora_prg_debitador
+                    para atualizar a quantidade de execuções programadas no debitador
+                    Projeto debitador único - Josiane Stiehler (AMcom)
+					  
+	     23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
+			              no Bancoob. (Reinert)
+
+	     16/08/2018 - Ajustado cursores da craptab para utilizar o Unique Key Index
+                    na procedure pc_gera_arrecadacao_bancoob. (Reinert) 
+										
+			 18/10/2018 - Ajustado nome dos arquivos de arrecadação do Bancoob para AILOS. 
+			            - Alterado layout dos arquivos de arrecadação do Bancoob. (Reinert)
+			 
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
@@ -5705,7 +5719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
                      '<identificador>'   || lpad(vr_nrrecolh,15,'0')           ||'</identificador>'  ||   
                      '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
-                     '<vlrtotal>'        || vr_vldocmto                       ||'</vlrtotal>';
+                     '<vlrtotal>'        || to_char(vr_vldocmto,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vlrtotal>';
                      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
@@ -6523,7 +6537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																												<dslindig>'|| vr_dslindig           ||'</dslindig>
 																												<cdbarras>'|| vr_cdbarras           ||'</cdbarras> 
 																												<dtmvtopg>'|| to_char(vr_dtmvtopg,'DD/MM/RRRR')||'</dtmvtopg>
-																												<vlrtotal>'|| pr_vlrtotal            ||'</vlrtotal>
+																												<vlrtotal>'|| TO_CHAR(pr_vlrtotal,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.') ||'</vlrtotal>
 																												<cdseqfat>'|| vr_cdseqfat            ||'</cdseqfat>
 																												<nrdigfat>'|| vr_nrdigfat            ||'</nrdigfat>
 																												<dttransa>'|| to_char(SYSDATE,'DD/MM/RRRR') ||'</dttransa>
@@ -7167,14 +7181,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Janeiro/2018                       Ultima atualizacao: 10/01/2018
+     Data    : Janeiro/2018                       Ultima atualizacao: 09/05/2018
   
    Dados referentes ao programa:
   
    Frequencia: Sempre que chamado
    Objetivo  : Procedimento para processar os debitos agendados de pagamento bancoob
   
-    Alterações: 
+    Alterações: 09/05/2018 - Incluido a chamada da rotina gen_debitador_unico.pc_qt_hora_prg_debitador
+                             para atualizar a quantidade de execuções programadas no debitador
+                             Projeto debitador único - Josiane Stiehler (AMcom)
   --------------------------------------------------------------------------------------------------------------- */
 
     ----------------> CURSORES <---------------  
@@ -7266,6 +7282,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END IF;
       
       vr_dtmvtopg:= rw_crapdat.dtmvtolt;
+      
+      -- atualiza a quantidade de execuções que estão agendadas no debitador unico
+      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                  ,pr_cdprocesso => 'PAGA0003.PC_PROCESSA_AGEND_BANCOOB' --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF;
+
       
       --> Verificar/controlar a execução da DEBNET e DEBSIC 
       SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
@@ -7649,10 +7674,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         SELECT dstextab
           INTO vr_dstextab
           FROM craptab
-         WHERE nmsistem = 'CRED'
-           AND tptabela = 'GENERI'
+         WHERE upper(nmsistem) = 'CRED'
+           AND upper(tptabela) = 'GENERI'
            AND cdempres = pr_cdconven
-           AND cdacesso = 'ARQBANCOOB'
+           AND upper(cdacesso) = 'ARQBANCOOB'
            AND tpregist = 00
            AND cdcooper = pr_cdcooper;
         --
@@ -7796,10 +7821,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           --
           UPDATE craptab
              SET dstextab = lpad(to_number(substr(dstextab,1,6)) + 1, 6, '0') || ' ' || to_char(pr_dtmvtolt, 'DDMMYYYY')
-           WHERE nmsistem = 'CRED'
-             AND tptabela = 'GENERI'
+           WHERE upper(nmsistem) = 'CRED'
+             AND upper(tptabela) = 'GENERI'
              AND cdempres = pr_cdconven
-             AND cdacesso = 'ARQBANCOOB'
+             AND upper(cdacesso) = 'ARQBANCOOB'
              AND tpregist = 00
              AND cdcooper = pr_cdcooper;
           --
@@ -7901,17 +7926,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- NSR - Número Seqüencial de Registro
         pr_detalhe := pr_detalhe || lpad(pr_nrseqreg, 8, '0');
         -- Código da agência arrecadadora
-        pr_detalhe := pr_detalhe || RPAD(pr_cdagebcb, 8, ' ');
+        pr_detalhe := pr_detalhe || to_char(pr_cdageaut, 'fm0000')
+				                         || to_char(pr_cdagenci, 'fm0000'); --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
+											                                              --  do projeto 406 para a Viacredi
+				
         -- Forma de arrecadação
         pr_detalhe := pr_detalhe || '2';
         
         -- Número de autenticação caixa ou código de transação
         vr_dsautdoc := to_char(pr_cdageaut,'fm0000') ||
                        --> quando liberar pagamento BANCOOB no TAA e CX.Online, deverá gravar PA do terminal e número do terminal
-                       to_char(pr_cdagenci, 'fm00')  || --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
-											                                  --  do projeto 406 para a Viacredi
                        '0000'   || --> Terminal fixo "0000"
-                        to_char(pr_nrautdoc,'fm000000');
+                        to_char(pr_nrautdoc,'fm00000000');
                         
         pr_detalhe := pr_detalhe || lpad(vr_dsautdoc,16,'0');
         -- Valor Desconto

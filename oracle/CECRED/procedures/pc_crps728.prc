@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Odirlei Busana - AMcom
-    Data    : fevereiro/2018                  Ultima Atualizacao : 08/02/2018
+    Data    : fevereiro/2018                  Ultima Atualizacao : 18/10/2018
 
     Dados referente ao programa:
 
@@ -15,6 +15,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
 
     Alteracoes : 05/06/2018 - Ajustes para mover arquivo pdf independente da sua data de geração.
                               PRJ406 - FGTS(Odirlei - AMcom)
+															
+								 25/07/2018 - Alterado busca dos nomes de arquivos de retorno para CECRED
+								              devido a mudança de marca ainda não tratada no parceiro Bancoob.
+															(Reinert)
+															
+								 18/10/2018 - Alterado busca dos nomes de arquivos de retorno para AILOS
+								              novamente. (Reinert)
+															
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
