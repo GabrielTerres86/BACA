@@ -145,7 +145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
       FOR rw_fase_msg in cr_fase_msg LOOP
         --
         -- Se a data da próxima execução de fase estiver dentro do período de execução
-        IF rw_fase_msg.dtproxima_execucao <= vr_data_execucao THEN
+-- Não verificar se está na range de execução
+--        IF rw_fase_msg.dtproxima_execucao <= vr_data_execucao THEN
           --
           pc_executa_fase_mensagem(pr_cdfase          => rw_fase_msg.cdfase,
                                    pr_nmfase_anterior => rw_fase_msg.nmfase_anterior,
@@ -157,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
             RAISE vr_exc_erro;
           END IF;
           --
-        END IF;
+--        END IF;
         --
       END LOOP;
       --
@@ -293,7 +294,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND NOT EXISTS (SELECT 1
                                      FROM tbspb_msg_recebida_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                                      AND bb.cdfase         = c.cdfase)
+                                      AND (bb.cdfase        = c.cdfase
+                                        OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
+                                        OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))
                  GROUP BY c.nmfase)
           GROUP BY nmfase;
     rw_arquivo1 cr_arquivo1%ROWTYPE;
@@ -386,7 +389,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND NOT EXISTS (SELECT 1
                              FROM tbspb_msg_recebida_fase bb
                             WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                              AND bb.cdfase         = c.cdfase);
+                              AND (bb.cdfase        = c.cdfase
+                                OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
+                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)));
     rw_arquivo2 cr_arquivo2%ROWTYPE;
 
     --Cursor para pegar informações para arquivo
@@ -447,7 +452,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND NOT EXISTS (SELECT 1
                                      FROM tbspb_msg_recebida_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                                      AND bb.cdfase         = c.cdfase));
+                                      AND (bb.cdfase        = c.cdfase
+                                        OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
+                                        OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase))));
     rw_arquivo3 cr_arquivo3%ROWTYPE;
     --
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -519,7 +526,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
         END IF;
         --
       END LOOP;
-      --
       --
       BEGIN
         UPDATE tbspb_fase_mensagem a
