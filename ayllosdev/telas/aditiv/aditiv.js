@@ -272,6 +272,12 @@ function manterRotina( operacao ) {
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
 
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
+		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
+		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
+	}
+
  	$.trim(dscatbem.toUpperCase());
 	$.trim(dstipbem.toUpperCase());
 	$.trim(nrmodbem.toUpperCase());
@@ -1353,6 +1359,7 @@ function formataTipo5() {
 		cVlfipbem   = $('#vlfipbem','#'+frmTipo5);
 		cVlrdobem   = $('#vlrdobem','#'+frmTipo5);
 		cDssitgrv   = $('#dssitgrv','#'+frmTipo5);
+		cDscatbem	= $('#dscatbem','#'+frmTipo5);
 		
 		///========================================================== Tamanhos Campos
 		
@@ -1400,7 +1407,6 @@ function formataTipo5() {
 			cVlfipbem.addClass("campoTelaSemBorda");
 			cVlfipbem.removeClass("campo");
 			
-			
 			$("#nrrenava").val("");
 			$("#nrmodbem").val("");
 			$("#nranobem").val("");
@@ -1409,21 +1415,40 @@ function formataTipo5() {
 			cVlrdobem.maskMoney();
 			$("#dstipbem").change(function(){
 			 	bloqueiaCamposVeiculoZero($(this).val());				
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
 				if($(this).val() == 'USADO'){ modeloBem = ''; }
 				$('#nrmodbem').val(-1).change();
 				var bemFin = $('#dsbemfin').val();
 				$('#dsbemfin').val(bemFin).change();
+				}
 			});
 			
 			busca_uf_pa(nrdconta);
 			$("#uflicenc").prop("readonly", true);
 			
+			$("#"+idElementTpVeiulo).change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
+					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca).show();
+					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo).show();
+					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno).show();
+		} else {
+					$("#" + idElementMarca + "C").show();
+					$("#" + idElementMarca).val('').hide();
+					$("#" + idElementModelo + "C").show();
+					$("#" + idElementModelo).val('').hide();
+					$("#" + idElementAno + "C").show().habilitaCampo();
+					$("#" + idElementAno).val('').hide();
+					cVlfipbem.val('');
+				}
+			});
 
 		} else {
-
 			$('select, input', '#'+frmTipo5).desabilitaCampo();
 		}
-		if ( cddopcao == 'C' ) {
+		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) ) {
 			$("#dsmarbemC").show();
 			$("#dsbemfinC").show();
 			$("#nrmodbemC").show();
@@ -1561,8 +1586,6 @@ function formataTipo5() {
         $('#divRotina').css({'width':'1050px'});
 		$('#divConteudo').css({'width':'1000px'});
 		$('#frmTipo').css({'text-align': 'center'});
-
-
 
 	}
 

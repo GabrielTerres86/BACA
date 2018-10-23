@@ -42,7 +42,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Agosto/2013                     Ultima atualizacao: 20/05/2016
+   Data    : Agosto/2013                     Ultima atualizacao: 19/10/2018
 
    Dados referentes ao programa:
 
@@ -139,6 +139,8 @@
 
 			   20/05/2016 - Ajustes decorrente a conversção da tela GRAVAM
 							(Andrei - RKAM).
+              
+               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
 ............................................................................. */
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -321,7 +323,7 @@ PROCEDURE valida_eh_alienacao_fiduciaria:
 
     END.
 
-    /* Verificar se ha algum BEM tipo AUTOMOVEL/MOTO/CAMINHAO */
+    /* Verificar se ha algum BEM tipo AUTOMOVEL OU MOTO OU CAMINHAO OU OUTROS VEICULOS"  */
     FIND FIRST crapbpr NO-LOCK
          WHERE crapbpr.cdcooper = crawepr.cdcooper
            AND crapbpr.nrdconta = crawepr.nrdconta
@@ -330,7 +332,8 @@ PROCEDURE valida_eh_alienacao_fiduciaria:
            AND crapbpr.flgalien = TRUE
            AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
                 crapbpr.dscatbem MATCHES "*MOTO*"      OR
-                crapbpr.dscatbem MATCHES "*CAMINHAO*")
+                crapbpr.dscatbem MATCHES "*CAMINHAO*"   OR
+                crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*")
         NO-ERROR.
 
     IF  NOT AVAIL crapbpr THEN DO:
@@ -452,7 +455,8 @@ PROCEDURE valida_bens_alienados:
          AND crapbpr.flgalien = TRUE
          AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
               crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*") :
+              crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+              crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" ) :
 
 
         IF  crapbpr.cdsitgrv <> 2 THEN DO: /* Se nao tiver alienacao OK */
@@ -729,7 +733,8 @@ PROCEDURE registrar_gravames:
          AND crapbpr.flgalien = TRUE
          AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
               crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*"):
+              crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+              crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" ):
 
         ASSIGN crapbpr.flginclu = TRUE
                crapbpr.cdsitgrv = 0
@@ -794,7 +799,8 @@ PROCEDURE solicita_baixa_automatica:
          AND crapbpr.flgalien = TRUE
          AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
               crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*") :
+              crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+              crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" ) :
 
         IF  crapbpr.tpdbaixa = "M" THEN /* Se já foi baixado manual */
             NEXT.

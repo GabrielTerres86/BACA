@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 29/06/2018
+   Data    : AGOSTO/2013                      Ultima atualizacao: 19/10/2018
 
    Dados referentes ao programa:
 
@@ -242,6 +242,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 														(Reginaldo - AMcom - P450)
 							            
 
+               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+                                
      ............................................................................. */
 
      DECLARE
@@ -2000,6 +2002,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_categ('EQUIPAMENTO'):= 'EQUIP';
          vr_tab_categ('MAQUINA DE COSTURA'):= 'MAQCOSTURA';
          vr_tab_categ('AUTOMOVEL'):= 'AUTOMOVEL';
+         vr_tab_categ('OUTROS VEICULOS'):= 'OUTROS VEICULOS';
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -4675,6 +4678,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_tab_idatribu(idx):= vr_atributo;
                        vr_atributo:= vr_atributo + 1;
                      END LOOP;
+                   WHEN 'OUTROS VEICULOS' THEN
+                     vr_atributo:= 438;
+                     FOR idx IN 1..10 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;
                    WHEN 'EQUIPAMENTO' THEN
                      vr_atributo:= 451;
                      FOR idx IN 1..10 LOOP
@@ -4738,7 +4747,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  END IF;
 
                  --Categoria do Bem
-                 IF rw_crapbpr.dscatbem IN ('MOTO','AUTOMOVEL','CAMINHAO','EQUIPAMENTO') THEN
+                 IF rw_crapbpr.dscatbem = 'EQUIPAMENTO' OR grvm0001.fn_valida_categoria_alienavel(rw_crapbpr.dscatbem) = 'S' THEN
                    --Indice
                    FOR vr_nrindice IN 1..10 LOOP
                      --Incrementar Contador Linha
@@ -5771,7 +5780,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 									 RAISE vr_exc_saida;
 								 END IF;
 							 END IF;
-							 
+               
 							 -- Se o prejuízo foi liquidado
 							 IF NOT PREJ0003.fn_verifica_preju_conta(rw_crapcyb.cdcooper
 								                                     , rw_crapcyb.nrdconta) THEN

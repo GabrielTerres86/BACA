@@ -1006,7 +1006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 14/07/2016
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -1014,6 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Objetivo   : Busca contratos
     
     Alterações : 14/07/2016 - Ajuste para agrupar os contratos encontrados (Andrei - RKAM).
+    
+                 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_propostas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1033,9 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        AND crapbpr.tpctrpro = 90
        AND crapbpr.nrctrpro = crawepr.nrctremp
        AND crapbpr.flgalien = 1
-       AND (crapbpr.dscatbem LIKE '%AUTOMOVEL%' OR
-            crapbpr.dscatbem LIKE '%MOTO%'      OR
-            crapbpr.dscatbem LIKE '%CAMINHAO%')
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
        GROUP BY crawepr.nrdconta
                ,crapbpr.nrctrpro;          
                        
@@ -1957,7 +1957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -1969,6 +1969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
     --                          - Incluir nome do módulo logado em variável
     --                            (Ana - Envolti) - SD: 660356 e 660394
+    -- 
+    --               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     --Cursor para encontrar os bens
@@ -2021,9 +2023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        and crapbpr.tpctrpro = pr_tpctrpro
        and crapbpr.nrctrpro = crawepr.nrctremp
        and crapbpr.flgalien = 1
-       and (   crapbpr.dscatbem like '%AUTOMOVEL%'
-            or crapbpr.dscatbem like '%MOTO%'
-            or crapbpr.dscatbem like '%CAMINHAO%');
+       and grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S';
     
     -- Cursor para encontrar o bem
     CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2068,9 +2068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        and crapbpr.tpctrpro = 90
        and crapbpr.nrgravam = pr_nrgravam
        and crapbpr.flgalien = 1
-       and (   crapbpr.dscatbem like '%AUTOMOVEL%'
-            or crapbpr.dscatbem like '%MOTO%'
-            or crapbpr.dscatbem like '%CAMINHAO%')
+       and grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
        and crawepr.cdcooper = crapbpr.cdcooper
        and crawepr.nrdconta = crapbpr.nrdconta
        and crawepr.nrctremp = crapbpr.nrctrpro;

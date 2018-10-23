@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 15/08/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 19/10/2018
 
     Dados referentes ao programa:
 
@@ -321,7 +321,9 @@
               16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
                            PJ 450 - Diego Simas (AMcom)
                            
-              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts              
+              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
+
+              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
                            
 ............................................................................. */
 
@@ -2719,7 +2721,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO",crapbpr.dscatbem)
+                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
@@ -2756,7 +2758,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO",crapbpr.dscatbem)
+                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta

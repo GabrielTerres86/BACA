@@ -142,7 +142,7 @@ create or replace package cecred.tela_manbem is
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                           ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
-                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhao ou Outros Veiculos)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                           ,pr_nrmodbem in varchar2 --> Ano Modelo
                           ,pr_nranobem in varchar2 --> Ano Fabricação
@@ -1563,7 +1563,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     --
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       if trim(par_dstipbem) is null then
         v_dscritic := 'O campo Tipo Veiculo e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dstipbem';
@@ -1578,7 +1578,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     -- Validar campos para Bens Móveis
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       if trim(par_dscorbem) is null then
         v_dscritic := 'O campo Cor Classe e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dscorbem';
@@ -1614,7 +1614,7 @@ create or replace package body cecred.tela_manbem is
         raise vr_exc_erro;
       end if;
       --
-      if trim(par_dscatbem) = 'CAMINHAO' and
+      if trim(par_dscatbem) IN ('CAMINHAO','OUTROS VEICULOS') and
          length(trim(par_dschassi)) > 17 then
         v_dscritic := 'Numero do chassi maior que o tamanho maximo.';
         par_nmdcampo := 'dschassi';
@@ -1672,7 +1672,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     /*Valida se já existe alguma proposta com o chassi informado pelo coolaborador*/
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       open cr_crapbpr;
         fetch cr_crapbpr into v_crapbpr;
         if cr_crapbpr%found then
@@ -1737,9 +1737,7 @@ create or replace package body cecred.tela_manbem is
       /** GRAVAMES - NAO PERMITIR ALTERAR DETERMINADAS SITUACOES */
       if par_cddopcao = 'A' and
          par_idseqbem <> 0 and
-         (par_dscatbem like '%AUTOMOVEL%' or
-          par_dscatbem like '%MOTO%' or
-          par_dscatbem like '%CAMINHAO%') then
+         (grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S') then
         /** Quando 0, significa Bem novo, nao critica */
         open cr_crapbpr2;
           fetch cr_crapbpr2 into v_crapbpr2;
@@ -1940,7 +1938,7 @@ create or replace package body cecred.tela_manbem is
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                           ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
-                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhao ou Outros Veiculos)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                           ,pr_nrmodbem in varchar2 --> Ano Modelo
                           ,pr_nranobem in varchar2 --> Ano Fabricação
@@ -2252,7 +2250,7 @@ create or replace package body cecred.tela_manbem is
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Marcos Martini (Envolti)
-        Data    : Setembro/2018.                    Ultima atualizacao:
+        Data    : Setembro/2018.                    Ultima atualizacao: 19/10/2018
     
         Dados referentes ao programa:
     
@@ -2262,7 +2260,7 @@ create or replace package body cecred.tela_manbem is
   
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
   
     ..............................................................................*/                                 
     -- Verificar se o bem jah não existe
@@ -2314,7 +2312,7 @@ create or replace package body cecred.tela_manbem is
     
     
     /** GRAVAMES ***/
-    if par_tplcrato = 2 AND (par_dscatbem like '%AUTOMOVEL%' OR par_dscatbem like '%MOTO%' OR par_dscatbem like '%CAMINHAO%') THEN
+    if par_tplcrato = 2 AND grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' THEN
       v_flginclu := 1;
       v_tpinclus := 'A';
       -- Somente mudar situação gravames quando gravação veio da ADITIV

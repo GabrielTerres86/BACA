@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 12/04/2018
+   Data    : Marco/96.                       Ultima atualizacao: 19/10/2018
 
    Dados referentes ao programa:
 
@@ -247,7 +247,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                             criar fluxo contábil para os lançamentos de empréstimos e conta corrente,
                             Prj. 402 (Jean Michel).
 
-
+               19/10/2018 - P442 - Inclusão de OUTROS VEICULOS em comentario (Marcos-Envolti)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -659,7 +659,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   --Verifica se é portabilidade
   vr_portabilidade BOOLEAN := FALSE;
   
-  --Flag para tarifas moveis diferente de carro, moto ou caminhao
+  --Flag para tarifas moveis diferente de carro, moto ou caminhao ou outros veiculos
   vr_flgoutrosbens BOOLEAN;
   
   -- Variaveis Auxiliares Linha de Credito

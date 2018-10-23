@@ -74,7 +74,7 @@
       <input id="dscorbem" name="dscorbem" type="text" ></input>
 
 	  <label for="tpchassi"><? echo utf8ToHtml('Tipo chassi:') ?></label>
-      <input id="tpchassi" name="tpchassi" type="text" ></input>
+      <? echo selectTipoChassi('tpchassi', " - ") ?>
 
       <label for="dschassi"><? echo utf8ToHtml('Chassi/N&#186;. S&eacute;rie:') ?></label>
       <input id="dschassi" name="dschassi" type="text" ></input>

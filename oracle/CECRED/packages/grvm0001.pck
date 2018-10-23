@@ -142,7 +142,10 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   TYPE typ_tab_dados_arquivo IS
     TABLE OF typ_reg_dados_arquivo
       INDEX BY VARCHAR2(20); -- Chave composta por Cooper(5)+TpArquivo(1)+Sequencia(14)
-
+  
+  -- Função para validar se categoria do bem enviado é alienável
+  FUNCTION fn_valida_categoria_alienavel(pr_dscatbem IN crapbpr.dscatbem%TYPE) RETURN VARCHAR2;
+  
   -- Atualiza os dados conforme o cdorigem para geração de arquivos cyber
   PROCEDURE pc_solicita_baixa_automatica(pr_cdcooper IN crapbpr.cdcooper%type -- Código da Cooperativa
                                      ,pr_nrdconta IN crapbpr.nrdconta%type -- Numero da conta do associado
@@ -387,7 +390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --             22/02/2018 - Inclusão de Logs nas procedures pc_gravames_baixa_manual, pc_gravames_cancelar, pc_gravames_inclusao_manual
   ---------------------------------------------------------------------------------------------------------------
   
-  -- Cursor para verificar se ha algum BEM tipo AUTOMOVEL/MOTO/CAMINHAO
+  -- Cursor para verificar se ha algum BEM alienável
   CURSOR cr_crapbpr (pr_cdcooper crapbpr.cdcooper%type
                     ,pr_nrdconta crapbpr.nrdconta%type
                     ,pr_nrctrpro crapbpr.nrctrpro%type) IS
@@ -400,10 +403,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.tpctrpro = 90
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.flgalien = 1
-       AND (crapbpr.dscatbem LIKE '%AUTOMOVEL%'
-        OR  crapbpr.dscatbem LIKE '%MOTO%'
-        OR  crapbpr.dscatbem LIKE '%CAMINHAO%');
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S';
   rw_crapbpr cr_crapbpr%rowtype;  
+
+  -- Função para validar se categoria do bem enviado é alienável
+  FUNCTION fn_valida_categoria_alienavel(pr_dscatbem IN crapbpr.dscatbem%TYPE) RETURN VARCHAR2 IS
+  /* ............................................................................
+
+    Programa: fn_valida_categoria_alienavel  
+    Autor   : Marcos Martini (Envolti)
+    Data    : Outubro/2018                   Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Objetivo  : Tratar categoria enviada e devolver positivo caso seja 
+                uma das categorias alienáveis:
+                 - AUTOMOVEL
+                 - MOTO
+                 - CAMINHAO
+                 - OUTROS VEICULOS
+    Alteracoes: 
+  ............................................................................ */   
+  BEGIN
+    IF TRIM(upper(pr_dscatbem)) IN('AUTOMOVEL','MOTO','CAMINHAO','OUTROS VEICULOS') THEN
+      RETURN 'S';
+    ELSE
+      RETURN 'N';
+    END IF;
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN 'N';
+  END fn_valida_categoria_alienavel;
+
 
   /* Funcao para validacao dos caracteres */
   FUNCTION fn_valida_caracteres (pr_flgnumer IN BOOLEAN,  -- Validar Numeros?
@@ -649,7 +680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       END IF;
       CLOSE cr_craplcr;
       
-      -- Verifica se ha algum BEM tipo AUTOMOVEL/MOTO/CAMINHAO
+      -- Verifica se ha algum BEM alienável
       OPEN cr_crapbpr(rw_crawepr.cdcooper,
                       rw_crawepr.nrdconta,
                       rw_crawepr.nrctremp);
@@ -1946,10 +1977,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
 
         -- Histórico
-        vr_tab_dados_arquivo(vr_dsdchave).dscatbem := rw_bpr.dscatbem;
-        vr_tab_dados_arquivo(vr_dsdchave).dstipbem := rw_bpr.dstipbem;
-        vr_tab_dados_arquivo(vr_dsdchave).dsmarbem := rw_bpr.dsmarbem;
-        vr_tab_dados_arquivo(vr_dsdchave).dsbemfin := rw_bpr.dsbemfin;
+        vr_tab_dados_arquivo(vr_dsdchave).dscatbem := nvl(rw_bpr.dscatbem,' ');
+        vr_tab_dados_arquivo(vr_dsdchave).dstipbem := nvl(rw_bpr.dstipbem,' ');
+        vr_tab_dados_arquivo(vr_dsdchave).dsmarbem := nvl(rw_bpr.dsmarbem,' ');
+        vr_tab_dados_arquivo(vr_dsdchave).dsbemfin := nvl(rw_bpr.dsbemfin,' ');
 
         -- ATUALIZAR A SITUACAO DO BEM DO GRAVAMES
         BEGIN
@@ -2286,7 +2317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
         
         -- Incrementar a mensagem de erro
-        pr_dscritic := pr_dscritic;
+        pr_dscritic := replace(pr_dscritic,'"','''');
         
         --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
         --Gera log
@@ -2305,7 +2336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         ROLLBACK;
         -- Retornar erro não tratado
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro GRVM0001.pc_gravames_geracao_arquivo -> '||SQLERRM;
+        pr_dscritic := 'Erro GRVM0001.pc_gravames_geracao_arquivo -> '||replace(SQLERRM,'"','''');
 
         --Padronização - Chamado 660394
         -- Gera log
@@ -2508,7 +2539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -2520,6 +2551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
     --                          - Incluir nome do módulo logado em variável
     --                            (Ana - Envolti) - SD: 660356 e 660394
+    --
+    --               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_propostas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2538,10 +2571,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.tpctrpro = 90
        AND crapbpr.nrctrpro = crawepr.nrctremp
        AND crapbpr.flgalien = 1
-       AND (crapbpr.dscatbem LIKE '%AUTOMOVEL%' OR
-            crapbpr.dscatbem LIKE '%MOTO%'      OR
-            crapbpr.dscatbem LIKE '%CAMINHAO%')
-           GROUP BY crawepr.nrctremp;                     
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
+     GROUP BY crawepr.nrctremp;                     
                        
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -2809,7 +2840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -2837,6 +2868,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                  08/08/2018 - Ajuste no campo nrdplaca para formatar os caracteres para
                               caracteres maiusculos na opcao de alteracao de gravame. 
                               Chamado PRB0040116 (Gabriel - Mouts).
+                              
+                 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
 
     -------------------------------------------------------------------------------------------------------------*/                               
   
@@ -3065,7 +3098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       --Levantar Excecao  
       RAISE vr_exc_erro;
     
-    ELSIF trim(pr_dscatbem) IN('MOTO','AUTOMOVEL','CAMINHAO') AND 
+    ELSIF grvm0001.fn_valida_categoria_alienavel(pr_dscatbem) = 'S' AND 
           length(trim(pr_dschassi)) > 17                      THEN
       
       vr_cdcritic:= 0;
@@ -3740,7 +3773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -3754,7 +3787,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
                            - Incluir nome do módulo logado em variável
                              (Ana - Envolti) - SD: 660356 e 660394
+                
                 27/09/2018 - Inclusão de parâmetro para a justificativa para o cancelamento (Daniel - Envolti)
+                
+                19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -3772,9 +3808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.idseqbem = pr_idseqbem
        AND crapbpr.flgalien = 1
-       AND (crapbpr.dscatbem LIKE '%AUTOMOVEL%' OR
-            crapbpr.dscatbem LIKE '%MOTO%'      OR
-            crapbpr.dscatbem LIKE '%CAMINHAO%');
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S';
     rw_crapbpr cr_crapbpr%ROWTYPE;
       
     --Variaveis de Criticas
@@ -5949,11 +5983,13 @@ PROCEDURE pc_registrar_gravames(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero d
    Sistema : Conta-Corrente - Cooperativa de Crédito
    Sigla   : CRED
    Autor   : Renato Raul Cordeiro (AMcom)
-   Data    : Abril/2018.                     Ultima atualização:
+   Data    : Abril/2018.                     Ultima atualização: 19/10/2018
 
    --HISTÓRICO ORACLE--
           23/04/2018 - Migrado rotina/fonte progress para oracle.
                        Renato Raul Cordeiro (AMcom)
+                       
+          19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
 
   ............................................................................... */
 
@@ -6078,11 +6114,7 @@ PROCEDURE pc_registrar_gravames(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero d
          and a.tpctrpro = 90
          and a.nrctrpro = vr_nrctremp
          and a.flgalien = 1
-         and (
-                a.dscatbem like '%AUTOMOVEL%' OR
-                a.dscatbem like '%MOTO%'      OR
-                a.dscatbem like '%CAMINHAO%'
-             );
+         and grvm0001.fn_valida_categoria_alienavel(a.dscatbem) = 'S';
     exception
        when others then
           vr_cdcritic := 0;

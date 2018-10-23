@@ -1665,7 +1665,7 @@ TYPE typ_tab_ratings IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : 
-       Data    :                            Ultima atualizacao: 22/06/2018
+       Data    :                            Ultima atualizacao: 19/10/2018
 
        Dados referentes ao programa:
 
@@ -1673,6 +1673,8 @@ TYPE typ_tab_ratings IS
        Objetivo  : Rotina responsavel por validar a efetivação da proposta
 
        Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeito/Odirlei AMcom)
+       
+                   19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
                   
     ............................................................................. */
 
@@ -1803,7 +1805,7 @@ TYPE typ_tab_ratings IS
              AND bpr.nrdconta = pr_nrdconta
              AND bpr.nrctrpro = pr_nrctremp
              AND bpr.flgalien = 1
-             AND bpr.dscatbem IN ('AUTOMOVEL','MOTO','CAMINHAO')
+             AND grvm0001.fn_valida_categoria_alienavel(bpr.dscatbem) = 'S'
              -- Existe em outro contrato deste cooperado ainda nao liquidado
              AND epr.cdcooper = bpr.cdcooper
              AND epr.nrdconta = bpr.nrdconta

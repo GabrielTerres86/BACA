@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 10/10/2018
+       Data    : Julho/2018                       Ultima atualizacao: 19/10/2018
 
        Dados referentes ao programa:
 
@@ -47,6 +47,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                   P450 - Correção no valor do contrato para a modalidade 0101(Reginaldo/AMcom)
 
                      10/10/2018 - P450 - Ajustes Gerais Juros60/ADP/Empr. (Guilherme/AMcom)
+                     
+                     19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável e 
+                                  onde há Caminhao apenas, utilizar também Outros Veiculos (Marcos-Envolti)
+                     
     .............................................................................................................................*/
 
     DECLARE
@@ -3192,7 +3196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                 vr_tpatribu := 0424;
               ELSIF rw_tbepr_bens_hst.dscatbem = 'EQUIPAMENTO' THEN
                 vr_tpatribu := 0423;
-              ELSIF rw_tbepr_bens_hst.dscatbem = 'CAMINHAO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem IN('CAMINHAO','OUTROS VEICULOS') THEN
                 vr_tpatribu := 0424;
               ELSIF rw_tbepr_bens_hst.dscatbem = 'APARTAMENTO' THEN
                 vr_tpatribu := 0426;
@@ -3484,7 +3488,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         END IF;
       END pc_inf_aplicacao_regulatoria;
 
-      -- Caso o emprestimo for para automovel, moto ou caminhao, imprime o codigo do chassi do mesmo.
+      -- Caso o emprestimo for para bens alienáveis imprime o codigo do chassi do mesmo.
       PROCEDURE pc_verifica_inf_chassi(pr_cdcooper crapris.cdcooper%TYPE,
                                        pr_cdcopemp crapris.cdcooper%TYPE,
                                        pr_nrdconta crapris.nrdconta%TYPE,
@@ -3497,7 +3501,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         IF pr_cdmodali IN(0299,0499) THEN
           -- Busca a descricao dos bens da proposta de emprestimo
           FOR rw_tbepr_bens_hst IN cr_tbepr_bens_hst_4(pr_cdcopemp,pr_nrdconta, pr_nrctremp, 90, pr_dtrefere) LOOP
-            IF (rw_tbepr_bens_hst.dschassi <> ' ') AND UPPER(rw_tbepr_bens_hst.dscatbem) IN ('AUTOMOVEL','MOTO','CAMINHAO') THEN
+            IF (rw_tbepr_bens_hst.dschassi <> ' ') AND grvm0001.fn_valida_categoria_alienavel(rw_tbepr_bens_hst.dscatbem) = 'S' THEN
               -- Somente para empréstimo da COOP com origem 3
               IF pr_dsinfaux <> 'BNDES' AND pr_cdorigem = 3 THEN              
                 -- Busca o cadastro de emprestimos

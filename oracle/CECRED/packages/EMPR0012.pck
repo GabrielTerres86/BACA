@@ -6020,13 +6020,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       Sistema  : CRED
       Sigla    : GRVM
       Autor    : Odirlei Busana - AMcom
-      Data     : Julhi/2018.                   Ultima atualizacao:
+      Data     : Julhi/2018.                   Ultima atualizacao: 19/10/2018
     
       Dados referentes ao programa:
     
        Objetivo  : Rotina para verificar situação do gravames da proposta CDC
     
-       Alteracoes:
+       Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     ............................................................................. */
        
     
@@ -6066,9 +6066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
          AND bpr.nrctrpro = pr_nrctrpro
          AND bpr.tpctrpro = 90
          AND bpr.flgalien = 1 --Bem alienado a proposta
-         AND (bpr.dscatbem LIKE '%AUTOMOVEL%' OR 
-              bpr.dscatbem LIKE '%MOTO%' OR
-              bpr.dscatbem LIKE '%CAMINHAO%');
+         AND grvm0001.fn_valida_categoria_alienavel(bpr.dscatbem) = 'S';
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;

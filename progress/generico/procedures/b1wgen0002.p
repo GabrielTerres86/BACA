@@ -13,7 +13,7 @@
   | verifica_microcredito               | EMPR0005.pc_verifica_microcredito         |
   | retornaDataUtil                     | EMPR0008.pc_retorna_data_util             |
   | atualiza_risco_proposta             | RATI0002.pc_atualiza_risco_proposta       |  
-  | proc_qualif_operacao                | EMPR9999.pc_proc_qualif_operacao     |
+  | proc_qualif_operacao                | EMPR9999.pc_proc_qualif_operacao          |
   | valida-dados-alienacao              | TELA_MANBEM.pc_valida_dados_alienacao     |
   | grava-alienacao-hipoteca            | TELA_MANBEM.pc_grava_alienacao_hipot_prog |
   +-------------------------------------+-------------------------------------------+
@@ -32,7 +32,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 11/10/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 19/10/2018
 
    Dados referentes ao programa:
 
@@ -811,6 +811,8 @@
                        remocao de tratamento e parametros de bens e intervenientes na verifica-outras-propostas
                        e por fim remocao de tratamento de CPFs de Intervenientes com CPFs dos Bens
                        que esta sendo feito no Oracle (Marcos-Envolti)
+                       
+          19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)             
           
  ..............................................................................*/
 
@@ -2277,7 +2279,8 @@ PROCEDURE obtem-propostas-emprestimo:
                AND crapbpr.flgalien = TRUE
                AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
                     crapbpr.dscatbem MATCHES "*MOTO*"      OR
-                    crapbpr.dscatbem MATCHES "*CAMINHAO*") 
+                    crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+                    crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" ) 
                AND (crapbpr.cdsitgrv = 1 OR /* Em Processamento */
                     crapbpr.cdsitgrv = 2)   /* Alienado */
             NO-ERROR.
@@ -2921,7 +2924,9 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                            AND crapbpr.flgalien = TRUE
                            AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
                                 crapbpr.dscatbem MATCHES "*MOTO*"      OR
-                                crapbpr.dscatbem MATCHES "*CAMINHAO*") 
+                                crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+                                crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" )                                 
+                                
                            AND (crapbpr.cdsitgrv = 1 OR /* Em Processamento */
                                 crapbpr.cdsitgrv = 2)   /* Alienado */
                         NO-ERROR.
@@ -6533,7 +6538,7 @@ PROCEDURE grava-proposta-completa:
                aux_idchsdup = FALSE
                aux_dscatbem = aux_dscatbem + "|" + CAPS(ENTRY(1,reg_dsdregis,";")).
                
-        IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO",TRIM(CAPS(ENTRY(1,reg_dsdregis,";")))) THEN
+        IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO,OUTROS VEICULOS",TRIM(CAPS(ENTRY(1,reg_dsdregis,";")))) THEN
             DO:
                 DO aux_contabns = 1 TO NUM-ENTRIES(par_dsdalien,"|"): 
                     
@@ -6574,7 +6579,7 @@ PROCEDURE grava-proposta-completa:
                ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|")
                       aux_contbens = aux_contbens + 1.
                       
-               IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO",TRIM(CAPS(ENTRY(1,reg_dsdregis,";")))) THEN
+               IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO,OUTROS VEICULOS",TRIM(CAPS(ENTRY(1,reg_dsdregis,";")))) THEN
                   DO:
                
                      RUN valida-dados-alienacao (INPUT par_cdcooper,

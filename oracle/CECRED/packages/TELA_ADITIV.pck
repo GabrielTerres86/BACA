@@ -235,7 +235,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
                                   ,pr_tpctrato in varchar2 --> Tipo Contrato
-                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhão ou Outros Veiculos)
                                   ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                                   ,pr_dsmarbem in varchar2 --> Marca do Bem
                                   ,pr_nrmodbem in varchar2 --> Ano Modelo
@@ -4310,7 +4310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
                                   ,pr_tpctrato in varchar2 --> Tipo Contrato
-                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto Caminhao ou Outros Veiculos)
                                   ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                                   ,pr_dsmarbem in varchar2 --> Marca do Bem
                                   ,pr_nrmodbem in varchar2 --> Ano Modelo

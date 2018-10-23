@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 30/08/2018
+  Data    : Abril/2017                      Ultima atualizacao: 19/10/2018
 
   Dados referentes ao programa:
 
@@ -36,6 +36,8 @@ BEGIN
               13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
 
               30/08/2018 - Debitador Unico - permitir executar na cadeia da CECRED alem do debitador (Fabiano B. Dias AMcom).
+              
+              19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)              
 			  
  ............................................................................. */
 
@@ -53,7 +55,7 @@ BEGIN
                  where  crapbpr.cdcooper = crappep.cdcooper
                  and    crapbpr.nrdconta = crappep.nrdconta
                  and    crapbpr.nrctrpro = crappep.nrctremp
-                 and    crapbpr.dscatbem in ('MOTO','AUTOMOVEL','CAMINHAO')
+                 and    grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
                  and    crapbpr.cdsitgrv not in (1,4,5)
                  and    rownum = 1),0) idgravame
            , nvl((select 1 from crapavl
@@ -96,7 +98,7 @@ BEGIN
                  where  crapbpr.cdcooper = epr.cdcooper
                  and    crapbpr.nrdconta = epr.nrdconta
                  and    crapbpr.nrctrpro = epr.nrctremp
-                 and    crapbpr.dscatbem in ('MOTO','AUTOMOVEL','CAMINHAO')
+                 and    grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
                  and    crapbpr.cdsitgrv not in (1,4,5)
                  and    rownum = 1),0) idgravame
               , nvl((select 1 from crapavl
