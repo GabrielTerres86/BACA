@@ -2260,7 +2260,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
            vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
                                 ,pr_nmdcampo => 'NRSEQDIG'
                                 ,pr_dsdchave => to_char(pr_cdcooper)||';'||
-                                 to_char(SYSDATE, 'DD/MM/RRRR')||';'||
+                                 to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
                                 '1;100;650011');
 
            -- Debita os juros remuneratórios na conta corrente
