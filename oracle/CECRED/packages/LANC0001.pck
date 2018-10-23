@@ -253,6 +253,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --                          a partir da package "EMPR0001".
   --                          (Reginaldo - AMcom - PRJ 450)
   --
+  -- Alterado  : 23/10/2018 - Correção histórico 2738 ao excluir lançamentos conta transitória
+  --                          (Renato - AMcom - PRJ 450)
   ---------------------------------------------------------------------------------------------------------------
 
 -- Record para armazenar dados dos históricos para evitar consultas repetitivas
@@ -1494,7 +1496,7 @@ BEGIN
 		 	     AND prj.nrdconta = vr_nrdconta
   	 			 AND prj.dtmvtolt = vr_dtmvtolt
 	   			 AND prj.nrdocmto = vr_nrdocmto
-		   		 AND prj.cdhistor = 2720;	
+		   		 AND prj.cdhistor = 2738;	
   	 END IF;
      -- le proxima linha
      fetch c_cursor into wlinha;
