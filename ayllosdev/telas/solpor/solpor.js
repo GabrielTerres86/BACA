@@ -61,6 +61,13 @@ function Cabecalho() {
         this.getTodosComponentes().limpaFormulario();
         this.habilitaCampos();
         this.getComponenteOpcoes().focus();
+        this.getComponenteOpcoes().unbind('keypress').bind('keypress', function(e) {
+		if ( divError.css('display') == 'block' ) { return false; }
+		if ( e.keyCode == 13 ) {
+			LiberaCampos();
+			return false;
+		}
+	});	
     }
 }
 
@@ -144,6 +151,7 @@ function Filtro() {
             grid.carregar(cddopcao, 1);
         });
 
+
         $('#btVoltar', '#divBotoes').unbind('click').bind('click', function (e) {
             estadoInicial();
         });
@@ -151,6 +159,8 @@ function Filtro() {
         $('#btContinuar', '#divBotoes').css({
             'display': 'inline-block'
         });
+
+        $("select:not([disabled]),input[type='text']:not([disabled])", "#frmFiltro").first().focus();
     }
 
     this.inicializarComponentes = function () {

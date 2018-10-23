@@ -103,14 +103,13 @@ require_once("../../includes/carrega_permissoes.php");
 																			<? include('form_cabecalho.php'); ?>
 																			<div id="divFiltro"></div>
 																			<div style="margin-top:10px;" id="divListaSolicitacoes"></div>
-																		</div>
-
-																		<div id="divBotoes" style="margin-bottom: 10px;">
-																			<a href="#" class="botao" id="btVoltar" onClick="return false;" style="text-align: right;">Voltar</a>
-																			<a href="#" class="botao" id="btContinuar" onClick="return false;" style="text-align: right;">Continuar</a>
+																			<div id="divBotoes" style="margin-bottom: 10px;">
+																				<a href="#" class="botao" id="btVoltar" onClick="return false;" style="text-align: right;">Voltar</a>
+																				<a href="#" class="botao" id="btContinuar" onClick="return false;" style="text-align: right;">Continuar</a>
+																			</div>
 																		</div>
 																		<div id="divRotina"></div>
-																		<div id="divUsoGenerico"></div>
+																		<div id="divUsoGenerico"></div>																		
 																	</td>
 																</tr>
 															</table>					

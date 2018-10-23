@@ -193,13 +193,13 @@ $solicitacoes = $xmlObj->roottag->tags[0]->tags[0]->tags;
 
 <script type="text/javascript">
 
-	$('a.paginacaoAnt').unbind('click').bind('click', function() {
+	$('a.paginacaoAnt', '#divTela').unbind('click').bind('click', function() {
 		grid.carregar(<? echo "'".$cddopcao."','".($pagina - 1)."'"; ?>);
 
 	});
-	$('a.paginacaoProx').unbind('click').bind('click', function() {
+	$('a.paginacaoProx', '#divTela').unbind('click').bind('click', function() {
 		grid.carregar(<? echo "'".$cddopcao."','".($pagina + 1)."'"; ?>);
 	});
 
-    $('#divPesquisaRodape').formataRodapePesquisa();
+    $('#divPesquisaRodape', '#divTela').formataRodapePesquisa();
 </script> 
