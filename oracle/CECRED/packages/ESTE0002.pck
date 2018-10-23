@@ -180,6 +180,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
                                (Diego Simas/AMcom)
 
+				  10/11/2018 - Ajuste na procedure "pc_gera_json_pessoa_ass" - correção no cursor que identifica
+							   se o contrato de empréstimo está/esteve em prejuízo
+							   (Reginaldo/AMcom)
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -1090,7 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 03/09/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 11/10/2018
       
         Dados referentes ao programa:
       
@@ -1117,6 +1121,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                     03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
                                  (Diego Simas/AMcom)
+
+										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
+										             (Reginaldo/AMcom)
 
     ..........................................................................*/
     DECLARE
@@ -1619,7 +1626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
            AND epr.inprejuz = 1
-           AND epr.inliquid = pr_inliquid;
+					 AND ((pr_inliquid = 0 AND epr.vlsdprej > 0)
+					  OR (pr_inliquid = 1 AND epr.vlsdprej = 0));
       rw_crapepr_preju cr_crapepr_preju%ROWTYPE;
     
       --> Consultar se já houve prejuizo nessa conta do cooperado

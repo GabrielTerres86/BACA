@@ -162,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 16/08/2018
+    Data    : Dezembro/2016                Ultima Atualizacao: 27/08/2018
      
     Dados referentes ao programa:
    
@@ -174,6 +174,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
 			    16/08/2018 - Incluido crítica vr_cdcritic := 1288 na procedure pc_resgata_aplicacao,
                              Prj. 427 - URA (Jean Michel)
+
+                27/08/2018 - Inclusão de regra do BACENJUD 
+                             PJ 450 - Diego Simas - AMcom             
+
   .............................................................................*/
 
   -- Rotina para bloquear valores  
@@ -3765,6 +3769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        and lcm.progress_recid+0 > pr_progress_recid -- Lancamentos do dia que são maiores que o último lançamento utilizado
   ORDER BY
            lcm.progress_recid;
+    rw_lancamento cr_lancamento%rowtype; 
             
     -- Registro sobre a data do sistema
     rw_crapdat                btch0001.cr_crapdat%ROWTYPE;
@@ -3784,6 +3789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_rw_crapdat              btch0001.cr_crapdat%ROWTYPE;    
     vr_dsdircop                VARCHAR2(400); 
     vr_monitoramento_encerrado VARCHAR2(1):='N';
+    vr_sld_cta_prj             tbcc_prejuizo.vlsdprej%TYPE;
+    vr_inprejuz                BOOLEAN;
     -- Handle para arquivo
     vr_ind_arq                 UTL_FILE.FILE_TYPE;   
     vr_des_erro                VARCHAR2(4000);    
@@ -3921,6 +3928,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        vr_idordem  := rw_monitoramento.idordem;
        -- Só vai verificar se tem lançamento se ainda restar saldo
        IF nvl(vr_saldo,0) > 0 THEN         
+          
+          -- Diego Simas -- AMcom -- BACENJUD --
+          -- PJ 450 - Regulatório de Crédito  --
+          -- INÍCIO                           --
+          vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => rw_monitoramento.cdcooper
+                                                         ,pr_nrdconta => rw_monitoramento.nrdconta);
+          
+          --> Verificar se possui lançamento pendente, para nao resgatar indevidamente
+          OPEN cr_lancamento(rw_monitoramento.cdcooper,
+                             rw_monitoramento.nrdconta,
+                             rw_crapdat.dtmvtolt,
+                             rw_monitoramento.progress_recid_mon);
+          FETCH cr_lancamento INTO rw_lancamento;
+          IF cr_lancamento%FOUND THEN
+            -- Caso encontre, marca como false para nao verificar saldo
+            vr_inprejuz := FALSE;
+          END IF;
+          CLOSE cr_lancamento;                    
+          
+          -- Se a conta estiver em prejuízo
+          IF vr_inprejuz = TRUE THEN
+             -- Busca saldo do bloqueado prejuízo
+             vr_sld_cta_prj := PREJ0003.fn_sld_cta_prj(pr_cdcooper => rw_monitoramento.cdcooper             
+                                                      ,pr_nrdconta => rw_monitoramento.nrdconta);                                                     
+             IF (vr_sld_cta_prj > 0) THEN                                                     
+                IF nvl(vr_saldo,0) >= vr_sld_cta_prj THEN
+                   PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_monitoramento.cdcooper
+			                                   ,pr_nrdconta => rw_monitoramento.nrdconta
+													               ,pr_cdoperad => '1'
+													               ,pr_vllanmto => vr_sld_cta_prj
+													               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+													               ,pr_cdcritic => vr_cdcritic
+													               ,pr_dscritic => vr_dscritic);
+                   IF nvl(vr_cdcritic,0) > 0 OR 
+                      TRIM(vr_dscritic) IS NOT NULL THEN
+                   	  RAISE vr_exc_saida;
+               	   END IF;        
+                ELSIF vr_sld_cta_prj > nvl(vr_saldo,0) THEN
+                   PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_monitoramento.cdcooper
+			                                   ,pr_nrdconta => rw_monitoramento.nrdconta
+													               ,pr_cdoperad => '1'
+													               ,pr_vllanmto => nvl(vr_saldo,0)
+													               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+													               ,pr_cdcritic => vr_cdcritic
+													               ,pr_dscritic => vr_dscritic);
+                   IF nvl(vr_cdcritic,0) > 0 OR 
+                      TRIM(vr_dscritic) IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+               	   END IF;         
+                END IF;
+             END IF;                                                       
+          END IF;            
+          -- FIM                              --
+          -- PJ 450 - Regulatório de Crédito  --
+          -- Diego Simas -- AMcom -- BACENJUD -- 
+                   
        -- Verifica se houve crédito na conta entre a última execução e esta
        FOR rw_lancamento in cr_lancamento(rw_monitoramento.cdcooper,
                                           rw_monitoramento.nrdconta,

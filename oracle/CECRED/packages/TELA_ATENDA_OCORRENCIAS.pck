@@ -35,6 +35,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
                                 ,pr_nmdcampo  OUT VARCHAR2              --Nome do Campo
                                 ,pr_des_erro  OUT VARCHAR2);            --Saida OK/NOK
 
+  /* Verifica Conta Corrente em Prejuízo e lista detalhes */
+  PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);
+
 END TELA_ATENDA_OCORRENCIAS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
@@ -818,6 +828,339 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
   END pc_busca_ctr_acordos;
+
+  PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2)IS            --Saida OK/NOK
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_consulta_preju_cc
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Diego Simas (AMcom)
+    Data     : Junho/2018                          Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Consulta para verificar se a conta corrente está em prejuízo
+                 e listar os detalhes na tela ATENDA/OCORRÊNCIAS/PREJUÍZOS.
+
+    Alterações :
+
+    -------------------------------------------------------------------------------------------------------------*/
+
+    -- CURSORES --
+
+    --> Consultar se já houve prejuizo nessa conta
+    CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
+      SELECT t.dtinclusao,
+             t.qtdiaatr,
+             t.vlpgprej,
+             t.vlrabono,
+             t.vljuprej,
+             t.vlsdprej,
+             t.vldivida_original,
+             t.vljur60_ctneg,
+             t.vljur60_lcred
+        FROM tbcc_prejuizo t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta;
+    rw_prejuizo cr_prejuizo%ROWTYPE;
+
+    --> Consultar crapass
+    CURSOR cr_crapass(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
+      SELECT c.inprejuz
+        FROM crapass c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.nrdconta = pr_nrdconta
+         AND c.inprejuz = 1;
+    rw_crapass cr_crapass%ROWTYPE;
+
+    --> Consultar crapsld
+    CURSOR cr_crapsld(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
+      SELECT c.vliofmes
+        FROM crapsld c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.nrdconta = pr_nrdconta;
+    rw_crapsld cr_crapsld%ROWTYPE;
+
+    -- Calendário da cooperativa selecionada
+    CURSOR cr_dat(pr_cdcooper crapdat.cdcooper%TYPE) IS
+      SELECT dat.dtmvtolt
+        FROM crapdat dat
+       WHERE dat.cdcooper = pr_cdcooper;
+    rw_dat cr_dat%ROWTYPE;
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3);
+    vr_exc_saida EXCEPTION;
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+    vr_qtdiaatr NUMBER(10);
+    vr_qtdiapre NUMBER(10);
+    vr_inprejuz VARCHAR2(1);
+    vr_qttotatr NUMBER(10);
+    vr_saldodev NUMBER(25,2);
+    vr_iof      NUMBER(25,2);
+
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;
+    vr_exc_erro  EXCEPTION;
+
+  BEGIN
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- PASSA OS DADOS PARA O XML RETORNO
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Dados',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'inf',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+
+    -----> PROCESSAMENTO PRINCIPAL <-----
+
+    pr_cdcritic := NULL;
+    pr_dscritic := NULL;
+    vr_qtdiaatr := 0;
+    vr_qtdiapre := 0;
+    vr_inprejuz := 'N';
+    vr_qttotatr := 0;
+    vr_saldodev := 0;
+
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%FOUND THEN
+      CLOSE cr_crapass;
+
+      vr_inprejuz := 'S';
+
+      OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta);
+
+      FETCH cr_prejuizo INTO rw_prejuizo;
+
+      IF cr_prejuizo%FOUND THEN
+
+        CLOSE cr_prejuizo;
+
+        -- Faz todo o processamento dos detalhes do prejuízo --
+        -- Diego Simas (AMcom)
+        -- Dias em atraso   --
+        -- Dias em prejuízo --
+
+        OPEN cr_dat(pr_cdcooper => pr_cdcooper);
+
+        FETCH cr_dat INTO rw_dat;
+
+        IF cr_dat%FOUND THEN
+          CLOSE cr_dat;
+          -- Dias em Atraso   --
+          vr_qtdiaatr := ((rw_dat.dtmvtolt - rw_prejuizo.dtinclusao) + rw_prejuizo.qtdiaatr);
+          -- Dias em Prejuízo --
+          vr_qtdiapre := (rw_dat.dtmvtolt - rw_prejuizo.dtinclusao);
+        ELSE
+          CLOSE cr_dat;
+        END IF;
+
+        -- Dias Total Atraso
+        vr_qttotatr := vr_qtdiaatr + vr_qtdiapre;
+
+        OPEN cr_crapsld(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapsld INTO rw_crapsld;
+
+        vr_iof := 0;
+        
+        vr_saldodev := (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + 
+                         rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred) * (-1);                      
+              
+
+        IF cr_crapsld%FOUND THEN
+          CLOSE cr_crapsld;
+          vr_iof := rw_crapsld.vliofmes;
+          vr_saldodev :=  vr_saldodev + (rw_crapsld.vliofmes * -1);
+        ELSE
+          CLOSE cr_crapsld;
+          
+        END IF;
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'dttransf', -- Transferência
+                               pr_tag_cont => to_char(rw_prejuizo.dtinclusao, 'DD/MM/YYYY'),
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vltrapre', -- Valor Transferido para Prejuízo
+                               pr_tag_cont => rw_prejuizo.vldivida_original,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vlsdprej', -- Saldo Atual
+                               pr_tag_cont => rw_prejuizo.vlsdprej + 
+                                              rw_prejuizo.vljur60_ctneg +
+                                              rw_prejuizo.vljur60_lcred,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'qtdiaatr', -- Dias em atraso
+                               pr_tag_cont => vr_qtdiaatr,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'qtdiapre', -- Dias em prejuízo
+                               pr_tag_cont => vr_qtdiapre,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'qtdittat', -- Dias total atraso
+                               pr_tag_cont => vr_qttotatr,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vljuprej', -- Juros Remuneratório
+                               pr_tag_cont => rw_prejuizo.vljuprej,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'valoriof', -- IOF
+                               pr_tag_cont => vr_iof,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vlpagpre', -- Valor pago prejuízo
+                               pr_tag_cont => rw_prejuizo.vlpgprej,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vlabopre', -- Valor abono prejuízo
+                               pr_tag_cont => rw_prejuizo.vlrabono,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vlslddev', -- Saldo Devedor
+                               pr_tag_cont => abs(least(vr_saldodev,0)),
+                               pr_des_erro => vr_dscritic);
+
+      ELSE
+        CLOSE cr_prejuizo;
+      END IF;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => vr_qtregist,
+                           pr_tag_nova => 'inprejuz', -- Indicador de Prejuízo
+                           pr_tag_cont => vr_inprejuz,
+                           pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_consulta_preju_cc --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_consulta_preju_cc;
 
 END TELA_ATENDA_OCORRENCIAS;
 /

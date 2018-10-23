@@ -6256,7 +6256,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         CLOSE cr_crapsld;
         --Saldo Negativo mes
         IF nvl(rw_crapsld.vlsmnmes,0) <> 0 THEN
-          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
+          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper 
+                                                            ,pr_nrdconta => pr_nrdconta) = false) THEN
           --Resultado 1
           vr_tab_resulta(1):= (rw_crapsld.vlsmnmes * vr_txjurneg) * -1;
           --Incrementar Contador conta
@@ -6349,7 +6351,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_tab_resulta(2):= (rw_crapsld.vlsmnesp * (rw_craplrt.txmensal / 100)) * -1;
           END IF;        
           
-          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
+          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                                            ,pr_nrdconta => pr_nrdconta) = false) THEN
           --Incrementar Conta          
           vr_contadct:= vr_contadct + 1;
           --Incrementar contador lancamentos na tabela
@@ -6372,7 +6376,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF; --crapsld.vlsmnesp <> 0
         --Valor Bloqueado
         IF rw_crapsld.vlsmnblq <> 0 AND  
-          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL )THEN 
+          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper 
+                                             ,pr_nrdconta => pr_nrdconta) = false) THEN 
           --Resultado 3
           vr_tab_resulta(3):= (rw_crapsld.vlsmnblq * (vr_txjursaq)) * -1;
           --Incrementar Conta          

@@ -49,7 +49,7 @@
 				<? $cont_id = 0;
 				foreach($lancamento as $lancamento){
                 ?>	<tr>
-						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1  || 
+						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this,<?php echo $inprejuz; ?>)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1  || 
 																																		      getByTagName($lancamento->tags,'cdalinea') == 0  || 
 																																			  getByTagName($lancamento->tags,'cdalinea') == 20 || 
 																																			  getByTagName($lancamento->tags,'cdalinea') == 21 || 																																			  

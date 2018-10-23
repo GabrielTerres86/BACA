@@ -432,6 +432,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Contrato
                                       ,pr_dtdstjur IN  crappep.dtdstjur%TYPE     --> Data da ultima correcao do valor pago
                                       ,pr_vlpagpar_atu IN crappep.vlpagpar%TYPE  --> Valor Ja Pago da Parcela
+                                      ,pr_nmdatela  IN VARCHAR2 DEFAULT 'EMPR0011' --> Nome da tela
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
@@ -467,6 +468,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                          ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Emprestimo
                                          ,pr_idfiniof IN  crawepr.idfiniof%TYPE     --> Indicador para financiar IOF
                                          ,pr_vlemprst IN  crapepr.vlemprst%TYPE     --> Valor do Emprestimo
+                                         ,pr_nmdatela IN  VARCHAR2 DEFAULT 'EMPR0011' --> Nome da tela
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -584,14 +586,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Abril - 2017                 Ultima atualizacao: 
+  --  Data     : Abril - 2017                 Ultima atualizacao: 14/08/2018
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas para calculo do emprestimo Pos-Fixado.
   --
-  -- Alteracoes: 
-  --
+  -- Alteracoes: 14/08/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier
+  --                          da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
+  --                          -pc_efetua_pagamento_em_dia
+  --                          -pc_efetua_pagamento_em_atraso
+  --                          -pc_efetua_pagamento_vencer
   ---------------------------------------------------------------------------
   PROCEDURE pc_calcula_qtd_dias_uteis(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                                      ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
@@ -5386,6 +5391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Contrato
                                       ,pr_dtdstjur IN  crappep.dtdstjur%TYPE     --> Data da ultima correcao do valor pago
                                       ,pr_vlpagpar_atu IN crappep.vlpagpar%TYPE  --> Valor Ja Pago da Parcela                                      
+                                      ,pr_nmdatela     IN VARCHAR2               --> Nome da tela
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
@@ -5395,7 +5401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Julho/2017                         Ultima atualizacao: 
+       Data    : Julho/2017                         Ultima atualizacao: 15/08/2018
 
        Dados referentes ao programa:
 
@@ -5403,7 +5409,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o Pagamento da Parcela em dia
 
-       Alteracoes: 
+       Alteracoes: 9318:** Pagamento de Empréstimo  Rangel Decker (AMcom)
+                            Adição do parametro pr_nmdatela DEFAULT 'EMPR0011'
+
     ............................................................................. */
 
     DECLARE
@@ -5651,7 +5659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         
         -- No programa CRPS149: 
         -- Será feito o débito em conta corrente        
-        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+        IF UPPER(pr_cdprogra) <> 'CRPS149' AND UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
           -- Se for Financiamento
           IF pr_floperac THEN
             -- Condicao para verificar se o pagamento foi feito por um avalista
@@ -5786,6 +5794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                          ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Emprestimo
                                          ,pr_idfiniof IN  crawepr.idfiniof%TYPE     --> Indicador para financiar IOF
                                          ,pr_vlemprst IN  crapepr.vlemprst%TYPE     --> Valor do Emprestimo
+                                         ,pr_nmdatela IN  VARCHAR2               --> Nome da tela
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
@@ -5803,7 +5812,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o Pagamento da Parcela em Atraso.
 
-       Alteracoes: 
+       Alteracoes: 9318:** Pagamento de Empréstimo  Rangel Decker (AMcom)
+                            Adição do parametro pr_nmdatela DEFAULT 'EMPR0011'
+
+                   11/10/2018 - Ajustado rotina para caso pagamento for pago pela tela
+                                BLQ gerar o IOF na tabela prejuizo detalhe.
+                                PRJ450 - Regulatorio(Odirlei-AMcom)         
+
     ............................................................................. */
 
     DECLARE
@@ -5846,6 +5861,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            AND craplem.nrctremp = pr_nrctremp
            AND craplem.nrparepr = pr_nrparepr
            AND craplem.cdhistor IN (2373,2371,2377,2375,2347,2346);
+           
+      -- Retorna as contas em prejuizo
+      CURSOR cr_contaprej (pr_cdcooper  IN tbcc_prejuizo.cdcooper%TYPE
+                         , pr_nrdconta  IN tbcc_prejuizo.nrdconta%TYPE) IS
+        SELECT tbprj.idprejuizo
+          FROM tbcc_prejuizo tbprj
+         WHERE tbprj.cdcooper = pr_cdcooper
+           AND tbprj.nrdconta = pr_nrdconta
+           AND tbprj.dtliquidacao IS NULL;
+       rw_contaprej cr_contaprej%ROWTYPE;
+            
     BEGIN
       -- Calcular o valor do atraso
       pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
@@ -5997,7 +6023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         
         -- No programa CRPS149: 
         -- Será feito o débito em conta corrente        
-        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+        IF UPPER(pr_cdprogra) <> 'CRPS149' AND UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
           -- Verificar se o pagamento foi feito por um avalista
           IF NVL(pr_nrseqava,0) = 0 THEN
             -- Se for Financiamento
@@ -6146,7 +6172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
         -- No programa CRPS149: 
         -- Será feito o débito em conta corrente        
-        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN          
+        IF UPPER(pr_cdprogra) <> 'CRPS149' AND UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
           -- Verificar se o pagamento foi feito por um avalista
           IF NVL(pr_nrseqava,0) = 0 THEN
             -- Se for Financiamento
@@ -6292,9 +6318,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           RAISE vr_exc_erro;
         END IF;
         
+        --> Se for pagamento pela tela Bloqueado prejuizo
+        IF upper(pr_nmdatela) = 'BLQPREJU' THEN
+        
+          -- Identificar numero do prejuizo da conta
+          OPEN cr_contaprej(pr_cdcooper => pr_cdcooper, 
+                            pr_nrdconta => pr_nrdconta);
+          FETCH cr_contaprej INTO rw_contaprej;
+          CLOSE cr_contaprej;
+          
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2794;  --> IOF S/ FINANC
+          ELSE
+            vr_cdhistor := 2793; --> IOF S/EMPREST
+          END IF;
+                      
+          -- Incluir lançamento na TBCC_PREJUIZO_DETALHE
+          PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => pr_cdcooper
+                                          , pr_nrdconta   => pr_nrdconta
+                                          , pr_dtmvtolt   => pr_dtcalcul
+                                          , pr_cdhistor   => vr_cdhistor
+                                          , pr_idprejuizo => rw_contaprej.idprejuizo
+                                          , pr_vllanmto   => vr_vliofcpl
+                                          , pr_nrctremp   => pr_nrctremp
+                                          , pr_cdoperad   => pr_cdoperad
+                                          , pr_cdcritic   => vr_cdcritic
+                                          , pr_dscritic   => vr_dscritic);
+        
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;  
+          END IF;   
+        
         -- No programa CRPS149: 
         -- Será feito o débito em conta corrente        
-        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN        
+        ELSIF UPPER(pr_cdprogra) <> 'CRPS149' THEN
           -- Se for Financiamento
           IF pr_floperac THEN
             vr_cdhistor := 2542;
@@ -6437,7 +6496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- No programa CRPS149: 
       -- Será feito o débito em conta corrente        
-      IF UPPER(pr_cdprogra) <> 'CRPS149' THEN        
+      IF UPPER(pr_cdprogra) <> 'CRPS149' AND UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
         -- Se for Financiamento
         IF pr_floperac THEN
           -- Condicao para verificar se o pagamento foi feito por um avalista
@@ -6550,6 +6609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_vlsdvpar  IN  crappep.vlsdvpar%TYPE     --> Saldo Devedor da Parcela
                                       ,pr_vltaxatu  IN  crappep.vltaxatu%TYPE     --> Taxa do CDI da Parcela
                                       ,pr_dtrefcor  IN  crapepr.dtrefcor%TYPE     --> Data de Referencia do ultimo lancamento de juros de correcao
+                                      ,pr_nmdatela  IN  VARCHAR2 DEFAULT 'EMPR0011' --> Nome da tela
                                       ,pr_tab_price IN OUT typ_tab_price          --> Tab do Price                                     
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
@@ -6568,7 +6628,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o pagamento da parcela a Vencer
 
-       Alteracoes: 
+       Alteracoes: 9318:** Pagamento de Empréstimo  Rangel Decker (AMcom)
+                            Adição do parametro pr_nmdatela DEFAULT 'EMPR0011'
+
     ............................................................................. */
 
     DECLARE
@@ -6817,7 +6879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       ---------------------------------------------------------------------------------------------------
       -- No programa CRPS149: 
       -- Será feito o débito em conta corrente        
-      IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+      IF UPPER(pr_cdprogra) <> 'CRPS149' AND UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
         IF NVL(pr_nrseqava,0) = 0 THEN
           -- Se for Financiamento
           IF pr_floperac THEN
@@ -7391,7 +7453,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para geracao dos pagamentos.
 
-       Alteracoes: 
+       Alteracoes:  9318:** Pagamento de Empréstimo  Rangel Decker (AMcom)
+                         Alteração nas chamadas da procedures :
+                         -
+
     ............................................................................. */
 
     DECLARE
@@ -7721,6 +7786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_vlpagpar_atu => NVL(rw_crappep.vlpagpar,0) + 
                                                       NVL(rw_crappep.vldstrem,0) + 
                                                       NVL(rw_crappep.vldstcor,0)                                 
+                                  ,pr_nmdatela => pr_nmdatela
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -7764,6 +7830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                      ,pr_txmensal => rw_crapepr.txmensal
                                      ,pr_idfiniof => rw_crapepr.idfiniof
                                      ,pr_vlemprst => rw_crapepr.vlemprst
+                                     ,pr_nmdatela => pr_nmdatela
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
 
@@ -7809,6 +7876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_vltaxatu  => rw_crappep.vltaxatu
                                   ,pr_dtrefcor  => rw_crapepr.dtrefcor
                                   ,pr_tab_price => pr_tab_price
+																	,pr_nmdatela  => pr_nmdatela
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
       

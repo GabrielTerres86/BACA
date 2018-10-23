@@ -88,6 +88,26 @@
 	$qtregist   = $xmlObjeto->roottag->tags[1]->attributes["QTREGIST"];
 	$nmprimtl	= $xmlObjeto->roottag->tags[1]->attributes['NMPRIMTL'];
 	
+	//Mensageria referente a situação da conta
+	$xml  = ""; 
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$retornoAposErro,false);
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+	}
+	
 	include('form_devolu.php');
 
 	if ( $nrdconta == 0 ) {

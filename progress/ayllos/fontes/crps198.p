@@ -110,6 +110,9 @@
                24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
                             Heitor (Mouts) - Melhoria 440
 
+               11/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                            [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+                            
 ............................................................................. */
 
 DEF STREAM str_1.      /*  Para relatorio de rejeitados  */
@@ -117,6 +120,8 @@ DEF STREAM str_1.      /*  Para relatorio de rejeitados  */
 { includes/var_batch.i {1} } 
 
 { includes/var_cpmf.i } 
+
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF        VAR rel_nrmodulo AS INT     FORMAT "9"                     NO-UNDO.
 DEF        VAR rel_nmmodulo AS CHAR    FORMAT "x(15)" EXTENT 5
@@ -177,6 +182,12 @@ DEF        VAR tot_vlestemp AS DECIMAL                                NO-UNDO.
 DEF        VAR tot_vlantemp AS DECIMAL                                NO-UNDO.
 DEF        VAR tot_vlavsemp AS DECIMAL                                NO-UNDO.
 DEF        VAR tot_vldebemp AS DECIMAL                                NO-UNDO.                          
+
+DEF        VAR h-b1wgen0200 AS HANDLE                                 NO-UNDO.
+DEF        VAR aux_incrineg AS INT                                    NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                    NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                   NO-UNDO.
+
 DEFINE TEMP-TABLE cratest FIELD cdempres AS INTEGER
                           FIELD cdagenci AS INTEGER
                           FIELD qtestemp AS INTEGER
@@ -257,6 +268,7 @@ FORM "-------  --------------" AT 28
      WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_total.
 
 glb_cdprogra = "crps198".
+
 
 RUN fontes/iniprg.p.
 
@@ -372,6 +384,13 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
                               INT(SUBSTR(craptab.dstextab,07,4)))
            aux_lsempres = aux_lsempres + "," + 
                           STRING(craptab.cdempres,"99999").  
+
+
+    /* 11/06/20108 - TJ - Verificar se pode realizar o debito  */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p 
+        PERSISTENT SET h-b1wgen0200.
+
 
     TRANS_1:
 
@@ -595,28 +614,76 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
 
                       END.
 
-                 CREATE craplcm.
                  ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                         craplot.qtcompln = craplot.qtcompln + 1
                         craplot.qtinfoln = craplot.qtcompln
                         craplot.vlcompdb = craplot.vlcompdb + aux_vldescto
-                        craplot.vlinfodb = craplot.vlcompdb
+                        craplot.vlinfodb = craplot.vlcompdb.
 
-                        craplcm.cdagenci = craplot.cdagenci
-                        craplcm.cdbccxlt = craplot.cdbccxlt
-                        craplcm.cdhistor = crapavs.cdhistor
-                        craplcm.dtmvtolt = glb_dtmvtolt
-                        craplcm.cdpesqbb = ""
-                        craplcm.nrdconta = crapavs.nrdconta
-                        craplcm.nrdctabb = crapavs.nrdconta
-                        craplcm.nrdctitg = STRING(crapavs.nrdconta,"99999999")
-                        craplcm.nrdocmto = crapavs.nrdocmto
-                        craplcm.nrdolote = craplot.nrdolote
-                        craplcm.nrseqdig = craplot.nrseqdig
-                        craplcm.vllanmto = aux_vldescto
-                        craplcm.cdcooper = glb_cdcooper.
-                 VALIDATE craplcm.
+                      
+                 /* 11/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                   (INPUT glb_dtmvtolt                         /* par_dtmvtolt */
+                   ,INPUT craplot.cdagenci                     /* par_cdagenci */
+                   ,INPUT craplot.cdbccxlt                     /* par_cdbccxlt */
+                   ,INPUT craplot.nrdolote                     /* par_nrdolote */
+                   ,INPUT crapavs.nrdconta                     /* par_nrdconta */
+                   ,INPUT crapavs.nrdocmto                     /* par_nrdocmto */
+                   ,INPUT crapavs.cdhistor                     /* par_cdhistor */
+                   ,INPUT craplot.nrseqdig                     /* par_nrseqdig */
+                   ,INPUT aux_vldescto                         /* par_vllanmto */
+                   ,INPUT crapavs.nrdconta                     /* par_nrdctabb */
+                   ,INPUT ""                                   /* par_cdpesqbb */
+                   ,INPUT 0                                    /* par_vldoipmf */
+                   ,INPUT 0                                    /* par_nrautdoc */
+                   ,INPUT 0                                    /* par_nrsequni */
+                   ,INPUT 0                                    /* par_cdbanchq */
+                   ,INPUT 0                                    /* par_cdcmpchq */
+                   ,INPUT 0                                    /* par_cdagechq */
+                   ,INPUT 0                                    /* par_nrctachq */
+                   ,INPUT 0                                    /* par_nrlotchq */
+                   ,INPUT 0                                    /* par_sqlotchq */
+                   ,INPUT ""                                   /* par_dtrefere */
+                   ,INPUT ""                                   /* par_hrtransa */
+                   ,INPUT 0                                    /* par_cdoperad */
+                   ,INPUT 0                                    /* par_dsidenti */
+                   ,INPUT glb_cdcooper                         /* par_cdcooper */
+                   ,INPUT STRING(crapavs.nrdconta,"99999999")  /* par_nrdctitg */
+                   ,INPUT ""                                   /* par_dscedent */
+                   ,INPUT 0                                    /* par_cdcoptfn */
+                   ,INPUT 0                                    /* par_cdagetfn */
+                   ,INPUT 0                                    /* par_nrterfin */
+                   ,INPUT 0                                    /* par_nrparepr */
+                   ,INPUT 0                                    /* par_nrseqava */
+                   ,INPUT 0                                    /* par_nraplica */
+                   ,INPUT 0                                    /* par_cdorigem */
+                   ,INPUT 0                                    /* par_idlautom */
+                   /* CAMPOS OPCIONAIS DO LOTE                                                                  */ 
+                   ,INPUT 0                                    /* Processa lote                                 */
+                   ,INPUT 0                                    /* Tipo de lote a movimentar                     */
+                   /* CAMPOS DE SAIDA                                                                           */                                            
+                   ,OUTPUT TABLE tt-ret-lancto                 /* Collection que contém o retorno do lançamento */
+                   ,OUTPUT aux_incrineg                        /* Indicador de crítica de negócio               */
+                   ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
+                   ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
+                   
+                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+                 DO:   
+					 RUN fontes/critic.p.
+
+					 glb_dscritic = aux_dscritic.
+
+                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '" +
+                                       glb_dscritic + " Conta : " +
+                                       STRING(crapavs.nrdconta,"zzzz,zz9,9") +
+                                       " >> log/proc_batch.log").
+                     glb_cdcritic = 0.
+
+                     NEXT.                      
              END.
+                   
+             END. /* fim aux_vldescto > 0 */
 
     END.  /* FOR EACH crapavs TRANSACTION */
 
@@ -624,6 +691,10 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
        IF   MONTH(glb_dtmvtolt) <> MONTH(glb_dtmvtopr)    THEN
             craptab.dstextab = SUBSTR(craptab.dstextab,1,22) + "1".
     END.     
+
+    /* 11/06/2018 - TJ - Apagar handle associado antes do For Each crapavs */
+    IF  VALID-HANDLE(h-b1wgen0200) THEN
+        DELETE PROCEDURE h-b1wgen0200.
 
 END.    /* FOR EACH craptab */
 

@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 21/07/2017
  * OBJETIVO     : Valida dados do pagamento
  *
- * ALTERACOES	: 
+ * ALTERACOES	: 21/08/2018 - Exibir mensagem de conta em prejuizo
+ *				               PJ 450 - Diego Simas - AMcom	 
  */
 ?>
  
@@ -27,23 +28,53 @@
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
 	$vlapagar = (isset($_POST['vlapagar'])) ? $_POST['vlapagar'] : '';
 
-	// Montar o xml de Requisicao
-    $xml  = "<Root>";
-    $xml .= "	<Dados>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
-	$xml .= "		<vlapagar>".$vlapagar."</vlapagar>";
-    $xml .= "	</Dados>";
-    $xml .= "</Root>";
+	// Mensageria referente a situa??o de preju?zo	
+	// Diego Simas (AMcom) 
+	// In?cio  
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
 
-    $xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_VALIDA_PAG_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObject = getObjectXML($xmlResult);
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
 
-    if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO' ) {
-        exibirErro('error',$xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
-	} else if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'CONFIRMACAO' ) {
-		echo 'showConfirmacao("'.$xmlObject->roottag->tags[0]->cdata.'","Confirma&ccedil;&atilde;o - Aimaro","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
-	} else {	
-		echo 'confirmaPagamento();'; 
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+	}
+	
+	if($inprejuz == 1 && $vlapagar != 0){
+		exibirErro('error',utf8_encode('Conta em prejuízo, pagamento deve ser efetuado através da opção Bloqueado Prejuízo.'),'Alerta - Aimaro',$mtdErro,false);
+	}else{
+	// Fim
+	// Diego Simas (AMcom) 
+
+	    // Montar o xml de Requisicao
+        $xml  = "<Root>";
+        $xml .= "	<Dados>";
+	    $xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
+	    $xml .= "		<vlapagar>".$vlapagar."</vlapagar>";
+        $xml .= "	</Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_VALIDA_PAG_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO' ) {
+            exibirErro('error',$xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
+	    } else if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'CONFIRMACAO' ) {
+		    echo 'showConfirmacao("'.$xmlObject->roottag->tags[0]->cdata.'","Confirma&ccedil;&atilde;o - Aimaro","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
+	    } else {	
+		    echo 'confirmaPagamento();'; 
+		}
+	
 	}
 ?>

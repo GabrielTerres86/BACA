@@ -35,6 +35,9 @@
 	//***					      que deverão ser lidas da crapdat na      ***//
 	//***					      rotina (Renato Darosci - Supero)         ***//
 	//***					                                               ***//
+	//***			 27/08/2018 - Incluido opção de utilizar saldo bloqueado***//
+	//***					      prejuizo para bloqueio judicial          ***//
+	//***					      PRJ450 - (Odirlei - AMcom)               ***//
 	//************************************************************************//
 	
 	session_start();
@@ -109,6 +112,7 @@
 		if ($cdtppesq == 4) { $tabela .=				"<th align=\'CENTER\'>Aplica&ccedil;&atilde;o</th>";
                               $tabela .=				"<th align=\'CENTER\'>Conta Corrente</th>";
                               $tabela .=				"<th align=\'CENTER\'>Poupan&ccedil;a Programada</th>";
+                              $tabela .=				"<th align=\'CENTER\'>Bloqueado Preju&iacute;zo</th>";
                             }
 		$tabela .=			"</tr>";
 		$tabela .=		"</thead>";
@@ -164,6 +168,29 @@
 			$vlctacor = max(str_replace(",",".",getByTagName($registros[$i]->tags,'vlstotal')) - $vlsdbloq - $vlsdblpr - $vlsdblfp,0);
 			$vlpoupan = str_replace(",",".",getByTagName($registros[$i]->tags,'vlsldppr'));
                                                                                              
+            
+            //Busca Saldo atual da conta transitória
+            $xml  = "";
+            $xml .= "<Root>";
+            $xml .= "  <Dados>";
+            $xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+            $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";	
+            $xml .= "  </Dados>";
+            $xml .= "</Root>";
+
+            $xmlResult = mensageria($xml, "PREJ0003", "CONSULTAR_SLDPRJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $xmlObjeto = getObjectXML($xmlResult);
+
+            $param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+            if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+                exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+                //('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false);
+            }else{
+                // Buscar saldo bloqueado prejuizo
+                $vlblqprj = getByTagName($param->tags,'saldo');		
+            }
+                                                                                             
             $idchkbox = 'chk-cta';
             $nmchkbox = $cdcooper. '-'. $nrdconta. '-'. $nrcpfcgc;
         
@@ -187,6 +214,10 @@
             $tabela .=			"<td align=\'center\'>";
             $tabela .=				 "R$ ". formataMoeda($vlpoupan);
             $tabela .=			"</td>";
+            //Bloqueado Prejuizo
+            $tabela .=			"<td align=\'center\'>";
+            $tabela .=				 "R$ ". formataMoeda($vlblqprj);
+            $tabela .=			"</td>";
         }
             $tabela .=		"</tr>";
             $tabela .=		"<tr>";
@@ -207,6 +238,11 @@
             $tabela .=			"<td style=\'text-align:center;\'>";
             $tabela .=			    "<input type=\'checkbox\' style=\'float:none;\' id=\'" . $idchkbox . "\' name=\'3-" . $nmchkbox . "\' value=\'" . $vlpoupan ."\' onClick=\'atualizaSaldo(this);\' />";
             $tabela .=			"</td>";
+            //Bloqueado Prejuizo
+            $tabela .=			"<td style=\'text-align:center;\'>";
+            $tabela .=			    "<input type=\'checkbox\' style=\'float:none;\' id=\'" . $idchkbox . "\' name=\'5-" . $nmchkbox . "\' value=\'" . $vlblqprj ."\' onClick=\'atualizaSaldo(this);\' />";
+            $tabela .=			"</td>";
+            
         }
             $tabela .=		"</tr>";
             

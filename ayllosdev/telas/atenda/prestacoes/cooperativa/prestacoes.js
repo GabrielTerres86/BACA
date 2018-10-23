@@ -64,7 +64,11 @@
  * 050: [07/06/2018] Tratamento para nao permitir desfazer efetivação de emprestimo CDC. PRJ439 (Odirlei-AMcom)
  * 049: [01/08/2018] Ajuste para apresentar valores negativos na tela de prejuizo - INC0019253. (Andre Bohn - MoutS)
  * 050: [12/09/2018] P442 - Ajustes nos tamanhos de tela e mascaras para apresentacao de Consultas Automatizadas novas (Diogo-Envolti)
- */
+ * 047: [09/07/2018] Criado opção para tela de controles (Qualificação da Operação e Contratos Liquidados)
+ *	   			   	 PJ450 - Diego Simas (AMcom)
+ * 048: [20/08/2018] Ajustado a função mostraExtrato para não exibir o conteúdo carregado em telas anteriores da divUsoGenerico
+ *                   PJ450 - Diego Simas (AMcom)  
+*/
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
 $.getScript(UrlSite + "includes/rating/rating.js");
@@ -230,7 +234,7 @@ function controlaOperacao(operacao) {
     }
 
   
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA', 'CON_QUALIFICA'] ) ) {
+	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA', 'CONTROLES', 'CON_CONTRATOS_LIQ'] ) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -470,9 +474,17 @@ function controlaOperacao(operacao) {
 			mostraDivPortabilidade(operacao);
 			return false;
 			break;
+		case 'CONTROLES':
+			mostraDivControles(operacao);
+			return false;
+			break;
 		case 'CON_QUALIFICA':
 		case 'ALT_QUALIFICA':
 			mostraDivQualificaControle(operacao);
+			return false;
+			break;
+		case 'CON_CONTRATOS_LIQ':
+			mostraDivContratosALiquidar(operacao);
 			return false;
 			break;
 		case 'PORTAB_APRV' :
@@ -1961,6 +1973,46 @@ function controlaLayout(operacao) {
 	return false;
 }
 
+//Função para formatar tabela de Contratos Liquidados
+function formataContratosLiq(){
+	var divRegistro = $('div.divRegistros','#divUsoGenerico');
+	//var divRegistro = $('div.divRegistrosCL');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '160px', 'width': '750px' });
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0, 0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '30px';
+	arrayLargura[1] = '50px';
+	arrayLargura[2] = '51px';
+	arrayLargura[3] = '60px';
+	arrayLargura[4] = '100px';
+	arrayLargura[5] = '60px';
+	arrayLargura[6] = '70px';
+	arrayLargura[7] = '50px';
+	arrayLargura[8] = '70px';
+	arrayLargura[9] = '70px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'center';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
+	arrayAlinha[8] = 'center';
+	arrayAlinha[9] = 'center';
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+}
+
 //Função para controle de navegação
 function controlaFoco() {
     $('#divConteudoOpcao').each(function () {
@@ -2748,7 +2800,6 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
-	exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
@@ -2777,9 +2828,9 @@ function mostraExtrato( operacao ) {
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			$('#divUsoGenerico').html(response);
-			layoutPadrao();
 			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			exibeRotina($('#divUsoGenerico'));
 			bloqueiaFundo($('#divUsoGenerico'));
 		}
 	});
@@ -3054,6 +3105,37 @@ function mostraDivPortabilidade( operacao ) {
 	return false;
 }
 
+function mostraDivControles(operacao) {
+
+	showMsgAguardo('Aguarde, abrindo controles...');
+
+	limpaDivGenerica();
+
+	exibeRotina($('#divUsoGenerico'));
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/controles.php',
+		data: {			
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            $('#divUsoGenerico').html(response);
+            layoutPadrao();
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+
+	return false;
+}
+
 function mostraDivQualificaControle(operacao) {
 
 	showMsgAguardo('Aguarde, abrindo qualifica&ccedil;&atilde;o...');
@@ -3091,6 +3173,91 @@ function mostraDivQualificaControle(operacao) {
         }
     });
 
+	return false;
+}
+
+function gravaContratosLiquidados(){
+	
+	var dsliquid = dsctrliqCL;
+
+	if(dsliquid != ""){
+		showConfirmacao("Confirma o vínculo do(s) Contrato(s) Liquidado(s): "+
+						dsliquid+
+						" com o contrato "+
+						nrctremp+"?",
+						"Confirma&ccedil;&atilde;o - Ayllos",
+						"gravaContratosLiqDef();",
+						"return false;",
+						"sim.gif",
+						"nao.gif");
+	}
+
+	return false;
+	
+}
+
+function gravaContratosLiqDef(){
+
+	showMsgAguardo('Aguarde, gravando contratos liquidados...');
+	
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/gravaContratosLiquidados.php',
+		data: {
+			cdcooper: cdcooper, 
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			dsliquid: dsctrliqCL,	
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			$('#divUsoGenerico').html(response);
+			layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo($('#divUsoGenerico'));            
+        }
+    });
+
+	return false;	
+}
+
+function mostraDivContratosALiquidar(){
+
+	showMsgAguardo('Aguarde, abrindo Contratos Liquidados...');
+
+	limpaDivGenerica();
+    
+	exibeRotina($('#divUsoGenerico'));
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/contratosALiquidar.php',
+		data: {
+			cdcooper: cdcooper,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {			
+			$('#divUsoGenerico').html(response);
+			//layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo($('#divUsoGenerico'));			
+		}
+	});
+	
 	return false;
 }
 

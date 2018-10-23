@@ -24,6 +24,17 @@
 							 24/01/2018 - Na funcao controlaLayout havia erros de sintaxe ocasionando problemas na 
 							              formatação da tela (Tiago #824708)
 							 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+               26/06/2018 - Campos do pagamento do prejuizo(Conta Transitoria)
+                            P450 - Diego Simas - AMcom
+			   01/08/2018 - Ajuste nos campos do pagamento do prejuízo da conta transitória
+			   				PJ450 - Diego Simas - AMcom
+			   03/08/2018 - Campos do pagamento do empréstimo (Conta Transitória)
+                            P450 - Diego Simas - AMcom
+               21/08/2018 - Incluído campo Juros referente ao juros remuneratório da conta transitória.
+				  		    PJ450 - Diego Simas - AMcom 
+			   04/09/2018 - Ajuste na mensagem de pagamento de prejuizo em conta sem saldo
+			   			    PJ450 - Diego Simas - AMcom
+
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -353,6 +364,68 @@ function imprimirExtrato() {
 	carregaImpressaoAyllos("frmExtrato",action,callafter);
 }
 
+function imprimirExtratoCT() {
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+	$("#nrdconta", "#frmDetalhesCT").val(nrdconta);
+
+	var action = $("#frmDetalhesCT").attr("action");
+	var callafter = "bloqueiaFundo(divRotina);";
+
+	carregaImpressaoAyllos("frmDetalhesCT", action, callafter);
+}
+
+
+
+function imprimeExtratoLancamentosCT() {
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, verificando impress&atilde;o ...");
+
+	var dtiniper = $("#dtiniper", "#frmDetalhesCT").val();
+	var dtfimper = $("#dtfimper", "#frmDetalhesCT").val();
+
+	// Valida data inicial
+	if ($.trim(dtiniper) == "" || !validaData(dtiniper)) {
+		hideMsgAguardo();
+		showError("erro", "Data inicial inv&aacute;lida.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#dtiniper','#frmExtrato').focus()");
+		$("#dtiniper", "#frmDetalhesCT").val("");
+		return false;
+	}
+
+	// Valida data final
+	if ($.trim(dtfimper) == "" || !validaData(dtfimper)) {
+		hideMsgAguardo();
+		showError("erro", "Data final inv&aacute;lida.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#dtfimper','#frmExtrato').focus()");
+		$("#dtfimper", "#frmDetalhesCT").val("");
+		return false;
+	}
+
+	// Executa script atraves de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/dep_vista/validar_impressao_extrato_CT.php",
+		data: {
+			nrdconta: nrdconta,
+			dtiniper: dtiniper,
+			dtfimper: dtfimper,
+			redirect: "script_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			try {
+				eval(response);
+			} catch (error) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+	});
+
+}
+
 //
 function obtemExtrato() {
 	$("#iniregis","#frmExtDepVista").val("1");
@@ -372,7 +445,7 @@ function navega(iniregis) {
 // Função que formata o layout
 function controlaLayout( nomeForm ){
 
-	var altura = '253px';
+	var altura = '310px';
 
 	if (nomeForm == 'frmDadosDepVista') {
         //Seleção dos Labels e Inputs
@@ -420,6 +493,9 @@ function controlaLayout( nomeForm ){
         var Lvllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
         var Cvllimcre = $('#vllimcre', '#' + nomeForm);
 
+		var Lvlsldctr = $('label[for="vlsldctr"]', '#' + nomeForm);
+		var Cvlsldctr = $('#vlsldctr', '#' + nomeForm);
+
         var Ldtultlcr = $('label[for="dtultlcr"]', '#' + nomeForm);
         var Cdtultlcr = $('#dtultlcr', '#' + nomeForm);
 
@@ -448,6 +524,7 @@ function controlaLayout( nomeForm ){
         Lvlblqjud.addClass('rotulo').css('width', '110px');
         Lvlstotal.addClass('rotulo').css('width', '110px');
         Lvllimcre.addClass('rotulo').css('width', '110px');
+		Lvlsldctr.addClass('rotulo').css('width', '110px');
         Ldtultlcr.css('width', '180px');
         Lvllimdis.css('width', '180px');
         Ldtliberacao.css('width', '180px');
@@ -467,6 +544,7 @@ function controlaLayout( nomeForm ){
         Cvlblqjud.css('width', '87px').addClass('monetario');
         Cvlstotal.css('width', '87px').addClass('monetario');
         Cvllimcre.css('width', '87px').addClass('monetario');
+		Cvlsldctr.css('width', '87px').addClass('monetario');
         Cdtultlcr.css('width', '93px').addClass('data');
         Cvllimdis.css('width', '93px').addClass('monetario');
         Cdtliberacao.css('width', '93px').addClass('data');
@@ -536,6 +614,15 @@ function controlaLayout( nomeForm ){
 		arrayAlinha[6] = 'right';
 
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
+
+	} else if (nomeForm == 'frmDetalhesCT') {
+
+		$("#dtiniper,#dtfimper", "#frmDetalhesCT").setMask("DATE", "", "", "divRotina");
+		var rNrctrato = $('label[for="nrctremp"]', '#frmPagPrejCC');
+		rNrctrato.css({ 'width': '70px' });
+		var cNrctrato = $('#nrctremp', '#frmPagPrejCC');
+		cNrctrato.css({ 'width': '120px' }).addClass('inteiro').attr('maxlength', '14');
+		cNrctrato.habilitaCampo();
 
 	}else if( nomeForm == 'frmMedias' ){
 
@@ -665,6 +752,7 @@ function controlaLayout( nomeForm ){
         rVlsdindi = $('label[for="vlsdindi"]', '#' + nomeForm);
         rVlstotal = $('label[for="vlstotal"]', '#' + nomeForm);
         rVllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
+		rVlsldctr = $('label[for="vlsldctr"]', '#' + nomeForm);
         rVlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
         rVllimcpa = $('label[for="vllimcpa"]', '#' + nomeForm);
         
@@ -678,6 +766,7 @@ function controlaLayout( nomeForm ){
         rVlsdindi.addClass('rotulo').css({ 'width': '200px' });
         rVlstotal.addClass('rotulo').css({ 'width': '200px' });
         rVllimcre.addClass('rotulo').css({ 'width': '200px' });
+		rVlsldctr.addClass('rotulo').css({ 'width': '200px' });
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
         rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
 	
@@ -691,6 +780,7 @@ function controlaLayout( nomeForm ){
         cVlsdindi = $('#vlsdindi', '#' + nomeForm);
         cVlstotal = $('#vlstotal', '#' + nomeForm);
         cVllimcre = $('#vllimcre', '#' + nomeForm);
+		cVlsldctr = $('#vlsldctr', '#' + nomeForm);
         cVlblqjud = $('#vlblqjud', '#' + nomeForm);
         cVllimcpa = $('#vllimcpa', '#' + nomeForm);
 
@@ -703,6 +793,7 @@ function controlaLayout( nomeForm ){
         cVlsdindi.css({ 'width': '75px', 'text-align': 'right' });
         cVlstotal.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
+		cVlsldctr.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
 		
@@ -824,3 +915,526 @@ function mostraDetalhesAtraso() {
         }
     });
 }
+
+function mostraDetalhesCT() {
+	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
+
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/detalhes_conta_transitoria.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			dtiniper: $("#dtiniper", "#frmDetalhesCT").val(),
+			dtfimper: $("#dtfimper", "#frmDetalhesCT").val(),
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N?o foi poss?vel concluir a requisi??o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			$('#divUsoGenerico').html(response);
+			//layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo($('#divUsoGenerico'));
+		}
+	});
+}
+
+// Fun??o que formata a tabela lan?amentos Contra Transit?ria
+function formataLancamentosCT() {
+
+	var divRegistro = $('div.divRegistros', '#divTabContraOrdens');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '235px', 'width': '650px' });
+
+	var ordemInicial = new Array();
+
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '67px';
+	arrayLargura[1] = '100px';
+	arrayLargura[2] = '100px';
+	arrayLargura[3] = '100px';
+	arrayLargura[4] = '100px';
+	arrayLargura[5] = '100px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'center';
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+	ajustarCentralizacao();
+	return false;
+}
+/*
+Inicio das rotinas relacionadas ao pagamento de prejuizo
+*/
+function mostraPagamentoPrejuzCC() {
+
+	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
+
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/pagamento_prejuz_cc.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N?o foi poss?vel concluir a requisi??o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			bloqueiaFundo($('#divUsoGenerico'));
+		}
+	});
+}
+
+function mostraLiberacaoCC() {
+
+	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
+
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/liberacao_cc.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N?o foi poss?vel concluir a requisi??o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			bloqueiaFundo($('#divUsoGenerico'));
+		}
+	});
+}
+
+function mostraPagamentoEmp(nrctremp){
+	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
+
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/emprestimos_cc.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N?o foi poss?vel concluir a requisi??o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			bloqueiaFundo($('#divUsoGenerico'));
+			if(nrctremp != null){
+				$('#nrctremp', '#frmEmpCC').val(nrctremp);
+			}
+		}
+	});
+}
+
+function formataPagamentoPrejuzCC() {
+	var Lvlsdprej = $('label[for="vlsdprej"]', '#frmPagPrejCC');
+	var Cvlsdprej = $('#vlsdprej', '#frmPagPrejCC');
+	var Ljuremune = $('label[for="juremune"]', '#frmPagPrejCC');
+	var Cjuremune = $('#juremune', '#frmPagPrejCC');
+	var Lvlttjurs = $('label[for="vlttjurs"]', '#frmPagPrejCC');
+	var Cvlttjurs = $('#vlttjurs', '#frmPagPrejCC');
+	var Lvltotiof = $('label[for="vltotiof"]', '#frmPagPrejCC');
+	var Cvltotiof = $('#vltotiof', '#frmPagPrejCC');
+	var Lvlpagto = $('label[for="vlpagto"]', '#frmPagPrejCC');
+	var Cvlpagto = $('#vlpagto', '#frmPagPrejCC');
+	var Lvlabono = $('label[for="vlabono"]', '#frmPagPrejCC');
+	var Cvlabono = $('#vlabono', '#frmPagPrejCC');
+	var Lvlsaldo = $('label[for="vlsaldo"]', '#frmPagPrejCC');
+	var Cvlsaldo = $('#vlsaldo', '#frmPagPrejCC');
+
+	Lvlsdprej.addClass('rotulo').css({ 'width': '130px' });
+	Cvlsdprej.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Ljuremune.addClass('rotulo').css({ 'width': '130px' });
+	Cjuremune.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Lvlttjurs.addClass('rotulo').css({ 'width': '130px' });
+	Cvlttjurs.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Lvltotiof.addClass('rotulo').css({ 'width': '130px' });
+	Cvltotiof.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Lvlpagto.addClass('rotulo').css({ 'width': '130px' });
+	Cvlpagto.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Lvlabono.addClass('rotulo').css({ 'width': '130px' });
+	Cvlabono.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Lvlsaldo.addClass('rotulo').css({ 'width': '130px' });
+	Cvlsaldo.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+
+	Cvlpagto.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', ',');
+	Cvlabono.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', ',');
+}
+
+function formataLiberacaoCC() {
+	var Lvlpagto = $('label[for="vlpagto"]', '#frmLibCC');
+	var Cvlpagto = $('#vlpagto', '#frmLibCC');
+
+	Lvlpagto.addClass('rotulo').css({ 'width': '45px' });
+	Cvlpagto.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+
+	Cvlpagto.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', '');
+}
+
+function formataEmprestimo() {
+	var Lvlpagto = $('label[for="vlpagto"]', '#frmEmpCC');
+	var Cvlpagto = $('#vlpagto', '#frmEmpCC');
+
+	Lvlpagto.addClass('rotulo').css({ 'width': '80px' });
+	Cvlpagto.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+
+	Cvlpagto.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', '');
+
+	var Lvlabono = $('label[for="vlabono"]', '#frmEmpCC');
+	var Cvlabono = $('#vlabono', '#frmEmpCC');
+
+	Lvlabono.addClass('rotulo').css({ 'width': '80px' });
+	Cvlabono.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+
+	Cvlabono.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', '');
+
+	var Lnrctremp = $('label[for="nrctremp"]', '#frmEmpCC');
+	var Cnrctremp = $('#nrctremp', '#frmEmpCC');
+
+	Lnrctremp.addClass('rotulo').css({ 'width': '80px' });
+	Cnrctremp.css({ 'width': '110px', 'text-align': 'right' }).attr('maxlength', '13');
+
+	Cnrctremp.setMask('INTEGER', 'z.zzz.zzz.zz9', '.', '');
+
+	Lvlabono.hide();
+	Cvlabono.hide();
+
+}
+
+// início contrato
+function mostraContrato(campo, formulario) {
+
+	showMsgAguardo('Aguarde, buscando ...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/contrato.php',
+		data: {
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
+		},
+		success: function (response) {
+			$('#divUsoGenerico').html(response);
+			buscaContrato(campo, formulario, nrdconta);
+			return false;
+		}
+	});
+
+	return false;
+
+}
+
+function buscaContrato(campo, formulario, nrdconta) {
+
+	showMsgAguardo('Aguarde, buscando ...');
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/busca_contrato.php',
+		data: {
+			nrdconta: nrdconta,
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground();");
+		},
+		success: function (response) {
+
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divConteudo').html(response);
+					exibeRotina($('#divUsoGenerico'));
+					formataContrato(campo, formulario);
+					return false;
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
+				}
+			}
+		}
+	});
+	return false;
+}
+
+function formataContrato(campo, formulario) {
+
+	var divRegistro = $('div.divRegistros', '#divContrato');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '120px', 'width': '500px' });
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0, 0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '60px';
+	arrayLargura[1] = '62px';
+	arrayLargura[2] = '80px';
+	arrayLargura[3] = '60px';
+	arrayLargura[4] = '80px';
+	arrayLargura[5] = '38px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'right';
+	arrayAlinha[1] = 'left';
+	arrayAlinha[2] = 'right';
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'right';
+	arrayAlinha[5] = 'right';
+	arrayAlinha[6] = 'right';
+
+	var metodoTabela = "selecionaContrato('" + campo + "','" + formulario + "');";
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+
+	hideMsgAguardo();
+	//bloqueiaFundo($('#divUsoGenerico1'));
+
+	return false;
+}
+
+function selecionaContrato(campo, formulario) {
+
+	if ($('table > tbody > tr', '#divContrato').hasClass('corSelecao')) {
+
+		$('table > tbody > tr', '#divContrato').each(function () {
+			if ($(this).hasClass('corSelecao')) {				
+               	mostraPagamentoEmp($('#nrctremp', $(this)).val());				
+                consultaSituacaoEmpr($('#nrctremp', $(this)).val());
+			}
+		});
+	}
+
+	return false;
+
+}
+//fim contrato
+
+function retiraMascara(numero) {
+	numero = parseFloat(numero.replace(".", "").replace(",", "."));
+	return numero;
+}
+
+function calcularSaldo() {
+	
+	var vlsdprej = retiraMascara($('#vlsdprej', '#frmPagPrejCC').val()) || 0;
+	var juremune = retiraMascara($('#juremune', '#frmPagPrejCC').val()) || 0;
+	var vltotiof = retiraMascara($('#vltotiof', '#frmPagPrejCC').val()) || 0;
+	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
+	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
+
+	var vlsaldo = (vlsdprej + vltotiof + juremune) - (vlpagto + vlabono);
+	
+	$('#vlsaldo', '#frmPagPrejCC').val(numberToReal(vlsaldo));
+}
+
+function numberToReal(numero) {
+	var numero = numero.toFixed(2).split('.');
+	numero[0] = numero[0].split(/(?=(?:...)*$)/).join('.');
+	return numero.join(',');
+}
+
+function efetuaPagamentoPrejuizoCC() {
+
+  var vlpagto = $('#vlpagto', '#frmPagPrejCC').val() || 0;
+	var vlabono = $('#vlabono', '#frmPagPrejCC').val() || 0;
+  
+	if (validaPagamentoPreju() == false) {
+		return false;
+	}	
+
+	showMsgAguardo('Aguarde, efetuando pagamento...');
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/paga_prejuz_cc.php',
+		data: {
+			nrdconta: nrdconta,
+			vlrpagto: vlpagto,
+			vlrabono: vlabono,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			eval(response);			
+		}
+	});
+
+	return false;
+}
+
+function efetuaLiberacaoCC(vlPagto) {
+    
+	showMsgAguardo('Aguarde, efetuando liberação...');  
+	exibeRotina($('#divUsoGenerico'));
+        
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/paga_liberacao_cc.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			vlrpagto: vlPagto,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			if (response.indexOf('showError("error"') == -1) {
+				showError("inform", 'Libera&ccedil;&atilde;o efetuada com sucesso.', "Alerta - Aimaro", mostraDetalhesCT());
+			} else {
+				eval(response);
+			}
+		}
+	});    
+	
+	return false;
+
+}
+
+function efetuaPagamentoEmp(nrctrato, vlpagto, vlabono) {
+	
+	showMsgAguardo('Aguarde, efetuando pagamento...');
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/paga_emprestimo.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			nrctremp: nrctrato,
+			vlrpagto: vlpagto,
+			vlrabono: vlabono,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			eval(response);			
+		}
+	});
+	
+	return false;
+
+}
+
+function consultaSituacaoEmpr(nrctremp){
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/consulta_situacao_empr.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			nrctremp: nrctremp,			
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {			
+			eval(response);			
+		}
+	});
+	
+	return false;
+
+}
+
+function validaPagamentoPreju() {
+	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
+	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
+	var vlsaldo = retiraMascara($('#vlsaldo', '#frmPagPrejCC').val()) || 0;
+
+	if (vlpagto <= 0 && vlabono <= 0) {
+		showError("inform", 'Informe o valor do pagamento ou valor de abono.', "Alerta - Aimaro");
+		return false;
+	} else if (vlsaldo < 0) {
+		showError("inform", 'O valor do pagamento não pode ultrapassar o valor principal.', "Alerta - Aimaro");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function validaLiberacaoSaque() {
+	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
+
+	if (vlpagto <= 0) {
+		showError("inform", 'Informe o valor a ser liberado para saque.', "Alerta - Aimaro");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+/*
+Final das rotinas relacionadas ao pagamento de prejuizo
+*/

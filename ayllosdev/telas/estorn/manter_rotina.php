@@ -7,7 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 
  * -------------- 
-				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ *				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ *				  28/08/2018 - Tratar o estorno de pagamento da C/C em prejuízo 
+ *				  		       PJ 450 - Diego Simas - AMcom
+ *
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -16,15 +19,22 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
 	$operacao		 = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 	$nrdconta		 = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrctremp 		 = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
 	$qtdlacto 		 = (isset($_POST['qtdlacto'])) ? $_POST['qtdlacto'] : 0;
+	$totalest        = (isset($_POST['totalest'])) ? $_POST['totalest'] : 0;
 	$dsjustificativa = (isset($_POST['dsjustificativa'])) ? $_POST['dsjustificativa'] : '';
+    
+    if ($operacao == 'ESTORNO_CT') {
+        if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'ECT')) <> ''){
+            exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        }        
+    }else {
+        if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> ''){
+            exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        }
+    }
 	
 	switch ($operacao){
 		
@@ -78,6 +88,8 @@
 			$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
 			$xml .= "		<dsjustificativa>".$dsjustificativa."</dsjustificativa>";
 			$xml .= "		<inproces>".$glbvars['inproces']."</inproces>";
+			// Empréstimo/Financiamento
+			// $xml .= "		<cdorigem>3</cdorigem>";
 			$xml .= "	</Dados>";
 			$xml .= "</Root>";
 			
@@ -85,6 +97,31 @@
 			$xmlObj    = getObjectXML($xmlResult);
 			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 				exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+			}
+			exibirErro('inform','Estorno Realizado com Sucesso!','Alerta - Ayllos',"estadoInicial();",false);
+			break;
+
+		case 'ESTORNO_CT':
+			//Mensageria referente ao estorno do prejuízo da Conta Corrente
+			$xml  = "";
+			$xml .= "<Root>";
+			$xml .= "  <Dados>";
+			$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+			$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		    $xml .= "    <totalest>".str_replace(",",".",$totalest)."</totalest>";			
+			$xml .= "    <justific>".$dsjustificativa."</justific>";
+			// Prejuízo de CC
+			// $xml .= "		<cdorigem>1</cdorigem>";			
+			$xml .= "  </Dados>";
+			$xml .= "</Root>";
+
+			$xmlResult = mensageria($xml, "PREJ0003", "ESTORNA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+			$xmlObjeto = getObjectXML($xmlResult);	
+
+			$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+			if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"controlaOperacao('');",false); 
 			}
 			exibirErro('inform','Estorno Realizado com Sucesso!','Alerta - Ayllos',"estadoInicial();",false);
 		break;

@@ -135,6 +135,12 @@ BEGIN
                20/05/2016 - Incluido nas consultas da craplau
                             craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
                                 
+  --           06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                        após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                        Alteração específica neste programa acrescentando o tratamento para a origem
+  --                        BLQPREJU
+  --                        (Renato Cordeiro - AMcom)
+                                
 ............................................................................. */
   DECLARE
     -- Codigo do programa
@@ -191,7 +197,7 @@ BEGIN
          AND craplau.insitlau = 2
          AND craplau.cdhistor NOT IN (21,26,521,526,527,530)
          AND (craplau.cdagenci = 1 AND craplau.cdbccxpg = 11)
-         AND craplau.dsorigem NOT IN ('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD', 'DAUT BANCOOB','TRMULTAJUROS')
+         AND craplau.dsorigem NOT IN ('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD', 'DAUT BANCOOB','TRMULTAJUROS','BLQPREJU')
     ORDER BY crapass.cdagenci;
 
 

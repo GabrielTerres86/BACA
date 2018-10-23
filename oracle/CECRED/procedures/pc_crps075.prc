@@ -64,6 +64,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps075 (pr_cdcooper  IN crapcop.cdcooper%
                    27/07/2017 - Incluido delete na tbconv_det_agendamento antes de excluir da
                                 CRAPLAU, devido a existencia de FK.
                                 Heitor (Mouts) - Chamado 706691
+    --             06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+    --                          após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+    --                          Alteração específica neste programa acrescentando o tratamento para a origem
+    --                          BLQPREJU
+    --                          (Renato Cordeiro - AMcom)
     ............................................................................ */
 
     DECLARE
@@ -132,6 +137,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps075 (pr_cdcooper  IN crapcop.cdcooper%
                                        ,'BLOQJUD'
                                        ,'DAUT BANCOOB'
                                        ,'TRMULTAJUROS'
+                                       ,'BLQPREJU'
                                        ,'ADIOFJUROS');
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
