@@ -6980,7 +6980,7 @@ EXCEPTION
           FETCH cr_tab_tdb INTO rw_craptdb;
           EXIT  WHEN cr_tab_tdb%NOTFOUND;
           
-          vr_vlpagmto := rw_craptdb.vlsldtit; 
+          vr_vlpagmto := rw_craptdb.vlsldtit + rw_craptdb.vlmulta + rw_craptdb.vlmora + rw_craptdb.vliof;
           
           pc_pagar_titulo(pr_cdcooper => vr_cdcooper
                          ,pr_cdagenci => vr_cdagenci
