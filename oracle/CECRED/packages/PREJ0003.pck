@@ -4801,6 +4801,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		         25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 						  	  PJ 450 - Diego Simas (AMcom)
 
+                 16/10/2018 - Ajuste na rotina para realizar o estorno do abono na conta corrente do cooperado.
+                              PRJ450-Regulatorio(Odirlei-AMcom)
+
+
     -------------------------------------------------------------------------------------------------------------*/
 
     -- CURSORES --
@@ -4876,6 +4880,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     vr_cdhistor tbcc_prejuizo_detalhe.cdhistor%TYPE;
     vr_valoriof tbcc_prejuizo_detalhe.vllanmto%TYPE;
     vr_valordeb tbcc_prejuizo_detalhe.vllanmto%TYPE;
+    vr_nrdocmto NUMBER;
 
     --Variaveis de Indice
     vr_index PLS_INTEGER;
@@ -4894,6 +4899,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		vr_vlest_abono NUMBER;
 		vr_vlest_IOF   NUMBER := 0;
     vr_vldpagto    NUMBER := 0;
+    vr_vlest_saldo NUMBER := 0;
     
   BEGIN
     pr_des_erro := 'OK';
@@ -4962,6 +4968,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
               -- 2726 <- ESTORNO - > Pagamento do valor principal do prejuízo
               vr_cdhistor := 2726;
               vr_vldpagto := nvl(vr_vldpagto,0) + nvl(rw_detalhe_tot_est.vllanmto,0);
+              vr_vlest_saldo := nvl(rw_detalhe_tot_est.vllanmto,0);
            ELSIF rw_detalhe_tot_est.cdhistor = 2727 THEN
               -- 2728 <- ESTORNO - > Pagamento dos juros +60 da transferência para prejuízo
 							vr_vlest_jur60 := rw_detalhe_tot_est.vllanmto;
@@ -5061,12 +5068,15 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                     to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
                                     '1;100;650009');
 
+        vr_nrdocmto := 999992722; 
+        LOOP
+          
 			LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                        , pr_cdagenci => vr_cdagenci
                                        , pr_cdbccxlt => vr_nrdcaixa
                                        , pr_nrdolote => 650009
                                        , pr_nrdconta => pr_nrdconta
-                                       , pr_nrdocmto => 999992722
+                                         , pr_nrdocmto => vr_nrdocmto
                                        , pr_cdhistor => 2719
                                        , pr_nrseqdig => vr_nrseqdig
                                        , pr_vllanmto => vr_valordeb
@@ -5074,7 +5084,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                        , pr_cdpesqbb => 'ESTORNO DE PAGAMENTO DE PREJUÍZO DE C/C'
                                        , pr_dtrefere => rw_crapdat.dtmvtolt
                                        , pr_hrtransa => gene0002.fn_busca_time
-                                       , pr_cdoperad => 1
+                                         , pr_cdoperad => vr_cdoperad
                                        , pr_cdcooper => pr_cdcooper
                                        , pr_cdorigem => 5
 																			 , pr_incrineg => vr_incrineg
@@ -5083,8 +5093,22 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 																			 , pr_dscritic => vr_dscritic);
 																			 
 		  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN
+              IF vr_cdcritic = 92 THEN
+                vr_nrdocmto := vr_nrdocmto + 10000;
+                continue;
+			  END IF;
+              RAISE vr_exc_erro;
+            ELSE
 				RAISE vr_exc_erro;
 			END IF;
+          END IF;
+          
+          EXIT;
+        
+        END LOOP;
+        
+        
       END IF;
       
       vr_vldpagto := nvl(vr_vldpagto,0) - nvl(vr_valordeb,0);
@@ -5130,7 +5154,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
         WHEN OTHERS THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Erro de insert na tbcc_prejuizo_detalhe(2724): '||SQLERRM;
-          RAISE vr_exc_erro;
+        RAISE vr_exc_erro;
       END;                    
       
       vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
@@ -5139,12 +5163,15 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                                 to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
                                                '1;100;650009');
 
-      LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
+      vr_nrdocmto := 999992724; 
+      LOOP
+          
+        LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                        , pr_cdagenci => vr_cdagenci
                                        , pr_cdbccxlt => vr_nrdcaixa
                                        , pr_nrdolote => 650009
                                        , pr_nrdconta => pr_nrdconta
-                                       , pr_nrdocmto => 999992724
+                                       , pr_nrdocmto => vr_nrdocmto
                                        , pr_cdhistor => 2724
                                        , pr_nrseqdig => vr_nrseqdig
                                        , pr_vllanmto => vr_vldpagto
@@ -5152,7 +5179,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                        , pr_cdpesqbb => 'ESTORNO DE ABONO DE PREJUÍZO DE C/C'
                                        , pr_dtrefere => rw_crapdat.dtmvtolt
                                        , pr_hrtransa => gene0002.fn_busca_time
-                                       , pr_cdoperad => 1
+                                       , pr_cdoperad => vr_cdoperad
                                        , pr_cdcooper => pr_cdcooper
                                        , pr_cdorigem => 5
                                        , pr_incrineg => vr_incrineg
@@ -5160,16 +5187,28 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                        , pr_cdcritic => vr_cdcritic
                                        , pr_dscritic => vr_dscritic);
   																			 
-      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF vr_incrineg = 0 THEN
+            IF vr_cdcritic = 92 THEN
+              vr_nrdocmto := vr_nrdocmto + 10000;
+              continue;
+            END IF;
+            RAISE vr_exc_erro;
+          ELSE
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+          
+        EXIT;
+        
+      END LOOP;
       
       --> atualizar valor de abono com o valor que realmente conseguiu abonar
       vr_vlest_abono := vr_vldpagto;
       vr_vldpagto    := 0;
       
     END IF;   
-     
+		
 		
 		BEGIN
 			UPDATE tbcc_prejuizo prj
@@ -5177,7 +5216,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 					 , prj.vljur60_ctneg = prj.vljur60_ctneg + nvl(vr_vlest_jur60, 0)
 					 , prj.vljuprej = prj.vljuprej + nvl(vr_vlest_jupre,0)
 					 , prj.vlpgprej = prj.vlpgprej - (nvl(vr_vlest_princ,0) + nvl(vr_vlest_IOF,0))
-					 , prj.vlsdprej = prj.vlsdprej + (nvl(vr_vlest_princ,0))
+					 , prj.vlsdprej = prj.vlsdprej + (nvl(vr_vlest_saldo,0))
 			 WHERE prj.idprejuizo = rw_detalhe_ult_lanc.idprejuizo;
 		EXCEPTION
 			WHEN OTHERS THEN
