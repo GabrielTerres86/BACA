@@ -385,7 +385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                           instr(TRIM(enc.dsendere), ' '),
                           length(enc.dsendere))) AS endereco
              ,enc.nrendere 
-             ,substr(enc.complend,1,47) complend -- Heckmann/Amcom Task 11393 - Conforme sugerido pelo Ornelas/Jaison 
+             ,enc.complend 
              ,enc.nrcepend 
              ,enc.nmbairro 
              ,enc.nmcidade 
@@ -1428,15 +1428,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 29/08/2018
+    Data     : Abril/2016.                   Ultima atualizacao: 12/04/2016
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar a movimentação das operações dos cooperados
     
-    Alteração : 29/08/2018 - P450 - Alterado para descontar do saldo da conta corrente, o saldo
-                             da conta transitória (Heckmann/AMCom)
+    Alteração : 
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -1708,7 +1707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapass.nrdconta,
                                   pr_dtultmes  => last_day(rw_craplcm.dtmesmvt),
                                   pr_tpoperac  => 101, -- 101-Conta corrente
-                                  pr_vloperac  => rw_craplcm.vllanmto + PREJ0003.fn_sld_cta_prj(rw_crapass.cdcooper, rw_crapass.nrdconta, 0),
+                                  pr_vloperac  => rw_craplcm.vllanmto,
                                   pr_indebcre  => rw_craplcm.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
                                   pr_dtdemiss  => rw_crapass.dtelimin,
@@ -1745,7 +1744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapass.nrdconta,
                                   pr_dtultmes  => last_day(rw_aplicac.dtmesmvt),
                                   pr_tpoperac  => 199, -- 199-Aplicação
-                                  pr_vloperac  => rw_aplicac.vllanmto + PREJ0003.fn_sld_cta_prj(rw_crapass.cdcooper, rw_crapass.nrdconta, 0),
+                                  pr_vloperac  => rw_aplicac.vllanmto,
                                   pr_indebcre  => rw_aplicac.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
                                   pr_dtdemiss  => rw_crapass.dtelimin,
@@ -1851,15 +1850,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 29/08/2018
+    Data     : Abril/2016.                   Ultima atualizacao: 19/04/2016
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar arquivo com os saldos das operações dos cooperados
     
-    Alteração : 29/08/2018 - P450 - Alterado para descontar do saldo da conta corrente, o saldo
-                             da conta transitória (Heckmann/AMCom)
+    Alteração : 
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -1898,7 +1896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              ,ass.cdagenci
              ,ass.inpessoa 
              ,sda.dtmvtolt
-             ,sda.vlsddisp + PREJ0003.fn_sld_cta_prj(ass.cdcooper, ass.nrdconta, 0) AS vlsddisp
+             ,sda.vlsddisp
              ,sda.vlsdrdca + sda.vlsdrdpp AS vlsdapli  -- aplicação + p. programada
         FROM crapsda sda,
              crapass ass
