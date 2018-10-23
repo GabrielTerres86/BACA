@@ -2441,6 +2441,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor IN(2408,2412)
              and   pd.dtmvtolt = pr_dtmvtolt
@@ -2456,6 +2457,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor IN(2716,2717)
              and   pd.dtmvtolt = pr_dtmvtolt
@@ -2473,6 +2475,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                   tbcc_prejuizo_detalhe pd
              where p.cdcooper  = pd.cdcooper
              and   p.nrdconta  = pd.nrdconta
+             AND   p.idprejuizo = pd.idprejuizo
              and   pd.cdcooper = pr_cdcooper
              and   pd.cdhistor = pr_cdhistor
              and   pd.dtmvtolt = pr_dtmvtolt
