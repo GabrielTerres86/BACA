@@ -415,7 +415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'pctaxpre',
                              pr_tag_cont => to_char(vr_pctaxpre,
-                                                    '999D00',
+                                                    '990D00',
                                                     'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);   
                              
