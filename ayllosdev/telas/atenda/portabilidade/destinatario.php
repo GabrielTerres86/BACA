@@ -102,7 +102,7 @@
             
             <br style="clear:both"/>
             
-            <label for="cdagencia_destinataria_r" class="clsCampos" style="width:158px">Agência:</label>
+            <label for="cdagencia_destinataria_r" class="clsCampos" style="width:158px">Ag&ecirc;ncia:</label>
             <input type="text" id="cdagencia_destinataria_r" name="cdagencia_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $cdagencia_destinataria_r; ?>" style="width:75px" />
             
             <label for="nrdconta_destinataria_r" class="clsCampos" style="width:60px">Conta:</label>

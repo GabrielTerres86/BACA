@@ -14,7 +14,7 @@ require_once('../../../class/xmlfile.php');
 isPostMethod();	
 	
 // Verifica permissões de acessa a tela
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'S',false)) <> '') 
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C',false)) <> '') 
 	exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	
 $nrdconta = ( ( !empty($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0 );

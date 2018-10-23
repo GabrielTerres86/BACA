@@ -211,22 +211,23 @@
 </form>
 
 <div id="divBotoes">
+	<a class="botao" id="btVoltar" href="#" onclick="encerraRotina(true);return false;">Voltar</a>
 
 	<?php if ($cddopcao == 'A' || $cddopcao == 'I') { ?>
-	<a class="botao" id="btSolicitar" href="#" onclick="controlaOperacao('S')">Solicitar Portabilidade</a>
+	<a class="botao"           id="btSolicitar"     href="#" onclick="controlaOperacao('S')">Solicitar Portabilidade</a>
+	<a class="botaoDesativado" id="btImprimirTermo" href="#" onclick="return false;">Imprimir Termo</a>
 	<?php } else { ?>
-	<a class="botaoDesativado" id="btSolicitar" href="#" onclick="return false;">Solicitar Portabilidade</a>
+	<a class="botaoDesativado" id="btSolicitar"     href="#" onclick="return false;">Solicitar Portabilidade</a>
+	<a class="botao"           id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
 	<?php } ?>
 
-	<a class="botao" id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
-	
 	<?php if (in_array($cdsituacao, array(1,2,3))) { ?>
 	<a class="botao" id="btCancelar" href="#" onclick="controlaOperacao('E')">Cancelar Portabilidade</a>
 	<?php } else { ?>
 	<a class="botaoDesativado" id="btCancelar" href="#" onclick="return false;">Cancelar Portabilidade</a>
 	<?php } ?>
 
-	<a class="botao" id="btVoltar" href="#" onclick="encerraRotina(true);return false;">Voltar</a>
+	
 </div>
 
 <script type="text/javascript">

@@ -21,7 +21,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
 		exibeErro($msgError);
 	}
 

@@ -446,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         vr_dtsolicitacao_fim DATE;
         vr_dtretorno_ini DATE;
         vr_dtretorno_fim DATE;
-    
+
         CURSOR cr_lista_solicitacoes(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
                                     ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE
                                     ,pr_cdagenci crapass.cdagenci%TYPE
@@ -478,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                                AND tpe.idsituacao = dom.cddominio
                                AND dom.nmdominio = 'SIT_PORTAB_SALARIO_ENVIA'
                                AND dcp.nmdominio(+) = tpe.dsdominio_motivo
-                               AND dcp.cddominio(+) = tpe.cdmotivo
+                               AND dcp.cddominio(+) = to_char(tpe.cdmotivo)
                                AND tpe.cdcooper = nvl(pr_cdcooper, tpe.cdcooper)
                                AND tpe.nrdconta = nvl(pr_nrdconta, tpe.nrdconta)
                                AND ass.cdcooper = tpe.cdcooper
@@ -489,7 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                                AND nvl(tpe.dtretorno, TRUNC(SYSDATE)) BETWEEN nvl(pr_dtretorno_ini, nvl(tpe.dtretorno, TRUNC(SYSDATE))) AND
                                    nvl(pr_dtretorno_fim, nvl(tpe.dtretorno, TRUNC(SYSDATE)))
                                AND tpe.idsituacao = nvl(pr_idsituacao, tpe.idsituacao)
-                               AND tpe.nrsolicitacao = nvl(pr_nuportabilidade, tpe.nrsolicitacao)
+                               AND nvl(tpe.nrnu_portabilidade,0) = nvl(pr_nuportabilidade, nvl(tpe.nrnu_portabilidade,0))
                                ORDER BY tpe.nrnu_portabilidade, tpe.nrsolicitacao) a
                              WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
                   )
@@ -516,7 +516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
             -- Levanta exceção
             RAISE vr_exc_saida;
         END IF;
-        
+
         -- Criar cabecalho do XML
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -526,19 +526,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                               ,pr_tag_nova => 'Dados'
                               ,pr_tag_cont => NULL
                               ,pr_des_erro => vr_dscritic);
-                              
+ 
         GENE0007.pc_insere_tag(pr_xml  => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'Solicitacoes'
                             ,pr_tag_cont => NULL
                             ,pr_des_erro => vr_dscritic);
-
+ 
         vr_dtsolicitacao_ini := TO_DATE(pr_dtsolicitacao_ini,'DD/MM/RRRR');
         vr_dtsolicitacao_fim := TO_DATE(pr_dtsolicitacao_fim,'DD/MM/RRRR');
         vr_dtretorno_ini := TO_DATE(pr_dtretorno_ini,'DD/MM/RRRR');
         vr_dtretorno_fim := TO_DATE(pr_dtretorno_fim,'DD/MM/RRRR');
-    
+
         FOR rw_lista_solicitacoes IN cr_lista_solicitacoes(pr_cdcooper          => pr_cdcooper
                                                           ,pr_nrdconta          => pr_nrdconta
                                                           ,pr_cdagenci          => pr_cdagenci
@@ -554,15 +554,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                             ,pr_tag_nova => 'Solicitacao'
                             ,pr_tag_cont => NULL
                             ,pr_des_erro => vr_dscritic);
-                            
-                            
+                             
           GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                                 ,pr_tag_pai  => 'Solicitacao'
                                 ,pr_posicao  => vr_cont_tag
                                 ,pr_tag_nova => 'nrrownum'
                                 ,pr_tag_cont => rw_lista_solicitacoes.nrrownum
                                 ,pr_des_erro => vr_dscritic);
-                                
+ 
           GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                                 ,pr_tag_pai  => 'Solicitacao'
                                 ,pr_posicao  => vr_cont_tag

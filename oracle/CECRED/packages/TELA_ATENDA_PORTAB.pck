@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.tela_atenda_portab IS
+CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
 
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -64,9 +64,9 @@ CREATE OR REPLACE PACKAGE cecred.tela_atenda_portab IS
                                       ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                       ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
 
-END tela_atenda_portab;
+END TELA_ATENDA_PORTAB;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -243,6 +243,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
             vr_cdagenci VARCHAR2(100);
             vr_nrdcaixa VARCHAR2(100);
             vr_idorigem VARCHAR2(100);
+            vr_dscnpjbc VARCHAR2(20);
         
             -- Variaveis para CADA0008.pc_busca_inf_emp
             vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
@@ -490,13 +491,19 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
                                   ,pr_tag_nova => 'nrispb_banco_folha'
                                   ,pr_tag_cont => rw_portab_envia.nrispb_banco_folha
                                   ,pr_des_erro => vr_dscritic);
-        
+             
+            -- Verifica se há CNPJ
+            IF NVL(rw_portab_envia.nrcnpj_banco_folha,0) > 0 THEN
+              vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_banco_folha ,2);
+            ELSE 
+              vr_dscnpjbc := NULL;
+            END IF;
+            
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrcnpj_banco_folha'
-                                  ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_banco_folha
-                                                                           ,2)
+                                  ,pr_tag_cont => vr_dscnpjbc
                                   ,pr_des_erro => vr_dscritic);
         
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -519,13 +526,19 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
                                   ,pr_tag_nova => 'dtsolicitacao_r'
                                   ,pr_tag_cont => rw_portab_envia.dtsolicitacao_r
                                   ,pr_des_erro => vr_dscritic);
-        
+            
+            -- Verifica se há CNPJ
+            IF NVL(rw_portab_envia.nrcnpj_empregador_r,0) > 0 THEN
+              vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_empregador_r,2);
+            ELSE 
+              vr_dscnpjbc := NULL;
+            END IF;
+            
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrcnpj_empregador_r'
-                                  ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_empregador_r
-                                                                           ,2)
+                                  ,pr_tag_cont => vr_dscnpjbc
                                   ,pr_des_erro => vr_dscritic);
         
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -638,6 +651,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
             vr_cdagenci VARCHAR2(100);
             vr_nrdcaixa VARCHAR2(100);
             vr_idorigem VARCHAR2(100);
+            vr_dscnpjif VARCHAR2(20);
         
             -- Variaveis locais
             vr_contador INTEGER := 0;
@@ -687,11 +701,17 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
                                       ,pr_tag_cont => rw_crapban.nrispbif
                                       ,pr_des_erro => vr_dscritic);
             
+                IF NVL(rw_crapban.nrcnpjif,0) > 0 THEN
+                  vr_dscnpjif := gene0002.fn_mask_cpf_cnpj(rw_crapban.nrcnpjif, 2);
+                ELSE 
+                  vr_dscnpjif := NULL;
+                END IF;
+                
                 gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                       ,pr_tag_pai  => 'inf'
                                       ,pr_posicao  => vr_contador
                                       ,pr_tag_nova => 'nrcnpjif'
-                                      ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(rw_crapban.nrcnpjif, 2)
+                                      ,pr_tag_cont => vr_dscnpjif
                                       ,pr_des_erro => vr_dscritic);
             
                 gene0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -941,7 +961,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
                 RAISE vr_exc_erro;
             END IF;
         
-            IF length(rw_craptfc.nrtelefo) > 9 OR length(rw_craptfc.nrtelefo) > 6 THEN
+            IF length(rw_craptfc.nrtelefo) > 9 OR length(rw_craptfc.nrtelefo) < 6 THEN
                 vr_dscritic := 'Numero do telefone do cooperado invalido.';
                 RAISE vr_exc_erro;
             END IF;
@@ -1758,5 +1778,5 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_portab IS
                                            pr_dscritic || '</Erro></Root>');
     END pc_imprimir_termo_portab;
 
-END tela_atenda_portab;
+END TELA_ATENDA_PORTAB;
 /
