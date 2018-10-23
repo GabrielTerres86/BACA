@@ -294,7 +294,7 @@ PROCEDURE valida-cheque-avulso-conta:
                        crapass.nrdconta = INTEGER(p-nro-conta)  NO-LOCK.
 
     ASSIGN p-nome-titular = crapass.nmprimtl
-           p-inprejuz     = crapass.inprejuz.
+           p-inprejuz     = IF crapass.inprejuz = 1 THEN TRUE ELSE FALSE.
    
     RETURN "OK".
 
