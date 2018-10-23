@@ -397,6 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
     --Cursor para pegar informações para arquivo
       CURSOR cr_arquivo3 IS
         SELECT SUM(qtd_msg_total) qtd_msg_total
+          FROM (SELECT SUM(qtd_msg_total) qtd_msg_total
           FROM (SELECT TRIM(TO_CHAR(COUNT(a.nrcontrole_if),'00000')) qtd_msg_total
                   FROM tbspb_msg_enviada      a
                       ,tbspb_msg_enviada_fase b
@@ -452,9 +453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND NOT EXISTS (SELECT 1
                                      FROM tbspb_msg_recebida_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                                      AND (bb.cdfase        = c.cdfase
-                                        OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
-                                        OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase))));
+                                              AND (bb.cdfase        = c.cdfase
+                                                OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
+                                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))));
     rw_arquivo3 cr_arquivo3%ROWTYPE;
     --
     vr_cdcritic crapcri.cdcritic%TYPE;
