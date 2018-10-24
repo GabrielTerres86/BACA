@@ -221,9 +221,9 @@ create or replace package body cecred.EMPR9999 as
   vr_dsarqlog     CONSTANT VARCHAR2(10):= 'acordo.log';
 
 
-  PROCEDURE pc_busca_numero_contrato(pr_cdcooper     IN tbepr_consignado_contrato.cdcooper%TYPE        --> Codigo da cooperativa
-                                    ,pr_nrdconta     IN tbepr_consignado_contrato.nrdconta%TYPE        --> Conta do Associado
-                                    ,pr_nrctremp     IN tbepr_consignado_contrato.nrctremp%TYPE Default 0 --> Número do Contrato
+  PROCEDURE pc_busca_numero_contrato(pr_cdcooper     IN crapepr.cdcooper%TYPE        --> Codigo da cooperativa
+                                    ,pr_nrdconta     IN crapepr.nrdconta%TYPE        --> Conta do Associado
+                                    ,pr_nrctremp     IN crapepr.nrctremp%TYPE Default 0 --> Número do Contrato
                                     ----------------- > OUT < ----------------------
                                     ,pr_existenr     OUT INTEGER                                     --> 1 (Verdadeiro) 0 (Falso) para se existe contrato/ proposta
                                     ,pr_cdcritic     OUT INTEGER                                       --> Código da crítica
@@ -255,6 +255,7 @@ create or replace package body cecred.EMPR9999 as
    AND nrdconta   = pr_nrdconta
    AND nrctremp   = pr_nrctremp
    UNION
+   /* tabela ainda nao liberada
    SELECT nrdconta
          ,cdcooper
          ,nrctremp
@@ -262,7 +263,7 @@ create or replace package body cecred.EMPR9999 as
    WHERE cdcooper = pr_cdcooper
    AND nrdconta   = pr_nrdconta
    AND nrctremp   = pr_nrctremp
-   UNION
+   UNION*/
    SELECT nrdconta
          ,cdcooper
          ,nrctremp
