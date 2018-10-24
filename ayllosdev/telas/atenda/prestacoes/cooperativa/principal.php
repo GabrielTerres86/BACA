@@ -48,6 +48,8 @@
  * 036: [07/06/2018] - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti
  * 036: [22/05/2018] - Ajuste para calcular a antecipação da parcela parcial do projeto 298 - Pos Fixado. (James)
  * 037: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
+ * 038: [12/07/2018] - Incluir novamente a passagem do campo idcobope, que foi removido indevidamente. (Renato Darosci - Supero)   
+ * 039: [17/10/2018] Marcos (Envolti): Inclusão de campos do projeto 442
  */
 ?>
 
@@ -392,17 +394,18 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
-            arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof'); ?>';
+			arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
+			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof'); ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr'); ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif'); ?>';
 			arrayProposta['vlfinanc'] = '<? echo getByTagName($proposta,'vlfinanc'); ?>';
-            arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal'); ?>';
+			arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal'); ?>';
 
-            // Se for Pos-Fixado
-            if (arrayProposta['tpemprst'] == 2) {
-                arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
-                arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
-            }
+			// Se for Pos-Fixado
+			if (arrayProposta['tpemprst'] == 2) {
+      			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
+      			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
+			}
 
 			
 			var arrayRendimento = new Object();
