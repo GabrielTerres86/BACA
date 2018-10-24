@@ -188,9 +188,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
 			else {
 				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
-				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
-				echo '}';
 			}
         }
 
@@ -216,9 +214,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
 			}else{
 				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
-				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
-				echo '}';
 			}
 
 			//echo "$('#dddebito').attr('disabled', true);";
