@@ -21,9 +21,9 @@ SELECT a.cdcooper,
    AND l.cdcooper = h.cdcooper
    AND l.cdhistor = h.cdhistor
    AND h.indebcre = 'C'   
-   AND p.cdcooper = 11
+   AND p.cdcooper = &pr_cdcooper
    AND p.dtliquidacao IS NULL
-   AND a.cdcooper = 11
+   AND a.cdcooper = &pr_cdcooper
    AND a.inprejuz = 1
    AND h.intransf_cred_prejuizo = 1
    --> Buscar cred. de transf

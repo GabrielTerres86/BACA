@@ -19,9 +19,9 @@ SELECT a.cdcooper,
    AND l.cdcooper = h.cdcooper
    AND l.cdhistor = h.cdhistor
    AND h.indebcre = 'D'   
-   AND p.cdcooper = 11
+   AND p.cdcooper = &pr_cdcooper
    AND p.dtliquidacao IS NULL
-   AND a.cdcooper = 11
+   AND a.cdcooper = &pr_cdcooper
    AND a.inprejuz = 1
    AND (l.cdhistor NOT IN (2719, --> EST. CREDITO
                            2718, --> JUROS REM. CC  
