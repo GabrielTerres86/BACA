@@ -1,7 +1,7 @@
-CREATE OR REPLACE PACKAGE CECRED.CADA0004_prj is
+CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
  /* ---------------------------------------------------------------------------------------------------------------
 
-    Programa : CADA0004_prj
+    Programa : CADA0004
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
@@ -893,12 +893,12 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                          ,pr_cdcritic  OUT PLS_INTEGER
                                          ,pr_dscritic  OUT VARCHAR2
                                          ,pr_des_reto  OUT VARCHAR2 );
-END CADA0004_prj;
+END CADA0004;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
+CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : CADA0004_prj
+  --  Programa : CADA0004
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
@@ -1163,7 +1163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possível validar socios (CADA0004_prj.pc_valida_socios): '||SQLERRM;
+      pr_dscritic := 'Não foi possível validar socios (CADA0004.pc_valida_socios): '||SQLERRM;
   END pc_valida_socios;
 
   /******************************************************************************/
@@ -1781,7 +1781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na CADA0004_prj.pc_lista_conven: '||SQLERRM;
+      pr_dscritic := 'Erro na CADA0004.pc_lista_conven: '||SQLERRM;
   END pc_lista_conven;
 
   /******************************************************************************/
@@ -1859,7 +1859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 			WHEN OTHERS THEN
 
 					pr_cdcritic := vr_cdcritic;
-					pr_dscritic := 'Erro geral na rotina na procedure CADA0004_prj.pc_verifica_adm_web. Erro: ' || SQLERRM;
+					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_verifica_adm_web. Erro: ' || SQLERRM;
 					pr_des_erro := 'NOK';
 					-- Carregar XML padrão para variável de retorno não utilizada.
 					-- Existe para satisfazer exigência da interface.
@@ -2244,7 +2244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_lista_cartoes:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_lista_cartoes:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -2830,7 +2830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_lista_ocorren:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_lista_ocorren:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -3017,7 +3017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro CADA0004_prj.pc_lista_ocorren:'||SQLERRM;
+      pr_dscritic := 'Erro CADA0004.pc_lista_ocorren:'||SQLERRM;
 
   END pc_lista_ocorren_prog;
 
@@ -3203,7 +3203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.fn_valor_limite_credito:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.fn_valor_limite_credito:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -3470,7 +3470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_busca_dados_associado:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_busca_dados_associado:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -3775,7 +3775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_completa_cab_atenda:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_completa_cab_atenda:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -6228,7 +6228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_obtem_mensagens_alerta:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_obtem_mensagens_alerta:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -6468,7 +6468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro CADA0004_prj.pc_obtem_cabecalho_atenda:'||SQLERRM;
+      vr_dscritic := 'Erro CADA0004.pc_obtem_cabecalho_atenda:'||SQLERRM;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -7461,7 +7461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
     WHEN OTHERS THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro na rotina CADA0004_prj.pc_carrega_dados_atenda: '||SQLERRM;
+      vr_dscritic := 'Erro na rotina CADA0004.pc_carrega_dados_atenda: '||SQLERRM;
       -- Gerar rotina de gravação de erro
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -7609,7 +7609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
                                pr_action => vr_nmeacao);
 
     --> Carregar dos dados para a tela ATENDA
-    CADA0004_prj.pc_carrega_dados_atenda ( pr_cdcooper => vr_cdcooper  --> Codigo da cooperativa
+    CADA0004.pc_carrega_dados_atenda ( pr_cdcooper => vr_cdcooper  --> Codigo da cooperativa
                                       ,pr_cdagenci => vr_cdagenci  --> Codigo de agencia
                                       ,pr_nrdcaixa => vr_nrdcaixa  --> Numero do caixa
                                       ,pr_cdoperad => vr_cdoperad  --> Codigo do operador
@@ -7891,7 +7891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 		vr_flgrisco BOOLEAN;
 
 		-- PL Table com dados do cadstro restritivo
-		vr_tab_cadrest CADA0004_prj.typ_tab_cadrest;
+		vr_tab_cadrest CADA0004.typ_tab_cadrest;
 		vr_ind_cadrest NUMBER;
 
 		-- Buscar PA do operador
@@ -9471,7 +9471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
           RAISE vr_exc_saida;
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_inserir_cnae_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnae_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -9482,7 +9482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_inserir_cnae_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnae_bloqueado: ' || SQLERRM;
 
     END;
   END pc_inserir_cnae_bloqueado;
@@ -9538,7 +9538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -9549,7 +9549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
 
     END;
   END pc_atualizar_cnae_bloqueado;
@@ -9573,7 +9573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_excluir_cnae_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnae_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -9584,7 +9584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_excluir_cnae_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnae_bloqueado: ' || SQLERRM;
 
     END;
   END pc_excluir_cnae_bloqueado;
@@ -9825,7 +9825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_cria_cnae_proibido_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_cria_cnae_proibido_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -9903,7 +9903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_exclui_cnae_proibido_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exclui_cnae_proibido_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -9946,7 +9946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_limpa_cnae_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnae_bloqueado: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -10052,7 +10052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
     vr_dsauxml     varchar2(32767);
 
     vr_tab_linhas  gene0009.typ_tab_linhas;
-    vr_cdprogra    VARCHAR2(50) := 'CADA0004_prj.pc_importa_arq_cnae';
+    vr_cdprogra    VARCHAR2(50) := 'CADA0004.pc_importa_arq_cnae';
 
     -- Procedure auxiliar para adicionar as criticas do arquivo
     PROCEDURE pc_add_critica(pr_dscritic IN VARCHAR2
@@ -10496,7 +10496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_exporta_arq_cnae_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exporta_arq_cnae_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -10719,7 +10719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
           RAISE vr_exc_saida;
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -10730,7 +10730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
 
     END;
   END pc_inserir_cnpj_bloqueado;
@@ -10786,7 +10786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -10797,7 +10797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
 
     END;
   END pc_atualizar_cnpj_bloqueado;
@@ -10821,7 +10821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em CADA0004_prj.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
+          vr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -10832,7 +10832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
 
     END;
   END pc_excluir_cnpj_bloqueado;
@@ -11071,7 +11071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_cria_cnpj_proibido_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_cria_cnpj_proibido_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -11149,7 +11149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_exclui_cnpj_proibido_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exclui_cnpj_proibido_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -11192,7 +11192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_limpa_cnpj_proibido: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnpj_proibido: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -11254,7 +11254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
     vr_dsauxml     varchar2(32767);
 
     vr_tab_linhas  gene0009.typ_tab_linhas;
-    vr_cdprogra    VARCHAR2(50) := 'CADA0004_prj.pc_importa_arq_cnpj';
+    vr_cdprogra    VARCHAR2(50) := 'CADA0004.pc_importa_arq_cnpj';
 
     -- Procedure auxiliar para adicionar as criticas do arquivo
     PROCEDURE pc_add_critica(pr_dscritic IN VARCHAR2
@@ -11691,7 +11691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CADA0004_prj.pc_exporta_arq_cnpj_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exporta_arq_cnpj_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -12302,7 +12302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
 
     -- VERIFICAR SE A CONTA PRECISA ATUALIZAR O TELEFONE
-    CADA0004_prj.pc_verifica_atualiz_fone(pr_cdcooper => pr_cdcooper
+    CADA0004.pc_verifica_atualiz_fone(pr_cdcooper => pr_cdcooper
                                     , pr_nrdconta => pr_nrdconta
                                     , pr_idseqttl => pr_idseqttl
                                     , pr_cdcritic => vr_cdcritic
@@ -12321,7 +12321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
 
       IF vr_atualiza = 'SIM' THEN
          -- SE PRECISA ATUALIZAR TELEFONE, ATUALIZA A DATA DE MANUTENÇÃO DO TELEFONE
-         CADA0004_prj.pc_atualiz_data_manut_fone(pr_cdcooper => pr_cdcooper
+         CADA0004.pc_atualiz_data_manut_fone(pr_cdcooper => pr_cdcooper
                                            , pr_nrdconta => pr_nrdconta
                                            , pr_cdcritic => vr_cdcritic
                                            , pr_dscritic => vr_dscritic);
@@ -12395,7 +12395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
            gene0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_idseqttl => 1 -- SEMPRE PRO PRIMEIRO TITULAR
-                                     ,pr_cdprogra => 'CADA0004_prj'
+                                     ,pr_cdprogra => 'CADA0004'
                                      ,pr_inpriori => 0
                                      ,pr_dsdmensg => vr_dsmensag
                                      ,pr_dsdassun => 'Atualização de Telefone'
@@ -13134,7 +13134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004_prj IS
       WHEN OTHERS THEN
         cecred.pc_internal_exception(3);
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral (CADA0004_prj.pc_retorna_cartao_valido).';
+        pr_dscritic := 'Erro geral (CADA0004.pc_retorna_cartao_valido).';
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -13448,7 +13448,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
         WHEN OTHERS THEN
           --cecred.pc_internal_exception(3);
           pr_cdcritic := 0;
-          pr_dscritic := 'Erro geral (CADA0004_prj.pc_obter_cartao_URA). '||SQLERRM;
+          pr_dscritic := 'Erro geral (CADA0004.pc_obter_cartao_URA). '||SQLERRM;
 
       END;
 
@@ -13660,5 +13660,5 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
       pr_des_reto := 'NOK';
 
   END pc_bloquear_cartao_magnetico;
-END CADA0004_prj;
+END CADA0004;
 /
