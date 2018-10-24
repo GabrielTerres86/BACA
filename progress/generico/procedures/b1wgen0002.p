@@ -7540,7 +7540,7 @@ PROCEDURE grava-proposta-completa:
                                  WHEN pc_cria_proposta_sp.pr_dscritic <> ?.
         IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
           DO:
-            UNDO Grava, LEAVE Grava.
+            UNDO Gravar, LEAVE Gravar.
           END.
        END.
     END. /* Fim Grava- Fim TRANSACTION */
