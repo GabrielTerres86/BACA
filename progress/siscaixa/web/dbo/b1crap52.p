@@ -27,10 +27,6 @@
 
                 16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-           
-
-----------------------------------------------------------------------------*/
-
 
                 30/05/2018 - Utilizaçao do Caixa Online mesmo com o processo 
                              batch (noturno) executando (Fabio Adriano - AMcom). 
