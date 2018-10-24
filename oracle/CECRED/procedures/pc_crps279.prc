@@ -178,6 +178,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
 
                    17/04/2018 - Retirar o <= da validacao de idade do seguro prestamista
                                 (Lucas Ranghetti #INC0012820)
+
+                   17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
+                                ferramentas contabeis e fiscais.
+                                Heitor / Alcemir (Mouts)
     ............................................................................ */
 
     DECLARE
@@ -721,7 +725,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;
           END LOOP;
           -- para evitar diferença o ultimo PA recebe a diferença do rateio (pode ser negativo ou posito)
-          vr_tab_lancarq(vr_tab_lancarq.last) := vr_tab_lancarq(vr_tab_lancarq.last) + (vr_vlttpgto - vr_vltotarq); 
+          vr_tab_lancarq(vr_tab_lancarq.last) := vr_tab_lancarq(vr_tab_lancarq.last) + round((vr_vlttpgto - vr_vltotarq),2); 
         END IF;
         -- Fechar tag
         pc_escreve_clob(vr_clobxml,'</totais>');
