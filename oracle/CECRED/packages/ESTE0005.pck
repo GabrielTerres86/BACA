@@ -7144,7 +7144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     --> Atualizar proposta
     BEGIN
       UPDATE crawcrd crd
-         SET crd.dsprotoc = nvl(vr_dsprotocolo,' '),
+         SET crd.dsprotoc = nvl(vr_dsprotocolo,crd.dsprotoc),
              crd.dtaprova = NULL
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
