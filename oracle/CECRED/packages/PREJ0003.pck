@@ -435,7 +435,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 		SELECT prj.vlsdprej +
 		       prj.vljuprej +
 				   prj.vljur60_ctneg +
-				   prj.vljur60_lcred saldo
+				   prj.vljur60_lcred +
+					 fn_juros_remun_prov(prj.cdcooper, prj.nrdconta) saldo
 		  FROM tbcc_prejuizo prj
 		 WHERE prj.cdcooper = pr_cdcooper
 		   AND prj.nrdconta = pr_nrdconta
@@ -2936,6 +2937,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       UPDATE tbcc_prejuizo prj
          SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
        WHERE prj.rowid = rw_contaprej.rowid;
+
     END IF;
 
     vr_valrpago := vr_valrpago + vr_vlprinc;
