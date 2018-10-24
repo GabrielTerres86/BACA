@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 23/07/2018
+   Data    : 19/07/2016                        Ultima atualizacao: 18/10/2018
   
    Dados referentes ao programa: 
   
@@ -423,11 +423,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     para atualizar a quantidade de execuções programadas no debitador
                     Projeto debitador único - Josiane Stiehler (AMcom)
 					  
-	   23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
+	     23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
 			              no Bancoob. (Reinert)
 
-	   16/08/2018 - Ajustado cursores da craptab para utilizar o Unique Key Index
+	     16/08/2018 - Ajustado cursores da craptab para utilizar o Unique Key Index
                     na procedure pc_gera_arrecadacao_bancoob. (Reinert) 
+										
+			 18/10/2018 - Ajustado nome dos arquivos de arrecadação do Bancoob para AILOS. 
+			            - Alterado layout dos arquivos de arrecadação do Bancoob. (Reinert)
+			 
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
@@ -7634,7 +7638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --
         --RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
         RETURN lpad(pr_cdagebcb, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || 
-               to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0')||'.CECRED'; --||pr_nmcopcen;
+               to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0')|| '.' || pr_nmcopcen;
         --
       END fn_nm_arquivo;
       
@@ -7922,17 +7926,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- NSR - Número Seqüencial de Registro
         pr_detalhe := pr_detalhe || lpad(pr_nrseqreg, 8, '0');
         -- Código da agência arrecadadora
-        pr_detalhe := pr_detalhe || RPAD(pr_cdagebcb, 8, ' ');
+        pr_detalhe := pr_detalhe || to_char(pr_cdageaut, 'fm0000')
+				                         || to_char(pr_cdagenci, 'fm0000'); --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
+											                                              --  do projeto 406 para a Viacredi
+				
         -- Forma de arrecadação
         pr_detalhe := pr_detalhe || '2';
         
         -- Número de autenticação caixa ou código de transação
         vr_dsautdoc := to_char(pr_cdageaut,'fm0000') ||
                        --> quando liberar pagamento BANCOOB no TAA e CX.Online, deverá gravar PA do terminal e número do terminal
-                       to_char(pr_cdagenci, 'fm00')  || --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
-											                                  --  do projeto 406 para a Viacredi
                        '0000'   || --> Terminal fixo "0000"
-                        to_char(pr_nrautdoc,'fm000000');
+                        to_char(pr_nrautdoc,'fm00000000');
                         
         pr_detalhe := pr_detalhe || lpad(vr_dsautdoc,16,'0');
         -- Valor Desconto
