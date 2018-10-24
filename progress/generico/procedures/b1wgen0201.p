@@ -499,7 +499,7 @@ PROCEDURE integra_proposta:
                   END.
           END. /* fim do IF de alteracao */
 
-          IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO,OUTROS VEICULOS" ",TRIM(CAPS(tt-bens-alienacao.dscatbem))) THEN
+          IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO,OUTROS VEICULOS",TRIM(CAPS(tt-bens-alienacao.dscatbem))) THEN
             DO:
                RUN valida-dados-alienacao IN h-b1wgen0002 (INPUT par_cdcooper,
                                                            INPUT 0,
