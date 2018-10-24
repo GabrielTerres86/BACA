@@ -1790,6 +1790,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --
     --  Alteração : 20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
     --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ 	--              24/10/2018 - AJuste para não retornar dados incorretos para a tela
+	--                           CONTAS >> DADOS COMERCIAL : Alcemir (Mouts) - INC0024687.                 
     --
     -- ..........................................................................*/
     
@@ -1898,8 +1900,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                 INTO rw_crapttl;
             CLOSE cr_crapttl;
                 
-            IF nvl(rw_crapttl.nrcpfemp,0) <> 0
-            OR TRIM(rw_crapttl.nmextemp) IS NOT NULL THEN
+            IF (nvl(rw_crapttl.nrcpfemp,0) <> 0
+            OR TRIM(rw_crapttl.nmextemp) IS NOT NULL) AND nvl(pr_nrdocnpj,0) <> 0 THEN
               pr_nrcnpjot := rw_crapttl.nrcpfemp;
               pr_nmpessot := rw_crapttl.nmextemp;
               pr_cdemprot := pr_cdempres;
