@@ -3031,7 +3031,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             END IF;            
             --Fecha o cursor
             CLOSE cr_craprto;                   
-          ELSIF rw_crapgrv.cdretlot = 0 AND (rw_crapgrv.cdretgrv <> 0 AND rw_crapgrv.cdretgrv <> 30) THEN
+          END IF;
+		  IF rw_crapgrv.cdretlot = 0 AND (rw_crapgrv.cdretgrv <> 0 AND rw_crapgrv.cdretgrv <> 30) THEN
             -- Buscar critica GRV
             OPEN cr_craprto(pr_cdoperac => vr_tparquiv
                            ,pr_nrtabela => 2
@@ -3057,7 +3058,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             
             --Fecha o cursor
             CLOSE cr_craprto;
-          ELSIF rw_crapgrv.cdretlot = 0 AND rw_crapgrv.cdretctr <> 0 AND rw_crapgrv.cdretctr <> 90 THEN
+          END IF;
+		  IF rw_crapgrv.cdretlot = 0 AND rw_crapgrv.cdretctr <> 0 AND rw_crapgrv.cdretctr <> 90 THEN
             -- Buscar critica contrato
             OPEN cr_craprto(pr_cdoperac => vr_tparquiv
                            ,pr_nrtabela => 3
