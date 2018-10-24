@@ -65,6 +65,10 @@
                             
                21/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
+                            
+               19/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
+                            estorno de lançamentos na conta corrente              
+                            pc_estorna_lancto_prog (Fabio Adriano - AMcom).               
               
 ............................................................................. */
 
@@ -1067,7 +1071,42 @@ PROCEDURE proc_liberado:
                              craplot.vlcompdb = craplot.vlcompdb -
                                                         crapcdb.vlcheque.
  
-                      DELETE craplcm.
+                      /*DELETE craplcm.*/
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                          RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                        
+                      RUN estorna_lancamento_conta IN h-b1wgen0200 
+                          (INPUT craplcm.cdcooper               /* par_cdcooper */
+                          ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+                          ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+                          ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+                          ,INPUT craplcm.nrdolote               /* par_nrdolote */
+                          ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+                          ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+                          ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+                          ,INPUT craplcm.nrctachq               /* par_nrctachq */
+                          ,INPUT craplcm.nrdconta               /* par_nrdconta */
+                          ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+                          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                                          
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                           RETURN.
+                         /* DO: 
+                              /* Tratamento de erros conforme anteriores */                           
+                              RUN cria-erro (INPUT par_cdcooper,
+                                            INPUT par_cdagenci,
+                                            INPUT par_nrdcaixa,
+                                            INPUT aux_cdcritic,
+                                            INPUT aux_dscritic,
+                                            INPUT YES).
+                              UNDO TRANSACAO, LEAVE TRANSACAO.
+                          END. */  
+                                
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                          DELETE PROCEDURE h-b1wgen0200.
+                      /* Fim do DELETE */
+                      
                   END.
          END.
 

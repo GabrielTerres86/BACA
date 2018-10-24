@@ -28,10 +28,23 @@
                16/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
+                            
+               19/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
+                            estorno de lançamentos na conta corrente              
+                            pc_estorna_lancto_prog (Fabio Adriano - AMcom).              
                                            
 ..............................................................................*/
 { includes/var_online.i }
 { includes/var_atenda.i }
+{ sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
+
+DEF VAR aux_cdcritic        AS INTE                                NO-UNDO.
+DEF VAR aux_dscritic        AS CHAR                                NO-UNDO.
 
 DEF BUTTON btn-resgates      LABEL "Saque".
 DEF BUTTON btn-cancelamento  LABEL "Cancelamento".
@@ -394,7 +407,29 @@ PROCEDURE cancelamento:
         craplot.vlcompcr = 0   AND   craplot.vlinfocr = 0   THEN
         DELETE craplot.
    
-   DELETE craplcm.
+   /*DELETE craplcm.*/
+   
+   IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+       RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                      
+   RUN estorna_lancamento_conta IN h-b1wgen0200 
+        (INPUT craplcm.cdcooper               /* par_cdcooper */
+       ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+       ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+       ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+       ,INPUT craplcm.nrdolote               /* par_nrdolote */
+       ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+       ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+       ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+       ,INPUT craplcm.nrctachq               /* par_nrctachq */
+       ,INPUT craplcm.nrdconta               /* par_nrdconta */
+       ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+       ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+       ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+    
+   IF  VALID-HANDLE(h-b1wgen0200) THEN
+       DELETE PROCEDURE h-b1wgen0200.
+                      
    
    /* Atualizacao CRAPSLI */
    FIND crapsli WHERE crapsli.cdcooper  = glb_cdcooper          AND
