@@ -1,4 +1,13 @@
-begin
+DECLARE
+  CURSOR cr_job (pr_owner    VARCHAR2,
+                 pr_job_name VARCHAR2) IS
+    SELECT 1
+      FROM all_scheduler_jobs j
+     WHERE UPPER(j.owner) = UPPER(pr_owner)
+       AND UPPER(j.job_name) = UPPER(pr_job_name);
+
+  rw_job cr_job%ROWTYPE;
+BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
@@ -14,6 +23,15 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+
+  -- JOB ANTIGO DEVERA SER EXCLUIDO
+  OPEN cr_job (pr_owner    => 'CECRED', 
+               pr_job_name => 'JBCONTAB_PROCESSA_CONTABIL');
+  FETCH cr_job INTO rw_job;
+  IF cr_job%FOUND THEN
+  	sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCONTAB_PROCESSA_CONTABIL');  
+  END IF;
+  CLOSE cr_job;
 
   --Job para processamento dos ajustes/arquivos do projeto 421 - Melhorias nas ferramentas contabeis e fiscais
   sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBCONTAB_PROCESSA_CONTABIL',
