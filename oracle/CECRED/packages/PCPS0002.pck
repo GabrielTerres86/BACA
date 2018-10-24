@@ -2971,7 +2971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 			END IF;
 			--
 			vr_lstdados := gene0002.fn_quebra_string(pr_string => vr_dsconteu
-																							,pr_delimit => ',');
+																							,pr_delimit => ';');
 			--
 			IF rw_crappco.cdpartar = 58 THEN
 				--
