@@ -24,6 +24,8 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0002 is
   
   -- Comunicas pendencias de avaliação
   PROCEDURE pc_email_pa_portabilidade;
+	
+	PROCEDURE pc_agenda_jobs;
     
 END PCPS0002;
 /
@@ -2919,6 +2921,146 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     WHEN OTHERS THEN
       raise_application_error(-20002, 'Erro na rotina PC_EMAIL_PA_PORTABILIDADE: '||SQLERRM);
   END pc_email_pa_portabilidade;
+	
+	PROCEDURE pc_agenda_jobs IS
+		/* .............................................................................
+			Programa: pc_agenda_jobs
+			Sistema : CRED
+			Autor   : Augusto - Supero
+			Data    : 23/10/2018                Ultima atualizacao:
+	  
+			Dados referentes ao programa:
+	 
+			Frequencia: Sempre que for chamado
+	   
+			Objetivo  : Procedure responsável por agendar os jobs da integração PCPS.
+	  
+			Alteracoes:
+		..............................................................................*/		
+    
+		-- Cursor responsável por retornar os horários de agendamento dos jobs
+		CURSOR cr_crappco IS
+		   SELECT dsconteu
+			       ,cdpartar
+		   	 FROM crappco
+			  WHERE cdpartar IN (58, 59, 60, 62)
+				  AND cdcooper = 3;
+		rw_crappco cr_crappco%ROWTYPE;
+		
+		-- Variável interna
+		vr_dsconteu    crappco.dsconteu%TYPE;
+		vr_dthrexe     TIMESTAMP;
+		vr_jobname     VARCHAR2(100);
+		vr_lstdados    gene0002.typ_split;
+		
+		-- Variável de críticas
+    vr_dscritic    VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro    EXCEPTION;
+		
+	BEGIN
+
+    FOR rw_crappco IN cr_crappco LOOP
+			--
+			vr_dsconteu := rw_crappco.dsconteu;
+			--
+			IF vr_dsconteu IS NULL THEN
+				vr_dscritic := 'Horario nao definido na crappco.';
+				RAISE vr_exc_erro; -- Não podemos parar o processamento
+			END IF;
+			--
+			vr_lstdados := gene0002.fn_quebra_string(pr_string => vr_dsconteu
+																							,pr_delimit => ',');
+			--
+			IF rw_crappco.cdpartar = 58 THEN
+				--
+				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
+    		  vr_dthrexe := TO_TIMESTAMP_TZ(to_date(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
+					--
+					vr_jobname := 'JB_PCPS_ENVIA$';
+					GENE0001.pc_submit_job(pr_cdcooper => 3,
+																 pr_cdprogra => 'PCPS0002',
+																 pr_dsplsql  => 'BEGIN PCPS0002.pc_gera_arquivo_APCS(10); PCPS0002.pc_gera_arquivo_APCS(12); PCPS0002.pc_gera_arquivo_APCS(14); END;',
+																 pr_dthrexe  => vr_dthrexe,
+																 pr_interva  => NULL,
+																 pr_jobname  => vr_jobname,
+																 pr_des_erro => vr_dscritic);
+					--
+					IF vr_dscritic IS NOT NULL THEN
+						RAISE vr_exc_erro; -- Não podemos parar o processamento
+					END IF;
+					--
+				END LOOP;
+				--
+			ELSIF rw_crappco.cdpartar = 59 THEN
+				--
+				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
+          vr_dthrexe := TO_TIMESTAMP_TZ(to_date(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
+					--
+					vr_jobname := 'JB_PCPS_COMPULS$';
+					GENE0001.pc_submit_job(pr_cdcooper => 3,
+																 pr_cdprogra => 'PCPS0002',
+																 pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(16); END;',
+																 pr_dthrexe  => vr_dthrexe,
+																 pr_interva  => NULL,
+																 pr_jobname  => vr_jobname,
+																 pr_des_erro => vr_dscritic);
+					--
+					IF vr_dscritic IS NOT NULL THEN
+						RAISE vr_exc_erro; -- Não podemos parar o processamento
+					END IF;
+					--
+				END LOOP;
+				--
+			ELSIF rw_crappco.cdpartar = 60 THEN
+				--
+				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
+          vr_dthrexe := TO_TIMESTAMP_TZ(to_date(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
+					--
+					vr_jobname := 'JB_PCPS_EMAIL$';
+					GENE0001.pc_submit_job(pr_cdcooper => 3,
+																 pr_cdprogra => 'PCPS0002',
+																 pr_dsplsql  => 'BEGIN PCPS0002.pc_email_pa_portabilidade(); END;',
+																 pr_dthrexe  => vr_dthrexe,
+																 pr_interva  => NULL,
+																 pr_jobname  => vr_jobname,
+																 pr_des_erro => vr_dscritic);
+					--
+					IF vr_dscritic IS NOT NULL THEN
+						RAISE vr_exc_erro; -- Não podemos parar o processamento
+					END IF;
+					--
+				END LOOP;
+				--				
+			ELSIF rw_crappco.cdpartar = 62 THEN
+				--
+				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
+          vr_dthrexe := TO_TIMESTAMP_TZ(to_date(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
+					--
+					vr_jobname := 'JB_PCPS_RECEBE$';
+					GENE0001.pc_submit_job(pr_cdcooper => 3,
+																 pr_cdprogra => 'PCPS0002',
+																 pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(10); PCPS0002.pc_proc_arquivo_APCS(11); PCPS0002.pc_proc_arquivo_APCS(12); PCPS0002.pc_proc_arquivo_APCS(13); PCPS0002.pc_proc_arquivo_APCS(14); PCPS0002.pc_proc_arquivo_APCS(15); END;',
+																 pr_dthrexe  => vr_dthrexe,
+																 pr_interva  => NULL,
+																 pr_jobname  => vr_jobname,
+																 pr_des_erro => vr_dscritic);
+					--
+					IF vr_dscritic IS NOT NULL THEN
+						RAISE vr_exc_erro; -- Não podemos parar o processamento
+					END IF;
+					--
+				END LOOP;
+				--
+			END IF;
+		END LOOP;
+	EXCEPTION
+    WHEN vr_exc_erro THEN
+      raise_application_error(-20001, vr_dscritic);
+    WHEN OTHERS THEN
+      raise_application_error(-20002, 'Erro na rotina pc_agenda_jobs: '||SQLERRM);
+	END pc_agenda_jobs;
   
   
 BEGIN
