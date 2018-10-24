@@ -61,7 +61,7 @@ BEGIN
 		, cdorigem
 	)
 	VALUES (
-			rw_craplcm.dtmvtolt
+		  rw_crapdat.dtmvtolt
 		, rw_craplcm.cdagenci
 		, rw_craplcm.cdbccxlt
 		, 650009
@@ -72,7 +72,7 @@ BEGIN
 		, rw_craplcm.vllanmto
 		, rw_craplcm.nrdctabb
 		, 'ESTORNO DE CREDITO RECEBIDO EM C/C EM PREJUIZO'
-		, rw_craplcm.dtmvtolt
+		, rw_crapdat.dtmvtolt
 		, 0
 		, 1
 		, rw_craplcm.cdcooper
@@ -93,7 +93,7 @@ BEGIN
 			 , cdorigem
 	)
 	VALUES (
-				 rw_craplcm.dtmvtolt
+			   rw_crapdat.dtmvtolt
 			 , rw_craplcm.cdagenci
 			 , rw_craplcm.nrdconta
 			 , rw_craplcm.nrdocmto

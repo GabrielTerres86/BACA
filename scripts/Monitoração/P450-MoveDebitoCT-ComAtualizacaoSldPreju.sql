@@ -48,7 +48,7 @@ BEGIN
 			 , cdorigem
 	)
 	VALUES (
-				 rw_craplcm.dtmvtolt
+			   rw_crapdat.dtmvtolt
 			 , rw_craplcm.cdagenci
 			 , rw_craplcm.nrdconta
 			 , rw_craplcm.nrdocmto
