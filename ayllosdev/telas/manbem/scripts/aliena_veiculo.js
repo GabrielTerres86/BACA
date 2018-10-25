@@ -75,7 +75,7 @@ function TrataDados(){
 function validaCamposAditiv(){
 	var invalidos=0;
 	errorMessage = "";
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if (in_array($('#dscatbem', '#frmTipo').val(),['OUTROS VEICULOS'])) {
 		if(!validaCampo('dsmarbemC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('dsbemfinC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('nrmodbemC', '#frmTipo')){invalidos=invalidos+1;}

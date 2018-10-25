@@ -1428,17 +1428,23 @@ function formataTipo5() {
 			
 			$("#"+idElementTpVeiulo).change( function() {
 				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
-					$("#" + idElementMarca + "C").hide();
+					removeErroCampo($("#" + idElementMarca + "C", '#'+frmTipo5));
+					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show();
-					$("#" + idElementModelo + "C").hide();
+					removeErroCampo($("#" + idElementModelo + "C", '#'+frmTipo5));
+					$("#" + idElementModelo + "C").val('').hide();
 					$("#" + idElementModelo).show();
-					$("#" + idElementAno + "C").hide();
+					removeErroCampo($("#" + idElementAno + "C", '#'+frmTipo5));
+					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show();
 		} else {
+					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
 					$("#" + idElementMarca + "C").show();
 					$("#" + idElementMarca).val('').hide();
+					removeErroCampo($("#" + idElementModelo, '#'+frmTipo5));
 					$("#" + idElementModelo + "C").show();
 					$("#" + idElementModelo).val('').hide();
+					removeErroCampo($("#" + idElementAno, '#'+frmTipo5));
 					$("#" + idElementAno + "C").show().habilitaCampo();
 					$("#" + idElementAno).val('').hide();
 					cVlfipbem.val('');

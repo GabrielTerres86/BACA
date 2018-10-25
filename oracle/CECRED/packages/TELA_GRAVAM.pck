@@ -2973,7 +2973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
           vr_tparquiv := 'C';        
         WHEN 3 THEN
           vr_dsoperac := 'BAIXA';
-          vr_tparquiv := 'B';        
+          vr_tparquiv := 'Q';        
       END CASE;
       
       -- CPF apenas no relatório
