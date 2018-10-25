@@ -522,7 +522,7 @@
                             flag de conta integraçao. PRJ366 (Lombardi).
 				 
                29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
-                            PRJ450 - Renato Cordeiro (AMcom)         
+                            PRJ450 - Renato Cordeiro ( AMcom )         
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
