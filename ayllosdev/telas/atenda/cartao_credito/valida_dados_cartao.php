@@ -232,8 +232,8 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				//echo "$('#dddebito').attr('disabled', false);";				
             echo "$('#tpenvcrd').attr('disabled', false);";
             if ($cdadmcrd != 15) {
-                echo '$("#tpdpagto","#frmNovoCartao").val("0");';
-                echo "$('#tpdpagto').attr('disabled', false);";
+                echo '$("#tpdpagto","#frmNovoCartao").val("1");';
+                echo "$('#tpdpagto').attr('disabled', true);";
             } else {
                 echo "$('#tpdpagto').val('1');";
 				//if ($nrctrcrd == 0) {

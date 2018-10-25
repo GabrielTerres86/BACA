@@ -345,7 +345,7 @@ $vlnovlim = number_format(0,2,",",".");
 				vlsugmot = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
                 vlnovlim = parseFloat($("#vlnovlim").val().replace(/\./g,'').replace(",","."));
 
-                if (vlnovlim <= 0) {
+                if (vlnovlim < 0) {
                     showError("error", "<? echo utf8ToHtml("Por favor, informe um valor para o novo limite."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
                 }

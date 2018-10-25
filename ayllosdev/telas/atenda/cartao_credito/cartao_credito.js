@@ -4501,7 +4501,7 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
             }
         } else {
 
-            if ($('#dsadmcrd').val().indexOf("DEB") > -1) {
+            if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
                 cdadmcrd = 17;
             } else {
                 cdadmcrd = 15;
@@ -4509,7 +4509,7 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
         }
     }   
 	if(inpessoa > 1){
-		 if ($('#dsadmcrd').val().indexOf("DEB") > -1) {
+		 if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
 			cdadmcrd = 17;
 		} else {
 			cdadmcrd = 15;
@@ -6254,7 +6254,7 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
             }
         }else{
             log4console("Resolvido");
-            if($('#dsadmcrd').val().indexOf("DEB") > -1){
+            if($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1){
                 cdadmcrd = 17;
             }else{
                 cdadmcrd = 15;
