@@ -264,6 +264,11 @@ DEF VAR c-desc-erro             AS CHAR                   NO-UNDO.
 
 DEF VAR h_b2crap00              AS HANDLE                 NO-UNDO.
 DEF VAR h-b1crap02              AS HANDLE                 NO-UNDO.
+DEF VAR h-b1wgen0200            AS HANDLE                 NO-UNDO.
+DEF VAR aux_incrineg            AS INT                    NO-UNDO.
+DEF VAR aux_cdcritic            AS INT                    NO-UNDO.
+DEF VAR aux_dscritic            AS CHAR                   NO-UNDO.
+
 
 DEF VAR de-valor-bloqueado      AS DEC                    NO-UNDO.
 DEF VAR de-valor-liberado       AS DEC                    NO-UNDO.
