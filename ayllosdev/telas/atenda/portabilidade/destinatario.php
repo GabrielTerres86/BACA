@@ -37,7 +37,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_RECEBE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObject = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
@@ -46,15 +46,13 @@
 	}
 
 	$registro                       = $xmlObject->roottag->tags[0];
-
-	$nrnu_portabilidade_r           = getByTagName($registro->tags,'nrnu_portabilidade_r');
-	$dtsolicitacao_r                = getByTagName($registro->tags,'dtsolicitacao_r');
-	$nrcnpj_empregador_r            = getByTagName($registro->tags,'nrcnpj_empregador_r');
-	$dsnome_empregador_r            = getByTagName($registro->tags,'dsnome_empregador_r');
+	$nrnu_portabilidade_r           = getByTagName($registro->tags,'nrnu_portabilidade');
+	$dtsolicitacao_r                = getByTagName($registro->tags,'dtsolicitacao');
+	$nrcnpj_empregador_r            = getByTagName($registro->tags,'nrcnpj_empregador');
+	$dsnome_empregador_r            = getByTagName($registro->tags,'dsnome_empregador');
 	$banco                          = getByTagName($registro->tags,'banco');
-	$cdagencia_destinataria_r       = getByTagName($registro->tags,'cdagencia_destinataria_r');
-	$nrdconta_destinataria_r        = getByTagName($registro->tags,'nrdconta_destinataria_r');
-	
+	$cdagencia_destinataria_r       = getByTagName($registro->tags,'cdagencia_destinataria');
+	$nrdconta_destinataria_r        = getByTagName($registro->tags,'nrdconta_destinataria');	
 	$cdsituacao 		            = getByTagName($registro->tags,'cdsituacao');
 	
 	/***

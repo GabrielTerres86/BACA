@@ -2,7 +2,7 @@
 	//**********************************************************************************************//
 	//*** Fonte: envio_solicitacao.php                                                           ***//
 	//*** Autor: Anderson-Alan                                                                   ***//
-	//*** Data : Setembro/2018                Última Alteração: 24/09/2018                       ***//
+	//*** Data : Setembro/2018                Ãšltima AlteraÃ§Ã£o: 24/09/2018                       ***//
 	//***                                                                                        ***//
 	//*** Objetivo  : Mostrar opcao Principal da rotina de Portabilidade Salarial da tela ATENDA ***//
 	//****			                                                                             ***//
@@ -13,7 +13,7 @@
 
 	session_start();
 
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
@@ -37,41 +37,40 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_ENVIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObject = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','acessaOpcaoAba(2,0,"0")', false);
 	}
 
 	$registro           = $xmlObject->roottag->tags[0];
+	if (!empty($registro->name) && strtoupper($registro->name) == "INPESSOA_INVALIDO" && $registro->cdata == "1") {
+		exibirErro('error','Portabilidade indispon&iacute;vel para Pessoa Jur&iacute;dica.','Alerta - Ayllos','encerraRotina(true)', false);
+		exit();
+	}
+	
 	$nrcpfcgc           = getByTagName($registro->tags,'nrcpfcgc');
 	$nmprimtl           = getByTagName($registro->tags,'nmprimtl');
 	$nrtelefo           = getByTagName($registro->tags,'nrtelefo');
 	$dsdemail           = getByTagName($registro->tags,'dsdemail');
-	$dsdbanco           = getByTagName($registro->tags,'DSDBANCO');
-	$cdageban           = getByTagName($registro->tags,'CDAGEBAN');
-	$nrispbif           = getByTagName($registro->tags,'nrispbif');
-	$nrcnpjif           = getByTagName($registro->tags,'nrcnpjif');
-	$nrdocnpj_emp       = getByTagName($registro->tags,'nrdocnpj_emp');
-	$nmprimtl_emp       = getByTagName($registro->tags,'nmprimtl_emp');
-	$nrdocnpj           = getByTagName($registro->tags,'nrdocnpj');
-	$tpconta            = getByTagName($registro->tags,'TPCONTA');
-	$cdagectl           = getByTagName($registro->tags,'cdagectl');
-	$dssituacao         = getByTagName($registro->tags,'dssituacao');
-	$dtretorno          = getByTagName($registro->tags,'dtretorno');
-	$dtsolicita         = getByTagName($registro->tags,'dtsolicita');
-	$dsmotivo           = getByTagName($registro->tags,'dsmotivo');
-	$nrnu_portabilidade = getByTagName($registro->tags,'nrnu_portabilidade');
 	$cdbanco_folha      = getByTagName($registro->tags,'cdbanco_folha');
 	$nrispb_banco_folha = getByTagName($registro->tags,'nrispb_banco_folha');
 	$nrcnpj_banco_folha = getByTagName($registro->tags,'nrcnpj_banco_folha');
-	$dsrowid            = getByTagName($registro->tags,'dsrowid');
+	$nrdocnpj_emp       = getByTagName($registro->tags,'nrdocnpj_emp');
+	$nmprimtl_emp       = getByTagName($registro->tags,'nmprimtl_emp');
+	$nrispbif           = getByTagName($registro->tags,'nrispbif');
+	$nrdocnpj           = getByTagName($registro->tags,'nrdocnpj');
+	$cdagectl           = getByTagName($registro->tags,'cdagectl');
 	$nrdconta_formatada = getByTagName($registro->tags,'nrdconta');
-	
+	$dssituacao         = getByTagName($registro->tags,'dssituacao');
+	$nrnu_portabilidade = getByTagName($registro->tags,'nrnu_portabilidade');
+	$dtsolicita         = getByTagName($registro->tags,'dtsolicita');
+	$dtretorno          = getByTagName($registro->tags,'dtretorno');
+	$dsmotivo           = getByTagName($registro->tags,'dsmotivo');
 	$cdsituacao 		= getByTagName($registro->tags,'cdsituacao');
-	
+	$dsrowid            = getByTagName($registro->tags,'dsrowid');
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
      **
@@ -139,7 +138,7 @@
 				$nrcnpjif = getByTagName($registro->tags,'nrcnpjif');
 				$cdbccxlt = getByTagName($registro->tags,'cdbccxlt');
 				
-				$selected = ( ( $cdbanco_folha == $cdbccxlt && $nrcnpjif == $nrcnpj_banco_folha ) ? 'selected' : '' );
+				$selected = ( ( $cdbanco_folha == $cdbccxlt ) ? 'selected' : '' );
 
 				echo '<option '.$selected.' data-nrcnpjif="'.$nrcnpjif.'" data-nrispbif="'.$nrispbif.'" value="'.$cdbccxlt.'">'.$dsdbanco.'</option>';
 			}
@@ -148,8 +147,8 @@
 		
 		<br style="clear:both"/>
 		
-		<label for="nrispbif" class="clsCampos">ISPB:</label>
-		<input id="nrispbif" name="nrispbif" readonly="readonly" type="text" class="campo" value="<?php echo $nrispb_banco_folha; ?>" />
+		<label for="nrispbif_banco_folha" class="clsCampos">ISPB:</label>
+		<input id="nrispbif_banco_folha" name="nrispbif_banco_folha" readonly="readonly" type="text" class="campo" value="<?php echo $nrispb_banco_folha; ?>" />
 		
 		<label for="nrcnpjif" class="clsCampos">CNPJ:</label>
 		<input name="nrcnpjif" type="text" id="nrcnpjif" readonly="readonly" class="campo" value="<?php echo $nrcnpj_banco_folha; ?>" />
@@ -174,8 +173,8 @@
 		
 		<br style="clear:both"/>
 		
-		<label for="tpconta" class="clsCampos">Tipo de Conta:</label>
-		<input type="text" id="tpconta" name="tpconta" readonly="readonly" class="campo" value="Conta Corrente<?php echo $tpconta; ?>" />
+		<label for="cdtipcta" class="clsCampos">Tipo de Conta:</label>
+		<input type="text" id="cdtipcta" name="cdtipcta" readonly="readonly" class="campo" value="Conta Corrente" />
 		
 		<label for="cdagectl" class="clsCampos">Ag&ecirc;ncia:</label>
 		<input type="text" id="cdagectl" name="cdagectl" readonly="readonly" class="campo" value="<?php echo $cdagectl; ?>" />
@@ -237,6 +236,6 @@
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
-	// Bloqueia conteúdo que está atrás do div da rotina
+	// Bloqueia conteÃºdo que estÃ¡ atrÃ¡s do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 </script>

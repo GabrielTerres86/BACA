@@ -1204,10 +1204,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
     
         -- Variaveis internas
         vr_cont_tag PLS_INTEGER := 0;
-        vr_dtsolicitacao_ini DATE;
-        vr_dtsolicitacao_fim DATE;
-        vr_dtretorno_ini DATE;
-        vr_dtretorno_fim DATE;
     
         CURSOR cr_lista_contas(pr_dsrowid VARCHAR2) IS            
 					SELECT cop.nmrescop
@@ -1547,11 +1543,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         vr_idorigem VARCHAR2(100);
     
         -- Variaveis internas
-        vr_cont_tag PLS_INTEGER := 0;
-        vr_dtsolicitacao_ini DATE;
-        vr_dtsolicitacao_fim DATE;
-        vr_dtretorno_ini DATE;
-        vr_dtretorno_fim DATE;
 				vr_nrdrowid  ROWID;
     
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS            

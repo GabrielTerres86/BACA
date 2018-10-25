@@ -721,12 +721,8 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			}
 			case "PORTABILIDADE": {
 				$nomeRotina = "Portabilidade";
-				if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == 1) {
-					$urlRotina = "portabilidade";
-				} else {
-					$urlRotina = "";
-				}
-				$strValue = ( isset($valores[23]->cdata) ) ? ($valores[23]->cdata == "1")  ? "SIM" : "NAO" : "NAO";
+				$urlRotina = "portabilidade";
+				$strValue = (isset($valores[23]->cdata) ? (($valores[23]->cdata == "1")  ? "SIM" : "NAO") : "NAO");
 				$telaPermitadaAcessoBacen = 1;
 				break;
 			}

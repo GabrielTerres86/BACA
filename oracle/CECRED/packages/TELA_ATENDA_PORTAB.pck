@@ -14,13 +14,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
     -- Alteracoes:
     ---------------------------------------------------------------------------------------------------------------
 
-    PROCEDURE pc_busca_dados(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
-                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
-                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                            ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
+    PROCEDURE pc_busca_dados_envia(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
+																	,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																	,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																	,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2); --> Descricao do erro
+
+    PROCEDURE pc_busca_dados_recebe(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
+																	 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																	 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																	 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	 ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
 
     PROCEDURE pc_busca_bancos_folha(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
@@ -82,27 +90,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     -- Alteracoes: 
     ---------------------------------------------------------------------------------------------------------------
 
-    PROCEDURE pc_busca_dados(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
-                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
-                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                            ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+    PROCEDURE pc_busca_dados_envia(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
+																	,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																	,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																	,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
     BEGIN
     
         /* .............................................................................
         
-        Programa: pc_busca_dados
+        Programa: pc_busca_dados_envia
         Sistema : Ayllos Web
-        Autor   : Anderson Alan
-        Data    : Setembro/2018                 Ultima atualizacao:
+        Autor   : Augusto - Supero
+        Data    : Outubro/2018                 Ultima atualizacao:
         
         Dados referentes ao programa:
         
         Frequencia: Sempre que for chamado
         
-        Objetivo  : Rotina para buscar os dados.
+        Objetivo  : Rotina para buscar os dados de envio.
         
         Alteracoes: -----
         ..............................................................................*/
@@ -113,6 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
                 SELECT crapass.nrcpfcgc
                       ,crapass.nmprimtl
+											,crapass.inpessoa
                   FROM crapass
                  WHERE crapass.cdcooper = pr_cdcooper
                    AND crapass.nrdconta = pr_nrdconta;
@@ -120,31 +129,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             -- Seleciona o Telefone
             CURSOR cr_craptfc(pr_cdcooper IN crapass.cdcooper%TYPE
                              ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-                SELECT *
-                  FROM (SELECT '(' || to_char(craptfc.nrdddtfc) || ')' || craptfc.nrtelefo
-                          FROM craptfc
-                         WHERE craptfc.cdcooper = pr_cdcooper
-                           AND craptfc.nrdconta = pr_nrdconta
-                           AND craptfc.tptelefo IN (1, 2, 3)
-                         ORDER BY CASE tptelefo
-                                      WHEN 2 THEN -- priorizar celular
-                                       0
-                                      ELSE -- demais telefones
-                                       tptelefo
-                                  END ASC)
-                 WHERE rownum = 1; -- retorna apenas uma ocorrencia conforme prioridade na ordenacao
+                SELECT '(' || to_char(craptfc.nrdddtfc) || ')' || craptfc.nrtelefo
+									FROM craptfc
+								 WHERE craptfc.cdcooper = pr_cdcooper
+									 AND craptfc.nrdconta = pr_nrdconta
+									 AND craptfc.tptelefo IN (1, 2, 3)
+								 ORDER BY CASE tptelefo
+															WHEN 2 THEN -- priorizar celular
+															 0
+															ELSE -- demais telefones
+															 tptelefo
+													END ASC;
         
             -- Selecionar o Email
             CURSOR cr_crapcem(pr_cdcooper IN crapenc.cdcooper%TYPE
                              ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
-                SELECT *
-                  FROM (SELECT crapcem.dsdemail
-                          FROM crapcem
-                         WHERE crapcem.cdcooper = pr_cdcooper
-                           AND crapcem.nrdconta = pr_nrdconta
-                         ORDER BY crapcem.dtmvtolt
-                                 ,crapcem.hrtransa DESC)
-                 WHERE rownum = 1; -- retorna apenas uma ocorrencia
+                SELECT crapcem.dsdemail
+									FROM crapcem
+								 WHERE crapcem.cdcooper = pr_cdcooper
+									 AND crapcem.nrdconta = pr_nrdconta
+								 ORDER BY crapcem.dtmvtolt
+												 ,crapcem.hrtransa DESC;
         
             -- Selecionar o codigo da empresa
             CURSOR cr_crapttl(pr_cdcooper IN crapenc.cdcooper%TYPE
@@ -169,63 +174,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             -- Seleciona Portab Envia
             CURSOR cr_portab_envia(pr_cdcooper IN crapenc.cdcooper%TYPE
                                   ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
-                SELECT '(' || to_char(nrddd_telefone) || ')' || nrtelefone AS telefone
-                      ,dsdemail
-                      ,situacao
-                      ,cdsituacao
-                      ,motivo
-                      ,cdmotivo
-                      ,to_char(dtsolicitacao, 'DD/MM/RRRR HH24:MI:SS') AS dtsolicitacao
-                      ,to_char(dtretorno, 'DD/MM/RRRR HH24:MI:SS') AS dtretorno
-                      ,to_char(nrnu_portabilidade) AS nrnu_portabilidade
-                      ,cdbanco_folha
-                      ,nrispb_banco_folha
-                      ,nrcnpj_banco_folha
-                      ,dsrowid
-                      ,to_char(nrnu_portabilidade_r) AS nrnu_portabilidade_r
-                      ,to_char(dtsolicitacao_r, 'DD/MM/RRRR HH24:MI:SS') AS dtsolicitacao_r
-                      ,nrcnpj_empregador_r
-                      ,dsnome_empregador_r
-                      ,banco
-                      ,cdagencia_destinataria_r
-                      ,nrdconta_destinataria_r
-                  FROM (SELECT tpe.nrddd_telefone
-                              ,tpe.nrtelefone
-                              ,tpe.dsdemail
-                              ,dom.dscodigo AS situacao
-                              ,dom.cddominio AS cdsituacao
-                              ,dcp.dscodigo AS motivo
-                              ,dcp.cddominio AS cdmotivo
-                              ,tpe.dtsolicitacao AS dtsolicitacao
-                              ,tpe.dtretorno
-                              ,tpe.nrnu_portabilidade
-                              ,tpe.cdbanco_folha
-                              ,tpe.nrispb_banco_folha
-                              ,tpe.nrcnpj_banco_folha
-                              ,tpe.rowid AS dsrowid
-                              ,tpr.nrnu_portabilidade AS nrnu_portabilidade_r
-                              ,tpr.dtsolicitacao AS dtsolicitacao_r
-                              ,tpr.nrcnpj_empregador AS nrcnpj_empregador_r
-                              ,tpr.dsnome_empregador AS dsnome_empregador_r
-                              ,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
-                              ,tpr.cdagencia_destinataria AS cdagencia_destinataria_r
-                              ,tpr.nrdconta_destinataria AS nrdconta_destinataria_r
-                          FROM tbcc_portabilidade_envia  tpe
-                              ,tbcc_portabilidade_recebe tpr
-                              ,tbcc_dominio_campo        dom
-                              ,tbcc_dominio_campo        dcp
-                              ,crapban                   ban
-                         WHERE tpe.idsituacao = dom.cddominio
-                           AND ban.nrispbif(+) = tpr.nrispb_destinataria
-                           AND dom.nmdominio = 'SIT_PORTAB_SALARIO_ENVIA'
-                           AND dcp.nmdominio(+) = tpe.dsdominio_motivo
-                           AND dcp.cddominio(+) = tpe.cdmotivo
-                           AND tpr.nrnu_portabilidade(+) = tpe.nrnu_portabilidade
-                           AND tpe.nrdconta = pr_nrdconta
-                           AND tpe.cdcooper = pr_cdcooper
-                         ORDER BY tpe.dtsolicitacao DESC)
-                 WHERE rownum = 1;
-            -- AND motivo IS NOT NULL; debug
+                SELECT '(' || to_char(tpe.nrddd_telefone) || ')' || tpe.nrtelefone AS telefone
+											,tpe.dsdemail
+											,dom.dscodigo AS situacao
+											,dom.cddominio AS cdsituacao
+											,dcp.dscodigo AS motivo
+											,dcp.cddominio AS cdmotivo
+											,to_char(tpe.dtsolicitacao, 'DD/MM/RRRR HH24:MI:SS') AS dtsolicitacao
+											,to_char(tpe.dtretorno, 'DD/MM/RRRR HH24:MI:SS') AS dtretorno
+											,tpe.cdbanco_folha
+											,tpe.nrispb_banco_folha
+											,tpe.nrcnpj_banco_folha
+											,to_char(tpe.nrnu_portabilidade) AS nrnu_portabilidade
+											,tpe.nrcpfcgc
+											,tpe.nmprimtl
+											,tpe.nrcnpj_empregador
+											,tpe.dsnome_empregador
+											,tpe.ROWID dsrowid
+									FROM tbcc_portabilidade_envia  tpe
+											,tbcc_dominio_campo        dom
+											,tbcc_dominio_campo        dcp
+								 WHERE tpe.idsituacao = dom.cddominio
+									 AND dom.nmdominio = 'SIT_PORTAB_SALARIO_ENVIA'
+									 AND dcp.nmdominio(+) = tpe.dsdominio_motivo
+									 AND dcp.cddominio(+) = tpe.cdmotivo
+									 AND tpe.nrdconta = pr_nrdconta
+									 AND tpe.cdcooper = pr_cdcooper
+								 ORDER BY tpe.dtsolicitacao DESC;
             rw_portab_envia cr_portab_envia%ROWTYPE;
         
             -- Variavel de criticas
@@ -243,22 +218,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             vr_cdagenci VARCHAR2(100);
             vr_nrdcaixa VARCHAR2(100);
             vr_idorigem VARCHAR2(100);
-            vr_dscnpjbc VARCHAR2(20);
+						vr_cdbanco_bf VARCHAR2(100);
+						vr_nrispb_bf VARCHAR2(100);
+            vr_dscnpj_bf VARCHAR2(100);
         
             -- Variaveis para CADA0008.pc_busca_inf_emp
-            vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
-            vr_idaltera PLS_INTEGER;
-            vr_idseqttl crapttl.idseqttl%TYPE := 1;
-            vr_nrdocnpj VARCHAR2(100);
-            vr_cdempres crapemp.cdempres%TYPE;
+            vr_nrdocnpj tbcc_portabilidade_envia.nrcnpj_empregador%TYPE;
             vr_nmpessot tbcadast_pessoa.nmpessoa%TYPE;
-            vr_nrcnpjot crapemp.nrdocnpj%TYPE;
-            vr_nmempout crapemp.nmresemp%TYPE;
-            vr_cdemprot crapemp.cdempres%TYPE;
         
             -- Variaveis Gerais
             vr_nrcpfcgc     crapass.nrcpfcgc%TYPE;
             vr_nmprimtl     crapass.nmprimtl%TYPE;
+						vr_inpessoa     crapass.inpessoa%TYPE;
             vr_nrtelefo     VARCHAR2(100);
             vr_dsdemail     crapcem.dsdemail%TYPE;
             vr_nrispbif_cop crapban.nrispbif%TYPE;
@@ -282,291 +253,429 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         
             -- Criar cabecalho do XML
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-        
-            -- Selecionar o CPF, Nome
-            OPEN cr_crapass(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
-            FETCH cr_crapass
-                INTO vr_nrcpfcgc
-                    ,vr_nmprimtl;
-            IF cr_crapass%NOTFOUND THEN
-                vr_dscritic := 'Cooperado não encontrado.';
-                RAISE vr_exc_erro;
-            END IF;
-            CLOSE cr_crapass;
-        
-            -- Selecionar o Telefone
-            OPEN cr_craptfc(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
-            FETCH cr_craptfc
-                INTO vr_nrtelefo;
-            CLOSE cr_craptfc;
-        
-            -- Selecionar o Email
-            OPEN cr_crapcem(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
-            FETCH cr_crapcem
-                INTO vr_dsdemail;
-            CLOSE cr_crapcem;
-        
-            -- Selecionar o codigo da empresa
-            OPEN cr_crapttl(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
-            FETCH cr_crapttl
-                INTO vr_nrdocnpj
-                    ,vr_nmpessot;
-        
-            IF cr_crapttl%NOTFOUND THEN
-                vr_dscritic := 'Codigo da empresa do titular da conta não encontrado.';
-                RAISE vr_exc_erro;
-            END IF;
-            CLOSE cr_crapttl;
-        
-            -- Selecionar a instituicao destinataria
-            OPEN cr_crapban_crapcop(pr_cdcooper => vr_cdcooper);
-            FETCH cr_crapban_crapcop
-                INTO vr_nrispbif_cop
-                    ,vr_nrdocnpj_cop
-                    ,vr_cdagectl_cop;
-            IF cr_crapban_crapcop%NOTFOUND THEN
-                vr_dscritic := 'Instituição Destinatária não encontrada.';
-                RAISE vr_exc_erro;
-            END IF;
-            CLOSE cr_crapban_crapcop;
-        
-            -- Seleciona Portab Envia
-            OPEN cr_portab_envia(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
-            FETCH cr_portab_envia
-                INTO rw_portab_envia;
-            CLOSE cr_portab_envia;
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+						
+						-- Selecionar o CPF, Nome e Tipo de Conta
+						OPEN cr_crapass(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+						FETCH cr_crapass
+								INTO vr_nrcpfcgc
+										,vr_nmprimtl
+										,vr_inpessoa;
+						IF cr_crapass%NOTFOUND THEN
+								vr_dscritic := 'Cooperado não encontrado.';
+								RAISE vr_exc_erro;
+						END IF;
+						CLOSE cr_crapass;
+						
+						-- Se for pessoa júridica
+						IF vr_inpessoa = 2 THEN
+							gene0007.pc_insere_tag(pr_xml      => pr_retxml
+																		,pr_tag_pai  => 'Root'
+																		,pr_posicao  => 0
+																		,pr_tag_nova => 'inpessoa_invalido'
+																		,pr_tag_cont => '1'
+																		,pr_des_erro => vr_dscritic);
+              RETURN;
+						END IF;
+						
+						-- Seleciona Portab Envia
+						OPEN cr_portab_envia(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+						FETCH cr_portab_envia
+								INTO rw_portab_envia;
+						CLOSE cr_portab_envia;
+						
+						-- Selecionar a instituicao destinataria
+						OPEN cr_crapban_crapcop(pr_cdcooper => vr_cdcooper);
+						FETCH cr_crapban_crapcop
+								INTO vr_nrispbif_cop
+										,vr_nrdocnpj_cop
+										,vr_cdagectl_cop;
+						IF cr_crapban_crapcop%NOTFOUND THEN
+								vr_dscritic := 'Instituição Destinatária não encontrada.';
+								RAISE vr_exc_erro;
+						END IF;
+						CLOSE cr_crapban_crapcop;
+
+				    -- Se houver portabilidade pendente
+				    IF nvl(rw_portab_envia.cdsituacao, 0) NOT IN (1,2,3,5,6,9) THEN
+							-- Selecionar o Telefone
+							OPEN cr_craptfc(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+							FETCH cr_craptfc
+									INTO vr_nrtelefo;
+							CLOSE cr_craptfc;
+	        
+							-- Selecionar o Email
+							OPEN cr_crapcem(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+							FETCH cr_crapcem
+									INTO vr_dsdemail;
+							CLOSE cr_crapcem;
+							
+							-- Selecionar o codigo da empresa
+							OPEN cr_crapttl(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+							FETCH cr_crapttl
+									INTO vr_nrdocnpj
+											,vr_nmpessot;
+		        
+							IF cr_crapttl%NOTFOUND THEN
+									vr_dscritic := 'Codigo da empresa do titular da conta não encontrado.';
+									RAISE vr_exc_erro;
+							END IF;
+							CLOSE cr_crapttl;
+						
+						ELSE						
+							vr_nrcpfcgc := rw_portab_envia.nrcpfcgc;
+							vr_nmprimtl := rw_portab_envia.nmprimtl;
+							vr_nrtelefo := rw_portab_envia.telefone;
+							vr_dsdemail := rw_portab_envia.dsdemail;
+							vr_nrdocnpj := rw_portab_envia.nrcnpj_empregador;
+							vr_nmpessot := rw_portab_envia.dsnome_empregador;
+							vr_cdbanco_bf := rw_portab_envia.cdbanco_folha;
+							vr_nrispb_bf := rw_portab_envia.nrispb_banco_folha;
+							IF NVL(rw_portab_envia.nrcnpj_banco_folha,0) > 0 THEN
+                vr_dscnpj_bf := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_banco_folha ,2);
+							ELSE 
+								vr_dscnpj_bf := NULL;
+							END IF;
+						END IF;
+            
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Root'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'Dados'
                                   ,pr_tag_cont => NULL
                                   ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrdconta'
-                                  ,pr_tag_cont => gene0002.fn_mask_conta(pr_nrdconta)
-                                  ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+            -- Cooperado
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrcpfcgc'
                                   ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc, 1)
                                   ,pr_des_erro => vr_dscritic);
-        
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nmprimtl'
                                   ,pr_tag_cont => vr_nmprimtl
                                   ,pr_des_erro => vr_dscritic);
-        
-            IF TRIM(rw_portab_envia.telefone) IS NOT NULL AND TRIM(rw_portab_envia.dsdemail) IS NOT NULL THEN
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Dados'
-                                      ,pr_posicao  => 0
-                                      ,pr_tag_nova => 'nrtelefo'
-                                      ,pr_tag_cont => rw_portab_envia.telefone
-                                      ,pr_des_erro => vr_dscritic);
-            
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Dados'
-                                      ,pr_posicao  => 0
-                                      ,pr_tag_nova => 'dsdemail'
-                                      ,pr_tag_cont => rw_portab_envia.dsdemail
-                                      ,pr_des_erro => vr_dscritic);
-            ELSE
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Dados'
-                                      ,pr_posicao  => 0
-                                      ,pr_tag_nova => 'nrtelefo'
-                                      ,pr_tag_cont => vr_nrtelefo
-                                      ,pr_des_erro => vr_dscritic);
-            
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Dados'
-                                      ,pr_posicao  => 0
-                                      ,pr_tag_nova => 'dsdemail'
-                                      ,pr_tag_cont => vr_dsdemail
-                                      ,pr_des_erro => vr_dscritic);
-            END IF;
-        
+
+					  gene0007.pc_insere_tag(pr_xml      => pr_retxml
+																 ,pr_tag_pai  => 'Dados'
+																 ,pr_posicao  => 0
+																 ,pr_tag_nova => 'nrtelefo'
+																 ,pr_tag_cont => vr_nrtelefo
+																 ,pr_des_erro => vr_dscritic);
+
+				    gene0007.pc_insere_tag(pr_xml      => pr_retxml
+																 ,pr_tag_pai  => 'Dados'
+																 ,pr_posicao  => 0
+																 ,pr_tag_nova => 'dsdemail'
+																 ,pr_tag_cont => vr_dsdemail
+																 ,pr_des_erro => vr_dscritic);
+
+            -- Banco folha
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
+																	,pr_tag_pai  => 'Dados'
+																	,pr_posicao  => 0
+																	,pr_tag_nova => 'cdbanco_folha'
+																	,pr_tag_cont => vr_cdbanco_bf
+																	,pr_des_erro => vr_dscritic);
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'nrispb_banco_folha'
+                                  ,pr_tag_cont => vr_nrispb_bf
+                                  ,pr_des_erro => vr_dscritic);
+            
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'nrcnpj_banco_folha'
+                                  ,pr_tag_cont => vr_dscnpj_bf
+                                  ,pr_des_erro => vr_dscritic);
+
+            -- Empregador
+					  gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrdocnpj_emp'
                                   ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj, 2)
                                   ,pr_des_erro => vr_dscritic);
-        
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nmprimtl_emp'
                                   ,pr_tag_cont => vr_nmpessot
                                   ,pr_des_erro => vr_dscritic);
-        
+
+            -- Instituição Destinataria															
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrispbif'
                                   ,pr_tag_cont => vr_nrispbif_cop
                                   ,pr_des_erro => vr_dscritic);
-        
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'nrdocnpj'
                                   ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj_cop, 2)
                                   ,pr_des_erro => vr_dscritic);
-        
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'cdagectl'
                                   ,pr_tag_cont => vr_cdagectl_cop
                                   ,pr_des_erro => vr_dscritic);
-        
+
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'nrdconta'
+                                  ,pr_tag_cont => gene0002.fn_mask_conta(pr_nrdconta)
+                                  ,pr_des_erro => vr_dscritic);
+
+            -- Status da Solicitação
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'dssituacao'
                                   ,pr_tag_cont => rw_portab_envia.situacao
                                   ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+            
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'cdsituacao'
-                                  ,pr_tag_cont => rw_portab_envia.cdsituacao
+                                  ,pr_tag_nova => 'nrnu_portabilidade'
+                                  ,pr_tag_cont => rw_portab_envia.nrnu_portabilidade
                                   ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'dsmotivo'
-                                  ,pr_tag_cont => rw_portab_envia.motivo
-                                  ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'cdmotivo'
-                                  ,pr_tag_cont => rw_portab_envia.cdmotivo
-                                  ,pr_des_erro => vr_dscritic);
-        
+																	
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'dtsolicita'
                                   ,pr_tag_cont => rw_portab_envia.dtsolicitacao
                                   ,pr_des_erro => vr_dscritic);
-        
+																	
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'dtretorno'
                                   ,pr_tag_cont => rw_portab_envia.dtretorno
                                   ,pr_des_erro => vr_dscritic);
-        
+																	
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrnu_portabilidade'
-                                  ,pr_tag_cont => rw_portab_envia.nrnu_portabilidade
+                                  ,pr_tag_nova => 'dsmotivo'
+                                  ,pr_tag_cont => rw_portab_envia.motivo
                                   ,pr_des_erro => vr_dscritic);
-        
+
+            -- extras        
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'cdbanco_folha'
-                                  ,pr_tag_cont => rw_portab_envia.cdbanco_folha
+                                  ,pr_tag_nova => 'cdsituacao'
+                                  ,pr_tag_cont => rw_portab_envia.cdsituacao
                                   ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrispb_banco_folha'
-                                  ,pr_tag_cont => rw_portab_envia.nrispb_banco_folha
-                                  ,pr_des_erro => vr_dscritic);
-             
-            -- Verifica se há CNPJ
-            IF NVL(rw_portab_envia.nrcnpj_banco_folha,0) > 0 THEN
-              vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_banco_folha ,2);
-            ELSE 
-              vr_dscnpjbc := NULL;
-            END IF;
-            
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrcnpj_banco_folha'
-                                  ,pr_tag_cont => vr_dscnpjbc
-                                  ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'dsrowid'
                                   ,pr_tag_cont => rw_portab_envia.dsrowid
                                   ,pr_des_erro => vr_dscritic);
+
         
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrnu_portabilidade_r'
-                                  ,pr_tag_cont => rw_portab_envia.nrnu_portabilidade_r
-                                  ,pr_des_erro => vr_dscritic);
+            -- Se houve retorno de erro
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+            END IF;
         
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'dtsolicitacao_r'
-                                  ,pr_tag_cont => rw_portab_envia.dtsolicitacao_r
-                                  ,pr_des_erro => vr_dscritic);
+        EXCEPTION
+            WHEN vr_exc_erro THEN
+                IF vr_cdcritic <> 0 THEN
+                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                END IF;
             
-            -- Verifica se há CNPJ
-            IF NVL(rw_portab_envia.nrcnpj_empregador_r,0) > 0 THEN
-              vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_empregador_r,2);
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+            
+                -- Carregar XML padrao para variavel de retorno
+                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+            
+            WHEN OTHERS THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := 'Erro geral na rotina da tela PORTAB: ' || SQLERRM;
+            
+                -- Carregar XML padrao para variavel de retorno
+                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        END;
+    
+    END pc_busca_dados_envia;
+
+    PROCEDURE pc_busca_dados_recebe(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
+																	,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																	,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																	,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+    BEGIN
+    
+        /* .............................................................................
+        
+        Programa: pc_busca_dados_envia
+        Sistema : Ayllos Web
+        Autor   : Augusto - Supero
+        Data    : Outubro/2018                 Ultima atualizacao:
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para buscar os dados de envio.
+        
+        Alteracoes: -----
+        ..............................................................................*/
+        DECLARE
+        
+            -- Seleciona Portab Recebe
+            CURSOR cr_portab_recebe(pr_cdcooper IN crapenc.cdcooper%TYPE
+                                  ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
+                SELECT to_char(tpr.nrnu_portabilidade) nrnu_portabilidade
+                              ,to_char(tpr.dtsolicitacao, 'DD/MM/RRRR HH24:MI:SS') dtsolicitacao
+                              ,tpr.nrcnpj_empregador
+                              ,tpr.dsnome_empregador
+                              ,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
+                              ,tpr.cdagencia_destinataria
+                              ,tpr.nrdconta_destinataria
+															,tpr.idsituacao
+                          FROM tbcc_portabilidade_recebe tpr
+                              ,crapban                   ban
+                         WHERE ban.nrispbif(+) = tpr.nrispb_destinataria
+                           AND tpr.nrdconta = pr_nrdconta
+                           AND tpr.cdcooper = pr_cdcooper
+                         ORDER BY tpr.dtsolicitacao DESC;
+            rw_portab_recebe cr_portab_recebe%ROWTYPE;
+        
+            -- Variavel de criticas
+            vr_cdcritic crapcri.cdcritic%TYPE;
+            vr_dscritic VARCHAR2(10000);
+        
+            -- Tratamento de erros
+            vr_exc_erro EXCEPTION;
+        
+            -- Variaveis de log
+            vr_cdcooper INTEGER;
+            vr_cdoperad VARCHAR2(100);
+            vr_nmdatela VARCHAR2(100);
+            vr_nmeacao  VARCHAR2(100);
+            vr_cdagenci VARCHAR2(100);
+            vr_nrdcaixa VARCHAR2(100);
+            vr_idorigem VARCHAR2(100);
+						
+						-- Variaveis internas
+						vr_dscnpjbc VARCHAR2(100);
+        
+        BEGIN
+            -- Incluir Nome do Módulo Logado
+            gene0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_PORTAB', pr_action => NULL);
+        
+            -- Extrai os dados vindos do XML
+            gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_nmdatela => vr_nmdatela
+                                    ,pr_nmeacao  => vr_nmeacao
+                                    ,pr_cdagenci => vr_cdagenci
+                                    ,pr_nrdcaixa => vr_nrdcaixa
+                                    ,pr_idorigem => vr_idorigem
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+            -- Criar cabecalho do XML
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+						
+						-- Seleciona Portab Envia
+						OPEN cr_portab_recebe(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
+						FETCH cr_portab_recebe
+								INTO rw_portab_recebe;
+						CLOSE cr_portab_recebe;
+            
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Root'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'Dados'
+                                  ,pr_tag_cont => NULL
+                                  ,pr_des_erro => vr_dscritic);
+            -- Portabilidade
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'nrnu_portabilidade'
+                                  ,pr_tag_cont => rw_portab_recebe.nrnu_portabilidade
+                                  ,pr_des_erro => vr_dscritic);
+
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'dtsolicitacao'
+                                  ,pr_tag_cont => rw_portab_recebe.dtsolicitacao
+                                  ,pr_des_erro => vr_dscritic);
+
+            -- Empregador
+						IF NVL(rw_portab_recebe.nrcnpj_empregador,0) > 0 THEN
+              vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_recebe.nrcnpj_empregador, 2);
             ELSE 
               vr_dscnpjbc := NULL;
             END IF;
-            
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
+																	,pr_tag_pai  => 'Dados'
+																	,pr_posicao  => 0
+																	,pr_tag_nova => 'nrcnpj_empregador'
+																	,pr_tag_cont => vr_dscnpjbc
+																	,pr_des_erro => vr_dscritic);
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrcnpj_empregador_r'
-                                  ,pr_tag_cont => vr_dscnpjbc
+                                  ,pr_tag_nova => 'dsnome_empregador'
+                                  ,pr_tag_cont => rw_portab_recebe.dsnome_empregador
                                   ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Dados'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'dsnome_empregador_r'
-                                  ,pr_tag_cont => rw_portab_envia.dsnome_empregador_r
-                                  ,pr_des_erro => vr_dscritic);
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+
+            -- Instituição Destinataria
+					  gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
                                   ,pr_tag_nova => 'banco'
-                                  ,pr_tag_cont => rw_portab_envia.banco
+                                  ,pr_tag_cont => rw_portab_recebe.banco
                                   ,pr_des_erro => vr_dscritic);
-        
+
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'cdagencia_destinataria_r'
-                                  ,pr_tag_cont => rw_portab_envia.cdagencia_destinataria_r
+                                  ,pr_tag_nova => 'cdagencia_destinataria'
+                                  ,pr_tag_cont => rw_portab_recebe.cdagencia_destinataria
                                   ,pr_des_erro => vr_dscritic);
-        
+
+						gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'nrdconta_destinataria'
+                                  ,pr_tag_cont => rw_portab_recebe.nrdconta_destinataria
+                                  ,pr_des_erro => vr_dscritic);
+
+            -- extras        
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Dados'
                                   ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'nrdconta_destinataria_r'
-                                  ,pr_tag_cont => gene0002.fn_mask_conta(rw_portab_envia.nrdconta_destinataria_r)
+                                  ,pr_tag_nova => 'cdsituacao'
+                                  ,pr_tag_cont => rw_portab_recebe.idsituacao
                                   ,pr_des_erro => vr_dscritic);
         
             -- Se houve retorno de erro
@@ -596,9 +705,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                                                '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         END;
     
-    END pc_busca_dados;
+    END pc_busca_dados_recebe;
 
-    PROCEDURE pc_busca_bancos_folha(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+		PROCEDURE pc_busca_bancos_folha(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                    ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
                                    ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
@@ -872,7 +981,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             vr_nrdrowid ROWID;
         
             -- Variaveis locais
-            vr_contador      INTEGER := 0;
             vr_nrsolicitacao tbcc_portabilidade_envia.nrsolicitacao%TYPE;
         
         BEGIN
@@ -1420,7 +1528,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             vr_nrdrowid ROWID;
         
             -- Variaveis locais
-            vr_contador INTEGER := 0;
             vr_situacao tbcc_dominio_campo.cddominio%TYPE;
             vr_motivo   tbcc_dominio_campo.dscodigo%TYPE;
         

@@ -66,9 +66,13 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 				showError("error", "N?o foi poss?vel concluir a requisi??o..", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
             success: function (response) {
-				$("#divConteudoOpcao").html(response);
-				controlaFoco(opcao); 
-			}				
+				if (response.substr(0, 14) == 'hideMsgAguardo') {
+					eval(response);
+				} else {
+					$("#divConteudoOpcao").html(response);
+					controlaFoco(opcao); 
+				}
+			}	
 		}); 
 	}					
 }
@@ -113,7 +117,7 @@ function controlaLayout(cddopcao) {
 		var rDsdemail = $('label[for="dsdemail"]', '#'+nomeForm);
 		var rDsdbanco = $('label[for="dsdbanco"]', '#'+nomeForm);
 		var rCdageban = $('label[for="cdageban"]', '#'+nomeForm);
-		var rNrispbif = $('label[for="nrispbif"]', '#'+nomeForm);
+		var rNrispbif_banco_folha = $('label[for="nrispbif_banco_folha"]', '#'+nomeForm);
 		var rNrcnpjif = $('label[for="nrcnpjif"]', '#'+nomeForm);
 		var rNrdocnpj_emp = $('label[for="nrdocnpj_emp"]', '#'+nomeForm);
 		var rNmprimtl_emp = $('label[for="nmprimtl_emp"]', '#'+nomeForm);
@@ -134,7 +138,7 @@ function controlaLayout(cddopcao) {
 		var cDsdemail = $('#dsdemail', '#'+nomeForm);
 		var cDsdbanco = $('#dsdbanco', '#'+nomeForm);
 		var cCdageban = $('#cdageban', '#'+nomeForm);
-		var cNrispbif = $('#nrispbif', '#'+nomeForm);
+		var cNrispbif_banco_folha = $('#nrispbif_banco_folha', '#'+nomeForm);
 		var cNrcnpjif = $('#nrcnpjif', '#'+nomeForm);
 		var cNrdocnpj_emp = $('#nrdocnpj_emp', '#'+nomeForm);
 		var cNmprimtl_emp = $('#nmprimtl_emp', '#'+nomeForm);
@@ -167,10 +171,10 @@ function controlaLayout(cddopcao) {
 		rCdageban.css({ 'width': '80px' });
 		cCdageban.css({ 'width': '80px' });
 		
-		rNrispbif.addClass('rotulo').css({ 'width': '98px' });
-		cNrispbif.css({ 'width': '110px' });
+		rNrispbif_banco_folha.addClass('rotulo').css({ 'width': '98px' });
+		cNrispbif_banco_folha.css({ 'width': '110px' });
 		
-		rNrcnpjif.css({ 'width': '100px' });
+		rNrcnpjif.css({ 'width': '50px' });
 		cNrcnpjif.css({ 'width': '200px' });
 		
 		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '98px' });
@@ -221,7 +225,7 @@ function controlaLayout(cddopcao) {
 				nrispbif = $el.data('nrispbif'),
 				nrcnpjif = $el.data('nrcnpjif');
 
-			$('#nrispbif').val(nrispbif);
+			$('#nrispbif_banco_folha').val(nrispbif);
 			$('#nrcnpjif').val(nrcnpjif);
 		});
 		
@@ -277,7 +281,7 @@ function solicitaPortabilidade(skipConfirm) {
 	showMsgAguardo("Aguarde, solicitando portabilidade...");
 
 	var cdbccxlt = $('#dsdbanco', '#'+nomeForm).val();
-	var nrispbif = $('#nrispbif', '#'+nomeForm).val();
+	var nrispbif_banco_folha = $('#nrispbif_banco_folha', '#'+nomeForm).val();
 	var nrcnpjif = $('#nrcnpjif', '#'+nomeForm).val();
 
 	// Carrega conte?do da op??o atrav?s de ajax
@@ -288,7 +292,7 @@ function solicitaPortabilidade(skipConfirm) {
 		data: {
 			nrdconta: nrdconta,
             cdbccxlt: cdbccxlt,
-		  	nrispbif: nrispbif,
+		  	nrispbif: nrispbif_banco_folha,
 			nrcnpjif: normalizaNumero(nrcnpjif),
 			cddopcao: 'S',
 			redirect: "script_ajax" // Tipo de retorno do ajax
