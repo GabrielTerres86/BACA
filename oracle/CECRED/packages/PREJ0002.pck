@@ -1,8 +1,8 @@
-CREATE OR REPLACE PACKAGE CECRED.PREJ0002_prj AS
+CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
 
 /*..............................................................................
 
-   Programa: PREJ0002_prj                        Antigo: Nao ha
+   Programa: PREJ0002                        Antigo: Nao ha
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
@@ -98,12 +98,12 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002_prj AS
     FUNCTION fn_dias_atraso_emp(pr_cdcooper IN crapepr.cdcooper%TYPE,
                                 pr_nrdconta IN crapepr.nrdconta%TYPE,
                                 pr_nrctremp IN crapepr.nrctremp%TYPE) RETURN NUMBER;
-end PREJ0002_prj;
+end PREJ0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
+CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 /*..............................................................................
 
-   Programa: PREJ0002_prj                        Antigo: Nao ha
+   Programa: PREJ0002                        Antigo: Nao ha
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
@@ -810,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
                              ,pr_cdoperad => 'PROCESSO'
                              ,pr_dscritic => vr_dscritic
                              ,pr_dsorigem => 'INTRANET'
-                             ,pr_dstransa => 'PREJ0002_prj-Estorno pagamento.'
+                             ,pr_dstransa => 'PREJ0002-Estorno pagamento.'
                              ,pr_dttransa => TRUNC(SYSDATE)
                              ,pr_flgtrans => 0 --> ERRO/FALSE
                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -945,7 +945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
     end if;
 
     /* Gerando Log de Consulta */
-    vr_dstransa := 'PREJ0002_prj-Efetuando estorno da transferencia para prejuizo, Cooper: ' || vr_cdcooper ||
+    vr_dstransa := 'PREJ0002-Efetuando estorno da transferencia para prejuizo, Cooper: ' || vr_cdcooper ||
                     ' Conta: ' || pr_nrdconta || ', Contrato: ' || pr_nrctremp || ' Tipo: '
                      || rw_crapepr.tpemprst || ', Data: ' || pr_dtmvtolt || ', indicador: ' || pr_idtipo ;
 
@@ -988,7 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
        raise vr_exc_erro;
     END IF;
 
-    vr_dstransa := 'PREJ0002_prj-Estorno da transferência para prejuizo, referente contrato: ' || pr_nrctremp ||', realizada com sucesso.';
+    vr_dstransa := 'PREJ0002-Estorno da transferência para prejuizo, referente contrato: ' || pr_nrctremp ||', realizada com sucesso.';
     -- Gerando Log de Consulta
     GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                         ,pr_cdoperad => vr_cdoperad
@@ -1017,7 +1017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
                           ,pr_cdoperad => vr_cdoperad
                           ,pr_dscritic => NVL(pr_dscritic,' ')
                           ,pr_dsorigem => 'INTRANET'
-                          ,pr_dstransa => 'PREJ0002_prj-Estorno transferencia para prejuizo.'
+                          ,pr_dstransa => 'PREJ0002-Estorno transferencia para prejuizo.'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 0 --> ERRO/FALSE
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -1043,7 +1043,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
                           ,pr_cdoperad => vr_cdoperad
                           ,pr_dscritic => NVL(pr_dscritic,' ')
                           ,pr_dsorigem => vr_dsorigem
-                          ,pr_dstransa => 'PREJ0002_prj-Estorno da Transferência Prejuízo.'
+                          ,pr_dstransa => 'PREJ0002-Estorno da Transferência Prejuízo.'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 0 --> ERRO/FALSE
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -1380,7 +1380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
                          ,pr_cdoperad => vr_cdoperad
                          ,pr_dscritic => NVL(pr_dscritic,' ')
                          ,pr_dsorigem => 'INTRANET'
-                         ,pr_dstransa => 'PREJ0002_prj-Pagamento forçado de prejuizo.'
+                         ,pr_dstransa => 'PREJ0002-Pagamento forçado de prejuizo.'
                          ,pr_dttransa => TRUNC(SYSDATE)
                          ,pr_flgtrans => 0 --> ERRO/FALSE
                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -1406,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
                          ,pr_cdoperad => vr_cdoperad
                          ,pr_dscritic => NVL(pr_dscritic,' ')
                          ,pr_dsorigem => vr_dsorigem
-                         ,pr_dstransa => 'PREJ0002_prj-Transferência Prejuízo.'
+                         ,pr_dstransa => 'PREJ0002-Transferência Prejuízo.'
                          ,pr_dttransa => TRUNC(SYSDATE)
                          ,pr_flgtrans => 0 --> ERRO/FALSE
                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -1680,7 +1680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
       WHEN OTHERS THEN
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em PREJ0002_prj.pc_consulta_pagamentos: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em PREJ0002.pc_consulta_pagamentos: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1831,7 +1831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002_prj AS
       WHEN OTHERS THEN
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em PREJ0002_prj.pc_valores_contrato: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em PREJ0002.pc_valores_contrato: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1993,5 +1993,5 @@ BEGIN
 END fn_dias_atraso_emp;
 
 
-END PREJ0002_prj;
+END PREJ0002;
 /

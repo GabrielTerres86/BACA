@@ -1,8 +1,8 @@
-CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
+CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
 
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : APLI0005_prj
+  --  Programa : APLI0005
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
@@ -229,7 +229,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                               ,pr_cdprodut IN crapcpc.cdprodut%TYPE    --> Codigo do Produto
                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                               ,pr_dscritic OUT crapcri.dscritic%TYPE   --> Descricao de Critica
-                              ,pr_tab_care OUT APLI0005_prj.typ_tab_care); --> Tabela com dados de carencias
+                              ,pr_tab_care OUT APLI0005.typ_tab_care); --> Tabela com dados de carencias
 
   -- Rotina geral para consulta de taxa de modalidades das aplicacoes
   PROCEDURE pc_obtem_taxa_modalidade(pr_cdcooper IN craprac.cdcooper%TYPE      --> Código da Cooperativa
@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                     ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
-                                    ,pr_tab_taxa OUT APLI0005_prj.typ_tab_taxa);    --> Tabela com dados de prazos, vencimento e taxas
+                                    ,pr_tab_taxa OUT APLI0005.typ_tab_taxa);    --> Tabela com dados de prazos, vencimento e taxas
 
   -- Rotina para consulta de taxa de modalidades das aplicacoes do caracater
   PROCEDURE pc_obtem_taxa_modalidade_car(pr_cdcooper IN craprac.cdcooper%TYPE    --> Código da Cooperativa
@@ -279,7 +279,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                        ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                                        ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
-                                       ,pr_tab_taxa OUT APLI0005_prj.typ_tab_taxa);    --> Tabela com dados de prazos, vencimento e taxas
+                                       ,pr_tab_taxa OUT APLI0005.typ_tab_taxa);    --> Tabela com dados de prazos, vencimento e taxas
 
 
 
@@ -459,7 +459,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                ,pr_idgerlog IN INTEGER                           --> Identificador de Log (0 – Não / 1 – Sim)
                                ,pr_cdcritic OUT INTEGER                          --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2                         --> Descrição da crítica
-                               ,pr_tab_aplica OUT APLI0005_prj.typ_tab_aplicacao);   --> Tabela  com os dados da aplicação
+                               ,pr_tab_aplica OUT APLI0005.typ_tab_aplicacao);   --> Tabela  com os dados da aplicação
 
   PROCEDURE pc_busca_aplicacoes_car(pr_cdcooper IN craprac.cdcooper%TYPE             --> Código da Cooperativa
                                    ,pr_cdoperad IN crapope.cdoperad%TYPE             --> Código do Operador
@@ -622,7 +622,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                         pr_nraplica IN craprac.nraplica%TYPE,        -- Número da Aplicação
                                         pr_idlstdhs IN NUMBER,                       -- Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim)
                                         pr_idgerlog IN NUMBER,                       -- Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim)
-                                        pr_tab_extrato OUT APLI0005_prj.typ_tab_extrato, -- PLTable com os dados de extrato
+                                        pr_tab_extrato OUT APLI0005.typ_tab_extrato, -- PLTable com os dados de extrato
                                         pr_vlresgat OUT NUMBER,                      -- Valor de resgate
                                         pr_vlrendim OUT NUMBER,                      -- Valor de rendimento
                                         pr_vldoirrf OUT NUMBER,                      -- Valor do IRRF
@@ -860,7 +860,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                    ,pr_dtmvtolt     IN DATE                         --> Data de Movimentação
                                    ,pr_flgcance     IN INTEGER                      --> Flag de Cancelamento
                                    ,pr_flgerlog     IN INTEGER                      --> Gerar Log (0-False / 1-True)
-                                   ,pr_resg_aplica OUT APLI0005_prj.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
+                                   ,pr_resg_aplica OUT APLI0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE        --> Codigo da critica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE);      --> Descricao da critica
 
@@ -917,9 +917,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005_prj IS
                                         ,pr_cdcritic OUT PLS_INTEGER                     --> Código da crítica
                                         ,pr_dscritic OUT VARCHAR2);
 
-END APLI0005_prj;
+END APLI0005;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
+CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
   -- Cursor genérico de parametrização
   CURSOR cr_craptab_taxas(pr_cdcooper IN craptab.cdcooper%TYPE
@@ -1080,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
         IF cr_crapcpc%NOTFOUND THEN
           CLOSE cr_crapcpc;
-          vr_dscritic := 'Erro ao consulta produto APLI0005_prj.pc_busca_saldo_aplicacoes';
+          vr_dscritic := 'Erro ao consulta produto APLI0005.pc_busca_saldo_aplicacoes';
           RAISE vr_exc_saida;
         ELSE
           CLOSE cr_crapcpc;
@@ -1203,7 +1203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005_prj.pc_busca_saldo_aplicacoes: ' ||
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_busca_saldo_aplicacoes: ' ||
                        SQLERRM;
         ROLLBACK;
     END;
@@ -1352,7 +1352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
         IF cr_crapcpc%NOTFOUND THEN
           CLOSE cr_crapcpc;
-          vr_dscritic := 'Erro ao consulta produto APLI0005_prj.pc_busca_saldo_aplic_prog';
+          vr_dscritic := 'Erro ao consulta produto APLI0005.pc_busca_saldo_aplic_prog';
           RAISE vr_exc_saida;
         ELSE
           CLOSE cr_crapcpc;
@@ -1475,7 +1475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005_prj.pc_busca_saldo_aplicacoes: ' ||
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_busca_saldo_aplicacoes: ' ||
                        SQLERRM;
         ROLLBACK;
     END;
@@ -1525,12 +1525,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_auxconta PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_care APLI0005_prj.typ_tab_care;
+      vr_tab_care APLI0005.typ_tab_care;
 
     BEGIN
 
       -- Leitura de carencias do produto informado
-      APLI0005_prj.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+      APLI0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                  ,pr_cdprodut => pr_cdprodut   -- Codigo do Produto
                                  ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                  ,pr_dscritic => vr_dscritic   -- Descricao da Critica
@@ -1576,7 +1576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_obtem_carencias_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_obtem_carencias_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1626,7 +1626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_contador PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_care APLI0005_prj.typ_tab_care;
+      vr_tab_care APLI0005.typ_tab_care;
 
       -- Variaveis de XML
       vr_xml_temp VARCHAR2(32767);
@@ -1634,7 +1634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      APLI0005_prj.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+      APLI0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                  ,pr_cdprodut => pr_cdprodut   -- Codigo do Produto
                                  ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                  ,pr_dscritic => vr_dscritic   -- Descricao da Critica
@@ -1690,7 +1690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005_prj.pc_obtem_carencias_car: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_obtem_carencias_car: ' || SQLERRM;
         ROLLBACK;
     END;
 
@@ -1701,7 +1701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                               ,pr_cdprodut IN crapcpc.cdprodut%TYPE      --> Codigo do Produto
                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo de Critica
                               ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descricao de Critica
-                              ,pr_tab_care OUT APLI0005_prj.typ_tab_care) IS --> Tabela com dados de carencias
+                              ,pr_tab_care OUT APLI0005.typ_tab_care) IS --> Tabela com dados de carencias
   BEGIN
 
     /* .............................................................................
@@ -1735,7 +1735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_ind_care PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_care APLI0005_prj.typ_tab_care;
+      vr_tab_care APLI0005.typ_tab_care;
 
       -- Selecionar dados de carencia de aplicacao
       CURSOR cr_crapcpc(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
@@ -1795,7 +1795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005_prj.pc_obtem_carencias: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_obtem_carencias: ' || SQLERRM;
     END;
 
   END pc_obtem_carencias;
@@ -1809,7 +1809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                                     ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
-                                    ,pr_tab_taxa OUT APLI0005_prj.typ_tab_taxa) IS --> Tabela com dados de prazos, vencimento e taxas
+                                    ,pr_tab_taxa OUT APLI0005.typ_tab_taxa) IS --> Tabela com dados de prazos, vencimento e taxas
   BEGIN
 
     /* .............................................................................
@@ -1861,7 +1861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       ------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       -- Temp Table
-      vr_tab_taxa APLI0005_prj.typ_tab_taxa;
+      vr_tab_taxa APLI0005.typ_tab_taxa;
 
       -- Variavel usada para montar o indice da tabela de memoria
       vr_index_craplpp VARCHAR2(20);
@@ -2203,7 +2203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
           ELSE
             vr_cdcritic := 0;
-            vr_dscritic := 'Retorno "NOK" na APLI0005_prj.pc_obtem_taxa_modalidade e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_obtem_taxa_modalidade e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
           END IF;
           -- Levantar Excecao
           RAISE vr_exc_saida;
@@ -2281,7 +2281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Carencias APLI0005_prj.pc_obtem_carencias: ' ||
+        pr_dscritic := 'Erro geral em Consulta de Carencias APLI0005.pc_obtem_carencias: ' ||
                        SQLERRM;
         ROLLBACK;
     END;
@@ -2331,11 +2331,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
-      vr_tab_taxa APLI0005_prj.typ_tab_taxa;
+      vr_tab_taxa APLI0005.typ_tab_taxa;
 
     BEGIN
       -- Leitura de carencias do produto informado
-      APLI0005_prj.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -2371,7 +2371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Taxa de Modalidade APLI0005_prj.pc_obtem_taxa_modalidade_car: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Consulta de Taxa de Modalidade APLI0005.pc_obtem_taxa_modalidade_car: ' || SQLERRM;
         ROLLBACK;
     END;
 
@@ -2424,12 +2424,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_auxconta PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_taxa APLI0005_prj.typ_tab_taxa;
+      vr_tab_taxa APLI0005.typ_tab_taxa;
 
     BEGIN
 
       -- Leitura de carencias do produto informado
-      APLI0005_prj.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -2479,7 +2479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_obtem_taxa_modalidade_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_obtem_taxa_modalidade_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -2498,7 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                                     ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
-                                    ,pr_tab_taxa OUT APLI0005_prj.typ_tab_taxa) IS --> Tabela com dados de prazos, vencimento e taxas
+                                    ,pr_tab_taxa OUT APLI0005.typ_tab_taxa) IS --> Tabela com dados de prazos, vencimento e taxas
   PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
 
@@ -2524,7 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      APLI0005_prj.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -3036,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
             vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic := 'Retorno "NOK" na APLI0005_prj.pc_valida_cad_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_valida_cad_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
           END IF;
 
           --Levantar Excecao
@@ -3224,7 +3224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005_prj.pc_valida_cad_aplic: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_valida_cad_aplic: ' || SQLERRM;
         /* Desfazer apenas se não for via batch */
         IF upper(pr_nmdatela) <> 'CRPS145' THEN
         ROLLBACK;
@@ -3333,7 +3333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
-      APLI0005_prj.pc_valida_cad_aplic(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_valida_cad_aplic(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad   --> Código do Operador
                                   ,pr_nmdatela => vr_nmdatela   --> Nome da Tela
                                   ,pr_idorigem => vr_idorigem   --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -3375,7 +3375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_valida_cad_aplic_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_valida_cad_aplic_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -3472,7 +3472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Calculo de Prazo de Aplicacao APLI0005_prj.pc_calcula_prazo_aplicacao: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Calculo de Prazo de Aplicacao APLI0005.pc_calcula_prazo_aplicacao: ' || SQLERRM;
 
         ROLLBACK;
     END;
@@ -3553,7 +3553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         RAISE vr_exc_saida;
       END IF;
 
-      APLI0005_prj.pc_calcula_prazo_aplicacao(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
+      APLI0005.pc_calcula_prazo_aplicacao(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
                                          ,pr_datcaren => vr_datcaren   --> Data de carencia
                                          ,pr_datvenci => vr_datvenci   --> Data de vencimento
                                          ,pr_diaspraz => pr_diaspraz   --> Quantidade de dias de carencia
@@ -3589,7 +3589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Calculo de Prazo de Aplicacao APLI0005_prj.pc_calcula_prazo_aplicacao_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em Calculo de Prazo de Aplicacao APLI0005.pc_calcula_prazo_aplicacao_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -3944,7 +3944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
     BEGIN
 
-      gene0001.pc_informa_acesso(pr_module => 'APLI0005_prj.pc_cadastra_aplic');
+      gene0001.pc_informa_acesso(pr_module => 'APLI0005.pc_cadastra_aplic');
 
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -3982,7 +3982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         CLOSE BTCH0001.cr_crapdat;
       END IF;
 
-      APLI0005_prj.pc_valida_cad_aplic(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_valida_cad_aplic(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -4155,7 +4155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '|| rw_crapass.nrdconta;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic := 'Retorno "NOK" na APLI0005_prj.pc_cadastra_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_cadastra_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
           END IF;
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -5127,7 +5127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_cadastra_aplic: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_cadastra_aplic: ' || SQLERRM;
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -5238,7 +5238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_dtvencto := TO_DATE(pr_dtvencto,'dd/mm/RRRR');
 
       -- Efetua o cadastro de aplicacoes
-      APLI0005_prj.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
+      APLI0005.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
                                 ,pr_cdoperad => vr_cdoperad   -- Código do Operador
                                 ,pr_nmdatela => vr_nmdatela   -- Nome da Tela
                                 ,pr_idorigem => vr_idorigem   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
@@ -5288,7 +5288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_cadastra_aplic_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_cadastra_aplic_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -5342,7 +5342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     ..............................................................................*/
 
     BEGIN
-         APLI0005_prj.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
+         APLI0005.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
                                                  pr_cdoperad => pr_cdoperad,
                                                    pr_nmdatela => pr_nmdatela,
                                                    pr_idorigem => pr_idorigem,
@@ -6173,7 +6173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_exclui_aplicacao: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_exclui_aplicacao: ' || SQLERRM;
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -6241,7 +6241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Procedure para excluir aplicação
-      APLI0005_prj.pc_exclui_aplicacao(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_exclui_aplicacao(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -6270,7 +6270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na exclusao de aplicacoes APLI0005_prj.pc_exclui_aplicacao_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na exclusao de aplicacoes APLI0005.pc_exclui_aplicacao_car: ' || SQLERRM;
 
     END;
   END pc_exclui_aplicacao_car;
@@ -6343,7 +6343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Efetua o cadastro de aplicacoes
-      APLI0005_prj.pc_exclui_aplicacao(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
+      APLI0005.pc_exclui_aplicacao(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad   -- Código do Operador
                                   ,pr_nmdatela => vr_nmdatela   -- Nome da Tela
                                   ,pr_idorigem => vr_idorigem   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
@@ -6385,7 +6385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_exclui_aplicacao_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_exclui_aplicacao_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -6408,7 +6408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                                ,pr_idgerlog IN INTEGER                           --> Identificador de Log (0 – Não / 1 – Sim)
                                ,pr_cdcritic OUT INTEGER                          --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2                         --> Descrição da crítica
-                               ,pr_tab_aplica OUT APLI0005_prj.typ_tab_aplicacao)--> Tabela com os dados da aplicação
+                               ,pr_tab_aplica OUT APLI0005.typ_tab_aplicacao)--> Tabela com os dados da aplicação
                                IS
    BEGIN
    /* .............................................................................
@@ -6455,7 +6455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_nrdrowid ROWID;
 
       -- Declaração da tabela que conterá os dados da aplicação
-      vr_tab_aplica APLI0005_prj.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
       vr_ind_aplica PLS_INTEGER := 0;
 
       -- Seleciona registro de aplicação de captação
@@ -6787,7 +6787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_busca_aplicacoes: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_busca_aplicacoes: ' || SQLERRM;
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -6852,7 +6852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
-      vr_tab_aplica APLI0005_prj.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
 
       -- Variaveis de XML
       vr_xml_temp VARCHAR2(32767);
@@ -6860,7 +6860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Procedure para buscar informações da aplicação
-      APLI0005_prj.pc_busca_aplicacoes(pr_cdcooper => pr_cdcooper             --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper => pr_cdcooper             --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad             --> Código do Operador
                                   ,pr_nmdatela => pr_nmdatela             --> Nome da Tela
                                   ,pr_idorigem => pr_idorigem             --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -6942,7 +6942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005_prj.pc_busca_aplicacoes_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005.pc_busca_aplicacoes_car: ' || SQLERRM;
 
     END;
   END pc_busca_aplicacoes_car;
@@ -6994,7 +6994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_auxconta PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_aplica APLI0005_prj.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
 
       -- Variaveis de log
       vr_cdcooper crapcop.cdcooper%TYPE;
@@ -7024,7 +7024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Procedure para buscar informações da aplicação
-      APLI0005_prj.pc_busca_aplicacoes(pr_cdcooper => vr_cdcooper             --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper => vr_cdcooper             --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad             --> Código do Operador
                                   ,pr_nmdatela => vr_nmdatela             --> Nome da Tela
                                   ,pr_idorigem => to_number(vr_idorigem)  --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7098,7 +7098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_busca_aplicacoes_web: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_busca_aplicacoes_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -7165,7 +7165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Declaração da tabela que conterá os dados da aplicação
-      vr_tab_aplica APLI0005_prj.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
       vr_ind_aplica_tmp VARCHAR2(25);
       vr_saldo_rdca apli0001.typ_tab_saldo_rdca; --> Tabela para armazenar saldos de aplicacao
       vr_saldo_rdca_tmp apli0001.typ_tab_saldo_rdca_tmp; --> Tabela para armazenar saldos de aplicacao
@@ -7180,7 +7180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Consulta de novas aplicacoes
-      APLI0005_prj.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
                                   ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
                                   ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7353,7 +7353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         END IF;
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_lista_aplicacoes: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_lista_aplicacoes: ' || SQLERRM;
     END;
   END pc_lista_aplicacoes;
 
@@ -7458,7 +7458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Carrega PL table com aplicacoes da conta
-      APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper => vr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => vr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => vr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => vr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7563,7 +7563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         cecred.pc_internal_exception(vr_cdcooper, pr_nrdconta);
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_lista_aplicacoes_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_lista_aplicacoes_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -7630,7 +7630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Declaração da tabela que conterá os dados da aplicação
-      vr_tab_aplica APLI0005_prj.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
       vr_ind_aplica_tmp VARCHAR2(25);
       vr_saldo_rdca apli0001.typ_tab_saldo_rdca; --> Tabela para armazenar saldos de aplicacao
       vr_saldo_rdca_tmp apli0001.typ_tab_saldo_rdca_tmp; --> Tabela para armazenar saldos de aplicacao
@@ -7645,7 +7645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Consulta de novas aplicacoes
-      APLI0005_prj.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
                                   ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
                                   ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7818,7 +7818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         END IF;
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_lista_aplicacoes: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_lista_aplicacoes: ' || SQLERRM;
     END;
   END pc_lista_apli_demon;
 
@@ -7883,7 +7883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- pc_lista_aplicacoes com pr_dtinicio e pr_dtfim
-      APLI0005_prj.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7992,7 +7992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005_prj.pc_lista_aplicacoes_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005.pc_lista_aplicacoes_car: ' || SQLERRM;
 
     END;
   END pc_lista_demons_apli;
@@ -8057,7 +8057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Carrega PL table com aplicacoes da conta
-      APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -8165,7 +8165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005_prj.pc_lista_aplicacoes_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005.pc_lista_aplicacoes_car: ' || SQLERRM;
 
     END;
   END pc_lista_aplicacoes_car;
@@ -8735,7 +8735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005_prj.pc_val_solicit_resg. Erro: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005.pc_val_solicit_resg. Erro: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -8876,7 +8876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Valida resgate de aplicacao
-      APLI0005_prj.pc_val_solicit_resg(pr_cdcooper => pr_cdcooper    --> Código da Cooperativa
+      APLI0005.pc_val_solicit_resg(pr_cdcooper => pr_cdcooper    --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad    --> Código do Operador
                                   ,pr_nmdatela => pr_nmdatela    --> Nome da Tela
                                   ,pr_idorigem => pr_idorigem    --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  )
@@ -8949,7 +8949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       -- Verifica se o resgate é on-line
       IF pr_dtresgat = rw_crapdat.dtmvtolt THEN
-        APLI0005_prj.pc_efetua_resgate(pr_cdcooper => pr_cdcooper
+        APLI0005.pc_efetua_resgate(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nraplica => pr_nraplica
                                   ,pr_vlresgat => pr_vlresgat
@@ -9049,7 +9049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005_prj.pc_solicita_resgate: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005.pc_solicita_resgate: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -11257,7 +11257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
         pr_tpcritic := 1;
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005_prj.pc_efetua_resgate: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no resgate de aplicacoes APLI0005.pc_efetua_resgate: ' || SQLERRM;
     END;
 
   END pc_efetua_resgate;
@@ -11272,7 +11272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                                         pr_nraplica IN craprac.nraplica%TYPE,    -- Número da Aplicação
                                         pr_idlstdhs IN NUMBER,                   -- Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim)
                                         pr_idgerlog IN NUMBER,                   -- Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim)
-                                        pr_tab_extrato OUT APLI0005_prj.typ_tab_extrato, -- PLTable com os dados de extrato
+                                        pr_tab_extrato OUT APLI0005.typ_tab_extrato, -- PLTable com os dados de extrato
                                         pr_vlresgat OUT NUMBER,                  -- Valor de resgate
                                         pr_vlrendim OUT NUMBER,                  -- Valor de rendimento
                                         pr_vldoirrf OUT NUMBER,                  -- Valor do IRRF
@@ -11333,7 +11333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_txlancto NUMBER;
 
       -- PLTable que conterá os dados do extrato
-      vr_tab_extrato APLI0005_prj.typ_tab_extrato;
+      vr_tab_extrato APLI0005.typ_tab_extrato;
       vr_ind_extrato PLS_INTEGER := 0;
 
       -- Busca registro de aplicações de captação
@@ -11701,7 +11701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         END IF;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado APLI0005_prj.pc_busca_extrato_aplicacoes: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado APLI0005.pc_busca_extrato_aplicacoes: ' || SQLERRM;
         ROLLBACK;
 
         -- Verifica se deve gerar log
@@ -11772,7 +11772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
-       vr_tab_extrato APLI0005_prj.typ_tab_extrato;
+       vr_tab_extrato APLI0005.typ_tab_extrato;
 
       -- Variaveis de XML
       vr_xml_temp VARCHAR2(32767);
@@ -11786,7 +11786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Procedure para buscar informações da aplicação
-      APLI0005_prj.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper,        -- Código da Cooperativa
+      APLI0005.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper,        -- Código da Cooperativa
                                           pr_cdoperad => pr_cdoperad,        -- Código do Operador
                                           pr_nmdatela => pr_nmdatela,        -- Nome da Tela
                                           pr_idorigem => pr_idorigem,        -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -11866,7 +11866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005_prj.pc_busca_extrato_aplicacao_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005.pc_busca_extrato_aplicacao_car: ' || SQLERRM;
 
 
     END;
@@ -11923,7 +11923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
-       vr_tab_extrato APLI0005_prj.typ_tab_extrato;
+       vr_tab_extrato APLI0005.typ_tab_extrato;
 
       -- Variáveis locais
       vr_contador PLS_INTEGER := 0;
@@ -11939,7 +11939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Procedure para buscar informações da aplicação
-      APLI0005_prj.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper,        -- Código da Cooperativa
+      APLI0005.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper,        -- Código da Cooperativa
                                           pr_cdoperad => pr_cdoperad,        -- Código do Operador
                                           pr_nmdatela => pr_nmdatela,        -- Nome da Tela
                                           pr_idorigem => pr_idorigem,        -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -12015,7 +12015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_busca_extrato_aplicacao_web: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_busca_extrato_aplicacao_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -12212,7 +12212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       WHEN OTHERS THEN
         -- Alimenta parametros com a crítica ocorrida
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro nao tratado na procedure APLI0005_prj.pc_consulta_resgates. Erro: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na procedure APLI0005.pc_consulta_resgates. Erro: ' || SQLERRM;
 
     END;
 
@@ -12274,7 +12274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     BEGIN
 
       -- Procedure para buscar informações de resgates
-      APLI0005_prj.pc_consulta_resgates(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_consulta_resgates(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_dtmvtolt => pr_dtmvtolt
                                    ,pr_nraplica => pr_nraplica
@@ -12353,7 +12353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na consulta de resgates APLI0005_prj.pc_consulta_resgates_car: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na consulta de resgates APLI0005.pc_consulta_resgates_car: ' || SQLERRM;
 
     END;
   END pc_consulta_resgates_car;
@@ -12441,7 +12441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Procedure para buscar informações de resgates
-      APLI0005_prj.pc_consulta_resgates(pr_cdcooper => vr_cdcooper
+      APLI0005.pc_consulta_resgates(pr_cdcooper => vr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_dtmvtolt => vr_dtmvtolt
                                    ,pr_nraplica => pr_nraplica
@@ -12493,7 +12493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_consulta_resgates_web: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_consulta_resgates_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -12978,7 +12978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
           ELSE
             vr_cdcritic := 0;
-            vr_dscritic := 'Retorno "NOK" na APLI0005_prj.pc_cancela_resgate.'; --63600 + 8400
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_cancela_resgate.'; --63600 + 8400
           END IF;
 
           -- Levantar Excecao
@@ -13862,7 +13862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no cancelamento de resgate APLI0005_prj.pc_cancela_resgate: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no cancelamento de resgate APLI0005.pc_cancela_resgate: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -13961,7 +13961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Procedure para cancelar resgate de aplicacao
-      APLI0005_prj.pc_cancela_resgate(pr_cdcooper => vr_cdcooper
+      APLI0005.pc_cancela_resgate(pr_cdcooper => vr_cdcooper
                                  ,pr_cdagenci => vr_cdagenci
                                  ,pr_nrdcaixa => vr_nrdcaixa
                                  ,pr_cdoperad => vr_cdoperad
@@ -14006,7 +14006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_cancela_resgate_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_cancela_resgate_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -14105,7 +14105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_tab_erro.DELETE;
 
       -- Consulta as informações das aplicações
-      APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -14260,7 +14260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       WHEN OTHERS THEN
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no cancelamento de resgate APLI0005_prj.pc_calc_sld_resg_varias: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no cancelamento de resgate APLI0005.pc_calc_sld_resg_varias: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -14363,7 +14363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       -- Calcula saldo de resgate de varias aplicacoes
-      APLI0005_prj.pc_calc_sld_resg_varias(pr_flagauto => pr_flagauto   --> Indicador de Resgate Automatico e Manual
+      APLI0005.pc_calc_sld_resg_varias(pr_flagauto => pr_flagauto   --> Indicador de Resgate Automatico e Manual
                                       ,pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
                                       ,pr_cdagenci => vr_cdagenci   --> Codigo do PA
                                       ,pr_nrdcaixa => vr_nrdcaixa   --> Codigo do Caixa
@@ -14409,7 +14409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_calc_sld_resg_varias_web: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_calc_sld_resg_varias_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -14469,7 +14469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
 
         -- Consulta de aplicacoes antigas e novas
-        APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
+        APLI0005.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
                                     ,pr_cdoperad   => pr_cdoperad         --> Código do Operador
                                     ,pr_nmdatela   => pr_nmdatela         --> Nome da Tela
                                     ,pr_idorigem   => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -14756,7 +14756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       /* Fim insere dados */
 
       -- Consulta de aplicacoes antigas e novas
-      APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad         --> Código do Operador
                                   ,pr_nmdatela   => pr_nmdatela         --> Nome da Tela
                                   ,pr_idorigem   => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -14991,7 +14991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       WHEN OTHERS THEN
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado no resgate automatico APLI0005_prj.pc_ret_apl_resg_aut: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado no resgate automatico APLI0005.pc_ret_apl_resg_aut: ' || SQLERRM;
 
         ROLLBACK;
 
@@ -15109,7 +15109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       /* Procedure para resgate de aplicacao */
-      APLI0005_prj.pc_ret_apl_resg_aut(pr_cdcooper => vr_cdcooper   -- Codigo da cooperativa
+      APLI0005.pc_ret_apl_resg_aut(pr_cdcooper => vr_cdcooper   -- Codigo da cooperativa
                                   ,pr_cdagenci => vr_cdagenci   -- Codigo do PA
                                   ,pr_nrdcaixa => vr_nrdcaixa   -- Codigo do Caixa
                                   ,pr_cdoperad => vr_cdoperad   -- Codigo do Operador
@@ -15161,7 +15161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_ret_apl_resg_aut_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_ret_apl_resg_aut_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -15256,7 +15256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       IF pr_idvalida = 0 THEN
         -- Validacao de solicitacao de resgate
-        APLI0005_prj.pc_val_solicit_resg(pr_cdcooper => vr_cdcooper
+        APLI0005.pc_val_solicit_resg(pr_cdcooper => vr_cdcooper
                                     ,pr_cdoperad => vr_cdoperad
                                     ,pr_nmdatela => vr_nmdatela
                                     ,pr_idorigem => vr_idorigem
@@ -15282,7 +15282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       ELSE
         /* Efetivação da solicitacao de resgate */
-        APLI0005_prj.pc_solicita_resgate(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
+        APLI0005.pc_solicita_resgate(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
                                     ,pr_cdoperad => vr_cdoperad   --> Código do Operador
                                     ,pr_nmdatela => vr_nmdatela   --> Nome da Tela
                                     ,pr_idorigem => vr_idorigem   --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  )
@@ -15328,7 +15328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005_prj.pc_val_solicit_resgate_web: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0005.pc_val_solicit_resgate_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -15350,7 +15350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
                                    ,pr_dtmvtolt     IN DATE                         --> Data de Movimentação
                                    ,pr_flgcance     IN INTEGER                      --> Flag de Cancelamento
                                    ,pr_flgerlog     IN INTEGER                      --> Gerar Log (0-False / 1-True)
-                                   ,pr_resg_aplica OUT APLI0005_prj.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
+                                   ,pr_resg_aplica OUT APLI0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE        --> Codigo da critica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE) IS    --> Descricao da critica
 
@@ -15389,7 +15389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_contador INTEGER := 0;       -- Contador utilizado como indice da TT
 
       -- Temp Table
-      vr_tab_resg_aplica APLI0005_prj.typ_tab_resg_aplica; -- Tem-table com os dados de resgates de aplicacoes
+      vr_tab_resg_aplica APLI0005.typ_tab_resg_aplica; -- Tem-table com os dados de resgates de aplicacoes
 
       -- Cursores
 
@@ -15599,7 +15599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005_prj.pc_obtem_resgates_conta. Erro: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes APLI0005.pc_obtem_resgates_conta. Erro: ' || SQLERRM;
 
     END;
   END pc_obtem_resgates_conta;
@@ -15660,7 +15660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       vr_auxconta INTEGER := 0;
 
       -- Temp Table
-      vr_tab_resg_aplica APLI0005_prj.typ_tab_resg_aplica; -- Tem-table com os dados de resgates de aplicacoes
+      vr_tab_resg_aplica APLI0005.typ_tab_resg_aplica; -- Tem-table com os dados de resgates de aplicacoes
 
     BEGIN
 
@@ -15683,7 +15683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       END IF;
 
       /* Procedure para consulta de proximos resgates de aplicacao */
-      APLI0005_prj.pc_obtem_resgates_conta(pr_cdcooper    => vr_cdcooper
+      APLI0005.pc_obtem_resgates_conta(pr_cdcooper    => vr_cdcooper
                                       ,pr_cdagenci    => vr_cdagenci
                                       ,pr_nrdcaixa    => vr_nrdcaixa
                                       ,pr_cdoperad    => vr_cdoperad
@@ -15752,7 +15752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em APLI0005_prj.pc_cancela_resgate_web: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em APLI0005.pc_cancela_resgate_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -15963,7 +15963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
         pr_des_reto := 'NOK';
 
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro na APLI0005_prj.pc_cadast_varios_resgat_aplica. ' || SQLERRM;
+        vr_dscritic := 'Erro na APLI0005.pc_cadast_varios_resgat_aplica. ' || SQLERRM;
 
         -- Se deve gerar log
         IF pr_flgerlog = 1 THEN
@@ -16053,7 +16053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
       pr_vlsldisp := 0;
 
       -- Carrega PL table com aplicacoes da conta
-      APLI0005_prj.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -16138,7 +16138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na busca do saldo total para resgate APLI0005_prj.pc_busca_saldo_total_resgate: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na busca do saldo total para resgate APLI0005.pc_busca_saldo_total_resgate: ' || SQLERRM;
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -16160,5 +16160,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_prj IS
     END;
   END pc_busca_saldo_total_resgate;
 
-END APLI0005_prj;
+END APLI0005;
 /

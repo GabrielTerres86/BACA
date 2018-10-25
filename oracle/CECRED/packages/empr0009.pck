@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.EMPR0009_prj IS
+CREATE OR REPLACE PACKAGE CECRED.EMPR0009 IS
 
   /* Type das parcelas em atraso */
   TYPE typ_reg_parcelas IS RECORD(
@@ -55,12 +55,12 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0009_prj IS
                                   ,pr_dscritic IN VARCHAR2 DEFAULT NULL --> Descricao da critica
                                   );
 
-END EMPR0009_prj;
+END EMPR0009;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
+CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   ---------------------------------------------------------------------------
   --
-  --  Programa : EMPR0009_prj
+  --  Programa : EMPR0009
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_qtde_parc_atraso');
+                            ,pr_action => 'EMPR0009.fn_calc_qtde_parc_atraso');
       -- Caso os meses decorridos for maior que a quantidade de prestacoes
       IF pr_qtmesdec >= pr_qtpreemp THEN
         vr_nrparepr := pr_qtpreemp - FLOOR(pr_qtprecal);
@@ -174,7 +174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_data_prox_venc');
+                            ,pr_action => 'EMPR0009.fn_calc_data_prox_venc');
       -- Adiciona um mês
       vr_dtdpagto := GENE0005.fn_calc_data(pr_dtmvtolt  => pr_dtdpagto  --> Data de entrada
                                           ,pr_qtmesano  => 1            --> 1 mês a acumular
@@ -231,7 +231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_data_pagamento');
+                            ,pr_action => 'EMPR0009.fn_calc_data_pagamento');
       -- Quantidade de Parcelas em Atraso
       vr_nrparepr := CEIL(pr_qtmesdec - pr_qtprecal);
       -- 01/Mes/Ano
@@ -291,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_meses_decorridos');
+                            ,pr_action => 'EMPR0009.fn_calc_meses_decorridos');
       vr_dtdpagto := pr_dtdpagto;
       vr_qtmesdec := pr_qtmesdec;
 
@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
       END LOOP;
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_meses_decorridos');
+                            ,pr_action => 'EMPR0009.fn_calc_meses_decorridos');
 
       -- Condicao para verificar se foi possivel calcular o proximo vencimento
       IF vr_dtdpagto IS NULL THEN
@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                                 ,pr_dtmvtolt => vr_dtdpagto);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.fn_calc_meses_decorridos');
+                            ,pr_action => 'EMPR0009.fn_calc_meses_decorridos');
 
       -- Caso a data do proximo vencimento eh hoje, devemos remover 1 mes dos meses decorridos
       IF vr_dtdpagto = pr_dtmvtolt THEN
@@ -374,7 +374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_gera_log');
+                            ,pr_action => 'EMPR0009.pc_gera_log');
 
       pr_dscriout := NULL;
       IF TRIM(pr_dscritic) IS NOT NULL THEN
@@ -443,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_cria_lanc_futuro');
+                            ,pr_action => 'EMPR0009.pc_cria_lanc_futuro');
       vr_nrseqdig := fn_sequence('CRAPLAU','NRSEQDIG',''||pr_cdcooper||';'||TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR')||'');
 
       BEGIN
@@ -640,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 	PROCEDURE pc_calcula_juros_mora_tr(pr_dtcalcul     IN crapdat.dtmvtolt%TYPE      --> Movimento atual
                                     ,pr_perjurmo     IN craplcr.perjurmo%TYPE      --> Percentual de juros de mora por atraso
                                     ,pr_vlpagpar     IN NUMBER                     --> Valor Pago da Parcela
-                                    ,pr_tab_parcelas IN EMPR0009_prj.typ_tab_parcelas  --> Temp-Table contendo as parcelas em atraso
+                                    ,pr_tab_parcelas IN EMPR0009.typ_tab_parcelas  --> Temp-Table contendo as parcelas em atraso
                                     ,pr_vldjuros     OUT crapepr.vlemprst%TYPE) IS --> Valor calculado
   BEGIN
     /* .............................................................................
@@ -670,7 +670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado  - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_calcula_juros_mora_tr');
+                            ,pr_action => 'EMPR0009.pc_calcula_juros_mora_tr');
       vr_vlpagpar := pr_vlpagpar;
       ------------------------------------------------------------------------------------
       -- Calculo da taxa de mora diaria
@@ -727,14 +727,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
   PROCEDURE pc_cria_atualiza_ttparcelas(pr_nrparepr      IN INTEGER --> Numero da Parcela
                                        ,pr_dtvencto      IN DATE    --> Data de Vencimento
                                        ,pr_vlatupar      IN NUMBER  --> Valor atualizado da parcela
-                                       ,pr_tab_parcelas  IN OUT EMPR0009_prj.typ_tab_parcelas) IS --> Tabela de Parcelas
+                                       ,pr_tab_parcelas  IN OUT EMPR0009.typ_tab_parcelas) IS --> Tabela de Parcelas
   BEGIN
     DECLARE
       vr_indice NUMBER;
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_cria_atualiza_ttparcelas');
+                            ,pr_action => 'EMPR0009.pc_cria_atualiza_ttparcelas');
       vr_indice := pr_tab_parcelas.COUNT() + 1;
       -- Copiar as informações da tabela para a temp-table
       pr_tab_parcelas(vr_indice).nrparepr := pr_nrparepr;
@@ -787,7 +787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_calcula_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_calcula_atraso_tr');
       vr_dtdpagto := pr_dtdpagto;
 
       -- Calculo para identificar quantas parcelas estao em atraso
@@ -796,7 +796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                              ,pr_qtprecal => pr_qtprecal);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_calcula_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_calcula_atraso_tr');
       -- Calcular o valor do juros de mora para cada parcela
       FOR vr_indice IN 1 .. vr_nrparepr LOOP
         -- Condicao para a primeira parcela
@@ -810,13 +810,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
           vr_dtdpagto := fn_calc_data_prox_venc(pr_dtdpagto => vr_dtdpagto);
           -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
           GENE0001.pc_set_modulo(pr_module => NULL
-                                ,pr_action => 'EMPR0009_prj.pc_calcula_atraso_tr');
+                                ,pr_action => 'EMPR0009.pc_calcula_atraso_tr');
           -- Vamos verificar se eh um dia util
           vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                     ,pr_dtmvtolt => vr_dtdpagto);
           -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
           GENE0001.pc_set_modulo(pr_module => NULL
-                                ,pr_action => 'EMPR0009_prj.pc_calcula_atraso_tr');
+                                ,pr_action => 'EMPR0009.pc_calcula_atraso_tr');
           -- Valor do atraso sera o valor da parcela
           vr_vlatraso := NVL(pr_vlpreemp,0);
         END IF;
@@ -829,7 +829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                      ,pr_tab_parcelas => pr_tab_parcelas);
           -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
           GENE0001.pc_set_modulo(pr_module => NULL
-                                ,pr_action => 'EMPR0009_prj.pc_calcula_atraso_tr');
+                                ,pr_action => 'EMPR0009.pc_calcula_atraso_tr');
         END IF;
       END LOOP;
       -- Inicializa nome do modulo logado - 22/09/2017 - Ch 758606
@@ -846,7 +846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
 	PROCEDURE pc_calcula_multa_tr(pr_cdcooper     IN crapcop.cdcooper%TYPE         --> Código da Cooperativa
                                ,pr_vlpagpar     IN NUMBER                        --> Valor Pago da Parcela
-                               ,pr_tab_parcelas IN OUT EMPR0009_prj.typ_tab_parcelas --> Temp-Table contendo as parcelas em atraso
+                               ,pr_tab_parcelas IN OUT EMPR0009.typ_tab_parcelas --> Temp-Table contendo as parcelas em atraso
                                ,pr_vldmulta     OUT NUMBER) IS  --> Valor calculado
   BEGIN
     /* .............................................................................
@@ -874,14 +874,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_calcula_multa_tr');
+                            ,pr_action => 'EMPR0009.pc_calcula_multa_tr');
       -- Carrega o percentual
       vr_vlperctl := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_cdacesso => 'PERCENTUAL_MULTA_TR');
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_calcula_multa_tr');
+                            ,pr_action => 'EMPR0009.pc_calcula_multa_tr');
 
       vr_indice := pr_tab_parcelas.FIRST;
       WHILE vr_indice IS NOT NULL LOOP
@@ -916,7 +916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
       -- Limpa tabela saldos
       vr_tab_saldos.DELETE;
       vr_tab_parcelas.DELETE;
@@ -1087,7 +1087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
          vr_nrparcela := trunc(vr_qtprecal)+1;
          --
          -- Procedure para lancar Multa e Juros de Mora para o TR
-         EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc(pr_cdcooper => pr_cdcooper
+         EMPR0009.pc_efetiva_pag_atraso_tr_prc(pr_cdcooper => pr_cdcooper
                                              ,pr_cdagenci => pr_cdagenci
                                              ,pr_cdoperad => pr_cdoperad
                                              ,pr_nmdatela => pr_nmdatela
@@ -1147,7 +1147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
       END IF;
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       -- Guarda o saldo antes dos debitos
       vr_vlsldis2 := vr_vlsldisp;
@@ -1188,7 +1188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
       END IF;
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       -- Calcular a real data de pagamento
       vr_dtdpagto := fn_calc_data_pagamento(pr_qtmesdec => vr_qtmesdec
@@ -1197,7 +1197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                            ,pr_dtcalcul => vr_dtcalcul);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       ------------------------------------------------------------------------------------------------
       --                           Calcula as parcelas em atraso
@@ -1212,7 +1212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                    ,pr_tab_parcelas => vr_tab_parcelas);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
       ------------------------------------------------------------------------------------------------
       --                           Condicao para verificar se cobra multa
       ------------------------------------------------------------------------------------------------
@@ -1224,7 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                     ,pr_vldmulta     => vr_vldmulta);
         -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
         GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                              ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                              ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
         -- Se possuir multa para debitar
         IF vr_vldmulta > 0 THEN
@@ -1282,7 +1282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
           END IF;
 
@@ -1306,7 +1306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
           END IF;
 
@@ -1333,7 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                          ,pr_vldjuros     => vr_vldjuros);
         -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
         GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                              ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                              ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
         -- Se possuir Juros de Mora para debitar
         IF vr_vldjuros > 0 THEN
           IF vr_floperac THEN
@@ -1388,7 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
           END IF;
 
           -- Verifica se lanca na tela LAUTOM
@@ -1412,7 +1412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
           END IF;
 
@@ -1443,7 +1443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
       END IF;
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1452,7 +1452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => pr_nrctremp);
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1461,7 +1461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => TO_CHAR(vr_dtdpagto,'DD/MM/RRRR'));
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1470,7 +1470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => TO_CHAR(vr_vlsldisp,'fm999g999g999g990d00'));
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1479,7 +1479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => TO_CHAR(pr_vlpagpar,'fm999g999g999g990d00'));
       -- Inclui nome do modulo logado
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1488,7 +1488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => pr_qtmesdec);
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       -- Gera item do LOG
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1497,7 +1497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => pr_qtprecal);
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
       -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1506,7 +1506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => TO_CHAR(pr_vldmulta,'fm999g999g999g990d00'));
       -- Inclui nome do modulo logado
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -1527,9 +1527,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         -- Grava informações para resolver erro de programa/ sistema - 22/09/2017 - Ch 758606
-        EMPR0009_prj.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
+        EMPR0009.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
                                        ,pr_dstiplog => 'E'
-                                       ,pr_nmrotina => 'EMPR0009_prj'
+                                       ,pr_nmrotina => 'EMPR0009'
                                        ,pr_dscritic => 'pc_efetiva_pag_atraso_tr' ||
                                                        ' - pr_nmdatela: ' || pr_nmdatela ||
                                                        ' - pr_nrdconta: ' || pr_nrdconta ||
@@ -1543,11 +1543,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
         -- No caso de erro de programa gravar tabela especifica de log - 22/09/2017 - Ch 758606
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela EMPR0009_prj.pc_efetiva_pag_atraso_tr: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela EMPR0009.pc_efetiva_pag_atraso_tr: ' || SQLERRM;
         -- Grava informações para resolver erro de programa/ sistema - 22/09/2017 - Ch 758606
-        EMPR0009_prj.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
+        EMPR0009.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
                                        ,pr_dstiplog => 'E'
-                                       ,pr_nmrotina => 'EMPR0009_prj'
+                                       ,pr_nmrotina => 'EMPR0009'
                                        ,pr_dscritic => 'pc_efetiva_pag_atraso_tr' ||
                                                        ' - pr_nmdatela: ' || pr_nmdatela ||
                                                        ' - pr_nrdconta: ' || pr_nrdconta ||
@@ -1677,7 +1677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
     BEGIN
       -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => NULL
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
       -- Limpa tabela saldos
       vr_tab_saldos.DELETE;
       vr_tab_parcelas.DELETE;
@@ -1807,7 +1807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
         -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
         GENE0001.pc_set_modulo(pr_module => NULL
-                              ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                              ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
         -- Calcula a multa
         vr_vldmulta := pr_vlpreapg * (vr_vlperctl / 100);
 
@@ -1867,7 +1867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
           END IF;
 
           -- Verifica se lanca na tela LAUTOM
@@ -1886,7 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
             -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
             -- Se ocorreu erro
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
@@ -1971,7 +1971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
             END IF;
             -- Inclui nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => NULL
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
           END IF;
 
           -- Verifica se lanca na tela LAUTOM
@@ -1989,7 +1989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                                         ,pr_dscritic => vr_dscritic);
             -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
             GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                                  ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                                  ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
             -- Se ocorreu erro
             IF vr_dscritic IS NOT NULL THEN
               vr_cdcritic := 0;
@@ -2019,7 +2019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
                  ,pr_dscriout => vr_dscriout);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
       -- Se ocorreu erro
       IF vr_dscriout IS NOT NULL THEN
          vr_dscritic := vr_dscriout;
@@ -2032,7 +2032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => pr_nrctremp);
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -2041,7 +2041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 																pr_dsdadatu => TO_CHAR(vr_dtdpagto,'DD/MM/RRRR'));
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -2051,7 +2051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -2061,7 +2061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
 
       -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -2071,7 +2071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
 
       -- Retorna nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                            ,pr_action => 'EMPR0009_prj.pc_efetiva_pag_atraso_tr_prc');
+                            ,pr_action => 'EMPR0009.pc_efetiva_pag_atraso_tr_prc');
 
 		  -- Gera item do LOG
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -2089,9 +2089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         -- Grava informações para resolver erro de programa/ sistema - 22/09/2017 - Ch 758606
-        EMPR0009_prj.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
+        EMPR0009.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
                                        ,pr_dstiplog => 'E'
-                                       ,pr_nmrotina => 'EMPR0009_prj'
+                                       ,pr_nmrotina => 'EMPR0009'
                                        ,pr_dscritic => 'pc_efetiva_pag_atraso_tr_prc' ||
                                                        ' - pr_nmdatela: ' || pr_nmdatela ||
                                                        ' - pr_nrdconta: ' || pr_nrdconta ||
@@ -2106,11 +2106,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
         -- No caso de erro de programa gravar tabela especifica de log - 22/09/2017 - Ch 758606
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela EMPR0009_prj.pc_efetiva_pag_atraso_tr: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela EMPR0009.pc_efetiva_pag_atraso_tr: ' || SQLERRM;
         -- Grava informações para resolver erro de programa/ sistema - 22/09/2017 - Ch 758606
-        EMPR0009_prj.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
+        EMPR0009.pc_grava_erro_programa(pr_cdcooper => pr_cdcooper
                                        ,pr_dstiplog => 'E'
-                                       ,pr_nmrotina => 'EMPR0009_prj'
+                                       ,pr_nmrotina => 'EMPR0009'
                                        ,pr_dscritic => 'pc_efetiva_pag_atraso_tr_prc' ||
                                                        ' - pr_nmdatela: ' || pr_nmdatela ||
                                                        ' - pr_nrdconta: ' || pr_nrdconta ||
@@ -2173,5 +2173,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009_prj IS
       CECRED.pc_internal_exception;
   END pc_grava_erro_programa;
 
-END EMPR0009_prj;
+END EMPR0009;
 /
