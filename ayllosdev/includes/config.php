@@ -96,10 +96,10 @@
 	
 	// Variaveis para Fipe
   // PROD
-  // $UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  // $Url_SOA = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
   // Homol 
-  $UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
-  $AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
+  $Url_SOA = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	
 	
 	// Identificador dos grupos de usuarios nas maquinas HP-UX

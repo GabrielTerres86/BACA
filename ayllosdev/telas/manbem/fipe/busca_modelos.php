@@ -25,10 +25,10 @@
 
     /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
-    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ;
+    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
 	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
 	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
-    $urlServicoOperacao = $UrlFipe."ObterListaMarcaModelosFipe";
+    $urlServicoOperacao = $Url_SOA."ObterListaMarcaModelosFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
@@ -41,7 +41,7 @@
         }
     }';
 
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 

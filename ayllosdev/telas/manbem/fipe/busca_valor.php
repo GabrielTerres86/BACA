@@ -27,7 +27,7 @@
     $cdModeloVeiculo	        = (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ; 
     $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0  ; 
     
-    $urlServicoOperacao = $UrlFipe."ObterListaTabelasFipe";
+    $urlServicoOperacao = $Url_SOA."ObterListaTabelasFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
@@ -45,7 +45,7 @@
             "registrosPorPagina": 100
         }
     }';
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 

@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE            : busca_marcas.php
- * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
- * DATA CRIAÃ‡ÃƒO     : 14/08/2018
+ * CRIAÇÃO        : Maykon D. Granemann / ENVOLTI
+ * DATA CRIAÇÃO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
- * ALTERAÃ‡Ã•ES     :
+ * ALTERAÇÕES     :
  * --------------
  */
 ?> 
@@ -24,14 +24,14 @@
 	
 	$aux = "";
 
-    /******************************************************* Chama ServiÃ§o Fipe *****************************************************************/
+    /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
     $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;
 	$dsmarbem			= (isset($_POST['dsmarbem'])) ? $_POST['dsmarbem'] : 0  ;
 	$dsbemfin			= (isset($_POST['dsbemfin'])) ? utf8_decode($_POST['dsbemfin']) : 0  ;
 	$nrmodbem			= (isset($_POST['nrmodbem'])) ? utf8_decode($_POST['nrmodbem']) : 0  ;
 
-    $urlServicoOperacao = $UrlFipe."ObterListaMarcasFipe";
+    $urlServicoOperacao = $Url_SOA."ObterListaMarcasFipe";
     $data = '{
         "tabelaFIPE": {
             "tipoVeiculo": {
@@ -43,10 +43,10 @@
             "registrosPorPagina": 100
         }
     }';
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);    
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);    
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
 
-    /**************************************************** Fim Chamada ServiÃ§o Fipe ****************************************************************/
+    /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 
     /*************************************************** Tratamento dados retornados **************************************************************/
     $nameTagList = 'marca';
