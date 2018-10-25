@@ -2883,7 +2883,8 @@ create or replace package body cecred.tela_manbem is
       END IF;  
     END IF;
     
-    -- Temos de garantir que os CPFs informados na lista de bens estejam na lista
+    /*
+	-- Temos de garantir que os CPFs informados na lista de bens estejam na lista
     -- de CPFs informados na lista de Intervenientes, qualquer diferença irá gerar
     -- erro nas CCBs e no GRAVAME
     FOR rw_cpf IN cr_cpfbens LOOP
@@ -2919,8 +2920,8 @@ create or replace package body cecred.tela_manbem is
       par_dscritic := 'O(s) documento(s) '||rtrim(par_dscritic,',')||' foi(ram) cadastrado(s) como Interveniente(s) porem nao foram relacionados a nenhum Bem';
       RAISE vr_exc_erro;
     END IF;
-    
-    
+	*/
+
     -- Novamente somente na alteração
     IF par_cddopcao = 'A' THEN
       
