@@ -2646,7 +2646,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       IF vr_vlsddisp  >= rw_crapsldiof.vliofmes THEN
          vr_vllanciof := rw_crapsldiof.vliofmes;     -- Paga Total
       ELSE
-         vr_vllanciof := rw_crapsldiof.vliofmes - vr_vlsddisp;  --Paga Parcial
+         vr_vllanciof := vr_vlsddisp;  --Paga Parcial
       END IF;
 
       pc_pagar_IOF_conta_prej(pr_cdcooper   => pr_cdcooper           -- Código da Cooperativa
@@ -2698,7 +2698,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       IF vr_vlsddisp  >= rw_craplauiof.vliofmes THEN
          vr_vllanciof := rw_craplauiof.vliofmes;     -- Paga Total
       ELSE
-        vr_vllanciof := rw_craplauiof.vliofmes -  vr_vlsddisp;  --Paga Parcial
+        vr_vllanciof := vr_vlsddisp;  --Paga Parcial
       END IF;
 
       pc_pagar_IOF_conta_prej(pr_cdcooper   => pr_cdcooper           -- Código da Cooperativa
