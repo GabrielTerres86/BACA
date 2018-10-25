@@ -102,6 +102,39 @@
 	// Verifica se a empresa do plastico foi informada
 	if (empty($nmempres) && $inpessoa == 2) exibirErro('error','Empresa do Plastico deve ser informada.','Alerta - Aimaro',$funcaoAposErro,false);
 	
+	$xml  = "";
+    $xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+	$xml .= "   <tplimcrd>0</tplimcrd>"; // Concessao
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResultLimite = mensageria($xml, "ATENDA_CRD", "BUSCA_CONFIG_LIM_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjectLimite = getObjectXML($xmlResultLimite);
+	$xmlDadosLimite = $xmlObjectLimite->roottag->tags[0];
+
+	if (strtoupper($xmlDadosLimite->tags[0]->name) == 'ERRO') {
+	    $msgErro = $xmlDadosLimite->tags[0]->tags[0]->tags[4]->cdata;
+	    if ($msgErro == "") {
+	        $msgErro = $xmlDadosLimite->tags[0]->cdata;
+	    }
+
+	    exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+
+	}else{
+	    $vllimmin = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MINIMO"), 2, '.', '');
+		$vllimmax = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MAXIMO"), 2, '.', '');
+	}
+	
+	if(str_replace(',','.',$vllimpro) > $vllimmax){
+		exibirErro('error','Não é possível solicitar um valor de limite acima do limite da categoria.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	}
+	if(str_replace(',','.',$vllimpro) < $vllimmin){
+		exibirErro('error','Valor do limite solicitado abaixo do limite mínimo.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	}
+	
     // Monta o xml de requisição
 	$xmlSetCartao  = "";
 	$xmlSetCartao .= "<Root>";
