@@ -28,17 +28,20 @@
 				<input id="nmresbcc" maxlength="15" name="nmresbcc" type="text" value="<?echo getByTagName($registro->tags,'nmresbcc');?>"/>
 				</br>
 				<label for="nmextbcc">Nome Extenso:</label>
-				<input id="nmextbcc" maxlength="35" name="nmextbcc" type="text"/>		
+				<input id="nmextbcc" maxlength="35" name="nmextbcc" type="text"/>
+				</br>
+				<label for="nrcnpjif">CNPJ:</label>
+				<input id="nrcnpjif" maxlength="25" name="nrcnpjif" type="text"/>
 			</div>
 		</fieldset>
 		<fieldset style="margin-top: 10px">
 			<legend align="center" > SPB - Sistema de Pagamento Brasileiro </legend>
 			<div>
-				<label for="flgdispb">Operando com SPB-STR:</label>		
+				<label for="flgdispb">Operando com SPB-STR:</label>
 				<select id="flgdispb" name="flgdispb" onchange="controlaSitSPB();">	
 					<option value="1" >SIM</option>
 					<option value="0" selected>NAO</option>
-				</select>								
+				</select>
 				
 				<label for="dtinispb">In&iacute;cio em:</label>
 				<input id="dtinispb" name="dtinispb" type="text"/>

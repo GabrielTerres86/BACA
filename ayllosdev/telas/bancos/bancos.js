@@ -20,27 +20,28 @@ var frmConsulta = 'frmConsulta';
 var divEntrada  = 'divEntrada';
 
 var cddopcao, nmresbcc, cdbccxlt, nrispbif, flgdispb, dtinispb, nmextbcc, flgoppag, dtaltstr, dtaltpag,
-    cTodosCabecalho, btnOK, cTodosConsulta, cTodosEntrada;
+    cTodosCabecalho, btnOK, cTodosConsulta, cTodosEntrada, nrcnpjif;
 
-var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, rFlgoppag, rDtaltstr, rDtaltpag,
-    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc, cFlgoppag, cDtaltstr, cDtaltpag;
+var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, rFlgoppag, rDtaltstr, rDtaltpag, rNrcnpjif,
+    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc, cFlgoppag, cDtaltstr, cDtaltpag, cNrcnpjif;
 	
 $(document).ready(function() {
 	
 	estadoInicial();
-		
+	
 });
 
 function carregaDados(){
 
 	cddopcao = $('#cddopcao','#'+frmCab).val();
-	nmresbcc = $('#nmresbcc','#'+frmConsulta).val();  
-	cdbccxlt = $('#cdbccxlt','#'+divEntrada).val();                                             
+	nmresbcc = $('#nmresbcc','#'+frmConsulta).val();
+	cdbccxlt = $('#cdbccxlt','#'+divEntrada).val();
 	nrispbif = $('#nrispbif','#'+divEntrada).val();
-	flgdispb = $('#flgdispb','#'+frmConsulta).val();                                            
+	flgdispb = $('#flgdispb','#'+frmConsulta).val();
 	dtinispb = $('#dtinispb','#'+frmConsulta).val();
-	flgoppag = $('#flgoppag','#'+frmConsulta).val();                                            	
+	flgoppag = $('#flgoppag','#'+frmConsulta).val();
 	nmextbcc = $('#nmextbcc','#'+frmConsulta).val();
+	nrcnpjif = $('#nrcnpjif','#'+frmConsulta).val();
 					                                                 
 	return false;
 	
@@ -159,7 +160,8 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
-		cFlgoppag.desabilitaCampo();		
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();	
 		cCdbccxlt.focus();
 	
 	}else if(cCddopcao.val() == "A"){
@@ -178,7 +180,28 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
-		cFlgoppag.desabilitaCampo();		
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();
+		cCdbccxlt.focus();
+			
+	}else if(cCddopcao.val() == "M"){
+	
+		$('#frmConsulta').css('display','none');
+		$('#divEntrada').css('display','block');
+		
+		$('#btVoltar','#divBotoes').show();
+		$('#btSalvar','#divBotoes').show();
+		$('#btLupaBanco','#divEntrada').show();
+		$('#btLupaISPB','#divEntrada').show();
+		
+		cCdbccxlt.habilitaCampo();
+		cNrispbif.habilitaCampo();
+		cNmresbcc.desabilitaCampo();
+		cNmextbcc.desabilitaCampo();
+		cFlgdispb.desabilitaCampo();
+		cDtinispb.desabilitaCampo();
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();
 		cCdbccxlt.focus();
 			
 	}
@@ -232,8 +255,7 @@ function btnContinuar() {
 				cNmresbcc.focus();
 				
 				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
-												
-								
+                
 			}else {
 				
 				$('#frmConsulta').css('display','block');
@@ -249,7 +271,8 @@ function btnContinuar() {
 				cNmresbcc.habilitaCampo();
 				cNmextbcc.habilitaCampo();
 				cFlgdispb.habilitaCampo();				
-				cFlgoppag.habilitaCampo();
+				cFlgoppag.habilitaCampo();			
+				cNrcnpjif.habilitaCampo();
 				
 				if (cFlgdispb.val() == 1){
 					cDtinispb.habilitaCampo();
@@ -271,23 +294,59 @@ function btnContinuar() {
 				cNmresbcc.focus();
 				
 				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
-												
-								
+
 			}else {
 
 				buscaBanco();
-				
+
 				if (cFlgdispb.val() == 1){
 					cDtinispb.habilitaCampo();
 				}else{
 					cDtinispb.val('');
 					cDtinispb.desabilitaCampo();
 				}
-				
+
+                
+				nmresbcc.focus();
 			}
 						
 			return false;
 						
+		}else if(cCddopcao.val() == "M"){
+			
+			if ( cCdbccxlt.hasClass('campoTelaSemBorda')  ) {
+				
+				cNrcnpjif.focus();
+				$('#frmConsulta').css('display','block');
+				
+				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
+                
+			}else {
+
+				buscaBanco();	
+
+				$('#frmConsulta').css('display','block');
+
+				rDtaltstr.hide();
+				cDtaltstr.hide();
+				rDtaltpag.hide();
+				cDtaltpag.hide();
+				
+				cCdbccxlt.desabilitaCampo();
+				cNrispbif.desabilitaCampo();
+				
+				cNmresbcc.desabilitaCampo();
+				cNmextbcc.desabilitaCampo();
+				cFlgdispb.desabilitaCampo();				
+				cFlgoppag.desabilitaCampo();
+				cDtinispb.desabilitaCampo();
+				
+				cNrcnpjif.habilitaCampo();	
+				cNrcnpjif.focus();	
+	
+				
+			}
+
 		}
 		
 	}
@@ -326,7 +385,7 @@ function buscaBanco() {
 		url		: UrlSite + 'telas/bancos/busca_consulta_banco.php', 
 		data    :
 				{ 
-				  cddopcao   : cddopcao,	
+				  cddopcao   : cddopcao,
 				  cdbccxlt   : cdbccxlt,
 				  nrispbif   : nrispbif,
 				  redirect   : 'script_ajax'
@@ -372,7 +431,8 @@ function manterRotina() {
 				  flgdispb   : flgdispb,
 				  dtinispb   : dtinispb,
 				  flgoppag   : flgoppag,
-				  nmextbcc   : nmextbcc,		
+				  nmextbcc   : nmextbcc,
+				  nrcnpjif   : normalizaNumero(nrcnpjif),
 				  redirect   : 'script_ajax'					  
 				  
 				},
@@ -408,6 +468,7 @@ function formataConsulta(){
 	rDtinispb = $('label[for="dtinispb"]','#frmConsulta');
 	rDtaltstr = $('label[for="dtaltstr"]','#frmConsulta');
 	rDtaltpag = $('label[for="dtaltpag"]','#frmConsulta');	
+	rNrcnpjif = $('label[for="nrcnpjif"]','#frmConsulta');
 	
 	cCdbccxlt = $('#cdbccxlt','#divEntrada');	
 	cNrispbif = $('#nrispbif','#divEntrada');
@@ -418,6 +479,7 @@ function formataConsulta(){
 	cDtinispb = $('#dtinispb','#frmConsulta');
 	cDtaltstr = $('#dtaltstr','#frmConsulta');
 	cDtaltpag = $('#dtaltpag','#frmConsulta');
+	cNrcnpjif = $('#nrcnpjif','#frmConsulta');
 		
 	rCdbccxlt.css({'width':'80px'}).addClass('rotulo');
 	rNrispbif.css({'width':'100px'}).addClass('rotulo-linha');
@@ -428,6 +490,7 @@ function formataConsulta(){
 	rDtinispb.css({'width':'87px'}).addClass('rotulo-linha');
 	rDtaltstr.css({'width':'110px'}).addClass('rotulo-linha');
 	rDtaltpag.css({'width':'275px'}).addClass('rotulo-linha');
+	rNrcnpjif.css({'width':'153px'}).addClass('rotulo');
 	
 	cCdbccxlt.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','3');
 	cNrispbif.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','8');
@@ -438,6 +501,7 @@ function formataConsulta(){
 	cDtinispb.css({'width':'72px'}).addClass('data').val('');
 	cDtaltstr.css({'width':'72px'}).addClass('data').val('');
 	cDtaltpag.css({'width':'72px'}).addClass('data').val('');
+	cNrcnpjif.css({'width':'250px'}).addClass('cnpj');
 	
 	cTodosConsulta.desabilitaCampo();
 	cTodosEntrada.desabilitaCampo();
