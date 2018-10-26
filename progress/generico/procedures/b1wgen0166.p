@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0166.p
     Autor   : Oliver Fagionato (GATI)
-    Data    : Agosto/2013                               Alteracao: 17/04/2017
+    Data    : Agosto/2013                               Alteracao: 18/10/2018
 
     Objetivo  : Alterar, consultar, incluir e gerar relatório de empresas.
 
@@ -86,6 +86,11 @@
 
                 04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                              tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
+							 
+				18/10/2018 - Ajuste na gravacao dos campos indicadores de aviso de debito na
+				             procedure Altera_inclui para considerar o valor ja gravado na tabela
+							 caso exista. Necessario para evitar duplicidade de geracao de registro
+							 na crapavs - INC0025297. (Fabricio)
 
 
 .............................................................................*/
@@ -592,12 +597,12 @@ PROCEDURE Altera_inclui:
                        crapemp.nrdocnpj = par_nrdocnpj
                        crapemp.dsdemail = par_dsdemail
                        crapemp.flgvlddv = par_flgvlddv
-                       crapemp.inavscot = par_inavscot
-                       crapemp.inavsemp = par_inavsemp
-                       crapemp.inavsppr = par_inavsppr
-                       crapemp.inavsden = par_inavsden
-                       crapemp.inavsseg = par_inavsseg
-                       crapemp.inavssau = par_inavssau
+                       crapemp.inavscot = IF crapemp.inavscot = ? THEN par_inavscot ELSE crapemp.inavscot
+                       crapemp.inavsemp = IF crapemp.inavsemp = ? THEN par_inavsemp ELSE crapemp.inavsemp
+                       crapemp.inavsppr = IF crapemp.inavsppr = ? THEN par_inavsppr ELSE crapemp.inavsppr
+                       crapemp.inavsden = IF crapemp.inavsden = ? THEN par_inavsden ELSE crapemp.inavsden
+                       crapemp.inavsseg = IF crapemp.inavsseg = ? THEN par_inavsseg ELSE crapemp.inavsseg
+                       crapemp.inavssau = IF crapemp.inavssau = ? THEN par_inavssau ELSE crapemp.inavssau
                        crapemp.tpconven = par_tpconven
                        crapemp.tpdebcot = par_tpdebcot
                        crapemp.tpdebemp = par_tpdebemp

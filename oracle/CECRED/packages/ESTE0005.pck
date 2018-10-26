@@ -15,6 +15,11 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
 
   ---------------------------------------------------------------------------------------------------------------*/
 
+  PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
+                                        ---- OUT ----
+                                        pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                        pr_dscritic OUT VARCHAR2);              --> Descricao da critica
+  
   --> Rotina responsavel por montar o objeto json para analise
   PROCEDURE pc_gera_json_motor(pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                               ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da agencia
@@ -92,14 +97,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Rotinas de Cartões de Crédito/Débito que utilizam comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Paulo Roberto da Silva
-      Data     : Fevereiro/2018.                   Ultima atualizacao: 19/02/2018
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 03/09/2018
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Para solicitações e alterações de limites de credito de cartões utilizar a comunicação com O Motor e a Esteira de Crédito da IBRATAN.
 
-      Alteracoes:
+      Alteracoes: 03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
+                               (Diego Simas/AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -801,6 +807,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_atrasoscr      BOOLEAN;
       vr_prejscr        BOOLEAN;
       vr_qtdiaatr       NUMBER;
+      vr_inprejuz BOOLEAN;
+      vr_flesprej BOOLEAN;
+      vr_flemprej BOOLEAN;
 
       --PlTables auxiliares
       vr_tab_sald                extr0001.typ_tab_saldos;
@@ -1132,14 +1141,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                   ,wpr2.nrctrliq##10);
       rw_eprliquid cr_eprliquid%ROWTYPE;
 
-      -- Verificar se houve prejuizo do Cooperado na Cooperativa
-      CURSOR cr_crapepr_preju IS
+      -- Causou Prejuizo / Esta em Prejuizo
+      -- PJ 450 - Diego Simas (AMcom)
+      -- INICIO
+      
+      -- Cursor para encontrar o cpf/cnpj base do cooperado
+      -- e encontrar todas as contas do cooperado atraves do seu CPF/CNPJ
+      CURSOR cr_crapass_cpf_cnpj(pr_cdcooper IN crapass.cdcooper%TYPE
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT nrdconta
+        FROM crapass a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrcpfcnpj_base IN (SELECT nrcpfcnpj_base
+                                    FROM crapass x
+                                   WHERE x.cdcooper = a.cdcooper
+                                     AND x.nrdconta = pr_nrdconta)
+       ORDER BY nrdconta; 
+       rw_crapass_cpf_cnpj cr_crapass_cpf_cnpj%ROWTYPE;
+      
+      -- Verificar se o cooperado teve emprestimo com prejuizo
+      -- ou se esta com emprestimo em prejuizo na Cooperativa          
+      CURSOR cr_crapepr_preju(pr_cdcooper IN crapepr.cdcooper%TYPE
+                             ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                             ,pr_inliquid IN crapepr.inliquid%TYPE)IS
         SELECT 1
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
-           AND epr.inprejuz = 1;
+           AND epr.inprejuz = 1
+           AND epr.inliquid = pr_inliquid;
       rw_crapepr_preju cr_crapepr_preju%ROWTYPE;
+
+      --> Consultar se já houve prejuizo nessa conta do cooperado
+      CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                         pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+        SELECT 1
+          FROM tbcc_prejuizo t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta;
+      rw_prejuizo cr_prejuizo%ROWTYPE; 
+      
+      -- FIM
+      -- PJ 450 - Diego Simas (AMcom)
+      -- Causou Prejuizo / Esta em Prejuizo
 
       -- Verificar se ha emprestimo nas linhas 800 e 900
       CURSOR cr_crapepr_800_900 IS
@@ -1927,20 +1971,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generic2.put('dataUltimaRevCadast', este0002.fn_data_ibra_motor(vr_dtaltera));
       END IF;
 
-      -- Verificar se houve prejuizo do Cooperado na Cooperativa
-      OPEN cr_crapepr_preju;
+      -- Causou Prejuizo / Esta em Prejuizo     
+      -- PJ 450 - Diego Simas (AMcom) 
+      -- INICIO      
+      
+      vr_flesprej := FALSE;
+      vr_flemprej := FALSE;
+
+      FOR rw_crapass_cpf_cnpj              
+       IN cr_crapass_cpf_cnpj
+         (pr_cdcooper => pr_cdcooper
+         ,pr_nrdconta => pr_nrdconta) LOOP    
+          -- Para cada conta do associado cpf/cnpj 
+          -- verificamos se está em prejuízo de empréstimo e conta corrente
+          -- ou se já causou prejuizo de emprestimo e conta corrente
+          
+          -- Está em Prejuizo na Cooperativa      
+          -- Emprestimo
+          OPEN cr_crapepr_preju(pr_cdcooper => pr_cdcooper 
+                               ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta
+                               ,pr_inliquid => 0);
       FETCH cr_crapepr_preju
         INTO rw_crapepr_preju;
 
-      IF cr_crapepr_preju%FOUND OR rw_crapass.cdsitdtl IN (5, 6, 7, 8) THEN
-        vr_flprjcop := TRUE;
-      ELSE
-        vr_flprjcop := FALSE;
+          IF cr_crapepr_preju%FOUND THEN
+             vr_flemprej := TRUE;
       END IF;
+          
       CLOSE cr_crapepr_preju;
+          
+          -- Conta Corrente
+          vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, rw_crapass_cpf_cnpj.nrdconta);
+          IF vr_inprejuz = TRUE THEN
+             vr_flemprej := TRUE;
+          END IF;
+          
+          -- Esteve algum dia em Prejuizo na Cooperativa      
+          -- Emprestimo
+          OPEN cr_crapepr_preju(pr_cdcooper => pr_cdcooper 
+                               ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta
+                               ,pr_inliquid => 1);
+          FETCH cr_crapepr_preju
+           INTO rw_crapepr_preju;
+          
+          IF cr_crapepr_preju%FOUND THEN
+             vr_flesprej := TRUE;
+          END IF;
+          
+          CLOSE cr_crapepr_preju;
+          
+          -- Conta Corrente                   
+          OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper 
+                          ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta);
+          FETCH cr_prejuizo
+           INTO rw_prejuizo;
+          
+          IF cr_prejuizo%FOUND THEN
+             vr_flesprej := TRUE;
+          END IF;
+          
+          CLOSE cr_prejuizo;
+                
+      END LOOP;
 
       -- Enviar causouPrejuizoCoop
-      vr_obj_generic2.put('causouPrejuizoCoop', vr_flprjcop);
+      vr_obj_generic2.put('causouPrejuizoCoop', vr_flesprej);
+      -- Enviar estaEmPrejuizoCoop
+      vr_obj_generic2.put('estaEmPrejuizoCoop', vr_flemprej);
+         
+      -- FIM      
+      -- PJ 450 - Diego Simas (AMcom)
+      -- Causou Prejuizo / Esta em Prejuizo
 
       -- Verificar se ha emprestimo nas linhas 800 e 900
       OPEN cr_crapepr_800_900;
@@ -2374,6 +2475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       END IF;
 
+      
       -- Então chamaremos a rotina para busca do endividamento total
       gene0005.pc_saldo_utiliza(pr_cdcooper    => pr_cdcooper
                                ,pr_tpdecons    => 3
@@ -3916,7 +4018,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     rw_crapprp cr_crapprp%ROWTYPE;
     
     --Busca categorias de cartão
-    CURSOR cr_catcrd(pr_tpctahab crapadc.tpctahab%TYPE) IS
+    CURSOR cr_catcrd(pr_tpctahab crapadc.tpctahab%TYPE
+                    ,pr_tplimcrd tbcrd_config_categoria.tplimcrd%TYPE) IS
       SELECT tcc.cdadmcrd
             ,adc.nmadmcrd
             ,tcc.vllimite_minimo
@@ -3924,6 +4027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FROM crapadc adc
             ,tbcrd_config_categoria tcc
        WHERE tcc.cdcooper = pr_cdcooper
+         AND tcc.tplimcrd = pr_tplimcrd
          AND adc.cdcooper = tcc.cdcooper
          AND adc.cdadmcrd = tcc.cdadmcrd
          AND adc.tpctahab = pr_tpctahab
@@ -3986,6 +4090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
     vr_qtdiarpv      INTEGER;
+    vr_tplimcrd      NUMBER(1) := 0; -- 0-concessao, 1-alteracao
 
   BEGIN
 
@@ -4178,6 +4283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_generico.put('codigoCatAtualCartaoCecred',0);
       vr_obj_generico.put('descricaoCatAtualCartaoCecred','');
       vr_obj_generico.put('contaCartao',0);
+      vr_tplimcrd := 0; -- concessao
     ELSE
       -- Se for A - Alteracao (ou seja, alteracao de limite) enviaremos os dados.
       OPEN cr_crawcrd (pr_cdcooper => pr_cdcooper
@@ -4195,15 +4301,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generico.put('descricaoCatAtualCartaoCecred','');
         vr_obj_generico.put('contaCartao',0);
       END IF;
+      vr_tplimcrd := 1; -- alteracao
       CLOSE cr_crawcrd;
     END IF;
 
     -- Montar objeto Categoria Cartão Cecred
     vr_lst_generic3 := json_list();
 
+     
+
     -- Buscar todos os dados do SPC
     -- Efetuar laço para trazer todos os registros
-    FOR rw_catcrd IN cr_catcrd(pr_tpctahab => rw_crapass.inpessoa) LOOP
+    FOR rw_catcrd IN cr_catcrd(pr_tpctahab => rw_crapass.inpessoa
+                              ,pr_tplimcrd => vr_tplimcrd) LOOP
 
       -- Criar objeto para a operação e enviar suas informações
       vr_obj_generic3 := json();
@@ -4862,7 +4972,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     
     --Busca caterogias de cartão
     CURSOR cr_catcrd(pr_cdcooper IN crapass.cdcooper%TYPE
-                    ,pr_tpctahab crapadc.tpctahab%TYPE) IS
+                    ,pr_tpctahab crapadc.tpctahab%TYPE
+                    ,pr_tplimcrd IN tbcrd_config_categoria.tplimcrd%TYPE) IS
       SELECT tcc.cdadmcrd
             ,adc.nmresadm
             ,tcc.vllimite_minimo
@@ -4870,6 +4981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FROM crapadc adc
             ,tbcrd_config_categoria tcc
        WHERE tcc.cdcooper = pr_cdcooper
+         AND tcc.tplimcrd = pr_tplimcrd
          AND adc.cdcooper = tcc.cdcooper
          AND adc.cdadmcrd = tcc.cdadmcrd
          AND adc.tpctahab = pr_tpctahab
@@ -4910,12 +5022,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_dsmensag VARCHAR2(32767);
     vr_contigencia VARCHAR2(4000);
     vr_temcrapass  VARCHAR2(1);
+    vr_tplimcrd NUMERIC(1) := 0; -- 0=concessao, 1-alteracao
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
 
   BEGIN
+    
+    IF pr_tpproces='I' THEN
+      vr_tplimcrd := 0; -- concessao
+    ELSE
+      vr_tplimcrd := 1; -- alteracao
+    END IF;
+    
     -- Buscar informações do Associado
     OPEN cr_crapass;
     FETCH cr_crapass INTO rw_crapass;
@@ -4926,7 +5046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_temcrapass := 'S';
         
       FOR rw_catcrd IN cr_catcrd(rw_crapass.cdcooper
-                                ,rw_crapass.inpessoa) LOOP
+                                ,rw_crapass.inpessoa
+                                ,vr_tplimcrd) LOOP
         -- Criar objeto para a operação e enviar suas informações 
         vr_obj_anl := json();
         vr_obj_anl.put('codigo',rw_catcrd.cdadmcrd);
@@ -5784,6 +5905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     --Busca dados Alteração de Limite
     CURSOR cr_limatu (pr_nrcontacartao tbcrd_limite_atualiza.nrconta_cartao%TYPE) IS
       SELECT a.vllimite_alterado
+            ,a.vllimite_anterior
             ,a.dsjustificativa
             ,a.dsprotocolo
             ,a.nrproposta_est
@@ -5792,15 +5914,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
          AND a.nrdconta = pr_nrdconta
          AND a.nrconta_cartao = pr_nrcontacartao
          AND a.nrctrcrd = pr_nrctrcrd
-         AND a.tpsituacao = 6
-         AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
-         AND NOT EXISTS (SELECT 1
-                             FROM tbcrd_limite_atualiza b
-                            WHERE b.cdcooper = a.cdcooper
-                              AND b.nrdconta = a.nrdconta
-                              AND b.nrconta_cartao = a.nrconta_cartao
-                              AND b.idatualizacao > a.idatualizacao)
-      ORDER BY idatualizacao DESC;
+         AND a.tpsituacao = 6 -- em analise
+         AND a.insitdec   = 1 -- Sem Aprovação
+         AND a.dtalteracao = (select max(x.dtalteracao)
+                                from tbcrd_limite_atualiza x
+                               where a.cdcooper = x.cdcooper
+                                 AND a.nrdconta = x.nrdconta
+                                 AND a.nrctrcrd = x.nrctrcrd 
+                                 AND a.nrconta_cartao = x.nrconta_cartao
+                                 AND a.nrproposta_est = x.nrproposta_est);
     rw_limatu cr_limatu%ROWTYPE;      
     vr_vllimite_alterado tbcrd_limite_atualiza.vllimite_alterado%TYPE;
     
@@ -5827,12 +5949,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     rw_crapadc cr_crapadc%ROWTYPE;
     
     -- Busca limite maximo
-    CURSOR cr_tbcrd_config_categoria (pr_cdcooper crapcop.cdcooper%TYPE
-                                     ,pr_cdadmcrd crapadc.cdadmcrd%TYPE) IS
+    CURSOR cr_tbcrd_config_categoria (pr_cdcooper tbcrd_config_categoria.cdcooper%TYPE
+                                     ,pr_cdadmcrd tbcrd_config_categoria.cdadmcrd%TYPE
+                                     ,pr_tplimcrd tbcrd_config_categoria.tplimcrd%TYPE) IS
     SELECT cat.vllimite_maximo
       FROM tbcrd_config_categoria cat 
      WHERE cat.cdcooper = pr_cdcooper
-       AND cat.cdadmcrd = pr_cdadmcrd;
+       AND cat.cdadmcrd = pr_cdadmcrd
+       AND cat.tplimcrd = pr_tplimcrd;
     rw_tbcrd_config_categoria cr_tbcrd_config_categoria%ROWTYPE;
 
     -- Busca categoria cartao atual que esta sendo upgraded
@@ -5884,6 +6008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_dsjustif     crawcrd.dsjustif%TYPE;
     vr_vlsugmot     crawcrd.vllimdlr%TYPE;
     vr_nrctrcrd     crawcrd.nrctrcrd%TYPE;
+    vr_tplimcrd     NUMERIC(1) := 0; -- 0=concessao, 1=alteracao
     
     -- Hora da impressao
     vr_hrimpres NUMBER;
@@ -5947,6 +6072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
+      vr_tplimcrd := 1; -- alteracao
     ELSE
       vr_vllimite := rw_crawcrd.vllimcrd;
       vr_tpprodut := 'LM';
@@ -5956,6 +6082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 	  IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
+      vr_tplimcrd := 0; -- concessao
     END IF;    
     CLOSE cr_limatu;
     
@@ -6130,7 +6257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     
     -- Busca limite maximo da categoria
     OPEN cr_tbcrd_config_categoria (pr_cdcooper => pr_cdcooper
-                                   ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);
+                                   ,pr_cdadmcrd => rw_crawcrd.cdadmcrd
+                                   ,pr_tplimcrd => vr_tplimcrd);
     FETCH cr_tbcrd_config_categoria INTO rw_tbcrd_config_categoria;
     IF cr_tbcrd_config_categoria%FOUND THEN
       vr_obj_proposta.put('valorLimiteCategoria',este0001.fn_decimal_ibra(rw_tbcrd_config_categoria.vllimite_maximo));
@@ -6225,10 +6353,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         
         -- Se o arquivo não existir
         IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN
+          -- caso nao achar esperar um pouco antes de zerar erro
+          sys.dbms_lock.sleep(0.5);
+          IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN
           -- Remover o conteudo do nome do arquivo para não enviar
           vr_nmarquiv := null;
         END IF;
-        
+        END IF;
       END IF;
     END IF;
 
@@ -6286,9 +6417,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       -- Executar comando para Download
 --ATENCAO - EM PRODUCAO alterar para 'S' apenas
+      --ATENCAO - caso ocorrer erro em HOMOL alterar para 'SR' para testar
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando);
-
 
       -- Se NAO encontrou o arquivo
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
@@ -6679,7 +6810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
 
       -- Tentaremos enviar alteração com reinício de fluxo para a Esteira
-      este0005.pc_alterar_proposta_est (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+      ESTE0005.pc_alterar_proposta_est (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
                                        ,pr_cdagenci => pr_cdagenci          --> Codigo da agencia
                                        ,pr_cdoperad => pr_cdoperad          --> codigo do operador
                                        ,pr_cdorigem => pr_cdorigem          --> Origem da operacao
@@ -7013,7 +7144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     --> Atualizar proposta
     BEGIN
       UPDATE crawcrd crd
-         SET crd.dsprotoc = nvl(vr_dsprotocolo,' '),
+         SET crd.dsprotoc = nvl(vr_dsprotocolo,crd.dsprotoc),
              crd.dtaprova = NULL
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
@@ -7042,6 +7173,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
+        IF lower(vr_dscritic) LIKE '%efetuar a reanalise%limite de reanalises%proposta foi excedido%' THEN
+           BEGIN
+             UPDATE crawcrd
+                SET insitcrd = 6 --Cancelado
+                   ,flgprcrd = 0 --Nao eh mais o primeiro cartao
+                   ,dtcancel = TRUNC(SYSDATE) -- Setar a data de cancelamento
+              WHERE cdcooper = pr_cdcooper
+                AND nrdconta = pr_nrdconta
+                AND nrctrcrd = pr_nrctrcrd;
+                vr_dscritic := 'Nao foi possivel efetuar a reanalise, pois o limite de reanalises desta proposta foi excedido.';
+           EXCEPTION
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao cancelar proposta.';
+           END;
+        END IF;
         RAISE vr_exc_erro;
     END IF;
 

@@ -1224,6 +1224,10 @@ create or replace package body cecred.INSS0001 as
                       
          25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
                       (Belli - Envolti - Chamado REQ0020667)
+
+         22/06/2018 - PRJ450 - Inclusao de chamada da LANC0001, para centralizar 
+                            lancamentos CRAPLCM, nas procedures: pc_gera_credito_em_conta, 
+                            pc_transfere_beneficio e pc_benef_inss_gera_credito (Teobaldo J, AMcom)
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1251,6 +1255,9 @@ create or replace package body cecred.INSS0001 as
        Objetivo  : Procedimento para gerar lote e lancamento, para gerar credito em conta
 
        Alteracoes: 04/02/2013 - Conversao Progress >> Oracle (PLSQL) (Odirlei-AMcom)
+       
+                   22/06/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                                lancamentos na CRAPLCM (Teobaldo J, AMcom)
       ---------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erros
     vr_exc_erro exception;
@@ -1287,6 +1294,13 @@ create or replace package body cecred.INSS0001 as
          and nrdolote = 10114;
 
     rw_craplot cr_craplot%rowtype;
+
+    --Variaveis de criticas / retorno
+    vr_cdcritic       INTEGER;
+    vr_dscritic       VARCHAR2(4000); 
+    vr_incrineg       INTEGER;
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
+    
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_gera_credito_em_conta');
@@ -1379,40 +1393,35 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
     end;
 
-    -- Inserir Lancamento em deposito a vista
-    begin
-      insert into craplcm
-              (cdcooper,
-               dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote,
-               nrdconta,
-               nrdctabb,
-               nrdctitg,
-               nrdocmto,
-               cdhistor,
-               vllanmto,
-               nrseqdig)
-             values
-              (pr_cdcooper,            -- cdcooper
-               rw_craplot.dtmvtolt,    -- dtmvtolt
-               rw_craplot.cdagenci,    -- cdagenci
-               rw_craplot.cdbccxlt,    -- cdbccxlt
-               rw_craplot.nrdolote,    -- nrdolote
-               rw_craplbi.nrdconta,    -- nrdconta
-               rw_craplbi.nrdconta,    -- nrdctabb
-               gene0002.fn_mask(rw_craplbi.nrdconta,'99999999'), -- nrdctitg
-               rw_craplot.nrseqdig,    -- nrdocmto
-               581,                    -- cdhistor
-               rw_craplbi.vlliqcre,    -- vllanmto
-               rw_craplot.nrseqdig     -- nrseqdig
+    -- 22/06/2018 - Efetuar lancamento na conta-corrente
+    LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => rw_craplot.dtmvtolt 
+                                      ,pr_cdagenci => rw_craplot.cdagenci
+                                      ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                      ,pr_nrdolote => rw_craplot.nrdolote 
+                                      ,pr_nrdconta => rw_craplbi.nrdconta
+                                      ,pr_nrdctabb => rw_craplbi.nrdconta
+                                      ,pr_nrdctitg => gene0002.fn_mask(rw_craplbi.nrdconta,'99999999')
+                                      ,pr_nrdocmto => rw_craplot.nrseqdig
+                                      ,pr_cdhistor => 581
+                                      ,pr_nrseqdig => rw_craplot.nrseqdig 
+                                      ,pr_vllanmto => rw_craplbi.vlliqcre
+                                      ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                      ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                      ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                      ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                      ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                      ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
               );
-    exception
-      when others then
-        pr_dscritic := 'Erro ao inserir Lancamento em deposito a vista(craplcm): '||sqlerrm;
+
+    -- Conforme tipo de erro realiza acao diferenciada
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+        pr_dscritic := 'Erro ao inserir Lancamento em deposito a vista(craplcm): '||vr_dscritic;
         RAISE vr_exc_erro;
-    end;
+      END IF;
+    END IF;
+    
 
     --Atualizar Lancamento de credito de beneficios do INSS
     begin
@@ -1503,6 +1512,9 @@ create or replace package body cecred.INSS0001 as
 
        Alteracoes: 04/02/2013 - Conversao Progress >> Oracle (PLSQL) (Odirlei-AMcom)
 
+                   21/06/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                                lancamentos na CRAPLCM (Teobaldo J, AMcom)
+
       ---------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erros
     vr_exc_erro exception;
@@ -1550,6 +1562,13 @@ create or replace package body cecred.INSS0001 as
          and cdhistor = pr_cdhistor;
 
     rw_craphis cr_craphis%rowtype;
+    
+    --Variaveis de criticas / retorno
+    vr_cdcritic       INTEGER;
+    vr_dscritic       VARCHAR2(4000); 
+    vr_incrineg       INTEGER;
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
+    
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 664301
 	  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_transfere_beneficio');
@@ -1563,20 +1582,29 @@ create or replace package body cecred.INSS0001 as
       -- Fechar o cursor pois havera raise
       CLOSE cr_craplbi;
       -- Montar mensagem de critica
-      pr_dscritic := 'Registro n?o localizado no buffer de lancamentos de creditos de beneficios do INSS';
+      pr_dscritic := 'Registro nao localizado no buffer de lancamentos de creditos de beneficios do INSS';
       RAISE vr_exc_erro;
     else
       -- Apenas fechar o cursor
       close cr_craplbi;
     end if;
 
+    -- 22/06/2018 - Verificar se pode debitar (Regra de Negocio)
+    IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_cdhistor => pr_cdhistor) THEN
+      pr_dscritic := 'Conta nao permite lancamento de debito (INSS0001, regra da LANC0001). Cooperativa: '|| 
+                      pr_cdcooper || ' - Nr. Conta: ' || pr_nrdconta || ' - Cod. historico: ' || pr_cdhistor;
+      RAISE vr_exc_erro;
+    END IF; 
+
     -- Buscar lote
     OPEN cr_craplot;
     FETCH cr_craplot
      INTO rw_craplot;
-    -- Se n?o encontrar
+    -- Se nao encontrar
     if cr_craplot%notfound then
-      -- Caso ainda n?o exista o lote, deve cria-lo
+      -- Caso ainda nao exista o lote, deve cria-lo
       begin
         insert into craplot
                  (cdcooper,
@@ -1617,49 +1645,41 @@ create or replace package body cecred.INSS0001 as
     end if;
     close cr_craplot;
 
-    -- Inserir Lancamento em deposito a vista
-    begin
-      insert into craplcm
-              (
-               dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote,
-               nrdconta,
-               nrdctabb,
-               nrdctitg,
-               vllanmto,
-               cdhistor,
-               nrseqdig,
-               nrdocmto,
-               cdcooper
-               )
-             values
-              (
-               rw_craplot.dtmvtolt,    -- dtmvtolt
-               rw_craplot.cdagenci,    -- cdagenci
-               rw_craplot.cdbccxlt,    -- cdbccxlt
-               rw_craplot.nrdolote,    -- nrdolote
-               pr_nrdconta,            -- nrdconta
-               pr_nrdconta,            -- nrdctabb
-               gene0002.fn_mask(pr_nrdconta,'99999999'), -- nrdctitg
-               rw_craplbi.vlliqcre,    -- vllanmto
-               pr_cdhistor,            -- cdhistor
-               nvl(rw_craplot.nrseqdig,0) + 1,-- nrseqdig
-               nvl(rw_craplot.nrseqdig,0) + 1,-- nrdocmto
-               pr_cdcooper             -- cdcooper
+    -- 22/06/2018 - Inserir Lancamento em deposito a vista
+    LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => rw_craplot.dtmvtolt 
+                                      ,pr_cdagenci => rw_craplot.cdagenci
+                                      ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                      ,pr_nrdolote => rw_craplot.nrdolote 
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrdctabb => pr_nrdconta
+                                      ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+                                      ,pr_nrdocmto => nvl(rw_craplot.nrseqdig,0) + 1
+                                      ,pr_cdhistor => pr_cdhistor
+                                      ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1 
+                                      ,pr_vllanmto => rw_craplbi.vlliqcre
+                                      ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                      ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                      ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                      ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                      ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                      ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
               );
-    exception
-      when others then
-        pr_dscritic := 'Erro ao inserir Lancamento em deposito a vista(craplcm): '||sqlerrm;
+
+    -- Conforme tipo de erro realiza acao diferenciada
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+        pr_dscritic := 'Erro ao inserir Lancamento em deposito a vista(craplcm): '||vr_dscritic;
         RAISE vr_exc_erro;
-    end;
+      END If;
+    END IF;
+
 
     -- Buscar historico do lancamento
     OPEN cr_craphis;
     FETCH cr_craphis
      INTO rw_craphis;
-    -- Se n?o encontrar
+    -- Se nao encontrar
     if cr_craphis%notfound then
       close cr_craphis;
     else
@@ -1769,12 +1789,12 @@ create or replace package body cecred.INSS0001 as
     when vr_exc_erro then
       -- Retornar critica para o programa que chamou a pck
       IF pr_cdcritic IS NULL THEN
-        -- Utilizaremos codigo zero, pois foi erro n?o cadastrado
+        -- Utilizaremos codigo zero, pois foi erro nao cadastrado
         pr_cdcritic := 0;
       END IF;
 
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n?o tratado
+      -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
 
@@ -3557,6 +3577,9 @@ create or replace package body cecred.INSS0001 as
                               confirmação do pagamento apenas quando estiver rodando pelo
                               processo (Douglas - Chamado 314031)
                 
+                 25/06/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                              lancamentos na CRAPLCM (Teobaldo J, AMcom)
+    
    ---------------------------------------------------------------------------------------------------------------*/
       --Registro do tipo tabela craplot
       rw_craplot craplot%ROWTYPE;
@@ -3569,6 +3592,12 @@ create or replace package body cecred.INSS0001 as
                                           
       --Variaveis de Excecoes
       vr_exc_erro EXCEPTION;                                       
+      
+      --Variaveis de criticas / retorno
+      vr_cdcritic       INTEGER;
+      vr_incrineg       INTEGER;
+      vr_tab_retorno    LANC0001.typ_reg_retorno;
+                                         
     BEGIN
   	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_gera_credito');
@@ -3663,34 +3692,36 @@ create or replace package body cecred.INSS0001 as
         
       --Inserir lancamento de Credito
       BEGIN
-        INSERT INTO craplcm(craplcm.cdcooper
-                           ,craplcm.dtmvtolt
-                           ,craplcm.cdagenci
-                           ,craplcm.cdbccxlt
-                           ,craplcm.nrdolote
-                           ,craplcm.nrdctabb
-                           ,craplcm.nrdocmto
-                           ,craplcm.nrdconta
-                           ,craplcm.nrdctitg
-                           ,craplcm.cdhistor
-                           ,craplcm.vllanmto
-                           ,craplcm.nrseqdig
-                           ,craplcm.hrtransa
-                           ,craplcm.cdpesqbb)
-                    VALUES (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,pr_nrdconta
-                           ,rw_craplot.nrseqdig
-                           ,pr_nrdconta
-                           ,to_char(pr_nrdconta,'fm00000000')
-                           ,1399
-                           ,pr_vllanmto
-                           ,rw_craplot.nrseqdig
-                           ,gene0002.fn_busca_time 
-                           ,pr_nrrecben||';'||to_char(pr_dtcompet,'YYYYMM'));
+        -- 26/06/2018 - Efetuar lancamento de credito
+        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                          ,pr_dtmvtolt => rw_craplot.dtmvtolt 
+                                          ,pr_cdagenci => rw_craplot.cdagenci
+                                          ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          ,pr_nrdolote => rw_craplot.nrdolote 
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrdctabb => pr_nrdconta
+                                          ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')
+                                          ,pr_nrdocmto => rw_craplot.nrseqdig
+                                          ,pr_cdhistor => 1399
+                                          ,pr_vllanmto => pr_vllanmto
+                                          ,pr_nrseqdig => rw_craplot.nrseqdig 
+                                          ,pr_hrtransa => gene0002.fn_busca_time
+                                          ,pr_cdpesqbb => pr_nrrecben||';'||to_char(pr_dtcompet,'YYYYMM')
+                                          ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                          ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                          ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                          ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                          ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                          ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                          );
+
+        -- Conforme tipo de erro realiza acao diferenciada
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+            vr_dscritic := 'Erro ao inserir Lancamento credito beneficio INSS(craplcm): '||vr_dscritic;
+            RAISE vr_exc_erro;              
+          END IF;
+        END IF;      
          
         
         /*M195 verificar na lista de parametros de historicos pemitidos

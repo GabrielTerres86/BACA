@@ -95,8 +95,12 @@ DEF TEMP-TABLE tt-cartoes NO-UNDO
     
 DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD nrcrcard LIKE crawcrd.nrcrcard  
+    FIELD nrdoccrd LIKE crawcrd.nrdoccrd
     FIELD nrctrcrd LIKE crawcrd.nrctrcrd
+    FIELD nmresadm LIKE crapadc.nmresadm
     FIELD dscartao AS CHAR 
+    FIELD nmempttl LIKE crapass.nmprimtl
+    FIELD nrcnpjtl LIKE crapass.nrcpfcgc
     FIELD nmtitcrd LIKE crawcrd.nmtitcrd
     FIELD nmextttl LIKE crawcrd.nmextttl
     FIELD nrcpftit LIKE crawcrd.nrcpftit

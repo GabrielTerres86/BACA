@@ -73,6 +73,7 @@
 	$nmempres = $_POST["nmempres"];
 	$flgdebit = $_POST['flgdebit'];
 	$cdadmcrd = $_POST['cdadmcrd'];
+	$nrctrcrd = isset($_POST['nrctrcrd']) ? $_POST['nrctrcrd'] : '';
 	
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
 	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Aimaro',$funcaoAposErro,false);
@@ -100,6 +101,41 @@
 	
 	// Verifica se a empresa do plastico foi informada
 	if (empty($nmempres) && $inpessoa == 2) exibirErro('error','Empresa do Plastico deve ser informada.','Alerta - Aimaro',$funcaoAposErro,false);
+	
+	if ($cdadmcrd > 17 && $cdadmcrd < 16) { // se não for debito
+	$xml  = "";
+    $xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+	$xml .= "   <tplimcrd>0</tplimcrd>"; // Concessao
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResultLimite = mensageria($xml, "ATENDA_CRD", "BUSCA_CONFIG_LIM_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjectLimite = getObjectXML($xmlResultLimite);
+	$xmlDadosLimite = $xmlObjectLimite->roottag->tags[0];
+
+	if (strtoupper($xmlDadosLimite->tags[0]->name) == 'ERRO') {
+	    $msgErro = $xmlDadosLimite->tags[0]->tags[0]->tags[4]->cdata;
+	    if ($msgErro == "") {
+	        $msgErro = $xmlDadosLimite->tags[0]->cdata;
+	    }
+
+			exibirErro('error',utf8ToHtml($msgErro),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+
+	}else{
+	    $vllimmin = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MINIMO"), 2, '.', '');
+		$vllimmax = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MAXIMO"), 2, '.', '');
+	}
+	
+	if(str_replace(',','.',$vllimpro) > $vllimmax){
+			exibirErro('error',utf8ToHtml('Não é possível solicitar um valor de limite acima do limite da categoria.'),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	}
+	if(str_replace(',','.',$vllimpro) < $vllimmin){
+			exibirErro('error',utf8ToHtml('Valor do limite solicitado abaixo do limite mínimo.'),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+		}
+	}
 	
     // Monta o xml de requisição
 	$xmlSetCartao  = "";
@@ -130,6 +166,7 @@
 	$xmlSetCartao .= "		<dsrepinc>".$dsrepinc."</dsrepinc>";
 	$xmlSetCartao .= "		<dsrepres>".$dsrepres."</dsrepres>";
 	$xmlSetCartao .= "		<flgdebit>".$flgdebit."</flgdebit>";
+	$xmlSetCartao .= "		<nrctrcrd>".$nrctrcrd."</nrctrcrd>";
 	$xmlSetCartao .= "	</Dados>";
 	$xmlSetCartao .= "</Root>";
 
@@ -161,7 +198,11 @@
 		$executar .= "bloqueiaFundo(divRotina,\"nrctaav1\",\"frmNovoCartao\",false);";		
 		
 		// Mostra mensagem de confirmação para finalizar a operação
-		$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+		if (empty($nrctrcrd)) {
+			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+		} else {
+			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+		}
 		
 	} else {
 	   
@@ -175,7 +216,11 @@
 		// Esconde mensagem de aguardo
 		$executar .= "hideMsgAguardo();";
 		$executar .= "bloqueiaFundo(divRotina);";
-		$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		if (empty($nrctrcrd)) {
+			$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		} else {
+			$executar .= "showConfirmacao(\"Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		}
 		
 
 		// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB

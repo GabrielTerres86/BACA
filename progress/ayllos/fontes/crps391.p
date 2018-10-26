@@ -162,6 +162,7 @@ DEF   VAR b1wgen0011   AS HANDLE                                     NO-UNDO.
 DEF STREAM str_1.
 DEF STREAM str_2.
 DEF STREAM str_3.
+DEF STREAM str_4.
 
 DEF BUFFER b_crapcop     FOR crapcop.
 DEF BUFFER b_gnconve     FOR gnconve.
@@ -202,7 +203,7 @@ DEF VAR aux_nrseqdeb     AS INTE                              NO-UNDO.
 DEF VAR aux_tprepass     AS CHAR    FORMAT "x(03)"            NO-UNDO.
 DEF VAR aux_tprepas2     AS CHAR    FORMAT "x(03)"            NO-UNDO.
 DEF VAR aux_linhaarq     AS CHAR                              NO-UNDO.  
-
+DEF VAR aux_flgarqvi     AS LOGICAL                           NO-UNDO.
 DEF VAR aux_nrdconta_debito  LIKE craplcm.nrdconta            NO-UNDO.
 DEF VAR aux_nrdconta_credito LIKE craplcm.nrdconta            NO-UNDO.
 
@@ -224,6 +225,7 @@ DEF VAR rel_nmmodulo AS CHAR    FORMAT "x(15)" EXTENT 9
 DEF VAR aux_arqrel_1 AS CHAR                                  NO-UNDO.
 DEF VAR aux_arqrel_2 AS CHAR                                  NO-UNDO.
 DEF VAR aux_arqrel_3 AS CHAR                                  NO-UNDO.
+DEF VAR aux_arqrel_4 AS CHAR                                  NO-UNDO.
 DEF VAR aux_flgradar AS LOGICAL                               NO-UNDO.
 
 DEF VAR rel_cpfcgrcb AS CHAR                                  NO-UNDO.
@@ -233,6 +235,15 @@ DEF VAR aux_dsccdrcb AS INTE    FORMAT "zzzzzzz9"             NO-UNDO.
 DEF VAR aux_dsccdrcb2 LIKE gnconve.dsccdrcb                   NO-UNDO.    
 DEF VAR aux_dsccdrcb3 LIKE gnconve.dsccdrcb                   NO-UNDO. 
 
+DEF TEMP-TABLE tt-arq-conve NO-UNDO
+         FIELD cdcooper LIKE gncontr.cdcooper
+         FIELD dtmvtolt LIKE gncontr.dtmvtolt
+		 FIELD nrctdbfl LIKE gnconve.nrctdbfl
+		 FIELD vltarifa LIKE gncontr.vltarifa
+		 FIELD nmempres LIKE gnconve.nmempres
+		 FIELD dsdircop LIKE crapcop.dsdircop
+		 FIELD cdconven LIKE gncontr.cdconven.
+		 
 DEF TEMP-TABLE tt-arq-radar NO-UNDO
          FIELD cdcooper LIKE gncontr.cdcooper
          FIELD dtmvtolt LIKE gncontr.dtmvtolt
@@ -282,8 +293,10 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
 
  RUN fontes/iniprg.p.
  
+ 
  IF   glb_cdcritic > 0 THEN
       RETURN.
+ 
  
  /* Busca dados da cooperativa */
  FIND crabcop WHERE crabcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
@@ -300,7 +313,12 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         aux_arqrel_2 = "rl/crrl403.lst"
         aux_arqrel_3 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
                                  + STRING(MONTH(glb_dtmvtolt),"99")
-                                 + STRING(DAY(glb_dtmvtolt),"99") + "_REPCNVFIL.txt".
+                                 + STRING(DAY(glb_dtmvtolt),"99") + "_REPCNVFIL.txt"
+								 
+		aux_arqrel_4 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
+                                 + STRING(MONTH(glb_dtmvtolt),"99")
+                                 + STRING(DAY(glb_dtmvtolt),"99") + "_TARIFA_CONVENIOS.txt".
+								 
                                  
  {includes/cabrel132_1.i }
  {includes/cabrel132_2.i }
@@ -308,6 +326,7 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
  OUTPUT STREAM str_1 TO VALUE(aux_arqrel_1) PAGED PAGE-SIZE 62.
  OUTPUT STREAM str_2 TO VALUE(aux_arqrel_2) PAGED PAGE-SIZE 62.
  OUTPUT STREAM str_3 TO VALUE(aux_arqrel_3) PAGED PAGE-SIZE 62.
+ OUTPUT STREAM str_4 TO VALUE(aux_arqrel_4) PAGED PAGE-SIZE 62.
 
  VIEW STREAM str_1 FRAME f_cabrel132_1.
  VIEW STREAM str_2 FRAME f_cabrel132_2.
@@ -372,6 +391,9 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
  ASSIGN aux_tparrecada = "".
  ASSIGN aux_titulo_rel1 = "LANCAMENTOS - COOPERATIVA (CAIXA/DEBITO AUTOMATICO)"
         aux_titulo_rel2 = "REPASSE P/COOPERATIVAS(CAIXA/DEBITO AUTOMATICO)".
+ 
+ 
+ EMPTY TEMP-TABLE tt-arq-conve.
  
  RUN processa_convenios_deb_cred.   /* gncontr.tpdcontr = 1 ou 4 */
  
@@ -439,6 +461,58 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
          END.
      END.
  END.
+ 
+ /* criar arquivo contabil prj421*/
+ 
+ ASSIGN aux_flgarqvi = FALSE.    
+
+ FOR EACH tt-arq-conve NO-LOCK:           
+         
+         if not aux_flgarqvi then
+         do:
+            ASSIGN aux_arqrel_4 = "/usr/coop/" + crabcop.dsdircop + "/" + "contab/" 
+                                 + SUBSTRING(STRING(YEAR(tt-arq-conve.dtmvtolt),"9999"),3,2)
+                                 + STRING(MONTH(tt-arq-conve.dtmvtolt),"99")
+                                 + STRING(DAY(tt-arq-conve.dtmvtolt),"99") + "_TARIFA_CONVENIOS.txt".
+                               
+            OUTPUT STREAM str_4 TO VALUE(aux_arqrel_4).  
+            ASSIGN aux_flgarqvi = TRUE. 
+         end.
+          
+         IF tt-arq-conve.vltarifa > 0 THEN
+         DO:
+           ASSIGN aux_linhaarq = STRING(YEAR(tt-arq-conve.dtmvtolt),'9999')		                         
+                                + STRING(MONTH(tt-arq-conve.dtmvtolt),'99') 
+                                + STRING(DAY(tt-arq-conve.dtmvtolt),'99')  
+                                + ',' + STRING(DAY(tt-arq-conve.dtmvtolt),'99') 
+                                      + STRING(MONTH(tt-arq-conve.dtmvtolt),'99') 
+                                      + STRING(YEAR(tt-arq-conve.dtmvtolt),'9999')
+						        + ',1889'
+                                + ',' + STRING(tt-arq-conve.nrctdbfl, '9999')                                
+                                + ',' + TRIM(REPLACE(STRING(tt-arq-conve.vltarifa,'zzzzzzzz9.99'),',','.'))
+                                + ',5210'
+                                + ',"TARIFA REPASSE CONVENIO ' + STRING(tt-arq-conve.nmempres) + ' DAS COOP. FILIADAS - A RECEBER"'.                              
+                                  
+           PUT STREAM str_4 aux_linhaarq FORMAT "x(150)" SKIP. 
+         END.
+                                             
+
+ END.
+
+ IF aux_flgarqvi THEN
+ DO:
+   OUTPUT STREAM str_4 CLOSE.
+            
+   /* Move para nova pasta */
+            
+   UNIX SILENT VALUE("ux2dos " + aux_arqrel_4 + 
+              " > /usr/sistemas/arquivos_contabeis/ayllos/"
+                            + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
+                            + STRING(MONTH(glb_dtmvtolt),"99")
+                            + STRING(DAY(glb_dtmvtolt),"99") + "_" + string(glb_cdcooper,"99") + "_TARIFA_CONVENIOS.txt 2>/dev/null").
+
+ END. 
+ 
  
  IF glb_cdcooper = 3  THEN
     DO:
@@ -602,6 +676,30 @@ PROCEDURE processa_convenios_deb_cred.
                 ASSIGN aux_vlapagar = aux_vlapagar +  gncontr.vlapagar
                        aux_cdhisrep = 749.
             END.
+		
+		// caso o valor de repasse for bruto então deve ser gerado 
+		// no arquivo contabil PRJ421.
+        IF  gnconve.flgrepas AND gnconve.nrctdbfl > 0  THEN
+        DO:
+		    FIND tt-arq-conve NO-LOCK WHERE
+                 tt-arq-conve.cdconven = gncontr.cdconven NO-ERROR.
+			//verifica se o convenio ja existe na tabela, se existir somar valor da tarifa
+            // pois deve haver apenas um lancamento no arquivo do convenio com o valor total			
+	        IF AVAIL tt-arq-conve THEN 
+		       ASSIGN tt-arq-conve.vltarifa =  tt-arq-conve.vltarifa + gncontr.vltarifa.
+			ELSE
+			DO: 
+				CREATE tt-arq-conve.
+				ASSIGN tt-arq-conve.cdcooper = gncontr.cdcooper
+					   tt-arq-conve.dtmvtolt = gncontr.dtmvtolt
+					   tt-arq-conve.vltarifa = gncontr.vltarifa
+					   tt-arq-conve.nmempres = gnconve.nmempres
+					   tt-arq-conve.nrctdbfl = gnconve.nrctdbfl
+					   tt-arq-conve.dsdircop = crapcop.dsdircop
+					   tt-arq-conve.cdconven = gncontr.cdconven.
+		    END.		   
+		END.
+		
         IF aux_flgradar  AND gnconve.nrctdbfl > 0  THEN  /*escreve a linha no arquivo*/
         DO: 
             CREATE tt-arq-radar. 

@@ -616,7 +616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
        Sistema : Crédito - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Márcio(Mouts)
-       Data    : 07/2018                         Ultima atualizacao: 
+       Data    : 07/2018                         Ultima atualizacao: 19/10/2018
 
        Dados referentes ao programa:
 
@@ -624,7 +624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 
        Objetivo  : Procedure para procesar as regras de expiração da proposta de crédito
 
-       Alteracoes: 
+       Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     ............................................................................. */
 
     DECLARE
@@ -700,7 +700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1  -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99) -- Garantia
-          AND upper(dscatbem) IN ('AUTOMOVEL','CAMINHAO','MOTO')
+          AND grvm0001.fn_valida_categoria_alienavel(bpr.dscatbem) = 'S'
           AND ROWNUM = 1;        
 
       CURSOR cr_crapbpr_maq_equ(p_cdcooper IN crapcop.cdcooper%type,

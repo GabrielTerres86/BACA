@@ -237,6 +237,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                           ,pr_cdbccxlt_lcm   IN tbgen_iof_lancamento.cdbccxlt_lcm%TYPE DEFAULT NULL --> Chave: Caixa do Lancamento
                           ,pr_nrdolote_lcm   IN tbgen_iof_lancamento.nrdolote_lcm%TYPE DEFAULT NULL --> Chave: Lote do Lancamento
                           ,pr_nrseqdig_lcm   IN tbgen_iof_lancamento.nrseqdig_lcm%TYPE DEFAULT NULL --> Chave: Sequencia do Lancamento
+                          ,pr_nracordo       IN tbgen_iof_lancamento.nracordo%TYPE DEFAULT NULL     --> Chave: nr acordo
                           ,pr_cdcritic       OUT NUMBER                                             --> Código da Crítica
                           ,pr_dscritic       OUT VARCHAR2);                          
   
@@ -2794,6 +2795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                           ,pr_cdbccxlt_lcm   IN tbgen_iof_lancamento.cdbccxlt_lcm%TYPE DEFAULT NULL --> Chave: Caixa do Lancamento
                           ,pr_nrdolote_lcm   IN tbgen_iof_lancamento.nrdolote_lcm%TYPE DEFAULT NULL --> Chave: Lote do Lancamento
                           ,pr_nrseqdig_lcm   IN tbgen_iof_lancamento.nrseqdig_lcm%TYPE DEFAULT NULL --> Chave: Sequencia do Lancamento
+                          ,pr_nracordo       IN tbgen_iof_lancamento.nracordo%TYPE DEFAULT NULL     --> Chave: nr acordo
                           ,pr_cdcritic       OUT NUMBER                                             --> Código da Crítica
                           ,pr_dscritic       OUT VARCHAR2)  IS                                      --> Descrição da Crítica
   
@@ -2811,7 +2813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     Objetivo  : Rotina para alterar o valor do IOF
 
     Observacao: -----
-    Alteracoes:
+    Alteracoes:	07/05/2018 - Inclusao do campo nracordo. PRJ450(Odirlei-AMcom)
     ..............................................................................*/
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
@@ -2830,6 +2832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
               ,tbgen_iof_lancamento.cdbccxlt_lcm = pr_cdbccxlt_lcm
               ,tbgen_iof_lancamento.nrdolote_lcm = pr_nrdolote_lcm
               ,tbgen_iof_lancamento.nrseqdig_lcm = pr_nrseqdig_lcm
+              ,tbgen_iof_lancamento.nracordo     = pr_nracordo
          WHERE tbgen_iof_lancamento.cdcooper   = pr_cdcooper
            AND tbgen_iof_lancamento.nrdconta   = pr_nrdconta
            AND tbgen_iof_lancamento.nrcontrato = pr_nrcontrato
@@ -2839,7 +2842,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
            AND tbgen_iof_lancamento.cdagenci_lcm IS NULL
            AND tbgen_iof_lancamento.cdbccxlt_lcm IS NULL
            AND tbgen_iof_lancamento.nrdolote_lcm IS NULL
-           AND tbgen_iof_lancamento.nrseqdig_lcm IS NULL;
+           AND tbgen_iof_lancamento.nrseqdig_lcm IS NULL
+           AND tbgen_iof_lancamento.nracordo     IS NULL;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao alterar a tabela de IOF: '||SQLERRM;

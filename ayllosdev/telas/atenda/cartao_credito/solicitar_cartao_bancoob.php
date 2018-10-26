@@ -82,13 +82,14 @@
 			}
 		}else if($tpacao =="alterar"){
 
-			if(!isset($_POST['vlsugmot'])){
+			if(!isset($_POST['vlnovlim'])){
 				echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob. Novo limite não informado.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 				return;
 			}
 			
 			$titular  = $_POST['titular'];
-			$sugestao = $_POST['valorSugerido'];
+			$vlnovlim = $_POST['vlnovlim'];
+			$sugestao = $_POST['vlsugmot'];
 			$titular  = $_POST['titular'];
 			$vllimmin = $_POST['vllimmin'];
 			$vllimmax = $_POST['vllimmax'];
@@ -106,7 +107,7 @@
 			$insitdec;
 			if($titular == 'n' && $inpessoa == 1){
 				$insitdec = 2;
-			}else if(( $sugestao > $vllimmin ) && ( $sugestao < $vllimmax)){
+			}else if(( $vlnovlim > $vllimmin ) && ( $vlnovlim < $sugestao)){
 				$insitdec = 2;
 			}else{
 				$insitdec = 1;
@@ -118,7 +119,7 @@
 			$bancoobXML .= " <Dados>";
 			$bancoobXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 			$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-			$bancoobXML .= "   <vllimite>".$sugestao."</vllimite>";
+			$bancoobXML .= "   <vllimite>".$vlnovlim."</vllimite>";
 			$bancoobXML .= "   <idseqttl >".$idseqttl."</idseqttl>";
 			$bancoobXML .= " </Dados>";
 			$bancoobXML .= "</Root>";
@@ -128,7 +129,7 @@
 			$logXML .= " <Dados>";
 			$logXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 			$logXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-			$logXML .= "   <vllimite>".$sugestao."</vllimite>";
+			$logXML .= "   <vllimite>".$vlnovlim."</vllimite>";
 			$logXML .= "   <dsprotoc>".$protocolo."</dsprotoc >";
 			$logXML .= "   <dsjustif>".$justificativa."</dsjustif>";
 			$logXML .= "   <flgtplim>".$tipo."</flgtplim>";
@@ -164,7 +165,7 @@
 						
 					}else
 						echo "/* Encaminhado direto para o bancoob (Adicional e  PF)*/";
-				}else if((/*( !($cdadmcrd == 12 && $sugestao == 0)  ) &&*/ ( $sugestao <= $vllimmax))   ){
+				}else if((/*( !($cdadmcrd == 12 && $vlnovlim == 0)  ) &&*/ ( $vlnovlim <= $sugestao))   ){
 					// todo : ALTERAR_CARTAO_BANCOOB
 					$admresult = mensageria($bancoobXML, "CCRD0007", "ALTERAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);

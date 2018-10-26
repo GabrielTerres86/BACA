@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 12/09/2018
+ * FONTE        : emprestimos.js                            Última alteração: 10/10/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -140,6 +140,9 @@
 * 111: [15/08/2018] Criada tela 'Motivos', botão 'Anular' e controle para não permitir alterar e analisar com situação ANULADA. PRJ 438 (Mateus Z - Mouts)
 * 111: [28/05/2018] P439 - Criado validacoes de contingencia da integracao cdc
 * 112: [12/09/2018] P442 - Ajustes nos tamanhos da tela devido novos campos nas Consultas Automatizadas (Maykon-Envolti)
+* 113: [10/10/2018] Ajustes nas declaracoes de variaveis (Andrey Formigari)
+* 114: [15/09/2018] Alteração da tela de Bens da Atenda Prestação/Empréstimo (Christian / Envolti)
+* 115: [20/09/2018] Inclusão de histórico de Gravames (Christian / Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -350,6 +353,8 @@ var inobriga = '';
 
 //emprestimo
 var booPrimeiroBen = false; //809763
+var booBoxMarcas = true;
+var bemCarregadoUfPa = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -358,6 +363,9 @@ var dsctrliq_antigo = '';
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
+
+var modeloBem;
+var frmCab   		= 'frmCab';
 
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
@@ -419,6 +427,12 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 }
 
 function controlaOperacao(operacao) {
+
+	var idcobope = '';
+	var insitest = '';
+	var err_efet = '';
+	var nrdrecid = '';
+	var flgimpnp = '';
 
     cdlcremp = '';
     vlempres = '';
@@ -802,11 +816,11 @@ function controlaOperacao(operacao) {
             cddopcao = 'A';
             break;
         case 'AI_ALIENACAO':
+		case 'AI_BENS':
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
             break;
         case 'A_ALIENACAO' :
-
             if (arrayProposta['tplcremp'] == 2) {
                 if (contAlienacao < nrAlienacao) {
                     mensagem = 'abrindo altera ...';
@@ -854,7 +868,6 @@ function controlaOperacao(operacao) {
             cddopcao = 'A';
             break;
         case 'A_INTEV_ANU' :
-
             if (arrayCooperativa['flginter'] == 'yes') {
                 if (contIntervis < nrIntervis) {
                     mensagem = 'abrindo consultar ...';
@@ -980,7 +993,6 @@ function controlaOperacao(operacao) {
             cddopcao = 'I';
             break;
         case 'I_ALIENACAO' :
-
             if (arrayProposta['tplcremp'] == 1) {
                 controlaOperacao('I_CONTRATO');
                 return false;
@@ -1104,7 +1116,6 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'VI':
-            
             /*Recarregar o campo tipo emprestimo com a opcao selecionada*/
             var cTipoEmprRec = $('#tpemprst', '#frmNovaProp');
             var tpemprstRec = arrayProposta['tpemprst'];
@@ -1332,8 +1343,13 @@ function controlaOperacao(operacao) {
             }            
             idfiniof = arrayProposta['idfiniof'];
             break;
-		case 'MOTIVOS' :
-        	carregaDadosConsultaMotivos();
+		case 'C_HISTORICO_GRAVAMES' :
+			mostraTabelaHistoricoGravames();
+			return false;
+			break;
+		
+        case 'MOTIVOS' :
+            carregaDadosConsultaMotivos();
             return false;
             break;
         default:
@@ -1365,7 +1381,7 @@ function controlaOperacao(operacao) {
 	
     showMsgAguardo('Aguarde, ' + mensagem);
 
-    // Executa script de através de ajax
+    // Executa script de através de ajax -- Ponto de erro da função
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1394,7 +1410,6 @@ function controlaOperacao(operacao) {
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
-			
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
@@ -1403,7 +1418,6 @@ function controlaOperacao(operacao) {
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
-			
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
@@ -1447,14 +1461,9 @@ function controlaOperacao(operacao) {
                     }
                 }
 
-                if ((operacao == 'C_ALIENACAO') ||
-                        (operacao == 'AI_ALIENACAO') ||
-                        (operacao == 'A_ALIENACAO') ||
-                        (operacao == 'E_ALIENACAO') ||
-                        (operacao == 'I_ALIENACAO') ||
-                        (operacao == 'IA_ALIENACAO')) {
+/*                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS']) && !bemCarregadoUfPa) {
                     busca_uf_pa_ass();
-                }
+                }*/
                 
                 if ((typeof arrayProposta != typeof undefined) && (arrayProposta['tpemprst']== 0)) {
                     $("#idfiniof").desabilitaCampo();
@@ -1465,7 +1474,6 @@ function controlaOperacao(operacao) {
                 if (possuiPortabilidade == 'S') {
                     $("#idfiniof").desabilitaCampo();
                 }
-                
                 
             } else {
                 eval(response);
@@ -1533,7 +1541,6 @@ function manterRotina(operacao) {
 
 			geraRegsDinamicos();
 			
-    
 			var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
 			var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
 
@@ -1675,7 +1682,7 @@ function manterRotina(operacao) {
     // 032 : comentado replace do campo vlopescr
     //vlopescr = parseFloat( vlopescr.replace(',','.') );
 
-    if (operacao != 'ENV_ESTEIRA' ){
+    if (operacao != 'ENV_ESTEIRA' ) {
     vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
     percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
     vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -1903,7 +1910,7 @@ function verificaQtDiaLib() {
             $('#qtdialib').change();
             if (possuiPortabilidade == 'S') {
               $("#idfiniof").desabilitaCampo();
-            }else {
+            } else {
               $("#idfiniof").habilitaCampo();
             }
             break;
@@ -1915,7 +1922,7 @@ function verificaQtDiaLib() {
             $('#qtdialib').change();
             if (possuiPortabilidade == 'S') {
               $("#idfiniof").desabilitaCampo();
-            }else {
+            } else {
               $("#idfiniof").habilitaCampo();
             }
             break;
@@ -1954,7 +1961,6 @@ function controlaLayout(operacao) {
         arrayLargura[9] = '65px';
         arrayLargura[10] = '120px';
 
-
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
         arrayAlinha[1] = 'right';
@@ -1974,7 +1980,6 @@ function controlaLayout(operacao) {
 
         // Operação Alterando/Incluindo
     } else if (in_array(operacao, ['TI', 'TE', 'TC', 'TA', 'CF', 'A_NOVA_PROP', 'A_NUMERO', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA', 'I_INICIO', 'A_INICIO', 'A_VALOR', 'A_AVALISTA'])) {
-
 
         nomeForm = 'frmNovaProp';
         altura = '340px';
@@ -2228,7 +2233,6 @@ function controlaLayout(operacao) {
                 $("#idfiniof").val(0);
             }
 
-
         } else if (in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])) {
             cTodos.desabilitaCampo();
             //botao voltar
@@ -2480,7 +2484,6 @@ function controlaLayout(operacao) {
         cCoresp.css('width', '22px');
         cInconcje.css('width', '22px');
 
-
         if (operacao == 'C_DADOS_PROP') {
             cTodos.desabilitaCampo();
             cTodos_1.desabilitaCampo();
@@ -2501,9 +2504,7 @@ function controlaLayout(operacao) {
                 if (arrayRendimento['tpdrend' + i] == 6) {
                     cJustif.habilitaCampo();
                 }
-
             }
-
 
         } else if (operacao == 'I_DADOS_PROP') {
             cTodos.habilitaCampo();
@@ -2515,9 +2516,7 @@ function controlaLayout(operacao) {
                 if (arrayRendimento['tpdrend' + i] == 6) {
                     cJustif.habilitaCampo();
                 }
-
             }
-
         }
 
         //Manter campo bloqueado, dado deve ser apenas alterado na tela Contas
@@ -2555,7 +2554,6 @@ function controlaLayout(operacao) {
             }
 
         });
-
 
         cComite.addClass('alphanum').css({'width': '420px', 'height': '80px', 'float': 'left', 'margin': '3px 0px 3px 3px', 'padding-right': '1px'});
         cObs.addClass('alphanum').css({'width': '420px', 'height': '80px', 'float': 'left', 'margin': '3px 0px 3px 3px', 'padding-right': '1px'});
@@ -2669,7 +2667,6 @@ function controlaLayout(operacao) {
                     cNome.focus();*/
                     cInpessoa.habilitaCampo();
                     cInpessoa.focus();
-                    
                 }
 
                 return false;
@@ -2691,8 +2688,7 @@ function controlaLayout(operacao) {
                 if (pessoa == "" ) {
                     showError('error', 'Selecione o tipo de pessoa', 'Aten;&atilde;o', '$("#inpessoa","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
                     return false;
-                }else {
-                
+                } else {
                     cCPF.habilitaCampo();
                     cCPF.focus();
                 }
@@ -2741,7 +2737,6 @@ function controlaLayout(operacao) {
                         
                     }
 
-
                     }
 
                     // Caso em que o cpf é zero
@@ -2752,8 +2747,6 @@ function controlaLayout(operacao) {
                 return false;
         
         });
-
-        
 
         var cTodos_1 = $('select,input', '#' + nomeForm + ' fieldset:eq(1)');
 
@@ -2872,9 +2865,10 @@ function controlaLayout(operacao) {
             $('legend:first', '#frmDadosAval').html('Dados dos Avalistas/Fiadores ' + i);
 
             //Projeto CEP
-            $('#dsendre1,#cdufresd,#dsendre2,#nmcidade', '#' + nomeForm).desabilitaCampo();
+            $('#dsendre1, #cdufresd, #dsendre2, #nmcidade', '#' + nomeForm).desabilitaCampo();
 
         }
+
     } else if (in_array(operacao, ['A_PROTECAO_AVAL', 'A_PROTECAO_TIT', 'A_PROTECAO_CONJ', 'C_PROTECAO_TIT',
         'C_PROTECAO_AVAL', 'C_PROTECAO_CONJ', 'C_PROTECAO_SOC', 'A_PROTECAO_SOC',
         'I_PROTECAO_TIT'])) {
@@ -2894,8 +2888,7 @@ function controlaLayout(operacao) {
             $('#nrinfcad', '#frmOrgaos').desabilitaCampo();
         }
 
-    }
-    else if (in_array(operacao, ['I_MICRO_PERG', 'A_MICRO_PERG', 'C_MICRO_PERG'])) {
+    } else if (in_array(operacao, ['I_MICRO_PERG', 'A_MICRO_PERG', 'C_MICRO_PERG'])) {
 
         nomeForm = 'frmQuestionario';
         altura = '470px';
@@ -2915,8 +2908,6 @@ function controlaLayout(operacao) {
         if (cddopcao == 'C') {
             cTodos.desabilitaCampo();
         } else {
-
-
 
             // Se mudou alguma resposta, verificar se tem que habilitar/desabilitar alguma pergunta
             cTodos.unbind("change").bind("change", function(e) {
@@ -2957,8 +2948,7 @@ function controlaLayout(operacao) {
                 $(this).trigger('change');
             });
         }
-    }
-    else if (in_array(operacao, ['C_HIPOTECA', 'AI_HIPOTECA', 'A_HIPOTECA', 'I_HIPOTECA', 'IA_HIPOTECA'])) {
+    } else if (in_array(operacao, ['C_HIPOTECA', 'AI_HIPOTECA', 'A_HIPOTECA', 'I_HIPOTECA', 'IA_HIPOTECA'])) {
 
         nomeForm = 'frmHipoteca';
         altura = '160px';
@@ -3157,7 +3147,6 @@ function controlaLayout(operacao) {
             cDsPercep.css('display', 'block');
         }
 
-
     } else if (in_array(operacao, ['C_DADOS_PROP_PJ', 'A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
 
         nomeForm = 'frmDadosPropPj';
@@ -3189,9 +3178,11 @@ function controlaLayout(operacao) {
 
     } else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO'])) {
 
-        nomeForm = 'frmAlienacao';
-        altura = '215px';
-        largura = '462px';
+        nomeForm = 'frmTipo';
+        altura 	 = '350px';//'215px';
+        largura  = '630px';//'462px';
+		$('#dssitgrv').parent().css({"margin-top": "20px"});
+		$('#lsbemfin').css({'width': '100%', 'text-align': 'center'});
 
         var cTodos = $('select,input', '#' + nomeForm);
         var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="dscorbem"],label[for="ufdplaca"],label[for="nrrenava"],label[for="nrmodbem"]', '#' + nomeForm);
@@ -3201,10 +3192,11 @@ function controlaLayout(operacao) {
         var rLinha = $('label[for="dschassi"],label[for="uflicenc"],label[for="nrcpfbem"]', '#' + nomeForm);
         var rAnoFab = $('label[for="nranobem"]', '#' + nomeForm);
         var rTpBem = $('label[for="dstipbem"]', '#' + nomeForm);
+        var rUfLicenc = $('label[for="uflicenc"]', '#' + nomeForm);
 
         var cCateg = $('#dscatbem', '#' + nomeForm);
         var cTpBem = $('#dstipbem', '#' + nomeForm);
-        var cVlMercad = $('#vlmerbem', '#' + nomeForm);
+        //var cVlMercad = $('#vlmerbem', '#' + nomeForm);
         var cDesc = $('#dsbemfin', '#' + nomeForm);
         var cTpChassi = $('#tpchassi', '#' + nomeForm);
         var cCor = $('#dscorbem', '#' + nomeForm);
@@ -3215,39 +3207,63 @@ function controlaLayout(operacao) {
         var cRenavan = $('#nrrenava', '#' + nomeForm);
         var cAnoFab = $('#nranobem', '#' + nomeForm);
         var cAnoMod = $('#nrmodbem', '#' + nomeForm);
-        var cCPF = $('#nrcpfbem', '#' + nomeForm);
+        var cCPF = $('#nrcpfcgc', '#' + nomeForm); //nrcpfbem
 
-        rRotulo.addClass('rotulo').css('width', '67px');
-        rNrBem.css('width', '245px');
-        rVlBem.css('width', '140px');
-        rTpCHassi.addClass('rotulo-linha');
-        rLinha.css('width', '103px');
-        rAnoFab.addClass('rotulo-linha');
-        rTpBem.css('width', '140px');
+        var cVlFipe = $('#vlfipbem', '#' + nomeForm);
+        var cVlMercad = $('#vlrdobem', '#' + nomeForm); //vlmerbem
+		var cSitGrv = $('#dssitgrv', '#' + nomeForm);
 
-        cCateg.css('width', '156px');
-        cVlMercad.addClass('moeda').css('width', '87px');
-        cDesc.addClass('alphanum').css('width', '225px').attr('maxlength', '25');
-        cTpChassi.css('width', '87px');
-        cCor.addClass('alphanum').css('width', '156px').attr('maxlength', '35');
+		if($("#dscatbem option[value='EQUIPAMENTO']").length == 0){
+			$('#dscatbem','#frmTipo').append($('<option>', {
+				value: "EQUIPAMENTO",
+				text: "Equipamento"
+			}));
+		}
+		if($("#dscatbem option[value='MAQUINA DE COSTURA']").length == 0){
+			$('#dscatbem','#frmTipo').append($('<option>', {
+				value: "MAQUINA DE COSTURA",
+				text: "Máquina de Costura"
+			}));
+		}
 
-        cUfPlaca.css('width', '45px');
-        cNrPlaca.addClass('placa').css({'width': '70px', 'text-transform': 'uppercase'});
-        cUfLicenc.css('width', '45px');
-        cRenavan.addClass('renavan2').css('width', '118px');
-        cAnoFab.addClass('inteiro').css('width', '60px').attr('maxlength', '4');
-        cAnoMod.addClass('inteiro').css('width', '118px').attr('maxlength', '4');
+        if (operacao == 'C_ALIENACAO') {
+            cTodos.desabilitaCampo();
+        } else {
+            cTodos.habilitaCampo();
+			if (cTpBem.val() != 'USADO' ) {
+				cUfPlaca.val('').desabilitaCampo();
+				cNrPlaca.val('').desabilitaCampo();
+				cRenavan.val('').desabilitaCampo();
+			}
+			if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
+				if (contAlienacao == 1) {
+					$('#btDeletar', '#divBotoes').css('display', 'none');
+				}
+			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
+				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
+				$('#' + nomeForm).limpaFormulario();
+				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+			}
+		}
 
-        cCPF.css('width', '162px');
-
-        cCateg.unbind('change').bind('change', function() {
-
-            if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
-                rTpBem.css('visibility', 'visible');
-                cTpBem.css({'visibility': 'visible', 'width': '87px'}).habilitaCampo();
-                cChassi.addClass('alphanum').css('width', '162px').attr('maxlength', '17');
+		if (!in_array(operacao, ['C_ALIENACAO'])) {
+			if (!bemCarregadoUfPa) {
+				busca_uf_pa_ass();
+			}
+			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
+					if (cTpChassi.val()==""){
+						cTpChassi.val(2);
+					}
+					cTpBem.trigger("change");
+					cTpBem.habilitaCampo(); //, 'width': '87px'
+					$("#btHistoricoGravame").show();
+					cChassi.addClass('alphanum').attr('maxlength', '17'); //.css('width', '162px')
+					cTpChassi.habilitaCampo();
+					cCor.habilitaCampo();
+					cUfLicenc.habilitaCampo();
                 cTpBem.unbind('change').bind('change', function() {
-                    if (cTpBem.val() == 'ZERO KM') {
+						if (cTpBem.val() != 'USADO') {
                         cUfPlaca.val('').desabilitaCampo();
                         cNrPlaca.val('').desabilitaCampo();
                         cRenavan.val('').desabilitaCampo();
@@ -3257,13 +3273,141 @@ function controlaLayout(operacao) {
                         cRenavan.habilitaCampo();
                         busca_uf_pa_ass();
                     }
+						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) ) {
+						if($(this).val() == 'USADO'){ modeloBem = ''; }
+						$('#nrmodbem').val(-1).change();
+						var bemFin = $('#dsbemfin').val();
+						$('#dsbemfin').val(bemFin).change();
+						}
                 });
+
+					if (!in_array(cCateg.val(), ['OUTROS VEICULOS'])) {
+					    $("#" + idElementMarca + "C").hide();
+					    $("#" + idElementMarca).show();
+					    $("#" + idElementModelo + "C").hide();
+					    $("#" + idElementModelo).show();
+					    $("#" + idElementAno + "C").hide();
+					    $("#" + idElementAno).show();
+
+					if (booBoxMarcas) {
+						trataCamposFipe($(this));
+					}
+
+					if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
+						var tipoVeiculo = trataTipoVeiculo($(this).val());
+						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
+						buscaFipeServico(urlPagina,data);
+					}
+
+					if (!booBoxMarcas) {
+					    booBoxMarcas = true;
+					}
+					} else {
+					    $("#" + idElementMarca + "C").show();
+					    $("#" + idElementMarca).val('').hide();
+					    $("#" + idElementModelo + "C").show();
+					    $("#" + idElementModelo).val('').hide();
+					    $("#" + idElementAno + "C").show().habilitaCampo();
+					    $("#" + idElementAno).val('').hide();
+						cVlFipe.val('');
+					}
+
+				} else if ( cCateg.val()=="" ) {
+					cTpBem.val('').desabilitaCampo();
+					cUfLicenc.val('').desabilitaCampo();
+					$("#btHistoricoGravame").hide();
+					cUfPlaca.val('').desabilitaCampo();
+					cNrPlaca.val('').desabilitaCampo();
+					cRenavan.val('').desabilitaCampo();
+					cTpChassi.val('').desabilitaCampo();
+					cCor.val('').desabilitaCampo();
+					cVlFipe.val('');
+					cVlMercad.val('');
+					cSitGrv.val('');
+					cAnoFab.val('');
+					cCPF.val('');
+					cChassi.val('');
+					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca).show().html('');
+					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo).show().html('');
+					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno).show().html('');
+					busca_uf_pa_ass();
             } else {
-                rTpBem.css('visibility', 'hidden');
-                cTpBem.css('visibility', 'hidden').desabilitaCampo();
-                cChassi.addClass('alphanum').css('width', '162px').attr('maxlength', '20');
+					cTpBem.val('').desabilitaCampo();
+					cUfLicenc.desabilitaCampo();
+					cChassi.addClass('alphanum').attr('maxlength', '20');//.css('width', '162px')
+					$("#btHistoricoGravame").hide();
+					cUfPlaca.val('').desabilitaCampo();
+					cNrPlaca.val('').desabilitaCampo();
+					cRenavan.val('').desabilitaCampo();
+					cTpChassi.val('').desabilitaCampo();
+					cCor.val('').desabilitaCampo();
+					cVlFipe.val('');
+					$("#"+idElementMarca+"C").show();
+					$("#"+idElementMarca).val('').hide();
+					$("#"+idElementModelo+"C").show();
+					$("#"+idElementModelo).val('').hide();
+					$("#"+idElementAno+"C").show().val('').desabilitaCampo();
+					$("#"+idElementAno).val('').hide();
             }
         });
+
+			$("#"+idElementMarca).unbind('change').bind('change', function() {
+				trataCamposFipe($(this));
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+					var urlPagina= "telas/manbem/fipe/busca_modelos.php";
+					var cdMarcaFipe = $(this).val();
+					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax' });
+					buscaFipeServico(urlPagina,data);
+				}
+				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
+					$("#"+idElementModelo+"C").show();
+					$("#"+idElementModelo).hide();
+					$("#"+idElementAno+"C").show();
+					$("#"+idElementAno).hide();
+				} else {
+					$("#"+idElementModelo+"C").hide();
+					$("#"+idElementModelo).show();
+				}
+			});
+
+			$("#"+idElementModelo).unbind('change').bind('change', function() {
+				trataCamposFipe($(this));
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+					var urlPagina= "telas/manbem/fipe/busca_anos.php";
+					var cdMarcaFipe = $("#"+idElementMarca).val();
+					var cdModeloFipe = $(this).val();
+					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax' });
+					buscaFipeServico(urlPagina,data);
+				}
+				if ($(this).val() == '-1' && $("#"+idElementAno+"C").val() != "") {
+					$("#"+idElementAno+"C").show();
+					$("#"+idElementAno).hide();
+				} else {
+					$("#"+idElementAno+"C").hide();
+					$("#"+idElementAno).show();
+				}
+			});
+
+			$("#"+idElementAno).unbind('change').bind('change', function() {
+				trataCamposFipe($(this));
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+					var urlPagina= "telas/manbem/fipe/busca_valor.php";
+					var cdMarcaFipe = $("#"+idElementMarca).val();
+					var cdModeloFipe = $("#"+idElementModelo).val();
+					var cdAnoFipe;
+					if(modeloBem == '') {
+						cdAnoFipe = $(this).val();
+					} else {
+						cdAnoFipe = modeloBem;
+					}
+					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
+					buscaFipeServico(urlPagina,data);
+				}
+			});
 
         // Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
         cCateg.trigger("change");
@@ -3271,7 +3415,7 @@ function controlaLayout(operacao) {
         // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
         cChassi.unbind('keydown').bind('keydown', function(event) {
 			
-			if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 			
 				var tecla = event.which || event.keyCode;
 				
@@ -3302,7 +3446,7 @@ function controlaLayout(operacao) {
 				cChassi.val(cChassi.val().replace(re, ''));
 			}		            
             
-			if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
                 re = /[\Q\q\I\i\O\o\_]/g;
                 
                 if(re.test(cChassi.val())){
@@ -3319,35 +3463,49 @@ function controlaLayout(operacao) {
 		cChassi.unbind('blur').bind('blur', function(){
 			cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
             
-            if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
 			  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
             }
             
 			cChassi.val(cChassi.val().replace(/ /g,''));			
 		});
 		
-        if (operacao == 'C_ALIENACAO') {
-            cTodos.desabilitaCampo();
-        } else if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
-            cTodos.habilitaCampo();
-            if (cTpBem.val() == 'ZERO KM') {
-                cUfPlaca.val('').desabilitaCampo();
-                cNrPlaca.val('').desabilitaCampo();
-                cRenavan.val('').desabilitaCampo();
+			bemCarregadoUfPa = false;
+			if ($("#"+idElementMarca+"C").val()=="" && (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO']))){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
+			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
+			if ($("#"+idElementAno+"C").val()=="" && (!in_array(cCateg.val(), ['MAQUINA DE COSTURA', 'EQUIPAMENTO']))){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
+		} else {
+			$("#" + idElementMarca + "C").show();
+			$("#" + idElementMarca).hide();
+			$("#" + idElementModelo + "C").show();
+			$("#" + idElementModelo).hide();
+			$("#" + idElementAno + "C").show();
+			$("#" + idElementAno).hide();
             }
-            if (contAlienacao == 1) {
-                $('#btDeletar', '#divBotoes').css('display', 'none');
-            }
-        } else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO') {
-            cTodos.habilitaCampo();
-            strSelect(lscatbem, 'dscatbem', 'frmAlienacao');
-            $('#' + nomeForm).limpaFormulario();
-            rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
-            cTpChassi.val(2)
-        }
 
-        cUfLicenc.desabilitaCampo();
+		cRenavan.mask('AA.AAA.AAA.AAA', {reverse: true});
 
+		cCPF.keyup(function(){
+			valor = $(this).val();
+			if ( valor.length > 14 ) {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/^(\d{2})(\d)/,"$1.$2");
+				valor=valor.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				valor=valor.replace(/\.(\d{3})(\d)/,".$1/$2");
+				valor=valor.replace(/(\d{4})(\d)/,"$1-$2");
+			} else {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			}
+			$(this).val(valor);
+		});
+
+		//desabilita campos somente leitura
+		cVlFipe.desabilitaCampo();
+		cSitGrv.desabilitaCampo();
+		//cUfLicenc.desabilitaCampo();
 
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'AI_INTEV_ANU', 'I_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
@@ -3730,13 +3888,10 @@ function controlaLayout(operacao) {
 
         arrayEmprestimosAvalista = new Array();
 
-        if (operacao == 'T_AVALISTA1')
-        {
+        if (operacao == 'T_AVALISTA1') {
             arrayEmprestimosAvalista = arrayEmprestimosAvalista1;
             $('#linkAba0').html('Empr&eacute;stimos Avalista 1');
-        }
-        else
-        {
+        } else {
             arrayEmprestimosAvalista = arrayEmprestimosAvalista2;
             $('#linkAba0').html('Empr&eacute;stimos Avalista 2');
         }
@@ -3867,7 +4022,6 @@ function controlaLayout(operacao) {
         });
         // Fim SD 779305
 
-
     } else if (operacao == 'PORTAB_CRED_C') { /*Portabilidade - Consulta*/
         nomeForm = 'frmPortabilidadeCredito';
         largura = '465px';
@@ -3936,7 +4090,7 @@ function controlaLayout(operacao) {
             $(this).val(removeCaracteresInvalidos($(this).val()));
         });
         // Fim SD 779305
-       } else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])){
+	} else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
         nomeForm = 'frmDemonstracaoEmprestimo';
         largura = '345px';
         altura = '205px';
@@ -4170,7 +4324,6 @@ function attArray(novaOp, cdcooper) {
             arrayRendimento['tpdrend' + i] = $('#tpdrend' + i, '#frmDadosProp').val();
             arrayRendimento['dsdrend' + i] = $('#dsdrend' + i, '#frmDadosProp').val();
             arrayRendimento['vldrend' + i] = $('#vldrend' + i, '#frmDadosProp').val();
-
         }
 
         arrayRendimento['vlsalcon'] = $('#vlsalcon', '#frmDadosProp').val();
@@ -4198,7 +4351,6 @@ function attArray(novaOp, cdcooper) {
 
     } else if (in_array(operacao, ['A_DADOS_AVAL', 'AI_DADOS_AVAL', 'I_DADOS_AVAL', 'IA_DADOS_AVAL'])) {
 
-
         atual = contAvalistas - 1;
 
         arrayAvalistas[atual]['nrctaava'] = $('#nrctaava', '#frmDadosAval').val();
@@ -4225,7 +4377,6 @@ function attArray(novaOp, cdcooper) {
         arrayAvalistas[atual]['nrendere'] = $('#nrendere', '#frmDadosAval').val();
         arrayAvalistas[atual]['complend'] = $('#complend', '#frmDadosAval').val();
         arrayAvalistas[atual]['nrcxapst'] = $('#nrcxapst', '#frmDadosAval').val();
-
         //Daniel
         arrayAvalistas[atual]['inpessoa'] = $('#inpessoa', '#frmDadosAval').val();
         arrayAvalistas[atual]['dtnascto'] = $('#dtnascto', '#frmDadosAval').val();
@@ -4234,23 +4385,37 @@ function attArray(novaOp, cdcooper) {
 
         atual = contAlienacao - 1;
 
-        arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfin', '#frmAlienacao').val().replace("<", "").replace(">", "")));
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmAlienacao').val().replace("<", "").replace(">", "")));
-        arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrrenava'] = $('#nrrenava', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
+        arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val().toUpperCase();
+        arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val().toUpperCase();
+        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
+        arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
+        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
+        arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
+        arrayAlienacoes[atual]['nrrenava'] = normalizaNumero( $('#nrrenava', '#frmTipo').val().toUpperCase() );
+        arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
+        arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val().toUpperCase();
+        //arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
+        //arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmTipo').val();
+        //arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmTipo').val();
+        //arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmTipo').val();
+        arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc option:selected', '#frmTipo').val().toUpperCase();//$('#uflicenc', '#frmTipo').val(); // GRAVAMES */
 		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
+
+		arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+		arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+		arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
+		arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
+		var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
+			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
+			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+		} else {
+			arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
+			arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
+			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+		}
+
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
         atual = contIntervis - 1;
@@ -4279,6 +4444,7 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['nrcxapst'] = $('#nrcxapst', '#frmIntevAnuente').val();
 
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
+
         arrayProtCred['nrperger'] = $('#nrperger', '#frmOrgProtCred').val();
         arrayProtCred['dsperger'] = $('#dsperger', '#frmOrgProtCred').val();
         arrayProtCred['dtcnsspc'] = $('#dtcnsspc', '#frmOrgProtCred').val();
@@ -4313,6 +4479,7 @@ function attArray(novaOp, cdcooper) {
         arrayHipotecas[atual]['vlmerbem'] = $('#vlmerbem', '#frmHipoteca').val();
 
     } else if (in_array(operacao, ['V_PARCELAS'])) {
+
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
         arrayProposta['nivriori'] = $('#nivriori', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
@@ -4367,7 +4534,7 @@ function verificaDelecao() {
 
     } else if (in_array(operacao, ['IA_ALIENACAO', 'A_ALIENACAO'])) {
 
-        if (contAlienacao > 1 && $('#dscatbem', '#frmAlienacao').val() == '' && $('#dsbemfin', '#frmAlienacao').val() == '') {
+        if (contAlienacao > 1 && $('#dscatbem', '#frmTipo').val() == '' && $('#dsbemfin', '#frmTipo').val() == '') {
                 novaOp = (operacao == 'IA_ALIENACAO') ? 'I_ALIENACAO' : operacao;
                 mtdRetorno = 'deletaAlienacao("' + novaOp + '");';
             }
@@ -4487,8 +4654,7 @@ function atualizaTela() {
 
         if (arrayRendimento['inconcje'] == 'yes') {
             $('#inconcje_1', '#frmDadosProp').prop('checked', true);
-        }
-        else {
+        } else {
             $('#inconcje_2', '#frmDadosProp').prop('checked', true);
         }
 
@@ -4531,33 +4697,146 @@ function atualizaTela() {
 
     } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO'])) {
 
-        strSelect(lscatbem, 'dscatbem', 'frmAlienacao');
+        //strSelect(lscatbem, 'dscatbem', 'frmTipo');
 
-        $('#dscatbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscatbem']);
-        $('#dstipbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dstipbem']);
-        $('#dsbemfin', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dsbemfin']);
-        $('#dscorbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscorbem']);
-        $('#dschassi', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dschassi']);
-        $('#nranobem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nranobem']);
-        $('#nrmodbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
-        $('#nrdplaca', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
-        $('#nrrenava', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrrenava']);
-        $('#tpchassi', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['tpchassi']);
-        $('#ufdplaca', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
-        $('#nrcpfbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
-        $('#dscpfbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
-        $('#vlmerbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['vlmerbem']);
-        $('#idalibem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['idalibem']);
-        $('#uflicenc', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['uflicenc']); //GRAVAMES */
-        $('#lsbemfin', '#frmAlienacao').html(arrayAlienacoes[contAlienacao]['lsbemfin']);
+		var vlrdobemtmp = "";
+		var nrcpfcgctmp = 0;
+
+		if (arrayAlienacoes[contAlienacao]['vlrdobem']) {
+			vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlrdobem'];
+		} else {
+			vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlmerbem'];
+		}
+
+		if (arrayAlienacoes[contAlienacao]['nrcpfcgc']) {
+			nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfcgc'];
+		} else if (arrayAlienacoes[contAlienacao]['nrcpfbem']) {
+			nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfbem'];
+		}
+
+		var nrmodbemtmp = arrayAlienacoes[contAlienacao]['nrmodbem'];
+
+		if (arrayAlienacoes[contAlienacao]['dstpcomb'] && nrmodbemtmp.indexOf(arrayAlienacoes[contAlienacao]['dstpcomb']) == -1) {
+			nrmodbemtmp = nrmodbemtmp + " " + arrayAlienacoes[contAlienacao]['dstpcomb'];
+		}
+
+        //$('#dscatbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscatbem']);
+        $('#dstipbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dstipbem']);
+        $('#dsbemfin', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dsbemfin']);
+        $('#dscorbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscorbem']);
+        $('#dschassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dschassi']);
+        $('#nranobem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nranobem']);
+        //$('#nrmodbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
+        $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
+        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
+        $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
+        //$('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
+        //$('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
+        //$('#dscpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
+        //$('#vlmerbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['vlmerbem']);
+        $('#idalibem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['idalibem']);
+        //$('#uflicenc', '#frmTipo').val(arrayAlienacoes[contAlienacao]['uflicenc']); //GRAVAMES */
+
+		$('#vlfipbem', '#frmTipo').val( arrayAlienacoes[contAlienacao]['vlfipbem'] ).trigger('mask.maskMoney');
+		$('#dssitgrv', '#frmTipo').val( arrayAlienacoes[contAlienacao]['dssitgrv'] );
+
+		if (nrcpfcgctmp > 0) {
+			if (nrcpfcgctmp.length < 12) { //CPF
+				nrcpfcgctmp = ("00000000000" + nrcpfcgctmp).slice(-11);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			} else { //CNPJ
+				nrcpfcgctmp = ("00000000000000" + nrcpfcgctmp).slice(-14);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/\.(\d{3})(\d)/,".$1/$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{4})(\d)/,"$1-$2");
+			}
+		}
+
+		$('#vlrdobem', '#frmTipo').val( vlrdobemtmp ).trigger('mask.maskMoney');
+		$('#nrcpfcgc', '#frmTipo').val( nrcpfcgctmp );
+
+		//$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
+/*
+		if (!in_array(operacao, ['IA_ALIENACAO'])) {
+			$("#dsmarbemC").show();
+			$("#dsbemfinC").show();
+			$("#nrmodbemC").show();
+			$("#dsmarbem").hide();
+			$("#dsbemfin").hide();
+			$("#nrmodbem").hide();
+		}
+*/
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "EQUIPAMENTO",
+			text: "Equipamento"
+		}));
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "MAQUINA DE COSTURA",
+			text: "Máquina de Costura"
+		}));
+
+		$("#frmTipo #dscatbem option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['dscatbem'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+
+		if (arrayAlienacoes[contAlienacao]['tpchassi'] != "") {
+			bemCarregadoUfPa = true;
+		}
+		
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
+
+			urlPagina= "telas/manbem/fipe/busca_marcas.php";
+			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
+			data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax', dsmarbem: arrayAlienacoes[contAlienacao]['dsmarbem'], dsbemfin: arrayAlienacoes[contAlienacao]['dsbemfin'], nrmodbem: nrmodbemtmp });
+			buscaFipeServico(urlPagina,data);
+		} else {
+			$('#dsmarbemC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsmarbem'] );
+			$('#dsbemfinC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsbemfin'] );
+			$('#nrmodbemC','#frmTipo').val( nrmodbemtmp );
+		}
+
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO', 'OUTROS VEICULOS'])) {
+			$("#btHistoricoGravame").show();
+			$("#frmTipo #dstipbem option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #tpchassi option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #ufdplaca option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #uflicenc option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+		} else {
+			$('#dstipbem', '#frmTipo').desabilitaCampo();
+			$('#uflicenc', '#frmTipo').desabilitaCampo();
+			$('#tpchassi', '#frmTipo').val('').desabilitaCampo();
+			$('#dscorbem', '#frmTipo').val('').desabilitaCampo();
+		}
+
+		$('#lsbemfin','#frmTipo').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
         if (arrayAlienacoes[contAlienacao]['dstipbem'] == 'ZERO KM') {
-            $('#ufdplaca', '#frmAlienacao').val('').desabilitaCampo();
-            $('#nrdplaca', '#frmAlienacao').val('').desabilitaCampo();
-            $('#nrrenava', '#frmAlienacao').val('').desabilitaCampo();
+            $('#ufdplaca', '#frmTipo').val('').desabilitaCampo();
+            $('#nrdplaca', '#frmTipo').val('').desabilitaCampo();
+            $('#nrrenava', '#frmTipo').val('').desabilitaCampo();
         }
-
-        idseqbem = arrayAlienacoes[contAlienacao]['idseqbem'];
+		booBoxMarcas = false;
 
         contAlienacao++;
 
@@ -4603,7 +4882,6 @@ function atualizaTela() {
             $('#dspatlvr', '#frmOrgProtCred').val(aDadosPropostaFinalidade['dspatlvr']);
             $('#nrgarope', '#frmOrgProtCred').val(aDadosPropostaFinalidade['nrgarope']);
             $('#dsgarope', '#frmOrgProtCred').val(aDadosPropostaFinalidade['dsgarope']);
-
         } else {
             $('#nrperger', '#frmOrgProtCred').val(arrayProtCred['nrperger']);
             $('#dsperger', '#frmOrgProtCred').val(arrayProtCred['dsperger']);
@@ -4767,10 +5045,10 @@ function insereAlienacao(operacao, opContinua) {
     idseqbem = 0;
 
     // Alteracao 069
-    $('#dsbemfin', '#frmAlienacao').val(retiraCaracteres($('#dsbemfin', '#frmAlienacao').val(), "'|;", false));
+    $('#dstipbem', '#frmTipo').val(retiraCaracteres($('#dstipbem', '#frmTipo').val(), "'|;", false));
 
-    if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') &&
-            $('#dsbemfin', '#frmAlienacao').val() == '')
+    if (((typeof $('#dscatbem', '#frmTipo').val() == 'object') || $('#dscatbem', '#frmTipo').val() == '') &&
+            $('#dstipbem', '#frmTipo').val() == '')
     {
         controlaOperacao(opContinua);
         return false;
@@ -4779,21 +5057,38 @@ function insereAlienacao(operacao, opContinua) {
     i = arrayAlienacoes.length;
 
     eval('var arrayAlienacao' + i + ' = new Object();');
-    eval('arrayAlienacao' + i + '["dscatbem"] = $("#dscatbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmAlienacao").val().replace("<","").replace(">","")));');
-    eval('arrayAlienacao' + i + '["dscorbem"] = removeAcentos(removeCaracteresInvalidos($("#dscorbem","#frmAlienacao").val().replace("<","").replace(">","")));');
-    eval('arrayAlienacao' + i + '["dschassi"] = $("#dschassi","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nranobem"] = $("#nranobem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrdplaca"] = $("#nrdplaca","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrrenava"] = $("#nrrenava","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["tpchassi"] = $("#tpchassi","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmAlienacao").val();'); // GRAVAMES*/
+    eval('arrayAlienacao' + i + '["dscatbem"] = removeAcentos(removeCaracteresInvalidos($("#dscatbem","#frmTipo").val().toUpperCase()));');
+    eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmTipo").val().toUpperCase();');
+    //eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
+    eval('arrayAlienacao' + i + '["dscorbem"] = removeAcentos(removeCaracteresInvalidos($("#dscorbem","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
+    eval('arrayAlienacao' + i + '["dschassi"] = $("#dschassi","#frmTipo").val().toUpperCase();');
+    eval('arrayAlienacao' + i + '["nranobem"] = $("#nranobem","#frmTipo").val().toUpperCase();');
+    //eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nrdplaca"] = $("#nrdplaca","#frmTipo").val().toUpperCase();');
+    eval('arrayAlienacao' + i + '["nrrenava"] = normalizaNumero($("#nrrenava","#frmTipo").val());');
+    eval('arrayAlienacao' + i + '["tpchassi"] = $("#tpchassi","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmTipo").val().toUpperCase();');
+    //eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmTipo").val();');
+    //eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmTipo").val();');
+    //eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();'); // GRAVAMES*/
+
+    eval('arrayAlienacao' + i + '["nrcpfcgc"] = normalizaNumero($("#nrcpfcgc","#frmTipo").val());');
+    eval('arrayAlienacao' + i + '["vlrdobem"] = $("#vlrdobem","#frmTipo").val().replace("R$","").replace(".","");');
+    eval('arrayAlienacao' + i + '["vlfipbem"] = $("#vlfipbem","#frmTipo").val().replace("R$","").replace(".","");');
+    eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();');
+
+	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));');
+		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));');
+		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));');
+	} else {
+		eval('arrayAlienacao' + i + '["dsmarbem"] = $("#dsmarbem option:selected","#frmTipo").text().toUpperCase();');
+		eval('arrayAlienacao' + i + '["dsbemfin"] = $("#dsbemfin option:selected","#frmTipo").text().toUpperCase();');
+		eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem option:selected","#frmTipo").text().toUpperCase();');
+	}
+
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
@@ -4804,7 +5099,7 @@ function insereAlienacao(operacao, opContinua) {
     nrAlienacao++;
     contAlienacao++;
 
-    arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + ' Bem )';
+    arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + '&ordm; Bem )';
 
     controlaOperacao(operacao);
     glb_codigoOperadorLiberacao = '';
@@ -5042,7 +5337,6 @@ function Busca_Associado(nrctaava, nrcpfcgc, indxaval) {
                     eval(response);
                 }
 
-
                 return false;
             } catch (error) {
                 hideMsgAguardo();
@@ -5244,22 +5538,17 @@ function validaDadosGerais() {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
-
             try {
-
                 if (response.indexOf('showError("error"') == -1) {
                     aux_retorno = true;
                     eval(response);
 
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
-
                 } else {
                     aux_retorno = false;
                     hideMsgAguardo();
                     eval(response);
-
-
                 }
 
             } catch (error) {
@@ -5335,22 +5624,17 @@ function validaDadosAval() {
         },
         success: function(response) {
             try {
-
                 if (response.indexOf('showError("error"') == -1) {
-
                     aux_retorno = true;
                     eval(response);
 
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
-
                 } else {
-
                     aux_retorno = false;
                     hideMsgAguardo();
                     eval(response);
                 }
-
 
             } catch (error) {
                 hideMsgAguardo();
@@ -5406,23 +5690,17 @@ function validaDadosInterv() {
         },
         success: function(response) {
             try {
-
                 if (response.indexOf('showError("error"') == -1) {
-
                     aux_retorno = true;
                     eval(response);
 
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
-
                 } else {
-
                     aux_retorno = false;
                     hideMsgAguardo();
                     eval(response);
                 }
-
-
             } catch (error) {
                 hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
@@ -5458,7 +5736,7 @@ function validaHipoteca(nmfuncao, operacao) {
 
     if (!booPrimeiroBen) {//809763
         if (dscatbem == '') {//809763
-            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dscatbem\',\'frmAlienacao\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dscatbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
             return false;//809763
         } 
     }//809763
@@ -5506,7 +5784,7 @@ function validaHipoteca(nmfuncao, operacao) {
 
 function validaAlienacao(nmfuncao, operacao) {
 	
-    if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == '' && booPrimeiroBen) {//809763
+    if (((typeof $('#dscatbem', '#frmTipo').val() == 'object') || $('#dscatbem', '#frmTipo').val() == '') && $('#dstipbem', '#frmTipo').val() == '' && booPrimeiroBen) {//809763
         eval(nmfuncao);
         return false;
 }
@@ -5516,30 +5794,100 @@ function validaAlienacao(nmfuncao, operacao) {
     $('input,select', '#' + nomeForm).removeClass('campoErro');
 
     // Alteracao 069
-    $('#dsbemfin', '#frmAlienacao').val(retiraCaracteres($('#dsbemfin', '#frmAlienacao').val(), "'|;", false));
+	if ($('#dsbemfin', '#frmTipo').val()) {
+		$('#dsbemfin', '#frmTipo').val(retiraCaracteres($('#dsbemfin', '#frmTipo').val(), "'|;", false));
+	}
 
-    var dscatbem  = $.trim($('#dscatbem', '#frmAlienacao').val());
-    var vlmerbem  = $.trim(number_format(parseFloat($('#vlmerbem', '#frmAlienacao').val().replace(/[. ]*/g, '').replace(',', '.')), 2, ',', ''));
-    var dsbemfin  = removeAcentos(removeCaracteresInvalidos($.trim($('#dsbemfin', '#frmAlienacao').val().replace("<", "").replace(">", ""))));
-    var tpchassi  = $.trim($('#tpchassi', '#frmAlienacao').val());
-    var dscorbem  = removeAcentos(removeCaracteresInvalidos($.trim($('#dscorbem', '#frmAlienacao').val().replace("<", "").replace(">", ""))));
-    var ufdplaca  = $.trim($('#ufdplaca', '#frmAlienacao').val());
-    var nrdplaca  = $.trim($('#nrdplaca', '#frmAlienacao').val());
-    var dschassi  = $.trim($('#dschassi', '#frmAlienacao').val());
-    var nrrenava  = $.trim(normalizaNumero($('#nrrenava', '#frmAlienacao').val()));
-    var nranobem  = $.trim($('#nranobem', '#frmAlienacao').val());
-    var nrmodbem  = $.trim($('#nrmodbem', '#frmAlienacao').val());
-    var nrcpfbem  = $.trim(normalizaNumero($('#nrcpfbem', '#frmAlienacao').val()));
-    var uflicenc  = $.trim($('#uflicenc', '#frmAlienacao').val());
-    var dstipbem  = $.trim($('#dstipbem', '#frmAlienacao').val());
+    //var dscatbem  = $.trim($('#dscatbem', '#frmTipo').val());
+    //var vlmerbem  = $.trim(number_format(parseFloat($('#vlmerbem', '#frmTipo').val().replace(/[. ]*/g, '').replace(',', '.')), 2, ',', ''));
+    //var dsbemfin  = removeAcentos(removeCaracteresInvalidos($.trim($('#dsbemfin', '#frmTipo').val().replace("<", "").replace(">", ""))));
+    //var tpchassi  = $.trim($('#tpchassi', '#frmTipo').val());
+    //var dscorbem  = removeAcentos(removeCaracteresInvalidos($.trim($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", ""))));
+    //var ufdplaca  = $.trim($('#ufdplaca', '#frmTipo').val());
+    //var nrdplaca  = $.trim($('#nrdplaca', '#frmTipo').val());
+    //var dschassi  = $.trim($('#dschassi', '#frmTipo').val());
+    //var nrrenava  = $.trim(normalizaNumero($('#nrrenava', '#frmTipo').val()));
+    //var nranobem  = $.trim($('#nranobem', '#frmTipo').val());
+    //var nrmodbem  = $.trim($('#nrmodbem', '#frmTipo').val());
+    //var nrcpfbem  = $.trim(normalizaNumero($('#nrcpfbem', '#frmTipo').val()));
+    //var uflicenc  = $.trim($('#uflicenc', '#frmTipo').val());
+    //var dstipbem  = $.trim($('#dstipbem', '#frmTipo').val());
+
 	var fVlemprst = arrayProposta['vlemprst'];
 		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+
+	var dscatbem = $('#dscatbem', '#frmTipo').val().toUpperCase();
+	var dstipbem = $('#dstipbem', '#frmTipo').val().toUpperCase();
+	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
+	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
+	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+	if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		dsmarbem = $('#dsmarbemC', '#frmTipo').val().toUpperCase();
+		dsbemfin = $('#dsbemfinC', '#frmTipo').val().toUpperCase();
+		nrmodbem = $('#nrmodbemC', '#frmTipo').val().toUpperCase();
+	}
+	var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val().toUpperCase()); // inteiro
+	var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
+	var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
+	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val() ); // inteiro
+	var dschassi =  $('#dschassi', '#frmTipo').val().toUpperCase(); // string
+
+	var dscorbem =  $('#dscorbem', '#frmTipo').val().toUpperCase(); // string
+	var ufdplaca =  $('#ufdplaca', '#frmTipo').val().toUpperCase(); // string
+	var nrdplaca =  $('#nrdplaca', '#frmTipo').val().toUpperCase(); // string
+	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
+	var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
+    var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+	
+	var vlmerbem = vlrdobem;
+	var nrcpfbem = nrcpfcgc;
+
+	var dssitgrv = $('#dssitgrv', '#frmTipo').val().toUpperCase();
+
+	var radios = $('input[name=nrbem]');
+	var idseqbem = "";
+	var cdoperad =1;
+	for (var i = 0, length = radios.length; i < length; i++) {
+		if (radios[i].checked) {
+			idseqbem = normalizaNumero($.trim(radios[i].value));			
+			break;
+		}
+	}
+	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'');//.replace(',','.');
+	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'');//.replace(',','.');
+
+	// Converter caracteres especiais na Marca e Modelo
+	dsmarbem = convert_accented_characters(dsmarbem);
+	dsbemfin = convert_accented_characters(dsbemfin);
+
+	var dstpcomb = "";
+	if ( arrmodbem = nrmodbem.split(" ") ) {
+		nrmodbem = arrmodbem[0];
+		dstpcomb = arrmodbem[1];
+	}
+	
+ 	$.trim(dscatbem);
+	$.trim(dstipbem);
+	$.trim(dsmarbem);
+	$.trim(nrmodbem);
+	$.trim(nranobem);
+	$.trim(dsbemfin);
+	$.trim(vlrdobem);
+	$.trim(vlfipbem);
+	$.trim(tpchassi);
+	$.trim(dschassi);
+	$.trim(dscorbem);
+	$.trim(ufdplaca);
+	$.trim(nrdplaca);
+	$.trim(nrrenava);
+	$.trim(uflicenc);
+	$.trim(nrcpfcgc);
 
     var idcatbem = contAlienacao;
 
     if (!booPrimeiroBen) {//809763
         if (dscatbem == '') {//809763
-            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dscatbem\',\'frmAlienacao\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dscatbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
             return false;//809763
         } 
     }//809763
@@ -5550,19 +5898,20 @@ function validaAlienacao(nmfuncao, operacao) {
 
     var aux_retorno = false;
 
-    if (in_array(dscatbem, ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+    if (in_array(dscatbem, ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
+
         var msgerro = '';
         var camperr = '';
 
         if (dsbemfin == '') {
-            msgerro = 'Descri&ccedil;&atilde;o';
+            msgerro = 'Modelo';
             camperr = 'dsbemfin';
         } else if (dscorbem == '') {
             msgerro = 'Cor Classe';
             camperr = 'dscorbem';
-        } else if (vlmerbem == '0,00') {
+        } else if (vlrdobem == '0,00') { //vlmerbem
             msgerro = 'Valor de Mercado';
-            camperr = 'vlmerbem';
+            camperr = 'vlrdobem';
         } else if (tpchassi == '') {
             msgerro = 'Tipo Chassi';
             camperr = 'tpchassi';
@@ -5590,7 +5939,7 @@ function validaAlienacao(nmfuncao, operacao) {
         }
 
         if (msgerro != '') {
-            showError('error', 'O campo ' + msgerro + ' &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'' + camperr + '\',\'frmAlienacao\');hideMsgAguardo();bloqueiaFundo(divRotina);');
+            showError('error', 'O campo ' + msgerro + ' &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'' + camperr + '\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');
             return false;
         }
     }
@@ -5612,6 +5961,8 @@ function validaAlienacao(nmfuncao, operacao) {
             nrdplaca: nrdplaca, idseqbem: idseqbem,
             nomeform: nomeForm, dstipbem: dstipbem,
             uflicenc: uflicenc, nmfuncao: nmfuncao,
+			dsmarbem: dsmarbem, vlrdobem: vlrdobem,
+			vlfipbem: vlfipbem, nrcpfcgc: nrcpfcgc,
 			vlemprst: fVlemprst,
             redirect: 'script_ajax'
         },
@@ -5631,7 +5982,6 @@ function validaAlienacao(nmfuncao, operacao) {
                     hideMsgAguardo();
                     eval(response);
                 }
-
 
             } catch (error) {
                 hideMsgAguardo();
@@ -6037,7 +6387,6 @@ function montaString() {
 
     }
 
-
     //Bens alienação
     aux_dsdalien = '';
     for (i in arrayAlienacoes) {
@@ -6046,23 +6395,34 @@ function montaString() {
             aux_dsdalien = aux_dsdalien + '|';
         }
 
+		var dstpcomb = "";
+		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		arrmodbem = nrmodbem.split(" ");
+		if ( arrmodbem[0] !== nrmodbem ) {
+			nrmodbem = arrmodbem[0];
+			dstpcomb = arrmodbem[1];
+		}
+
         aux_dsdalien = aux_dsdalien +
                 arrayAlienacoes[i]['dscatbem'] + ';' +
                 removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dsbemfin'].replace("<", "").replace(">", ""))) + ';' +
                 removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dscorbem'].replace("<", "").replace(">", ""))) + ';' +
-                number_format(parseFloat(arrayAlienacoes[i]['vlmerbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' +
+                number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
                 arrayAlienacoes[i]['dschassi'] + ';' +
                 arrayAlienacoes[i]['nranobem'] + ';' +
-                arrayAlienacoes[i]['nrmodbem'] + ';' +
+                nrmodbem.substring(0,4) + ';' +
                 arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
                 normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
                 arrayAlienacoes[i]['tpchassi'] + ';' +
                 arrayAlienacoes[i]['ufdplaca'] + ';' +
-                normalizaNumero(arrayAlienacoes[i]['nrcpfbem']) + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
                 arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
                 arrayAlienacoes[i]['dstipbem'] + ';' +
                 arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
-                arrayAlienacoes[i]['cdcoplib']; /* OPERADOR DE LIBERACAO */
+                arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
+                arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
+                number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
+				dstpcomb + ';' ; //novo
     }
 
     //Interneiente anuente
@@ -6475,13 +6835,10 @@ function fechaSimulacoes(encerrarRotina) {
     $('#divProcSimulacoesTabela').remove();
     $('#divUsoGenerico').html('');
     fechaRotina($('#divUsoGenerico'));
-    if (encerrarRotina)
-    {
+    if (encerrarRotina) {
         fechaRotina($('#divUsoGenerico'), $('#divRotina'));
         encerraRotina(true);
-    }
-    else
-    {
+    } else {
         exibeRotina($('#divRotina'));
         controlaOperacao('');
     }
@@ -10075,9 +10432,9 @@ function gravaMotivosAnulacao(){
             } catch(error) {
                 hideMsgAguardo();
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            }
-        }               
-    });
+			}
+		}				
+	});
 }
 
 function fechaMotivos(encerrarRotina) {
@@ -10089,14 +10446,121 @@ function fechaMotivos(encerrarRotina) {
 }
 
 function controlarMotivos(cdMotivo){
-	if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
-		// Desabilitar todos os outros campos de observação
-		$('input[type=text]', '#frmDadosMotivos').each(function() {
+    if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
+        // Desabilitar todos os outros campos de observação
+        $('input[type=text]', '#frmDadosMotivos').each(function() {
             $($(this), '#frmDadosMotivos').desabilitaCampo();
             $($(this), '#frmDadosMotivos').val('');
         });
         // Habilitar somente o campo de observação do motivo selecionado
-		$('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
+        $('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
     }
 }
-// PRJ 438 - FIM
+
+function buscaTipo() {
+	arrayAditiv.length = 0;
+	showMsgAguardo('Aguarde, buscando ...');
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/busca_tipo.php',
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			nraditiv: nraditiv,
+			cdaditiv: cdaditiv,
+            tpctrato: tpctrato,
+			redirect: 'script_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+		},
+		success: function(response) {
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divConteudo', '#divRotina').html(response);
+
+					if ( cddopcao == 'X' && parseInt(regtotal) == 0 ) {
+						estadoInicial();
+					} else {
+						exibeRotina( $('#divRotina') );
+					}
+
+					if ( cddopcao == 'E' && cdaditiv != 2 && cdaditiv != 3 ) {
+						$('#divBotoes', '#divRotina').css({'display':'none'});
+						manterRotina('VD');
+					}
+
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+				}
+			} else {
+				try {
+					eval( response );
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+				}
+			}
+		}
+	});
+
+	return false;
+}
+
+function verificarTipoVeiculo() {
+	var tipo = $('#dstipbem option:selected').val();
+	
+	var optionsModBem = $('#nrmodbem option');
+		$.each(optionsModBem, function(){
+			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
+				$(this).remove();
+			}
+		});
+	if(tipo != 'ZERO KM'){
+		modeloBem = '';
+	} 
+}
+
+function selecionaComplemento(tr) {
+	$('#idseqbem','#'+frmCab).val($('#idseqbem', tr).val());
+	$('#nrdplaca','.complemento').html($('#nrdplaca', tr).val());
+	$('#ufdplaca','.complemento').html($('#ufdplaca', tr).val());
+	$('#dscorbem','.complemento').html($('#dscorbem', tr).val());
+	$('#nranobem','.complemento').html($('#nranobem', tr).val());
+	$('#nrmodbem','.complemento').html($('#nrmodbem', tr).val());
+    $('#uflicenc','.complemento').html($('#uflicenc', tr).val());
+    
+	return false;
+}
+
+
+function mostraAplicacao(tpaplica) {
+	showMsgAguardo('Aguarde, buscando ...');
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos//aplicacao.php',
+		data: {
+			redirect: 'html_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
+		},
+		success: function(response) {
+			$('#divUsoGenerico').html(response);
+			buscaAplicacao(tpaplica);
+			return false;
+		}
+    });
+    
+	return false;
+}

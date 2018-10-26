@@ -3,7 +3,7 @@
 	 /************************************************************************
 	   Fonte: principal.php
 	   Autor: Guilherme
-	   Data : Fevereiro/2008                 Última Alteração: 06/10/2015
+	   Data : Fevereiro/2008                 Última Alteração: 26/06/2018
 
 	   Objetivo  : Mostrar opcao Principal da rotina de Dep. Vista
                    da tela ATENDA
@@ -16,6 +16,8 @@
 								Prj. 302 (Jean Michel).
 				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
                    12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória)
+				   			  P450 - Diego Simas - AMcom								 
 	
 	 ************************************************************************/
 	
@@ -82,6 +84,26 @@
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	
+	//Busca Saldo atual da conta transitória
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";	
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "PREJ0003", "CONSULTAR_SLDPRJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false);
+	}else{
+		$sldatuct = getByTagName($param->tags,'saldo');		
+	}				
+
 	// Montar o xml de Requisicao das datas de prejuizo
 	$xml = "";
 	$xml .= "<Root>";
@@ -140,6 +162,27 @@
 		}
 	}
 	
+	//Mensageria referente a situação da conta e se já foi transferido para prejuízo
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "PREJ0003", "BUSCA_SIT_BLOQ_PREJU", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata); 
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+		$ocopreju = getByTagName($param->tags,'ocopreju');	    
+	}
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -215,8 +258,18 @@
 		<label for="dtultlcr"><? echo utf8ToHtml('Útima Atualização:') ?></label>
 		<input name="dtultlcr" id="dtultlcr" type="text" value="<?php echo getByTagName($depvista,"dtultlcr"); ?>" />
 		<br />
-		
 	</fieldset>
+		
+	<? if($inprejuz == 1 || $ocopreju == 'S'){ ?>
+  	<fieldset>
+		<legend><? echo utf8ToHtml('Bloqueado Prejuízo'); ?></legend>
+		<label for="vlsldctr"><? echo utf8ToHtml('Saldo:') ?></label>
+		<input name="vlsldctr" id="vlsldctr" type="text" value="<?php echo number_format(str_replace(",",".",$sldatuct),2,",","."); ?>" />
+		<div style="float: right; padding-right: 5px;">
+			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();return false;" style="padding: 3px 6px;">Detalhes</a>
+		</div>
+	</fieldset>
+	<? } ?>
 
 </form>
 

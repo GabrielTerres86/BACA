@@ -18,10 +18,16 @@
     require_once('uteis/chama_servico.php');
     require_once('uteis/class_combo.php');
     require_once('uteis/xml_convert_values.php');
+    require_once('../includes/utils.php');
     isPostMethod();
+	
+	$aux = "";
+
     /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
-    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
+    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ;
+	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
+	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
     $urlServicoOperacao = $UrlFipe."ObterListaMarcaModelosFipe";
     $data = '{
         "tabelaFIPE": {
@@ -51,8 +57,18 @@
         echo "$('#".$idElementoHtml."').append($('<option>', 
         {
           value: ".$comboItem->value.",
-          text: '".utf8_decode($comboItem->text)."'
+          text: '".removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))))."'
         }));";
+
+		if (removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) == utf8_decode(mb_strtoupper($dsbemfin, 'UTF-8'))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) . "'; }).attr('selected', 'selected');
+				urlPagina= \"telas/manbem/fipe/busca_anos.php\";
+				cdMarcaFipe = $('#'+idElementMarca).val();
+				cdModeloFipe = ".$comboItem->value.";
+				data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax', nrmodbem: '$nrmodbem' });
+				buscaFipeServico(urlPagina,data);";
+		}
     }
+	echo $aux;
     /************************************************** Fim Tratamento dados retornados *************************************************************/
 ?>

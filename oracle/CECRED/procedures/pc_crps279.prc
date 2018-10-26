@@ -178,6 +178,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
 
                    17/04/2018 - Retirar o <= da validacao de idade do seguro prestamista
                                 (Lucas Ranghetti #INC0012820)
+
+                   17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
+                                ferramentas contabeis e fiscais.
+                                Heitor / Alcemir (Mouts)
     ............................................................................ */
 
     DECLARE
@@ -344,6 +348,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
           INDEX BY PLS_INTEGER; -- Indice pela conta
       vr_tab_crapseg typ_tab_crapseg;
 
+      -- tabela para armazenar valores de lancamento no arquivo contabil por agencia PRJ421
+      TYPE typ_tab_lancarq IS 
+        TABLE OF NUMBER(30,10) INDEX BY PLS_INTEGER;
+      
+      vr_tab_lancarq typ_tab_lancarq;
       ------------------------------- VARIAVEIS -------------------------------
 
       -- Variaveis para retorno da parametrização do relatório
@@ -353,6 +362,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
       vr_tab_vltabela NUMBER(6,5);
       vr_tab_nrdeanos PLS_INTEGER;
       vr_tab_dtiniseg DATE;
+      vr_idx_lancarq PLS_INTEGER;
+      
+      -- variavei geracao arquivo contbil Prj421      
+      vr_arquivo_txt         utl_file.file_type;
+      vr_nom_diretorio       varchar2(200);
+      vr_dsdircop            varchar2(200);
+      vr_typ_said VARCHAR2(4);
+      vr_linhadet VARCHAR(4000);
+      
+
+      -- Nome do arquivo que será gerado
+      vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
+      vr_nmarqdat            varchar2(50);
+      vr_dtmvtolt_yymmdd     VARCHAR2(8);
 
       -- Variaveis para cópia das informações quando no primeiro registro do CPF
       vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
@@ -365,10 +388,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
       vr_flganter BOOLEAN;       --> Indicador de epr anterior a data
       vr_dtsgprst DATE;          --> Data de movimento do seguro prestamista
       vr_dtvencto DATE;          --> Data de vencimento do epr
+      vr_vltotarq NUMBER(30,10);  --> total do lancamento geração arquivo prj421
       -- Idade do cooperado
       vr_nrdeanos PLS_INTEGER;
       vr_nrdmeses PLS_INTEGER;
       vr_dsdidade VARCHAR2(50);
+      vr_percpagt NUMBER(20,15);
 
       -- Totalizadores
       vr_vltotdiv NUMBER(30,10):= 0;-- Total da divida
@@ -671,12 +696,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
           -- Considerar % pagamento segurado zerado também
           vr_vlpagseg := 0;
         END IF;
+        
+        vr_tab_lancarq.delete;
+        vr_vltotarq := 0;
         -- Gerar tag de totais
         pc_escreve_clob(vr_clobxml,'<totais qttotdiv="'||to_char(vr_qttotdiv,'fm999g999g990')||'"'
                                  ||       ' vlttpgto="'||to_char(vr_vlttpgto,'fm999g999g990d00')||'"'
                                  ||       ' vltotdiv="'||to_char(vr_vltotdiv,'fm999g999g990d00')||'"'
                                  ||       ' vlpagseg="'||to_char(vr_vlpagseg,'fm990d0000000000')||'">');
+                                       
+        vr_percpagt  := round(vr_tab_vltabela/100,10);
         -- Gerar totais por PAC se existir
+       
         IF vr_tab_sldevpac.COUNT > 0 THEN
           FOR vr_cdagenci IN vr_tab_sldevpac.FIRST..vr_tab_sldevpac.LAST LOOP
             -- Se existir registro no contador atual
@@ -687,8 +718,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
                                        ||  '<cdagenci>'||LPAD(vr_cdagenci,3,' ')||'</cdagenci>'
                                        ||  '<sldevpac>'||to_char(vr_tab_sldevpac(vr_cdagenci),'fm999g999g990d00')||'</sldevpac>'
                                        ||'</totpac>');
+                                       
+              vr_tab_lancarq(vr_cdagenci) := vr_tab_sldevpac(vr_cdagenci) * vr_percpagt; -- deve ser arredondado
+              vr_vltotarq := vr_vltotarq + round(vr_tab_lancarq(vr_cdagenci),2);
+                                      
             END IF;
           END LOOP;
+          -- para evitar diferença o ultimo PA recebe a diferença do rateio (pode ser negativo ou posito)
+          vr_tab_lancarq(vr_tab_lancarq.last) := vr_tab_lancarq(vr_tab_lancarq.last) + round((vr_vlttpgto - vr_vltotarq),2); 
         END IF;
         -- Fechar tag
         pc_escreve_clob(vr_clobxml,'</totais>');
@@ -697,6 +734,78 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
       -- Fechar a tag raiz
       pc_escreve_clob(vr_clobxml,'</raiz>');
 
+      -- gerar arquivo contabil
+      vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                              pr_cdcooper => pr_cdcooper,
+                                              pr_nmsubdir => 'contab');
+
+     -- Busca o diretório final para copiar arquivos
+     vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => 0
+                                            ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+     -- Nome do arquivo a ser gerado
+     vr_dtmvtolt_yymmdd := to_char(rw_crapdat.dtmvtolt, 'yyyymmdd');
+     vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_'||lpad(pr_cdcooper,2,0)||'_PRESTAMISTA.txt';
+
+
+     
+     -- Abre o arquivo para escrita
+     gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                                 pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                                 pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                                 pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                                 pr_des_erro => vr_dscritic);
+
+     if vr_dscritic is not null then
+       vr_cdcritic := 0;
+       RAISE vr_exc_saida;
+     end if;
+     
+      -- gerar arquivo aqui -- varrer pl table
+      IF vr_tab_lancarq.count > 0 THEN
+         vr_idx_lancarq := vr_tab_lancarq.first;
+         
+         /* Escrita arquivo o total*/
+         vr_linhadet := TRIM(vr_dtmvtolt_yymmdd)||','||
+                             trim(to_char(rw_crapdat.dtmvtolt,'ddmmyy'))||','||
+                             '8304,'||
+                             '4963,'||
+                             trim(to_char(round(vr_vlttpgto,2),'999999999999.99'))||','|| --valor deve ir positivo para o arquivo
+                             '5210,'||
+                             '"VLR. REF. PROVISAO P/ PAGAMENTO DE SEGURO PRESTAMISTA - CHUBB DO BRASIL CIA DE SEGUROS - REF. ' 
+                             || to_CHAR(rw_crapdat.dtmvtolt,'MM/YYYY') ||'"';
+         
+
+         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+         
+         --escreve no arquivo rateio por PA                    
+         WHILE  vr_idx_lancarq IS NOT NULL LOOP
+                      
+            vr_linhadet := lpad(vr_idx_lancarq,3,0) || ',' || TRIM(to_char(round(vr_tab_lancarq(vr_idx_lancarq),2),'999999999999.99')); 
+            gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+                        
+            vr_idx_lancarq :=  vr_tab_lancarq.next(vr_idx_lancarq);  
+           
+         END LOOP;
+       
+      END IF;
+      
+      gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+      
+      vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_PRESTAMISTA.txt';
+              
+      -- Copia o arquivo gerado para o diretório final convertendo para DOS
+      gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
+                                    pr_typ_saida   => vr_typ_said,
+                                    pr_des_saida   => vr_dscritic);
+                
+      -- Testar erro
+      if vr_typ_said = 'ERR' then
+         vr_cdcritic := 1040;
+         gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
+      end if;
+     
+    
 
       -- Busca do diretório base da cooperativa para a geração de relatórios
       vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop

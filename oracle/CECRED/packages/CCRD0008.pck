@@ -173,14 +173,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      Sistema : Rotinas referentes ao Termo Adesão Cartão de Crédito
      Sigla   : CRED
      Autor   : Paulo Silva - Supero
-     Data    : Março/2018.                    Ultima atualizacao: 28/03/2018
+     Data    : Março/2018.                    Ultima atualizacao: 28/09/2018
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para buscar dados para impressao do Termo de Adesão
      
-     Alteracoes: 
+     Alteracoes: 28/09/2018 - Ajuste para pegar valor numerico do limite de esteira 
+                              no json. INC0023773 (Lombardi)
     ..............................................................................*/
 
     ---------->> CURSORES <<--------
@@ -453,9 +454,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          AND nrdconta = pr_nrdconta
          AND nrctrprp = pr_nrctrcrd
          AND tpacionamento = 1
-         AND dsoperacao = 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO'
+         AND (dsoperacao = 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO' OR
+              dsoperacao = 'REENVIO DA PROPOSTA PARA ANALISE DE CREDITO')
          AND tpproduto = 4
-       ORDER BY idacionamento ASC;
+       ORDER BY dhacionamento DESC;
        
     CURSOR cr_retorno_esteira(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE) IS
       SELECT dsconteudo_requisicao
@@ -466,7 +468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          AND tpacionamento = 2
          AND dsoperacao LIKE '%RETORNO PROPOSTA%'
          AND tpproduto = 4
-       ORDER BY idacionamento DESC;
+       ORDER BY dhacionamento DESC;
     
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
@@ -493,6 +495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dsDadosAprovador      VARCHAR2(500);
     
     vr_obj      cecred.json := json();
+    vr_obj_alt  cecred.json := json();
     vr_obj_lst  json_list := json_list();
     vr_obj_crd  cecred.json := json();
     vr_obj_anl  cecred.json := json();
@@ -808,25 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
 												pr_nrdconta => pr_nrdconta,
 												pr_nrcpfcgc => rw_crawcrd.nrcpftit);
 				FETCH cr_crapavt INTO rw_crapavt;
-
-				-- Se nao encontrar
-				IF cr_crapavt%NOTFOUND THEN
-					-- Fechar o cursor pois efetuaremos raise
 					CLOSE cr_crapavt;
-					-- Montar mensagem de critica
-					vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || pr_nrdconta ||
-												 ' CPF: '                                   || rw_crawcrd.nrcpftit ||
-												 ' Coop: '                                  || pr_cdcooper ;
-					RAISE vr_exc_erro;
-					--
-				ELSE
-					-- Data nascimento representante
-					--vr_dtnascto := rw_crapavt.dtnascto;
-
-					-- Apenas fechar o cursor
-					CLOSE cr_crapavt;
-					--
-				END IF;
 
 				-- Somente alimenta varíaveis com informações de Documento for Carteira de Identidade
 				IF rw_crapavt.tpdocava = 'CI' THEN
@@ -889,15 +874,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     CLOSE cr_aciona_motor;
 
     --Valor Limite Esteira
-    IF rw_crawcrd.insitdec IN (1,3,8) THEN
+    IF rw_crawcrd.insitdec IN (1,3,8) and rw_crawcrd.insitcrd !=4 THEN
       OPEN cr_envio_esteira(pr_nrctrcrd => rw_crawcrd.nrctrcrd);
       FETCH cr_envio_esteira INTO vr_dsconteudo;
       IF cr_envio_esteira%FOUND THEN
         vr_obj := json(vr_dsconteudo);
         
         IF vr_obj.exist('valor') THEN
-          vr_vllimest := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj.get('valor').to_char(),'"'),'"'),'\u','\')));
+          vr_vllimest := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj.get('valor').get_number,'"'),'"'),'\u','\')));
           vr_dsDadosAprovador := 'Esteira de Crédito em '|| to_char(rw_crawcrd.dtaprova,'DD/MM/YYYY');
+        ELSIF vr_obj.exist('dadosAtualizados') THEN
+          vr_obj_alt := json(vr_obj.get('dadosAtualizados'));
+          IF vr_obj_alt.exist('valor') THEN
+            vr_vllimest := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_alt.get('valor').get_number,'"'),'"'),'\u','\')));
+            vr_dsDadosAprovador := 'Esteira de Crédito em '|| to_char(rw_crawcrd.dtaprova,'DD/MM/YYYY');
+          END IF;
         END IF;
       
         OPEN cr_retorno_esteira(pr_nrctrcrd => rw_crawcrd.nrctrcrd);
@@ -909,7 +900,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
             vr_retorno := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj.get('insitapr').to_char(),'"'),'"'),'\u','\')));
           END IF;
           
-          IF vr_retorno <> '1' THEN
+          IF vr_retorno = '4' THEN
+            -- retorno de rafazer na esteira com isso mostra que esta em analise
+            vr_dsDadosAprovador := 'Em análise pela Esteira.';  
+          ELSIF vr_retorno <> '1' THEN
             vr_vllimest := NULL;
             vr_dsDadosAprovador := null;
           END IF;
@@ -919,6 +913,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
         CLOSE cr_retorno_esteira;
       END IF;
       CLOSE cr_envio_esteira;
+    ELSIF rw_crawcrd.insitdec=3 and rw_crawcrd.insitcrd = 4 THEN
+      -- sempre que o cartao estiver em uso o limite esteira sera o mesmo
+      -- solucao para nao gerar apresentar falha na reimpressao
+      vr_vllimest := rw_crawcrd.vllimcrd;
+      vr_dsDadosAprovador := 'Esteira de Crédito em '|| to_char(rw_crawcrd.dtaprova,'DD/MM/YYYY');
     END IF;
     
     -- Monta os dados do Aprovador

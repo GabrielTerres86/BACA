@@ -181,6 +181,8 @@ function strToNm($nrStr){
 $vllimmax = number_format(0,2,",",".");
 $vllimmin = number_format(0,2,",",".");
 $vlsugmot = number_format(0,2,",",".");
+$vlnovlim = number_format(0,2,",",".");
+
 
   // Vamos chamar o motor apenas se for titular.
   if ($titular) {
@@ -196,8 +198,6 @@ $vlsugmot = number_format(0,2,",",".");
 	$objXml = simplexml_load_string($xmlResult);
 	echo "<!-- SUGESTAO_LIMITE_CRD_ALT \n   $xmlResult  \n -->";
 		
-	
-	
 	if(isset($objXml->Erro) && (strlen($objXml->Erro->Registro->dscritic) > 0)){
 		$mssg = str_replace(" ]"," ]<br>", $objXml->Erro->Registro->dscritic);
 		$mssg =  str_replace("\u00C3\u0192\u00C2\u00A1","a",$mssg);
@@ -257,9 +257,6 @@ $vlsugmot = number_format(0,2,",",".");
 	$protocolo = ($json_sugestoes["protocolo"]);
     
 	$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
-	echo "<!-- json:\n";
-	print_r($json_sugestoes);
-	echo " \n-->";
     $cartoes = $json_sugestoes["categoriasCartaoCecred"];
 
     $sugestoes = $json_sugestoes["indicadoresGeradosRegra"]["sugestaoCartaoCecred"];	
@@ -286,15 +283,42 @@ $vlsugmot = number_format(0,2,",",".");
     }	
 
 
+    $xml  = "";
+    $xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+	$xml .= "   <tplimcrd>1</tplimcrd>"; // Alteração
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResultLimite = mensageria($xml, "ATENDA_CRD", "BUSCA_CONFIG_LIM_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjectLimite = getObjectXML($xmlResultLimite);
+	$xmlDadosLimite = $xmlObjectLimite->roottag->tags[0];
+
+	if (strtoupper($xmlDadosLimite->tags[0]->name) == 'ERRO') {
+	    $msgErro = $xmlDadosLimite->tags[0]->tags[0]->tags[4]->cdata;
+	    if ($msgErro == "") {
+	        $msgErro = $xmlDadosLimite->tags[0]->cdata;
+	    }
+
+	    exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+
+	}else{
+	    $vllimmin = getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MINIMO");
+		$vllimmax =  getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MAXIMO");
+	}
 	if(!is_null($cartao)){
 		$dados = $xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags;
 		$dslimite = getByTagName($dados,"DSLIMITE");
 		$eDslimite = explode("#",$dslimite);
-		$vllimmin = $cartao['vlLimiteMinimo'];
-		$vllimmax =  $cartao['vlLimiteMaximo'];
 		echo "<script>vlLimiteMaximo =".$cartao['vlLimiteMaximo']." ; </script>";
-        if(isset($sugestoesMotor[$cartao['codigo']]))
+		echo "<!-- teste japones -->";
+        if(isset($sugestoesMotor[$cartao['codigo']])){
             $vlsugmot = number_format($sugestoesMotor[$cartao['codigo']],2,",",".");
+            $vlnovlim = number_format($sugestoesMotor[$cartao['codigo']],2,",",".");
+        }
+
 	 
 	}else{
 		echo "<!-- Cartao NUlo -->";
@@ -322,6 +346,7 @@ $vlsugmot = number_format(0,2,",",".");
     $('#nmtitcrd').tooltip();
     $('#nmextttl').tooltip();
     $("#vlsugmot").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
+    $("#vlnovlim").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
 	$("#vllimdif").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");  
      if(inpessoa !=2)
         $(".rowLimit").hide();
@@ -353,7 +378,7 @@ $vlsugmot = number_format(0,2,",",".");
                         <label for="vllimtit" class="rotulo txtNormalBold"><? echo utf8ToHtml("Limite atual") ?>:</label>
                     </td>
                     <td>
-                        <input type="text" value='<? echo number_format(str_replace(",",".",$limiteatual),2,",","."); ?>' id="vllimmin" name="vllimmin"
+                        <input type="text" value='<? echo number_format(str_replace(",",".",$limiteatual),2,",","."); ?>' id="vllimtit" name="vllimtit"
 						
                                class="campoTelaSemBorda" disabled>
                     </td>
@@ -372,20 +397,20 @@ $vlsugmot = number_format(0,2,",",".");
                 </tr>
                 <tr>
                     <td>
-                        <label for="vllimmax" class="rotulo txtNormalBold"><? echo utf8ToHtml("Valor Sugerido") ?>
+                        <label for="vlsugmot" class="rotulo txtNormalBold"><? echo utf8ToHtml("Valor Sugerido") ?>
                             :</label>
                     </td>
                     <td>
-                        <input  type="text" id="vllimmax" name="vllimmax"value="<? echo $vlsugmot; ?>" class="campoTelaSemBorda" disabled>
+                        <input  type="text" id="vlsugmot" name="vlsugmot"value="<? echo $vlsugmot; ?>" class="campoTelaSemBorda" disabled>
                     </td>
 				</tr>
 				<tr>	                    
 					<td>
-                        <label for="vlsugmot" class="rotulo txtNormalBold"><? echo utf8ToHtml("Novo Limite") ?>
+                        <label for="vlnovlim" class="rotulo txtNormalBold"><? echo utf8ToHtml("Novo Limite") ?>
                             :</label>
                     </td>
                     <td>
-                        <input onchange="verificaValor()" type="text" id="vlsugmot" name="vlsugmot" class="campo" value='<? echo $vlsugmot; /*number_format(str_replace(",",".",$vlsugmot),2,",",".");*/ ?>'>
+                        <input onchange="verificaValor()" type="text" id="vlnovlim" name="vlnovlim" class="campo" value='<? echo $vlnovlim; number_format(str_replace(",",".",$vlnovlim),2,",","."); ?>'>
                     </td>
                 </tr>
                 <tr id='justificativaRow'>
@@ -526,17 +551,17 @@ $vlsugmot = number_format(0,2,",",".");
 
     $("#divOpcoesDaOpcao1").css("display", "block");
     $("#divConteudoCartoes").css("display", "none");
-    $( "#vlsugmot" ).keyup(function(evt) {
+    $("#vlnovlim").keyup(function(evt) {
         verificaValor();
     })
 
     function verificaValor(){
-            var vllimmax  = <? echo strToNm($vlsugmot);?>;
+            var vllimmax  = <? echo strToNm($vllimmax);?>;
 			var vllimmin  = <? echo strToNm($vllimmin);?>;
-			var valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
-            console.log("valorSugerido > vllimmax = "+valorSugerido > vllimmax);
-            if(valorSugerido > vllimmax ){ 
-			//if(valorSugerido > limiteatualCC || (cdadmcrd == 12 && valorSugerido == 0 )){ item 169 - homol prj
+			var vlsugmot = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
+			var vlnovlim = parseFloat($("#vlnovlim").val().replace(/\./g,'').replace(",","."));
+            console.log("NovoLimite > vlsugmot = "+vlnovlim > vlsugmot);
+            if(vlnovlim > vlsugmot ){ 
 				$("#justificativaRow").show();
 				obgjustificativa = true;
 			}
@@ -565,32 +590,25 @@ $vlsugmot = number_format(0,2,",",".");
         $("#tplimiterow").hide();
     $("#justificativaRow").hide();    
 	
-	var valorSugerido ;
 	var vllimmin;
 	var vllimmax;
 	var justificativa;
+	var vlnovlim;
 	
 
 		function enviarSolicitacao(){
 			if(istitular){
 			
-				vllimmax  = <? echo strToNm($vlsugmot);?>;
+				vllimmax  = <? echo strToNm($vllimmax);?>;
 				vllimmin  = <? echo strToNm($vllimmin);?>;
-				valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
-				/*if (valorSugerido > 49500)
-				{
-					showError("error", "<? echo utf8ToHtml("Valor de limite solicitado acima do limite máximo de R$49.500,00."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-					return;
-				}*/
-				/*if(valorSugerido == 0){
-					showError("error", "Por favor informe um valor sugerido para o novo limite.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-					return;
-				}*/
+				vlsugmot = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
+				vlnovlim = parseFloat($("#vlnovlim").val().replace(/\./g,'').replace(",","."));
+
 				if(obgjustificativa && $("#justificativa").val().length == 0){
 					showError("error", "<? echo utf8ToHtml("Por favor,selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}
-				if(valorSugerido > vlLimiteMaximo){
+				if(vlnovlim > vllimmax){
 					showError("error", "<? echo utf8ToHtml("Não é possível solicitar um valor de limite acima do limite da categoria."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}
@@ -599,12 +617,12 @@ $vlsugmot = number_format(0,2,",",".");
 				if(inpessoa == 2){
 					tipo = '<? echo (is_null($opcao))? '' : $opcao; ?>';  /* $("#tplimite").val();	 */
 				}
-				if( istitular &&(valorSugerido < vllimmin)){
+				if( istitular && (vlnovlim < vllimmin)){
 					showError("error", "<? echo utf8ToHtml("Valor do limite solicitado abaixo do limite mínimo."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
-				}else if(obgjustificativa  && valorSugerido > vllimmax){
+				}else if(obgjustificativa  && vlnovlim > vlsugmot){
 					if($("#justificativa").val().length == 0)
-						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#vlnovlim','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					else
 						alterarBancoob(false,inpessoa,tipo,<?echo $nrctrcrd; ?> );
 						//senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
@@ -613,7 +631,7 @@ $vlsugmot = number_format(0,2,",",".");
 					alterarBancoob(true,inpessoa,tipo,<?echo $nrctrcrd; ?> );
 				}
 			} else {
-				valorSugerido = parseFloat($("#vllimdif").val().replace(/\./g,'').replace(",","."));
+				vlnovlim = parseFloat($("#vllimdif").val().replace(/\./g,'').replace(",","."));
 				if(!verificaValorDif()){
 					return;
 				}

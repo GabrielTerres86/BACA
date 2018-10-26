@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 19/07/2018
+    Data    : Novembro/2007                  Ultima Atualizacao: 03/10/2018
     
     Dados referentes ao programa:
 
@@ -352,6 +352,10 @@
                 19/07/2018 - Remover a acentuacao das mensagens de retorno, para que todas fiquem
                              identicas. (PRJ 363 - Douglas Quisinski)
 
+                03/10/2018 - adicionado o parametro IDORIGEM nas procedures valida_senha,
+                             valida_senha_cartao_magnetico, valida_senha_cartao_cecred                
+                             para que seja possivel zerar a quantidade de senha incorretas quando
+                             estiver sendo executado pela URA (Douglas - Prj 427 URA)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -575,6 +579,8 @@ PROCEDURE valida_senha:
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_idtipcar    AS INT          NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
+    DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
     /* Cartão Magnético */
@@ -585,6 +591,8 @@ PROCEDURE valida_senha:
                                              INPUT par_nrcartao,
                                              INPUT par_dssencar,
                                              INPUT par_dtnascto,
+                                             INPUT par_idorigem,
+                                             OUTPUT par_cdcritic,
                                              OUTPUT par_dscritic).
                                           
            IF RETURN-VALUE <> "OK" THEN
@@ -599,6 +607,8 @@ PROCEDURE valida_senha:
                                           INPUT par_nrcartao,
                                           INPUT par_dssencar,
                                           INPUT par_dtnascto,
+                                          INPUT par_idorigem,
+                                          OUTPUT par_cdcritic,
                                           OUTPUT par_dscritic).
                                           
            IF RETURN-VALUE <> "OK" THEN
@@ -5377,6 +5387,7 @@ PROCEDURE valida_cartao_cecred:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     
     DEFINE OUTPUT PARAM par_idseqttl    AS INT          NO-UNDO.
+    DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
     FOR crapcrd FIELDS(cdcooper nrdconta nrctrcrd cdadmcrd nrcpftit inacetaa)
@@ -5439,7 +5450,8 @@ PROCEDURE valida_cartao_cecred:
     /* Verificar se o cartão está com acesso liberado. */
     IF crapcrd.inacetaa <> 1 THEN
        DO:
-           par_dscritic = "Acesso bloqueado.".
+           ASSIGN par_cdcritic = 625
+                  par_dscritic = "Acesso bloqueado.".
            RETURN "NOK".
        END.
        
@@ -5475,6 +5487,8 @@ PROCEDURE valida_senha_cartao_cecred:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
+    DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
     DEF VAR aux_idseqttl LIKE crapttl.idseqttl          NO-UNDO.
@@ -5490,6 +5504,7 @@ PROCEDURE valida_senha_cartao_cecred:
                               INPUT par_nrdconta,
                               INPUT par_nrcartao,
                               OUTPUT aux_idseqttl,
+                              OUTPUT par_cdcritic,
                               OUTPUT par_dscritic).
     
     IF RETURN-VALUE <> "OK" THEN
@@ -5568,9 +5583,11 @@ PROCEDURE valida_senha_cartao_cecred:
            IF crapcrd.qtsenerr = crapcop.taamaxer THEN
               DO:
                   IF aux_flgcadas  THEN
-                     ASSIGN par_dscritic = "     Senha Invalida,      Acesso Bloqueado".
+                     ASSIGN par_cdcritic = 1392
+                            par_dscritic = "     Senha Invalida,      Acesso Bloqueado".
                   ELSE
-                     ASSIGN par_dscritic = " Dados nao conferem,      Acesso Bloqueado".
+                     ASSIGN par_cdcritic = 301
+                            par_dscritic = " Dados nao conferem,      Acesso Bloqueado".
 
                   IF NOT VALID-HANDLE(h-b1wgen0028) THEN
                      RUN sistema/generico/procedures/b1wgen0028.p PERSISTENT SET h-b1wgen0028.
@@ -5596,11 +5613,13 @@ PROCEDURE valida_senha_cartao_cecred:
               DO:
                   /* Informa quantas tentativas ainda restam */
                   IF aux_flgcadas  THEN
-                     ASSIGN par_dscritic = "      Senha Invalida,    Resta(m) " +
+                     ASSIGN par_cdcritic = 1391
+                            par_dscritic = "      Senha Invalida,    Resta(m) " +
                                            STRING(crapcop.taamaxer - crapcrd.qtsenerr,"z9") +
                                            " Tentativa(s)".
                   ELSE
-                     ASSIGN par_dscritic = "  Dados nao conferem,    Resta(m) " +
+                     ASSIGN par_cdcritic = 301
+                            par_dscritic = "  Dados nao conferem,    Resta(m) " +
                                            STRING(crapcop.taamaxer - crapcrd.qtsenerr,"z9") +
                                            " Tentativa(s)".
               END.
@@ -5610,7 +5629,8 @@ PROCEDURE valida_senha_cartao_cecred:
        END.
 
     /* se acertou a senha e nao tem as letras, zera a quantidade de erros */
-    IF NOT aux_flgcadas  THEN
+    /* se for URA, também zera a quantidade de erros  */
+    IF NOT aux_flgcadas OR par_idorigem = 6 THEN
        DO:
            /* zera quantidade de erros de senha */
            ASSIGN crapcrd.qtsenerr = 0.
@@ -5629,6 +5649,8 @@ PROCEDURE valida_senha_cartao_magnetico:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     DEFINE  INPUT PARAM par_dssencar    AS CHAR         NO-UNDO.
     DEFINE  INPUT PARAM par_dtnascto    AS CHAR         NO-UNDO.
+    DEFINE  INPUT PARAM par_idorigem    AS INT          NO-UNDO.
+    DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
     DEF VAR aux_flgcadas AS LOGICAL                     NO-UNDO.
@@ -5729,9 +5751,13 @@ PROCEDURE valida_senha_cartao_magnetico:
             IF  crapcrm.qtsenerr = crapcop.taamaxer  THEN
                 DO:
                     IF  aux_flgcadas  THEN
-                        par_dscritic = "     Senha Invalida,      Cartao Bloqueado".
+                    DO:
+                      ASSIGN par_cdcritic = 1392
+                             par_dscritic = "     Senha Invalida,      Cartao Bloqueado".
+                    END.
                     ELSE
-                        par_dscritic = " Dados nao conferem,      Cartao Bloqueado".
+                      ASSIGN par_cdcritic = 301
+                             par_dscritic = " Dados nao conferem,      Cartao Bloqueado".
 
                     RUN sistema/generico/procedures/b1wgen0032.p PERSISTENT SET h_b1wgen0032.
 
@@ -5754,15 +5780,20 @@ PROCEDURE valida_senha_cartao_magnetico:
             ELSE
                 DO:
                     /* Informa quantas tentativas ainda restam */
-
                     IF  aux_flgcadas  THEN
+                    DO:
+                        ASSIGN par_cdcritic = 1391
                         par_dscritic = "      Senha Invalida,    Resta(m) " +
                                        STRING(crapcop.taamaxer - crapcrm.qtsenerr,"z9") +
                                        " Tentativa(s)".
+                    END.
                     ELSE
-                        par_dscritic = "  Dados nao conferem,    Resta(m) " +
+                    DO:
+                      ASSIGN par_cdcritic = 301
+                             par_dscritic = "  Dados nao conferem,    Resta(m) " +
                                        STRING(crapcop.taamaxer - crapcrm.qtsenerr,"z9") +
                                        " Tentativa(s)".
+                    END.
                 END.
 
 
@@ -5771,7 +5802,8 @@ PROCEDURE valida_senha_cartao_magnetico:
 
 
     /* se acertou a senha e nao tem as letras, zera a quantidade de erros */
-    IF  NOT aux_flgcadas  THEN
+    /* se for URA, também zera a quantidade de erros */
+    IF  NOT aux_flgcadas OR par_idorigem = 6 THEN
         DO:
             /* zera quantidade de erros de senha */
             crapcrm.qtsenerr = 0.
@@ -5797,12 +5829,14 @@ PROCEDURE valida_senha_letras_cartao_cecred:
     DEFINE VARIABLE aux_flsenlet AS LOGICAL             NO-UNDO.
     DEFINE VARIABLE aux_idseqttl LIKE crapttl.idseqttl  NO-UNDO.
     DEFINE VARIABLE h-b1wgen0028 AS HANDLE              NO-UNDO.
+    DEFINE VARIABLE aux_cdcritic AS INT                 NO-UNDO.
     
     /* Valida se os dados do cartao cecred estah OK */
     RUN valida_cartao_cecred (INPUT par_cdcooper,
                               INPUT par_nrdconta,
                               INPUT par_nrcartao,
                               OUTPUT aux_idseqttl,
+                              OUTPUT aux_cdcritic,
                               OUTPUT par_dscritic).
     
     IF RETURN-VALUE <> "OK" THEN

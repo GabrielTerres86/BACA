@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 29/06/2018
+   Data    : AGOSTO/2013                      Ultima atualizacao: 19/10/2018
 
    Dados referentes ao programa:
 
@@ -237,6 +237,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
                  
+							 13/09/2018 - Ajuste para identificação do pagamento com histórico 2386 (Recuperação de 
+							              prejuízo - empréstimo em prejuízo) a partir do extrato do prejuízo (TBCC_PREJUIZO_DETALHE)
+														(Reginaldo - AMcom - P450)
+							            
+
+               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+                                
      ............................................................................. */
 
      DECLARE
@@ -421,7 +428,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
               on x.cdcooper = crapcyb.cdcooper
              and x.nrdconta = crapcyb.nrdconta
              and x.nrctremp = crapcyb.nrctremp
-           where crapcyb.cdorigem IN (2,3)
+           where ((crapcyb.cdorigem = 1
+					   AND crapcyb.cdlcremp = 0) 
+						  OR crapcyb.cdorigem IN (2,3))
              and x.inliquid = 0
              and x.cdcooper = pr_cdcooper
            group by x.cdcooper
@@ -500,20 +509,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
              ,case
-                when crapcyb.cdorigem in (2,3) then -- emprestimos
+                when crapcyb.cdorigem in (1,2,3) then -- emprestimos/conta
                   tpep.vlmtapar
                 when crapcyb.cdorigem = 4 then -- desconto de titulo
                   tdt.vlmtatit  -- multa por atraso de pagamento
               end AS vlmtapar
              ,case
-                when crapcyb.cdorigem in (2,3) then -- emprestimos
+                when crapcyb.cdorigem in (1,2,3) then -- emprestimos/conta
                   tpep.vlmrapar
                 when crapcyb.cdorigem = 4 then -- desconto de titulo
                   tdt.vlmratit
               end AS vlmrapar -- juros por atraso de pagamento
 
              ,CASE
-                WHEN crapcyb.cdorigem in (2,3) THEN -- emprestimos
+                WHEN crapcyb.cdorigem in (1,2,3) THEN -- emprestimos/conta
                   tpep.vliofcpl
                 WHEN crapcyb.cdorigem = 4 THEN -- desconto de titulo
                   tdt.vliofcpl
@@ -693,7 +702,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Pagamento de Prejuizo
             AND craphis.cdhistor in (2386)
-         GROUP BY craplcm.cdhistor,craphis.dshistor;
+					GROUP BY craplcm.cdhistor,craphis.dshistor
+		 UNION
+		     /* P450 - Reginaldo/AMcom - Ajuste para processar corretamente 
+				           os prejuízos de empréstimo pagos via Conta Transitória */
+			   SELECT prj.vllanmto
+				      , prj.cdhistor 
+							, his.dshistor
+					 FROM tbcc_prejuizo_detalhe prj
+					    , craphis his
+					WHERE prj.cdcooper = pr_cdcooper
+					  AND prj.nrdconta = pr_nrdconta
+						AND prj.nrctremp = pr_nrctremp
+						AND prj.cdhistor = 2781 -- Recuperação de prejuízo
+						AND his.cdcooper = prj.cdcooper
+						AND his.cdhistor = prj.cdhistor;
          
        -- [Projeto 403] Busca o valor pago para desconto de títulos  
        CURSOR cr_valor_pago_dsct_tit (pr_cdcooper  IN crapcyb.cdcooper%type
@@ -1979,6 +2002,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_categ('EQUIPAMENTO'):= 'EQUIP';
          vr_tab_categ('MAQUINA DE COSTURA'):= 'MAQCOSTURA';
          vr_tab_categ('AUTOMOVEL'):= 'AUTOMOVEL';
+         vr_tab_categ('OUTROS VEICULOS'):= 'OUTROS VEICULOS';
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -2062,17 +2086,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,crapcyb.vlpreapg = 0
                                  ,crapcyb.vlsdevan = pr_rw_crapcyb.vlsdeved
                                  ,crapcyb.vlsdeved = 0
+																 -- Acrescido pelo projeto 450 para correto tratamento do prejuízo de conta corrente (Reginaldo/AMcom)
+																 ,crapcyb.vlsdprea = pr_rw_crapcyb.vlsdprej
+																 ,crapcyb.vlsdprej = 0
+																 ,crapcyb.flgpreju = 0
+																 -- Fim (P450)
                WHERE crapcyb.rowid = pr_rw_crapcyb.rowid
                RETURNING crapcyb.dtdbaixa
                         ,crapcyb.vlprapga
                         ,crapcyb.vlpreapg
                         ,crapcyb.vlsdevan
                         ,crapcyb.vlsdeved
+												,crapcyb.vlsdprea
+												,crapcyb.vlsdprej
+												,crapcyb.flgpreju
                INTO pr_rw_crapcyb.dtdbaixa
                    ,pr_rw_crapcyb.vlprapga
                    ,pr_rw_crapcyb.vlpreapg
                    ,pr_rw_crapcyb.vlsdevan
-                     ,pr_rw_crapcyb.vlsdeved;
+                   ,pr_rw_crapcyb.vlsdeved
+									 ,pr_rw_crapcyb.vlsdprea
+									 ,pr_rw_crapcyb.vlsdprej
+									 ,pr_rw_crapcyb.flgpreju;
              EXCEPTION
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
@@ -4643,6 +4678,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_tab_idatribu(idx):= vr_atributo;
                        vr_atributo:= vr_atributo + 1;
                      END LOOP;
+                   WHEN 'OUTROS VEICULOS' THEN
+                     vr_atributo:= 438;
+                     FOR idx IN 1..10 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;
                    WHEN 'EQUIPAMENTO' THEN
                      vr_atributo:= 451;
                      FOR idx IN 1..10 LOOP
@@ -4706,7 +4747,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  END IF;
 
                  --Categoria do Bem
-                 IF rw_crapbpr.dscatbem IN ('MOTO','AUTOMOVEL','CAMINHAO','EQUIPAMENTO') THEN
+                 IF rw_crapbpr.dscatbem = 'EQUIPAMENTO' OR grvm0001.fn_valida_categoria_alienavel(rw_crapbpr.dscatbem) = 'S' THEN
                    --Indice
                    FOR vr_nrindice IN 1..10 LOOP
                      --Incrementar Contador Linha
@@ -5715,7 +5756,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      END IF;
 
                END IF;
+						 ELSIF rw_crapcyb.cdorigem = 1
+						 AND (rw_crapcyb.flgpreju = 1
+						 OR PREJ0003.fn_verifica_liquidacao_preju(rw_crapcyb.cdcooper, rw_crapcyb.nrdconta, vr_dtatual))  THEN -- Prejuízo de conta corrente
+							 -- Se houve pagamentos no dia
+							 vr_vllammto := PREJ0003.fn_valor_pago_conta_prej(rw_crapcyb.cdcooper
+							                                                , rw_crapcyb.nrdconta
+																															, vr_dtatual);
+							 IF vr_vllammto > 0 THEN
+								 --Gerar Carga Pagamentos
+								 pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
+																					,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
+																					,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
+																					,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
+																					,pr_vlrpagto => vr_vllammto            --Valor A pagar emprestimo
+																					,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
+																					,pr_cdhistor => 'PA'                  --Codigo Historico (Genérico)
+																					,pr_dshistor => NULL                   --Descricao Historico
+																					,pr_cdcritic => vr_cdcritic            --Codigo Erro
+																					,pr_dscritic => vr_dscritic);          --Descricao Erro
+								 --Se ocorreu erro
+								 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+									 RAISE vr_exc_saida;
+								 END IF;
+							 END IF;
                
+							 -- Se o prejuízo foi liquidado
+							 IF NOT PREJ0003.fn_verifica_preju_conta(rw_crapcyb.cdcooper
+								                                     , rw_crapcyb.nrdconta) THEN
+								
+								 --Gerar carga de Baixa
+								 pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb  --Registro Cyber
+																     ,pr_dtmvtolt => vr_dtatual    --Data Movimento
+																		 ,pr_dtmvtlt2 => vr_dtmvtlt2   --Data Movimento formatada
+																		 ,pr_cdcritic => vr_cdcritic   --Codigo Erro
+																		 ,pr_dscritic => vr_dscritic); --Descricao Erro
+																		 
+								 --Se ocorreu erro
+								 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+									 RAISE vr_exc_saida;
+								 END IF;
+							 END IF;
              ELSE
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram atualizacao
                -- financeira no crps280.i (Foram liquidados)

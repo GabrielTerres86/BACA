@@ -281,8 +281,8 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
             
             if($('input[name=dsadmcrdcc]:checked').val() == "outro"){
                 var select = $("#listType").val().split(";");
-                $("#dsadmcrd").val(select[0]);
-                $("#cdadmcrd").val(select[1]);
+                $("#dsadmcrd", "#frmNovoCartao").val(select[0]);
+                $("#cdadmcrd", "#frmNovoCartao").val(select[1]);
 				var vlSugMotor = select[2];
 				while(vlSugMotor.indexOf(".") > -1)
 					vlSugMotor = vlSugMotor.replace(".","");

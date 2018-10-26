@@ -22,7 +22,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    15/09/2016 - #519637 Criação de log de controle de início, erros e fim de execução do job (Carlos)
    
    02/01/2017 - Adição de filtro para não agendar o job para cooperativas inativas (Anderson).
-
+   
    07/03/2017 - Ajuste para aumentar o tamanho da variável vr_jobname (Adriano - SD 625356 ).
    
   ..........................................................................*/
@@ -62,6 +62,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
      FROM crapcop cop
      WHERE cop.cdcooper <> 3
        AND cop.flgativo = 1;
+
+    CURSOR cr_agendamento IS
+      SELECT trim(substr(craptab.dstextab,1,2))||':'||trim(substr(craptab.dstextab,3,2)) hora_exec,
+             1 ordem_exec
+        FROM craptab
+       WHERE craptab.nmsistem = 'CRED'
+         AND craptab.tptabela = 'GENERI'
+         AND craptab.cdempres = 00
+         AND craptab.cdacesso = 'HRAGENDEBTED'
+         AND craptab.cdcooper = 0
+      UNION ALL
+      SELECT trim(substr(craptab.dstextab,6,2))||':'||trim(substr(craptab.dstextab,8,2)) hora_exec,
+             2 ordem_exec
+        FROM craptab
+       WHERE craptab.nmsistem = 'CRED'
+         AND craptab.tptabela = 'GENERI'
+         AND craptab.cdempres = 00
+         AND craptab.cdacesso = 'HRAGENDEBTED'
+         AND craptab.cdcooper = 0
+      UNION ALL
+      SELECT trim(substr(craptab.dstextab,11,2))||':'||trim(substr(craptab.dstextab,13,2)) hora_exec,
+             3 ordem_exec
+        FROM craptab
+       WHERE craptab.nmsistem = 'CRED'
+         AND craptab.tptabela = 'GENERI'
+         AND craptab.cdempres = 00
+         AND craptab.cdacesso = 'HRAGENDEBTED'
+         AND craptab.cdcooper = 0;
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -121,41 +149,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
           continue;
         END IF;
         
-        vr_jobname := 'PC_CRPS705_'||rw_crapcop.cdcooper||'$';
-        vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTED(pr_cdcooper => '||rw_crapcop.cdcooper ||
-                                                    ',pr_cdprogra => '' PC_CRPS705  '''||
-                                                    ',pr_dsjobnam => '''||vr_jobname||'''); end;';
+        FOR rw_agendamento IN cr_agendamento LOOP
+          vr_jobname := 'PC_CRPS705_'||rw_agendamento.ordem_exec||rw_crapcop.cdcooper||'$';
+          vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTED(pr_cdcooper => '||rw_crapcop.cdcooper ||
+                                                      ',pr_cdprogra => '' PC_CRPS705  '''||
+                                                      ',pr_dsjobnam => '''||vr_jobname||'''); end;';
           
-        -- Faz a chamada ao programa paralelo atraves de JOB
-        gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
-                              ,pr_cdprogra  => vr_cdprogra       --> Código do programa
-                              ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
-                              ,pr_dthrexe   => TO_TIMESTAMP(to_char((SYSDATE),'DD/MM/RRRR HH24:MI')||':'||to_char(rw_crapcop.cdcooper,'fm00'),
-                                                                              'DD/MM/RRRR HH24:MI:SS') --> Incrementar mais 1 minuto
-                              ,pr_interva   => NULL                     --> apenas uma vez
-                              ,pr_jobname   => vr_jobname               --> Nome randomico criado
-                              ,pr_des_erro  => vr_dscritic);
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
+                                ,pr_cdprogra  => vr_cdprogra       --> Código do programa
+                                ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
+                                ,pr_dthrexe   => TO_TIMESTAMP(to_char((SYSDATE),'DD/MM/RRRR ')||rw_agendamento.hora_exec||':'||to_char(rw_crapcop.cdcooper,'fm00'),
+                                                                                'DD/MM/RRRR HH24:MI:SS') --> Incrementar mais 1 minuto
+                                ,pr_interva   => NULL                     --> apenas uma vez
+                                ,pr_jobname   => vr_jobname               --> Nome randomico criado
+                                ,pr_des_erro  => vr_dscritic);
 
-        IF TRIM(vr_dscritic) is not null THEN
-          vr_dscritic := 'Falha na criacao do Job para execucao da '||vr_cdprogra||' (Coop:'||rw_crapcop.cdcooper||' Job: '||vr_jobname||'): '|| vr_dscritic;
-          RAISE vr_exc_email;              
-        END IF;
-        
+          IF TRIM(vr_dscritic) is not null THEN
+            vr_dscritic := 'Falha na criacao do Job para execucao da '||vr_cdprogra||' (Coop:'||rw_crapcop.cdcooper||' Job: '||vr_jobname||'): '|| vr_dscritic;
+            RAISE vr_exc_email;              
+          END IF;
+        END LOOP;
       END LOOP;  
     ELSE
       
-      -- Valida se executa o job( testar de esta rodando o batch)
-      gene0004.pc_executa_job( pr_cdcooper => pr_cdcooper   --> Codigo da cooperativa
-                              ,pr_fldiautl => 0             --> Flag se deve validar dia util
-                              ,pr_flproces => 1             --> Flag se deve validar se esta no processo (true = não roda no processo)
-                              ,pr_flrepjob => 1             --> Flag para reprogramar o job
-                              ,pr_flgerlog => 1             --> indicador se deve gerar log
-                              ,pr_nmprogra => pr_dsjobnam   --> Nome do programa que esta sendo executado no job
-                              ,pr_dscritic => vr_dscritic);
-      
-      -- se nao retornou critica  chama rotina
-      IF TRIM(vr_dscritic) IS NULL THEN
-        
         -- Verificação do calendário
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         
@@ -180,6 +197,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         --> Executar programa
         pc_crps705 (pr_cdcooper => pr_cdcooper, 
                     pr_flgresta => 0, 
+					pr_execucao => TO_NUMBER(SUBSTR(pr_dsjobnam,12,1)),
                     pr_stprogra => vr_stprogra,
                     pr_infimsol => vr_infimsol, 
                     pr_cdcritic => vr_cdcritic, 
@@ -199,9 +217,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         --> Log de fim de execucao
         pc_controla_log_batch(pr_dstiplog => 'F');
         
-      ELSE 
-        RAISE vr_exc_email;
-      END IF;
       
     END IF; -- fim IF coop = 3
     

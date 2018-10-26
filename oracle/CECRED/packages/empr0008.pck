@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE EMPR0008 IS
+CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
 
   ---------------------------------------------------------------------------
   --
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE EMPR0008 IS
                                 ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
 END EMPR0008;
 /
-CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   ---------------------------------------------------------------------------
   --
   --  Programa : EMPR0008
@@ -158,6 +158,10 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
                
   03/05/2018 - P404 - Inclusão do novo tipo de contrato 4, para permitir estornos e não lançar a crítica
                linha de crédito não permitida (Lucas Skroch - Supero)
+               
+  16/08/2018 - 9140:Estorno do Pagamento de Empréstimos Rangel Decker (AMcom) 
+                    - pc_tela_estornar_pagamentos
+                    - pc_efetua_estor_pgto_no_dia            
   */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
@@ -625,8 +629,32 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
 
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
-    BEGIN   
       
+        --Valor dos lançamentos envolvidos  no estorno
+			CURSOR cr_craplem (pr_cdcooper IN craplcm.cdcooper%TYPE,
+                           pr_nrdconta IN craplcm.nrdconta%TYPE,
+                         pr_nrctremp IN craplem.nrctremp%TYPE,
+                         pr_nrparepr IN craplem.nrparepr%TYPE,
+												 pr_dtmvtolt IN craplcm.dtmvtolt%TYPE)  IS
+			SELECT SUM(craplem.vllanmto) vllanmto 
+        FROM craplem,
+             craphis 
+       WHERE craphis.cdcooper = craplem.cdcooper
+         AND craphis.cdhistor = craplem.cdhistor
+         AND craphis.indcalem = 'S'
+         AND craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.nrctremp = pr_nrctremp
+         AND craplem.nrparepr = pr_nrparepr
+         AND craplem.dtmvtolt = pr_dtmvtolt
+         AND craplem.cdbccxlt = 100
+         AND craplem.nrdolote > 600000
+         AND craplem.nrdolote < 650000
+         AND craplem.cdhistor IN (1038,1039,1037,1044,1540,1619,1050,1045,1047,
+                                  1077,1048,1049,1618,1620,1051,1057,1076,1078);
+			rw_craplem cr_craplem%ROWTYPE;
+    BEGIN
+      IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN
       -- Exclui os lancamentos da Conta Corrente
       BEGIN
         DELETE FROM craplcm
@@ -644,8 +672,43 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           vr_dscritic := 'Nao foi possivel excluir os lancamentos da conta corrente';
           RAISE vr_exc_saida;
       END;
-      
-      -- Exclui os lancamentos da Conta Corrente
+    ELSE
+        OPEN cr_craplem( pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_nrctremp => pr_nrctremp,
+                         pr_nrparepr => pr_nrparepr,
+                         pr_dtmvtolt => pr_dtmvtolt);
+        FETCH cr_craplem INTO rw_craplem;
+
+        IF cr_craplem%NOTFOUND THEN
+          CLOSE cr_craplem;
+
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel recuperar os dados do lancamento para estornar.';
+          RAISE vr_exc_saida;
+        END IF;
+
+        CLOSE cr_craplem; 
+        
+        IF nvl(rw_craplem.vllanmto,0) > 0 THEN
+  			
+          PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_cdoperad => pr_cdoperad
+                                      , pr_vlrlanc  => rw_craplem.vllanmto
+                                      , pr_dtmvtolt => pr_dtmvtolt
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+
+          IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+            RAISE vr_exc_saida; 
+          END IF;
+
+                                     
+        END IF;                                 
+      END IF;
+		 
+      -- Exclui os lancamentos do extratdo do empréstimo
       BEGIN
         DELETE FROM craplem
          WHERE craplem.cdcooper = pr_cdcooper
@@ -883,7 +946,7 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
       vr_flgretativo     INTEGER := 0;
       vr_flgretquitado   INTEGER := 0;
       vr_flgretcancelado INTEGER := 0;
-          
+    
     BEGIN
       vr_tab_erro.DELETE;
       vr_tab_lancto_parcelas.DELETE;
@@ -909,7 +972,7 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
         
       ELSIF NVL(LENGTH(TRIM(pr_dsjustificativa)),0) > 250 THEN
         vr_dscritic := 'O tamanho do texto do campo Justificativa excedeu o tamanho maximo';
-        RAISE vr_exc_saida;
+        RAISE vr_exc_saida;      
       END IF;                        
 
       RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => vr_cdcooper
@@ -936,8 +999,8 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
       IF vr_flgretquitado = 1 THEN
         vr_dscritic := 'Lancamento nao permitido, contrato liquidado atraves de acordo.';
         RAISE vr_exc_saida;
-      END IF;                        
-                              
+      END IF;
+
       vr_vlmaxest := 0;
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -1629,6 +1692,9 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           RAISE vr_exc_saida;
         END IF;
         
+        --> Verificar se conta nao está em prejuizo
+        IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN 
+        
         /* Lanca em C/C e atualiza o lote */
         EMPR0001.pc_cria_lancamento_cc (pr_cdcooper => vr_tab_lancto_cc(vr_index_lanc).cdcooper --> Cooperativa conectada
                                        ,pr_dtmvtolt => vr_tab_lancto_cc(vr_index_lanc).dtmvtolt --> Movimento atual
@@ -1654,7 +1720,23 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
             RAISE vr_exc_saida;
           END IF;
         END IF;
+   ELSE
+          --> Caso esteja o credito de estono deve ser direcionado ao bloqueio prejuizo
+          PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => vr_tab_lancto_cc(vr_index_lanc).cdcooper, --> Cooperativa conectada
+                                      pr_nrdconta =>  vr_tab_lancto_cc(vr_index_lanc).nrdconta, --> Número da conta,
+                                      pr_cdoperad =>  vr_tab_lancto_cc(vr_index_lanc).cdoperad, --> Código do Operador,
+                                      pr_vlrlanc  => vr_tab_lancto_cc(vr_index_lanc).vllanmto, --> Valor da parcela emprestimo,
+                                      pr_dtmvtolt => vr_tab_lancto_cc(vr_index_lanc).dtmvtolt, --> Movimento atual
+                                       
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_dscritic => vr_dscritic);   
+         
         
+       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_saida;
+       END IF;
+          
+   END IF; 
         --Proximo registro
         vr_index_lanc := vr_tab_lancto_cc.NEXT(vr_index_lanc);        
       END LOOP;     

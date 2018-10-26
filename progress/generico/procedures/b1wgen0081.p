@@ -44,7 +44,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 10/05/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 19/07/2018
 
    Dados referentes ao programa:
 
@@ -208,6 +208,9 @@
               
                10/05/2018 - Permitir resgate de aplicaçoes bloqueadas (SM404)
               
+               02/07/2018 - PJ450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                            da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)                            
+                            
                19/07/2018 - Mostrar apenas aplicações não programadas no obtem-tipos-aplicacao e buscar-dados-aplicacao
 							Proj. 411.2 - CIS Corporate
 			   
@@ -221,7 +224,7 @@
  { sistema/generico/includes/gera_erro.i }
  { sistema/generico/includes/gera_log.i }
  { sistema/generico/includes/var_oracle.i } 
- 
+ { sistema/generico/includes/b1wgen0200tt.i } 
  
 DEF VAR aux_sldresga AS DECIMAL                               NO-UNDO. 
 DEF VAR tot_sldresga AS DECIMAL                               NO-UNDO. 
@@ -281,6 +284,9 @@ DEF VAR h-b1wgen0024 AS HANDLE                                NO-UNDO.
 DEF VAR h-b1wgen0112 AS HANDLE                                NO-UNDO.
 DEF VAR h-b1wgen0159 AS HANDLE                                NO-UNDO.
 
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200 AS HANDLE                                NO-UNDO.
+DEF VAR aux_incrineg AS INT                                   NO-UNDO.
 
 /** Tabelas para registro de log **/
 DEF TEMP-TABLE tt-aplicacao-ant NO-UNDO
@@ -3126,6 +3132,9 @@ PROCEDURE efetua-resgate-online:
 
     DEF VAR h-b1wgen0005 AS HANDLE                                  NO-UNDO.
 
+    DEF VAR aux_cdhistor LIKE  craplcm.cdhistor                     NO-UNDO.
+    DEF VAR aux_cdpesqbb LIKE  craplcm.cdpesqbb                     NO-UNDO.
+    
     DEF BUFFER crabrda FOR craprda.
     DEF BUFFER crablot FOR craplot.
 
@@ -3434,39 +3443,97 @@ PROCEDURE efetua-resgate-online:
     
                                 END. /** Fim do DO WHILE TRUE **/
     
-                                CREATE craplcm.
-                                ASSIGN craplcm.cdcooper = par_cdcooper
-                                       craplcm.dtmvtolt = craplot.dtmvtolt
-                                       craplcm.dtrefere = crabrda.dtmvtolt
-                                       craplcm.cdagenci = craplot.cdagenci
-                                       craplcm.cdbccxlt = craplot.cdbccxlt
-                                       craplcm.nrdolote = craplot.nrdolote
-                                       craplcm.nrdconta = crabrda.nrdconta
-                                       craplcm.nrdctabb = crabrda.nrdconta
-                                       craplcm.nrdctitg = 
-                                               STRING(crabrda.nrdconta,
-                                                      "99999999")
-                                       craplcm.nrdocmto = craplrg.nrdocmto
-                                       craplcm.cdhistor = IF  aux_flgresga  THEN
-                                                              115
+    
+                                /* PJ450 - Regulatorio de crédito */
+                                IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                                    RUN sistema/generico/procedures/b1wgen0200.p 
+                                    PERSISTENT SET h-b1wgen0200.
+                                
+                                IF  aux_flgresga  THEN
+                                    ASSIGN aux_cdhistor = 115.
+                                ELSE 
+                                    ASSIGN aux_cdhistor = 186.
+                                
+                                IF  crabrda.flgctain  THEN  
+                                    IF  aux_flgresga  THEN
+                                        ASSIGN aux_cdhistor = 497.
                                                           ELSE 
-                                                              186
-                                       craplcm.vllanmto = aux_vlresgat
-                                       craplcm.cdpesqbb = 
+                                        ASSIGN aux_cdhistor = 498.
+                                 
                                         IF (NOT aux_flgresga)                AND
                                            (crabrda.dtmvtolt >= aux_dtinipmf AND
                                             crabrda.dtmvtolt <= aux_dtfimpmf)
-                                            THEN " " ELSE "."
-                                       craplcm.nrseqdig = craplot.nrseqdig + 1.
+                                    THEN  
+                                      ASSIGN aux_cdpesqbb = " ".
+                                    ELSE 
+                                     ASSIGN aux_cdpesqbb = ".".
+                                
+                                /*  Cria lancamento da conta do associado ................................ */ 
+                                RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                                      (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+                                      ,INPUT craplot.cdagenci               /* par_cdagenci */
+                                      ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+                                      ,INPUT craplot.nrdolote               /* par_nrdolote */
+                                      ,INPUT crabrda.nrdconta               /* par_nrdconta */
+                                      ,INPUT craplrg.nrdocmto               /* par_nrdocmto */
+                                      ,INPUT aux_cdhistor                   /* par_cdhistor */
+                                      ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                                      ,INPUT aux_vlresgat                   /* par_vllanmto */
+                                      ,INPUT crabrda.nrdconta               /* par_nrdctabb */
+                                      ,INPUT aux_cdpesqbb                   /* par_cdpesqbb */
+                                      ,INPUT 0                              /* par_vldoipmf */
+                                      ,INPUT 0                              /* par_nrautdoc */
+                                      ,INPUT 0                              /* par_nrsequni */
+                                      ,INPUT 0                              /* par_cdbanchq */
+                                      ,INPUT 0                              /* par_cdcmpchq */
+                                      ,INPUT 0                              /* par_cdagechq */
+                                      ,INPUT 0                              /* par_nrctachq */
+                                      ,INPUT 0                              /* par_nrlotchq */
+                                      ,INPUT 0                              /* par_sqlotchq */
+                                      ,INPUT crabrda.dtmvtolt               /* par_dtrefere */
+                                      ,INPUT ""                             /* par_hrtransa */
+                                      ,INPUT ""                             /* par_cdoperad */
+                                      ,INPUT ""                             /* par_dsidenti */
+                                      ,INPUT par_cdcooper                   /* par_cdcooper */
+                                      ,INPUT STRING(crabrda.nrdconta,"99999999") /* par_nrdctitg */
+                                      ,INPUT ""                             /* par_dscedent */
+                                      ,INPUT 0                              /* par_cdcoptfn */
+                                      ,INPUT 0                              /* par_cdagetfn */
+                                      ,INPUT 0                              /* par_nrterfin */
+                                      ,INPUT 0                              /* par_nrparepr */
+                                      ,INPUT 0                              /* par_nrseqava */
+                                      ,INPUT 0                              /* par_nraplica */
+                                      ,INPUT 0                              /* par_cdorigem */
+                                      ,INPUT 0                              /* par_idlautom */
+                                      /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                                      ,INPUT 0                              /* Processa lote                                 */
+                                      ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                                      /* CAMPOS DE SAÍDA                                                                     */                                            
+                                      ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                                      ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                                      ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                                      ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                             
-                                IF  crabrda.flgctain  THEN  
-                                    ASSIGN craplcm.cdhistor = 
-                                                   IF  aux_flgresga  THEN
-                                                       497
+                                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                   DO:  
+                                      RUN gera_erro (INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT 1,      /** Sequencia **/
+                                                     INPUT aux_cdcritic,
+                                                     INPUT-OUTPUT aux_dscritic).
+                                       UNDO, RETURN "NOK".
+                                    END.
                                                    ELSE 
-                                                       498.
-                                VALIDATE craplcm.
+                                   DO:
+                                      /* 02/07/2018- Posicionando no registro da craplcm criado acima */
+                                      FIND FIRST tt-ret-lancto.
+                                      FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                                   END.
     
+                                IF  VALID-HANDLE(h-b1wgen0200) THEN
+                                    DELETE PROCEDURE h-b1wgen0200.
+
                                 ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                                        craplot.qtcompln = craplot.qtcompln + 1
                                        craplot.vlinfocr = craplot.vlinfocr + 

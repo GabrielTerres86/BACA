@@ -114,6 +114,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                        
 			   20/02/2018 11:23:36	20/02/2018 - Recompilação do fonte em produção (Jean Michel)                      
 
+               12/07/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                            lancamentos na CRAPLCM (Teobaldo J, AMcom)
+
      ............................................................................. */
 
      DECLARE
@@ -385,7 +388,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_tab_msg_confirma APLI0002.typ_tab_msg_confirma; 
      vr_dtvencto   DATE;
      vr_dsprotoc   crappro.dsprotoc%TYPE;
-
+     
      --Variaveis dos Indices
      vr_index_craptab   VARCHAR2(30);
      vr_index_aplicacao VARCHAR2(30);
@@ -403,7 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_exc_final       EXCEPTION;
      vr_exc_saida       EXCEPTION;
      -- Excluida variavel vr_exc_fimprg pois não é utilizada - Chamado 786752 - 27/10/2017
-
+     
      -- Variaveis para tratar o OTHERS - Chamado 786752 - 27/10/2017
      vr_tpocorrencia        tbgen_prglog_ocorrencia.tpocorrencia%TYPE;
 
@@ -411,9 +414,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_des_xml        CLOB;
      vr_des_xml999     CLOB;
      vr_des_xml_sem    CLOB;
-
+          
      -- variavel para trata cdageass sem informação - Chamado 775817 - 27/10/2017
      vr_cdageass_craprda   craprda.cdageass%TYPE;
+
+     --Variaveis de criticas / retorno
+     vr_incrineg       INTEGER;
+     vr_tab_retorno    LANC0001.typ_reg_retorno;
+
 
      --Procedure para gerar ocorrencia
      PROCEDURE pc_gera_ocorrencia( pr_ind_tipo_log  IN NUMBER
@@ -1142,6 +1150,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
            
            /*** Testa se aplicacao esta disponivel para saque ***/
            vr_index_craptab:= lpad(rw_craprda.nrdconta,12,'0')||lpad(substr(rw_craprda.nraplica,1,7),8,'0');
+
            IF vr_tab_craptab.EXISTS(vr_index_craptab) THEN
              --Se nao existe aplicacao
              vr_index_aplicacao:= lpad(rw_craprda.cdageass,10,'0')||
@@ -2116,7 +2125,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                -- Calculo da data de vencimento
                rw_craprda.qtdiaapl := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
                vr_dtvencto := rw_craprda.dtvencto + rw_craprda.qtdiaapl;
-              
+               /* Retirado a validação de vencimento que cai no fim de semana pois pode ocorrer
+               vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                         ,pr_dtmvtolt => vr_dtvencto
+                                                         ,pr_tipo => 'P');*/
+                                                         
+
                -- Reaplicação com as mesmas caracteristicas da anterior
                APLI0002.pc_incluir_nova_aplicacao(pr_cdcooper => pr_cdcooper
                                                  ,pr_cdagenci => rw_craprda.cdageass
@@ -2126,7 +2140,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_idorigem => 1
                                                  ,pr_nrdconta => rw_craprda.nrdconta
                                                  ,pr_idseqttl => 1
-                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtopr
+                                                 ,pr_dtmvtolt => rw_craprda.dtvencto
                                                  ,pr_tpaplica => rw_crapdtc.tpaplica
                                                  ,pr_qtdiaapl => rw_craprda.qtdiaapl
                                                  ,pr_dtresgat => vr_dtvencto
@@ -2333,39 +2347,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                      RAISE vr_exc_saida;
                  END;
 
-                 BEGIN
-                   INSERT INTO craplcm(dtmvtolt
-                                      ,dtrefere
-                                      ,cdagenci
-                                      ,cdbccxlt
-                                      ,nrdolote
-                                      ,nrdconta
-                                      ,nrdctabb
-                                      ,nrdctitg
-                                      ,nrdocmto
-                                      ,cdcooper
-                                      ,cdhistor
-                                      ,vllanmto
-                                      ,nrseqdig
-                                      ,cdcoptfn)      --> adicionado somente para resolver consistência do Oracle, não existe no Progress.
-                     VALUES(rw_craplot.dtmvtolt
-                           ,rw_craprda.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,rw_craprda.nrdconta
-                           ,rw_craprda.nrdconta
-                           ,gene0002.fn_mask(rw_craprda.nrdconta, '99999999')
-                           ,gene0002.fn_char_para_number(vr_nraplica)
-                           ,pr_cdcooper
-                           ,vr_cdhistorc
-                           ,vr_vlresgat
-                           ,rw_craplot.nrseqdig
-                           ,0);
-                 EXCEPTION
-                   WHEN others THEN
+                 -- 12/07/2018 - Inserir Lancamento em conta corrente
+                 LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                   ,pr_dtrefere => rw_craprda.dtmvtolt
+                                                   ,pr_cdagenci => rw_craplot.cdagenci
+                                                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                   ,pr_nrdolote => rw_craplot.nrdolote
+                                                   ,pr_nrdconta => rw_craprda.nrdconta
+                                                   ,pr_nrdctabb => rw_craprda.nrdconta
+                                                   ,pr_nrdctitg => gene0002.fn_mask(rw_craprda.nrdconta, '99999999')
+                                                   ,pr_nrdocmto => gene0002.fn_char_para_number(vr_nraplica)
+                                                   ,pr_cdcooper => pr_cdcooper
+                                                   ,pr_cdhistor => vr_cdhistorc
+                                                   ,pr_vllanmto => vr_vlresgat
+                                                   ,pr_nrseqdig => rw_craplot.nrseqdig
+                                                   ,pr_cdcoptfn => 0                    -- adicionado somente para resolver consistência do Oracle, não existe no Progress.
+                                                   ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                   ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                                   ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                                   ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                                   ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                                   ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                                   );
+                                                   
+                 -- Conforme tipo de criticia realiza acao diferenciada
+                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                      -- No caso de erro de programa gravar tabela especifica de log - Chamado 786752 - 27/10/2017
-                     CECRED.pc_internal_exception;
+                     CECRED.pc_internal_exception(pr_compleme => vr_dscritic);
                      --Variavel de erro recebe erro ocorrido
                      vr_cdcritic := 1034;
                      -- monta descrição do erro com os parametros
@@ -2383,9 +2391,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                    ', cdhistor:'|| vr_cdhistorc||
                                    ', vllanmto:'|| vr_vlresgat||
                                    ', nrseqdig:'|| rw_craplot.nrseqdig||
-                                   ', cdcoptfn:'||rw_craplot.nrseqdig||'. ' || SQLERRM;
+                                   ', cdcoptfn:'||rw_craplot.nrseqdig||'. ' || vr_dscritic;
                      RAISE vr_exc_saida;
-                 END;
+                 END IF; -- fim encontrou critica
+                 
                  -- Sai do loop
                  EXIT;
                ELSE

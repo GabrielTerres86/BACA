@@ -26,9 +26,15 @@
 	}
 ?>
 
+		
+<form id="frmCons" name="frmCons" class="formulario" onSubmit="return false;" style="display:block">
+	<div id="divDados" style="margin-top: 20px;"></div>    
+</form>
+
 <div id="divBotoes" style="margin-bottom:10px">
 	<a href="#" class="botao" id="btVoltar" onClick="estadoInicial(); return false;">Cancelar</a>
 	<a href="#" class="botao" id="btSalvar" onClick="Gera_Impressao(); return false;">Imprimir</a>
+	<a href="#" class="botao" id="btConsultar" onClick="mostraTabelaHistoricoGravames(1,1000); return false;">Hist&oacute;rico Gravame</a>
 </div>
 
 <script>

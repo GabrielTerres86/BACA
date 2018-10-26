@@ -9,7 +9,10 @@
 				  23/01/2014 - Adicionados parametros para validação de   
 							   CPF/CNPJ do proprietário dos bens como
 							   interveniente (Lucas). 
-				  21/05/2015 - Projeto Cessao de Credito. (James)
+				  21/05/2015 - Projeto Cessao de Credito. (James)  
+
+                  15/10/2018 - P442 - Não mais passar dados de interveniente e bens na validação
+                               de outras propostas (Marcos-Envolti)
 							   
 							   
    
@@ -35,8 +38,6 @@
 	$qtpreemp = (isset($_POST['qtpreemp'])) ? $_POST['qtpreemp'] : '';
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
-	$arrayIntervs 	 = (isset($_POST['arrayIntervs'])) ? $_POST['arrayIntervs'] : '';
-	$arrayBensAlien  = (isset($_POST['arrayBensAlien'])) ? $_POST['arrayBensAlien'] : '';
 	$cddopcao = 'A';                     
 
 	if( $operacao == 'I_FINALIZA'  ){ $cddopcao = 'I'; }
@@ -66,8 +67,6 @@
 	$xml1 .= "		<qtpromis>".$qtpromis."</qtpromis>";
 	$xml1 .= "		<qtpreemp>".$qtpreemp."</qtpreemp>";
 	$xml1 .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
-	$xml1 .=  		xmlFilho($arrayIntervs,'Intervenientes','Itens');
-	$xml1 .=  		xmlFilho($arrayBensAlien,'Alienacao','Itens');
 	$xml1 .= "	</Dados>";
 	$xml1 .= "</Root>";
 	

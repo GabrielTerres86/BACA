@@ -18,6 +18,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LIMCRD  IS
 
   PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN tbcrd_limite_atualiza.nrdconta%TYPE       --> Administradora
+                                    ,pr_tplimcrd    IN NUMBER --> Categoria (0 - Alteração / 1 - Concessão)
                                     ,pr_pagenumber  IN NUMBER --> Número da página
                                     ,pr_pagesize   IN NUMBER --> Quantidade de resgistros por página
                                     ,pr_only_cecred IN NUMBER --> Somente registros da cecred
@@ -30,6 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LIMCRD  IS
 
   PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN CRAPTLC.CDADMCRD%TYPE       --> Administradora
+									,pr_tplimcrd    IN NUMBER --> Categoria (0 - Alteração / 1 - Concessão)
                                     ,pr_vllimite_min IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE --> Valor limite minimo
                                     ,pr_vllimite_max IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE --> Valor limite maximo
                                     ,pr_vllimite IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE --> Valor limite maximo
@@ -52,6 +54,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LIMCRD  IS
 
 PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN tbcrd_limite_atualiza.nrdconta%TYPE       --> Administradora
+									,pr_tplimcrd  IN NUMBER --> Categoria (0 - Alteração / 1 - Concessão)
                                     ,pr_pagenumber  IN NUMBER --> Número da página
                                     ,pr_pagesize   IN NUMBER --> Quantidade de resgistros por página
                                     ,pr_only_cecred IN NUMBER --> Somente registros da cecred
@@ -81,6 +84,7 @@ PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcoo
           WHERE  nvl(pr_only_cecred,1) = 1
           AND    CDCOOPER = nvl(pr_cdcooper,CDCOOPER)
           AND    CDADMCRD = nvl(pr_cdadmcrd,CDADMCRD)
+		  AND tplimcrd = nvl(pr_tplimcrd, tplimcrd)
           UNION ALL
           SELECT crap.CDCOOPER
                   ,crap.CDADMCRD
@@ -223,6 +227,7 @@ BEGIN
           WHERE  nvl(pr_only_cecred,1) = 1
           AND    CDCOOPER = nvl(pr_cdcooper,CDCOOPER)
           AND    CDADMCRD = nvl(pr_cdadmcrd,CDADMCRD)
+		  AND tplimcrd = nvl(pr_tplimcrd, tplimcrd)
           UNION ALL
           SELECT 1
           FROM   CRAPTLC crap
@@ -280,6 +285,7 @@ END pc_busca_limite_cartao_crd;
 
 PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN CRAPTLC.CDADMCRD%TYPE       --> Administradora
+									,pr_tplimcrd  IN NUMBER --> Categoria (0 - Alteração / 1 - Concessão)
                                     ,pr_vllimite_min IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE --> Valor limite minimo
                                     ,pr_vllimite_max IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE --> Valor limite maximo
                                     ,pr_vllimite IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE --> Valor limite maximo
@@ -295,6 +301,30 @@ PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE      
                                     ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2           --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  CURSOR cr_craptlc IS
+    SELECT t.nrctamae
+          ,t.insittab
+          ,t.vllimcrd
+      FROM CRAPTLC t
+     WHERE t.cdadmcrd = pr_cdadmcrd
+       AND t.cdcooper = pr_cdcooper
+       AND t.cdlimcrd = pr_cdlimcrd
+       AND t.tpcartao = pr_tpcartao
+       AND t.dddebito = pr_dddebito;
+  rw_craptlc cr_craptlc%rowtype;
+
+  CURSOR cr_TBCRD_CONFIG_CATEGORIA IS
+    SELECT t.cdadmcrd
+          ,t.vllimite_minimo
+          ,t.vllimite_maximo
+          ,t.dsdias_debito
+          ,t.tplimcrd
+      FROM TBCRD_CONFIG_CATEGORIA t
+     WHERE t.cdadmcrd = pr_cdadmcrd
+       AND t.cdcooper = pr_cdcooper
+       AND tplimcrd = nvl(pr_tplimcrd, tplimcrd);
+  rw_tbcrd_config_categoria cr_tbcrd_config_categoria%ROWTYPE;
+  
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
 
@@ -308,25 +338,53 @@ PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE      
   --
   vr_cont_tag PLS_INTEGER := 0;
   vr_achou    NUMBER;
+  vr_dsopetab VARCHAR(6);
+  
+  -- Variaveis retornadas da gene0004.pc_extrai_dados
+  vr_nrdrowid  ROWID;
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  vr_dsorigem craplgm.dsorigem%type;
+  vr_idseqttl craplgm.idseqttl%type := 1;
+  
 BEGIN
 
   pr_des_erro := 'OK';
+
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                           pr_cdcooper => vr_cdcooper,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nmeacao  => vr_nmeacao,
+                           pr_cdagenci => vr_cdagenci,
+                           pr_nrdcaixa => vr_nrdcaixa,
+                           pr_idorigem => vr_idorigem,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic);
+
+  -- Se retornou alguma crítica
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+    -- Levanta exceção
+    RAISE vr_exc_saida;
+  END IF;
+
+  vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);
 
   -- Se código de credito for nulo, limites não são da cecred
   IF pr_cdadmcrd NOT BETWEEN 10 AND 80 THEN
 
     --Se Alteração ou Inserção
     IF pr_tpproces IN ('A','I') THEN
-      BEGIN
-        SELECT 1
-        INTO   vr_achou
-        FROM   CRAPTLC t
-        WHERE  t.cdadmcrd = pr_cdadmcrd
-        AND    t.cdcooper = pr_cdcooper
-        AND    t.cdlimcrd = pr_cdlimcrd
-        AND    t.tpcartao = pr_tpcartao
-        AND    t.dddebito = pr_dddebito;
 
+      OPEN cr_craptlc;
+      FETCH cr_craptlc INTO rw_craptlc;
+
+      IF cr_craptlc%FOUND THEN
+      BEGIN
         UPDATE CRAPTLC t
         SET    t.nrctamae = nvl(pr_nrctamae,t.nrctamae) -- conta mae
               ,t.insittab = nvl(pr_insittab,t.insittab) -- situação
@@ -337,11 +395,13 @@ BEGIN
         AND    t.tpcartao = pr_tpcartao
         AND    ((pr_dddebito IS NULL AND t.dddebito IS NULL) OR
                 (pr_dddebito IS NOT NULL AND t.dddebito = pr_dddebito));
-
         vr_update := TRUE;
-
       EXCEPTION
-        WHEN no_data_found THEN
+          WHEN OTHERS THEN
+            vr_dscritic := SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      ELSE --- se nao achar registro ele cria
           BEGIN
             INSERT INTO CRAPTLC(cdcooper
                                ,cdadmcrd
@@ -359,17 +419,14 @@ BEGIN
                                ,pr_tpcartao
                                ,pr_dddebito
                                ,pr_cdlimcrd);
-
             vr_insert := TRUE;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := SQLERRM;
               RAISE vr_exc_saida;
           END;
-        WHEN OTHERS THEN
-          vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;
-      END;
+      END IF;
+      CLOSE cr_craptlc;
     ELSE
       BEGIN
         DELETE FROM craptlc t
@@ -387,38 +444,79 @@ BEGIN
           RAISE vr_exc_saida;
       END;
     END IF;
-  ELSE
+    
+    IF vr_update THEN
+      vr_dsopetab := 'UPDATE';
+    ELSIF vr_insert THEN
+      vr_dsopetab := 'INSERT';
+    ELSE -- vr_delete
+      vr_dsopetab := 'DELETE';
+    END IF;
+
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                         pr_cdoperad => vr_cdoperad, 
+                         pr_dscritic => NULL, 
+                         pr_dsorigem => vr_dsorigem, 
+                         pr_dstransa => 'TABELA CRAPTLC ('|| vr_dsopetab ||')' , 
+                         pr_dttransa => trunc(SYSDATE),
+                         pr_flgtrans =>  1, -- True
+                         pr_hrtransa => gene0002.fn_busca_time, 
+                         pr_idseqttl => vr_idseqttl, 
+                         pr_nmdatela => vr_nmdatela, 
+                         pr_nrdconta => 0, 
+                         pr_nrdrowid => vr_nrdrowid);                    
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'nrctamae', 
+                              pr_dsdadant => rw_craptlc.nrctamae,
+                              pr_dsdadatu => pr_nrctamae);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'insittab', 
+                              pr_dsdadant => rw_craptlc.insittab, 
+                              pr_dsdadatu => pr_insittab);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'vllimcrd', 
+                              pr_dsdadant => rw_craptlc.vllimcrd,
+                              pr_dsdadatu => pr_vllimite);
+
+  ELSE --- alteracao de bancoob
     --Se Alteração ou Inserção
     IF pr_tpproces IN ('A','I') THEN
-      BEGIN
-        SELECT 1
-        INTO   vr_achou
-        FROM   TBCRD_CONFIG_CATEGORIA t
-        WHERE  t.cdadmcrd = pr_cdadmcrd
-        AND    t.cdcooper = pr_cdcooper;
 
+      OPEN cr_tbcrd_config_categoria;
+      FETCH cr_tbcrd_config_categoria INTO rw_tbcrd_config_categoria;
+
+      IF cr_tbcrd_config_categoria%FOUND THEN
+      BEGIN
         UPDATE TBCRD_CONFIG_CATEGORIA t
         SET    t.vllimite_minimo = nvl(pr_vllimite_min,t.vllimite_minimo)
               ,t.vllimite_maximo = nvl(pr_vllimite_max,t.vllimite_maximo)
               ,t.dsdias_debito = nvl(pr_dddebito,t.dsdias_debito)
         WHERE  t.cdadmcrd = pr_cdadmcrd
-        AND    t.cdcooper = pr_cdcooper;
-
+             AND t.cdcooper = pr_cdcooper
+             AND t.tplimcrd = pr_tplimcrd;
          vr_update := TRUE;
-
       EXCEPTION
-        WHEN no_data_found THEN
+          WHEN OTHERS THEN
+            vr_dscritic := SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      ELSE -- se nao existe vai criar o registro
           BEGIN
             INSERT INTO TBCRD_CONFIG_CATEGORIA(cdcooper
                                               ,cdadmcrd
                                               ,dsdias_debito
                                               ,VLLIMITE_MINIMO
-                                              ,VLLIMITE_MAXIMO)
+                                              ,VLLIMITE_MAXIMO
+                                              ,tplimcrd)
                          VALUES(pr_cdcooper
                                ,pr_cdadmcrd
                                ,pr_dddebito
                                ,pr_vllimite_min
-                               ,pr_vllimite_max);
+                               ,pr_vllimite_max
+                               ,pr_tplimcrd);
 
             vr_insert := TRUE;
           EXCEPTION
@@ -426,15 +524,15 @@ BEGIN
               vr_dscritic := SQLERRM;
               RAISE vr_exc_saida;
           END;
-        WHEN OTHERS THEN
-          vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;
-      END;
+      END IF;
+      CLOSE cr_tbcrd_config_categoria;
+      
     ELSE
       BEGIN
         DELETE FROM tbcrd_config_categoria t
         WHERE  t.cdadmcrd = pr_cdadmcrd
-        AND    t.cdcooper = pr_cdcooper;
+        AND    t.cdcooper = pr_cdcooper
+        AND tplimcrd = pr_tplimcrd;
 
         vr_delete := TRUE;
       EXCEPTION
@@ -443,6 +541,43 @@ BEGIN
           RAISE vr_exc_saida;
       END;
     END IF;
+    
+    IF vr_update THEN
+      vr_dsopetab := 'UPDATE';
+    ELSIF vr_insert THEN
+      vr_dsopetab := 'INSERT';
+    ELSE -- vr_delete
+      vr_dsopetab := 'DELETE';
+    END IF;
+    
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                         pr_cdoperad => vr_cdoperad, 
+                         pr_dscritic => NULL, 
+                         pr_dsorigem => vr_dsorigem, 
+                         pr_dstransa => 'TABELA TBCRD_CONFIG_CATEGORIA ('|| vr_dsopetab ||')' , 
+                         pr_dttransa => trunc(SYSDATE),
+                         pr_flgtrans =>  1, -- True
+                         pr_hrtransa => gene0002.fn_busca_time, 
+                         pr_idseqttl => vr_idseqttl, 
+                         pr_nmdatela => vr_nmdatela, 
+                         pr_nrdconta => 0, 
+                         pr_nrdrowid => vr_nrdrowid);                    
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'vllimite_minimo', 
+                              pr_dsdadant => rw_tbcrd_config_categoria.vllimite_minimo,
+                              pr_dsdadatu => pr_vllimite_min);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'vllimite_maximo', 
+                              pr_dsdadant => rw_tbcrd_config_categoria.vllimite_maximo, 
+                              pr_dsdadatu => pr_vllimite_max);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'dsdias_debito', 
+                              pr_dsdadant => rw_tbcrd_config_categoria.dsdias_debito,
+                              pr_dsdadatu => pr_dddebito);
+
   END IF;
 
   COMMIT;

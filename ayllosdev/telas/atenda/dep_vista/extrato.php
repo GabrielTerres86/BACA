@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: extrato.php                                               ***//
 	//*** Autor: Guilherme                                                 ***//
-	//*** Data : Fevereiro/2009               Última Alteração: 15/09/2011 ***//
+	//*** Data : Fevereiro/2009               Última Alteração: 24/05/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar opcao Principal da rotina de Conta           ***//
 	//***             Investimento da tela ATENDA  			               ***//
@@ -16,6 +16,12 @@
 	//***                                                                  ***//
 	//***             15/09/2011 - Alterado contagem da quantidade de      ***//
 	//***                          lançamentos do extrato (David).         ***//
+  //***                                                                  ***//
+  //***             24/05/2018 - Incluído label para mensagem            ***// 
+  //***                          se está, ou se houve prejuízo na CC     ***//
+  //***                          Projeto Regulatório de Crédito          ***//
+  //***                          Diego Simas - AMcom                     ***//
+  //***                                                                  ***//
 	//************************************************************************//
 	
 	session_start();
@@ -105,6 +111,26 @@
 		exit();
 	}
 	
+	//Mensageria referente a situação de prejuízo
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+	
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
+	}else{
+		$despreju = getByTagName($param->tags,'despreju');	    
+	}
+	
 ?>
 
 <form action="" name="frmExtDepVista" id="frmExtDepVista" method="post" >
@@ -117,6 +143,12 @@
 	<label for="dtfimper"><? echo utf8ToHtml('à:') ?></label>
 	<input type="text" name="dtfimper" id="dtfimper" value="<?php echo $dtfimper; ?>" autocomplete="no">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/pesquisar.gif" onClick="obtemExtrato();return false;">
+
+	<?php
+		if($despreju != ''){
+			echo "<label><font color='red'>&nbsp;&nbsp;".$despreju."</font></label>";
+		}
+	?>
 			
 </form>
 

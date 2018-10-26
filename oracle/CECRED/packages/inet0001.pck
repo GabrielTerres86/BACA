@@ -228,6 +228,9 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
          
 			25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego). 
          
+            01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
+                         Marcelo Telles Coelho - Mouts
+
 ..............................................................................*/
 
   --Tipo de Registro para limites
@@ -833,7 +836,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- Se estiver setado como estado de crise
         IF  vr_inestcri > 0  THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Sistema indisponivel no momento. Tente mais tarde!';
+            vr_dscritic := 'Sistema temporariamente indisponivel para a realizacao da transacao.'||chr(10)||
+                           'Por favor, tente novamente mais tarde.'; -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+                        -- 'Sistema indisponivel no momento. Tente mais tarde!';
             RAISE vr_exc_erro;
         END IF;
       END IF;

@@ -156,7 +156,7 @@
 	$aListaLimite	     = explode(";",$cdAdmLimite[0]);	
 	$cdLimite			 = explode("@",$aListaLimite[1]);
 
-	$xml .= "<Root>";
+	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
@@ -338,15 +338,16 @@
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
 					<?php
 					//for ($i = 0; $i < count($cdLimite); $i++){
-						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option><?php
+						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option>
 					//}
+				</select>
+				<?php
 				}else{
 					?>
 					<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' value='<? echo number_format( 0,2,",",".");?>'>
 					<?
 				}
 					?>
-				</select>			
 			</div>
 			<label for="flgdebit"><? echo utf8ToHtml('Habilita função débito:') ?></label>
 			<input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" onclick='confirmaPurocredito();'/>
@@ -551,18 +552,8 @@
 							
 							$("#flgdebit").removeAttr("readonly");
 							$("#flgdebit").removeAttr("disabled");
-							$("#flgdebit").removeProp("disabled");
-							$("#flgdebit").removeProp("readonly");
-							setTimeout(function(){
-								$("#flgdebit").removeAttr("readonly");
-								$("#flgdebit").removeAttr("disabled");
-								$("#flgdebit").removeProp("disabled");
-								$("#flgdebit").removeProp("readonly");
-							}, 600);
-							
-							
 							$("#tpdpagto").removeAttr("disabled");
-							$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
+							//$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
 							
 							$("#dddebito").removeAttr("disabled");
 							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';

@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Maio/2014.                       Ultima atualizacao: 
+   Data    : Maio/2014.                       Ultima atualizacao: 14/08/2018
    
    Dados referentes ao programa:
    
@@ -13,7 +13,8 @@
    Objetivo  : Valida se existe saldo disponivel para realizar a aplicacao
                e busca tabela de rentabilidade.
    
-   Alteracoes: 
+   Alteracoes: 14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 
 ..............................................................................*/
 
@@ -81,27 +82,23 @@ ASSIGN aux_cdcritic = 0
        aux_dscritic = ""
        aux_cdcritic = pc_obtem_dias_carencia_wt.pr_cdcritic 
                           WHEN pc_obtem_dias_carencia_wt.pr_cdcritic <> ?
-       aux_dscritic = pc_obtem_dias_carencia_wt.pr_dscritic
+       aux_dscritic = TRIM(pc_obtem_dias_carencia_wt.pr_dscritic)
                           WHEN pc_obtem_dias_carencia_wt.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
    DO:
-       IF aux_dscritic = "" THEN
+       IF TRIM(aux_dscritic) = "" THEN
           DO:
-             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                NO-LOCK NO-ERROR.
+             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
              
-             IF AVAIL crapcri THEN
-                ASSIGN aux_dscritic = crapcri.dscritic.
+             IF AVAILABLE crapcri THEN
+                ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
              ELSE
-                ASSIGN aux_dscritic = "Nao foi possivel consultar " +
-                                      "o periodo de carencia.".
-
+                ASSIGN aux_dscritic = "Nao foi possivel consultar o periodo de carencia.".
           END.
 
-       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                             "</dsmsgerr>".  
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                             "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
        RETURN "NOK".
        
@@ -111,9 +108,9 @@ FIND FIRST wt_carencia_aplicacao NO-LOCK NO-ERROR.
 
 IF NOT AVAIL wt_carencia_aplicacao THEN
    DO:
-      ASSIGN aux_dscritic = "Nao foi possivel consultar " +
-                            "o periodo de carencia."
-             xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+      ASSIGN aux_dscritic = "Nao foi possivel consultar o periodo de carencia."
+             xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                            "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
       RETURN "NOK".
 
@@ -169,26 +166,24 @@ FOR EACH wt_carencia_aplicacao NO-LOCK:
           aux_cdcritic = pc_obtem_taxa_aplicacao.pr_cdcritic 
                              WHEN pc_obtem_taxa_aplicacao.pr_cdcritic <> ?
 
-          aux_dscritic = pc_obtem_taxa_aplicacao.pr_dscritic
+          aux_dscritic = TRIM(pc_obtem_taxa_aplicacao.pr_dscritic)
                              WHEN pc_obtem_taxa_aplicacao.pr_dscritic <> ?.
 
-   IF aux_cdcritic <> 0   OR
-      aux_dscritic <> ""  THEN
+   IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
       DO:
-          IF aux_dscritic = "" THEN
+          IF TRIM(aux_dscritic) = "" THEN
              DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
                 
-                IF AVAIL crapcri THEN
-                   ASSIGN aux_dscritic = crapcri.dscritic.
+                IF AVAILABLE crapcri THEN
+                   ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
                 ELSE
-                   ASSIGN aux_dscritic = "Nao foi possivel consultar " +
-                                         "a taxa da aplicacao.".
+                   ASSIGN aux_dscritic = "Nao foi possivel consultar a taxa da aplicacao.".
 
              END.
 
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
           
           RETURN "NOK".
                          
@@ -228,30 +223,28 @@ FOR EACH wt_carencia_aplicacao NO-LOCK:
    ASSIGN aux_cdcritic = pc_calcula_permanencia_resgate.pr_cdcritic 
                              WHEN pc_calcula_permanencia_resgate.pr_cdcritic <> ?
 
-          aux_dscritic = pc_calcula_permanencia_resgate.pr_dscritic
+          aux_dscritic = TRIM(pc_calcula_permanencia_resgate.pr_dscritic)
                              WHEN pc_calcula_permanencia_resgate.pr_dscritic <> ?
           aux_qtdiaapl = pc_calcula_permanencia_resgate.pr_qtdiaapl
                              WHEN pc_calcula_permanencia_resgate.pr_qtdiaapl <> ?
           aux_dtvencto = pc_calcula_permanencia_resgate.pr_dtvencto
                              WHEN pc_calcula_permanencia_resgate.pr_dtvencto <> ?.
 
-   IF aux_cdcritic <> 0   OR
-      aux_dscritic <> ""  THEN
+   IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
       DO:
-          IF aux_dscritic = "" THEN
+          IF TRIM(aux_dscritic) = "" THEN
              DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
                 
-                IF AVAIL crapcri THEN
-                   ASSIGN aux_dscritic = crapcri.dscritic.
+                IF AVAILABLE crapcri THEN
+                   ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
                 ELSE
-                   ASSIGN aux_dscritic = "Nao foi possivel consultar " +
-                                         "a taxa da aplicacao.".
+                   ASSIGN aux_dscritic = "Nao foi possivel consultar a taxa da aplicacao.".
 
              END.
 
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
           
           RETURN "NOK".
                          
@@ -279,29 +272,25 @@ FOR EACH wt_carencia_aplicacao NO-LOCK:
    
    ASSIGN aux_cdcritic = pc_busca_aliquota_ir_rdc.pr_cdcritic 
                          WHEN pc_busca_aliquota_ir_rdc.pr_cdcritic <> ?
-
-          aux_dscritic = pc_busca_aliquota_ir_rdc.pr_dscritic
+          aux_dscritic = TRIM(pc_busca_aliquota_ir_rdc.pr_dscritic)
                          WHEN pc_busca_aliquota_ir_rdc.pr_dscritic <> ?
           aux_perirapl = pc_busca_aliquota_ir_rdc.pr_perirapl
                          WHEN pc_busca_aliquota_ir_rdc.pr_perirapl <> ?.
    
-   IF aux_cdcritic <> 0   OR
-      aux_dscritic <> ""  THEN
+   IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
       DO:
-          IF aux_dscritic = "" THEN
+          IF TRIM(aux_dscritic) = "" THEN
              DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
                 
-                IF AVAIL crapcri THEN
-                   ASSIGN aux_dscritic = crapcri.dscritic.
+                IF AVAILABLE crapcri THEN
+                   ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
                 ELSE
-                   ASSIGN aux_dscritic = "Nao foi possivel consultar " +
-                                         "a taxa de aliquota do IR".
-
+                   ASSIGN aux_dscritic = "Nao foi possivel consultar a taxa de aliquota do IR".
              END.
 
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
           
           RETURN "NOK".
                          
@@ -331,6 +320,4 @@ ASSIGN xml_operacao.dslinxml = aux_dslinxml.
 
 RETURN "OK".
 
-
 /*............................................................................*/
-

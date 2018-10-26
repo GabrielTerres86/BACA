@@ -142,6 +142,13 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                      ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
   
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_cdhistor      craplcm.cdhistor%type;
+  vr_incrineg  INTEGER;
+  vr_cdcritic    number(10);
+  pr_cdcritic    varchar2(2000);
+
 END BLQJ0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
@@ -175,7 +182,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         18/09/2018 - Ajuste na busca do saldo das cotas do cooperado no controle de garantias.
                      Ajustado cursor cr_creprlcr para não filtrar a linha de crédito, sendo emprestimos
                      deve considerar. INC0023682 - Wagner - Sustentação.  
-
+		
+                29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                             PRJ450 - Renato Cordeiro (AMcom)         
+ 
   .............................................................................*/
   
   -- Buscar o lote para lançamentos
@@ -1203,6 +1213,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                   ,pr_dsinfadc    IN VARCHAR2         
                                   ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
     
+  /*.............................................................................
+
+    Programa: pc_inclui_bloqueio_jud
+    Autor   : 
+    Data    :                 Ultima Atualizacao: 27/08/2018
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Incluir bloqueios judiciais
+                 
+    Alteracoes: 27/08/2018 - Alterado para realizar resgate do valor bloqueado em prejuizo.
+                             PRJ450 - Regulatorio(Odirlei-AMcom)
+    
+              
+
+  .............................................................................*/
     -- CURSORES
     -- Buscar dados do cadastro de bloqueio
     CURSOR cr_crapblj(pr_cdcooper  crapblj.cdcooper%TYPE
@@ -1376,7 +1402,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                        VALUES(pr_cdcooper                       -- cdcooper
                              ,rw_crapass.nrdconta               -- nrdconta
                              ,rw_crapass.nrcpfcgc               -- nrcpfcgc
-                             ,TO_NUMBER(vr_tbmodali(vr_indice)) -- cdmodali
+                             --> Gravar modalidade 5 - Bloqueado prejuizo como Conta Corrente
+                             --> pois foi realizado o resgate automatico para conta corrente
+                             ,decode(TO_NUMBER(vr_tbmodali(vr_indice)),
+                                     5,1,
+                                     TO_NUMBER(vr_tbmodali(vr_indice))) -- cdmodali
                              ,TO_NUMBER(vr_tbtipmov(vr_indice)) -- cdtipmov
                              ,vr_flblcrft                       -- flblcrft
                              ,BTCH0001.rw_crapdat.dtmvtolt      -- dtblqini
@@ -1403,8 +1433,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Setar a variavel de transação
         vr_flgtrans := TRUE;
         
-        -- Se modalidade 1 e houver valor bloqueado deve criar o lançamento
-        IF TO_NUMBER(vr_tbmodali(vr_indice)) = 1 AND TO_NUMBER(vr_tbbloque(vr_indice)) > 0 THEN
+        -- Se modalidade 1 - Conta Corrente ou 5 - Conta Bloqueada prejuizo
+        -- e houver valor bloqueado deve criar o lançamento
+        IF TO_NUMBER(vr_tbmodali(vr_indice)) IN (1,5) AND TO_NUMBER(vr_tbbloque(vr_indice)) > 0 THEN
+          
+          --> Para Conta bloqueada, deve realizar o resgate do bloqueado prejuizo
+          IF TO_NUMBER(vr_tbmodali(vr_indice)) = (5) THEN
+            PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+                                          , pr_nrdconta => rw_crapass.nrdconta
+                                          , pr_cdoperad => pr_cdoperad
+                                          , pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt                                       
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+                                          
+            IF nvl(vr_cdcritic,0) > 0 OR
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exp_erro; 
+            END IF;  
+                                          
+          END IF;
+          
           -- Buscar o lote para o lançamento
           OPEN  cr_craplot(pr_cdcooper
                           ,BTCH0001.rw_crapdat.dtmvtolt
@@ -1492,35 +1541,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           
           -- Inserir registro na CRAPLCM 
           BEGIN
-            INSERT INTO craplcm(cdcooper
-                               ,dtmvtolt
-                               ,dtrefere
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,vllanmto
-                               ,nrseqdig
-                               ,cdpesqbb)
-                         VALUES(pr_cdcooper                       -- cdcooper
-                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtolt
-                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtrefere
-                               ,rw_craplot.cdagenci               -- cdagenci
-                               ,rw_craplot.cdbccxlt               -- cdbccxlt
-                               ,rw_craplot.nrdolote               -- nrdolote
-                               ,rw_crapass.nrdconta               -- nrdconta
-                               ,rw_crapass.nrdconta               -- nrdctabb
-                               ,rw_crapass.nrdctitg               -- nrdctitg
-                               ,vr_nrdocmto                       -- nrdocmto
-                               ,DECODE(rw_crapass.inpessoa, 1, 1402, 1403) -- cdhistor => 1402 - PF / 1403 - PJ
-                               ,TO_NUMBER(vr_tbbloque(vr_indice)) -- vllanmto
-                               ,rw_craplot.nrseqdig + 1           -- nrseqdig
-                               ,'BLOQJUD');                       -- cdpesqbb
-          EXCEPTION
+            
+            if rw_crapass.inpessoa = 1 then
+               vr_cdhistor := 1402;
+            else
+               vr_cdhistor := 1403;
+            end if;
+
+            lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapass.nrdconta
+                   ,pr_nrdctabb => rw_crapass.nrdconta
+                   ,pr_nrdctitg => rw_crapass.nrdctitg
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_cdpesqbb => 'BLOQJUD'
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
+                   );
+
+            if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+               RAISE vr_exp_erro;
+            end if;
+
+          EXCEPTION 
+            WHEN vr_exp_erro THEN
+              raise vr_exp_erro;
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
               RAISE vr_exp_erro;
@@ -2217,37 +2272,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 --            IF sql%rowcount = 0  THEN
            IF NOT vr_inserlcm THEN
               vr_inserlcm := TRUE;
-          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor
-                             ,vllanmto
-                             ,nrseqdig
-                             ,cdpesqbb)
-                       VALUES(pr_cdcooper                       -- cdcooper
-                             ,pr_dtmvtolt                       -- dtmvtolt
-                             ,pr_dtmvtolt                       -- dtrefere
-                             ,rw_craplot.cdagenci               -- cdagenci
-                             ,rw_craplot.cdbccxlt               -- cdbccxlt
-                             ,rw_craplot.nrdolote               -- nrdolote
-                             ,rw_crapblj.nrdconta               -- nrdconta
-                             ,rw_crapblj.nrdconta               -- nrdctabb
-                             ,rw_crapblj.nrdctitg               -- nrdctitg
-                             ,vr_nrdocmto                       -- nrdocmto
-                             ,DECODE(rw_crapblj.inpessoa, 1, 1404, 1405) -- cdhistor => 1404 - PF / 1405 - PJ
-                                 ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
-                             ,rw_craplot.nrseqdig + 1           -- nrseqdig
-                             ,'BLOQJUD');                       -- cdpesqbb
+
+          if rw_crapblj.inpessoa = 1 then
+             vr_cdhistor := 1404;
+          else
+             vr_cdhistor := 1405;
+          end if;
+
+          lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => pr_dtmvtolt
+                   ,pr_dtrefere => pr_dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapblj.nrdconta
+                   ,pr_nrdctabb => rw_crapblj.nrdconta
+                   ,pr_nrdctitg => rw_crapblj.nrdctitg
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_vllanmto => pr_vldesblo
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_cdpesqbb => 'BLOQJUD'
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
+                   );
+
+          if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+             RAISE vr_exp_erro;
+          end if;
+
 --            END IF;
             END IF;
-        EXCEPTION
+        EXCEPTION		 
+          when vr_exp_erro then
+            raise vr_exp_erro;
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
             RAISE vr_exp_erro;

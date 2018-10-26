@@ -292,16 +292,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   -- Objetivo  : Centralizar rotinas relacionadas a tela PARPRT
   --
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
+  
   /*
-     24/09/2018: Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
+     24/09/2018 - Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
   
      26/09/2018 - inc0024348 Passagem do nome do programa para a execução da rotina 
                   pc_gera_conciliacao_auto para não criticar validações para o job (Carlos)
 
-     28/09/2018: Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
-     04/10/2018: Alterado validação de data da conciliação. Realizando somente para a automatica.. (Fabio Stein - Supero)
-		         Ajustado query de conciliações para pois o lcódigo isbp 0 para o banco do brasil retornava varios bancos.
-				 Ajustado banco.flgdispb para 1 na query de conciliações.
+     28/09/2018 - Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
+      
+     04/10/2018 - Alterado validação de data da conciliação. Realizando somente para a automatica.. (Fabio Stein - Supero)
+                - Ajustado query de conciliações para pois o lcódigo isbp 0 para o banco do brasil retornava varios bancos.
+                - Ajustado banco.flgdispb para 1 na query de conciliações.
+    
+     23/10/2018 - Alterado consulta de tarifas e custas para incluir o cdcartorio. (Fabio Stein - Supero)
    ---------------------------------------------------------------------------*/
     
     
@@ -371,7 +375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     FROM tbcobran_retorno_ieptb retorno
          INNER JOIN crapcob ON (retorno.cdcooper = crapcob.cdcooper AND retorno.nrdconta = crapcob.nrdconta AND retorno.nrcnvcob = crapcob.nrcnvcob AND retorno.nrdocmto = crapcob.nrdocmto)
          INNER JOIN crapmun ON retorno.cdcomarc = crapmun.cdcomarc
-         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade
+         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND retorno.cdcartorio = cartorio.cdcartorio         INNER JOIN crapcop ON retorno.cdcooper = crapcop.cdcooper
          INNER JOIN crapcop ON retorno.cdcooper = crapcop.cdcooper
          LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = retorno.idlancto_tarifa
          LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = retorno.idlancto_custas
@@ -401,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     FROM  tbcobran_confirmacao_ieptb confirmacao
           INNER JOIN crapcob ON (confirmacao.cdcooper = crapcob.cdcooper AND confirmacao.nrdconta = crapcob.nrdconta AND confirmacao.nrcnvcob = crapcob.nrcnvcob AND confirmacao.nrdocmto = crapcob.nrdocmto)
           INNER JOIN crapmun ON confirmacao.cdcomarc = crapmun.cdcomarc
-          INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade
+         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND confirmacao.cdcartorio = cartorio.cdcartorio          INNER JOIN crapcop ON confirmacao.cdcooper = crapcop.cdcooper
           INNER JOIN crapcop ON confirmacao.cdcooper = crapcop.cdcooper
           LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = confirmacao.idlancto_tarifa
           LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = confirmacao.idlancto_custas

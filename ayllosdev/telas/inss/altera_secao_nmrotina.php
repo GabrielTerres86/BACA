@@ -3,13 +3,18 @@
 	/************************************************************************
 	 Fonte: altera_secao_nmrotina.php                                             
 	 Autor: Adriano                                                 
-	 Data : Junho/2013                Última Alteração: 00/00/0000 
+	 Data : Junho/2013                Ãšltima AlteraÃ§Ã£o: 08/10/2018
 	                                                                  
 	 Objetivo : Alterar o $glbvars["nmrotina"]
 	                                                                  	 
-	 Alterações: 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+	 AlteraÃ§Ãµes: 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+   
+               08/10/2018 - Incluido o session_start para controla corretamente as variÃ¡veis de sessÃ£o (Jonata - Mouts / INC0024641).
+                       
 	************************************************************************/
 	
+  session_start();
+  
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	

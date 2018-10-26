@@ -599,6 +599,7 @@ PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperat
 
 PROCEDURE pc_consulta_contratos_ativos(pr_cdcooper  IN crapass.cdcooper%TYPE
                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE  
+																				,pr_incpreju  IN INTEGER DEFAULT 0
                                         ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
                                         ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
                                         ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
@@ -8402,6 +8403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 
   PROCEDURE pc_consulta_contratos_ativos(pr_cdcooper  IN crapass.cdcooper%TYPE
                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE  
+																				,pr_incpreju  IN INTEGER DEFAULT 0
                                         ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
                                         ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
                                         ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
@@ -8431,7 +8433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
       SELECT c.nrctremp 
             ,c.dtmvtolt  
-            ,c.vlemprst 
+            , CASE WHEN c.inprejuz = 0 THEN c.vlemprst ELSE c.vlsdprej END vlemprst
             ,c.qtpreemp
             ,c.vlpreemp
             ,c.cdlcremp
@@ -8439,7 +8441,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         FROM crapepr c 
        WHERE c.nrdconta = pr_nrdconta 
          AND c.cdcooper = pr_cdcooper
-         AND c.inliquid = 0
+         AND (c.inliquid = 0
+				  OR (c.inprejuz = 1
+					AND c.vlsdprej > 0))				 
     ORDER BY c.nrctremp;            
     rw_crapepr cr_crapepr%ROWTYPE;  
 
@@ -8522,7 +8526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                    '  <dtmvtolt>'||TO_CHAR(rw_crapepr.dtmvtolt, 'DD/MM/YYYY')||'</dtmvtolt>'||                                                  
                                                    '  <vlemprst>'||TO_CHAR(rw_crapepr.vlemprst)||'</vlemprst>'||
                                                    '  <qtpreemp>'||rw_crapepr.qtpreemp||'</qtpreemp>'||
-                                                   '  <vlpreemp>'||TO_CHAR(rw_crapepr.vlpreemp,'FM999G999G990D90', 'nls_numeric_characters='',.''')||'</vlpreemp>'||
+                                                   '  <vlpreemp>'||TO_CHAR(rw_crapepr.vlpreemp)||'</vlpreemp>'||
                                                    '  <cdlcremp>'||rw_crapepr.cdlcremp||'</cdlcremp>'||
                                                    '  <cdfinemp>'||rw_crapepr.cdfinemp||'</cdfinemp>'||
                                                    '</linha>');

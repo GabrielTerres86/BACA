@@ -89,17 +89,14 @@ switch ($operacao) {
         $xml .= "</Root>";
 
         $xmlResult = mensageria($xml,"TITCTO","TITCTO_CONCILIACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-        $xmlObj = getObjectXML($xmlResult);
-
-        if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-            
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","unblockBackground();btnVoltar();");';
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        if ($root->erro){
+            echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","unblockBackground();btnVoltar();");';
            exit;
-
         }
-
-        $dados = $xmlObj->roottag->tags[0]->tags[0];
-
+        $dados = $root->dados;
         break;
     case 'BT': 
         $xml = "<Root>";

@@ -20,7 +20,7 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");	
-
+	
 ?>
 <form id="frmFiltro" name="frmFiltro" class="formulario" style="display:none;">
 	

@@ -17,28 +17,35 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');		
 	isPostMethod();	
-  
+	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {			
+			exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+	}
 ?>
 
 <form name="frmCab" id="frmCab" class="formulario cabecalho" style= "display:none;">
 	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
 	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
+			
+    <input type="hidden" id="vlbtLibJudicial" 	name="vlbtLibJudicial" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'J',false); ?>" />
+    <input type="hidden" id="vlbtBlocJudicial" 	name="vlbtBlocJudicial" value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'L',false); ?>" />
+    <input type="hidden" id="vlbtAltBensSubsA" 	name="vlbtAltBensSubsA" value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'S',false); ?>" />
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opcao:') ?></label>
 	<select id="cddopcao" name="cddopcao">
-    <option value="A"><? echo utf8ToHtml('A - Alterar') ?></option>
-    <option value="B"><? echo utf8ToHtml('B - Baixar') ?></option>
-    <option value="C"><? echo utf8ToHtml('C - Consultar') ?></option>
-    <option value="G"><? echo utf8ToHtml('G - Gerar arquivo') ?></option>
-		<option value="H"><? echo utf8ToHtml('H - Hist&oacute;rico') ?></option>
-    <option value="I"><? echo utf8ToHtml('I - Imprimir') ?></option>
-    <option value="J"><? echo utf8ToHtml('J - Bloqueio Judicial') ?></option>
-    <option value="L"><? echo utf8ToHtml('L - Libera&ccedil;&atilde;o Judicial') ?></option>
-    <option value="M"><? echo utf8ToHtml('M - Inclus&atilde;o manual do gravame') ?></option>
-    <option value="R"><? echo utf8ToHtml('R - Retorno de arquivos') ?></option>
-    <option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
-    <option value="X"><? echo utf8ToHtml('X - Cancelamento manual ou automatico') ?></option>
-    <option value="P"><? echo utf8ToHtml('P - Parâmetros GRAVAME') ?></option>
+    <option value="C"><? echo utf8ToHtml('C - Gest&atilde;o de Bens (consultar, alterar, baixar, incluir, cancelar)') ?></option>
+	
+	<option value="I"><? echo utf8ToHtml('I - Impressão de Relatório / Histórico') ?></option>
+	
+	<option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
+	
+	<option value="J"><? echo utf8ToHtml('J - Libera&ccedil;&atilde;o Judicial / Bloqueio Judicial') ?></option>
+
+    <option value="G"><? echo utf8ToHtml('G - Gerar Lotes / Retorno Lotes') ?></option>
+	
+    <option value="P"><? echo utf8ToHtml('P - Parâmetros Gravam') ?></option>
+
+	
   </select>
   
   <a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

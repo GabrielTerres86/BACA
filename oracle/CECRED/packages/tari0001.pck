@@ -8424,7 +8424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --  Sistema  : Cred
     --  Sigla    : TARI0001
     --  Autor    : Marcelo Telles Coelho
-    --  Data     : Fevereiro/2018.                   Ultima atualizacao:
+    --  Data     : Fevereiro/2018.                   Ultima atualizacao: 19/10/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8435,7 +8435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --                            PRJ439 - CDC(Odirlei - AMcom)
     --
     --
-    --
+    --               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     vr_cdbattar VARCHAR2(100) := ' ';
     vr_cdhistor craphis.cdhistor%TYPE;
     vr_cdhisgar craphis.cdhistor%type;
@@ -8456,7 +8456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_cdcritic PLS_INTEGER;
     vr_dscritic VARCHAR2(4000);
     vr_des_erro VARCHAR2(4000);
-    -- Flag para tarifas moveis diferente de carro, moto ou caminhao
+    -- Flag para tarifas moveis diferente de bens alienáveis
     vr_flgoutrosbens BOOLEAN;
     -- Tabela Temporaria
     vr_tab_erro GENE0001.typ_tab_erro;
@@ -8857,10 +8857,8 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
             FOR i IN 1..vr_tab_dscatbem.count()
             LOOP
               IF vr_tab_dscatbem(i).dscatbem <> ' ' THEN
-                IF vr_tab_dscatbem(i).dscatbem LIKE '%AUTOMOVEL%'
-                OR vr_tab_dscatbem(i).dscatbem LIKE '%MOTO%'
-                OR vr_tab_dscatbem(i).dscatbem LIKE '%CAMINHAO%' THEN 
-                  -- Acumula o valor da tarifa para cada um dos bens em garantia do tipo AUTOMOVEL, MOTO ou CAMINHAO
+                IF grvm0001.fn_valida_categoria_alienavel(vr_tab_dscatbem(i).dscatbem) = 'S' THEN 
+                  -- Acumula o valor da tarifa para cada um dos bens em garantia alienáveis
                   pr_vltrfgar := pr_vltrfgar + vr_vltrfgar;
                 ELSE
                   vr_flgoutrosbens := TRUE;
@@ -8870,7 +8868,7 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
           END IF;
           -- Se houver outros bens cobrar mais uma tarifa
           IF vr_flgoutrosbens THEN
-            -- Acumula o valor da tarifa uma única vez para bens em garantia diferentes do tipo AUTOMOVEL, MOTO ou CAMINHAO
+            -- Acumula o valor da tarifa uma única vez para bens em garantia que não são alienáveis
             pr_vltrfgar := pr_vltrfgar + vr_vltrfgar;
           END IF;
         ELSE

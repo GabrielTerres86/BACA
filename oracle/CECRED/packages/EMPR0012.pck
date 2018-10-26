@@ -6020,13 +6020,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       Sistema  : CRED
       Sigla    : GRVM
       Autor    : Odirlei Busana - AMcom
-      Data     : Julhi/2018.                   Ultima atualizacao: 
+      Data     : Julhi/2018.                   Ultima atualizacao: 19/10/2018
     
       Dados referentes ao programa:
     
        Objetivo  : Rotina para verificar situação do gravames da proposta CDC
     
-       Alteracoes: 
+       Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     ............................................................................. */
        
     
@@ -6065,16 +6065,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
          AND bpr.nrdconta = pr_nrdconta
          AND bpr.nrctrpro = pr_nrctrpro
          AND bpr.tpctrpro = 90
-         AND bpr.flgalien = 1 --Bem alienado a proposta.
-         AND (bpr.dscatbem LIKE '%AUTOMOVEL%' OR 
-              bpr.dscatbem LIKE '%MOTO%' OR
-              bpr.dscatbem LIKE '%CAMINHAO%');
+         AND bpr.flgalien = 1 --Bem alienado a proposta
+         AND grvm0001.fn_valida_categoria_alienavel(bpr.dscatbem) = 'S';
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
     vr_cdsitgrv INTEGER;
-    vr_dssitgrv VARCHAR2(100);
     vr_dscrigrv VARCHAR2(300); 
     
     vr_stprogra INTEGER;
@@ -6104,7 +6101,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                    ,pr_nrctrpro  => pr_nrctremp ) LOOP 
 
         vr_cdsitgrv := NULL;
-        vr_dssitgrv := NULL;
         vr_dscrigrv := NULL;
 
         GRVM0001.pc_valida_situacao_gravames (pr_cdcooper => pr_cdcooper           -- Cód. cooperativa
@@ -6113,7 +6109,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                              ,pr_idseqbem => rw_crapbpr.idseqbem   -- Sequencial do bem
                                              --> OUT <--
                                              ,pr_cdsitgrv => vr_cdsitgrv           -- Situacao do Gravames(0=Nao Env/1=Em Proc/2=Alienado/3=Proces).
-                                             ,pr_dssitgrv => vr_dssitgrv           -- Retorna critica do gravames
                                              ,pr_dscrigrv => vr_dscrigrv           -- Retorna critica de processamento do gravames
                                              ,pr_cdcritic => vr_cdcritic           -- Codigo de critica de sistema
                                              ,pr_dscritic => vr_dscritic);         -- Descrição da critica de sistema

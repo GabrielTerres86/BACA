@@ -245,6 +245,11 @@ BEGIN
                  30/04/2018 - Alterados codigos de situacao "rw_crapass.cdsitdct". PRJ366 (Lombardi).
 
                  02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).	
+  --             06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                          após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                          Alteração específica neste programa acrescentando o tratamento para a origem
+  --                          BLQPREJU
+  --                          (Renato Cordeiro - AMcom)
 
   ............................................................................................*/
   
@@ -296,6 +301,7 @@ BEGIN
 	  vr_gerandb NUMBER := 1; -- Gera crapndb
 
     vr_dsctajud crapprm.dsvlrprm%TYPE;
+    vr_pmtdebit     BOOLEAN;
 
     --Chamado 709894
     vr_dsparam  varchar2(2000);
@@ -340,6 +346,7 @@ BEGIN
        ORDER BY lot.progress_recid DESC;
 
     rw_craplot cr_craplot%ROWTYPE;
+    vr_rw_craplot   lanc0001.cr_craplot%ROWTYPE;
 
     -- BUSCA LANCAMENTOS AUTOMATICOS
     CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -386,6 +393,7 @@ BEGIN
                                  ,'CAPTACAO'
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
+                                 ,'BLQPREJU'
                                  ,'ADIOFJUROS'
                                  ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor NOT IN( 1019,1230,1231,1232,1233,1234) --> 1019 será processado pelo crps642, consorcio no debcns
@@ -639,6 +647,10 @@ BEGIN
          AND gnconve.flgativo = 1;
          
     rw_gnconve cr_gnconve%ROWTYPE;
+
+    -- variaveis para rotina de debito
+    vr_tab_retorno   lanc0001.typ_reg_retorno;
+    vr_incrineg      INTEGER;      -- Indicador de crítica do negócio
 
     --------------- SUBROTINAS --------------------------
 
@@ -1256,6 +1268,14 @@ BEGIN
 		    END IF;
       END IF; 
 
+      -- valida se historico pode debitar
+      vr_pmtdebit := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                              pr_nrdconta => vr_nrdconta,
+                                              pr_cdhistor => rw_craplau.cdhistor);
+      IF vr_pmtdebit = false THEN
+        CONTINUE;
+      END IF;
+
       -- VERIFICA CODIGO DO BANCO / CAIXA
       IF rw_craplau.cdbccxlt = 911 THEN
         vr_cdbccxlt := 11;
@@ -1337,43 +1357,34 @@ BEGIN
 
         -- CASO NAO ENCONTRE O LOTE, INSERE
         BEGIN
+          LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 , pr_cdagenci => vr_cdagenci
+                                 , pr_cdbccxlt => vr_cdbccxlt
+                                 , pr_nrdolote => vr_nrdolote
+                                 , pr_cdbccxpg => 11
+                                 , pr_tplotmov => 1
+                                 , pr_cdcooper => vr_cdcooper
+                                 , pr_nrseqdig => 0
+                                 , pr_rw_craplot => vr_rw_craplot
+                                 , pr_cdcritic => vr_cdcritic
+                                 , pr_dscritic => vr_dscritic
+                                 );
 
-          INSERT INTO craplot
-            (dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             cdbccxpg,
-             tplotmov,
-             nrseqdig,
-             cdcooper)
-          VALUES
-            (rw_crapdat.dtmvtolt,
-             vr_cdagenci,
-             vr_cdbccxlt,
-             vr_nrdolote,
-             11,
-             1,
-             0,
-             vr_cdcooper)
-           RETURNING craplot.dtmvtolt,
-                     craplot.cdagenci,
-                     craplot.cdbccxlt,
-                     craplot.nrdolote,
-                     craplot.cdbccxpg,
-                     craplot.tplotmov,
-                     craplot.cdcooper,
-                     craplot.nrseqdig,
-                     craplot.rowid
-           INTO      rw_craplot_II.dtmvtolt,
-                     rw_craplot_II.cdagenci,
-                     rw_craplot_II.cdbccxlt,
-                     rw_craplot_II.nrdolote,
-                     rw_craplot_II.cdbccxpg,
-                     rw_craplot_II.tplotmov,
-                     rw_craplot_II.cdcooper,
-                     rw_craplot_II.nrseqdig,
-                     rw_craplot_II.rowid;
+          IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_saida;
+          END IF;
+          
+          -- FECHAR O CURSOR
+          CLOSE cr_craplot_II;
+
+          -- BUSCA REGISTRO REFERENTE AO LOTE CRIADO
+          OPEN cr_craplot_II(pr_cdcooper => vr_cdcooper,
+                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_cdbccxlt => vr_cdbccxlt,
+                             pr_nrdolote => vr_nrdolote);
+
+          FETCH cr_craplot_II INTO rw_craplot_II;
 
           -- VERIFICA SE HOUVE PROBLEMA NA INSERCAO DE REGISTROS
         EXCEPTION
@@ -1391,6 +1402,9 @@ BEGIN
         -- FECHAR O CURSOR
         CLOSE cr_craplot_II;
       END IF;
+
+      -- FECHAR O CURSOR
+      CLOSE cr_craplot_II;
 
       -- VERIFICA SE É UMA CONTA MIGRADA
       IF vr_ctamigra = 1 THEN
@@ -1758,44 +1772,38 @@ BEGIN
       IF vr_flgentra = 1 AND vr_gerandb = 1 THEN
 
         BEGIN
-
-          INSERT INTO craplcm
-            (dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             nrdconta,
-             nrdctabb,
-             nrdctitg,
-             nrdocmto,
-             cdhistor,
-             vllanmto,
-             nrseqdig,
-             cdcooper,
-             cdpesqbb)
-          VALUES
-            (rw_craplot_II.dtmvtolt,
-             rw_craplot_II.cdagenci,
-             rw_craplot_II.cdbccxlt,
-             rw_craplot_II.nrdolote,
-             vr_nrdconta,
-             rw_craplau.nrdctabb,
-             gene0002.fn_mask(rw_craplau.nrdctabb, '99999999'),
-             vr_nrdocmto,
-             rw_craplau.cdhistor,
-             rw_craplau.vllanaut,
-             nvl(rw_craplot_II.nrseqdig,0) + 1,
-             vr_cdcooper,
-             'Lote ' || TO_CHAR(rw_craplau.dtmvtolt, 'dd') || '/' ||
+           LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => rw_craplot_II.cdagenci
+                                             , pr_cdbccxlt => rw_craplot_II.cdbccxlt
+                                             , pr_nrdolote => rw_craplot_II.nrdolote
+                                             , pr_cdhistor => rw_craplau.cdhistor
+                                             , pr_dtmvtolt => rw_craplot_II.dtmvtolt
+                                             , pr_nrdconta => vr_nrdconta
+                                             , pr_nrdctabb => rw_craplau.nrdctabb
+                                             , pr_nrdctitg => gene0002.fn_mask(rw_craplau.nrdctabb, '99999999')
+                                             , pr_nrdocmto => vr_nrdocmto
+                                             , pr_nrseqdig => nvl(rw_craplot_II.nrseqdig,0) + 1
+                                             , pr_vllanmto => rw_craplau.vllanaut
+                                             , pr_cdcooper => vr_cdcooper
+                                             , pr_cdpesqbb => 'Lote ' || TO_CHAR(rw_craplau.dtmvtolt, 'dd') || '/' ||
              TO_CHAR(rw_craplau.dtmvtolt, 'mm') || '-' ||
              gene0002.fn_mask(vr_cdagenci, '999') || '-' ||
              gene0002.fn_mask(rw_craplau.cdbccxlt, '999') || '-' ||
              gene0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
              gene0002.fn_mask(rw_craplau.nrseqdig, '99999') || '-' ||
-             rw_craplau.nrdocmto);
+                                                               rw_craplau.nrdocmto
+                                             , pr_tab_retorno => vr_tab_retorno
+	                                           , pr_incrineg => vr_incrineg                                                               
+                                             , pr_cdcritic => vr_cdcritic
+                                             , pr_dscritic => vr_dscritic                                                               
+                                             );
+           IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+           END IF;
 
           -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
         EXCEPTION
+          WHEN vr_exc_saida THEN
+            raise vr_exc_saida; 
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao inserir na tabela CRAPLCM: ' || sqlerrm;
             --Chamado 709894

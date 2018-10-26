@@ -13,7 +13,7 @@ create or replace function cecred.
     -- Sistema : Conta-Corrente - Cooperativa de Credito
     -- Sigla   : CRED
     -- Autor   : Alisson (AMCOM)
-    -- Data    : Novembro/2014.                     Ultima atualizacao: 08/06/2015
+    -- Data    : Novembro/2014.                     Ultima atualizacao: 19/10/2018
 
     -- Dados referentes ao programa:
 
@@ -46,6 +46,8 @@ create or replace function cecred.
     --                           para 0203(Credito pessoal) quando for pessoa fisica, isto que pessoa fisica não poderia contrtar esta modalidade.
     --                           SD567319 (Odirlei-AMcom)
     --
+    --
+    --              19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -- .............................................................................
 
   --Dados Emprestimo BNDES
@@ -86,7 +88,7 @@ create or replace function cecred.
     WHERE craplcr.cdcooper = pr_cdcooper
     AND   craplcr.cdlcremp = pr_cdlcremp;
   rw_craplcr cr_craplcr%rowtype;
-  -- Testar se há alguma bem CARRO, MOTO ou CAMINHAO
+  -- Testar se há alguma bem CARRO, MOTO, CAMINHAO ou OUTROS VEICULOS
   CURSOR cr_crapbpr(pr_cdcooper IN crapebn.cdcooper%type
                    ,pr_nrdconta crapebn.nrdconta%TYPE
                    ,pr_nrctremp crapebn.nrctremp%TYPE) IS
@@ -96,7 +98,7 @@ create or replace function cecred.
        AND crapbpr.nrdconta = pr_nrdconta
        AND crapbpr.nrctrpro = pr_nrctremp
        AND crapbpr.dschassi <> ' '
-       AND UPPER(crapbpr.dscatbem) IN ('AUTOMOVEL','MOTO','CAMINHAO') 
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
        AND crapbpr.tpctrpro = 90 
        AND crapbpr.flgalien = 1; -- Alienado
   vr_exchassi CHAR(1); 
@@ -224,5 +226,3 @@ begin
   return(replace(vr_cdmodali,'0201','0213'));
 
 end fn_busca_modalidade_bacen;
-/
-

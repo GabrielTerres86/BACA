@@ -145,9 +145,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
 
   PROCEDURE pc_obtem_dados_conciliacao (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
                                     pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
-                                    pr_dtvencto    IN VARCHAR2,                  --> Data de vencimento
-                                    pr_dtmvtolt    IN VARCHAR2,                  --> Data da movimentacao
-                                    pr_flverbor    IN INTEGER,                   --> se e bordero novo ou velho
+                                       pr_dtvencto IN DATE,                  --> Data de vencimento
+                                       pr_dtmvtolt IN DATE,                  --> Data da movimentacao
                                     --> out
                                     pr_tab_dados_conciliacao   out  typ_tab_dados_conciliacao, --> Tabela de retorno
                                     pr_cdcritic out number,                         --> codigo da critica
@@ -275,6 +274,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     Dados referentes ao programa:
 
     Objetivo  : Centralizar rotinas relacionadas a tela Acompanhamento do Desconto de Título
+
+    Alteração : 22/10/2018 - Adicionado a procedure pc_obtem_dados_conciliacao_tit para gerar conciliação contábil com informações 
+                             de lançamento dos borderôs da nova carteira de desconto de titulo.
   */
   /* tratamento de erro */
   vr_exc_erro exception;
@@ -807,9 +809,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
   PROCEDURE pc_obtem_dados_conciliacao (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
                                     pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
-                                    pr_dtvencto    IN VARCHAR2,                  --> Data de vencimento
-                                    pr_dtmvtolt    IN VARCHAR2,                  --> Data da movimentacao
-                                    pr_flverbor    IN INTEGER,                   --> se e bordero novo ou velho
+                                       pr_dtvencto IN DATE,                  --> Data de vencimento
+                                       pr_dtmvtolt IN DATE,                  --> Data da movimentacao
                                     --> out
                                     pr_tab_dados_conciliacao   out  typ_tab_dados_conciliacao, --> Tabela de retorno
                                     pr_cdcritic out number,                         --> codigo da critica
@@ -843,7 +844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        tmp_diffdias INTEGER;
 
        /* Resgatados no dia */
-       CURSOR cr_resgatados (pr_flverbor INTEGER) IS
+       CURSOR cr_resgatados IS
          SELECT
               craptdb.insittit,
               craptdb.vltitulo
@@ -860,13 +861,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          WHERE
              craptdb.cdcooper = pr_cdcooper
              AND craptdb.insittit = 1
-             AND craptdb.dtresgat = vr_dtvencto
-             AND crapbdt.flverbor = pr_flverbor
+             AND craptdb.dtresgat = pr_dtvencto
+             AND crapbdt.flverbor = 0
          ;
        rw_resgatados cr_resgatados%ROWTYPE;
 
        /*Baixados sem pagamento no dia*/
-       CURSOR cr_baixados_sem_pagamento (pr_flverbor INTEGER) IS
+       CURSOR cr_baixados_sem_pagamento IS
          SELECT
               craptdb.insittit,
               craptdb.vltitulo,
@@ -884,12 +885,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          WHERE
              craptdb.cdcooper = pr_cdcooper
              AND craptdb.insittit = 3
-             AND craptdb.dtdebito = vr_dtvencto
-             AND crapbdt.flverbor = pr_flverbor;
+             AND craptdb.dtdebito = pr_dtvencto
+             AND crapbdt.flverbor = 0;
        rw_baixados_sem_pagamento cr_baixados_sem_pagamento%ROWTYPE;
 
        /* Pagos pelo Pagador - via COMPE... */
-       CURSOR cr_pagos_compe (pr_flverbor INTEGER) IS
+       CURSOR cr_pagos_compe IS
          SELECT
               craptdb.vltitulo
          FROM
@@ -910,12 +911,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               /*Apenas BB*/
               AND crapcob.indpagto = 0
               AND crapcob.cdbandoc = 001
-              AND crapbdt.flverbor = pr_flverbor
+              AND crapbdt.flverbor = 0
          ;
        rw_pagos_compe cr_pagos_compe%ROWTYPE;
 
        /* Pagos pelo Pagador - via CAIXA... */
-       CURSOR cr_pagos_caixa (pr_flverbor INTEGER) IS
+       CURSOR cr_pagos_caixa IS
          SELECT
               craptdb.vltitulo
          FROM
@@ -931,7 +932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          WHERE
               craptdb.cdcooper  = pr_cdcooper
               AND craptdb.dtdpagto  > vr_dtmvtoan
-              AND craptdb.dtdpagto <= vr_dtvencto
+              AND craptdb.dtdpagto <= pr_dtvencto
               AND craptdb.insittit  = 2
               /* Pago pelo CAIXA, InternetBank ou TAA, e compe 085 */
               AND (
@@ -940,12 +941,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                 OR crapcob.indpagto = 4 /**TAA**/
                 OR (crapcob.indpagto = 0 AND crapcob.cdbandoc = 085)
               )
-             AND crapbdt.flverbor = pr_flverbor
+             AND crapbdt.flverbor = 0
          ;
        rw_pagos_caixa cr_pagos_caixa%ROWTYPE;
 
        /* Recebidos no dia */
-       CURSOR cr_recebidos_dia (pr_flverbor INTEGER) IS
+       CURSOR cr_recebidos_dia IS
          SELECT
               craptdb.vltitulo
          FROM
@@ -960,13 +961,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
               craptdb.cdcooper = pr_cdcooper
-              AND craptdb.dtlibbdt = vr_dtvencto
-              AND crapbdt.flverbor = pr_flverbor
+              AND craptdb.dtlibbdt = pr_dtvencto
+              AND crapbdt.flverbor = 0
          ;
        rw_recebidos_dia cr_recebidos_dia%ROWTYPE;
 
        /* Saldo Anterior */
-       CURSOR cr_saldo_anterior (pr_flverbor INTEGER) IS
+       CURSOR cr_saldo_anterior IS
          SELECT
               craptdb.vltitulo,
               craptdb.dtlibbdt,
@@ -989,7 +990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
               craptdb.cdcooper = pr_cdcooper
-              AND crapbdt.flverbor = pr_flverbor
+              AND crapbdt.flverbor = 0
          ;
        rw_saldo_anterior cr_saldo_anterior%ROWTYPE;
 
@@ -1019,13 +1020,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     BEGIN
       -- Carrega dia anterior ao vencimento
       IF (pr_dtmvtolt IS NOT NULL ) THEN
-        vr_dtmvtolt:=to_date(pr_dtmvtolt, 'DD/MM/RRRR');
+        vr_dtmvtolt:=pr_dtmvtolt;
       ELSE
         vr_dtmvtolt:=NULL;
       END IF;
 
       IF (pr_dtvencto IS NOT NULL ) THEN
-         vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+         vr_dtvencto := pr_dtvencto;
       ELSE
         vr_dtvencto := vr_dtmvtolt;
         --vr_dtperant := NULL;
@@ -1068,7 +1069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          END IF;
 
          /*Calcula Resgatados*/
-         OPEN  cr_resgatados(pr_flverbor=>pr_flverbor);
+         OPEN  cr_resgatados;
          LOOP
                FETCH cr_resgatados INTO rw_resgatados;
                EXIT  WHEN cr_resgatados%NOTFOUND;
@@ -1078,7 +1079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
          /*Calcula data de referencia*/
          tmp_utilante := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => vr_dtvencto-1
+                                             ,pr_dtmvtolt => pr_dtvencto-1
                                              ,pr_tipo     => 'A' );
          tmp_dtrefere := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                              ,pr_dtmvtolt => tmp_utilante-1
@@ -1092,7 +1093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          vr_dtmvtoan := tmp_utilante;
 
          /*Calcula baixados sem pagamento dia*/
-         OPEN  cr_baixados_sem_pagamento(pr_flverbor=>pr_flverbor);
+         OPEN  cr_baixados_sem_pagamento;
          LOOP
                FETCH cr_baixados_sem_pagamento INTO rw_baixados_sem_pagamento;
                EXIT  WHEN cr_baixados_sem_pagamento%NOTFOUND;
@@ -1106,7 +1107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                              ,pr_tipo     => 'A' );
                    /* Nao contabilizar os titulos que vencem no final de semana ou feriado no primeiro dia util seguinte, por causa da
                            postergacao de data */
-                   IF (tmp_dtvencto<>rw_baixados_sem_pagamento.dtvencto AND  (vr_dtvencto - vr_dtrefere > 1  AND vr_dtvencto - vr_dtmvtoan > 1)    ) THEN
+                   IF (tmp_dtvencto<>rw_baixados_sem_pagamento.dtvencto AND  (pr_dtvencto - vr_dtrefere > 1  AND pr_dtvencto - vr_dtmvtoan > 1)    ) THEN
                        CONTINUE;
                    ELSE
                        vr_qtvencid := vr_qtvencid - 1;
@@ -1120,7 +1121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                              ,pr_tipo     => 'A' );
 
          /*Calcula pagos COMPE*/
-         OPEN  cr_pagos_compe(pr_flverbor=>pr_flverbor);
+         OPEN  cr_pagos_compe;
          LOOP
                FETCH cr_pagos_compe INTO rw_pagos_compe;
                EXIT  WHEN cr_pagos_compe%NOTFOUND;
@@ -1129,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          end   loop;
 
          /*Calcula pagos CAIXA*/
-         OPEN  cr_pagos_caixa(pr_flverbor=>pr_flverbor);
+         OPEN  cr_pagos_caixa;
          LOOP
                FETCH cr_pagos_caixa INTO rw_pagos_caixa;
                EXIT  WHEN cr_pagos_caixa%NOTFOUND;
@@ -1138,7 +1139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          end   loop;
 
          /*Calcula recebidos no dia*/
-         OPEN  cr_recebidos_dia(pr_flverbor=>pr_flverbor);
+         OPEN  cr_recebidos_dia;
          LOOP
                FETCH cr_recebidos_dia INTO rw_recebidos_dia;
                EXIT  WHEN cr_recebidos_dia%NOTFOUND;
@@ -1147,14 +1148,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          end   loop;
 
          /*Calcula Saldo Anterior*/
-         OPEN  cr_saldo_anterior(pr_flverbor=>pr_flverbor);
+         OPEN  cr_saldo_anterior;
          LOOP
                FETCH cr_saldo_anterior INTO rw_saldo_anterior;
                EXIT  WHEN cr_saldo_anterior%NOTFOUND;
                   /* Utiliza essas duas variaveis para pegar TODOS os títulos LIBERADOS até a data informada, pois ele
                   subtrai TODOS os com data de liberação a partir da data informada (qtd_liberado) de todos os liberados
                   da craptdb (qtd_saldo)  */
-                  IF (rw_saldo_anterior.dtlibbdt >= vr_dtvencto) THEN
+                  IF (rw_saldo_anterior.dtlibbdt >= pr_dtvencto) THEN
                      vr_vlliberado := vr_vlliberado + rw_saldo_anterior.vltitulo;
                      vr_qtliberado := vr_qtliberado + 1;
                   END IF;
@@ -1172,14 +1173,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                       CONTINUE;
                     END IF;
                   ELSE
-                    IF (rw_saldo_anterior.dtdpagto >= vr_dtvencto) THEN
+                    IF (rw_saldo_anterior.dtdpagto >= pr_dtvencto) THEN
                       vr_vlpgdepois := vr_vlpgdepois + rw_saldo_anterior.vltitulo;
                       vr_qtpgdepois := vr_qtpgdepois + 1;
                       CONTINUE;
                     END IF;
                   END IF;
 
-                  IF (rw_saldo_anterior.dtresgat >= vr_dtvencto) THEN
+                  IF (rw_saldo_anterior.dtresgat >= pr_dtvencto) THEN
                     vr_vlrgdepois := vr_vlrgdepois + rw_saldo_anterior.vltitulo;
                     vr_qtrgdepois := vr_qtrgdepois + 1;
                     CONTINUE;
@@ -1208,17 +1209,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          vr_qtcredit := vr_qtsldant + vr_qtvencid +vr_qttitulo + vr_qtderesg ;
          vr_vlsldant := (vr_vlpgdepois + vr_vlrgdepois +vr_vlbxdepois)+ (vr_vlsaldo - vr_vlliberado) ;
          vr_vlcredit := vr_vlsldant + vr_vlvencid + vr_vltitulo + vr_vlderesg ;
-         pr_tab_dados_conciliacao(0).dtvencto := vr_dtvencto;
-         pr_tab_dados_conciliacao(0).qtsldant := vr_qtsldant;
-         pr_tab_dados_conciliacao(0).vlsldant := vr_vlsldant;
-         pr_tab_dados_conciliacao(0).qtderesg := vr_qtderesg;
-         pr_tab_dados_conciliacao(0).vlderesg := vr_vlderesg;
-         pr_tab_dados_conciliacao(0).qtvencid := vr_qtvencid;
-         pr_tab_dados_conciliacao(0).vlvencid := vr_vlvencid;
-         pr_tab_dados_conciliacao(0).qttitulo := vr_qttitulo;
-         pr_tab_dados_conciliacao(0).vltitulo := vr_vltitulo;
-         pr_tab_dados_conciliacao(0).qtcredit := vr_qtcredit;
-         pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit;
+         pr_tab_dados_conciliacao(0).dtvencto := pr_dtvencto;
+         pr_tab_dados_conciliacao(0).qtsldant := vr_qtsldant; -- Saldo Anterior
+         pr_tab_dados_conciliacao(0).vlsldant := vr_vlsldant; -- Saldo Anterior
+         pr_tab_dados_conciliacao(0).qtderesg := vr_qtderesg; -- Titulos Resgatados
+         pr_tab_dados_conciliacao(0).vlderesg := vr_vlderesg; -- Titulos Resgatados
+         pr_tab_dados_conciliacao(0).qtvencid := vr_qtvencid; -- Vencimentos no dia
+         pr_tab_dados_conciliacao(0).vlvencid := vr_vlvencid; -- Vencimentos no dia
+         pr_tab_dados_conciliacao(0).qttitulo := vr_qttitulo; -- Titulos Recebidos
+         pr_tab_dados_conciliacao(0).vltitulo := vr_vltitulo; -- Titulos Recebidos
+         pr_tab_dados_conciliacao(0).qtcredit := vr_qtcredit; -- SALDO ATUAL
+         pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit; -- SALDO ATUAL
     END;
     EXCEPTION
       when vr_exc_erro then
@@ -1234,6 +1235,226 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
            /* montar descriçao de erro nao tratado */
            pr_dscritic := 'erro nao tratado na TELA_TITCTO.pc_obtem_dados_conciliacao ' ||sqlerrm;
   END pc_obtem_dados_conciliacao;
+
+  PROCEDURE pc_obtem_dados_conciliacao_tit(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                          ,pr_dtvencto IN DATE                  --> Data de vencimento
+                                          ,pr_dtmvtolt IN DATE                  --> Data da movimentacao
+                                          ,pr_tab_dados_conciliacao OUT typ_tab_dados_conciliacao --> Tabela de retorno
+                                          ,pr_cdcritic              OUT NUMBER                    --> codigo da critica
+                                          ,pr_dscritic              OUT VARCHAR2                  --> descricao da critica.
+                                          ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_obtem_dados_conciliacao_tit
+      Sistema  : Ayllos
+      Sigla    : 
+      Autor    : Paulo Penteado (GFT)
+      Data     : 17/10/2018
+  
+      Objetivo  : Gerar conciliação contábil com informações de lançamento dos borderôs da nova carteira de 
+                  desconto de titulo.
+                  
+                  Opção S da tela TITCTO
+  
+      Alteração : 17/10/2018 - Criação (Paulo Penteado (GFT))
+  
+    ----------------------------------------------------------------------------------------------------------*/
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+  
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    vr_dtvencto DATE;
+    vr_dtmvtolt DATE; 
+    
+    -- Variaveis de retorno
+    vr_qtderesg NUMBER;
+    vr_vlderesg NUMBER;
+    vr_qtvencid NUMBER;
+    vr_vlvencid NUMBER;
+    vr_qttitulo NUMBER;
+    vr_vltitulo NUMBER;
+    vr_qtsldant NUMBER;
+    vr_vlsldant NUMBER;
+    vr_qtcredit NUMBER;
+    vr_vlcredit NUMBER;
+    
+    vr_cdhisven VARCHAR2(1000);
+    vr_cdhisant VARCHAR2(1000);
+    
+    -- Resgatados no dia
+    CURSOR cr_resgatados IS
+    SELECT COUNT(1) qtderesg
+          ,nvl(SUM(vllanmto),0) vlderesg
+      FROM tbdsct_lancamento_bordero lcb 
+     WHERE lcb.cdhistor = dsct0001.vr_cdhistordsct_resbaix --2678
+       AND lcb.dtmvtolt = pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_resgatados cr_resgatados%ROWTYPE;
+    
+    -- Vencidos no dia
+    CURSOR cr_vencidos_no_dia IS
+    SELECT COUNT(1) qtvencid
+          ,nvl(SUM(vllanmto),0) vlvencid
+      FROM tbdsct_lancamento_bordero lcb 
+     WHERE lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisven,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(vr_cdhisven, '[^,]+', 1, LEVEL) IS NOT NULL)
+       AND lcb.dtmvtolt = pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_vencidos_no_dia cr_vencidos_no_dia%ROWTYPE;
+    
+    -- Recebidos no dia
+    CURSOR cr_recebidos_dia IS
+    SELECT SUM((SELECT COUNT(1)
+                  FROM craptdb tdb
+                 WHERE tdb.nrborder = lcb.nrborder
+                   AND tdb.nrdconta = lcb.nrdconta
+                   AND tdb.cdcooper = lcb.cdcooper)) qttitulo
+          ,nvl(SUM(vllanmto),0) vltitulo
+      FROM tbdsct_lancamento_bordero lcb 
+     WHERE lcb.cdhistor = dsct0003.vr_cdhistordsct_liberacred --2665
+       AND lcb.dtmvtolt = pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_recebidos_dia cr_recebidos_dia%ROWTYPE;
+    
+    -- Saldo anterior
+    CURSOR cr_saldo_anterior IS
+    SELECT nvl(SUM(CASE WHEN his.indebcre = 'D' THEN vllanmto ELSE 0 END) -
+               SUM(CASE WHEN his.indebcre = 'C' THEN vllanmto ELSE 0 END),0) vlsldant
+      FROM craphis his
+          ,tbdsct_lancamento_bordero lcb 
+     WHERE his.cdcooper = lcb.cdcooper
+       AND his.cdhistor = lcb.cdhistor
+       AND lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisant,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(vr_cdhisant, '[^,]+', 1, LEVEL) IS NOT NULL)
+       AND lcb.dtmvtolt < pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_saldo_anterior cr_saldo_anterior%ROWTYPE;
+    
+    CURSOR cr_saldo_ant_qtd IS
+    SELECT COUNT(1)
+      FROM crapbdt bdt
+          ,craptdb tdb
+     WHERE bdt.flverbor = 1
+       AND bdt.nrborder = tdb.nrborder
+       AND bdt.cdcooper = tdb.cdcooper
+       AND (nvl(tdb.dtdpagto,tdb.dtdebito) >= pr_dtvencto OR tdb.dtresgat >= pr_dtvencto  OR tdb.insittit = 4 )
+       AND tdb.dtlibbdt < pr_dtvencto
+       AND tdb.cdcooper = pr_cdcooper;
+     
+  BEGIN
+    vr_qtderesg := 0;
+    vr_vlderesg := 0;
+    vr_qtvencid := 0;
+    vr_vlvencid := 0;
+    vr_qttitulo := 0;
+    vr_vltitulo := 0;
+    vr_qtsldant := 0;
+    vr_vlsldant := 0;
+    
+    -- Carrega dia anterior ao vencimento
+    IF (pr_dtmvtolt IS NOT NULL ) THEN
+      vr_dtmvtolt:=pr_dtmvtolt;
+    ELSE
+      vr_dtmvtolt:=NULL;
+    END IF;
+
+    IF (pr_dtvencto IS NOT NULL ) THEN
+       vr_dtvencto := pr_dtvencto;
+    ELSE
+      vr_dtvencto := vr_dtmvtolt;
+      --vr_dtperant := NULL;
+    END IF;
+
+    IF (vr_dtvencto > vr_dtmvtolt) THEN
+       vr_cdcritic := 13;
+      raise vr_exc_erro;
+    END IF;
+
+    -- Resgatados
+    OPEN cr_resgatados;
+    FETCH cr_resgatados INTO rw_resgatados;
+    IF cr_resgatados%FOUND THEN
+      vr_qtderesg := rw_resgatados.qtderesg * -1;
+      vr_vlderesg := rw_resgatados.vlderesg * -1;
+    END IF;
+    CLOSE cr_resgatados;
+    
+    -- Vencidos no dia
+    vr_cdhisven := dsct0003.vr_cdhistordsct_pgtoopc       ||','|| --2671
+                   dsct0003.vr_cdhistordsct_pgtocompe     ||','|| --2672
+                   dsct0003.vr_cdhistordsct_pgtocooper    ||','|| --2673
+                   dsct0003.vr_cdhistordsct_pgtoavalopc   ||','|| --2675
+                   dsct0003.vr_cdhistordsct_pgtomultaopc  ||','|| --2682
+                   dsct0003.vr_cdhistordsct_pgtomultaavopc||','|| --2684
+                   dsct0003.vr_cdhistordsct_pgtojurosopc  ||','|| --2686
+                   dsct0003.vr_cdhistordsct_pgtojurosavopc;       --2688
+
+    OPEN cr_vencidos_no_dia;
+    FETCH cr_vencidos_no_dia INTO rw_vencidos_no_dia;
+    IF cr_vencidos_no_dia%FOUND THEN
+      vr_qtvencid := rw_vencidos_no_dia.qtvencid * -1;
+      vr_vlvencid := rw_vencidos_no_dia.vlvencid * -1;
+    END IF;
+    CLOSE cr_vencidos_no_dia;
+    
+    -- Recebidos no dia
+    OPEN cr_recebidos_dia;
+    FETCH cr_recebidos_dia INTO rw_recebidos_dia;
+    IF cr_recebidos_dia%FOUND THEN
+      vr_qttitulo := rw_recebidos_dia.qttitulo;
+      vr_vltitulo := rw_recebidos_dia.vltitulo;
+    END IF;
+    CLOSE cr_recebidos_dia;
+    
+    -- Saldo anterior
+    vr_cdhisant := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
+                   dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
+                   dsct0003.vr_cdhistordsct_apropjurmta||','|| --2669
+                   vr_cdhisven;
+    
+    OPEN cr_saldo_anterior;
+    FETCH cr_saldo_anterior INTO rw_saldo_anterior;
+    IF cr_saldo_anterior%FOUND THEN
+      vr_vlsldant := rw_saldo_anterior.vlsldant;    
+    END IF;
+    CLOSE cr_saldo_anterior; 
+    
+    OPEN cr_saldo_ant_qtd;
+    FETCH cr_saldo_ant_qtd INTO vr_qtsldant;
+    CLOSE cr_saldo_ant_qtd;
+    
+    -- Saldo atual
+    vr_qtcredit := vr_qtsldant + vr_qtvencid + vr_qttitulo + vr_qtderesg ;
+    vr_vlcredit := vr_vlsldant + vr_vlvencid + vr_vltitulo + vr_vlderesg ;
+
+    pr_tab_dados_conciliacao(0).dtvencto := pr_dtvencto;
+    pr_tab_dados_conciliacao(0).qtsldant := vr_qtsldant; -- Saldo Anterior
+    pr_tab_dados_conciliacao(0).vlsldant := vr_vlsldant; -- Saldo Anterior
+    pr_tab_dados_conciliacao(0).qtderesg := vr_qtderesg; -- Titulos Resgatados
+    pr_tab_dados_conciliacao(0).vlderesg := vr_vlderesg; -- Titulos Resgatados
+    pr_tab_dados_conciliacao(0).qtvencid := vr_qtvencid; -- Vencimentos no dia
+    pr_tab_dados_conciliacao(0).vlvencid := vr_vlvencid; -- Vencimentos no dia
+    pr_tab_dados_conciliacao(0).qttitulo := vr_qttitulo; -- Titulos Recebidos
+    pr_tab_dados_conciliacao(0).vltitulo := vr_vltitulo; -- Titulos Recebidos
+    pr_tab_dados_conciliacao(0).qtcredit := vr_qtcredit; -- SALDO ATUAL
+    pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit; -- SALDO ATUAL
+
+  EXCEPTION
+    WHEN vr_exc_erro then
+      IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+  
+    WHEN OTHERS THEN
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := 'Erro geral na rotina TELA_TITCTO.pc_obtem_dados_conciliacao_tit: '||SQLERRM;
+  END pc_obtem_dados_conciliacao_tit;
+
 
   PROCEDURE pc_obtem_dados_conciliacao_web(pr_tpcobran    IN CHAR                  --> Filtro de tipo de cobranca
                                         ,pr_dtvencto    IN VARCHAR2                  --> Data de vencimento
@@ -1266,6 +1487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     vr_texto_completo varchar2(32600);
     vr_index          PLS_INTEGER;
 
+    vr_dtvencto DATE;
+    vr_dtmvtolt DATE;    
+
     procedure pc_escreve_xml( pr_des_dados in varchar2
                             , pr_fecha_xml in boolean default false
                             ) is
@@ -1287,28 +1511,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                               , pr_cdoperad => vr_cdoperad
                               , pr_dscritic => vr_dscritic);
 
+      IF pr_dtmvtolt IS NOT NULL THEN
+        vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
+      ELSE
+        vr_dtmvtolt := NULL;
+      END IF;
+
+      IF pr_dtvencto IS NOT NULL THEN
+        vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+      ELSE
+        vr_dtvencto := NULL;
+      END IF;
 
       pc_obtem_dados_conciliacao( pr_cdcooper => vr_cdcooper,
                                         pr_tpcobran => pr_tpcobran,
-                                        pr_dtvencto => pr_dtvencto,
-                                        pr_dtmvtolt => pr_dtmvtolt,
-                                        pr_flverbor => 0,
+                                 pr_dtvencto => vr_dtvencto,
+                                 pr_dtmvtolt => vr_dtmvtolt,
                                         --> out
                                         pr_tab_dados_conciliacao => vr_tab_dados_antigo,
                                         pr_cdcritic => pr_cdcritic,
-                                        pr_dscritic => pr_dscritic
-                               );
+                                 pr_dscritic => pr_dscritic );
 
-      pc_obtem_dados_conciliacao( pr_cdcooper => vr_cdcooper,
-                                        pr_tpcobran => pr_tpcobran,
-                                        pr_dtvencto => pr_dtvencto,
-                                        pr_dtmvtolt => pr_dtmvtolt,
-                                        pr_flverbor => 1,
+      -- Somente se selecionar o tipo de cobrança registrada ou todos
+      IF pr_tpcobran <> 'S' THEN
+        pc_obtem_dados_conciliacao_tit(pr_cdcooper => vr_cdcooper,
+                                       pr_dtvencto => vr_dtvencto,
+                                       pr_dtmvtolt => vr_dtmvtolt,
                                         --> out
                                         pr_tab_dados_conciliacao => vr_tab_dados_novo,
                                         pr_cdcritic => pr_cdcritic,
-                                        pr_dscritic => pr_dscritic
-                               );
+                                       pr_dscritic => pr_dscritic );
+      END IF;
 
       -- inicializar o clob
       vr_des_xml := null;

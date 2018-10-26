@@ -20,6 +20,10 @@
 					<option value="A"><? echo utf8ToHtml("A - Alterar Limites") ?></option>
 					<option value="E"><? echo utf8ToHtml("E - Excluir Limites") ?></option>
 				</select>
+				<select class="campo" id="tplimcrd">
+					<option value="0"><? echo utf8ToHtml("C - Concessão") ?></option>
+					<option value="1"><? echo utf8ToHtml("A - Alteração") ?></option>
+				</select>
 				<? build_card_adm_select("mainAdmCrd", $glbvars);?> 
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
 			</td>

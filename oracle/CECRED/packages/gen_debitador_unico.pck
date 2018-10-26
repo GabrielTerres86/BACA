@@ -1470,7 +1470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
     | OK - PC_CRPS674 - DEBITO DE FATURA - LANCAMENTO DE DEBITO AUTOMATICO - BANCOOB/CABAL                                     | Não              | Sim            | 1 = Repique |
     | OK - PC_CRPS688 - EFETUAR RESGATE DE APLICAÇÕES AGENDADAS PELO INTERNET BANK                                             | Não              | Não            | Não         |
     | OK - RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA - EFETIVAR OS AGENDAMENTOS DE RECARGA DE CELULAR                            | Não              | Não            | Não         |
-    | OK - EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA | Não              | Não            | Não         |
+    | OK - TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA | Não              | Não            | Não         |    
     | OK - PC_CRPS123 - EFETUAR OS LANCAMENTOS AUTOMATICOS NO SISTEMA REF. A DEBITO EM CONTA                                   | Sim              | Não            | Não         |
     | OK - PC_CRPS724 - PAGAR AS PARCELAS DOS CONTRATOS DO PRODUTO POS-FIXADO                                                  | Não              | Sim            | Não         |
     | OK - PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES                                                       | Não              | Não            | Não         |
@@ -2632,9 +2632,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
               --
-            -- EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA
-            ELSIF Upper(r_processo_horario.cdprocesso) = 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB' THEN
-              vr_cdprogra := 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB';
+            -- TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB' THEN
+              vr_cdprogra := 'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB';
 
               -- Log de ocorrência
               pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -2653,7 +2653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_idtiplog => 'I');
 
               -- Executa processo/programa
-              empr0009.pc_efetiva_lcto_pendente_job(pr_cdcooper => pr_cdcooper);
+              TELA_LAUTOM.pc_efetiva_lcto_pendente_job(pr_cdcooper => pr_cdcooper);
 
               -- Tratamento de erro
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN

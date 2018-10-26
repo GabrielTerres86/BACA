@@ -44,5 +44,6 @@
 	<a class="botao" onclick="voltaDiv(0,1,4); return false;" href="#">Voltar</a>
 	<a class="botao" id="btnLerCartaoChip" 		name="btnLerCartaoChip" 	 onclick="lerCartaoChip(); return false;" href="#"><? echo utf8ToHtml('Inserir o cartão') ?></a>
 	<a class="botao" id="btnLerCartaoMagnetico" name="btnLerCartaoMagnetico" onclick="lerCartaoMagnetico(); return false;" href="#"><? echo utf8ToHtml('Passar o cartão') ?></a>	
+	<a class="botao" id="btnImprimirTermoEntrega" name="btnImprimirTermoEntrega" onclick="imprimirTermoEntrega(); return false;" href="#"><? echo utf8ToHtml('Imprimir termo entrega') ?></a>	
 	<a id="btnProsseguir" name="btnProsseguir" class="botao" href="#">Prosseguir</a>
 </div>

@@ -87,6 +87,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
                 12/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
                              Marcelo Telles Coelho - Mouts
+                01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
+                             Marcelo Telles Coelho - Mouts
 
 ..............................................................................*/
 
@@ -418,6 +420,9 @@ PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
                                      ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
                                      ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
                               ); 
+  -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+  -- Retornar o NRDOCMTO que compoe o NrControleIF
+  FUNCTION fn_nrdocmto_nrctrlif RETURN VARCHAR2;
 
 END sspb0001;
 /
@@ -907,8 +912,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
       vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
       vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+      vr_inestcri            INTEGER;
+      vr_clobxmlc            CLOB;
 
-    BEGIN
+    BEGIN -- inicio pc_proc_envia_vr_boleto
       --Inicializar parametros erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -936,6 +943,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapcop;
+      --
+      -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+      -- Busca o indicador estado de crise
+      SSPB0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                               ,pr_clobxmlc => vr_clobxmlc);
+      -- Se estiver setado como estado de crise
+      IF  vr_inestcri > 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Sistema SPB temporariamente indisponível para pagamento de VR Boleto!';
+        --Criar erro
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fim Projeto 475
+      --
       /* Busca data do sistema */
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -4610,6 +4638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               ,lcs.vllanmto
               ,lcs.dtmvtolt
               ,lcs.idopetrf
+              ,lcs.cdbccxlt -- Marcelo Telles Coelho - Projeto 475 -Sprint B
           FROM craplcs lcs
          WHERE lcs.cdcooper = pr_cdcooper
            AND lcs.dtmvtolt = pr_dtmvtolt
@@ -4689,7 +4718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
     vr_des_erro            VARCHAR2(100);
 
-  BEGIN
+  BEGIN -- Inicio pc_trfsal_opcao_b
 
     /* Busca dados da cooperativa */
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -4729,7 +4758,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     -- Se estiver setado como estado de crise
     IF  vr_inestcri > 0  THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Sistema indisponivel no momento. Tente mais tarde!';
+        -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+        -- Busca o indicador estado de crise
+        vr_dscritic := 'Atenção!'||chr(10)||
+                       'Sistema temporariamente indisponível para a realização da transação.'||chr(10)||
+                       'Por favor, tente novamente mais tarde.';
         RAISE vr_exc_erro;
     END IF;
 
@@ -4994,14 +5027,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              TO_CHAR(rw_crapdat.dtmvtolt,'MM') ||
              TO_CHAR(rw_crapdat.dtmvtolt,'DD') ||
              LPAD(rw_crapcop.cdagectl,4,0) ||
-             TO_CHAR(SYSTIMESTAMP,'SSSSSFF3') || --  ETIME - confrontando o numero de controle
-             'A' ;
+             -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+             -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
+             -- || to_char(SYSDATE,'sssss')
+             --   /* para evitar duplicidade devido paralelismo */
+             -- TO_CHAR(SYSTIMESTAMP,'SSSSSFF3') || --  ETIME - confrontando o numero de controle
+             SSPB0001.fn_nrdocmto_nrctrlif;
              EXIT WHEN vr_nrctrlif <> nvl(vr_nrctrlat,' ');
 
           END LOOP;
-
-
-          vr_nrctrlat := vr_nrctrlif;
 
           OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -5012,11 +5046,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
           IF cr_craplcs%NOTFOUND THEN
             vr_nrdcomto := rw_crapccs.nrdocmto;
+            vr_nrctrlif := vr_nrctrlif || 'I'; -- Marcelo Telles Coelho - Projeto 475 -Sprint B
           ELSE
             vr_nrdcomto := rw_crapccs.nrdocmto + 1000000;
+            -- Marcelo Telles Coelho - Projeto 475 -Sprint B
+            -- Identificar a origem correta para a mensagem
+            IF rw_craplcs.cdbccxlt = 11 THEN
+              vr_nrctrlif := vr_nrctrlif || 'C';
+            ELSE
+              vr_nrctrlif := vr_nrctrlif || 'I';
+          END IF;
+            -- Fim Projeto 475
           END IF;
 
           CLOSE cr_craplcs;
+
+          vr_nrctrlat := vr_nrctrlif; -- Marcelo Telles Coelho - Projeto 475 -Sprint B
 
           BEGIN
                INSERT INTO craplcs
@@ -5391,6 +5436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               ,lcs.dtmvtolt
               ,lcs.idopetrf
               ,lcs.nrridlfp
+              ,lcs.cdbccxlt
           FROM craplcs lcs
          WHERE lcs.cdcooper  = pr_cdcooper  AND
                lcs.dtmvtolt  <= pr_dtmvtolt  AND
@@ -5502,7 +5548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
     vr_des_erro            VARCHAR2(100);
 
-  BEGIN
+  BEGIN -- inicio pc_trfsal_opcao_x
 
     /* Busca dados da cooperativa */
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -5542,7 +5588,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     -- Se estiver setado como estado de crise
     IF  vr_inestcri > 0  THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Sistema indisponivel no momento. Tente mais tarde!';
+        -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+        -- Busca o indicador estado de crise
+        vr_dscritic := 'Atenção!'||chr(10)||
+                       'Sistema temporariamente indisponível para a realização da transação.'||chr(10)||
+                       'Por favor, tente novamente mais tarde.';
         RAISE vr_exc_erro;
     END IF;
 
@@ -5638,13 +5688,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              TO_CHAR(rw_crapdat.dtmvtolt,'MM') ||
              TO_CHAR(rw_crapdat.dtmvtolt,'DD') ||
              LPAD(rw_crapcop.cdagectl,4,0) ||
-             TO_CHAR(SYSTIMESTAMP,'SSSSSFF3') || --  ETIME - confrontando o numero de controle
-             'A' ;
+             -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+             -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
+             -- || to_char(SYSDATE,'sssss')
+             --   /* para evitar duplicidade devido paralelismo */
+             -- TO_CHAR(SYSTIMESTAMP,'SSSSSFF3') || --  ETIME - confrontando o numero de controle
+             SSPB0001.fn_nrdocmto_nrctrlif;
              EXIT WHEN vr_nrctrlif <> nvl(vr_nrctrlat,' ');
 
           END LOOP;
-
-        vr_nrctrlat := vr_nrctrlif;
 
        OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -5656,11 +5708,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
        IF cr_craplcs%NOTFOUND THEN
          vr_nrdcomto := rw_crapccs.nrdocmto;
+         vr_nrctrlif := vr_nrctrlif || 'I'; -- Marcelo Telles Coelho - Projeto 475 -Sprint B
        ELSE
          vr_nrdcomto := rw_crapccs.nrdocmto + 1000000;
+         -- Marcelo Telles Coelho - Projeto 475 -Sprint B
+         -- Identificar a origem correta para a mensagem
+         IF rw_craplcs.cdbccxlt = 11 THEN
+           vr_nrctrlif := vr_nrctrlif || 'C';
+         ELSE
+           vr_nrctrlif := vr_nrctrlif || 'I';
+       END IF;
+         -- Fim Projeto 475
        END IF;
 
        CLOSE cr_craplcs;
+
+       vr_nrctrlat := vr_nrctrlif; -- Marcelo Telles Coelho - Projeto 475 -Sprint B
 
        BEGIN
            INSERT INTO craplcs
@@ -6876,5 +6939,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
   END pc_busca_log_TED_estorn;
   
+  -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+  -- Retornar o NRDOCMTO que compoe o NumCtrlIF
+  FUNCTION fn_nrdocmto_nrctrlif RETURN VARCHAR2 IS
+    nrdocmto VARCHAR2(08);
+  BEGIN
+    nrdocmto := LPAD(to_char(SYSDATE,'sssss')
+             /* para evitar duplicidade devido paralelismo */
+              || to_char(SEQ_TEDENVIO.nextval,'fm000'),8,'0');
+    RETURN(nrdocmto);
+  END fn_nrdocmto_nrctrlif;
 END sspb0001;
 /

@@ -86,7 +86,22 @@
 		echo 'eval("cpfpriat = \''.formataNumericos("999.999.999-99",$nrcpfrep,".-").'\'");';
 		
 		echo '$("#'.$dsidfoco.'","#frmNovoCartao").focus();';
-	} elseif ($cddopcao == "H") { // Opção Habilitar 
+	} elseif ($cddopcao == "A") { // Opção Alterar
+		// Alimenta e configura campos
+		if ($bfexiste == "yes") { // CPF pertence a um associado			
+			echo '$("#nmextttl","#frmNovoCartao").val("'.$nmprimtl.'").attr("disabled","true").attr("readonly",true).attr("class","campo");';
+			echo '$("#dtnasccr","#frmNovoCartao").val("'.$dtnasctl.'").prop("disabled",true).attr("readonly",true).attr("class","campoTelaSemBorda");';
+			$dsidfoco = "dsadmcrd";
+		} else {
+			echo '$("#nmextttl","#frmNovoCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';
+			echo '$("#dtnasccr","#frmNovoCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';		
+			$dsidfoco = "dtnasccr";
+		}
+		
+		echo 'eval("cpfpriat = \''.formataNumericos("999.999.999-99",$nrcpfrep,".-").'\'");';
+		
+		echo '$("#'.$dsidfoco.'","#frmNovoCartao").focus();';
+	} elseif ($cddopcao == "H") { // Op??o Habilitar 
 		if ($idrepres == 1) {
 			$dsidrepr = "pri";
 		} else if ($idrepres == 2) {

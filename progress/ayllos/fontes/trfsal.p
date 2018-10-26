@@ -1635,8 +1635,10 @@ PROCEDURE efetua_processo_x:
   /*** Faz a busca de horario de transação ***/
   RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
    aux_ponteiro = PROC-HANDLE
-   ("SELECT gene0001.fn_param_sistema('CRED','" +
-    STRING(glb_cdcooper) + "','FOLHAIB_HOR_LIM_PORTAB') FROM DUAL").
+   ("SELECT trim(to_char(trunc(crapcop.fimopstr/3600),'00'))||':'||" +
+    "trim(to_char(((crapcop.fimopstr/3600) - trunc(crapcop.fimopstr/3600))*60,'00')) " +
+	" FROM crapcop WHERE cdcooper = " +  STRING(glb_cdcooper) ).
+	   
 
   FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
       ASSIGN aux_strhrlim = TRIM(proc-text).
@@ -1651,7 +1653,7 @@ PROCEDURE efetua_processo_x:
   
   IF aux_hrlimite < TIME THEN
     DO:
-      ASSIGN aux_strhrlim  = "Horário Portabilidade " + aux_strhrlim + " atingido, deseja continuar?".
+      ASSIGN aux_strhrlim  = "Horário SPB " + aux_strhrlim + " atingido, deseja continuar?".
 
       RUN fontes/confirma.p (INPUT aux_strhrlim,
                             OUTPUT aux_confirma).

@@ -19,6 +19,19 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0003 AS
    
   --------------------------------------------------------------------------------------------------------------- */
   
+  -- Tipo de registro para PlTable de listagem de benefícios do cooperado
+  TYPE typ_reg_beneficio_inss IS
+     RECORD (cdcooper crapcop.cdcooper%TYPE
+            ,nrdconta crapass.nrdconta%TYPE
+            ,cdagenci crapage.cdagenci%TYPE
+            ,nrrecben crapdbi.nrrecben%TYPE
+            ,cdorgins crapage.cdorgins%TYPE);
+            
+   -- Tipo de tabela para PlTable de tela-inss
+   TYPE typ_tab_beneficio_inss IS
+     TABLE OF typ_reg_beneficio_inss
+     INDEX BY PLS_INTEGER;
+  
   PROCEDURE pc_importar_prova_vida(pr_cdprogra   IN VARCHAR2     -- Programa que esta executando
                                   ,pr_dsdireto   IN VARCHAR2     -- Diretorio onde esta o arquivo
                                   ,pr_cdcritic  OUT PLS_INTEGER  -- Código da crítica
@@ -36,6 +49,29 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0003 AS
                                 ,pr_nrcontrole    IN VARCHAR2          -- Numero de controle do Sicredi
                                 ,pr_retxml        OUT NOCOPY XMLType); -- Retorno XML 
 
+  PROCEDURE pc_consultar_beneficios(pr_cdcooper IN INTEGER,                          --> Codigo da Cooperativa
+                                    pr_nrdconta IN INTEGER,                          --> Numero da Conta
+                                    pr_nrcpfcgc IN NUMBER,                           --> CPF do Cooperado
+                                    pr_tab_bene OUT INSS0003.typ_tab_beneficio_inss, --> PL TABLE para listar os beneficios
+                                    pr_dscritic OUT VARCHAR2);                       --> Mensagem de erro 
+  
+  PROCEDURE pc_lista_beneficios(pr_cdcooper IN INTEGER,         --> Codigo da Cooperativa
+                                pr_nrdconta IN INTEGER,         --> Numero da Conta
+                                pr_nrcpfcgc IN NUMBER,          --> CPF do Cooperado
+                                pr_dsbenefi OUT NOCOPY XMLType, --> XML com a lista de beneficios
+                                pr_dscritic OUT VARCHAR2);      --> Mensagem de erro 
+
+  PROCEDURE pc_gera_reg_emp_consignado(pr_cdcooper IN INTEGER    --> Codigo da Cooperativa
+                                      ,pr_nrdconta IN INTEGER    --> Numero da Conta
+                                      ,pr_cdorgins IN NUMBER     --> Codigo do Orgao Pagador
+                                      ,pr_nrbenefi IN NUMBER     --> Numero do Benefício
+                                      ,pr_tpoperac IN INTEGER    --> Tipo de operacao: (1 - Historico de emprestimos ativos, 2 - Consulta de margem consignavel)
+                                      ,pr_cdcoptfn IN INTEGER    --> Cooperativa do TAA
+                                      ,pr_cdagetfn IN INTEGER    --> Agencia do TAA
+                                      ,pr_nrterfin IN INTEGER    --> Numero do TAA
+                                      ,pr_nmdcanal IN VARCHAR2   --> Nome do Canal
+                                      ,pr_nmusuari IN VARCHAR2); --> Nome do Usuário da consulta
+                                  
   
 END INSS0003;
 /
@@ -882,5 +918,321 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
   
   END pc_salvar_codigo_nai;                                 
 
+  PROCEDURE pc_consultar_beneficios(pr_cdcooper IN INTEGER,                          --> Codigo da Cooperativa
+                                    pr_nrdconta IN INTEGER,                          --> Numero da Conta
+                                    pr_nrcpfcgc IN NUMBER,                           --> CPF do Cooperado
+                                    pr_tab_bene OUT INSS0003.typ_tab_beneficio_inss, --> PL TABLE para listar os beneficios
+                                    pr_dscritic OUT VARCHAR2) IS                     --> Mensagem de erro 
+    /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_consultar_beneficios
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas Quisinski
+    Data     : 01/08/2018                             Ultima atualizacao: 
+    
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Procedure para listar todos os benefícios vinculados com o CPF
+    
+    Alterações : 
+    ------------------------------------------------------------------------------------------------------------------*/
+  
+    -- Tratamento de erros
+    vr_cdcritic INTEGER; -- Código da crítica
+    vr_exc_saida EXCEPTION; -- Exceção
+  
+    vr_idx PLS_INTEGER;
+  
+    -- Cursor para verificacao do beneficiário do inss
+    CURSOR cr_crapdbi(pr_nrcpfcgc IN NUMBER) IS
+      SELECT dbi.nrrecben
+        FROM crapdbi dbi
+       WHERE dbi.nrcpfcgc = pr_nrcpfcgc;
+  
+    -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
+    CURSOR cr_craplcm_inss(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                           pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
+                           pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
+                           pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
+      SELECT 1
+        FROM craplcm lcm
+       WHERE lcm.cdcooper = pr_cdcooper
+         AND lcm.nrdconta = pr_nrdconta
+         AND lcm.cdhistor = 1399
+         AND lcm.dtmvtolt <= pr_dtmvtolt
+         AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
+            --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
+         AND SUBSTR(lcm.cdpesqbb, 1, INSTR(lcm.cdpesqbb, ';') - 1) = pr_nrrecben;
+    rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
+  
+    -- Buscar o orgão pagador
+    CURSOR cr_cdorgins(pr_cdcooper IN INTEGER, pr_nrdconta IN INTEGER) IS
+      SELECT age.cdorgins, age.cdagenci, ass.cdcooper, ass.nrdconta
+        FROM crapage age, crapass ass
+       WHERE age.cdcooper = ass.cdcooper
+         AND age.cdagenci = ass.cdagenci
+         AND ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_cdorgins cr_cdorgins%ROWTYPE;
+  
+    -- Cursor de DATA
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+  
+  BEGIN
+  
+    -- Incluir nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => 'INSS0003',
+                           pr_action => 'INSS0003.pc_consulta_beneficios');
+  
+    -- Buscar a data do sistema
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat
+      INTO rw_crapdat;
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      vr_cdcritic := 1;
+      -- Fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+  
+    -- Buscar os dados do PA do cooperado, onde recebe o benefício do INSS
+    OPEN cr_cdorgins(pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta);
+    FETCH cr_cdorgins
+      INTO rw_cdorgins;
+    IF cr_cdorgins%NOTFOUND THEN
+      vr_cdcritic := 9;
+      -- Fechar o cursor
+      CLOSE cr_cdorgins;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Fechar o cursor
+      CLOSE cr_cdorgins;
+    END IF;
+  
+    -- Limpar a tabela de beneficios 
+    pr_tab_bene.DELETE;
+  
+    -- Percorrer todos os benefícios da conta 
+    FOR rw_crapdbi IN cr_crapdbi(pr_nrcpfcgc => pr_nrcpfcgc) LOOP
+    
+      -- Verificar se a conta possui LCM 1399 nos ultimos 3 meses
+      OPEN cr_craplcm_inss(pr_cdcooper => rw_cdorgins.cdcooper,
+                           pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                           pr_nrdconta => rw_cdorgins.nrdconta,
+                           pr_nrrecben => rw_crapdbi.nrrecben);
+      FETCH cr_craplcm_inss
+        INTO rw_craplcm_inss;
+    
+      -- Verificar se existe lançamento nos ultimos tres meses
+      IF cr_craplcm_inss%FOUND THEN
+        -- Fechar Cursor
+        CLOSE cr_craplcm_inss;
+      
+        -- carregar os dados para a PL TABLE
+        vr_idx := pr_tab_bene.COUNT() + 1;
+        pr_tab_bene(vr_idx).cdcooper := rw_cdorgins.cdcooper;
+        pr_tab_bene(vr_idx).nrdconta := rw_cdorgins.nrdconta;
+        pr_tab_bene(vr_idx).cdagenci := rw_cdorgins.cdagenci;
+        pr_tab_bene(vr_idx).nrrecben := rw_crapdbi.nrrecben;
+        pr_tab_bene(vr_idx).cdorgins := rw_cdorgins.cdorgins;
+      
+      ELSE
+        -- Fechar Cursor
+        CLOSE cr_craplcm_inss;
+      END IF;
+    
+    END LOOP;
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    
+    WHEN OTHERS THEN
+      pr_dscritic := 'INS0003.pc_consultar_beneficios - Erro na consulta dos beneficios do cooperado. ERRO: ' ||
+                     SQLERRM;
+    
+  END pc_consultar_beneficios;
+
+  PROCEDURE pc_lista_beneficios(pr_cdcooper IN INTEGER,         --> Codigo da Cooperativa
+                                pr_nrdconta IN INTEGER,         --> Numero da Conta
+                                pr_nrcpfcgc IN NUMBER,          --> CPF do Cooperado
+                                pr_dsbenefi OUT NOCOPY XMLType, --> XML com a lista de beneficios
+                                pr_dscritic OUT VARCHAR2) IS    --> Mensagem de erro 
+                                
+    /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_lista_beneficios
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas Quisinski
+    Data     : 01/08/2018                             Ultima atualizacao: 
+    
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Procedure para listar todos os benefícios vinculados com o CPF
+    
+    Alterações : 
+    ------------------------------------------------------------------------------------------------------------------*/
+  
+    -- Tratamento de erros
+    vr_dscritic VARCHAR(4000); -- Descrição da crítica
+    vr_exc_saida EXCEPTION; -- Exceção
+  
+    -- Variaveis de XML
+    vr_xml_temp VARCHAR2(32767);
+    vr_dsbenefi CLOB;
+  
+    vr_tab_bene INSS0003.typ_tab_beneficio_inss;
+  
+  BEGIN
+    -- Incluir nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => 'INSS0003',
+                           pr_action => 'INSS0003.pc_lista_beneficios');
+  
+    pc_consultar_beneficios(pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => pr_nrdconta,
+                            pr_nrcpfcgc => pr_nrcpfcgc,
+                            pr_tab_bene => vr_tab_bene,
+                            pr_dscritic => vr_dscritic);
+  
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+  
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_dsbenefi, TRUE);
+    dbms_lob.open(vr_dsbenefi, dbms_lob.lob_readwrite);
+  
+    -- Cabecalho do XML
+    GENE0002.pc_escreve_xml(pr_xml            => vr_dsbenefi,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><BENEFICIOS>');
+  
+    IF vr_tab_bene.COUNT > 0 THEN
+      -- Percorrer todos os benefícios da conta 
+      FOR vr_idx IN vr_tab_bene.FIRST .. vr_tab_bene.LAST LOOP
+        -- Insere o cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_dsbenefi,
+                                pr_texto_completo => vr_xml_temp,
+                                pr_texto_novo     => '<beneficio>' ||
+                                                       '<cdcooper>' || to_char(vr_tab_bene(vr_idx).cdcooper) || '</cdcooper>' ||
+                                                       '<nrdconta>' || to_char(vr_tab_bene(vr_idx).nrdconta) || '</nrdconta>' ||
+                                                       '<cdagenci>' || to_char(vr_tab_bene(vr_idx).cdagenci) || '</cdagenci>' ||
+                                                       '<nrrecben>' || to_char(vr_tab_bene(vr_idx).nrrecben) || '</nrrecben>' ||
+                                                       '<cdorgins>' || to_char(vr_tab_bene(vr_idx).cdorgins) || '</cdorgins>' ||
+                                                     '</beneficio>');
+      END LOOP;
+    END IF;
+  
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_dsbenefi,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '</BENEFICIOS>',
+                            pr_fecha_xml      => TRUE);
+  
+    -- Atualiza o XML de retorno
+    pr_dsbenefi := xmltype(vr_dsbenefi);
+  
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_dsbenefi);
+    dbms_lob.freetemporary(vr_dsbenefi);
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_dscritic := 'INS0003.pc_lista_beneficios - Erro na consulta dos beneficios do cooperado. ERRO: ' ||
+                     SQLERRM;
+    
+  END pc_lista_beneficios;
+
+  PROCEDURE pc_gera_reg_emp_consignado(pr_cdcooper IN INTEGER  --> Codigo da Cooperativa
+                                      ,pr_nrdconta IN INTEGER  --> Numero da Conta
+                                      ,pr_cdorgins IN NUMBER   --> Codigo do Orgao Pagador
+                                      ,pr_nrbenefi IN NUMBER   --> Numero do Benefício
+                                      ,pr_tpoperac IN INTEGER  --> Tipo de operacao: (1 - Historico de emprestimos ativos, 2 - Consulta de margem consignavel)
+                                      ,pr_cdcoptfn IN INTEGER  --> Cooperativa do TAA
+                                      ,pr_cdagetfn IN INTEGER  --> Agencia do TAA
+                                      ,pr_nrterfin IN INTEGER  --> Numero do TAA
+                                      ,pr_nmdcanal IN VARCHAR2 --> Nome do Canal
+                                      ,pr_nmusuari IN VARCHAR2 --> Nome do Usuário da consulta
+                                      ) IS
+
+  /* ..........................................................................
+    --
+    --  Programa : pc_gera_reg_emp_consignado
+    --  Autor    : Douglas Quisinski
+    --  Data     : 13/08/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para gerar o registro de LOG para cada consulta que está 
+    --               sendo realizada para o INSS
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> VARIAVEIS <-----------------
+    vr_dscritic    VARCHAR2(1000);
+    vr_exc_erro    EXCEPTION;
+
+  BEGIN
+    -- Gerar o log de consulta
+    BEGIN
+      INSERT INTO CECRED.TBINSS_CONS_EMPR_CONSIGNADO 
+        (cdcooper
+        ,nrdconta
+        ,cdorgins
+        ,nrbenefi
+        ,dttransa
+        ,tpoperac
+        ,cdcoptfn
+        ,cdagetfn
+        ,nrterfin
+        ,nmdcanal
+        ,nmusuari
+        )
+      VALUES
+        (pr_cdcooper
+        ,pr_nrdconta
+        ,pr_cdorgins
+        ,pr_nrbenefi
+        ,SYSDATE
+        ,pr_tpoperac
+        ,pr_cdcoptfn
+        ,pr_cdagetfn
+        ,pr_nrterfin
+        ,pr_nmdcanal
+        ,pr_nmusuari
+        );       
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir TBINSS_CONS_EMPR_CONSIGNADO: ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    --
+    COMMIT;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pc_internal_exception(pr_cdcooper => pr_cdcooper
+                           ,pr_compleme => vr_dscritic);
+    WHEN OTHERS THEN
+      pc_internal_exception(pr_cdcooper => pr_cdcooper
+                           ,pr_compleme => 'Erro geral rotina INSS003.pc_gera_reg_emp_consignado: ' || SQLERRM);
+      
+  END pc_gera_reg_emp_consignado;
 END INSS0003;
 /

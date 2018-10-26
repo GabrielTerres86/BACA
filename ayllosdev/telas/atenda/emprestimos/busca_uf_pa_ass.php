@@ -17,12 +17,10 @@
 	require_once('../../../includes/controla_secao.php');	
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();		
-	
 
 	// Recebe a operação que está sendo realizada
 	$nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ; 
 
-	
 	// Dependendo da operação, chamo uma procedure diferente
 	$procedure       = 'retorna_UF_PA_ASS';	
 	$retornoAposErro = 'estadoInicial();';
@@ -58,9 +56,9 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
-	
+
 	$uflicenc = $xmlObjeto->roottag->tags[0]->attributes["UFLICENC"];	
-	
-	echo "$('#uflicenc','#frmAlienacao').val('$uflicenc');";
-		
+
+	echo "$('#uflicenc','#frmTipo').val('$uflicenc');";
+
 ?>

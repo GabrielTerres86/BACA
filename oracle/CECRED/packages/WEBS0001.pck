@@ -2189,6 +2189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   PROCEDURE pc_atualiza_prop_srv_cartao(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
                                        ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
                                        ,pr_nrctrcrd    IN crawcrd.nrctrcrd%TYPE     --> Numero do contrato
+                                       ,pr_nrctrest    IN crawcrd.nrctrcrd%TYPE DEFAULT NULL    --> Numero do contrato original da esteira (tratamento limite credito)
                                        ,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
                                        ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
                                        ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
@@ -2283,25 +2284,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             ON crd.cdcooper = a.cdcooper
            AND crd.nrdconta = a.nrdconta
            AND crd.nrctrcrd = a.nrctrcrd
-           AND crd.nrctrcrd = pr_nrctrcrd
            AND crd.nrcctitg > 0 /* Se a proposta nao tem conta cartao 
                                    ela nao foi pro bancoob, logo nao
                                    pode ter uma alteracao de limite */
          WHERE a.cdcooper = pr_cdcooper
            AND a.nrdconta = pr_nrdconta
+           AND a.nrctrcrd = pr_nrctrcrd 
+           AND a.nrproposta_est = pr_nrctrest
            AND a.tpsituacao = 6 --Em Análise
-           AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
-           AND NOT EXISTS (SELECT 1
-                             FROM tbcrd_limite_atualiza b
-                            WHERE b.cdcooper = a.cdcooper
-                              AND b.nrdconta = a.nrdconta
-                              AND b.idatualizacao > a.idatualizacao);
+           AND a.insitdec   = 1 --Sem aprovacao 
+           AND a.dtalteracao = (select max(x.dtalteracao)
+                                  from tbcrd_limite_atualiza x
+                                 where a.cdcooper = x.cdcooper
+                                   AND a.nrdconta = x.nrdconta
+                                   AND a.nrctrcrd = x.nrctrcrd 
+                                   AND a.nrproposta_est = x.nrproposta_est); 
       rw_limatu cr_limatu%ROWTYPE;
       
       ----- VARIÁVEIS -----
       vr_vllimite     crawcrd.vllimcrd%TYPE;
     
     BEGIN
+
       IF pr_tpretest = 'E' THEN --Apenas para retorno da Esteira
         -- Buscar os dados da proposta de cartão
         OPEN cr_crawcrd(pr_cdcooper => pr_cdcooper
@@ -2319,6 +2323,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         ELSE
           CLOSE cr_crawcrd;
         END IF;
+        
+        OPEN cr_limatu;
+        FETCH cr_limatu INTO rw_limatu;
+        IF cr_limatu%FOUND THEN
+          vr_vllimite := rw_limatu.vllimite_alterado;
+      END IF;
+        CLOSE cr_limatu;
+       
       END IF;
 
       -- Buscar os dados do cooperado
@@ -2340,7 +2352,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       IF pr_tpretest = 'E' THEN --Apenas para retorno da Esteira
         --> Tratar para nao validar criticas qnt for 99-expirado
         IF pr_insitapr <> 99 THEN
-          -- Proposta 2- Aprovado Auto, 3- Aprovado Manual
+          -- Proposta 2- Aprovado Auto, 3- Aprovado Manual -- somente para Nova proposta
+          IF pr_nrctrest is null THEN
           IF rw_crawcrd.insitcrd = 1 AND rw_crawcrd.insitdec IN (2,3) THEN
             pr_status      := 202;
             pr_cdcritic    := 974;
@@ -2355,24 +2368,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
             RAISE vr_exc_saida;
           END IF;
+          END IF; --> FIM IF pr_nrctrest is null
         END IF; --> Fim IF pr_insitapr <> 99 THEN
 
         -- Proposta Expirado
-        IF rw_crawcrd.insitdec = 7 THEN
+        IF rw_crawcrd.insitdec = 7 AND  pr_nrctrest is null THEN
           pr_status      := 202;
           pr_cdcritic    := 975;
           pr_msg_detalhe := 'Parecer nao foi atualizado, o prazo para analise da proposta exipirou.';
           RAISE vr_exc_saida;
         END IF;
 
-        OPEN cr_limatu;
-        FETCH cr_limatu INTO rw_limatu;
-        IF cr_limatu%FOUND THEN
-          CLOSE cr_limatu;
-          vr_vllimite := rw_limatu.vllimite_alterado;
-        ELSE
-          CLOSE cr_limatu;
-          
+        -- se e alteracao de limite
+        IF pr_nrctrest IS NULL THEN
           OPEN cr_crapcrd(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
                           pr_nrctrcrd => pr_nrctrcrd);
@@ -2474,9 +2482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END;
 
       IF pr_tpretest = 'E' THEN --Esteira
-        IF vr_vllimite IS NOT NULL THEN
-          
-        -- Situacao tpsituacao (1-Pendente/ 2-Enviado ao Bancoob/ 3-Concluido com Sucesso/ 4-Critica / 5-Expirado /6-Em Análise)
+        -- alteracao de limite
+        IF pr_nrctrest IS NOT NULL THEN
         
           -- Caso for alteracao de limite
           IF pr_insitapr = 1 THEN
@@ -2820,6 +2827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_dssitapr     VARCHAR2(50);
       vr_tpproduto    NUMBER;
       vr_nrctrprp     NUMBER(10);
+      vr_nrctrest     NUMBER(10); --> usado para cartao de credito atualiza limite
 
       
       --Busca dados proposta alteração
@@ -2883,6 +2891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         FETCH cr_limatu INTO rw_limatu;
         IF cr_limatu%FOUND THEN
           CLOSE cr_limatu;
+          vr_nrctrest := pr_nrctremp;
           vr_nrctrprp := rw_limatu.nrctrcrd;
         ELSE
           CLOSE cr_limatu;
@@ -3017,6 +3026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            pc_atualiza_prop_srv_cartao(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                       ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
                                       ,pr_nrctrcrd    => vr_nrctrprp    --> Numero do contrato
+                                      ,pr_nrctrest    => vr_nrctrest    --> Numero contrato esteira limite credito
                                       ,pr_tpretest    => 'E'            --> Tipo do retorno
                                       ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
                                       ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
@@ -4824,11 +4834,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
     vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
     vr_dsprotoc VARCHAR2(100); --> Protocolo
+    vr_tpprodut VARCHAR2(100); --> Tipo produto (MJ=Majoracao, LM=Limite Novo)
     vr_dsresana VARCHAR2(100); --> Resultado da Análise
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := 'S';
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_tplimcrd NUMERIC(1) := 0; -- 0=concessao, 1=alteracao
     
     --Objeto JSON e CLOB
     vr_objeto         json := json();
@@ -4861,7 +4873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     
     --Busca caterogias de cartão
     CURSOR cr_catcrd(pr_cdcooper IN crapass.cdcooper%TYPE
-                    ,pr_tpctahab crapadc.tpctahab%TYPE) IS
+                    ,pr_tpctahab crapadc.tpctahab%TYPE
+                    ,pr_tplimcrd IN tbcrd_config_categoria.tplimcrd%TYPE) IS
       SELECT tcc.cdadmcrd
             ,adc.nmresadm
             ,tcc.vllimite_minimo
@@ -4869,6 +4882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         FROM crapadc adc
             ,tbcrd_config_categoria tcc
        WHERE tcc.cdcooper = pr_cdcooper
+         AND tcc.tplimcrd = nvl(pr_tplimcrd, 0)
          AND adc.cdcooper = tcc.cdcooper
          AND adc.cdadmcrd = tcc.cdadmcrd
          AND adc.tpctahab = pr_tpctahab
@@ -4975,6 +4989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       IF vr_obj_indicador.exist('dataScoreBVS') THEN
         vr_datscore := fn_converte_null(gene0007.fn_convert_web_db(UNISTR(REPLACE(RTRIM(LTRIM(vr_obj_indicador.get('dataScoreBVS').to_char(),'"'),'"'),'\u','\'))));
       END IF;
+
     END IF;
 
     -- Produto 999 = Monitoraçao do serviço
@@ -5057,7 +5072,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     CLOSE cr_crapass;
 
     FOR rw_catcrd IN cr_catcrd(rw_aciona.cdcooper
-                              ,vr_inpessoa) LOOP
+                              ,vr_inpessoa
+                              ,vr_tplimcrd) LOOP
       -- Criar objeto para a operação e enviar suas informações 
       vr_obj_generic2 := json();
       vr_obj_generic2.put('codigo',rw_catcrd.cdadmcrd);

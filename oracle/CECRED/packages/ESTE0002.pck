@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 20/03/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 03/09/2018
 
       Dados referentes ao programa:
 
@@ -176,6 +176,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut na procedure pc_gera_json_pessoa_ass para
                                distinguir qual configuração da PAREST irá buscar (Paulo Penteado GFT)
+
+                  03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
+                               (Diego Simas/AMcom)
+
+				  10/11/2018 - Ajuste na procedure "pc_gera_json_pessoa_ass" - correção no cursor que identifica
+							   se o contrato de empréstimo está/esteve em prejuízo
+							   (Reginaldo/AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1087,7 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 21/12/2017
+        Data     : Maio/2017.                    Ultima atualizacao: 11/10/2018
       
         Dados referentes ao programa:
       
@@ -1111,6 +1118,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
                                irá buscar (Paulo Penteado GFT)
+
+                    03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
+                                 (Diego Simas/AMcom)
+
+										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
+										             (Reginaldo/AMcom)
 
     ..........................................................................*/
     DECLARE
@@ -1213,6 +1226,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_vlbloque_pp crapblj.vlbloque%TYPE;
       vr_documento VARCHAR(100);
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
+      vr_inprejuz BOOLEAN;
+      vr_flesprej BOOLEAN;
+      vr_flemprej BOOLEAN;
       			
 			--PlTables auxiliares
 			vr_tab_sald                EXTR0001.typ_tab_saldos;
@@ -1582,14 +1598,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   ,wpr2.nrctrliq##10);
       rw_eprliquid cr_eprliquid%ROWTYPE;
     
-      -- Verificar se houve prejuizo do Cooperado na Cooperativa          
-      CURSOR cr_crapepr_preju IS
+      -- Causou Prejuizo / Esta em Prejuizo
+      -- PJ 450 - Diego Simas (AMcom)
+      -- INICIO
+      
+      -- Cursor para encontrar o cpf/cnpj base do cooperado
+      -- e encontrar todas as contas do cooperado atraves do seu CPF/CNPJ
+      CURSOR cr_crapass_cpf_cnpj(pr_cdcooper IN crapass.cdcooper%TYPE
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT nrdconta
+        FROM crapass a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrcpfcnpj_base IN (SELECT nrcpfcnpj_base
+                                    FROM crapass x
+                                   WHERE x.cdcooper = a.cdcooper
+                                     AND x.nrdconta = pr_nrdconta)
+       ORDER BY nrdconta; 
+       rw_crapass_cpf_cnpj cr_crapass_cpf_cnpj%ROWTYPE;
+      
+      -- Verificar se o cooperado teve emprestimo com prejuizo
+      -- ou se esta com emprestimo em prejuizo na Cooperativa          
+      CURSOR cr_crapepr_preju(pr_cdcooper IN crapepr.cdcooper%TYPE
+                             ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                             ,pr_inliquid IN crapepr.inliquid%TYPE)IS
         SELECT 1
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
-           AND epr.inprejuz = 1;
+           AND epr.inprejuz = 1
+					 AND ((pr_inliquid = 0 AND epr.vlsdprej > 0)
+					  OR (pr_inliquid = 1 AND epr.vlsdprej = 0));
       rw_crapepr_preju cr_crapepr_preju%ROWTYPE;
+    
+      --> Consultar se já houve prejuizo nessa conta do cooperado
+      CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                         pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+        SELECT 1
+          FROM tbcc_prejuizo t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta;
+      rw_prejuizo cr_prejuizo%ROWTYPE; 
+      
+      -- FIM
+      -- PJ 450 - Diego Simas (AMcom)
+      -- Causou Prejuizo / Esta em Prejuizo
     
       -- Verificar se ha emprestimo nas linhas 800 e 900     
       CURSOR cr_crapepr_800_900 IS
@@ -2675,20 +2727,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         END IF; 
       END IF;
     		    
-      -- Verificar se houve prejuizo do Cooperado na Cooperativa          
-      OPEN cr_crapepr_preju;
+      -- Causou Prejuizo / Esta em Prejuizo     
+      -- PJ 450 - Diego Simas (AMcom) 
+      -- INICIO      
+      
+      vr_flesprej := FALSE;
+      vr_flemprej := FALSE;
+
+      FOR rw_crapass_cpf_cnpj              
+       IN cr_crapass_cpf_cnpj
+         (pr_cdcooper => pr_cdcooper
+         ,pr_nrdconta => pr_nrdconta) LOOP    
+          -- Para cada conta do associado cpf/cnpj 
+          -- verificamos se está em prejuízo de empréstimo e conta corrente
+          -- ou se já causou prejuizo de emprestimo e conta corrente
+          
+          -- Está em Prejuizo na Cooperativa      
+          -- Emprestimo
+          OPEN cr_crapepr_preju(pr_cdcooper => pr_cdcooper 
+                               ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta
+                               ,pr_inliquid => 0);
       FETCH cr_crapepr_preju
         INTO rw_crapepr_preju;
     
-      IF cr_crapepr_preju%FOUND OR rw_crapass.cdsitdtl IN (5, 6, 7, 8) THEN
-        vr_flprjcop := TRUE;
-      ELSE
-        vr_flprjcop := FALSE;
+          IF cr_crapepr_preju%FOUND THEN
+             vr_flemprej := TRUE;
       END IF;
+          
       CLOSE cr_crapepr_preju;
+          
+          -- Conta Corrente
+          vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, rw_crapass_cpf_cnpj.nrdconta);
+          IF vr_inprejuz = TRUE THEN
+             vr_flemprej := TRUE;
+          END IF;
+          
+          -- Esteve algum dia em Prejuizo na Cooperativa      
+          -- Emprestimo
+          OPEN cr_crapepr_preju(pr_cdcooper => pr_cdcooper 
+                               ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta
+                               ,pr_inliquid => 1);
+          FETCH cr_crapepr_preju
+           INTO rw_crapepr_preju;
+          
+          IF cr_crapepr_preju%FOUND THEN
+             vr_flesprej := TRUE;
+          END IF;
+          
+          CLOSE cr_crapepr_preju;
+          
+          -- Conta Corrente                   
+          OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper 
+                          ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta);
+          FETCH cr_prejuizo
+           INTO rw_prejuizo;
+          
+          IF cr_prejuizo%FOUND THEN
+             vr_flesprej := TRUE;
+          END IF;
+          
+          CLOSE cr_prejuizo;
+                
+      END LOOP;
     
       -- Enviar causouPrejuizoCoop
-      vr_obj_generic2.put('causouPrejuizoCoop', vr_flprjcop);
+      vr_obj_generic2.put('causouPrejuizoCoop', vr_flesprej);
+      -- Enviar estaEmPrejuizoCoop
+      vr_obj_generic2.put('estaEmPrejuizoCoop', vr_flemprej);
+         
+      -- FIM      
+      -- PJ 450 - Diego Simas (AMcom)
+      -- Causou Prejuizo / Esta em Prejuizo
     
       -- Verificar se ha emprestimo nas linhas 800 e 900
       OPEN cr_crapepr_800_900;

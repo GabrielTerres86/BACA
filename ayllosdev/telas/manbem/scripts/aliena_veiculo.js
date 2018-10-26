@@ -75,11 +75,17 @@ function TrataDados(){
 function validaCamposAditiv(){
 	var invalidos=0;
 	errorMessage = "";
-	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
-	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
+	if (in_array($('#dscatbem', '#frmTipo').val(),['OUTROS VEICULOS'])) {
+		if(!validaCampo('dsmarbemC', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('dsbemfinC', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('nrmodbemC', '#frmTipo')){invalidos=invalidos+1;}
+	} else {
 	if(!validaCampo('dsmarbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
+	}
+	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nranobem', '#frmTipo')){invalidos=invalidos+1;}	
 	if(!validaCampo('vlrdobem', '#frmTipo')){invalidos=invalidos+1;}
 
@@ -112,8 +118,17 @@ function bloqueiaCamposVeiculoZero(valor)
 	var renavam =$('#nrrenava');
 	var ufPlaca =$('#ufdplaca');
 	var nrPlaca =$('#nrdplaca');
+	
 	if(valor==="ZERO KM") 
 	{
+		renavam.addClass("campoTelaSemBorda");
+		ufPlaca.addClass("campoTelaSemBorda");
+		nrPlaca.addClass("campoTelaSemBorda");
+		
+		renavam.removeClass("campo");
+		ufPlaca.removeClass("campo");
+		nrPlaca.removeClass("campo");
+		
 		renavam.val("").prop( "disabled", true );
 		ufPlaca.val(null);
 		ufPlaca.prop( "disabled", true );
@@ -123,11 +138,21 @@ function bloqueiaCamposVeiculoZero(valor)
 		removeErroCampo(nrPlaca);
 	}
 	else{
+		
 		renavam.prop( "disabled", false );
 		ufPlaca.prop( "disabled", false );
 		nrPlaca.prop( "disabled", false );
+		
+		renavam.addClass("campo");
+		ufPlaca.addClass("campo");
+		nrPlaca.addClass("campo");
+		
+		renavam.removeClass("campoTelaSemBorda");
+		ufPlaca.removeClass("campoTelaSemBorda");
+		nrPlaca.removeClass("campoTelaSemBorda");		
 	}
 }
+
 
 
 function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
@@ -203,9 +228,14 @@ function SubstituiBem(){
 	var dscatbem = $('#dscatbem', '#frmTipo') .val();	
 	var dstipbem = $('#dstipbem', '#frmTipo') .val();
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text(); 
-	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text();
-	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
 	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
+	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text();
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
+		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
+		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
+	}
+	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
 	var vlrdobem =  $('#vlrdobem', '#frmTipo') .val();
 	var vlfipbem =  $('#vlfipbem', '#frmTipo') .val();
 	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro

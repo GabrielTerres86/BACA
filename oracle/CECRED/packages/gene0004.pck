@@ -38,6 +38,17 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0004 IS
 
   /* Definições das procedures de uso público */
 
+  /* Procedure para verificar a permissão no momento da requisição */
+  PROCEDURE pc_verifica_permissao_operacao(pr_cdcooper IN crapace.cdcooper%TYPE      --> Código da cooperativa
+                                          ,pr_cdoperad IN VARCHAR2                   --> Código do operador
+                                          ,pr_idsistem IN craptel.idsistem%TYPE      --> Identificador do sistema
+                                          ,pr_nmdatela IN craptel.nmdatela%TYPE      --> Nome da tela
+                                          ,pr_nmrotina IN craptel.nmrotina%TYPE      --> Nome da rotina
+                                          ,pr_cddopcao IN crapace.cddopcao%TYPE      --> Código da opção
+                                          ,pr_inproces IN crapdat.inproces%TYPE      --> Identificador do processo
+                                          ,pr_dscritic OUT VARCHAR2                  --> Descrição da crítica
+                                          ,pr_cdcritic OUT PLS_INTEGER);             --> Código da crítica
+
   /* Procedure para reagender job passando nome, nova data e novo horario*/
   PROCEDURE pc_reagenda_job(pr_job_name IN  Dba_Scheduler_Jobs.job_name%TYPE
                            ,pr_dtagenda IN  DATE
@@ -96,7 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0004 IS
                             ,pr_dscritic IN VARCHAR2                         --> Descrição da crítica
                             ,pr_dscriret OUT VARCHAR2                        --> Retorna se deu erro
                             ); 
-   
+                    
   /*Procedures de validacoes genericas para JOBs*/                         
   PROCEDURE pc_trata_exec_job(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
                           ,pr_fldiautl IN INTEGER                 --> Flag se deve validar dia util
@@ -180,7 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --                           do código e não mais pela descrição (Renato Darosci - Supero)
   --
   --              06/04/2017 - Criei novo cursor sobre a CRAPACE para ser executado sem o parametro nmrotina 
-  --                           desta forma melhorando a performance. (Carlos Rafael Tanholi - SD 538898) 
+  --                           desta forma melhorando a performance. (Carlos Rafael Tanholi - SD 538898)  
   --
   --              13/04/2018 - 1 - Tratado Others na geração da tabela tbgen erro de sistema
   --                           2 - Seta Modulo
@@ -246,8 +257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --                            alguma melhora na performance das chamadas, visto que estavam sendo 
     --                            feitas muitas chamadas da função. Dúvidas sobre a alteração podem ser 
     --                            tratadas também com o Rodrigo Siewerdt. (Renato Darosci - Supero)
-  	--
-	  --				       21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente (Rodrigo) 
+	--
+	  --				       21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente (Rodrigo)
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
@@ -514,7 +525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               06/04/2017 - Criei novo cursor sobre a CRAPACE para ser executado
     --                            sem o parametro nmrotina desta forma melhorando a performance
-    --                            (Carlos Rafael Tanholi - SD 538898) 
+    --                            (Carlos Rafael Tanholi - SD 538898)
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
@@ -522,14 +533,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
     --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
     --                           (Envolti - Belli - Chamado REQ0024645)
-    --  
-    -- .............................................................................
+    --      
+    --               02/10/2018 - P442 - Inclusão da Procedure para specification (Marcos-Envolti)
+	-- .............................................................................
   BEGIN
     DECLARE
       vr_exc_saida   EXCEPTION;             --> Controle de erros
       vr_cddepart    crapope.cddepart%TYPE; --> Descrição do departamento
-      vr_nmdatela crapace.nmdatela%TYPE;     
-      
+      vr_nmdatela crapace.nmdatela%TYPE;      
+
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       vr_dsparame   VARCHAR2(4000)             := NULL; -- Agrupa parametros para gravar em logs
       vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_verifica_permissao_operacao'; 
@@ -612,19 +624,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
             CLOSE cr_crapace_2; 
           END IF;  
         ELSE
-          -- Verifica as permissões de execução no cadastro
-          OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_nmrotina, pr_cddopcao);
-          FETCH cr_crapace
-           INTO vr_nmdatela;
-          -- Verifica se foi encontrada permissão
-          IF cr_crapace%NOTFOUND THEN
-            CLOSE cr_crapace;
-            pr_cdcritic := 36;
-            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-            RAISE vr_exc_saida;
-          ELSE
-            CLOSE cr_crapace; 
-          END IF;
+        -- Verifica as permissões de execução no cadastro
+        OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_nmrotina, pr_cddopcao);
+        FETCH cr_crapace
+         INTO vr_nmdatela;
+        -- Verifica se foi encontrada permissão
+        IF cr_crapace%NOTFOUND THEN
+          CLOSE cr_crapace;
+          pr_cdcritic := 36;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapace; 
+        END IF;
         END IF;
       
       END IF;
@@ -636,7 +648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
       --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
-    EXCEPTION      
+    EXCEPTION
       -- Trata mensagens - Chmd REQ0011757 - 13/04/2018
       WHEN vr_exc_saida THEN
         pr_dscritic := pr_dscritic ||
@@ -690,11 +702,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
            AND upper(j.job_name) LIKE '%'||upper(pr_job_name)||'%' ESCAPE '\';
            
       rw_job cr_job%ROWTYPE;   
-
+        
       -- Variaveis não utilizadas vr_jobname e vr_dscritic - Chmd REQ0011757 - 13/04/2018  
       
       vr_dscomando VARCHAR2(4000);
-      vr_dtagenda  TIMESTAMP;    
+      vr_dtagenda  TIMESTAMP;
       
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       vr_dsparame   VARCHAR2 (4000)             := NULL; -- Agrupa parametros para gravar em logs
@@ -711,7 +723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                      ', pr_dtagenda:' || pr_dtagenda || 
                      ', pr_hragenda:' || pr_hragenda || 
                      ', pr_mmagenda:' || pr_mmagenda;
-                     
+      
       vr_dtagenda := TO_TIMESTAMP_TZ(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
                      ||to_char(pr_mmagenda,'00')||':'||'00 ' || to_char( SYSTIMESTAMP, 'TZH:TZM' ),'dd/mm/yyyy hh24:mi:ss TZH:TZM');
     
@@ -732,10 +744,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         
         COMMIT;
       END LOOP;
-      
+
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-    EXCEPTION      
+    EXCEPTION
       -- Trata mensagens - Chmd REQ0011757 - 13/04/2018
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log
@@ -756,11 +768,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   END pc_reagenda_job;
 
   PROCEDURE pc_trata_exec_job(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
-                             ,pr_fldiautl IN INTEGER                 --> Flag se deve validar dia util
-                             ,pr_flproces IN INTEGER                 --> Flag se deve validar se esta no processo    
-                             ,pr_flrepjob IN INTEGER  DEFAULT 0      --> Flag para reprogramar o job
-                             ,pr_flgerlog IN INTEGER  DEFAULT NULL   --> indicador se deve gerar log
-                             ,pr_nmprogra IN VARCHAR2 DEFAULT NULL   --> Nome do programa que esta sendo executado no job
+                          ,pr_fldiautl IN INTEGER                 --> Flag se deve validar dia util
+                          ,pr_flproces IN INTEGER                 --> Flag se deve validar se esta no processo    
+                          ,pr_flrepjob IN INTEGER  DEFAULT 0      --> Flag para reprogramar o job
+                          ,pr_flgerlog IN INTEGER  DEFAULT NULL   --> indicador se deve gerar log
+                          ,pr_nmprogra IN VARCHAR2 DEFAULT NULL   --> Nome do programa que esta sendo executado no job
                              ,pr_intipmsg OUT INTEGER                --> 1 Padrão:Os programas tratam com a regra atual. 2 Grupo de mensagens para não parar o programa.
                              ,pr_cdcritic OUT INTEGER                --> Codigo Critica - Chmd REQ0011757 - 13/04/2018
                              ,pr_dscritic OUT VARCHAR2               --> Descricao Critica
@@ -841,13 +853,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_reprograma_job';
         vr_cdcritic   crapcri.cdcritic%TYPE      := 0;
         
-      BEGIN        
+      BEGIN
         -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);      
    
         -- Buscar dados do Job
         OPEN cr_job;
-        FETCH cr_job INTO rw_job;        
+        FETCH cr_job INTO rw_job;
         
         -- se encontrou o job
         IF cr_job%FOUND THEN
@@ -907,22 +919,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                      ', pr_flrepjob:' || pr_flrepjob ||
                      ', pr_flgerlog:' || pr_flgerlog ||
                      ', pr_nmprogra:' || pr_nmprogra;       
-   
+    
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
          
       -- Se não encontrar registro para a cooperativa
       IF btch0001.cr_crapdat%NOTFOUND THEN
-        CLOSE btch0001.cr_crapdat;
+         CLOSE btch0001.cr_crapdat;
         -- Inclusão de mensagen por código - Chmd REQ0011757 - 13/04/2018
         vr_cdcritic := 1; -- Sistema sem data de movimento
-        RAISE vr_exc_saida;
+         RAISE vr_exc_saida;
       ELSE
          CLOSE btch0001.cr_crapdat;
       END IF;         
       
       IF pr_flproces = 1 THEN
-         IF rw_crapdat.inproces <> 1 THEN
+         IF rw_crapdat.inproces <> 1 THEN    
             -- verificar se deve reprogramar job
             IF pr_flrepjob = 1 THEN 
               -- Buscar quantidade em minutos para reagendar a JOB
@@ -937,7 +949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
               -- se retornou critica
               IF vr_dscritic IS NOT NULL THEN    
                 RAISE vr_exc_saida;
-              END IF;            
+              END IF;                    
               -- Retorna nome do módulo logado Chmd REQ0011757 - 13/04/2018
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);              
               -- Inclusão de mensagen por código - Chmd REQ0011757 - 13/04/2018
@@ -965,7 +977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
             RAISE vr_exc_saida;
          END IF;   
       END IF;   
-
+    
       -- Limpa nome do módulo logado - Chmd REQ0011757 - 13/04/2018
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);      
     EXCEPTION 
@@ -976,7 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                        ', pr_intipmsg:' || pr_intipmsg; 
         pr_cdcritic := NVL(vr_cdcritic,0);
         -- verificar se deve gerar log
-        IF pr_flgerlog = 1 THEN  
+        IF pr_flgerlog = 1 THEN
           IF UPPER(NVL(pr_nmprogra,' ')) NOT IN ('DSCT0001.PC_EFETUA_BAIXA_TIT_CAR'
                                                 ,'PC_GERAR_TARIFA_PACOTE'
                                                 ) THEN 
@@ -985,10 +997,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                            ,pr_dscritic => pr_dscritic
                            ,pr_cdcritic => pr_cdcritic
                            );
-          END IF;
+        END IF;
         END IF;
         
-      WHEN OTHERS THEN    
+      WHEN OTHERS THEN        
         -- No caso de erro de programa gravar tabela especifica de log - Chmd REQ0011757 - 13/04/2018 
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         -- Efetuar retorno do erro não tratado
@@ -1000,7 +1012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                        ', pr_intipmsg:' || pr_intipmsg; 
         
         -- verificar se deve gerar log
-        IF pr_flgerlog = 1 THEN  
+        IF pr_flgerlog = 1 THEN
           IF UPPER(NVL(pr_nmprogra,' ')) NOT IN ('DSCT0001.PC_EFETUA_BAIXA_TIT_CAR'
                                                 ,'PC_GERAR_TARIFA_PACOTE'
                                                 ) THEN                      
@@ -1008,7 +1020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
             gene0004.pc_log(pr_dscritic => pr_dscritic
                            ,pr_cdcritic => pr_cdcritic
                            ); 
-          END IF;
+        END IF;
         END IF;
         
     END;
@@ -1047,7 +1059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       rw_crapdat    btch0001.cr_crapdat%ROWTYPE;    --> Cursor com dados da data
       vr_exc_saida  EXCEPTION;                      --> Controle de saída
       -- Excluido vr_exc_null - agora é tratado via variavel  - Chmd REQ0011757 - 13/04/2018
-      
+
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_executa_metodo';
       vr_cdcritic   crapcri.cdcritic%TYPE      := 0;
@@ -1203,8 +1215,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     -- .............................................................................
   BEGIN
     DECLARE
-      vr_bxml   VARCHAR2(32700);    --> String com o XML do erro   
-      
+      vr_bxml   VARCHAR2(32700);    --> String com o XML do erro
+
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       --vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_gera_xml_erro'; - 27/08/2018 REQ0024645
 
@@ -1271,7 +1283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Chamadoras   PRGD0001.pc_redir_acao_prgd
     --                GENE0004.pc_redir_acao
     --
-    --   Alteracoes: 30/04/2014 - Incluir campo de ação no LOG (Petter - Supero). 
+    --   Alteracoes: 30/04/2014 - Incluir campo de ação no LOG (Petter - Supero).
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
@@ -1292,14 +1304,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     vr_exc_erro EXCEPTION;      
       
   BEGIN
+      -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
       --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
       -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       
       BEGIN
-        -- Inserir primeiro registro para o histórico (request)
-        INSERT INTO crapsrw(dtsolici, nmtelaex, nmuserex, xmldadrq, cdcooper, nmacaoex)
+      -- Inserir primeiro registro para o histórico (request)
+      INSERT INTO crapsrw(dtsolici, nmtelaex, nmuserex, xmldadrq, cdcooper, nmacaoex)
         VALUES(SYSDATE, pr_nmdatela, pr_cdoperad, pr_xml, pr_cdcooper, pr_nmdeacao)
           RETURNING nrseqsol INTO pr_sequence;
       EXCEPTION
@@ -1318,7 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                          '. ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
-      
+
       COMMIT;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
@@ -1381,16 +1396,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     -- Trata critica - Chmd REQ0011757 - 13/04/2018
     vr_exc_erro EXCEPTION;      
   BEGIN
-    BEGIN
+  BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
       --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
       -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645 
       
-      BEGIN      
-        -- Atualizar histórico com XML de retorno (response)
-        UPDATE crapsrw cw
-        SET cw.xmldadrp = pr_xml
-        WHERE cw.nrseqsol = pr_seq;
+    BEGIN
+      -- Atualizar histórico com XML de retorno (response)
+      UPDATE crapsrw cw
+      SET cw.xmldadrp = pr_xml
+      WHERE cw.nrseqsol = pr_seq;
       EXCEPTION
         -- Trata log - Chmd REQ0011757 - 13/04/2018
         WHEN OTHERS THEN
@@ -1442,8 +1457,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Gerar chamada para a package/procedure de execução do processo de backend.    
-    -- 
+    --   Objetivo  : Gerar chamada para a package/procedure de execução do processo de backend.
+    --
     --   Disparada pela procedure GENE0004.pc_xml_web    
     --
     --   Alteracoes: 30/04/2014 - Implementação do cadastro de ações para execução (Petter - Supero).
@@ -1453,7 +1468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela craprdr
-    --                            (Adriano - SD 464741). 
+    --                            (Adriano - SD 464741).
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
@@ -1484,7 +1499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       vr_cdoperad   VARCHAR2(100);      --> Operador
       vr_xmllog     VARCHAR2(32767);    --> XML para propagar informações de LOG
       vr_dscritic   VARCHAR2(4000);     --> Descricao do Erro
-      
+
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_redir_acao';
 
@@ -1646,7 +1661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
           gene0004.pc_log(pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999)||vr_nmrotpro||'. '||SQLERRM
                          ,pr_cdcritic => 9999);               
       END;
-     
+
       -- Ordem para executar de forma imediata o SQL dinâmico
       EXECUTE IMMEDIATE vr_sql USING OUT pr_cdcritic, OUT pr_dscritic, IN OUT pr_xml, OUT pr_nmdcampo, OUT pr_des_erro;
 
@@ -1767,7 +1782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       vr_exc_erro   EXCEPTION;             --> Controle de tratamento de erros personalizados
       vr_exc_libe   EXCEPTION;             --> Controle de erros para o processo de liberação
       vr_conttag    PLS_INTEGER;           --> Contador do número de ocorrências da TAG
-      
+
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
       vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_xml_web'; 
       vr_dscriret   VARCHAR2    (3)            := 'OK';
@@ -1779,7 +1794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
       -- Criar instancia do XML em memória
       vr_xml := XMLType.createxml(pr_xml_req);
-      
+
       vr_cdcooper := NVL(gene0007.fn_valor_tag(pr_xml => vr_xml, pr_pos_exc => 0, pr_nomtag => 'cdcooper'),0);
       -- Retorna nome do módulo logado
       --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
@@ -1805,11 +1820,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       IF vr_conttag > 0 THEN
         pc_executa_metodo(pr_xml      => vr_xml
                          ,pr_cdcritic => vr_cdcritic
-                         ,pr_dscritic => vr_dscritic);      
-        -- Verifica se o controle de permissão gerou erro ou crítica
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_libe;
-        END IF;
+                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se o controle de permissão gerou erro ou crítica
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_libe;
+      END IF;
         -- Retorna nome do módulo logado
         --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
         -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
@@ -1825,41 +1840,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
       -- Verifica se ocorreram erros
       IF vr_des_erro <> 'OK' OR vr_dscritic IS NOT NULL THEN
-        
+
         -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
         IF vr_des_erro <> 'OK'  THEN    
           gene0004.pc_log(pr_dscritic => vr_dscritic
                          ,pr_cdcritic => vr_cdcritic
                          );
         END IF;
-        
+
         -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
         IF vr_cdcritic = 9999 THEN
           vr_cdcritic:= 1224;
           vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        END IF;
+          END IF;
         
-        pc_gera_xml_erro(pr_xml      => vr_erro_xml
-                        ,pr_cdcooper => vr_cdcooper
-                        ,pr_nmdcampo => vr_nmdcampo
-                        ,pr_cdcritic => vr_cdcritic
+          pc_gera_xml_erro(pr_xml      => vr_erro_xml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdcampo => vr_nmdcampo
+                          ,pr_cdcritic => vr_cdcritic
                         ,pr_dscritic => vr_dscritic
                         ,pr_dscriret => vr_dscriret);
 
-        -- Gravar mensagem de erro
-        pc_atualiza_trans(pr_xml      => vr_erro_xml
-                         ,pr_seq      => vr_seq
-                         ,pr_des_erro => vr_dscritic);
+          -- Gravar mensagem de erro
+          pc_atualiza_trans(pr_xml      => vr_erro_xml
+                           ,pr_seq      => vr_seq
+                           ,pr_des_erro => vr_dscritic);
 
-        -- Verifica se ocorreram erros ao gravar XML de resposta
-        IF vr_dscritic IS NOT NULL THEN                                                              
+          -- Verifica se ocorreram erros ao gravar XML de resposta
+          IF vr_dscritic IS NOT NULL THEN
           vr_cdcritic := 1197;
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)|| ' -> ' ||vr_dscritic;
-          RAISE vr_exc_erro;
-        END IF;
+            RAISE vr_exc_erro;
+          END IF;
         IF vr_dscriret = 'OK' THEN
-          -- Propagar XML de erro
-          pr_xml_res := vr_erro_xml.getClobVal();
+        -- Propagar XML de erro
+        pr_xml_res := vr_erro_xml.getClobVal();
         END IF;
 
       ELSE
@@ -1873,8 +1888,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       -- Limpa nome do módulo logado
       --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
-    EXCEPTION      
-      WHEN vr_exc_libe THEN                
+    EXCEPTION
+      WHEN vr_exc_libe THEN
         -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
         gene0004.pc_log(pr_dscritic => vr_dscritic
                        ,pr_cdcritic => vr_cdcritic                     
@@ -1900,10 +1915,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         ROLLBACK;
 
         IF vr_dscriret = 'OK' THEN
-          -- Propagar XML de erro
-         pr_xml_res := vr_erro_xml.getClobVal();
+        -- Propagar XML de erro
+        pr_xml_res := vr_erro_xml.getClobVal();
         END IF;
-      WHEN vr_exc_erro THEN                      
+      WHEN vr_exc_erro THEN
         -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
         gene0004.pc_log(pr_dscritic => vr_dscritic
                        ,pr_cdcritic => vr_cdcritic                     
@@ -1911,7 +1926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                        );
                        
         ROLLBACK;
-        
+
         -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
         vr_cdcritic:= 1224;
         vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -1923,8 +1938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                         ,pr_dscriret => vr_dscriret);
 
         IF vr_dscriret = 'OK' THEN
-          -- Propagar XML de erro
-          pr_xml_res := vr_erro_xml.getClobVal();
+        -- Propagar XML de erro
+        pr_xml_res := vr_erro_xml.getClobVal();
         END IF;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - Chmd REQ0011757 - 13/04/2018
@@ -1955,8 +1970,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                         ,pr_dscriret => vr_dscriret);
 
         IF vr_dscriret = 'OK' THEN
-          -- Propagar XML de erro
-          pr_xml_res := vr_erro_xml.getClobVal();
+        -- Propagar XML de erro
+        pr_xml_res := vr_erro_xml.getClobVal();
         END IF;
     END;
   END pc_xml_web;
@@ -2080,8 +2095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
             BEGIN
               -- Comando para retornar negativo o valor do SQLCODE e o sistema gravar a TBEGN ERRO
               vr_cdgraerr := 0 / 0; 
-            EXCEPTION
-              WHEN OTHERS THEN
+    EXCEPTION
+      WHEN OTHERS THEN
                 CECRED.pc_internal_exception(pr_cdcooper => 0
                                             ,pr_compleme => vr_dsxml || ' - ' ||vr_cdgraerr);         
             END;                    

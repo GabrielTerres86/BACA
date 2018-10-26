@@ -4,7 +4,7 @@
     text-align: left;
 }
     #frmTipo .bloco{        
-        display:inline-block;
+        display:inline-table;
         padding:2px 5px;
         margin:15px 0;
     }
@@ -18,14 +18,13 @@
         width:150px;   
         height: 20px;   
         background-color: #fff;
-        border: 1px solid #777;
         padding: 2px 4px 1px 4px;
         color: #333;
         text-transform:uppercase
     }
     #frmTipo label{
         min-width:120px;	
-        display:inline-block;
+        display:inline-table;
         text-align:right;
         height: 25px;
         font-weight: bold;
@@ -104,3 +103,15 @@
         text-align: center;
         display: none;
     }
+
+    /*********** mensagem de erro ***************/
+    center {
+        text-align: left!important;
+    }
+
+    .bloqueado
+    {
+        background: #ccc!important;
+    }
+    /*************************** Form Interveniente ************************/
+    

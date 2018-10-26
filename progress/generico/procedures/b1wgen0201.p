@@ -2,13 +2,13 @@
 
     Programa  : b1wgen0201.p
     Autor     : Lucas Reinert
-    Data      : Novembro/2017                Ultima Atualizacao: 
+    Data      : Novembro/2017                Ultima Atualizacao: 19/10/2018
     
     Dados referentes ao programa:
 
     Objetivo  : BO ref. Rotina integracao CDC
 
-    Alteracoes: 
+    Alteracoes: 19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
                 
 ..............................................................................*/
 
@@ -499,7 +499,7 @@ PROCEDURE integra_proposta:
                   END.
           END. /* fim do IF de alteracao */
 
-          IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO",TRIM(CAPS(tt-bens-alienacao.dscatbem))) THEN
+          IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO,OUTROS VEICULOS",TRIM(CAPS(tt-bens-alienacao.dscatbem))) THEN
             DO:
                RUN valida-dados-alienacao IN h-b1wgen0002 (INPUT par_cdcooper,
                                                            INPUT 0,

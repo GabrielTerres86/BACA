@@ -102,7 +102,7 @@ isPostMethod();
                                                 <table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
                                                     <tr>
                                                         <td align="center">
-                                                            <table width="660" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+                                                            <table width="760" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
                                                                 <tr>
                                                                     <td>
                                                                         <!-- INCLUDE DA TELA DE PESQUISA -->
@@ -163,7 +163,7 @@ isPostMethod();
                                                                                 <a  href="#" 
                                                                                     class="botao" 
                                                                                     id="btnExcluir" 
-                                                                                    onclick="showConfirmacao('<? echo utf8ToHtml("Deseja excluir este registro?") ?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirLimite()', '', 'sim.gif', 'nao.gif');"> Excluir</a>
+                                                                                    onclick="showConfirmacao('<? echo utf8ToHtml("Deseja excluir este registro?") ?>', 'Confirma&ccedil;&atilde;o - Aimaro', 'excluirLimite()', '', 'sim.gif', 'nao.gif');"> Excluir</a>
                                                                                 <div class="hideable navbtn">
 
                                                                                    

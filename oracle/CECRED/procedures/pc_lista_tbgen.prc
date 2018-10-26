@@ -30,6 +30,13 @@ BEGIN
               20/09/2018 - Usar na GENE0001 PC CONTROLE EXEC a consulta 02, levando em conta se a data de parâmetro
                            for diferente da data do cadastro então nesta data não executou.
                            (Envolti - Belli - Chamado - REQ0027434)
+                           
+              27/09/2018 - Ajuste coluna "Percentual de diferença entre a execução atual 
+                           e a média de execução do relatório resumo por programa.
+                           - Padronizar valores inferiores a um segundo
+                           - Padronizar demostração  se a quantidade de minutos atual for menor que a quantidade
+                             de minutos médio (houve melhora de tempo) a diferença mostrar o percentual como Negativo..
+                           (Envolti - Belli - Chamado - REQ0028395)
   ....................................................................................... */
     
 DECLARE
@@ -684,7 +691,7 @@ DECLARE
                           ,pr_tpocorre => 4   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                           ,pr_cdcricid => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                          ); 
-    --
+    --    
     gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
                               ,pr_cdprogra        => vr_cdproexe
                               ,pr_des_destino     => vr_dsenddst
@@ -693,7 +700,7 @@ DECLARE
                               ,pr_des_anexo       => vr_nmlisarq
                               ,pr_flg_remove_anex => 'N'
                               ,pr_flg_enviar      => 'S'
-                              ,pr_des_erro        => vr_dscritic); 
+                              ,pr_des_erro        => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN
       pr_cdcritic := 0;
       pr_dscritic := vr_dscritic;
@@ -1349,17 +1356,28 @@ DECLARE
         END IF;
     
         vr_qtminmed := rw_crapprg.qtminmed;
+        -- Padronizar valores inferiores a um segundo - 27/09/2018 - Chd REQ0028395
+        IF vr_qtminmed < 0.01 THEN
+          vr_qtminmed :=  0.01;
+        END IF;
             
         vr_qtminatu := NVL(TO_NUMBER(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2)),0);
              
         IF NVL(vr_qtminatu,0) > 0 AND NVL(vr_qtminmed,0) > 0 THEN
-          vr_qtperaux := ( ( vr_qtminatu * 100 ) / vr_qtminmed );
+          vr_qtperaux := ( ( TRUNC(vr_qtminatu,2) * 100 ) / TRUNC(vr_qtminmed,2) ); -- 27/09/2018 - Chd REQ0028395
           IF vr_qtperaux > 9999 THEN
             vr_qtperdif := 9999.99;
           ELSIF vr_qtperaux > 100 THEN
             vr_qtperdif := vr_qtperaux - 100;
           ELSE
             vr_qtperdif := vr_qtperaux;
+          END IF;
+          -- Padronizar demostração da quantidade de minutos atual - 27/09/2018 - Chd REQ0028395          
+          IF vr_qtminatu < vr_qtminmed THEN
+            vr_qtperdif := 100 - vr_qtperdif;
+            IF vr_qtperdif >= 0 THEN
+              vr_qtperdif := vr_qtperdif * -1;
+            END IF;
           END IF;
         ELSE
           vr_qtperdif := 100;
@@ -2829,7 +2847,6 @@ DECLARE
     vr_cdexeexc := 1262;
     vr_cdexepad := 1263;  
     vr_cdexcamd := 1264;
-
     -- Carrega lista: Erros sem cdprograma relacionado em memoria e Tempos excessivos e retorno da normalidade
     pc_tbgen_prg_ocorre_geral;   
     -- Retorno nome do módulo logado
@@ -2855,7 +2872,7 @@ DECLARE
                            ,pr_dstiplog => 'O'
                            ,pr_tpocorre => 4
                            ,pr_cdcricid => 0 );
-    END IF;
+    END IF;    
   
     -- Trata cooperativas
     pc_crapcop; 

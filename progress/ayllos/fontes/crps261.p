@@ -23,7 +23,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah                 
-   Data    : Maio/99                           Ultima atualizacao: 02/03/2017
+   Data    : Maio/99                           Ultima atualizacao: 06/08/2018
    
 
    Dados referentes ao programa:
@@ -111,6 +111,12 @@
 
                02/03/2017 - Incluido nas consultas da craplau 
                             craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                           Alteração específica neste programa acrescentando o tratamento para a origem
+                           BLQPREJU
+                           (Renato Cordeiro - AMcom)
 
 ********* ATENÇÃO: 28/09/2015 - Esse fonte já teve sua conversão para Oracle iniciada.
                                 A conversão seja revista quando retomada.
@@ -234,6 +240,7 @@ FOR EACH craplau WHERE craplau.cdcooper  = glb_cdcooper   AND
                        craplau.dsorigem <> "BLOQJUD"      AND
                        craplau.dsorigem <> "DAUT BANCOOB" AND
                        craplau.dsorigem <> "TRMULTAJUROS" AND
+                       craplau.dsorigem <> "BLQPREJU"     AND
                        craplau.dsorigem <> "ADIOFJUROS",
          crapass WHERE crapass.cdcooper  = glb_cdcooper   AND
                        crapass.nrdconta  = craplau.nrdconta

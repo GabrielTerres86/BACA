@@ -131,6 +131,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
 
                    04/08/2016 - #482583 Retirada do controle de restart (Carlos)
 
+                   05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
+  --                            Josiane Stiehler- AMcom
+   
+                   20/09/2018 = P450 - Elimina tratamento de incrineg no retorno da lanc0001.
+                                Não verificar se é crítica de negócio para gerar o raise.
+                                Renato Cordeiro - AMcom
     ............................................................................ */
 
     DECLARE
@@ -315,6 +321,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
       vr_vlsdeved     NUMBER(14,2); --> Saldo devedor do emprestimo
       -- Indicador de utilizac?o da tabela de taxa de juros
       vr_inusatab BOOLEAN;
+
+      -- P450 - Regulatório de crédito      
+      vr_incrineg     INTEGER;
+      vr_tab_retorno  lanc0001.typ_reg_retorno;
+      vr_fldebita     BOOLEAN;
 
       -- Subrotina para checar a existencia de lote cfme tipo passado
       PROCEDURE pc_cria_craplot(pr_dtmvtolt   IN craplot.dtmvtolt%TYPE
@@ -841,39 +852,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
                 RAISE vr_exc_undo;
               END IF;
             END IF;
+
             -- Efetuar lancamento na conta-corrente
-            BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,vllanmto)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8351.dtmvtolt
-                                 ,rw_craplot_8351.cdagenci
-                                 ,rw_craplot_8351.cdbccxlt
-                                 ,rw_craplot_8351.nrdolote
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_crapepr.nrctremp
-                                 ,20 --> Sobras Empr.
-                                 ,rw_craplot_8351.nrseqdig + 1
-                                 ,vr_vldsobra);
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao criar lancamento de sobras para a conta corrente (CRAPLCM) '
-                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                            || '. Detalhes: '||sqlerrm;
+             -- P450 - Regulatório de Crédito
+             LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot_8351.dtmvtolt
+                                               ,pr_cdagenci => rw_craplot_8351.cdagenci
+                                               ,pr_cdbccxlt => rw_craplot_8351.cdbccxlt
+                                               ,pr_nrdolote => rw_craplot_8351.nrdolote 
+                                               ,pr_nrdconta => rw_crapepr.nrdconta
+                                               ,pr_nrdocmto => rw_crapepr.nrctremp
+                                               ,pr_cdhistor => 20 --> Sobras Empr.
+                                               ,pr_nrseqdig => rw_craplot_8351.nrseqdig + 1 
+                                               ,pr_vllanmto => vr_vldsobra
+                                               ,pr_nrdctabb => rw_crapepr.nrdconta
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdctitg => to_char(rw_crapepr.nrdconta,'fm00000000')
+                                               -- OUTPUT --
+                                               ,pr_tab_retorno => vr_tab_retorno
+                                               ,pr_incrineg => vr_incrineg
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic); 
+                              
+             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_undo;
-            END;
+             END IF; 
+             
             -- Atualizar as informac?es no lote utilizado
             BEGIN
               UPDATE craplot
@@ -891,6 +894,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
                 RAISE vr_exc_undo;
             END;
           END IF;
+           
+           
 
           -- Se houve valor de abono
           IF vr_vldabono > 0 THEN

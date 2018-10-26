@@ -146,6 +146,7 @@ DEF VAR aux_vlsldrgt AS DECI                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_cdcritic LIKE crapcri.cdcritic                             NO-UNDO.
 DEF VAR aux_dscritic LIKE crapcri.dscritic                             NO-UNDO.
+DEF VAR aux_dsmsgerr AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen01   AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen04   AS HANDLE                                         NO-UNDO.
@@ -657,36 +658,85 @@ PROCEDURE p_validasenha:
   Purpose:     Runs procedure to associate each HTML field with its
                corresponding widget name and handle.
   Parameters:  
-  Notes:       
+  Notes: 
 ------------------------------------------------------------------------------*/
-
-   FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
-                            crapsnh.nrdconta = aux_nrdconta  AND
-                            crapsnh.tpdsenha = 2
-                            USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
-
-   IF   NOT AVAILABLE crapsnh THEN
-        {&OUT} "falso".
-   ELSE                    
-        DO: 
-            IF   INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN
-            DO:
-				FIND FIRST crapass WHERE crapass.cdcooper = crapsnh.cdcooper  AND
-										 crapass.nrdconta = crapsnh.nrdconta
-									     NO-LOCK NO-ERROR.
-
-			   IF   NOT AVAILABLE crapass THEN
-					{&OUT} "falso". 
-			   ELSE
-					{&OUT} "ok|" + STRING(crapass.cdcooper) + "|" + STRING(crapass.nrdconta) + "|" + STRING(crapass.cdagenci). 
-			END.
+   FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper
+                        AND crapass.nrdconta = aux_nrdconta
+   NO-LOCK NO-ERROR.
+   IF NOT AVAILABLE crapass THEN
+   DO:
+     FIND crapcri WHERE crapcri.cdcritic = 564 NO-LOCK NO-ERROR.
+     IF AVAILABLE crapcri THEN
+       ASSIGN aux_cdcritic = 564
+              aux_dscritic = TRIM(crapcri.dscritic).
+     ELSE
+       ASSIGN aux_cdcritic = 0
+              aux_dscritic =  "Conta invalida".
+              
+       ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                             "</pr_dscritic>"+
+                             "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                             "</pr_cdmsgerr></CECRED>".
+           
+       {&OUT} aux_dsmsgerr.
+   END.
+   ELSE
+   DO: 
+     FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
+                              crapsnh.nrdconta = aux_nrdconta  AND
+                              crapsnh.tpdsenha = 2
+                              USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
+     
+     IF NOT AVAILABLE crapsnh THEN
+     DO:
+       FIND crapcri WHERE crapcri.cdcritic = 1125 NO-LOCK NO-ERROR.
+         IF AVAILABLE crapcri THEN
+           ASSIGN aux_cdcritic = 1125
+                  aux_dscritic = TRIM(crapcri.dscritic).
+         ELSE
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic =  "Falha ao buscar senha".
+                  
+         ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                               "</pr_dscritic>"+
+                               "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                               "</pr_cdmsgerr></CECRED>".
+          
+         {&OUT} aux_dsmsgerr.
+     END.
+     ELSE
+     DO:
+       /*Verificar a senha*/
+       IF INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN 
+       DO: /*Se a senha informada existir*/
+         {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
+       END.
+       ELSE
+       DO: /*Caso a senha seja diferente*/
+         /* Conta Teste */
+         IF   aux_nmprimtl = "CONTA  TESTE"   THEN
+         DO:
+           {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
+         END.
+         ELSE
+         DO: /*Apresentar erro generico*/
+           FIND crapcri WHERE crapcri.cdcritic = 3 NO-LOCK NO-ERROR.
+           IF AVAILABLE crapcri THEN
+             ASSIGN aux_cdcritic = 3
+                    aux_dscritic = TRIM(crapcri.dscritic).
             ELSE
-            /* Conta Teste */
-            IF   aux_nmprimtl = "CONTA  TESTE"   THEN
-                 {&OUT} "ok|1|999|1".
-            ELSE
-                 {&OUT} "falso".
-        END.
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic =  "Senha invalida".
+              ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                                    "</pr_dscritic>"+
+                                    "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                                    "</pr_cdmsgerr></CECRED>".
+                 
+           {&OUT} aux_dsmsgerr.
+         END.       
+       END.
+     END.
+   END.
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */

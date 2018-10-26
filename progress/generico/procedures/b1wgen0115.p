@@ -450,7 +450,8 @@ PROCEDURE Busca_Dados:
                                  tt-aditiv.dscpfavl = xText:NODE-VALUE WHEN xField:NAME = "dscpfavl"
                                  tt-aditiv.nrcpfcgc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc"
                                  tt-aditiv.nrsequen = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrsequen"
-                                 tt-aditiv.idseqbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idseqbem".
+                                 tt-aditiv.idseqbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idseqbem"
+                                 tt-aditiv.dssitgrv = xText:NODE-VALUE WHEN xField:NAME = "dssitgrv".
 
                           IF xField:NAME = "promissorias" THEN
                              DO:

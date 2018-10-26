@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Rotina para carregar a tela de Estornar Pagamento
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 03/08/2018 - Criado a opção para estornar o pagamento de Prejuízo de Conta Corrente
+ *				               PJ 450 - Diego Simas - AMcom
  * -------------- 
  */
     session_start();
@@ -30,6 +31,13 @@
 		
 		case 'R':
 			require_once("form_impressao_estorno.php");
+			break;
+		case 'CCT':
+		case 'ECT':
+			require_once("form_estorno_pagamento_ct.php");
+			break;
+		case 'RCT':
+			require_once("form_impressao_estorno_ct.php");
 		break;
 	}	
 ?>

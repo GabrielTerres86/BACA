@@ -62,6 +62,7 @@ $floutros = $_POST["floutros"];
 $idastcjt = $_POST["idastcjt"];
 $glbadc = $_POST['glbadc'];
 $inpessoa = $_POST["inpessoa"];
+	$nrctrcrd = !empty($_POST["nrctrcrd"]) ? $_POST["nrctrcrd"] : 0;
 	
 	// Verifica se número da conta é um inteiro válido
 if (!validaInteiro($nrdconta)) exibirErro('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Aimaro', $funcaoAposErro, false);
@@ -118,7 +119,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     if ($inpessoa == 1) {
 
         //chw+
-        if ($vllimcrd <> 0) {
+        if ($vllimcrd <> 0 && $nrctrcrd == 0) {
             echo "$('#vllimpro').desabilitaCampo();";
         }
 
@@ -135,7 +136,6 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
         /*Como foi removido a opcao cooperado no campo Envio
           neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
         echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-
         echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
         echo "$('#dddebito').attr('disabled', true);";
         echo "$('#tpenvcrd').attr('disabled', true);";
@@ -192,8 +192,9 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 			}
         }
 
+        // tratamento para considerar cartao adicional
         if ($vllimcrd <> 0) {
-
+			// aqui e para ser adicional		
             if ($tpdpagto == 0 && $cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("0");';
             } else if ($tpdpagto == 1) {
@@ -209,31 +210,35 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
             echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
 
             echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
-			if($glbadc == 'n' || $cdadmcrd!="15")
+			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
-			else{
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);'; //
+			}else{
+				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
 				echo "desativa('nmempres');/*$glbadc*/";
 			}
 
-            echo "$('#dddebito').attr('disabled', true);";
+			//echo "$('#dddebito').attr('disabled', true);";
+			if ($nrctrcrd == 0) {
             echo "desativa('vllimpro');";
-            echo "$('#tpenvcrd').attr('disabled', true);";
             echo "$('#tpdpagto').attr('disabled', true);";
-            if (!($cdadmcrd > 10 && cdadmcrd < 18))
+			}
+			echo "$('#tpenvcrd').attr('disabled', true);";
+            if (!($cdadmcrd > 10 && $cdadmcrd < 18)) {
                 echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
+			}
 
         } else {
 
-            echo "$('#dddebito').attr('disabled', false);";
+				//echo "$('#dddebito').attr('disabled', false);";				
             echo "$('#tpenvcrd').attr('disabled', false);";
             if ($cdadmcrd != 15) {
-                echo '$("#tpdpagto","#frmNovoCartao").val("0");';
-                echo "$('#tpdpagto').attr('disabled', false);";
+                echo '$("#tpdpagto","#frmNovoCartao").val("1");';
+                echo "$('#tpdpagto').attr('disabled', true);";
             } else {
-                echo "$('#tpdpagto').attr('disabled', false);";
                 echo "$('#tpdpagto').val('1');";
-                echo "$('#tpdpagto').attr('disabled', true);";         
+				//if ($nrctrcrd == 0) {
+                //	echo "$('#tpdpagto').attr('disabled', true);";
+				//}
             }
 
         }

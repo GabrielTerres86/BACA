@@ -102,6 +102,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DEB_PEN_EFETIVADOS IS
   --
   -- Alterado:
   --
+  --             06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                          após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                          Alteração específica neste programa acrescentando o tratamento para a origem
+  --                          BLQPREJU
+  --                          (Renato Cordeiro - AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -822,7 +827,7 @@ DECLARE
            craplau.vllanaut vlrlancamento,
            craplau.dtmvtolt dtmvto,
            his.cdhistor||'-'||his.dshistor historico,
-           'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB' cdprocesso
+           'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB' cdprocesso
            , 0 auxcdlcremp            
           FROM craplau
              , craphis his
@@ -831,14 +836,14 @@ DECLARE
            AND craplau.insitlau = 1 -- Pendente
            AND craplau.cdbccxlt = 100
            AND craplau.nrdolote = 600033
-           AND craplau.dsorigem = 'TRMULTAJUROS'
+           AND craplau.dsorigem in ('TRMULTAJUROS','BLQPREJU')
            and ass.cdcooper     = craplau.cdcooper
            AND ass.nrdconta     = craplau.nrdconta
            AND ass.cdagenci     = pr_cdagenci      
            AND ass.nrdconta     = nvl(pr_nrdconta,ass.nrdconta)      
            AND craplau.cdcooper = his.cdcooper
            AND craplau.cdhistor = his.cdhistor
-           AND InStr(pr_ds_cdprocesso,'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB'||',') > 0                             
+           AND InStr(pr_ds_cdprocesso,'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB'||',') > 0                             
       union
       SELECT --'PP' idtpprd -- Tipo de produto de emprestimo, se PP chama a PC_CRPS750_2
                 crappep.cdcooper
@@ -1556,7 +1561,7 @@ BEGIN
            craplau.vllanaut vlrlancamento,
            craplau.dtmvtolt dtmvto,
            his.cdhistor||'-'||his.dshistor historico,
-           'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB' cdprocesso
+           'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB' cdprocesso
            , 0 auxcdlcremp            
           FROM craplau
              , craphis his
@@ -1565,14 +1570,14 @@ BEGIN
            AND craplau.insitlau = 1 -- Pendente
            AND craplau.cdbccxlt = 100
            AND craplau.nrdolote = 600033
-           AND craplau.dsorigem = 'TRMULTAJUROS'
+           AND craplau.dsorigem IN ('TRMULTAJUROS','BLQPREJU')
            and ass.cdcooper     = craplau.cdcooper
            AND ass.nrdconta     = craplau.nrdconta
            AND ass.cdagenci     = pr_cdagenci      
            AND ass.nrdconta     = nvl(pr_nrdconta,ass.nrdconta)      
            AND craplau.cdcooper = his.cdcooper
            AND craplau.cdhistor = his.cdhistor
-           AND InStr(pr_ds_cdprocesso,'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB'||',') > 0                             
+           AND InStr(pr_ds_cdprocesso,'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB'||',') > 0                             
       union
       SELECT --'PP' idtpprd -- Tipo de produto de emprestimo, se PP chama a PC_CRPS750_2
                 crappep.cdcooper

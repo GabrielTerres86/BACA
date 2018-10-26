@@ -8,8 +8,9 @@
  *              12/09/2018 - P442 - Não mais utilizar estado fixo (Marcos-Envolti)
  */	
 
- ?>
+include('../../../manbem/form_alie_veiculo.php');
 
+ /*
 <form name="frmAlienacao" id="frmAlienacao" class="formulario">	
 
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
@@ -63,10 +64,12 @@
 	<br />
 		
 </form>
+*/ ?>
 
 <div id="divBotoes">
 	<? if ($operacao == 'C_ALIENACAO') { ?>
-		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="controlaOperacao('C_NOVA_PROP_V'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_ALIENACAO'); return false;" />
+		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_NOVA_PROP_V'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico Gravame</a>
+		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_ALIENACAO'); return false;">Continuar</a>
 	<? } ?>
 </div>

@@ -311,7 +311,6 @@
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
 
-
       vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
@@ -320,7 +319,6 @@
 			tpemprst 	 = arrayProposta["tpemprst"];
 			cdtpempr 	 = arrayProposta["cdtpempr"];
 			dstpempr	 = arrayProposta["dstpempr"];
-
 
 			var arrayRendimento = new Object();
 
@@ -442,20 +440,20 @@
 
 						arrayBensAval<? echo $i; ?>[<? echo $j; ?>] = arrayBemAval<? echo $identificador; ?>;
 
-					<?}
-				}?>
+					<? }
+				} ?>
 
 				arrayAvalista<? echo $i; ?>['bensaval'] = arrayBensAval<? echo $i; ?> ;
 
 
 				arrayAvalistas[<? echo $i; ?>] = arrayAvalista<? echo $i; ?>;
-			<?}?>
+			<? } ?>
 
 			var arrayAlienacoes = new Array();
-			nrAlienacao    = "<?echo count($alienacoes)?>";
+			nrAlienacao    = "<? echo count($alienacoes); ?>";
 			contAlienacao  = 0;
 
-			<?for($i=0; $i<count($alienacoes); $i++) {?>
+			<? for($i=0; $i<count($alienacoes); $i++) { ?>
 
 				var arrayAlienacao<? echo $i; ?> = new Object(); 
 				arrayAlienacao<? echo $i; ?>['lsbemfin'] = '<? echo getByTagName($alienacoes[$i]->tags,'lsbemfin'); ?>';
@@ -476,6 +474,15 @@
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
                 arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['cdcoplib'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdcoplib'); ?>';
+
+				arrayAlienacao<? echo $i; ?>['dsmarbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dsmarbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlrdobem'); ?>';
+				arrayAlienacao<? echo $i; ?>['vlfipbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlfipbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['nrcpfcgc'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrcpfcgc'); ?>';
+				arrayAlienacao<? echo $i; ?>['cdoperad'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdoperad'); ?>';
+				arrayAlienacao<? echo $i; ?>['dssitgrv'] = '<? echo getByTagName($alienacoes[$i]->tags,'dssitgrv'); ?>';
+				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
+				arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
 
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
@@ -582,7 +589,7 @@
 
 		}
 
-	}else if(in_array($operacao,array('A_PARCELAS','V_PARCELAS','C_PARCELAS','I_PARCELAS'))) { // Só exibe se for 'Novo Cálculo'
+	} else if(in_array($operacao,array('A_PARCELAS','V_PARCELAS','C_PARCELAS','I_PARCELAS'))) { // Só exibe se for 'Novo Cálculo'
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -635,7 +642,7 @@
 
 				arrayParcelas[<? echo $i; ?>] = arrayParcela<? echo $i; ?>;
 
-			<?} ?>
+			<? } ?>
 		</script>
 		<?
 	}else if(in_array($operacao,array('T_EFETIVA'))) {
@@ -1016,6 +1023,13 @@
 ?>
 <script type="text/javascript">
 	$('#divConteudoOpcao').css({'-moz-opacity':'0','filter':'alpha(opacity=0)','opacity':'0'});
+	<?
+		if (in_array($operacao,array('I_PROTECAO_TIT','A_PROTECAO_AVAL','A_PROTECAO_TIT','A_PROTECAO_CONJ','C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'))) {		
+	?>
+		$('#divConteudoOpcao').css({'height': "550px"});
+	<?
+		}
+	?>
 </script>
 <?
 

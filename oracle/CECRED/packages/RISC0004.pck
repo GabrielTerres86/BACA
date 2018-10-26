@@ -170,6 +170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --
   -- Alterado:
   --             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+  --                          PJ 450 - Diego Simas - AMcom  
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1029,6 +1031,7 @@ BEGIN
       , inrisco_rating
       , inrisco_operacao
       , inrisco_refin
+      , qtdiaatr -- PJ 450 -- Diego Simas (AMcom)
       --, qtdias_atraso_refin
     )
     VALUES (
@@ -1051,6 +1054,7 @@ BEGIN
       , vr_inrisco_rating
       , vr_inrisco_operacao
       , vr_inrisco_refin
+      , rw_crapris.qtdiaatr -- PJ 450 -- Diego Simas (AMcom)
     --  , vr_qtdias_atraso_refin
     ) RETURNING ROWID INTO vr_rowidocr;
 
@@ -1297,7 +1301,7 @@ END pc_carrega_tabela_riscos;
                Calcular o maior risco do G.E.
                Gravar nas contas do G.E. o risco do grupo
 
-   Alteracoes: 
+   Alteracoes: 01/10/2018 - P450 - Arrasto do risco para Limite de Credito (Fabio/AMcom)
   ............................................................................. */
 
     -- ESTE CURSOR INDICA EM QUAL GRUPO TAL CPF/CNPJ DEVERIA ESTAR
@@ -1411,7 +1415,9 @@ END pc_carrega_tabela_riscos;
          AND ris.dtrefere = pr_dtrefere
          AND ris.nrdconta = pr_nrdconta
          AND ris.innivris < pr_innivris -- Menor que o risco do grupo
-         AND ris.inddocto = 1;
+         --AND ris.inddocto = 1
+         AND (ris.inddocto = 1 OR ris.cdmodali = 1901)
+         ;
     rw_crapris cr_crapris%ROWTYPE;
 
     CURSOR cr_crapris_last(pr_nrdconta IN crapris.nrdconta%TYPE
@@ -1429,7 +1435,8 @@ END pc_carrega_tabela_riscos;
            AND r.nrctremp = pr_nrctremp
            AND r.cdmodali = pr_cdmodali
            AND r.cdorigem = pr_cdorigem
-           AND r.inddocto = 1 -- 3020 e 3030
+           --AND r.inddocto = 1 -- 3020 e 3030
+           AND (r.inddocto = 1 OR r.cdmodali = 1901)
          ORDER BY r.dtrefere DESC --> Retornar o ultimo gravado
                 , r.innivris DESC --> Retornar o ultimo gravado
                 , r.dtdrisco DESC;

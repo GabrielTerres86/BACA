@@ -320,11 +320,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
 
                  12/09/2018 - P450 - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
-                            - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom) 
+                            - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
 
                  20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
 
                  01/10/2018 - P450 - Ajuste do juros60 nos Vencimentos/VRI (Guilherme/AMcom)
+
+  			     24/09/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
 
   ............................................................................ */
 
@@ -354,6 +356,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,ass.inpessoa
               ,ass.cdagenci
               ,ass.nrmatric
+			  ,ass.inprejuz
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
@@ -770,6 +773,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         SELECT ces.nrdconta
               ,ces.nrctremp
               ,ces.dtvencto
+              ,epr.dtmvtolt
           FROM tbcrd_cessao_credito ces
           JOIN crapepr epr
             ON epr.cdcooper = ces.cdcooper
@@ -4150,7 +4154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             FROM crapris
            WHERE cdcooper = pr_cdcooper
              AND dtrefere = vr_dtrefere
-             AND inddocto = 1 --> 3020 
+             --AND inddocto = 1 --> 3020
+             AND (inddocto = 1 OR cdmodali = 1901)
             -- AND vldivida > pr_vlarrasto --> Valor dos parâmetros
              --AND innivris < 10 Tiago
            ORDER BY nrdconta
@@ -4766,7 +4771,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            WHERE ris.cdcooper = pr_cdcooper
              AND ris.nrdconta = pr_nrdconta
              AND ris.dtrefere = vr_dtrefere
-             AND ris.inddocto = 1
+             --AND ris.inddocto = 1
+			 AND (ris.inddocto = 1 OR ris.cdmodali = 1901)
              AND ris.vldivida > pr_vlarrasto --> Valor dos parâmetros
              AND (ris.innivris < pr_innivris);
 
@@ -5458,6 +5464,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                    ,pr_rsprjaan => vr_vlprjaan
                                    ,pr_rsprjant => vr_vlprjant);
 
+              -- P450 - Reginaldo
+              -- Se a conta está em prejuízo, ajusta o nível de risco e o código de vencimento
+              IF rw_crapass.inprejuz = 1 THEN
+                vr_risco_aux := 10;
+								
+                CASE
+                  WHEN vr_qtdiaatr <= 360 THEN -- Prejuízo até 12 meses
+                    vr_cdvencto := 310;
+                  WHEN vr_qtdiaatr BETWEEN 361 AND  1440 THEN -- Prejuízo há mais de 12 meses e até 48 meses
+                    vr_cdvencto := 320;
+                  ELSE -- Prejuízo há mais de 48 meses
+                    vr_cdvencto := 330;
+                  END CASE;
+              END IF;
+
               -- Se houver Saldo Bloqueado
               IF vr_vlbloque > 0 THEN
                 -- Se a divida for inferior ao Saldo Bloqueado
@@ -5475,13 +5496,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
               -- Busca o saldo devedor até 59 dias e o valor dos juros +60 (Reginaldo/AMcom)
               TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60(pr_cdcooper => pr_cdcooper
-                                                         , pr_nrdconta => rw_crapass.nrdconta
-                                                         , pr_qtdiaatr => nvl(vr_qtdiaatr, 0)
+                                                             , pr_nrdconta => rw_crapass.nrdconta
+                                                             , pr_qtdiaatr => nvl(vr_qtdiaatr, 0)
                                                          , pr_tppesqui => 0 --> 1|Online  0|Batch
-                                                         , pr_vlsld59d => vr_vlsld59d
-                                                         , pr_vljuro60 => vr_vljuro60
-                                                         , pr_cdcritic => vr_cdcritic
-                                                         , pr_dscritic => vr_dscritic);
+                                                             , pr_vlsld59d => vr_vlsld59d
+                                                             , pr_vljuro60 => vr_vljuro60
+                                                             , pr_cdcritic => vr_cdcritic
+                                                             , pr_dscritic => vr_dscritic);
 
 
               -- Criar registro de risco para documento 3020

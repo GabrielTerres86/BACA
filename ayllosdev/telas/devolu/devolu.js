@@ -1842,10 +1842,14 @@ function limpaChequeTemp(imgrefe,frente, verso) {
 }
 
 
-function validaSelecao(linhaSelec){
+function validaSelecao(linhaSelec,inprejuz){
 
     iqtSelecao = 0;
 	
+    if (inprejuz == 1) {
+		showError("inform","Conta em Prejuizo","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+	}
+
     $('input:checkbox:checked', '#tabDevoluConta').each(function() {
         iqtSelecao++;
     });    

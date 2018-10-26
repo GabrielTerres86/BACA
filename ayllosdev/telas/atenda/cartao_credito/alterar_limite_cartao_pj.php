@@ -10,13 +10,13 @@ isPostMethod();
 $funcaoAposErro = 'bloqueiaFundo(divRotina);';
 $cecredADM      = Array(3, 11, 12, 13, 14, 15, 16, 17);
 $cdcooper       = $glbvars["cdcooper"];
-$nrdconta       = $_POST["nrdconta"];
-$nrcrcard       = $_POST['nrcrcard'];
-$cdAdmCartao    = $_POST['cdadmcrd'];
-$cdadmcrd       = $_POST['cdadmcrd'];
-$nrctrcrd       = $_POST['nrctrcrd'];
+$nrdconta       = !empty($_POST["nrdconta"]) ? $_POST["nrdconta"] : 0;
+$nrcrcard       = !empty($_POST['nrcrcard']) ? $_POST['nrcrcard'] : 0;
+$cdAdmCartao    = !empty($_POST['cdadmcrd']) ? $_POST['cdadmcrd'] : 0;
+$cdadmcrd       = !empty($_POST['cdadmcrd']) ? $_POST['cdadmcrd'] : 0;
+$nrctrcrd       = !empty($_POST['nrctrcrd']) ? $_POST['nrctrcrd'] : 0;
 $cartaoCECRED   = in_array($cdAdmCartao, $cecredADM);
-$nrctrcrd       = $_POST['nrctrcrd'];
+$nrctrcrd       = !empty($_POST['nrctrcrd']) ? $_POST['nrctrcrd'] : 0;
 
 function strToNm($nrStr){
     return str_replace(",",".",str_replace(".","",$nrStr));

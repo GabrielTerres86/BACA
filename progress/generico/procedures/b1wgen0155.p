@@ -35,7 +35,7 @@
     
    Programa: b1wgen0155.p                  
    Autora  : Guilherme / SUPERO
-   Data    : 23/04/2013                        Ultima atualizacao: 14/03/2018
+   Data    : 23/04/2013                        Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -101,6 +101,9 @@
                             
 			   14/03/2018 - Adicionado parametro que faltava na chamada da procedure
 							consulta-bloqueio-jud. (Kelvin)
+              
+               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+              
 ..............................................................................*/
  
 { sistema/generico/includes/b1wgen0155tt.i }
@@ -119,7 +122,7 @@
 { sistema/generico/includes/b1cabrelvar.i }
 
 { sistema/generico/includes/var_oracle.i }
-
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_nrsequen AS INTE                                           NO-UNDO.
@@ -133,6 +136,13 @@ DEF VAR h-b1wgen0001 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0004 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0006 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0024 AS HANDLE                                         NO-UNDO.
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
+/*DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.*/
+
 
 DEF STREAM str_1.
 
@@ -207,6 +217,7 @@ PROCEDURE inclui-bloqueio-jud:
     DEF VAR          aux_fldepvis AS LOG                               NO-UNDO.
     DEF VAR          aux_flgbloqu AS LOG                               NO-UNDO.
     DEF VAR          aux_flgdupli AS LOG                               NO-UNDO.
+    DEF VAR          aux_cdhistor AS INT                               NO-UNDO.
 
     EMPTY TEMP-TABLE tt-dados-blq. 
     EMPTY TEMP-TABLE tt-erro.      
@@ -342,24 +353,76 @@ PROCEDURE inclui-bloqueio-jud:
           
                  END.  /*  Fim do DO WHILE TRUE  */
 
-                 CREATE craplcm.
-                 ASSIGN craplcm.cdcooper = par_cdcooper
-                        craplcm.dtmvtolt = par_dtmvtolt
-                        craplcm.dtrefere = par_dtmvtolt
-                        craplcm.cdagenci = craplot.cdagenci
-                        craplcm.cdbccxlt = craplot.cdbccxlt
-                        craplcm.nrdolote = craplot.nrdolote
-                        craplcm.nrdconta = crapass.nrdconta
-                        craplcm.nrdctabb = crapass.nrdconta
-                        craplcm.nrdctitg = crapass.nrdctitg
-                        craplcm.nrdocmto = aux_nrdocmto
-                        craplcm.cdhistor = IF   crapass.inpessoa = 1 THEN 
-                                                1402 /* PF */
-                                           ELSE 1403 /* PJ */ 
-                        craplcm.vllanmto = 
-                                  DEC(ENTRY(aux_contador,par_vlbloque,";"))
-                        craplcm.nrseqdig = craplot.nrseqdig + 1
-                        craplcm.cdpesqbb = "BLOQJUD"
+                  /* BLOCO DA INSERÇAO DA CRAPLCM */
+                  IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                    RUN sistema/generico/procedures/b1wgen0200.p 
+                      PERSISTENT SET h-b1wgen0200.
+                      
+                      IF  crapass.inpessoa = 1 THEN 
+                         ASSIGN  aux_cdhistor = 1402. /* PF */
+                      ELSE 
+                         ASSIGN  aux_cdhistor = 1403. /* PJ */
+
+                  RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                    (INPUT par_dtmvtolt                   /* par_dtmvtolt */
+                    ,INPUT craplot.cdagenci               /* par_cdagenci */
+                    ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+                    ,INPUT craplot.nrdolote               /* par_nrdolote */
+                    ,INPUT crapass.nrdconta               /* par_nrdconta */
+                    ,INPUT aux_nrdocmto                   /* par_nrdocmto */
+                    ,INPUT aux_cdhistor                   /* par_cdhistor */
+                    ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                    ,INPUT DEC(ENTRY(aux_contador,par_vlbloque,";"))/* par_vllanmto */
+                    ,INPUT crapass.nrdconta               /* par_nrdctabb */
+                    ,INPUT "BLOQJUD"                      /* par_cdpesqbb */
+                    ,INPUT 0                              /* par_vldoipmf */
+                    ,INPUT 0                              /* par_nrautdoc */
+                    ,INPUT 0                              /* par_nrsequni */
+                    ,INPUT 0                              /* par_cdbanchq */
+                    ,INPUT 0                              /* par_cdcmpchq */
+                    ,INPUT 0                              /* par_cdagechq */
+                    ,INPUT 0                              /* par_nrctachq */
+                    ,INPUT 0                              /* par_nrlotchq */
+                    ,INPUT 0                              /* par_sqlotchq */
+                    ,INPUT par_dtmvtolt                   /* par_dtrefere */
+                    ,INPUT ""                             /* par_hrtransa */
+                    ,INPUT 0                              /* par_cdoperad */
+                    ,INPUT 0                              /* par_dsidenti */
+                    ,INPUT par_cdcooper                  /* par_cdcooper */
+                    ,INPUT crapass.nrdctitg               /* par_nrdctitg */
+                    ,INPUT ""                             /* par_dscedent */
+                    ,INPUT 0                              /* par_cdcoptfn */
+                    ,INPUT 0                              /* par_cdagetfn */
+                    ,INPUT 0                              /* par_nrterfin */
+                    ,INPUT 0                              /* par_nrparepr */
+                    ,INPUT 0                              /* par_nrseqava */
+                    ,INPUT 0                              /* par_nraplica */
+                    ,INPUT 0                              /* par_cdorigem */
+                    ,INPUT 0                              /* par_idlautom */
+                    /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                    ,INPUT 0                              /* Processa lote                                 */
+                    ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                    /* CAMPOS DE SAÍDA                                                                     */                                            
+                    ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                    ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                    ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                    ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+                    
+                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                    DO:  
+						RUN gera_erro (INPUT par_cdcooper,        
+									   INPUT 0,
+									   INPUT 1, /* nrdcaixa  */
+                                       INPUT 1, /* sequencia */
+                                       INPUT aux_cdcritic,        
+                                       INPUT-OUTPUT aux_dscritic).
+						UNDO, RETURN "NOK".
+                    END.   
+                    
+                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+                        
+                ASSIGN        
                         craplot.qtcompln = craplot.qtcompln + 1
                         craplot.qtinfoln = craplot.qtinfoln + 1
                         craplot.nrseqdig = craplot.nrseqdig + 1   
@@ -367,7 +430,6 @@ PROCEDURE inclui-bloqueio-jud:
                         craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
                         
                  VALIDATE craplot.
-                 VALIDATE craplcm.
 
                  DO WHILE TRUE:
 

@@ -1593,42 +1593,66 @@ function formataLogAlteracoes() {
 
 function dossieDigidoc(flgSocio) {
 
+	showMsgAguardo('Aguarde...');
+
 	GEDServidor = $('#gedservidor', '#frmCompliance').val();
 
-	if (flgSocio == 'S') {
-		if ( $('table > tbody > tr', '#frmSocios').hasClass('corSelecao') ) {
-					
-			$('table > tbody > tr', '#frmSocios').each( function() {
-				if ( $(this).hasClass('corSelecao') ) {
+	var form = (flgSocio == 'S') ? '#frmSocios' : '#frmCompliance';
 
-					nrcpfcgc = $('#nrcpfcgc_socio', $(this) ).val();
+	if ( $('table > tbody > tr', form).hasClass('corSelecao') ) {
 
-					nrcpfcgc = normalizaNumero(nrcpfcgc);
+		$('table > tbody > tr', form).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
 
-					window.open('http://'+GEDServidor+'/smartshare/Cliente/ViewerExterno.aspx?pkey=G7o9A&CPF/CPF='+nrcpfcgc,'_blank');
+				var cdcooper = $('#cdcooper', $(this)).val().replace(/^0+/, '');
+				var nrdconta = 0;
+				var nrcpfcgc = 0;
 
+				if(flgSocio == 'S'){
+					nrdconta = $('#nrdconta', $(this) ).val();
+					nrcpfcgc = $('#nrcpfcgc_socio', $(this)).val();
+				} else {
+					nrcpfcgc = $('#nrcpfcgc', $(this)).val();
+
+					$('table > tbody > tr', '#frmContas').each( function() {
+						if ( $(this).hasClass('corSelecao')) {
+							nrdconta = $('#nrdconta', $(this)).val();
+							nrdconta = normalizaNumero(nrdconta);
+						}
+					});
 				}
-			});
-		}
-	} else if (flgSocio == 'N') {
-		if ( $('table > tbody > tr', '#frmCompliance').hasClass('corSelecao') ) {
-					
-			$('table > tbody > tr', '#frmCompliance').each( function() {
-				if ( $(this).hasClass('corSelecao') ) {
 
-					nrcpfcgc = $('#nrcpfcgc', $(this) ).val();
-					tppessoa = $('#tppessoa', $(this) ).val();
+				// Executa script de confirmação através de ajax
+				$.ajax({
+					type: 'POST',
+					dataType: 'html',
+					url: UrlSite + 'telas/repext/dossie_digidoc.php',
+					data: {
+						cdcooper: cdcooper,
+					    nrcpfcgc: nrcpfcgc,
+					    nrdconta: nrdconta,
+					    redirect: 'html_ajax'
+					},
+					error: function(objAjax,responseError,objExcept) {
+						hideMsgAguardo();
 
-					nrcpfcgc = normalizaNumero(nrcpfcgc);
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+					},
+					success: function(response) {
+						hideMsgAguardo();
+						$('#divRotina').html(response);
+						exibeRotina($('#divRotina'));
+					    $('#divRotina').css({'margin-top': '170px'});
+					    $('#divRotina').css({'width': '400px'});
+					    $('#divRotina').centralizaRotinaH();
+						bloqueiaFundo( $('#divRotina') );			
+					    layoutPadrao();
 
-					if (tppessoa == 1) {
-						window.open('http://'+GEDServidor+'/smartshare/Cliente/ViewerExterno.aspx?pkey=G7o9A&CPF/CPF='+nrcpfcgc,'_blank');
-					} else {
-						window.open('http://'+GEDServidor+'/smartshare/Cliente/ViewerExterno.aspx?pkey=G7o9A&CPF/CNPJ='+nrcpfcgc,'_blank');
-					}
-				}
-			});
-		}
+						return false;
+					}				
+				});
+			}
+		});
 	}
 }
 

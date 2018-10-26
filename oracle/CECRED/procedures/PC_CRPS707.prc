@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 08/08/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 08/06/2018
 
    Dados referentes ao programa:
 
@@ -46,12 +46,13 @@ BEGIN
                       
          26/07/2017 - #713816 Ajustes para garantir o fechamento do arquivo para que o move
                       do mesmo ocorra (Carlos)
-                      
+
          08/08/2017 - Ajuste para não fechar o arquivo quando for encontrado inconsistências em algum 
                       registro, pois o arquivo todo deve ser processado e os registros com problema serão
                       encaminhaoos via e-mail para a área responsável tomar as devidas providências junto ao SICREDI
                       (Adriano).
                       
+			   06/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom). 
 
    ............................................................................. */
 
@@ -239,6 +240,11 @@ BEGIN
      vr_cltxterr CLOB;
      vr_hasfound BOOLEAN;
    
+     -- Tabela de retorno LANC0001 (PJR450 08/06/2018).
+     vr_tab_retorno  lanc0001.typ_reg_retorno;
+     vr_incrineg     NUMBER;
+    
+	 
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
    BEGIN
      IF to_number(to_char(pr_data,'mm')) < 10 THEN
@@ -412,6 +418,7 @@ BEGIN
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
+
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
        -- Envio centralizado de log de erro
@@ -981,38 +988,55 @@ BEGIN
                END IF;
                
                -- Cria o lancamento em C/C
-               BEGIN
-                 INSERT INTO craplcm (dtmvtolt
-                                     ,cdagenci
-                                     ,cdbccxlt
-                                     ,nrdolote
-                                     ,nrdconta
-                                     ,nrdctabb
-                                     ,nrdctitg
-                                     ,nrdocmto
-                                     ,cdhistor
-                                     ,vllanmto
-                                     ,nrseqdig
-                                     ,cdcooper
-                                     ,hrtransa)
-                              VALUES(rw_crapdat.dtmvtolt
-                                    ,1
-                                    ,100
-                                    ,8482
-                                    ,vr_nrdconta_new
-                                    ,vr_nrdconta_new
-                                    ,gene0002.fn_mask(vr_nrdconta_new,'99999999') -- nrdctitg
-                                    ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,1787
-                                    ,vr_vloperac
-                                    ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,vr_cdcooper
-                                    ,to_char(SYSDATE,'sssss'));
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||SQLERRM;
+               lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                , pr_cdagenci => 1
+                                                , pr_cdbccxlt => 100
+                                                , pr_nrdolote => 8482
+                                                , pr_nrdconta => vr_nrdconta_new
+                                                , pr_nrdocmto => 1
+                                                , pr_cdhistor => 1787
+                                                , pr_nrseqdig => rw_craplot.nrseqdig
+                                                , pr_vllanmto => vr_vloperac
+                                                , pr_nrdctabb => vr_nrdconta_new
+                                                --, pr_cdpesqbb => vr_cdpeslcm
+                                                --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                --, pr_cdbanchq => rw_tbdoctco(vr_indoctco).cdbandoc
+                                                --, pr_cdcmpchq => rw_tbdoctco(vr_indoctco).cdcmpdoc
+                                                --, pr_cdagechq => rw_tbdoctco(vr_indoctco).cdagedoc
+                                                --, pr_nrctachq => rw_tbdoctco(vr_indoctco).nrctadoc
+                                                --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                --, pr_sqlotchq => rw_tbdoctco(vr_indoctco).sqlotdoc
+                                                --, pr_dtrefere => vr_dtleiarq
+                                                , pr_hrtransa => to_char(SYSDATE,'sssss')
+                                                --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                , pr_cdcooper => vr_cdcooper
+                                                , pr_nrdctitg => gene0002.fn_mask(vr_nrdconta_new,'99999999')
+                                                --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                                --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                -------------------------------------------------
+                                                -- Dados do lote (Opcional)
+                                                -------------------------------------------------
+                                                --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                --, pr_tplotmov  => 1
+                                                , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||vr_dscritic;
                    RAISE vr_exc_saida;
-               END;
+               END IF;
 
                -- Efetuar geração do LOG da TED com sucesso
                sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
@@ -1305,7 +1329,7 @@ BEGIN
              IF vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;
-             
+
              IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                    ,pr_dtarquiv => vr_dtarquiv
                                    ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1314,26 +1338,26 @@ BEGIN
                                        
                IF trim(vr_dscritic) IS NULL THEN
                  vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-               END IF;
-                   
+           END IF;
+
                RAISE vr_exc_saida;
                    
              END IF;
 
            ELSE
-             IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
-                                   ,pr_dtarquiv => vr_dtarquiv
-                                   ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
-                                   ,pr_arqcomerro => FALSE
-                                   ,pr_dscritic => vr_dscritic) THEN
-              
-               IF trim(vr_dscritic) IS NULL THEN
-                 vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-               END IF;
+           IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                 ,pr_dtarquiv => vr_dtarquiv
+                                 ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                 ,pr_arqcomerro => FALSE
+                                 ,pr_dscritic => vr_dscritic) THEN
+            
+             IF trim(vr_dscritic) IS NULL THEN
+               vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
+           END IF;
 
-               RAISE vr_exc_saida;
-                       
-             END IF;
+             RAISE vr_exc_saida;
+                     
+           END IF;
              
            END IF;
              

@@ -520,6 +520,9 @@
 
                08/03/2018 - Substituidas verificacoes pelo campo "cdtipcta" fixos pelo código da modalidade e 
                             flag de conta integraçao. PRJ366 (Lombardi).
+				 
+               29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro ( AMcom )         
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -535,6 +538,9 @@
 { includes/var_landpv.i }
 { includes/var_cmedep.i "NEW" }
 
+{ sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
+
+DEF VAR h-b1wgen0200 AS HANDLE                                  NO-UNDO.
 
 DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -561,6 +567,7 @@ DEF VAR aux_devchqtic        AS LOG                             NO-UNDO.
 DEF VAR aux_nrdrowid         AS ROWID                           NO-UNDO.
 DEF VAR aux_qtregist         AS INT                             NO-UNDO.
 
+DEF VAR aux_incrineg         AS INT                             NO-UNDO.
 DEF VAR aux_cdcritic         AS INTE                            NO-UNDO.
 DEF VAR aux_dscritic         AS CHAR                            NO-UNDO.
 
@@ -578,6 +585,10 @@ DEF VAR aux_des_erro         AS CHAR                            NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
+        
+DEF VAR vr_cdpesqbb AS CHAR  NO-UNDO.
+DEF VAR vr_nrctachq AS INT   NO-UNDO.
+DEF VAR vr_nrdctabb AS INT   NO-UNDO.
         
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER craxlcm FOR craplcm.
@@ -4057,6 +4068,120 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                ELSE 
                     aux_nrdctabb = tel_nrdctabb.
 
+/*INICIO renato PJ450*/
+
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+/* inicio chamada rotina nova de gravaçao do lançamento*/
+
+             IF (tel_cdhistor = 24  OR 
+                   tel_cdhistor = 27  OR
+                   tel_cdhistor = 47  OR
+                   tel_cdhistor = 78  OR
+                   tel_cdhistor = 156 OR 
+                   tel_cdhistor = 191 OR 
+                   tel_cdhistor = 399) OR
+                   (tel_cdhistor = 351  AND tel_cdalinea > 0) THEN vr_cdpesqbb = STRING(tel_cdalinea,"99").
+             ELSE IF  tel_cdhistor = 275 OR
+                        tel_cdhistor = 317 OR
+                        tel_cdhistor = 3501 OR
+                        tel_cdhistor = 394 OR
+                        tel_cdhistor = 428 OR
+                        tel_cdhistor = 506 THEN vr_cdpesqbb = STRING(his_nrctremp,"99,999,999").
+             ELSE IF  tel_cdhistor = 104 OR
+                        tel_cdhistor = 302 OR 
+                        tel_cdhistor = 1806 THEN vr_cdpesqbb = STRING(tel_nrctatrf).
+             ELSE vr_cdpesqbb = "".
+
+             IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                  vr_nrctachq = craptco.nrctaant.
+             ELSE vr_nrctachq = tel_nrdctabb.
+             IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                  vr_nrdctabb = craptco.nrdconta.
+             ELSE vr_nrdctabb = aux_nrdctabb.
+                          
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                         (INPUT tel_dtmvtolt                 /*par_dtmvtolt*/
+                         ,INPUT tel_cdagenci                 /*par_cdagenci*/
+                         ,INPUT tel_cdbccxlt                 /*par_cdbccxlt*/
+                         ,INPUT tel_nrdolote                 /*par_nrdolote*/
+                         ,INPUT aux_nrdconta                 /*par_nrdconta*/
+                         ,INPUT tel_nrdocmto                 /*par_nrdocmto*/
+                         ,INPUT tel_cdhistor                 /*par_cdhistor*/
+                         ,INPUT tel_nrseqdig                 /*par_nrseqdig*/
+                         ,INPUT tel_vllanmto                 /*par_vllanmto*/
+                         ,INPUT vr_nrdctabb                  /*par_nrdctabb*/
+                         ,INPUT vr_cdpesqbb                  /*par_cdpesqbb*/
+                         ,INPUT 0                            /*par_vldoipmf*/
+                         ,INPUT tel_nrautdoc                 /*par_nrautdoc*/
+                         ,INPUT 0                            /*par_nrsequni*/
+                         ,INPUT tel_cdbaninf                 /*par_cdbanchq*/
+                         ,INPUT 0                            /*par_cdcmpchq*/
+                         ,INPUT tel_cdageinf                 /*par_cdagechq*/
+                         ,INPUT vr_nrctachq                  /*par_nrctachq*/
+                         ,INPUT 0                            /*par_nrlotchq*/
+                         ,INPUT 0                            /*par_sqlotchq*/
+                         ,INPUT tel_dtmvtolt                 /*par_dtrefere*/
+                         ,INPUT TIME                         /*par_hrtransa*/
+                         ,INPUT glb_cdoperad                 /*par_cdoperad*/
+                         ,INPUT ""                           /*par_dsidenti*/
+                         ,INPUT glb_cdcooper                 /*par_cdcooper*/
+                         ,INPUT crapass.nrdctitg             /*par_nrdctitg*/
+                         ,INPUT ""                           /*par_dscedent*/
+                         ,INPUT 0                            /*par_cdcoptfn*/
+                         ,INPUT 0                            /*par_cdagetfn*/
+                         ,INPUT 0                            /*par_nrterfin*/
+                         ,INPUT 0                            /*par_nrparepr*/
+                         ,INPUT 0                            /*par_nrseqava*/
+                         ,INPUT 0                            /*par_nraplica*/
+                         ,INPUT 0                            /*par_cdorigem*/
+                         ,INPUT 0                            /*par_idlautom*/
+                         ,INPUT 0                            /*par_inprolot */
+                         ,INPUT 0                            /*par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+       
+             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:   
+               IF aux_incrineg = 1 THEN
+                 DO:
+                   /* Tratativas de negocio */  
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                 END.
+               ELSE
+                 DO:
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                 END.
+             END.
+
+             ASSIGN /* RENATO PJ450*/
+                craplot.nrseqdig = tel_nrseqdig
+                craplot.qtcompln = craplot.qtcompln + 1.
+
+             FIND FIRST tt-ret-lancto.
+             
+             FIND FIRST craplcm 
+                WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
+                      NO-ERROR.
+             IF NOT AVAILABLE craplcm THEN
+                DO:
+                   MESSAGE "Erro ao ler CRAPLCM=" tt-ret-lancto.recid_lcm.
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                END.
+
+             DELETE PROCEDURE h-b1wgen0200.       
+
+/*FIM renato PJ450*/
+/*
                CREATE craplcm.
                ASSIGN craplcm.cdcooper = glb_cdcooper
                       craplcm.cdoperad = glb_cdoperad
@@ -4119,7 +4244,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                       craplot.qtcompln = craplot.qtcompln + 1.
 
                VALIDATE craplcm.
-
+*/
                IF   aux_indebcre = "D"   THEN
                     craplot.vlcompdb = craplot.vlcompdb + tel_vllanmto.
                ELSE
@@ -4371,6 +4496,100 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
+            /*INICIO renato PJ450*/
+
+                         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                             RUN sistema/generico/procedures/b1wgen0200.p 
+                                 PERSISTENT SET h-b1wgen0200.
+
+            /* inicio chamada rotina nova de gravaçao do lançamento*/
+
+                         vr_cdpesqbb = STRING(tel_nrdctabb).
+
+                         IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                              vr_nrctachq = craptco.nrctaant.
+                         ELSE vr_nrctachq = tel_nrdctabb.
+                         IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                              vr_nrdctabb = craptco.nrdconta.
+                         ELSE vr_nrdctabb = aux_nrdctabb.
+                                      
+                         RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                                     (INPUT tel_dtmvtolt           /*par_dtmvtolt*/
+                                     ,INPUT 1                      /*par_cdagenci*/
+                                     ,INPUT 100                    /*par_cdbccxlt*/
+                                     ,INPUT his_nrdolote           /*par_nrdolote*/
+                                     ,INPUT tel_nrctatrf           /*par_nrdconta*/
+                                     ,INPUT tel_nrdocmto           /*par_nrdocmto*/
+                                     ,INPUT his_cdhistor           /*par_cdhistor*/
+                                     ,INPUT crablot.nrseqdig + 1   /*par_nrseqdig*/
+                                     ,INPUT tel_vllanmto           /*par_vllanmto*/
+                                     ,INPUT tel_nrctatrf           /*par_nrdctabb*/
+                                     ,INPUT vr_cdpesqbb            /*par_cdpesqbb*/
+                                     ,INPUT 0                      /*par_vldoipmf*/
+                                     ,INPUT 0                      /*par_nrautdoc*/
+                                     ,INPUT 0                      /*par_nrsequni*/
+                                     ,INPUT 0                      /*par_cdbanchq*/
+                                     ,INPUT 0                      /*par_cdcmpchq*/
+                                     ,INPUT 0                      /*par_cdagechq*/
+                                     ,INPUT 0                      /*par_nrctachq*/
+                                     ,INPUT 0                      /*par_nrlotchq*/
+                                     ,INPUT 0                      /*par_sqlotchq*/
+                                     ,INPUT tel_dtmvtolt           /*par_dtrefere*/
+                                     ,INPUT TIME                   /*par_hrtransa*/
+                                     ,INPUT glb_cdoperad          /*par_cdoperad*/
+                                     ,INPUT ""                    /*par_dsidenti*/
+                                     ,INPUT glb_cdcooper          /*par_cdcooper*/
+                 ,INPUT STRING(tel_nrctatrf,"99999999")           /*par_nrdctitg*/
+                                     ,INPUT ""                           /*par_dscedent*/
+                                     ,INPUT 0                            /*par_cdcoptfn*/
+                                     ,INPUT 0                            /*par_cdagetfn*/
+                                     ,INPUT 0                            /*par_nrterfin*/
+                                     ,INPUT 0                            /*par_nrparepr*/
+                                     ,INPUT 0                            /*par_nrseqava*/
+                                     ,INPUT 0                            /*par_nraplica*/
+                                     ,INPUT 0                            /*par_cdorigem*/
+                                     ,INPUT 0                            /*par_idlautom*/
+                                     ,INPUT 0                            /*par_inprolot */
+                                     ,INPUT 0                            /*par_tplotmov */
+                                     ,OUTPUT TABLE tt-ret-lancto
+                                     ,OUTPUT aux_incrineg
+                                     ,OUTPUT aux_cdcritic
+                                     ,OUTPUT aux_dscritic).
+            /*  ver com a Josi como tratar a crítica */               
+                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:   
+                           IF aux_incrineg = 1 THEN
+                             DO:
+                               /* Tratativas de negocio */  
+                               MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                             END.
+                           ELSE
+                             DO:
+                               MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                             END.
+                         END.
+
+                         FIND FIRST tt-ret-lancto.
+                         DISP tt-ret-lancto.
+                         
+                         FIND FIRST craplcm 
+                            WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
+                                  NO-ERROR.
+                         IF NOT AVAILABLE craplcm THEN
+                            DO:
+                               MESSAGE "Erro ao ler CRAPLCM=" tt-ret-lancto.recid_lcm.
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                            END.
+
+                         DELETE PROCEDURE h-b1wgen0200.       
+
+/*FIM renato PJ450*/
+/*
                         CREATE craplcm.
                         ASSIGN craplcm.cdcooper = glb_cdcooper
                                craplcm.cdoperad = glb_cdoperad
@@ -4387,7 +4606,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                craplcm.nrseqdig = crablot.nrseqdig + 1
                                craplcm.vllanmto = tel_vllanmto
                                craplcm.cdpesqbb = STRING(tel_nrdctabb).
-                        VALIDATE craplcm.
+                        VALIDATE craplcm.*/
 
                     END.
                ELSE   

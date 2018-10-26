@@ -8,10 +8,10 @@
   | busca_operacoes                     | EMPR0003.pc_busca_operacoes          |
   | gera_co_responsavel                 | EMPR0003.pc_gera_co_responsavel      |
   +-------------------------------------+--------------------------------------+
-
+                            
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
-
+                            
   PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
   PESSOAS:
    - GUILHERME STRUBE    (CECRED)
@@ -23,24 +23,24 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 03/07/2018
-    
+   Data    : 23/03/2011                        Ultima atualizacao: 19/10/2018
+
    Dados referentes ao programa:
 
    Objetivo  : Tratar impressoes da BO 0002.
-   
+
    Alteracoes: 23/05/2011 - Alteraçao do format dos campos nmbairro e nmcidade.
                             Passado de "x(15)" para, "x(40)" e "x(25)", 
                             respectivamente. (Fabricio)
-                            
+
                28/06/2011 - Ajuste na composicao do campo dspreapg para co-
                             responsabilidade (David).  
-                            
+
                26/07/2011 - Nao gerar a proposta quando a impressao for completa
                            (Isara - RKAM)
-                           
+
                11/08/2011 - Incluir dtrefere na obtem_risco - GE (Guilherme).
-               
+
                05/09/2011 - Ajuste de format de variavel (Henrique).
                
                14/09/2011 - Nao imprimir rating para CECRED (Guilherme).
@@ -284,6 +284,8 @@
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).								
                                                    
                03/07/2018 - Utilizar trata-impressao-modelo1 para linhas de credito com tpctrato = 4. SCTASK0016657 (Lombardi)
+               
+               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
                                                    
 .............................................................................*/
 
@@ -2716,7 +2718,7 @@ PROCEDURE trata-impressao-modelo2:
       ASSIGN aux_contador = aux_contador + 1. 
    
       IF  TRIM(crapbpr.dsbemfin) <> ""   THEN
-          IF CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,EQUIPAMENTO",crapbpr.dscatbem) THEN
+          IF CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,EQUIPAMENTO,OUTROS VEICULOS",crapbpr.dscatbem) THEN
                DO:
                    ASSIGN rel_dsbemfin[aux_contador] =
                              "04." + STRING(aux_contador,"z9") + " - " +
@@ -2734,7 +2736,7 @@ PROCEDURE trata-impressao-modelo2:
                                 
                                (IF TRIM(crapbpr.nrdplaca) <> "" THEN 
                                    ", Placa " + STRING(crapbpr.ufdplaca,"xx")
-                                   + " " + STRING(crapbpr.nrdplaca,"xxx-xxxx")
+                                   + " " + STRING(crapbpr.nrdplaca,"xxxxxxx")
                                 ELSE "") 
                              ELSE "       ")
                              
@@ -5684,23 +5686,23 @@ PROCEDURE impressao-prnf:
             IF   par_vltotemp > 0   THEN
                  DO: 
                      aux_contador = 1.                     
-                      
+            
                      DISPLAY STREAM str_1 aux_qtdpremp   
                                     WITH FRAME f_pro_ed1.
-        
+            
                      /* busca informacoes de emprestimo e prestacoes (para nao 
                      utilizar mais a include "gera workepr.i") (Gabriel/DB1) */
                      IF NOT VALID-HANDLE(h-b1wgen0002) THEN
                      RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT
                          SET h-b1wgen0002.
-                    
+            
                      IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
                          DO:
                              ASSIGN aux_dscritic = "Handle invalido para BO " +
                                                    "b1wgen0002.".
                              LEAVE.
                          END.
-                    
+            
                      RUN obtem-dados-emprestimos IN h-b1wgen0002
                                          ( INPUT par_cdcooper,
                                            INPUT par_cdagenci,
@@ -5736,7 +5738,7 @@ PROCEDURE impressao-prnf:
                          FIRST crablcr WHERE 
                                crablcr.cdcooper = par_cdcooper AND
                                crablcr.cdlcremp = tt-dados-epr.cdlcremp NO-LOCK:
-                         
+            
                          IF  aux_contador > aux_qtdpremp THEN
                              NEXT.
               
@@ -9172,7 +9174,8 @@ IF  crawepr.tpemprst = 0 THEN /* Pós-Fixado */
                 /* Verifica se os bens associados aos Emprestimo sao veículos */
                 FIND FIRST tt-bens-contratos WHERE (tt-bens-contratos.dscatbem MATCHES "*AUTOMOVEL*" OR
                                                     tt-bens-contratos.dscatbem MATCHES "*MOTO*"      OR
-                                                    tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*") NO-LOCK NO-ERROR NO-WAIT.
+                                                    tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*"  OR
+                                                    tt-bens-contratos.dscatbem MATCHES "*OUTROS VEICULOS*") NO-LOCK NO-ERROR NO-WAIT.
                 IF  AVAIL tt-bens-contratos THEN
                     DO:
                         RUN monta-alienacao-fiduciaria-automovel-pos-fixado (INPUT par_cdcooper,
@@ -9279,7 +9282,8 @@ ELSE                          /* Pré-Fixado */
                 /* Verifica se os bens associados aos Emprestimo sao veículos */
                 FIND FIRST tt-bens-contratos WHERE (tt-bens-contratos.dscatbem MATCHES "*AUTOMOVEL*" OR
                                                     tt-bens-contratos.dscatbem MATCHES "*MOTO*"      OR
-                                                    tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*") NO-LOCK NO-ERROR NO-WAIT.
+                                                    tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*"  OR
+                                                    tt-bens-contratos.dscatbem MATCHES "*OUTROS VEICULOS*") NO-LOCK NO-ERROR NO-WAIT.
 
                 IF  AVAIL tt-bens-contratos THEN
                     DO:
@@ -15657,7 +15661,8 @@ PROCEDURE insere-clausula-bens-garantia-automovel:
 
     FOR EACH tt-bens-contratos WHERE (tt-bens-contratos.dscatbem MATCHES "*AUTOMOVEL*" OR
                                       tt-bens-contratos.dscatbem MATCHES "*MOTO*"      OR
-                                      tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*") NO-LOCK:
+                                      tt-bens-contratos.dscatbem MATCHES "*CAMINHAO*"  OR
+                                      tt-bens-contratos.dscatbem MATCHES "*OUTROS VEICULOS*") NO-LOCK:
 
         ASSIGN aux_subclaut = par_clbemgar + STRING(aux_contador) + ". " +  tt-bens-contratos.dscatbem 
                aux_contador = aux_contador + 1.

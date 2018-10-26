@@ -1,4 +1,5 @@
 <?php
+
 function build_select($id, $values, $cssClass, $radio){
 	//echo "<select id=\"$id\" class='campoTelaSemBorda'>";
     $type = $radio ? "radio": "checkbox";
@@ -9,6 +10,26 @@ function build_select($id, $values, $cssClass, $radio){
 //	echo "</select>";
 }
 
+function verifica_administradora($cdadmcrd) {
+    global $glbvars;
+    $xml  = "";
+    $xml .= "<Root>";
+    $xml .= " <Dados>";	
+    $xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "CADA0004", "VERIFICA_ADM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    $xmlDados = $xmlObject->roottag->tags[0];
+
+    if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
+        return 0;        
+    }else{
+        return getByTagName($xmlDados, "Administradora");
+    }
+}
 
 function build_card_adm_select($idSelect, $glbvars){
 
@@ -36,7 +57,7 @@ function build_card_adm_select($idSelect, $glbvars){
 	echo"<select class=\"campo\"  id=\"$idSelect\" style=\" width: 155px;\">";
 	for($iterator = 0; $iterator < $qtdregis; $iterator++){
 		$iObj = $objList->crapadc->Registro[$iterator];
-		echo "<option value='". $iObj->cdadmcrd."'> ". utf8ToHtml($iObj->nmadmcrd)." </option>";
+		echo "<option value='". $iObj->cdadmcrd."' tpadm='".verifica_administradora($iObj->cdadmcrd)."'> ".$iObj->cdadmcrd. " - ". utf8ToHtml($iObj->nmadmcrd)." </option>";
 		
 	}
 	echo "</select>";

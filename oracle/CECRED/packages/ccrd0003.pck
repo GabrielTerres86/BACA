@@ -7020,6 +7020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split(); 
       vr_indice     NUMBER;
+      vr_tplimcrd   NUMBER(1) :=  0; -- 0=concessao, 1=alteracao
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -7521,13 +7522,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       rw_craptlc cr_craptlc%ROWTYPE;
       
       -- Tabela de Limite de Credito CECRED
-      CURSOR cr_craptlc_cecred(pr_cdcooper craptlc.cdcooper%TYPE,
-                              pr_cdadmcrd craptlc.cdadmcrd%TYPE,
-                              pr_vllimcrd craptlc.vllimcrd%TYPE) IS
+      CURSOR cr_craptlc_cecred(pr_cdcooper TBCRD_CONFIG_CATEGORIA.cdcooper%TYPE
+                              ,pr_cdadmcrd TBCRD_CONFIG_CATEGORIA.cdadmcrd%TYPE
+                              ,pr_vllimcrd TBCRD_CONFIG_CATEGORIA.vllimite_minimo%TYPE
+                              ,pr_tplimcrd TBCRD_CONFIG_CATEGORIA.tplimcrd%TYPE) IS
         SELECT     1 AS cdlimcrd
         FROM       TBCRD_CONFIG_CATEGORIA tbcc
         WHERE      tbcc.cdcooper = pr_cdcooper
         AND        tbcc.cdadmcrd = pr_cdadmcrd
+           AND tbcc.tplimcrd = nvl(pr_tplimcrd, 0)
         AND        pr_vllimcrd between tbcc.vllimite_minimo AND tbcc.vllimite_maximo;
       rw_craptlc_cecred cr_craptlc_cecred%ROWTYPE;
       
@@ -7889,9 +7892,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               -- Se nao encontrou, vamos tentar buscar os limites na nova tabela
               IF NOT vr_craptlc THEN
                 -- CECRED
-                OPEN cr_craptlc_cecred(pr_cdcooper => pr_cdcooper,
-                            pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
-                            pr_vllimcrd => pr_vllimcrd);
+                OPEN cr_craptlc_cecred(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd
+                                      ,pr_vllimcrd => pr_vllimcrd
+                                      ,pr_tplimcrd => vr_tplimcrd);
                 FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
                 vr_craptlc := cr_craptlc_cecred%FOUND;
                 CLOSE cr_craptlc_cecred;

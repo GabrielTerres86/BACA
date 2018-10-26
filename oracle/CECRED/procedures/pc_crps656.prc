@@ -11,7 +11,7 @@ BEGIN
      Sistema : CRIA/ATUALIZA PREJUIZO CYBER
      Sigla   : CRED
      Autor   : James Prust Junior
-     Data    : Agosto/2013.                     Ultima atualizacao: 14/08/2015
+     Data    : Agosto/2013.                     Ultima atualizacao: 22/08/2018
 
      Dados referentes ao programa:
 
@@ -49,6 +49,13 @@ BEGIN
                  07/06/2017 - Ajuste da regra que define a origem a ser utilizada. Adequacao
                               da regra para que fique igual a regra existente no pc_crps280_i.
                               Heitor (Mouts) - Chamado 681595
+
+                 15/07/2018 - Incluir dados de prejuizo no cursor de empréstimos
+                              Renato Cordeiro (AMcom)
+
+                 22/08/2018 - Correção para gravação dos dados da conta corrente
+                              transferida para prejuízo.
+                              P450 - Reginaldo/AMcom
 
   ............................................................................. */
 
@@ -122,6 +129,11 @@ BEGIN
     vr_inrestar        PLS_INTEGER;                    --> Indicador de Restart
     vr_erro_exec       EXCEPTION;                      --> Controle de erros
 
+		vr_dstextab craptab.dstextab%TYPE;
+	  vr_pctaxpre NUMBER;
+	  vr_valoraux NUMBER;
+	  vr_txmensal NUMBER;
+
     ------------------------------- CURSORES ---------------------------------
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop IS
@@ -139,8 +151,40 @@ BEGIN
         AND cop.flgativo = 1
      ORDER BY cop.cdcooper;
 
-   /* Busca dados dos empréstimos com índice de prejuízo zero por cooperativa */
+   /* Busca contratos e contas em prejuízo por cooperativa */
    CURSOR cr_crapepr(pr_cdcooper IN crapcyb.cdcooper%TYPE) IS
+     SELECT prej.cdcooper,
+            prej.nrdconta,
+            prej.nrdconta          nrctremp,
+            0                      cdlcremp,
+            prej.dtinclusao        dtprejuz, --
+            prej.vlsdprej + 
+						prej.vljur60_ctneg +
+			      prej.vljur60_lcred +
+		        prej.vljuprej +
+						nvl(sld.vliofmes,0) +
+						PREJ0003.fn_juros_remun_prov(prej.cdcooper, prej.nrdconta) vlsdprej,
+            0                      cdfinemp,
+						sld.dtrisclq           dtmvtolt, --
+            prej.vldivida_original vlemprst, --
+            1                      qtpreemp, --
+            0                      tpdescto, --
+            0                      flgpagto, --
+            1                      inprejuz,
+            0                      qtmesdec, -- meses decorridos
+            0                      inliquid, --
+            0                      vlsdeved, --
+            0                      qtprecal, -- qtd prestações pagas
+            prej.vldivida_original vlpreemp, --
+            0                      txjuremp, --
+            0                      txmensal
+     FROM tbcc_prejuizo prej
+		    , crapsld sld
+        WHERE prej.dtliquidacao is NULL
+				  AND sld.cdcooper = prej.cdcooper
+					AND sld.nrdconta = prej.nrdconta
+		  AND prej.cdcooper <> pr_cdcooper
+     UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
            ,cer.nrctremp
@@ -164,7 +208,7 @@ BEGIN
       FROM crapepr cer
       WHERE cer.inprejuz > 0
         AND cer.cdcooper <> pr_cdcooper
-      ORDER BY cer.cdcooper;
+     ORDER BY 1;
 
     /* Buscar todos os registros do sistema CYBER */
     CURSOR cr_crapcyt IS
@@ -282,6 +326,20 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+		-- Buscar dados da TAB para extração da taxa de juros remuneratórios
+     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 8
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'USUARI'
+                                              ,pr_cdempres => 11
+                                              ,pr_cdacesso => 'PAREMPREST'
+                                              ,pr_tpregist => 01);
+     
+     -- Extrai a taxa de juros remuneratórios cadastrada na tela TAB089                                              
+		 vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
+		 --Calcular Juros
+		 vr_valoraux    := 1 + (vr_pctaxpre / 100);
+		 vr_txmensal := round(POWER(vr_valoraux, 30),2);
+
     vr_index := NULL;
     vr_contador := 0;
     -- Carregar dados da PL Table CRAPEPR
@@ -317,8 +375,13 @@ BEGIN
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlsdeved := reg.vlsdeved;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).qtprecal := reg.qtprecal;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlpreemp := reg.vlpreemp;
+			IF reg.nrdconta = reg.nrctremp AND reg.inprejuz = 1 THEN
+				vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := vr_pctaxpre;
+        vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := vr_txmensal;
+			ELSE
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := reg.txjuremp;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := reg.txmensal;
+			END IF;
     END LOOP;
 
     -- Carregar dados da PL Table CRAPCYB
@@ -419,7 +482,12 @@ BEGIN
                    vr_tab_crapepr(vr_index).cdlcremp = 900)) THEN
             vr_cdorigem := 2; -- Desconto
           ELSE
+						IF vr_tab_crapepr(vr_index).nrdconta = vr_tab_crapepr(vr_index).nrctremp AND
+							 vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+							vr_cdorigem := 1;
+						ELSE
             vr_cdorigem := 3;
+          END IF;
           END IF;
 
           -- Validar dados para CRAPTAB de provisão
@@ -569,6 +637,17 @@ BEGIN
                       pr_dscritic := 'Erro ao atualizar a tabela CRAPCYB: ' || SQLERRM;
                       RAISE vr_erro_exec;
                   END;
+								ELSIF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+									BEGIN
+                    -- Atualização do registro encontrado
+                    UPDATE crapcyb cyb
+                    SET cyb.dtdpagto = vr_tab_crapepr(vr_index).dtmvtolt
+                    WHERE cyb.rowid = vr_rowidcyb;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      pr_dscritic := 'Erro ao atualizar a tabela CRAPCYB: ' || SQLERRM;
+                      RAISE vr_erro_exec;
+                  END;
                 END IF;
               END IF;
             EXCEPTION
@@ -693,6 +772,7 @@ BEGIN
                    ,cyb.txdiaria = vr_tab_crapepr(vr_index).txjuremp
                    ,cyb.vlpreemp = vr_tab_crapepr(vr_index).vlpreemp
                    ,cyb.flgpreju = vr_tab_crapepr(vr_index).inprejuz
+									 ,cyb.dtprejuz = vr_tab_crapepr(vr_index).dtprejuz
                    ,cyb.flgresid = vr_flagup
                    ,cyb.nivrisat = vr_nivrisco
                    ,cyb.qtdiaris = vr_qtdiaris
@@ -706,6 +786,16 @@ BEGIN
                   pr_dscritic := 'Erro ao atualizar na tabela CRAPCYB: ' || SQLERRM;
                   RAISE vr_exc_saida;
               END;
+
+							IF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+								UPDATE crapcyb cyb
+                SET cyb.dtdpagto = vr_tab_crapepr(vr_index).dtmvtolt
+                WHERE cyb.cdcooper = vr_tab_crapepr(vr_index).cdcooper
+                  AND cyb.cdorigem = vr_cdorigem
+                  AND cyb.nrdconta = vr_tab_crapepr(vr_index).nrdconta
+                  AND cyb.nrctremp = vr_tab_crapepr(vr_index).nrctremp
+                  AND cyb.dtdbaixa IS NULL;
+            END IF;
             END IF;
           END IF;
 

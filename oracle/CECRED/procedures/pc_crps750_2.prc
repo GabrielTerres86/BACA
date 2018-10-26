@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 13/12/2017
+  Data    : Abril/2017.                    Ultima atualizacao: 30/08/2018
 
   Dados referentes ao programa:
 
@@ -44,6 +44,9 @@ BEGIN
               
               15/08/2018 - Debitar Parcelas de emprestimos PP (Parcelas em Dia) em todas as execuções do dia e 
                            não mais somente na última execução (Marcelo Elias Gonçalves / AMcom Make IT Real).					   
+
+              30/08/2018 - Debitador Unico - permitir executar na cadeia da CECRED alem do debitador (Fabiano B. Dias AMcom).
+						   
   ............................................................................. */
   DECLARE
 
@@ -389,6 +392,10 @@ BEGIN
       CLOSE BTCH0001.cr_crapdat;
     END IF;
 
+    IF pr_cdcooper = 3 THEN -- 30/08/2018.
+      vr_flultexe := 1;	
+      vr_qtdexec  := 1;	  
+    ELSE	
     --> Verificar/controlar a execução. 
     SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
                                     ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
@@ -403,6 +410,7 @@ BEGIN
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida; 
     END IF;
+    END IF; -- pr_cdcooper = 3.
 	
    
     /*No ultimo dia util do ano, nao havera debito de parcelas em atraso no

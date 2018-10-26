@@ -2,7 +2,7 @@
 	/************************************************************************
 	      Fonte: riscos.php
 	      Autor: Reginaldo Silva (AMcom)
-	      Data : Janeiro/2018               Última Alteração: 25/03/2018
+	      Data : Janeiro/2018               Última Alteração: 10/09/2018
 
 	      Objetivo  : Mostrar aba "Riscos" da rotina de OCORRÊNCIAS
                       da tela ATENDA
@@ -12,6 +12,10 @@
 		  09/02/2018 - Inclusão das colunas Risco Melhora e Risco Final
 		  25/03/2018 - Adicionada coluna de Risco Refinanciamento 
 		               e carregamento de dados brutos (Reginaldo / Marcel)
+		  24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+		               PJ 450 - Diego Simas - AMcom
+	      10/09/2018 - Inclusão do campo Número do Grupo Econômico
+		               PJ 450 - Diego Simas - AMcom
 
 	************************************************************************/	
 	session_start();
@@ -119,18 +123,20 @@
 				<tr>
 					<th><span title="CPF/CNPJ">CPF/CNPJ</span></th>
 					<th><span title="Número da conta">Conta</span></th>
-					<th><span title="Número do contrato">Contr.</span></th>
-					<th><span title="Tipo de contrato">Tipo</span></th>
-					<th><span title="Risco Inclusão">R. Incl.</span></th>
-					<th><span title="Rating">Rat.</span></th>
-					<th><span title="Risco Atraso">R. Atr.</span></th>
-					<th><span title="Risco Refinanciamento">R. Ref.</span></th>
-					<th><span title="Risco Agravado">R. Agr.</span></th>
-					<th><span title="Risco Melhora">R. Melh.</span></th>
-					<th><span title="Risco da Operação">R. Oper.</span></th>
-					<th><span title="Risco do CPF">R. CPF</span></th>
-					<th><span title="Risco do Grupo Econômico">R. GE</span></th>					
-					<th><span title="Risco Final">R. Final</span></th>
+					<th><span title="Número do contrato">CON</span></th>
+					<th><span title="Tipo de contrato">TIP</span></th>
+					<th><span title="Risco Inclusão">INC</span></th>
+					<th><span title="Rating">RAT</span></th>
+					<th><span title="Risco Atraso">ATR</span></th>
+					<th><span title="Risco Refinanciamento">REF</span></th>
+					<th><span title="Risco Agravado">AGR</span></th>
+					<th><span title="Risco Melhora">MEL</span></th>
+					<th><span title="Risco da Operação">OPE</span></th>
+					<th><span title="Risco do CPF">CPF</span></th>
+					<th><span title="Risco do Grupo Econômico">GE</span></th>					
+					<th><span title="Risco Final">FIN</span></th>
+					<th><span title="Quantidade de Dias de Atraso">D.ATR</span></th>
+					<th><span title="Número do Grupo Econômico">N.GE</span></th>
 				</tr>
 			</thead>
 			<tbody>				
@@ -152,6 +158,8 @@
 						<td><? echo getByTagName($risco->tags, 'risco_cpf'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_final'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'qtd_dias_atraso'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'numero_gr_economico'); ?></td>
 					</tr>
 				<?
 					}

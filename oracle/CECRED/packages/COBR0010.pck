@@ -1032,6 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
              cob.insmsant,
              cob.insmsvct,
              cob.insmspos,
+             cob.insrvprt, -- servico de protesto (0-Nenhum,1-IEPTB,2-BB)
              cob.rowid
         FROM crapcob cob
        WHERE cob.cdcooper = pr_cdcooper 
@@ -1143,6 +1144,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapcob;
+    END IF;
+
+    -- não permitir geracao de carta de anuencia para boletos protestados pelo BB 
+    -- ou sem servico de protesto    
+    IF rw_crapcob.insrvprt <> 1 THEN
+      vr_dscritic := 'Servico temporariamente indisponivel para este tipo de boleto.';
+      RAISE vr_exc_erro;      
     END IF;
                               
      -- Se ocorreu critica escreve no proc_message.log

@@ -88,7 +88,7 @@
 				<tbody>
 					<? foreach( $dados as $dado ) {    ?>
 						<tr>	
-							<td><? echo stringTabela(getByTagName($dado->tags,'nmpessoa'), 42, 'maiuscula'); ?> </td>
+							<td><? echo stringTabela(getByTagName($dado->tags,'nmpessoa'), 35, 'maiuscula'); ?> </td>
 							<td><? echo getByTagName($dado->tags,'nrcpfcgc'); ?> </td>
 							<td><? echo getByTagName($dado->tags,'insituacao'); ?> </td>
 							<td><? echo getByTagName($dado->tags,'inreportavel'); ?> </td>
