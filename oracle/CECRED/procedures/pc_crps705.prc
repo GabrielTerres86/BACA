@@ -1,5 +1,6 @@
 CREATE OR REPLACE PROCEDURE cecred.PC_CRPS705 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
                                                ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
+											   ,pr_execucao IN PLS_INTEGER             --> Ordem de execução no dia
                                                ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
@@ -216,6 +217,7 @@ BEGIN
                                 ,pr_dtmvtopg    => vr_dtmvtopg         --Data Pagamento
                                 ,pr_inproces    => rw_crapdat.inproces --Indicador processo
                                 ,pr_flsgproc    => vr_flsgproc         --Flag segundo processamento
+								,pr_execucao    => pr_execucao         --Ordem de execução no dia
                                 ,pr_cdcritic    => vr_cdcritic         --Codigo da Critica
                                 ,pr_dscritic    => vr_dscritic);       --Descricao da critica;
      --Se ocorreu erro
@@ -223,7 +225,9 @@ BEGIN
        --Levantar Excecao
        RAISE vr_exc_saida;
      END IF;
-    
+     -- só atualiza situação dos lançamentos se for a última execução do dia
+     IF pr_execucao = 3 THEN
+       --
      IF rw_crapdat.inproces = 1 THEN
        UPDATE craplau lau
           SET lau.insitlau = 4
@@ -235,7 +239,8 @@ BEGIN
           AND lau.dtmvtopg BETWEEN vr_dtmvtoan - 7 AND vr_dtmvtoan
           AND lau.cdtiptra = 4; --Somente TED
      END IF;
-           
+       --
+     END IF;           
      --Gerar Relatorio
      PAGA0001.pc_gera_relatorio (pr_cdcooper    => 0              --Todas Cooperativas
                                 ,pr_cdprogra    => vr_cdprogra    --Codigo Programa
