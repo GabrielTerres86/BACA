@@ -431,6 +431,7 @@ function controlaOperacao(operacao) {
 	var idcobope = '';
 	var insitest = '';
 	var err_efet = '';
+	/*var nrdrecid = '';*/
 	var flgimpnp = '';
 
     cdlcremp = '';
