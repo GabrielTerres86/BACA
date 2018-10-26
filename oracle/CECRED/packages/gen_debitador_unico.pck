@@ -10,6 +10,9 @@ CREATE OR REPLACE PACKAGE CECRED.gen_debitador_unico AS
   --  Objetivo  : Empacotar as rotinas referente ao Debitador Único
   --
   --  Alterações:
+  --   
+  --  26/10/2018 1) pc_job_debitador_unico: alterada frequencia do job (repeat_interval).
+  --             2) pc_verifica_job_running: adicionado espaco antes do percent (dava erro: procurava por 1 e encontrava 16).
   --
   -----------------------------------------------------------------------------------------------
 
@@ -138,6 +141,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
   --  Objetivo  : Empacotar as rotinas referente ao Debitador Único
   --
   --  Alterações:
+  --   
+  --  26/10/2018 1) pc_job_debitador_unico: alterada frequencia do job (repeat_interval).
+  --             2) pc_verifica_job_running: adicionado espaco antes do percent (dava erro: procurava por 1 e encontrava 16).
   --
   -----------------------------------------------------------------------------------------------
 
@@ -326,7 +332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       pr_ininterromper := TRUE;
       RAISE vr_erro;
     END IF;
-    
+
     
 
     -- VErificar se já foi a última execução
@@ -505,8 +511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
           or (to_number(To_Char(SYSDATE,'hh24')) between 0 and 1) THEN  -- entre meia noite e 1h, não permite excluir horário        
           vr_ds_erro := 'Exclusão de horário '||To_Char(pr_dhprocessamento,'hh24:mi')||' não permitida pois o controle de execução já está na última execução ou o horário já executou, exclusão permitida apenas para horários não executados.';
           RAISE vr_erro;          
-        END IF;
       END IF;
+    END IF;
     END IF;
     --
     pr_ininterromper := FALSE;
@@ -1053,8 +1059,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                 vr_ds_erro := 'Erro ao verificar quantidade de execuções faltantes no dia do programa '||pr_cdprocesso||' durante o dia no Debitador Único. Erro: '||SubStr(SQLERRM,255);
                 RAISE vr_erro;
             END;     
-        END IF;
-                
+    END IF;
+
         -- Se a rotina executa na cadeia noturna, atribui mais uma execução no contador.
         IF NVL(rw_tbgen_param_debit_unico.inexec_cadeia_noturna,'N') = 'S' THEN
           vr_qt_hora_prg_debitador_dia := nvl(vr_qt_hora_prg_debitador_dia,0) + 1;
@@ -1071,7 +1077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
           RAISE vr_erro;
         END IF;
         CLOSE cr_crapprm;
-        
+
         -- tratar dados do parametro
         vr_tbdados := gene0002.fn_quebra_string(pr_string  => rw_crapprm_ctrl.dsvlrprm,
                                                 pr_delimit => '#');        
@@ -1160,7 +1166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       AND    j.owner    = r.owner
       AND    j.job_name = r.job_name
       AND    UPPER(j.job_action) LIKE '%GEN_DEBITADOR_UNICO.PC_EXECUTA_DEBITADOR_UNICO%'
-      AND    UPPER(j.job_action) LIKE '%PR_CDCOOPER              => '||pr_cdcooper||'%'
+      AND    UPPER(j.job_action) LIKE '%PR_CDCOOPER              => '||pr_cdcooper||' %' -- Obrigatorio "espaco" antes do "percent" (26/10/2018).
       -- Que não seja o próprio
       AND  ((UPPER(j.job_action) NOT LIKE '%PR_IDHORA_PROCESSAMENTO  => '||pr_idhora_processamento||'%' AND pr_idhora_processamento IS NOT NULL)
        OR    pr_idhora_processamento IS NULL)
@@ -1337,7 +1343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                 ,pr_cdprogra  => vr_nm_job
                                 ,pr_dsplsql   => vr_ds_bloco_plsql
                                 ,pr_dthrexe   => TO_TIMESTAMP_TZ(vr_dthrexe||' America/Sao_Paulo','DD/MM/RRRR HH24:MI:SS TZR')
-                                ,pr_interva   => 'SYSDATE+1'
+                                ,pr_interva   => 'Freq=daily;ByDay=MON, TUE, WED, THU, FRI;ByHour='||to_char(to_date(vr_dthrexe,'DD/MM/RRRR HH24:MI:SS'),'hh24')||';ByMinute='||to_char(to_date(vr_dthrexe,'DD/MM/RRRR HH24:MI:SS'),'mi')||';BySecond=0' --'SYSDATE+1'--26/10/2018.
                                 ,pr_jobname   => vr_nm_job
                                 ,pr_des_erro  => vr_dscritic);
 
@@ -1450,6 +1456,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                       ,pr_nrprioridade_prg_erro IN tbgen_debitador_param.nrprioridade%TYPE) IS
 
     /*
+	| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | Alterações                                                                                                                                                                 |
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | 08/08/2108 - Vitor Shimada Assanuma (GFT) - Inclusão da PC_CRPS735                                                                                                         |
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- |
     | Programa                                                                                                                 | Debita Sem Saldo | Debita Parcial | Repescagem  |
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- |
@@ -1472,6 +1482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
     | OK - PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES                                                       | Não              | Não            | Não         |
     | OK - PC_CRPS268 - DEBITO EM CONTA REFERENTE SEGURO DE VIDA EM GRUPO                                                      | Sim              | Não            | Não         |
     | OK - PAGA0003.PC_PROCESSA_AGEND_BANCOOB - DEBITO AGENDADOS DE PAGAMENTO BONCOOB                                          | Não              | Não            | Não         |
+	| OK - PC_CRPS735 - DESCONTO DE TÍTULOS                                                                                    | Não              | Sim            | Não         |
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- |
     */
 
@@ -1537,6 +1548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
     vr_nrprioridade             tbgen_debitador_param.nrprioridade%TYPE;
     vr_tpexec_emergencial       VARCHAR2(1);
     vr_inexecutou_integra_abbc  VARCHAR2(1) := 'N';
+    vr_interminou_anterior      VARCHAR2(1) := 'S'; -- 26/10/2018.
     vr_job_name_running         dba_scheduler_jobs.job_name%TYPE;
     vr_start_date               VARCHAR2(18);
     -- Controle de agendamento para o próximo dia
@@ -1652,8 +1664,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                              ,pr_start_date           => vr_start_date
                              ,pr_ds_erro              => vr_dscritic);
       -- Tratamento Erro
+      vr_interminou_anterior := 'S';
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_email;
+        --RAISE vr_exc_email; -- 26/10/2018 trocado raise pelo flag para poder reagendar o job.
+        vr_interminou_anterior := 'N'; 
       END IF;
 
       -- Se a há algun JOB do Debitador rodando para a Cooperativa (Running)
@@ -1699,8 +1713,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_idtiplog => 'O');
 
-      -- Se a Cooperativa ainda estiver executando o Processo Batch (Noturna) ou a integração ABBC (CRPS538) ainda não foi processada
-      IF rw_crapdat.inproces > 1 OR Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN
+      -- Se a Cooperativa ainda estiver executando o Processo Batch (Noturna) 
+      -- ou a integração ABBC (CRPS538) ainda não foi processada
+      -- ou o job anterior (debitador) ainda nao terminou ENTAO REAGENDA JOB ATUAL:	  
+      IF rw_crapdat.inproces > 1 
+      OR Nvl(vr_inexecutou_integra_abbc,'N') = 'N' 
+      OR Nvl(vr_interminou_anterior,'N') = 'N' THEN --26/10/2018.
 
         -- Log de ocorrência
         pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -1963,7 +1981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_tpexecuc => NULL
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'I');
-
+            
               -- Executa processo/programa
               pc_crps642_priori(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Código da cooperativa
                                ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
@@ -2317,7 +2335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_tpexecuc => NULL
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
-              --
+              --                        
             --PC_CRPS439 - DEBITO DIARIO DO SEGURO
             ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS439' THEN
               vr_cdprogra := 'PC_CRPS439';
@@ -2806,7 +2824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_tpexecuc => NULL
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
-              --
+              --            
             --PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES
             ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS663' THEN
               vr_cdprogra := 'PC_CRPS663';
@@ -2990,7 +3008,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
               --
-            END IF;
+
+		  -- PC_CRPS735         
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS735' THEN
+            vr_cdprogra := 'PC_CRPS735';  
+            
+            -- Log de ocorrência
+            pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_tpexecuc => NULL
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                ,pr_idtiplog => 'O');              
+            --  
+            -- Log de inicio de execucao
+            pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                ,pr_indexecu => 'Inicio Execucao'
+                                ,pr_cdcooper => pr_cdcooper 
+                                ,pr_tpexecuc => NULL
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                ,pr_idtiplog => 'I');                                     
+             
+            -- Executa processo/programa   
+            CECRED.PC_CRPS735(pr_cdcooper => pr_cdcooper,   -- IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
+                              pr_stprogra => vr_stprogra,   -- OUT PLS_INTEGER           --> Saida de termino da execucao
+                              pr_infimsol => vr_infimsol,   -- OUT PLS_INTEGER           --> Saida de termino da solicitacao
+                              pr_cdcritic => vr_cdcritic,   -- OUT crapcri.cdcritic%TYPE --> Codigo da Critica                
+                              pr_dscritic => vr_dscritic);  -- OUT crapcri.dscritic%TYPE --> Descricao da Critica                             
+                                                            
+            -- Tratamento de erro                                 
+            IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
+              --
+              -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+              pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                           ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+              -- Log de erro de execucao 
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'E');
+              RAISE vr_exc_email;
+            END IF;  
+            --
+            -- Log de fim de execucao
+            pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                ,pr_indexecu => 'Fim Execucao'
+                                ,pr_cdcooper => pr_cdcooper 
+                                ,pr_tpexecuc => NULL
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                ,pr_idtiplog => 'F');
+                                
+            -- Log de ocorrência
+            pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --  
+			END IF;
           END IF; -- Fim tratamento para agendamentos do próximo dia
         END LOOP; --Fim Loop Processo/Programa do respectivo horário do debitador
 
