@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-22T10:55:59 -->
+<!-- 2018-10-22T16:17:46 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.3636363636363635"/>
 	<property name="ireport.x" value="0"/>
@@ -975,10 +975,10 @@
 				<textFieldExpression><![CDATA["<u>3. Pagamento</u> - O Emitente deverá pagar a Cooperativa o valor contratado, acrescido de juros remuneratórios, capitalizados mensalmente, à taxa, quantidade de parcelas, valores e data de vencimento estipulados nesta cédula. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes a esta Cédula, na forma do estabelecido nas normas regulamentares da Credora/Cooperativa."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="30">
+		<band height="39">
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="30" uuid="f6f31c17-4cf0-400c-8d81-d0379818e087">
+				<reportElement x="6" y="0" width="466" height="39" uuid="f6f31c17-4cf0-400c-8d81-d0379818e087">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -990,11 +990,11 @@
 				<textFieldExpression><![CDATA["a) A cada mês, na data indicada no subitem " + (2 + $F{ind_add_item}) + ".8, ocorrerá o débito na conta corrente do Emitente, do valor correspondente à parcela, acrescida dos valores de IOF, tarifas e demais despesas previstas nesta Cédula."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="50">
+		<band height="59">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="50" uuid="9531a4d8-820a-46a7-b5bf-0bfac86716e1">
+				<reportElement x="6" y="0" width="466" height="59" uuid="9531a4d8-820a-46a7-b5bf-0bfac86716e1">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1006,11 +1006,11 @@
 				<textFieldExpression><![CDATA["b) O valor de cada parcela foi calculado com base na Tabela Price, sistema de amortização de dívida, em que o percentual de principal e o percentual de juros de cada parcela variam no decorrer do tempo, de modo a manter-se constante o valor de cada parcela.\nc) Sempre que o dia do vencimento da parcela não ocorrer em dia útil, será prorrogado para o dia útil seguinte."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="35">
+		<band height="39">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="35" uuid="e66886e5-8401-4d15-85f8-98c5497c8f36">
+				<reportElement x="6" y="0" width="466" height="39" uuid="e66886e5-8401-4d15-85f8-98c5497c8f36">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1022,10 +1022,10 @@
 				<textFieldExpression><![CDATA["c) Na data do pagamento da parcela, a conta indicada para pagamento deverá manter saldo disponível suficiente para suportar o débito, sendo que a insuficiência de saldo configurará atraso no pagamento."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="50">
+		<band height="70">
 			<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="50" uuid="8526c317-190d-4ea7-ad62-e6b6538ea312">
+				<reportElement x="6" y="0" width="466" height="70" uuid="8526c317-190d-4ea7-ad62-e6b6538ea312">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1037,10 +1037,10 @@
 				<textFieldExpression><![CDATA["d) Em caso de atraso no pagamento via débito em conta e com a finalidade de evitar o acúmulo de encargos de atraso, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta do Emitente apresentar saldo disponível, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item \"Atraso no Pagamento e Multa\", até o limite do saldo disponível em conta e o limite de crédito, se contratado."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="55">
+		<band height="70">
 			<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="55" uuid="44470546-011f-49e2-84c7-6cf746ae4717">
+				<reportElement x="6" y="0" width="466" height="70" uuid="44470546-011f-49e2-84c7-6cf746ae4717">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1052,10 +1052,10 @@
 				<textFieldExpression><![CDATA["e) Caso a conta não apresente saldo disponível, a Cooperativa poderá realizar o débito em outras contas de titularidade do Emitente, ou poderá utilizar o produto de eventual resgate de suas aplicações financeiras, inclusive poupança, para as quais o Emitente não tenha contratado resgate automático, para liquidação, total ou parcial, do saldo devedor desta cédula.\ne.1) Qualquer resgate ou saque de valores das aplicações indicadas neste item será creditado na conta escolhida para pagamento, ocasionando amortização ou liquidação do saldo devedor dessa conta."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="70">
+		<band height="90">
 			<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="70" uuid="32f66953-6518-42bd-a78d-2bfb800c2b53">
+				<reportElement x="6" y="0" width="466" height="80" uuid="32f66953-6518-42bd-a78d-2bfb800c2b53">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1098,11 +1098,11 @@
 				<textFieldExpression><![CDATA["e) Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a Credora/Cooperativa realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo Emitente/Cooperado(a) nesta cédula."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="50">
+		<band height="60">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="50" uuid="1d5cc087-601b-4058-813c-1aa95a5bc522">
+				<reportElement x="6" y="0" width="466" height="60" uuid="1d5cc087-601b-4058-813c-1aa95a5bc522">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1114,10 +1114,10 @@
 				<textFieldExpression><![CDATA["e.1) A Credora/Cooperativa poderá, a seu critério, conceder ao Cooperado prazo de carência para resgate automático da(s) aplicação(ões) financeira(s) dada(s) em garantia nesta cédula, na hipótese prevista no item " + (2 + $F{ind_add_item}) + ".16 acima. O prazo de carência, se houver, será descrito no item " + (2 + $F{ind_add_item}) + ".16.1 das Condições Específicas desta Cédula. Durante tal prazo, a Credora/Cooperativa continuará realizando tentativas de débito nos moldes descritos na cláusula abaixo."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="60">
+		<band height="80">
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="60" uuid="c863f71e-b439-4d64-9a9b-3371d78d5a61">
+				<reportElement x="6" y="0" width="466" height="80" uuid="c863f71e-b439-4d64-9a9b-3371d78d5a61">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1129,10 +1129,10 @@
 				<textFieldExpression><![CDATA["e.2) No intuito de evitar o acúmulo de encargos em caso de não pagamento da parcela via débito em conta e durante o prazo de carência concedido antes do resgate automático do valor de aplicação(ões) financeira(s), a Credora/Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta do(a) Cooperado(a) apresentar saldo disponível, independentemente do valor, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item \"Atraso no Pagamento e Multa\", até o limite disponível na conta, inclusive, utilizando do limite de crédito, se contratado."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="85">
+		<band height="90">
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0]]></printWhenExpression>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="85" uuid="d65efe61-e305-4b3e-9fb4-1bf334e52165">
+				<reportElement x="6" y="0" width="466" height="90" uuid="d65efe61-e305-4b3e-9fb4-1bf334e52165">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1144,22 +1144,22 @@
 				<textFieldExpression><![CDATA["e.3) Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a  Credora/Cooperativa poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) Cooperado(a).\nf) Caso não seja verificado o pagamento na data do vencimento, o Emitente estará em atraso e a Cooperativa poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="46">
+		<band height="50">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} != "0"]]></printWhenExpression>
 			<staticText>
-				<reportElement x="6" y="0" width="466" height="46" uuid="2ef6e064-ee68-45ae-b9bd-e9d42997166d"/>
+				<reportElement x="6" y="0" width="466" height="50" uuid="2ef6e064-ee68-45ae-b9bd-e9d42997166d"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<text><![CDATA[g) A Cooperativa poderá, a seu critério, disponibilizar ao Emitente e ao(s) Devedores Solidários a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) Emitente e/ou do(s) Devedores Solidários, ou diretamente via conta online disponível no site da Cooperativa.]]></text>
 			</staticText>
 		</band>
-		<band height="38">
+		<band height="50">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == "0"]]></printWhenExpression>
 			<staticText>
-				<reportElement x="6" y="0" width="466" height="38" uuid="ac0ae3f4-661a-4326-900c-54352ab2aa68">
+				<reportElement x="6" y="0" width="466" height="50" uuid="ac0ae3f4-661a-4326-900c-54352ab2aa68">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
