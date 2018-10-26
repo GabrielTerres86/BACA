@@ -650,7 +650,7 @@ PROCEDURE obtem-resgate:
               ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
               ,INPUT par_vlresgat                   /* par_vllanmto */
               ,INPUT par_nrdconta                   /* par_nrdctabb */
-              ,INPUT craplot.nrseqdig + 1           /* par_cdpesqbb */
+              ,INPUT ""                             /* par_cdpesqbb */
               ,INPUT 0                              /* par_vldoipmf */
               ,INPUT 0                              /* par_nrautdoc */
               ,INPUT 0                              /* par_nrsequni */
