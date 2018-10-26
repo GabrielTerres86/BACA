@@ -19,7 +19,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
    Dados referentes ao programa:
 
    Frequencia: Diario.
-   Objetivo  : Atende a solicitacao 005. Efetuar debito de agendamentos feitos
+   Objetivo  : Atende a solicitacao 005. Efetuar debito de agendamentos feitos 
                na Internet.
 
    Alteracoes: 17/06/2011 - Ajuste devido a alteracao da include (Henrique).
@@ -59,7 +59,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             SD590929 e SD594359  (Tiago/Fabricio).
 
                05/04/2018 - Projeto Ligeirinho. Alterado o programa para rodar de forma paralelizada no batch noturno. 
-                            Melhora de performance (Fabiano Girardi - AMcom).                            
+                            Melhora de performance (Fabiano Girardi - AMcom).         
      ............................................................................. */
 
      
@@ -682,8 +682,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
      ---------------------------------------
      BEGIN
 
-       --Atribuir o nome do programa que está executando
-       vr_cdprogra:= 'CRPS509';
+      --Atribuir o nome do programa que está executando
+		 vr_cdprogra:= 'CRPS509';
 
        -- Incluir nome do módulo logado
        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS509'
@@ -742,24 +742,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             ,pr_tipo_delete => 'LOTE'); 
                             
 
-       /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
+           /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
        SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
                                       ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
                                       ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
-                                       ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento [OUT]
-                                       ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade [OUT]
-                                       ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro [OUT]
-                                       ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer  [OUT]
+                                          ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento [OUT]
+                                          ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade [OUT]
+                                          ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro [OUT]
+                                          ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer  [OUT]
 
-       IF nvl(vr_cdcritic,0) > 0 OR
-          TRIM(vr_dscritic) IS NOT NULL THEN
-         RAISE vr_exc_saida; 
-       END IF;             
+           IF nvl(vr_cdcritic,0) > 0 OR
+              TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida; 
+           END IF;             
          --Nao retirar este commit, nem para testar.
          COMMIT;
-
-    
+/*
        /* Valido somente para InternetBank, por isto pac 90 */
        PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                              ,pr_nrdconta => 0             --Numero da Conta
@@ -773,7 +772,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          --Levantar Excecao
          RAISE vr_exc_saida;
        END IF;
-
+*/
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 
                                                       ,pr_cdprogra => vr_cdprogra);
@@ -849,6 +848,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                        ,pr_dtmvtopg    => vr_dtmvtopg         --Data de pagamento
                                        ,pr_inproces    => rw_crapdat.inproces --Indicador processo
                                        ,pr_cdprogra    => vr_cdprogra         --Nome do programa
+																			 ,pr_inpriori    => pr_inpriori         --Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
                                        ,pr_tab_agendto => vr_tab_agendto      --tabela de agendamento
                                        ,pr_cdcritic    => vr_cdcritic         --Codigo da Critica
                                        ,pr_dscritic    => vr_dscritic);       --Descricao da Critica
@@ -1154,7 +1154,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
 
        --Gerar Relatorio
        PAGA0001.pc_gera_relatorio (pr_cdcooper    => 0              --Todas Cooperativas
-                                  ,pr_cdprogra    => vr_cdprogra    --Codigo Programa
+                                  ,pr_cdprogra    => SUBSTR(vr_cdprogra,1,7)    --Codigo Programa
                                   ,pr_tab_agendto => vr_tab_agendto --Tabela de memoria c/ agendamentos
                                   ,pr_rw_crapdat  => rw_crapdat     --Registro de Datas
                                   ,pr_cdcritic    => vr_cdcritic    --Codigo da Critica
