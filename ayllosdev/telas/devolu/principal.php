@@ -45,7 +45,7 @@
 	}
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Monta o xml dinâmico de acordo com a operação
@@ -82,11 +82,31 @@
 	if($opcao == 'CI') {
 		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 			$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 		}	
 	}
 	$qtregist   = $xmlObjeto->roottag->tags[1]->attributes["QTREGIST"];
 	$nmprimtl	= $xmlObjeto->roottag->tags[1]->attributes['NMPRIMTL'];
+	
+	//Mensageria referente a situação da conta
+	$xml  = ""; 
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult_prj = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto_prj = getObjectXML($xmlResult_prj);	
+
+	$param = $xmlObjeto_prj->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto_prj->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto_prj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$retornoAposErro,false);
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+	}
 	
 	include('form_devolu.php');
 
