@@ -1224,7 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 15/08/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -1469,6 +1469,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
                 15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
 			                       pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+                             
+                26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
+                             não estava deixando excluir aplicação 
+                             PRJ 450 Jaison (Lucas Ranghetti INC0026191)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -6715,7 +6719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 05/09/2014
+   Data    : Maio/2014                          Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -6726,6 +6730,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 05/09/2014 - Incluido tratamento de erro no retorno da pc_validar_nova_aplicacao
                              (Adriano).
                 
+                26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
+                             não estava deixando excluir aplicação 
+                             PRJ 450 Jaison (Lucas Ranghetti INC0026191)
   .......................................................................................*/
   PROCEDURE pc_excluir_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                      ,pr_cdageope IN crapage.cdagenci%TYPE --> Código da agência
@@ -7989,29 +7996,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         -- Excluir lancamentos 
         BEGIN
-          /*DELETE FROM craplcm
-           WHERE craplcm.rowid = rw_craplcm.rowid;*/
-           
-          lanc0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
-                                         , pr_dtmvtolt => NULL
-                                         , pr_cdagenci => NULL
-                                         , pr_cdbccxlt => NULL
-                                         , pr_nrdolote => NULL
-                                         , pr_nrdctabb => NULL
-                                         , pr_nrdocmto => NULL
-                                         , pr_cdhistor => NULL
-                                         , pr_nrctachq => NULL
-                                         , pr_nrdconta => NULL
-                                         , pr_cdpesqbb => NULL
-                                         , pr_rowid    => rw_craplcm.rowid
-                                         , pr_cdcritic => vr_cdcritic
-                                         , pr_dscritic => vr_dscritic); 
-                                         
-          IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
-             vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
+          DELETE FROM craplcm
+           WHERE craplcm.rowid = rw_craplcm.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir lancamentos!';
             RAISE vr_exc_erro;
-          END IF;                                 
-        
         END;
           
       END IF;  
