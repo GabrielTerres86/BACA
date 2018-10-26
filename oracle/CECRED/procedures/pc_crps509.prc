@@ -780,7 +780,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
 		 
          --Nao retirar este commit, nem para testar.
          COMMIT;
-
+/*
        /* Valido somente para InternetBank, por isto pac 90 */
        PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                              ,pr_nrdconta => 0             --Numero da Conta
@@ -794,7 +794,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          --Levantar Excecao
          RAISE vr_exc_saida;
        END IF;
-
+*/
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 
                                                       ,pr_cdprogra => vr_cdprogra);

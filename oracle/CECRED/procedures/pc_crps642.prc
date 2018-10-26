@@ -181,7 +181,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       --> Commit para garantir a gravação do parametro de 
       --> controle de execução do programa DEBSIC CTRL_DEBSIC_EXEC
       COMMIT;
-      
+/*      
       -- Procedure para atualizar o registro de transação para não efetivado
       PAGA0001.pc_atualiza_trans_nao_efetiv ( pr_cdcooper => pr_cdcooper  --Código da Cooperativa
                                              ,pr_nrdconta => 0           --Numero da Conta
@@ -195,7 +195,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
         --Envio do log de erro
         RAISE vr_exc_saida;
       END IF;
-
+*/
       -- Carrega o numero de dias para baixa dos valores
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
                                                 ,pr_nmsistem => 'CRED'
