@@ -4560,6 +4560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                
                   26/03/2018 - Ajuste feito para que caso ocorra algum erro na procedure pc_proc_envia_tec_ted
                                seja atualizado a situacao para erro e grave a descrição. SD (852564 - Kelvin)
+							   
+				  19/10/2018 - Ajuste na rotina para prever erro de alocamento de lote (Andrey Formigari - Mouts)
                                
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
@@ -4993,6 +4995,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   END;
 
               ELSE
+                  ROLLBACK;
+                  
                   BEGIN
                     UPDATE craplfp
                        SET idsitlct = 'E'  --Erro
@@ -5006,6 +5010,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                           -- Executa a exceção
                           RAISE vr_exc_erro;
                    END;
+                   
+                   COMMIT;
+                   
+                   vr_dscritic := 'Nao foi possivel efetuar a transferencia.'; 
+                   RAISE vr_exc_erro;
 
               END IF;
 
