@@ -161,8 +161,8 @@ BEGIN
 
      --Zerar tabelas de memoria auxiliar
      pc_limpa_tabela;
-
-     /* Valido somente para InternetBank, por isto pac 90 */
+/*
+    -- Valido somente para InternetBank, por isto pac 90
     PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                            ,pr_nrdconta => 0             --Numero da Conta
                                            ,pr_cdagenci => 90            --Código da Agencia
@@ -175,7 +175,7 @@ BEGIN
        --Levantar Excecao
        RAISE vr_exc_saida;
      END IF;
-
+*/
      --Essa informacao é necessária para a rotina pc_calc_poupanca
      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'
@@ -228,17 +228,17 @@ BEGIN
      -- só atualiza situação dos lançamentos se for a última execução do dia
      IF pr_execucao = 3 THEN
        --
-       IF rw_crapdat.inproces = 1 THEN
-         UPDATE craplau lau
-            SET lau.insitlau = 4
-               ,lau.dtdebito = lau.dtmvtopg 
-               ,lau.cdcritic = 999
-          WHERE lau.cdcooper = pr_cdcooper
-            AND lau.dsorigem IN ('INTERNET','TAA')
-            AND lau.insitlau = 1
-            AND lau.dtmvtopg BETWEEN vr_dtmvtoan - 7 AND vr_dtmvtoan
-            AND lau.cdtiptra = 4; --Somente TED
-       END IF;
+     IF rw_crapdat.inproces = 1 THEN
+       UPDATE craplau lau
+          SET lau.insitlau = 4
+             ,lau.dtdebito = lau.dtmvtopg 
+             ,lau.cdcritic = 999
+        WHERE lau.cdcooper = pr_cdcooper
+          AND lau.dsorigem IN ('INTERNET','TAA')
+          AND lau.insitlau = 1
+          AND lau.dtmvtopg BETWEEN vr_dtmvtoan - 7 AND vr_dtmvtoan
+          AND lau.cdtiptra = 4; --Somente TED
+     END IF;
        --
      END IF;           
      --Gerar Relatorio
