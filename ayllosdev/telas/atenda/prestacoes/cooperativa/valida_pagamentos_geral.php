@@ -63,7 +63,7 @@
 	// Diego Simas (AMcom) 
 
 	  // Monta o xml de requisição
-	  $xml .= "<Root>";
+	  $xml  = "<Root>";
   	  $xml .= "	<Cabecalho>";
 	  $xml .= "		<Bo>b1wgen0084b.p</Bo>";
 	  $xml .= "		<Proc>valida_pagamentos_geral</Proc>";
