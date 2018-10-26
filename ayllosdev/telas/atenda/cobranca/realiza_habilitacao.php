@@ -38,6 +38,8 @@
 
 				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
+				29/08/2018 - Inclusão da tratativa da mensagem para borderos quando removido a Negativação via Serasa e selecionado a remoção para todas as COBS.
+
 *************************************************************************/
 
 	session_start();
@@ -142,8 +144,12 @@
 
 		$xmlResult = mensageria($xmlCarregaDados, "SSPC0002", 'ALTERA_NEGATIVACAO', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+    		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		    exit();
+		}
 	} 
-
 	echo 'hideMsgAguardo();';
 
 	$xmlDados = $xmlObjCarregaDados->roottag->tags[0];
@@ -168,7 +174,14 @@
 	}
 	else
 	if ($flgimpri == 1 || ((int)$flprotes && (int)$flprotes !== $flproalt)) {  // Se tem o PDF a mostrar entao chama função para mostrar PDF do impresso gerado no browser
-		echo 'confirmaImpressao("'.$flgregis.'","");';
+		if ($flposbol == 1){
+			echo 'showError("inform",
+				     "Instru&ccedil;&atilde;o de negativa&ccedil;&atilde;o removida dos t&iacute;tulos com sucesso,<br> com exce&ccedil;&atilde;o dos t&iacute;tulos inclusos em border&ocirc;s de desconto de t&iacute;tulo.",
+					 "Alerta - Aimaro",
+					 "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'."confirmaImpressao('".$flgregis."','');".'");';
+		}else{
+			echo 'confirmaImpressao("'.$flgregis.'","");';
+		}
 	} 
 	else {	
 		echo $metodo;

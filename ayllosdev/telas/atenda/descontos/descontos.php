@@ -14,6 +14,7 @@
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  * 006: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 007: [18/08/2018] GFT: Ajuste Projeto 403 - Reformulação Desconto de Titulo. 
+ * 008: [22/08/2018] Vitor Shimada Assanuma(GFT): Adicionado abas na tela de títulos e histórico de contrato de limite.
  */	
 
 
@@ -63,7 +64,7 @@
 					</td> 
 				</tr>    
 				<tr>
-					<td class="tdConteudoTela" align="center">	
+					<td class="tdConteudoTela" align="center" id="tdConteudoOpcoes">	
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">

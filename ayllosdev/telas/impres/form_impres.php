@@ -10,6 +10,7 @@
  * 29/11/2012 - Daniel       (CECRED) : Alterado botões do tipo tag <input> para tag <a> novo layout.
  * 31/05/2013 - Daniel       (CECRED) : Retirado campo flgtarif.
  * 08/08/2016 - Guilherme    (SUPERO) : M325 - Informe de Rendimentos Trimestral PJ
+ * 28/08/2018 - Cassia       (GFT)    : Adicionado campos para extrato de Desconto de Títulos
  * --------------
  */
 ?>
@@ -85,7 +86,6 @@
 		<label for="nranoref"><? echo utf8ToHtml('Ano:') ?></label>
 		<input name="nranoref" id="nranoref" type="text" value="<? echo $nranoref ?>" value="" />
     </div>
-	
 <div id="divGeral" style="float:left">
 		<label for="flgemiss"><? echo utf8ToHtml('Quando?:') ?></label>
 		<select name="flgemiss" id="flgemiss">
@@ -151,5 +151,10 @@ $("#tpinform","#frmImpres").change(function() {
 	<input name="nranoref" id="nranoref" type="hidden" value="" />
 	<input name="nrperiod" id="nrperiod" type="hidden" value="" />
 	<input name="tpinform" id="tpinform" type="hidden" value="" />
+	<input name="idimpres" id="idimpres" type="hidden" value="" />
+	<input name="flgemail" id="flgemail" type="hidden" value="" />
+	<input name="nrctrlim" id="nrctrlim" type="hidden" value="" />
+	<input name="nrborder" id="nrborder" type="hidden" value="" />
+	<input name="limorbor" id="limorbor" type="hidden" value="" />
 </form>
 

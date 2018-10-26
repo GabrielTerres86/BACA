@@ -807,7 +807,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
 
     Objetivo  : Rotina para manipular os dados referente ao Serasa.
 
-    Alteracoes: -----
+    Alteracoes: 
+      29/08/2018 - Vitor Shimada Assanuma (GFT) - Inclusão da regra para que quando a cob estiver em um bordero não rejeitado, não deixar retirar
+                     a instrução de Negativação Serasa.
     ..............................................................................*/
     DECLARE
 
@@ -881,14 +883,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       ELSIF pr_flposbol = 1 THEN
 
         BEGIN
-          UPDATE crapcob 
-             SET flserasa = 0 
-           WHERE cdcooper = vr_cdcooper 
-             AND nrdconta = pr_nrdconta 
-             AND nrcnvcob = pr_nrconven 
-             AND incobran = 0 
-             AND inserasa IN (0,6)
-             AND cddespec IN (1,2,3); -- (01-DM,02-DS,03-NP)
+          UPDATE crapcob cob
+             SET cob.flserasa = 0 
+           WHERE cob.cdcooper = vr_cdcooper 
+             AND cob.nrdconta = pr_nrdconta 
+             AND cob.nrcnvcob = pr_nrconven 
+             AND cob.incobran = 0 
+             AND cob.inserasa IN (0,6)
+             AND cob.cddespec IN (1,2,3) -- (01-DM,02-DS,03-NP)
+             AND NOT EXISTS (
+               SELECT 1 FROM craptdb tdb -- Verifica se a cobrança está em um bordero não rejeitado
+                 INNER JOIN crapbdt bdt ON tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder
+               WHERE tdb.cdcooper = cob.cdcooper 
+                 AND tdb.nrdconta = cob.nrdconta
+                 AND tdb.nrcnvcob = cob.nrconven 
+                 AND tdb.nrdocmto = cob.nrdocmto
+                 AND bdt.insitbdt <> 5
+             );
         EXCEPTION
           WHEN OTHERS THEN
           vr_dscritic := 'Problema ao alterar dados (crapcob): ' || SQLERRM;

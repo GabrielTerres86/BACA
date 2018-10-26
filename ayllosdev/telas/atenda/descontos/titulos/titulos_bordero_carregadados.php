@@ -47,8 +47,11 @@
 				03/08/2018 - Inclusão da regra para mostrar mensagem se for bordero novo ou antigo (Vitor Shimada Assanuma - GFT)
 							 Inclusão dos campos de Risco
 
+				06/08/2018 - Impressão de Extrato do Borderô (Vitor Shimada Assanuma - GFT)
+
 				15/08/2018 - Inserido a regra para verificar se a chave está virada e se o borderô foi liberado no processo antigo. (Vitor Shimada Assanuma - GFT)
 
+				09/10/2018 - Fix na regra de mostrar o botão de extrato, para somente bordero liberados e no processo novo e ter acesso - Vitor S Assanuma (GFT)
 	************************************************************************/
 	
 	session_start();
@@ -225,8 +228,21 @@
 	<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
 	<?php } ?>	
 
+	<?php if ($flgnewbor) { ?>
+		<label for="innivris"><? echo utf8ToHtml('Nível Risco') ?></label>
+		<input type="text" name="innivris" id="innivris" value="<?php echo $bordero[16]->cdata; ?>" />
+		<br />
+	<?php } ?>
+	
 	<label for="txjurmor"><? echo utf8ToHtml('Taxa de Mora:') ?></label>
 	<input type="text" name="txjurmor" id="txjurmor" value="<?php echo number_format(str_replace(",",".",$bordero[4]->cdata),7,",","."). " %"; ?>" />
+	
+	<?php if ($flgnewbor) { ?>
+		<label for="qtdiaatr"><? echo utf8ToHtml('Qtd. Dias Risco') ?></label>
+		<input type="text" name="qtdiaatr" id="qtdiaatr" value="<?php echo $bordero[17]->cdata; ?>" />
+		<br />
+	<?php } ?>
+
 	</fieldset>
 </form>
 <div>
@@ -235,6 +251,13 @@
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/visualizar_titulos.gif" onClick="carregaTitulosBorderoDscTit();return false;" />
 		
 			<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $bordero[14]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&bordero=<?php echo formataNumericos('z.zzz.zz9',$bordero[0]->cdata,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>		
+
+		<?php 
+		// Somente para borderos liberados e no processo novo
+		if ($flgnewbor && $bordero[5]->cdata !== '' && in_array("X", $opcoesTela) ){?>
+            <input type="image" src="<?php echo $UrlImagens; ?>botoes/extrato.gif" onClick="gerarImpressao(11,3, 'no');return false;" />		
+        <?php } ?>
+        
 	<?php } 
 	//Form com os dados para fazer a chamada da geração de PDF	
 	include("impressao_form.php"); 

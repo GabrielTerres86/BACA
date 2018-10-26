@@ -25,6 +25,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --             15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
   --
   --             23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
+  --             23/08/2018 - Alteraçao na pc_renova_limdesctit: Registrar a renovação na tabela de histórico de alteraçao 
+  --                          de contrato de limite (Andrew Albuquerque - GFT)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -132,6 +134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                  15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
   
                  23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
+                 23/08/2018 - Alteraçao na pc_renova_limdesctit: Registrar a renovação na tabela de histórico de alteraçao 
+                              de contrato de limite (Andrew Albuquerque - GFT)
   */
   ---------------------------------------------------------------------------------------------------------------
   
@@ -1339,6 +1343,28 @@ BEGIN
                       continue;
              end;
 
+             -- Gerar histórico de Majoração/manutenção de Proposta.
+             cecred.tela_atenda_dscto_tit.pc_gravar_hist_alt_limite(pr_cdcooper => pr_cdcooper
+                                                                   ,pr_nrdconta => pr_nrdconta
+                                                                   ,pr_nrctrlim => pr_nrctrlim
+                                                                   ,pr_tpctrlim => 3 -- Limite Desconto Titulo
+                                                                   ,pr_dsmotivo => 'RENOVAÇÃO AUTOMÁTICA'
+                                                                   ,pr_cdcritic => vr_cdcritic 
+                                                                   ,pr_dscritic => vr_dscritic 
+                                                                   );
+             --  Se ocorreu erro
+             if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Erro no lancamento de histórido de limite de desconto de titulo';
+                -- Envio centralizado de log de erro
+               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                             || vr_cdprogra || ' --> '
+                                                             || vr_dscritic);
+                                                             
+             end if;
+             
              -- Gera Log de alteracao
              pc_gera_log_alteracao(pr_cdcooper => rw_craplim_crapass.cdcooper
                                   ,pr_nrdconta => rw_craplim_crapass.nrdconta
