@@ -2632,9 +2632,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
               --
-            -- EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA
-            ELSIF Upper(r_processo_horario.cdprocesso) = 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB' THEN
-              vr_cdprogra := 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB';
+            -- TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB' THEN
+              vr_cdprogra := 'TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB';
 
               -- Log de ocorrência
               pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -2653,7 +2653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_idtiplog => 'I');
 
               -- Executa processo/programa
-              empr0009.pc_efetiva_lcto_pendente_job(pr_cdcooper => pr_cdcooper);
+              TELA_LAUTOM.pc_efetiva_lcto_pendente_job(pr_cdcooper => pr_cdcooper);
 
               -- Tratamento de erro
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
