@@ -3,7 +3,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação                                        
                                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                              ,pr_dscritic OUT VARCHAR2) IS
+                                              ,pr_dscritic OUT VARCHAR2
+                                              ,pr_inpriori IN VARCHAR2 DEFAULT 'T'  ) IS  --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos)  
   BEGIN
     /*..............................................................................
 
@@ -11,14 +12,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2013                        Ultima atualizacao: 30/12/2015
+       Data    : Abril/2013                        Ultima atualizacao: 26/03/2018
 
        Dados referentes ao programa:
 
        Frequencia: Diario.
        Objetivo  : Solicitacao 005. Efetuar debito de agendamentos de
                    convenios SICREDI feitos na Internet. 
-                   
+
                                ************ ATENCAO *************
                    CASO NECESSARIO RODAR PROGRAMA MANUALMENTE VERIFICAR A NECESSIDADE DE AJUSTAR O
                    PARAMETRO(CRAPPRM) CTRL_DEBSIC_EXEC QUE CONTROLA A EXECUÇÃO DO PROGRAMA.
@@ -43,7 +44,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
                                 SD358499 (Odirlei-AMcom)
                    
                    30/12/2015 - Ajuste na chamada da proc. pc_atualiza_trans_nao_efetiv, adicionado
-                                param de saida pr_dstransa. (Jorge/David) Proj. 131 - Assinatura Multipla              
+                                param de saida pr_dstransa. (Jorge/David) Proj. 131 - Assinatura Multipla      
+
+                   26/03/2018 - Inclusão do pr_inpriori: Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos).
+                                Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S' .	(Fabiano B. Dias - AMcom)	 									 
+																
     ..............................................................................*/
     
     DECLARE
@@ -61,7 +66,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       rw_crapcop cr_crapcop%ROWTYPE;
 
       -- Código do programa
-      vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS642';
+      vr_cdprogra     VARCHAR2(50);--CONSTANT crapprg.cdprogra%TYPE := 'CRPS642';
       -- Tratamento de erros
       vr_exc_saida    EXCEPTION;
       vr_exc_fimprg   EXCEPTION;
@@ -81,6 +86,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       
 
     BEGIN
+		
+      --Atribuir o nome do programa que está executando
+      IF pr_inpriori = 'S' THEN
+        vr_cdprogra:= 'CRPS642_PRIORI';
+      ELSE
+			  vr_cdprogra:= 'CRPS642';
+      END IF;
+
+      -- Quando a tela DEBSIC (progress) chamar esta procedure, nao deve contar a execucao.	   
+      IF pr_inpriori <> 'T' THEN	  
+         -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                     ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)                              
+                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica  
+         IF vr_dscritic IS NOT NULL THEN
+           RAISE vr_exc_saida;
+         END IF;
+      END IF;			 
+
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS642'
                                 ,pr_action => null);
@@ -133,21 +157,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       END IF;
 
       vr_dtmvtopg:= rw_crapdat.dtmvtolt;
-      
-      --> Verificar/controlar a execução da DEBNET e DEBSIC 
-      SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
-                                      ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
-                                      ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
-                                      ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
-                                      ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
-                                      ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
 
-      IF nvl(vr_cdcritic,0) > 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_saida; 
-      END IF; 
+      -- Quando a tela DEBSIC (progress) chamar esta procedure, nao deve contar a execucao.	   
+      IF pr_inpriori <> 'T' THEN	  
+		 
+        --> Verificar/controlar a execução da DEBNET e DEBSIC 
+        SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
+                                        ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                        ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                        ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
+                                        ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                        ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                        ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                        ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida; 
+        END IF; 
+      
+      END IF; --pr_inpriori <> 'T'   
       
       --> Commit para garantir a gravação do parametro de 
       --> controle de execução do programa DEBSIC CTRL_DEBSIC_EXEC
@@ -194,6 +223,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,pr_nmrescop => rw_crapcop.nmrescop         --> Nome resumido da cooperativa
                                             ,pr_dtmvtopg => vr_dtmvtopg                 --> Data da efetivação do débito
                                             ,pr_inproces => rw_crapdat.inproces         --> Indicador do processo
+																						,pr_inpriori => pr_inpriori                 --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
                                             ,pr_tab_agendamentos => vr_tab_agendamentos --> Retorna os agendamentos
                                             ,pr_cdcritic => vr_cdcritic                 --> Codigo da critica de erro
                                             ,pr_dscritic => vr_dscritic);               --> Descrição do erro
@@ -220,7 +250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       
       -- Gderando o resumo das operações efetuadas
       SICR0001.pc_gera_relatorio( pr_cdcooper  => pr_cdcooper         --> Código da cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra         --> Código do programa
+                                 ,pr_cdprogra  => SUBSTR(vr_cdprogra,1,7)         --> Código do programa
                                  ,pr_inproces  => rw_crapdat.inproces --> Indicador do processo
                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
                                  ,pr_tab_agend => vr_tab_agendamentos --> Tabela temporária com a carga de agendamentos
