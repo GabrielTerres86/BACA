@@ -149,7 +149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_NumCtrlEmis := fn_gera_NumCtrlEmis(pr_dsdsigla,pr_nrseqarq);
     
     -- Cria o corpo do XML
-    pr_dsxmlarq := XMLTYPE.createXML('<APCSDOC xmlns="http://www.cip-bancos.org.br/ARQ/'||pr_dsdsigla||'.xsd"> '
+    pr_dsxmlarq := XMLTYPE.createXML('<?xml version="1.0"?>'
+                                   ||'<APCSDOC xmlns="http://www.cip-bancos.org.br/ARQ/'||pr_dsdsigla||'.xsd"> '
                                    ||'<BCARQ>'
                                    ||'  <NomArq>'||vr_nmarquiv||'</NomArq>'
 	                                 ||'  <NumCtrlEmis>'||vr_NumCtrlEmis||'</NumCtrlEmis>'
@@ -2070,7 +2071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   END pc_proc_xml_APCS106;
   
   
-  PROCEDURE pc_proc_xml_APCS108(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+    PROCEDURE pc_proc_xml_APCS108(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
                                ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -2106,16 +2107,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                             , nrmotact  NUMBER       PATH 'MotvActeComprioPortddCtSalr'
                             , dtaceite  VARCHAR2(30) PATH 'DtCancelPortddCtSalr' );
     
-    -- Buscar a solicitação da portabilidade 
-    CURSOR cr_portab(pr_nrnuport  tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
+    -- Buscar a solicitação da portabilidade recebidas
+    CURSOR cr_portab_recebe(pr_nrnuport  tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE) IS
       SELECT t.nrnu_portabilidade
            , ROWID   dsdrowid
         FROM tbcc_portabilidade_recebe t
        WHERE t.nrnu_portabilidade = pr_nrnuport;
-    rg_portab   cr_portab%ROWTYPE;
+    
+    -- Buscar a solicitação da portabilidade enviadas
+    CURSOR cr_portab_envia(pr_nrnuport  tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
+      SELECT t.nrnu_portabilidade
+           , ROWID   dsdrowid
+        FROM tbcc_portabilidade_envia t
+       WHERE t.nrnu_portabilidade = pr_nrnuport;
     
     -- Variáveis 
     vr_dsmsglog     VARCHAR2(1000);
+    vr_nrnuport     NUMBER;
+    vr_dsdrowid     VARCHAR2(100);
     
   BEGIN
     
@@ -2123,11 +2132,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     FOR rg_dadosret IN cr_dadosret LOOP
   
       -- Buscar o registro pelo código da NU portabilidade
-      OPEN  cr_portab(rg_dadosret.nrnuport);
-      FETCH cr_portab INTO rg_portab;
+      OPEN  cr_portab_recebe(rg_dadosret.nrnuport);
+      FETCH cr_portab_recebe INTO vr_nrnuport, vr_dsdrowid;
       
       -- Se não encontrar a solicitação de portabilidade
-      IF cr_portab%NOTFOUND THEN
+      IF cr_portab_recebe%NOTFOUND THEN
+        vr_nrnuport := NULL;
+        vr_dsdrowid := NULL;
+        
+        -- Buscar o registro pelo código da NU portabilidade
+        OPEN  cr_portab_envia(rg_dadosret.nrnuport);
+        FETCH cr_portab_envia INTO vr_nrnuport, vr_dsdrowid;
+        
+        -- Se não encontrar a solicitação de portabilidade
+        IF cr_portab_envia%NOTFOUND THEN
+          vr_nrnuport := NULL;
+          vr_dsdrowid := NULL;
+        ELSE
+          
+          -- Atualiza a solicitação para APROVADA
+          UPDATE tbcc_portabilidade_envia t
+             SET t.idsituacao       = 3 -- Aprovada
+               , t.dsdominio_motivo = vr_dsmotivoaceite
+               , t.cdmotivo         = rg_dadosret.nrmotact
+               , t.dtretorno        = rg_dadosret.dtaceite
+           WHERE ROWID = vr_dsdrowid;
+         
+        END IF;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab_envia;
+      
+      ELSE 
+        
+        -- Atualiza a solicitação para APROVADA
+        UPDATE tbcc_portabilidade_recebe t
+           SET t.idsituacao       = 2 -- Aprovada
+             , t.dsdominio_motivo = vr_dsmotivoaceite
+             , t.cdmotivo         = rg_dadosret.nrmotact
+             , t.dtretorno        = rg_dadosret.dtaceite
+         WHERE ROWID = vr_dsdrowid;
+       
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab_recebe;
+        
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF vr_nrnuport IS NULL THEN
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,'hh24:mi:ss')||' - '
@@ -2144,24 +2197,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             NULL;
         END;
         
-        -- Fechar o cursor
-        CLOSE cr_portab;
-    
         -- Processar o próximo registro
         CONTINUE;
         
       END IF;
-      
-      -- Fechar o cursor
-      CLOSE cr_portab;
-     
-      -- Atualiza a solicitação para CANCELADA
-      UPDATE tbcc_portabilidade_recebe t
-         SET t.idsituacao       = 2 -- Aprovada
-           , t.dsdominio_motivo = vr_dsmotivoaceite
-           , t.cdmotivo         = rg_dadosret.nrmotact
-           , t.dtretorno        = rg_dadosret.dtaceite
-       WHERE ROWID = rg_portab.dsdrowid;
       
     END LOOP;
         
@@ -2952,6 +2991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 		vr_dthrexe     TIMESTAMP;
 		vr_jobname     VARCHAR2(100);
 		vr_lstdados    gene0002.typ_split;
+		vr_dtutil      DATE;
 		
 		-- Variável de críticas
     vr_dscritic    VARCHAR2(10000);
@@ -2960,6 +3000,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_exc_erro    EXCEPTION;
 		
 	BEGIN
+		
+		vr_dtutil := gene0005.fn_valida_dia_util(pr_cdcooper => 3
+		                                        ,pr_dtmvtolt => trunc(SYSDATE));
+																						
+    IF vr_dtutil <> trunc(SYSDATE) THEN
+		   RETURN;
+		END IF;
 
     FOR rw_crappco IN cr_crappco LOOP
 			--

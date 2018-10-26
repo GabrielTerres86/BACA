@@ -1,0 +1,64 @@
+DECLARE
+/* ---------------------------------------------------------------------------------------------------------------
+
+		Programa : JB_PCPS_AGENDA
+		Sistema  : CRED
+		Sigla    : PCPS
+		Autor    : Augusto - Supero
+		Data     : Outubro/2018.
+
+		Dados referentes ao programa:
+
+		Frequencia: -----
+		Objetivo  : Rotina referente ao agendamento dos JOBS da integração PCPS.
+
+		Alteracoes:
+
+---------------------------------------------------------------------------------------------------------------*/
+
+PROCEDURE cria_agendamento IS
+BEGIN
+	sys.dbms_scheduler.create_job(
+          job_name        => 'cecred.JB_PCPS_AGENDA',
+          job_type        => 'PLSQL_BLOCK',
+          job_action      => 
+          'DECLARE
+            vr_cdcritic     INTEGER:= 0;
+            vr_dscritic     VARCHAR2(4000);
+          BEGIN
+            PCPS0002.pc_agenda_jobs();
+          END;',
+          start_date      => TO_TIMESTAMP_TZ(to_date(SYSDATE+1 ,'DD/MM/RRRR')||' 03:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR'),
+          repeat_interval => 'Freq=Daily;ByHour=3;BYMINUTE=0;BYSECOND=0;ByDay=MON,TUE,WED,THU,FRI',
+          end_date        => to_date(null),
+          job_class       => 'DEFAULT_JOB_CLASS',
+					enabled         => true,
+					auto_drop       => true,
+					comments        => 'Processar solicitação pc_crps730');
+END;
+
+
+BEGIN
+  BEGIN
+    sys.dbms_scheduler.drop_job(job_name => 'cecred.JB_PCPS_AGENDA');
+    dbms_output.put_line('Exclusão Ok JB_PCPS_AGENDA');
+    cria_agendamento;
+  EXCEPTION 
+    WHEN OTHERS THEN
+      IF SQLCODE = -27475 THEN
+        dbms_output.put_line('Não existe JB_PCPS_AGENDA Ok !');
+        cria_agendamento;
+      ELSE
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception;   
+        raise_application_error(-20001,'2 ERRO: ' ||  SQLERRM);
+      END IF;
+  END;
+  
+EXCEPTION 
+  WHEN OTHERS THEN
+    -- No caso de erro de programa gravar tabela especifica de log  
+    CECRED.pc_internal_exception;   
+    raise_application_error(-20002,'1 ERRO: ' ||  SQLERRM);
+END;  
+/
