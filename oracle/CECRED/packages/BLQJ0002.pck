@@ -3792,7 +3792,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                              rw_crapdat.dtmvtolt,
                              rw_monitoramento.progress_recid_mon);
           FETCH cr_lancamento INTO rw_lancamento;
-          IF cr_lancamento%FOUND THEN
+          IF cr_lancamento%FOUND AND 
+             rw_lancamento.vllanmto > 0 THEN
             -- Caso encontre, marca como false para nao verificar saldo
             vr_inprejuz := FALSE;
           END IF;
