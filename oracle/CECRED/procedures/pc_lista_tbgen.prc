@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_lista_tbgen(pr_cdcopprm IN  crapcop.cdcooper%TYPE -- Especifica OU zero e nula vai via crapprm
                                                  ,pr_nrcadeia IN  crapprg.nrsolici%TYPE -- NULL, 0 Lista todas ou especifica
-												 ,pr_dtmovime IN DATE                   -- Data de seleção da execução
-												 ,pr_idatzmed IN VARCHAR2               -- S - Atualiza média de tempo de xecução de programas senão não atualiza média
-												 ,pr_cdcritic OUT INTEGER
-												 ,pr_dscritic OUT VARCHAR2
-												 )
+											                        	 ,pr_dtmovime IN DATE                   -- Data de seleção da execução
+                        												 ,pr_idatzmed IN VARCHAR2               -- S - Atualiza média de tempo de xecução de programas senão não atualiza média
+                        												 ,pr_cdcritic OUT INTEGER
+                        												 ,pr_dscritic OUT VARCHAR2
+                                   							 )
 IS
 BEGIN
   /* ......................................................................................
@@ -12,14 +12,15 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 06/09/2018  
+  Data    : Maio/2018                   Ultima atualizacao: 09/10/2018  
     
   Dados referentes ao programa:
   
-  Frequencia: Disparado pelo JOB JBPRG_GRAF_CADEIA de segunda a sabado ás 09:15 da manha
+  Frequencia: Disparado pelo JOB JBPRG_LISTA_BATCH de segunda a sabado ás 05:30 da manha
+              Caso não aconteceu o termino das cadeias o Job é reagendado com o Job JBPRG_R_LISTA_BAT
 
   Objetivo: 1) Resumo da execução das cadeias
-            2) Detahles da execução das cadeias
+            2) Detalhes da execução das cadeias
                - Listar os tempos de execução da cadeia
                - Listar os erros das cadeias
                - Listar os logs pendentes a acertos 
@@ -37,9 +38,16 @@ BEGIN
                            - Padronizar demostração  se a quantidade de minutos atual for menor que a quantidade
                              de minutos médio (houve melhora de tempo) a diferença mostrar o percentual como Negativo..
                            (Envolti - Belli - Chamado - REQ0028395)
+                           
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - Tratar programa exclusivo retirado da cadeia
+                         - Criticas 1066/1067 - Inicio e Termino execução. Não é erro
+                         - (Envolti - Belli - Chamado - REQ0029484)
+              
   ....................................................................................... */
     
 DECLARE
+  vr_dtsysdat           DATE;
   vr_nmsistem           crapprm.nmsistem%TYPE := 'CRED';
   vr_cdproexe           tbgen_prglog.cdprograma%TYPE := 'pc_lista_tbgen';
   vr_cdproint           VARCHAR2(100);
@@ -48,7 +56,11 @@ DECLARE
   vr_cdmensag           tbgen_prglog_ocorrencia.cdmensagem%TYPE;
   vr_cdprogra           tbgen_prglog.cdprograma%TYPE;
   vr_dtmovime           DATE;
-  vr_dtmvtolt           DATE;
+  -- Eliminada vr_dtmvtolt - 09/10/2018 - Chd REQ0029484
+  --vr_dtmvtolt           DATE;  
+  vr_cdmsgsal           tbgen_prglog_ocorrencia.cdmensagem%TYPE;
+  vr_dtretsal           DATE; 
+  --        
   vr_dtmvtoan           DATE;
   vr_dtmesant           DATE;
   vr_tpcadeia           crapord.tpcadeia%TYPE;
@@ -110,11 +122,12 @@ DECLARE
   vr_tab_tbgen_prglog_duracao    typ_tab_tbgen_prglog_duracao;
   vr_index_tbgen_prglog_duracao  NUMBER(20) := 0;
 
+  -- Elimina dtmvtolt - 09/10/2018 - Chd REQ0029484
   -- Tabela para guardar as cooperativas que processarão - desta forma o programa fica bem rapido     
   TYPE typ_reg_cooper IS RECORD
-         (cdcooper     crapcop.cdcooper%type
-         ,nmrescop     crapcop.nmrescop%type
-         ,dtmvtolt     crapdat.dtmvtolt%type
+         (cdcooper     crapcop.cdcooper%TYPE
+         ,nmrescop     crapcop.nmrescop%TYPE
+         ,hrultpro     VARCHAR2(4)
          ,dtmvtoan     crapdat.dtmvtoan%TYPE);
   TYPE typ_tab_cooper IS TABLE OF 
                                  typ_reg_cooper 
@@ -489,14 +502,16 @@ DECLARE
   Procedure: pc_abre_arquivo
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
   Frequencia: Sempre que for chamado
   Objetivo  : Tratar abertura de arquivo
     
-  Alteracoes: 
+  Alteracoes:                           
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
     --
@@ -511,9 +526,10 @@ DECLARE
     
     vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                         ,pr_cdcooper => vr_cdcooper
-                                        ,pr_nmsubdir => '/arq');                                                                 
+                                        ,pr_nmsubdir => '/arq');    
+    -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484                                                             
     vr_nmarquiv := '/' || pr_nmarqpre || 
-                   '_' || to_char(SYSDATE, 'MMDD_HH24MISS') ||
+                   '_' || to_char(vr_dtsysdat, 'MMDD_HH24MISS') ||
                    '_COOP_'  || vr_cdcooper ||
                    '_TPCAD_' || vr_tpcadeia ||
                     '.'      || pr_tparqext;                                    
@@ -1021,7 +1037,7 @@ DECLARE
   Procedure: pc_espec_tbgen_prglog_ocor
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -1029,6 +1045,9 @@ DECLARE
   Objetivo  : Verifica se programa parou a cadeia
     
   Alteracoes: 
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - Tratar programa exclusivo retirado da cadeia
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */ 
 
@@ -1045,7 +1064,7 @@ DECLARE
     AND    t5.cdmensagem      = vr_cdmensag
     AND    t5.tpocorrencia    = 4
     AND    t5.dhocorrencia    = 
-         ( SELECT MIN(t5.dhocorrencia) 
+         ( SELECT MIN(t6.dhocorrencia) 
            FROM   tbgen_prglog t4
                  ,tbgen_prglog_ocorrencia t6
            WHERE  t4.cdcooper        = t3.cdcooper 
@@ -1053,7 +1072,7 @@ DECLARE
            AND    TRUNC(t4.dhinicio) = TRUNC(t3.dhinicio)
            AND    TO_CHAR(t4.dhinicio,'HH24MI') BETWEEN '0000' AND vr_dsulthor  
            AND    t6.idprglog        = t4.idprglog 
-           AND    t6.cdmensagem      = vr_cdmensag
+           AND    t6.cdmensagem      = t5.cdmensagem -- Ajuste 10/10/2018  REQ0029484
            AND    t6.tpocorrencia    = 4 )
   ORDER BY  t5.dhocorrencia;
   rw_tbgen_oco_min    cr_tbgen_oco_min%ROWTYPE;     
@@ -1071,7 +1090,7 @@ DECLARE
     AND    t5.cdmensagem      = vr_cdmensag
     AND    t5.tpocorrencia    = 4
     AND    t5.dhocorrencia    = 
-         ( SELECT MAX(t5.dhocorrencia) 
+         ( SELECT MAX(t6.dhocorrencia) 
            FROM   tbgen_prglog t4
                  ,tbgen_prglog_ocorrencia t6
            WHERE  t4.cdcooper        = t3.cdcooper 
@@ -1079,10 +1098,38 @@ DECLARE
            AND    TRUNC(t4.dhinicio) = TRUNC(t3.dhinicio)
            AND    TO_CHAR(t3.dhinicio,'HH24MI') BETWEEN '0000' AND vr_dsulthor  
            AND    t6.idprglog        = t4.idprglog 
-           AND    t6.cdmensagem      = vr_cdmensag
+           AND    t6.cdmensagem      = t5.cdmensagem -- Ajuste 10/10/2018  REQ0029484
            AND    t6.tpocorrencia    = 4 )
   ORDER BY  t5.dhocorrencia DESC;
   rw_tbgen_oco_max    cr_tbgen_oco_max%ROWTYPE;
+  --
+  --    
+  -- Selecionar DATA E HORA de reinicio da cadeia após um programa ser saltado
+  CURSOR cr_tbgen_retsal  IS
+    SELECT t3.idprglog, t3.dhinicio, t5.dhocorrencia
+    FROM   tbgen_prglog t3
+          ,tbgen_prglog_ocorrencia t5
+    WHERE  t3.cdcooper        = vr_cdcooper  
+    ---AND    t3.cdprograma      = vr_cdprogra  
+    AND    TRUNC(t3.dhinicio) = vr_dtmovime
+    AND    TO_CHAR(t3.dhinicio,'HH24MI') BETWEEN '0000' AND vr_dsulthor  
+    AND    t5.idprglog        = t3.idprglog 
+    AND    t5.cdmensagem      = vr_cdmsgsal
+    AND    t5.tpocorrencia    = 4
+    AND    t5.dhocorrencia    = 
+         ( SELECT MAX(t6.dhocorrencia) 
+           FROM   tbgen_prglog t4
+                 ,tbgen_prglog_ocorrencia t6
+           WHERE  t4.cdcooper        = t3.cdcooper 
+           AND    t4.cdprograma      = t3.cdprograma
+           AND    TRUNC(t4.dhinicio) = TRUNC(t3.dhinicio)
+           AND    TO_CHAR(t3.dhinicio,'HH24MI') BETWEEN '0000' AND vr_dsulthor  
+           AND    t6.idprglog        = t4.idprglog 
+           AND    t6.cdmensagem      = t5.cdmensagem -- Ajuste 10/10/2018  REQ0029484
+           AND    t6.tpocorrencia    = 4 )
+  ORDER BY  t5.dhocorrencia DESC;
+  rw_tbgen_retsal    cr_tbgen_retsal%ROWTYPE;  
+  --
   --
   CURSOR cr_execucao_manual
   IS
@@ -1117,14 +1164,31 @@ DECLARE
     vr_qthorpar := NULL;
     vr_cdmensag := 1229;
     FOR rw_tbgen_oco_min IN cr_tbgen_oco_min  LOOP
+      vr_dslispr3 := '.';
       IF vr_dthorret IS NULL THEN
         vr_dslispr2 := NULL;
-      ELSE
+        -- Tratar programa exclusivo retirado da cadeia - 09/10/2018 - Chamado - REQ0029484              
+        vr_dslispr3 := ', e o programa foi retirado da cadeia desta noite para não executar.';        
+        vr_cdmsgsal := 1231;
+        vr_dtretsal := NULL;
+        --
+        FOR rw_tbgen_retsal IN cr_tbgen_retsal  LOOP
+          vr_dtretsal := rw_tbgen_retsal.dhocorrencia;
+          IF rw_tbgen_retsal.dhocorrencia > rw_tbgen_oco_min.dhocorrencia THEN
+             vr_dtretsal := rw_tbgen_retsal.dhocorrencia;
+             
+             vr_dthorret := vr_dtretsal;
+             EXIT;
+          END IF;
+        END LOOP; 
+        --  
+      END IF;
+      
+      IF vr_dthorret IS NOT NULL THEN
         vr_qthorpar := TO_NUMBER(REPLACE(TRUNC((((vr_dthorret) - (rw_tbgen_oco_min.dhocorrencia)) * 24 * 60 ),2),',''.'));       
         vr_dslispr2 := ' de ' || TO_CHAR(TRUNC(vr_qthorpar), 'FM900') || ':' || TO_CHAR(MOD((vr_qthorpar * 60), 60), 'FM00') || ' minutos';      
       END IF;
       vr_dsparcad := '***';
-      vr_dslispr3 := '.';
       vr_ctregist := 0;
       BEGIN
         FOR rw_execucao_manual IN cr_execucao_manual LOOP
@@ -1137,6 +1201,7 @@ DECLARE
           END IF;
         END LOOP;
       END;
+      
       vr_ctsequec := vr_ctsequec + 1;
       vr_dslispr1 := TO_CHAR(vr_ctsequec,'9900') || '&nbsp;-&nbsp;O programa "' || LOWER(vr_nmprogra) || '" (' ||
                      vr_cdprogra || ') '  || 
@@ -1236,14 +1301,16 @@ DECLARE
   Procedure: pc_crapprg
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
   Frequencia: Sempre que for chamado
   Objetivo  : Trata cadastro de programa
     
-  Alteracoes: 
+  Alteracoes:                           
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
   
@@ -1345,9 +1412,9 @@ DECLARE
             
           END IF;
         END LOOP;                    
-        vr_qtprocad := vr_qtprocad + 1;
-        ---vr_dshorfim := TO_CHAR(vr_dhfimpro,'HH24:MI:SS');    
-        vr_dshorfim := TO_CHAR(NVL(vr_dhfimpro,TRUNC(SYSDATE)),'HH24:MI:SS');
+        vr_qtprocad := vr_qtprocad + 1;  
+        -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484
+        vr_dshorfim := TO_CHAR(NVL(vr_dhfimpro,TRUNC(vr_dtsysdat)),'HH24:MI:SS');
         vr_dsdatuca := TO_CHAR(vr_dtmvtoan,'DD/MM');
               
         IF vr_dshoruca IS NULL       OR
@@ -1644,7 +1711,7 @@ DECLARE
   Procedure: pc_tipo_cadeia
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -1653,7 +1720,9 @@ DECLARE
               Primeiro tipo cadeia 3 Noturna
               Segundo  tipo cadeia 1 Diaria
     
-  Alteracoes: 
+  Alteracoes:                            
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */  
   
@@ -1744,9 +1813,10 @@ DECLARE
       ELSE
         vr_dstipcad := 'Não identificada';
       END IF;
-            
+      
+      -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484            
       vr_dscb1pad := ' - Cooperativa: '      || vr_cdcooper || ' ' || vr_nmrescop ||
-                     ' - Gerado em: '        || TO_CHAR(SYSDATE,'DD/MM/YYYY HH24:MI:SS');   
+                     ' - Gerado em: '        || TO_CHAR(vr_dtsysdat,'DD/MM/YYYY HH24:MI:SS');   
       
       vr_dscb2pad := 'Data parâmetro: ' || vr_dtmovime || 
                      ' - Tipo Cadeia: '      || vr_tpcadeia || ' ' || vr_dstipcad ||
@@ -1908,14 +1978,17 @@ DECLARE
   Procedure: pc_crapcop
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
   Frequencia: Sempre que for chamado
   Objetivo  : Trata cadastro de cooperativa
     
-  Alteracoes: 
+  Alteracoes:                            
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - Tratar programa exclusivo retirado da cadeia
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */   
     
@@ -1923,42 +1996,73 @@ DECLARE
   -- Lista erros que não retornaram ao Progress "PROGRAMA COM ERRO", exemplo programa em loop 
   CURSOR cr_erro_outros
     IS
-    SELECT  
-          t1.cdcooper
-         ,REPLACE(t1.cdprograma,'.P','') cdprograma
-         ,t2.dhocorrencia dtreinicio
+    SELECT 
+          t10.cdcooper
+         ,t10.cdprograma
+         ,t10.dhinicio
+         ,t10.dtreinicio 
          ,( SELECT MAX(t3.dhinicio)
             FROM   tbgen_prglog             t3
-            WHERE  TRUNC(t3.dhinicio) = TRUNC(t1.dhinicio)
-            AND    t3.cdcooper        = t1.cdcooper 
-            AND    t3.dhinicio        < t1.dhinicio
-            AND    t3.cdprograma      = t1.cdprograma
+            WHERE  TRUNC(t3.dhinicio) = TRUNC(t10.dhinicio)
+            AND    t3.cdcooper        = t10.cdcooper 
+            AND    t3.dhinicio        < t10.dhinicio
+            AND    t3.cdprograma      = t10.cdprograma
           ) dtparada
          ,( SELECT MAX(t3.dhinicio)
             FROM   tbgen_prglog             t3
                   ,tbgen_prglog_ocorrencia  t4
-            WHERE  TRUNC(t3.dhinicio) = TRUNC(t1.dhinicio)
-            AND    t3.cdcooper        = t1.cdcooper 
-            AND    t3.dhinicio        < t1.dhinicio
+            WHERE  TRUNC(t3.dhinicio) = TRUNC(t10.dhinicio)
+            AND    t3.cdcooper        = t10.cdcooper 
+            AND    t3.dhinicio        < t10.dhinicio
             AND    t3.cdprograma      LIKE 'CRPS%.P'
             AND    t4.idprglog        = t3.idprglog
             AND    t4.cdmensagem      = 1229
-          ) dtpar002 
-    FROM   tbgen_prglog             t1
-          ,tbgen_prglog_ocorrencia  t2 
-    WHERE    t2.idprglog          = t1.idprglog
-    AND      t1.cdcooper          = vr_cdcooper 
-    AND      t1.cdprograma        NOT IN ('CRPS359.P', 'CRPS000.P')
-    AND      NVL(t2.cdmensagem,0) = 1231 
-    AND      t1.dhinicio          >= vr_dtmovime
-    ORDER BY t1.dhinicio desc  
-           , t2.dhocorrencia;
+          ) dtpar002
+         ,( SELECT REPLACE(t3.cdprograma,'.P','') cdproant
+            FROM   tbgen_prglog             t3
+                  ,tbgen_prglog_ocorrencia  t4
+            WHERE  TRUNC(t3.dhinicio) = TRUNC(t10.dhinicio)
+            AND    t3.cdcooper        = t10.cdcooper 
+            AND    t3.dhinicio        < t10.dhinicio
+            AND    t3.cdprograma      LIKE 'CRPS%.P'
+            AND    t4.idprglog        = t3.idprglog
+            AND    t4.cdmensagem      = 1229
+            AND    t3.dhinicio        = 
+              ( SELECT MAX(t33.dhinicio)
+              FROM   tbgen_prglog             t33
+                    ,tbgen_prglog_ocorrencia  t44
+              WHERE  TRUNC(t33.dhinicio) = TRUNC(t10.dhinicio)
+              AND    t33.cdcooper        = t10.cdcooper 
+              AND    t33.dhinicio        < t10.dhinicio
+              AND    t33.cdprograma      LIKE 'CRPS%.P'
+              AND    t44.idprglog        = t33.idprglog
+              AND    t44.cdmensagem      = 1229 )
+          ) cdproant
+    FROM
+    ( SELECT  
+          t1.cdcooper
+         ,t1.dhinicio
+         ,REPLACE(t1.cdprograma,'.P','') cdprograma
+         ,t2.dhocorrencia dtreinicio
+      FROM   tbgen_prglog             t1
+            ,tbgen_prglog_ocorrencia  t2 
+      WHERE    t2.idprglog          = t1.idprglog
+      AND      t1.cdcooper          = vr_cdcooper 
+      AND      t1.cdprograma        NOT IN ('CRPS359.P', 'CRPS000.P')
+      AND      NVL(t2.cdmensagem,0) = 1231 
+      AND      t1.dhinicio          >= vr_dtmovime
+      ORDER BY t1.dhinicio desc  
+             , t2.dhocorrencia
+    ) T10
+    ORDER BY t10.dhinicio desc  
+           , t10.dtreinicio;
   
     rw_erro_outros  cr_erro_outros%ROWTYPE;
   
     vr_dsparaux       VARCHAR2(4000);
     vr_hrparada       VARCHAR2  (10);
     vr_inerrout       BOOLEAN;
+    vr_inexclus       crapord.inexclus%TYPE;
   
   BEGIN
     -- Posiciona procedure
@@ -1983,7 +2087,8 @@ DECLARE
       END IF;
       --
       vr_nmrescop := vr_tab_cooper(vr_idoco).nmrescop;
-      vr_dtmvtolt := vr_tab_cooper(vr_idoco).dtmvtolt;
+      -- Eliminada vr_dtmvtolt - 09/10/2018 - Chd REQ0029484
+      --vr_dtmvtolt := vr_tab_cooper(vr_idoco).dtmvtolt;
       vr_dtmvtoan := vr_tab_cooper(vr_idoco).dtmvtoan;
       vr_tpcadeia := 0;
       vr_dsexclus := 'NULL';      
@@ -2006,7 +2111,9 @@ DECLARE
       vr_dslispr1 := NULL;
       --
       IF pr_dtmovime IS NULL THEN
-        vr_dtmovime := vr_dtmvtolt;
+        -- Assume sysdate no lugar da dtmvtlt crapdat - 09/10/2018 - Chd REQ0029484
+        -- vr_dtmovime := vr_dtmvtolt;
+        vr_dtmovime := TRUNC(vr_dtsysdat); 
       ELSE
         vr_dtmovime := pr_dtmovime;
         vr_dtmvtoan := GENE0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper         -- Cooperativa conectada
@@ -2027,10 +2134,71 @@ DECLARE
         IF rw_erro_outros.dtpar002 IS NOT NULL AND 
            rw_erro_outros.dtparada IS NOT NULL AND 
            rw_erro_outros.dtpar002 >= rw_erro_outros.dtparada THEN
-           vr_inerrout := false;
+          vr_inerrout := false;
         ELSE
-           vr_inerrout := true;
+          
+          BEGIN            
+            SELECT t2.inexclus into 
+                   vr_inexclus
+            FROM   crapprg       t
+                  ,crapord      t2
+            WHERE  t.cdcooper  = vr_cdcooper 
+            AND    t.inlibprg  = 1 
+            AND    t2.cdcooper = t.cdcooper 
+            AND    t2.nrsolici = t.nrsolici 
+            AND    t.cdprogra  = REPLACE(rw_erro_outros.cdprograma,'.P');
+          EXCEPTION 
+            WHEN vr_exc_montada THEN  
+              RAISE vr_exc_montada;  
+            WHEN vr_exc_erro_tratado THEN 
+              RAISE vr_exc_erro_tratado; 
+            WHEN vr_exc_others THEN 
+              RAISE vr_exc_others; 
+            WHEN OTHERS THEN   
+              -- No caso de erro de programa gravar tabela especifica de log
+              cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper); 
+              -- Trata erro
+              pr_cdcritic := 1036;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
+                             ' tbgen_prglog(3): ' ||
+                            vr_dsparame           ||
+                            ', cdcooper:' || rw_erro_outros.cdcooper ||
+                            ', cdprogra:' || rw_erro_outros.cdprograma ||
+                            ', dhinicio:' || rw_erro_outros.dhinicio ||
+                            ', dtreinic:' || rw_erro_outros.dtpar002 ||
+                            ', cdproant:' || rw_erro_outros.cdproant ||
+                            ', dtparada:' || rw_erro_outros.dtparada ||
+                            '. ' || SQLERRM; 
+              RAISE vr_exc_montada;
+          END;  
+          IF vr_inexclus = 1 THEN
+            vr_inerrout := false;
+          ELSE
+            vr_inerrout := true;
+          END IF;
         END IF;
+        
+        IF rw_erro_outros.cdprograma <> rw_erro_outros.cdproant THEN
+          IF rw_erro_outros.dtpar002 < rw_erro_outros.dhinicio THEN
+            vr_inerrout := false;
+          END IF;
+        END IF;
+        
+        -- Log de acoompanhamento de exceção de erro
+        pc_controla_log_batch(pr_cdcritic => 1201
+                           ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                           '. Acompanhamento exc(1):' ||
+                            vr_dsparame           ||
+                            ', cdcooper:' || rw_erro_outros.cdcooper ||
+                            ', cdprogra:' || rw_erro_outros.cdprograma ||
+                            ', cdproant:' || rw_erro_outros.cdproant ||
+                            ', dhinicio:' || TO_CHAR(rw_erro_outros.dhinicio,'YYYY-MM-DD HH24:MI:SS') ||
+                            ', dtreinic:' || TO_CHAR(rw_erro_outros.dtpar002,'YYYY-MM-DD HH24:MI:SS') ||
+                            ', dtparada:' || TO_CHAR(rw_erro_outros.dtparada,'YYYY-MM-DD HH24:MI:SS') ||
+                            ', inexclus:' || vr_inexclus
+                           ,pr_dstiplog => 'O'
+                           ,pr_tpocorre => 4
+                           ,pr_cdcricid => 0 );
         
         IF vr_inerrout THEN
           
@@ -2081,7 +2249,7 @@ DECLARE
           -- Trata erro
           pr_cdcritic := 1036;
           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
-                         ' tbgen_prglog(3): ' ||
+                         ' tbgen_prglog(4): ' ||
                          vr_dsparame          ||
                          '. ' || SQLERRM; 
           RAISE vr_exc_montada;
@@ -2120,6 +2288,7 @@ DECLARE
       vr_qtdiauti := 0;
       vr_qtlanmen := 0;
       vr_dtmesant := ADD_MONTHS(vr_dtmovime,-1);
+      
       LOOP
         -- Monta Calendario
         --vr_dtmovent := TO_CHAR(vr_dtdia,'00') || '/' || TO_CHAR(vr_dtmesant,'MM/YYYY');
@@ -2135,7 +2304,7 @@ DECLARE
           vr_qtdiauti := vr_qtdiauti + 1;
           -- Busca lançamentos do extrato bancario     
           BEGIN
-            SELECT /*+ index (crap craplcm##craplcm4)*/
+            SELECT /*+ index (crap craplcm##craplcm4)*/          
                   COUNT(*) INTO vr_qtlantab
             FROM  craplcm crap
             WHERE crap.dtmvtolt = vr_dtmovent
@@ -2192,6 +2361,7 @@ DECLARE
                          '. ' || SQLERRM; 
           RAISE vr_exc_montada;
       END;
+      
       vr_qtlandia := NVL(vr_qtlantab,0);
         
       -- Log de término de execucao da parte 1
@@ -2208,7 +2378,7 @@ DECLARE
       ELSE
         vr_prmeddia := TRUNC (( ( vr_qtlandia * 100 ) / vr_qtmeddia ) ,2);
       END IF;
-      
+            
       -- Regra de execção 4
       -- Dia com excesso de movimento
       -- Se for então não listar a regra de execção 1
@@ -2365,10 +2535,11 @@ DECLARE
       GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);    
      
       IF NVL(pr_cdcopprm,0) = 0 THEN
+        -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484
         -- Registrar como executado
         CECRED.gene0001.pc_controle_exec(pr_cdcooper  => vr_cdcooper   -- Código da coopertiva
                                         ,pr_cdtipope  => 'I'           -- Tipo de operacao I-incrementar e C-Consultar
-                                        ,pr_dtmvtolt  => SYSDATE       -- Data do movimento
+                                        ,pr_dtmvtolt  => vr_dtsysdat       -- Data do movimento
                                         ,pr_cdprogra  => 'PCLISBATCH'  -- Codigo do programa
                                         ,pr_flultexe  => vr_flultexe   -- Retorna se é a ultima execução do procedimento
                                         ,pr_qtdexec   => vr_qtdexec    -- Retorna a quantidade
@@ -2414,7 +2585,7 @@ DECLARE
   Procedure: pc_lista_media
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -2422,9 +2593,11 @@ DECLARE
   Objetivo  : Carrega lista da média da execução dos cdprograma
     
   Alteracoes: 
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
-  --
+  -- Eliminada CRAPDAT - 09/10/2018 - Chd REQ0029484  
   CURSOR cr_lista_media
   IS
   SELECT 
@@ -2440,13 +2613,10 @@ DECLARE
     ,SUM(TO_NUMBER(TRUNC((((t.dhfim) - (t.dhinicio)) * 24 * 60 ),2)))  qtmintot
     ,COUNT(*) qtexetot 
     FROM   tbgen_prglog  t
-          ,crapdat       t12
-    WHERE  t.cdprograma LIKE 'CRPS%.P'  
-    AND    t.dhinicio   IS NOT NULL 
-    AND    t.dhfim      IS NOT NULL
-    AND    t12.cdcooper = t.cdcooper			  
-    AND   (   (pr_dtmovime IS NULL     AND TRUNC(t.dhfim) < t12.dtmvtolt)
-           OR (pr_dtmovime IS NOT NULL AND TRUNC(t.dhfim) < pr_dtmovime ) )
+    WHERE  t.cdprograma   LIKE 'CRPS%.P'  
+    AND    t.dhinicio     IS NOT NULL 
+    AND    t.dhfim        IS NOT NULL		  
+    AND    TRUNC(t.dhfim) < vr_dtmovime
     AND    t.idprglog        = 
     ( SELECT   MAX(t4.idprglog) 
         FROM   tbgen_prglog T4
@@ -2564,7 +2734,7 @@ DECLARE
   Procedure: pc_tbgen_prg_ocorre_geral
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -2573,83 +2743,37 @@ DECLARE
               Carrega lista de erros sem cdprograma relacionado em memoria
     
   Alteracoes: 
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - Criticas 1067/1066. Não é erro - 09/10/2018 - Chd REQ0029484
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
   --
     vr_cdprosel       VARCHAR2(100);
+    vr_dtexctem       DATE;
     --
     -- Carrega lista de erros sem cdprograma relacionado em memoria
     -- A segunda QUERY lista erros de cooper 0 ou NULL ou Sem cadastro
     CURSOR cr_tbgen_prglog_ocorrencia 
     IS
-    SELECT * FROM (
-      SELECT  t6.cdcooper
+      SELECT  t6.cdcooper  cdcopoco
+             ,t7.cdcooper  cdcopcad
              ,t5.idocorrencia
              ,t6.cdprograma
              ,t5.dsmensagem
              ,t5.dhocorrencia
              ,t6.dhinicio
-             ,t8.dsulthor
-      FROM tbgen_prglog             t6
-          ,tbgen_prglog_ocorrencia  t5  
-          ,(  SELECT t12.dtmvtolt, t11.cdcooper
-                   , NVL(TO_CHAR(t13.dhfim,'HH24MI'),'0000')  dsulthor
-              FROM crapcop       t11
-                  ,crapdat       t12
-                  ,tbgen_prglog  t13 
-              WHERE t11.flgativo    = 1
-              AND   t12.cdcooper    = t11.cdcooper
-              AND   t13.cdcooper    = t11.cdcooper
-              AND   (  (    pr_dtmovime      IS NULL     
-                        AND TRUNC(t13.dhfim) = t12.dtmvtolt)
-                     OR (   pr_dtmovime      IS NOT NULL 
-                        AND TRUNC(t13.dhfim) = pr_dtmovime))
-              AND   t13.cdprograma  = vr_cdultpro  )  t8
-      WHERE  (   (    pr_dtmovime            IS NOT NULL 
-                  AND TRUNC(t5.dhocorrencia) = pr_dtmovime) 
-              OR (    pr_dtmovime            IS NULL     
-                  AND TRUNC(t5.dhocorrencia) = t8.dtmvtolt))
-      AND    t6.cdcooper   = t8.cdcooper                           
-      AND    t5.idprglog   = T6.idprglog 
-      AND    t5.cdmensagem NOT IN (1229, 1278)
-      AND   (   t5.tpocorrencia        IN (1,2) 
-             OR UPPER( t5.dsmensagem ) LIKE '%ERRO%'))  t1
-    WHERE  TO_CHAR(t1.dhocorrencia,'HH24MI') <= t1.dsulthor
-    UNION
-    SELECT * FROM (
-      SELECT 3 cdcooper -- Cooperativas não cadastradas para processo listaram na cooper 3
-            ,t5.idocorrencia
-            ,t6.cdprograma
-            ,t5.dsmensagem
-            ,t5.dhocorrencia
-            ,t6.dhinicio
-            ,t8.dsulthor
-      FROM tbgen_prglog             t6
-          ,tbgen_prglog_ocorrencia  t5  
-          ,(  SELECT MAX(t12.dtmvtolt) dtmvtolt
-                   , MAX(NVL(TO_CHAR(t13.dhfim,'HH24MI'),'0000')) dsulthor
-              FROM crapcop       t11
-                  ,crapdat       t12
-                  ,tbgen_prglog  t13 
-              WHERE t11.flgativo    = 1
-              AND   t12.cdcooper    = t11.cdcooper
-              AND   t13.cdcooper    = t11.cdcooper
-              AND   (  (    pr_dtmovime      IS NULL     
-                        AND TRUNC(t13.dhfim) = t12.dtmvtolt)
-                     OR (   pr_dtmovime      IS NOT NULL 
-                        AND TRUNC(t13.dhfim) = pr_dtmovime))
-              AND   t13.cdprograma  = vr_cdultpro  )  t8
-      WHERE  (   (    pr_dtmovime            IS NOT NULL 
-                  AND TRUNC(t5.dhocorrencia) = pr_dtmovime) 
-              OR (    pr_dtmovime            IS NULL     
-                  AND TRUNC(t5.dhocorrencia) = t8.dtmvtolt))
-      AND    NVL(t6.cdcooper,0)        NOT IN 
-                                       ( SELECT t11.cdcooper FROM crapcop t11 WHERE t11.flgativo = 1 )              
-      AND    t5.idprglog               = T6.idprglog 
+      FROM tbgen_prglog_ocorrencia  t5
+          ,tbgen_prglog             t6
+          ,crapcop                  t7  
+      WHERE  TRUNC(t5.dhocorrencia)    = TRUNC(vr_dtsysdat)  
       AND    t5.cdmensagem             NOT IN (1229, 1278)
       AND   (   t5.tpocorrencia        IN (1,2) 
-             OR UPPER( t5.dsmensagem ) LIKE '%ERRO%'))  t1
-    WHERE  TO_CHAR(t1.dhocorrencia,'HH24MI') <= t1.dsulthor 
+             OR UPPER( t5.dsmensagem ) LIKE '%ERRO%') 
+      AND  TRUNC(t6.dhinicio)          = TRUNC(vr_dtsysdat)              
+      AND    t6.idprglog               = T5.idprglog 
+      AND  t7.cdcooper (+)             = t6.cdcooper
+      AND  t7.flgativo (+)             = 1
     ORDER BY 6;
     --
     rw_tbgen_prglog_ocorrencia cr_tbgen_prglog_ocorrencia%ROWTYPE;       
@@ -2684,22 +2808,31 @@ DECLARE
 	     t1.cdcooper cdcooper, t1.cdprograma cdprogra
         ,( SELECT MAX(t20.dhocorrencia) 
            FROM   tbgen_prglog t10
-                 ,tbgen_prglog_ocorrencia t20
+                 ,( SELECT DISTINCT t2.idprglog, t2.dhocorrencia 
+                    FROM   tbgen_prglog_ocorrencia t2
+                    WHERE  t2.dhocorrencia  >= vr_dtexctem
+                    AND    t2.cdmensagem    = vr_cdexeexc ) t20
            WHERE  t10.cdcooper      = t1.cdcooper 
            AND    t10.cdprograma    = t1.cdprograma
-           AND    t20.idprglog      = t10.idprglog 
-           AND    t20.cdmensagem    = vr_cdexeexc ) dtexeexc
+           AND    t10.dhinicio      >= vr_dtexctem
+           AND    t20.idprglog      = t10.idprglog ) dtexeexc
         ,( SELECT MAX(t20.dhocorrencia) 
            FROM   tbgen_prglog t10
-                 ,tbgen_prglog_ocorrencia t20
+                 ,( SELECT DISTINCT t2.idprglog, t2.dhocorrencia 
+                    FROM   tbgen_prglog_ocorrencia t2
+                    WHERE  t2.dhocorrencia  >= vr_dtexctem
+                    AND    t2.cdmensagem    = vr_cdexepad ) t20
            WHERE  t10.cdcooper      = t1.cdcooper 
            AND    t10.cdprograma    = t1.cdprograma
-           AND    t20.idprglog      = t10.idprglog 
-           AND    t20.cdmensagem    = vr_cdexepad ) dtexepad
+           AND    t10.dhinicio      >= vr_dtexctem
+           AND    t20.idprglog      = t10.idprglog ) dtexepad
       FROM   tbgen_prglog t1
-            ,tbgen_prglog_ocorrencia t2
-      WHERE   t1.idprglog    = t2.idprglog 
-      AND     t2.cdmensagem  IN ( vr_cdexeexc,  vr_cdexepad ) 
+            ,( SELECT DISTINCT t2.idprglog 
+               FROM   tbgen_prglog_ocorrencia t2
+               WHERE  t2.dhocorrencia  >= vr_dtexctem
+               AND    t2.cdmensagem    IN ( vr_cdexeexc,  vr_cdexepad )) t2
+      WHERE   t1.idprglog      = t2.idprglog
+      AND     t1.dhinicio      >= vr_dtexctem
       ORDER BY  1,2,3 
       ) t50
     WHERE EXISTS ( 
@@ -2726,30 +2859,37 @@ DECLARE
     vr_index_tbgen_prglog_ocor := 0;
     --    
     -- Carrega lista de erros sem cdprograma relacionado em memoria
-    FOR rw_tbgen_prglog_ocorrencia IN cr_tbgen_prglog_ocorrencia  LOOP 
-          
-      vr_cdcopoco := rw_tbgen_prglog_ocorrencia.cdcooper;
+    FOR rw_tbgen_prglog_ocorrencia IN cr_tbgen_prglog_ocorrencia  LOOP
+      vr_cdcopoco := NVL(rw_tbgen_prglog_ocorrencia.cdcopoco,3);
+      IF vr_cdcopoco <> NVL(rw_tbgen_prglog_ocorrencia.cdcopcad,0) THEN        
+        vr_cdcopoco := 3;
+      END IF;
       -- Varre tabela "interna" com as cooperativas liberadas
       FOR vr_idoco IN 1 ..  vr_tab_cooper.COUNT LOOP
         -- Seleciona cooperativa liberada
         IF vr_cdcopoco = 0                                OR
            vr_cdcopoco = vr_tab_cooper(vr_idoco).cdcooper OR
-           vr_cdcopoco = pr_cdcopprm                         THEN
+           vr_cdcopoco = pr_cdcopprm                         THEN             
       
           vr_inselect := false;
+           
+          -- Seleciona erros somente até o final da cadeia      
+          IF TO_CHAR(rw_tbgen_prglog_ocorrencia.dhocorrencia,'HH24MI') <= vr_tab_cooper(vr_idoco).hrultpro THEN
 
-          -- Selecionar programas de todas cadeias
-          FOR rw_crapprg_tot IN cr_crapprg_tot  LOOP 
-            vr_cdprosel := '%'|| rw_crapprg_tot.cdprogra || '%';        
+            -- Selecionar programas de todas cadeias
+            FOR rw_crapprg_tot IN cr_crapprg_tot  LOOP 
+              vr_cdprosel := '%'|| rw_crapprg_tot.cdprogra || '%';        
 
-            IF  UPPER( rw_tbgen_prglog_ocorrencia.dsmensagem ) LIKE vr_cdprosel
-            OR  NVL(rw_tbgen_prglog_ocorrencia.cdprograma,'0') LIKE vr_cdprosel THEN          
-              vr_inselect := true;
-              vr_cdprogra := rw_crapprg_tot.cdprogra;
-              vr_nrsolici := rw_crapprg_tot.nrsolici;
-              EXIT;
-            END IF;
-          END LOOP;    
+              IF  UPPER( rw_tbgen_prglog_ocorrencia.dsmensagem ) LIKE vr_cdprosel
+              OR  NVL(rw_tbgen_prglog_ocorrencia.cdprograma,'0') LIKE vr_cdprosel THEN          
+                vr_inselect := true;
+                vr_cdprogra := rw_crapprg_tot.cdprogra;
+                vr_nrsolici := rw_crapprg_tot.nrsolici;
+                EXIT;
+              END IF;
+            END LOOP; 
+             
+          END IF;  
 
           IF vr_inselect THEN   
          
@@ -2772,7 +2912,12 @@ DECLARE
                  AND rw_tbgen_prglog_ocorrencia.cdprograma = 'CRPS657' )
             THEN
               vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).idtipo := 'P';
-            ELSE                     
+              
+            ELSIF rw_tbgen_prglog_ocorrencia.dsmensagem LIKE '%1066 - Inicio execução%' OR
+                  rw_tbgen_prglog_ocorrencia.dsmensagem LIKE '%1067 - Termino execução%'  
+            THEN
+              vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).idtipo := 'P';
+            ELSE
               vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).idtipo := 'E';
             END IF;
             vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).cdcooper     := vr_cdcopoco;
@@ -2788,11 +2933,12 @@ DECLARE
     -- Log de término de execucao da parte pc_tbgen_prg_ocorre_geral
     pc_controla_log_batch(pr_cdcritic => 1201
                          ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
-                                         '. Finalizado parte 1 pc_tbgen_prg_ocorre_geral'
+                                         '. Finalizado pc_tbgen_prg_ocorre_geral Parte 1'
                          ,pr_dstiplog => 'O'
                          ,pr_tpocorre => 4
                          ,pr_cdcricid => 0 );
     
+    vr_dtexctem := ADD_MONTHS(vr_dtsysdat,-1);
     -- Carrega lista de programas que estrapolaram o tempo padrão
     FOR rw_excesso_tempo IN cr_excesso_tempo  LOOP        
       vr_index_tbgen_prglog_duracao := vr_index_tbgen_prglog_duracao + 1;
@@ -2846,7 +2992,7 @@ DECLARE
     vr_cdultpro := 'CRPS659.P';
     vr_cdexeexc := 1262;
     vr_cdexepad := 1263;  
-    vr_cdexcamd := 1264;
+    vr_cdexcamd := 1264;    
     -- Carrega lista: Erros sem cdprograma relacionado em memoria e Tempos excessivos e retorno da normalidade
     pc_tbgen_prg_ocorre_geral;   
     -- Retorno nome do módulo logado
@@ -2854,7 +3000,7 @@ DECLARE
     -- Log de término de execucao da parte pc_tbgen_prg_ocorre_geral
     pc_controla_log_batch(pr_cdcritic => 1201
                          ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
-                                         '. Finalizado pc_tbgen_prg_ocorre_geral'
+                                         '. Finalizado pc_tbgen_prg_ocorre_geral Parte 2'
                          ,pr_dstiplog => 'O'
                          ,pr_tpocorre => 4
                          ,pr_cdcricid => 0 );
@@ -2872,8 +3018,8 @@ DECLARE
                            ,pr_dstiplog => 'O'
                            ,pr_tpocorre => 4
                            ,pr_cdcricid => 0 );
-    END IF;    
-  
+    END IF;
+    
     -- Trata cooperativas
     pc_crapcop; 
     ----------
@@ -2908,14 +3054,16 @@ DECLARE
   Procedure: pc_cria_job
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
   Frequencia: Sempre que for chamado
   Objetivo  : Cria job
     
-  Alteracoes: 
+  Alteracoes:                            
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
   --
@@ -2949,8 +3097,9 @@ DECLARE
            raise_application_error(-20001,vr_dscritic);
          END IF;
        END;';
+    -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484
     --Horario de agendamento
-    vr_dtagenda := ( SYSDATE + (( ( SUBSTR(vr_hrageexe,1,2) * 60 ) + SUBSTR(vr_hrageexe,4,2) ) /1440) );
+    vr_dtagenda := ( vr_dtsysdat + (( ( SUBSTR(vr_hrageexe,1,2) * 60 ) + SUBSTR(vr_hrageexe,4,2) ) /1440) );
     -- Faz a chamada ao programa paralelo atraves de JOB
     gene0001.pc_submit_job(pr_cdcooper  => vr_cdcooper     -- Código da cooperativa
                           ,pr_cdprogra  => vr_cdprogra     -- Código do programa
@@ -2997,7 +3146,7 @@ DECLARE
   Procedure: pc_posiciona_dat
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -3005,6 +3154,8 @@ DECLARE
   Objetivo  : posiciona DATAS
     
   Alteracoes: 
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
   --
@@ -3034,7 +3185,8 @@ DECLARE
     END IF;                   
     -- Verifica se a cadeia da cooperativa especifica terminou
     vr_inproces := rw_crapdat.Inproces;
-    vr_dtmvtolt := rw_crapdat.dtmvtolt;
+    -- Eliminada dtmvtlt CRAPDAT - 09/10/2018 - Chd REQ0029484
+    --vr_dtmvtolt := rw_crapdat.dtmvtolt;
     vr_dtmvtoan := rw_crapdat.dtmvtoan;    
     -- trata feriado
     vr_datautil := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooperprog -- Cooperativa conectada
@@ -3072,7 +3224,7 @@ DECLARE
   Procedure: pc_controle_execucao
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 
+  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
     
   Dados referentes ao programa:
     
@@ -3092,7 +3244,9 @@ DECLARE
          05: Senão executar no dia registra um ALERTA no sistema.
          06: Para obter a execução aprovada precisa obter a Regra 01 e 02.
     
-  Alteracoes: 
+  Alteracoes:                            
+              09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
+                         - (Envolti - Belli - Chamado - REQ0029484)
     
   ............................................................................. */
   --
@@ -3119,6 +3273,7 @@ DECLARE
     vr_ctnaoaut           NUMBER(4) := 0; -- cooperativa não aurorizada
     vr_diaSemana          NUMBER(1) := 0;
     vr_dsparaux           VARCHAR2(4000)   := NULL;
+    vr_hrultpro           VARCHAR2   (4);
   BEGIN
     -- Posiciona procedure
     vr_cdproint := vr_cdproexe || '.pc_controle_execucao';
@@ -3126,9 +3281,10 @@ DECLARE
     GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
     -- Posiciona cooper     
     vr_cdcooper := NVL(pr_cdcopprm,0);    
-    vr_dsparaux := vr_dsparame;        
+    vr_dsparaux := vr_dsparame;    
+    -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484    
     -- Verifica sabado para não executar a Cecred
-    vr_diaSemana := TO_CHAR(SYSDATE,'D');
+    vr_diaSemana := TO_CHAR(vr_dtsysdat,'D');
         
     -- selecionar todas cooperativas ativas
     FOR rw_crapcop_ativas IN cr_crapcop_ativas  LOOP
@@ -3137,7 +3293,7 @@ DECLARE
       vr_ctcooper := vr_ctcooper + 1; 
       vr_cdcooper := rw_crapcop_ativas.cdcooper;      
       vr_cdcooinp := vr_cdcooper;
-      ---   crapdat --- t12.dtmvtolt 
+      --
       vr_dsparame := vr_dsparaux ||
                      ', vr_cdcooper:' || vr_cdcooper;    
       ---vr_dsparaux := vr_dsparame;
@@ -3151,10 +3307,11 @@ DECLARE
       ELSE 
       -- Consulta 02, levando em conta se a data de parâmetro for diferente da data do cadastro 
       -- então nesta data não executou - 20/09/2018 - REQ0027434
+      -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484
       -- Verificar se já executou
       CECRED.gene0001.pc_controle_exec(pr_cdcooper  => vr_cdcooper   -- Código da coopertiva
                                       ,pr_cdtipope  => 'C2'          -- Tipo de operacao I-incrementar e C-Consultar
-                                      ,pr_dtmvtolt  => SYSDATE       -- Data do movimento
+                                      ,pr_dtmvtolt  => vr_dtsysdat   -- Data do movimento
                                       ,pr_cdprogra  => 'PCLISBATCH'    -- Codigo do programa
                                       ,pr_flultexe  => vr_flultexe   -- Retorna se é a ultima execução do procedimento
                                       ,pr_qtdexec   => vr_qtdexec    -- Retorna a quantidade
@@ -3225,8 +3382,9 @@ DECLARE
         vr_hrfimexe := '23:59';
       END IF;
       --
+      -- Ajuste SYSDATE em variavel vr_dtsysdat - 09/10/2018 - Chd REQ0029484
       -- Verificar se não passou do horário limite
-      IF vr_hrfimexe < TO_CHAR(SYSDATE,'HH24:MI') THEN
+      IF vr_hrfimexe < TO_CHAR(vr_dtsysdat,'HH24:MI') THEN
         vr_ctexelim := vr_ctexelim + 1;   
         -- Log acompanhamento
         pc_controla_log_batch(pr_cdcritic => 1201
@@ -3234,7 +3392,7 @@ DECLARE
                                              '. Passou do horario limite'     ||
                                              ', vr_cdcooper:'  || vr_cdcooper ||
                                              ', vr_hrfimexe:'  || vr_hrfimexe ||
-                                             ', hora sysdate:' || TO_CHAR(SYSDATE,'HH24:MI')
+                                             ', hora sysdate:' || TO_CHAR(vr_dtsysdat,'HH24:MI')
                              ,pr_dstiplog => 'O'
                              ,pr_tpocorre => 4
                              ,pr_cdcricid => 0 );
@@ -3246,8 +3404,36 @@ DECLARE
         vr_index_cooper := vr_index_cooper + 1;        
         vr_tab_cooper(vr_index_cooper).cdcooper := vr_cdcooper;
         vr_tab_cooper(vr_index_cooper).nmrescop := rw_crapcop_ativas.nmrescop;
-        vr_tab_cooper(vr_index_cooper).dtmvtolt := vr_dtmvtolt;
+        -- Eliminada dtmvtolt - 09/10/2018 - Chd REQ0029484
+        --vr_tab_cooper(vr_index_cooper).dtmvtolt := vr_dtmvtolt;
         vr_tab_cooper(vr_index_cooper).dtmvtoan := vr_dtmvtoan;
+        -- Buscar a data e hora final da cadeia para não listar os erros pós cadeia
+        BEGIN
+          SELECT MAX(NVL(TO_CHAR(t1.dhfim,'HH24MI'),'0800')) 
+          INTO   vr_hrultpro
+          FROM   tbgen_prglog  t1 
+          WHERE  t1.cdcooper     = vr_cdcooper
+          AND    TRUNC(t1.dhfim) = TRUNC(vr_dtsysdat)
+          AND    t1.cdprograma   = 'CRPS659.P';     
+        EXCEPTION  
+          WHEN vr_exc_montada THEN  
+            RAISE vr_exc_montada;  
+          WHEN vr_exc_erro_tratado THEN 
+            RAISE vr_exc_erro_tratado; 
+          WHEN vr_exc_others THEN 
+            RAISE vr_exc_others; 
+          WHEN OTHERS THEN   
+            -- No caso de erro de programa gravar tabela especifica de log
+            cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper); 
+            -- Trata erro
+            pr_cdcritic := 1036;
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
+                           ' tbgen_prglog(10): ' ||
+                           vr_dsparame          ||
+                           '. ' || SQLERRM; 
+            RAISE vr_exc_montada;    
+        END;
+        vr_tab_cooper(vr_index_cooper).hrultpro := vr_hrultpro;
       ELSE
         vr_ctexebat := vr_ctexebat + 1;
       END IF; -- vr_inproces -- Batch executando      
@@ -3315,7 +3501,7 @@ DECLARE
 BEGIN                                     --- --- --- INICIO DO PROCESSO      
   -- Incluido nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdproexe, pr_action => NULL);
-  vr_cdcooinp := NVL(pr_cdcopprm,0);  
+  vr_cdcooinp := NVL(pr_cdcopprm,0);
   -- Log de inicio de execucao
   pc_controla_log_batch(pr_dstiplog => 'I');
   
@@ -3341,6 +3527,8 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
   nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
   nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
   nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+  -- Incluida SYSDATE em variavel vr_dtsysdat para manupilar melhor quando teste - 09/10/2018 - Chd REQ0029484
+  vr_dtsysdat := SYSDATE;
     
   pc_controle_execucao;
    
