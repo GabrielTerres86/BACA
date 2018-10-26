@@ -161,7 +161,7 @@ BEGIN
      --Zerar tabelas de memoria auxiliar
      pc_limpa_tabela;
 /*
-     /* Valido somente para InternetBank, por isto pac 90 */
+    -- Valido somente para InternetBank, por isto pac 90
     PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                            ,pr_nrdconta => 0             --Numero da Conta
                                            ,pr_cdagenci => 90            --Código da Agencia
