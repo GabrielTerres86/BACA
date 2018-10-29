@@ -572,7 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 14/03/2018
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 18/10/2018
   --
   --  Dados referentes ao programa:
   --
@@ -616,7 +616,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --                          
   --             11/07/2018 - Adicionado na procedure pc_busca_intippes o parâmetro pr_tpctrato e o cursor cr_crawlim para buscar 
   --                          informações da pessoa do contrato de limite de desconto de titulos (Paulo Penteado GFT)
-  --                          
+  --
+  --             18/10/2018 - sctask0032817 Na rotina pc_solicita_retorno_req, desativada a criação do arquivo da 
+  --                          consulta do biro (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -3431,13 +3433,20 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
         RAISE vr_exc_saida;
     END;
 
-    -- Grava o xml de retorno no diretorio SALVAR da cooperativa
-    gene0002.pc_XML_para_arquivo(pr_XML => pr_retxml,
-                                 pr_caminho => vr_nmdirarq,
-                                 pr_arquivo => to_char(pr_nrprotoc)||'.xml',
-                                 pr_des_erro => vr_dscritic);
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
+    -- Verificar se deve salvar a requisição em arquivo
+    IF NVL(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                     pr_cdacesso => 'FL_SALVAR_ARQ_RET_BIRO'),'N') = 'S' THEN
+
+      -- Grava o xml de retorno no diretorio SALVAR da cooperativa
+      gene0002.pc_XML_para_arquivo(pr_XML => pr_retxml,
+                                   pr_caminho => vr_nmdirarq,
+                                   pr_arquivo => to_char(pr_nrprotoc)||'.xml',
+                                   pr_des_erro => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
     END IF;
 
   EXCEPTION
