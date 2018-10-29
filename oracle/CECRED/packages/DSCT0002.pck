@@ -8100,8 +8100,6 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                       '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))             ||'</nrdconta>' ||
                       '<cdagenci>'|| rw_crapbdt.cdagenci                                   ||'</cdagenci>' ||
                       '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
-                      '<inprejuz>'|| rw_crapbdt.inprejuz                                   ||'</inprejuz>' ||
-                      '<dtprejuz>'|| to_char(rw_crapbdt.dtprejuz, 'DD/MM/RRRR')            ||'</dtprejuz>' ||
                       '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
                       '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
                       '<vltitbor>'|| to_char(rw_crapbdt.vltitbor, 'fm999G999G999G990D00')  ||'</vltitbor>' ||
