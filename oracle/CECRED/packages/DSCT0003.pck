@@ -6972,6 +6972,7 @@ EXCEPTION
      -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%TYPE;
      vr_dscritic crapcri.dscritic%TYPE;
+     vr_rowid_log ROWID;
      
      -- Variaveis de entrada vindas no XML
      vr_cdcooper INTEGER;

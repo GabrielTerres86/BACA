@@ -896,7 +896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                  INNER JOIN crapbdt bdt ON tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder
                WHERE tdb.cdcooper = cob.cdcooper 
                  AND tdb.nrdconta = cob.nrdconta
-                 AND tdb.nrcnvcob = cob.nrconven 
+                 AND tdb.nrcnvcob = cob.nrcnvcob 
                  AND tdb.nrdocmto = cob.nrdocmto
                  AND bdt.insitbdt <> 5
              );
