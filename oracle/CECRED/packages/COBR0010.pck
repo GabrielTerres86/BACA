@@ -26,6 +26,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                               pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,	
                               pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
                               pr_qtdiaprt     IN crapcob.qtdiaprt%TYPE,                              
+                              pr_inavisms     IN crapcob.inavisms%TYPE,                                                            
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2);
@@ -80,6 +81,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                               pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,
                               pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
                               pr_qtdiaprt     IN crapcob.qtdiaprt%TYPE,
+                              pr_inavisms     IN crapcob.inavisms%TYPE,
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2) IS
@@ -147,6 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                   01/06/2018 - Adicionar o Numero de Celular do Sacado como parametro, para que seja 
                                processado na instrução 95. PRJ285 - Nova Conta Online (Douglas)
 
+                  22/10/2018 - Incluir parametro pr_inavisms na chamada do IB66 (Lucas Ranghetti INC0025087)
      .................................................................................*/
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
       SELECT cop.dsdircop
@@ -342,7 +345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).nrdctabb := rw_crapcob.nrdctabb;
     vr_tab_instrucao(1).inemiten := rw_crapcob.inemiten;
     vr_tab_instrucao(1).dtemscob := rw_crapcob.dtretcob;
-    vr_tab_instrucao(1).inavisms := rw_crapcob.inavisms;
+    vr_tab_instrucao(1).inavisms := nvl(pr_inavisms,rw_crapcob.inavisms);
     vr_tab_instrucao(1).insmsant := rw_crapcob.insmsant;
     vr_tab_instrucao(1).insmsvct := rw_crapcob.insmsvct;
     vr_tab_instrucao(1).insmspos := rw_crapcob.insmspos;
