@@ -90,7 +90,7 @@
 		echo "$('#flgdispb','#frmConsulta').habilitaCampo();";
 		echo "$('#dtinispb','#frmConsulta').habilitaCampo();";
 		echo "$('#flgoppag','#frmConsulta').habilitaCampo();";
-		echo "$('#nrcnpjif','#frmConsulta').habilitaCampo();";
+		echo "$('#nrcnpjif','#frmConsulta').desabilitaCampo();";
 		
 	}else if($cddopcao == 'M'){
 		echo "$('#cdbccxlt','#divEntrada').desabilitaCampo();";

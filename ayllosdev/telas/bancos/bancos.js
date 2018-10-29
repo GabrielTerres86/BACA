@@ -183,7 +183,7 @@ function controlaLayout() {
 		cFlgoppag.desabilitaCampo();
 		cNrcnpjif.desabilitaCampo();
 		cCdbccxlt.focus();
-			
+
 	}else if(cCddopcao.val() == "M"){
 	
 		$('#frmConsulta').css('display','none');
@@ -203,7 +203,7 @@ function controlaLayout() {
 		cFlgoppag.desabilitaCampo();
 		cNrcnpjif.desabilitaCampo();
 		cCdbccxlt.focus();
-			
+
 	}
 					
 	return false;
@@ -245,6 +245,8 @@ function btnContinuar() {
 		if(cCddopcao.val() == "C"){
 	
 			buscaBanco();
+
+			cNrcnpjif.css({'text-align':'left'});
 									
 		}else if(cCddopcao.val() == "I"){
 						
@@ -270,9 +272,9 @@ function btnContinuar() {
 				
 				cNmresbcc.habilitaCampo();
 				cNmextbcc.habilitaCampo();
-				cFlgdispb.habilitaCampo();				
-				cFlgoppag.habilitaCampo();			
-				cNrcnpjif.habilitaCampo();
+				cFlgdispb.habilitaCampo();
+				cFlgoppag.habilitaCampo();
+				cNrcnpjif.desabilitaCampo().css({'text-align':'left'});
 				
 				if (cFlgdispb.val() == 1){
 					cDtinispb.habilitaCampo();
@@ -306,12 +308,12 @@ function btnContinuar() {
 					cDtinispb.desabilitaCampo();
 				}
 
-                
+				cNrcnpjif.desabilitaCampo().css({'text-align':'left'});
 				nmresbcc.focus();
 			}
-						
+
 			return false;
-						
+
 		}else if(cCddopcao.val() == "M"){
 			
 			if ( cCdbccxlt.hasClass('campoTelaSemBorda')  ) {
@@ -337,13 +339,12 @@ function btnContinuar() {
 				
 				cNmresbcc.desabilitaCampo();
 				cNmextbcc.desabilitaCampo();
-				cFlgdispb.desabilitaCampo();				
+				cFlgdispb.desabilitaCampo();
 				cFlgoppag.desabilitaCampo();
 				cDtinispb.desabilitaCampo();
 				
-				cNrcnpjif.habilitaCampo();	
-				cNrcnpjif.focus();	
-	
+				cNrcnpjif.habilitaCampo().css({'text-align':'left'});
+				cNrcnpjif.focus();
 				
 			}
 
@@ -398,7 +399,10 @@ function buscaBanco() {
 		success : function(response) { 				
 					hideMsgAguardo();
 					try {
-						eval( response );												
+						eval( response );
+						if(cCddopcao.val() == "M"){
+							cNrcnpjif.trigger("focusin");
+						}
 					} catch(error) {						
 						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
 					}
