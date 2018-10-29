@@ -146,7 +146,7 @@ create or replace package body cecred.CNSO0001 is
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 20/09/2018
+   Data    : Julho/2013                       Ultima atualizacao: 16/10/2018
 
    Dados referentes ao programa:
 
@@ -196,6 +196,9 @@ create or replace package body cecred.CNSO0001 is
                            
                20/09/2018 - inc0024147 correção no usao das vars de crítica, o programa estava 
                             atribuindo cdcritic e dscritic para os parâmetros de saída diretamente (Carlos)
+                            
+               16/10/2018 - inc0025316 Na rotina pc_gera_relatorio, envio do relatório crrl663 para a intranet 
+                            quando for chamado pelo programa CRPS663 (Carlos)
 .............................................................................*/
 
   -- Cursores genericos
@@ -1379,7 +1382,10 @@ create or replace package body cecred.CNSO0001 is
                                  ,pr_qtcoluna  => 234
                                  ,pr_sqcabrel  => 1
                                  ,pr_cdrelato  => vr_cdrelato
-                                 ,pr_flg_impri => 'N'           
+                                 ,pr_flg_impri => CASE upper(pr_cdprogra) 
+                                                    WHEN 'CRPS663' THEN 'S' 
+                                                    ELSE 'N'
+                                                  END
                                  ,pr_nmformul  => '234col'
                                  ,pr_nrcopias  => 1
                                  ,pr_dspathcop => vr_dspathcop
