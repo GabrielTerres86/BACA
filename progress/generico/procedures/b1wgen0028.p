@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 26/05/2018
+    Data      : Marco/2008                    Ultima Atualizacao: 19/10/2018
     
     Dados referentes ao programa:
 
@@ -546,6 +546,8 @@
 							 anotacoes de trabalho do Incidente em questao.
                              Chamado PRB0040351 - Gabriel (Mouts).
 
+                19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
+                             conta cartão for zerada (Lucas Ranghetti INC0024543)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -2649,7 +2651,7 @@ PROCEDURE valida_nova_proposta:
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ AND 
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ OR 
                      crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
                      NEXT.
                    
@@ -2689,7 +2691,7 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ AND 
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ OR 
                                  cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
                                  NEXT.
 
