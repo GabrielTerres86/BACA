@@ -20,6 +20,10 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0003 IS
   PROCEDURE pc_decrypt_3DES(pr_data            IN CLOB
                            ,pr_decrypted_data  OUT CLOB
 									         ,pr_dscritic        OUT VARCHAR2);
+													 
+	PROCEDURE pc_obtem_chave(pr_cdacesso IN tbgen_chaves_crypto.cdacesso%TYPE
+		                      ,pr_dschave  OUT tbgen_chaves_crypto.dschave_crypto%TYPE
+		                      ,pr_dscritic OUT VARCHAR2);
 END PCPS0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
@@ -41,7 +45,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
   ---------------------------------------------------------------------------------------------------------------*/
 
   encryption_type CONSTANT PLS_INTEGER := dbms_crypto.encrypt_des + dbms_crypto.chain_cbc + dbms_crypto.pad_zero;
-	
+
   FUNCTION b2c(b IN BLOB) RETURN CLOB IS
 		v_clob CLOB;
 		v_varchar VARCHAR2(32767);
@@ -83,6 +87,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
     RETURN res;
   END c2b;
 
+	PROCEDURE pc_obtem_chave(pr_cdacesso IN tbgen_chaves_crypto.cdacesso%TYPE
+		                      ,pr_dschave  OUT tbgen_chaves_crypto.dschave_crypto%TYPE
+		                      ,pr_dscritic OUT VARCHAR2) IS
+													
+	---------------------------------------------------------------------------------------------------------------
+	--
+	--  Programa : pc_obtem_chave
+	--  Sistema  : Rotinas referentes a PLATAFORMA CENTRALIZADA DE PORTABILIDADE DE SALÁRIO
+	--  Sigla    : PCPS
+	--  Autor    : Augusto - Supero
+	--  Data     : Outubro/2018.                   Ultima atualizacao: --/--/----
+	--
+	-- Dados referentes ao programa:
+	--
+	-- Frequencia: -----
+	-- Objetivo: Retornar as chaves (privadas/publicas) previamente configuradas por vigencia
+	--
+	-- Alteracoes: 
+	--             
+	---------------------------------------------------------------------------------------------------------------
+
+		CURSOR cr_chave(pr_cdacesso IN tbgen_chaves_crypto.cdacesso%TYPE) IS
+			SELECT tcc.dschave_crypto 
+				FROM tbgen_chaves_crypto tcc 
+			 WHERE tcc.cdacesso = pr_cdacesso
+				 AND tcc.dtinicio_vigencia <= trunc(SYSDATE)
+		ORDER BY tcc.dtinicio_vigencia DESC;
+	  rw_chave cr_chave%ROWTYPE;
+		
+		vr_exc_saida EXCEPTION;
+		vr_dscritic VARCHAR2(2000);
+		
+	BEGIN
+		OPEN cr_chave(pr_cdacesso);
+		FETCH cr_chave INTO rw_chave;
+		
+		IF cr_chave%NOTFOUND THEN
+			CLOSE cr_chave;			
+			vr_dscritic := 'Chave ' || pr_cdacesso || ' não localizada.';
+			RAISE vr_exc_saida;
+		END IF;
+		CLOSE cr_chave;
+		
+		pr_dschave := rw_chave.dschave_crypto;
+		
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+				pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_obtem_chave: ' || SQLERRM;
+        ROLLBACK;
+		
+  END pc_obtem_chave;
+
   PROCEDURE pc_encrypt_3DES(pr_data             IN CLOB
 													 ,pr_encrypted_data   OUT CLOB
 													 ,pr_dscritic         OUT VARCHAR2)  IS
@@ -106,11 +164,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
 	vr_chave_privada BLOB;
 	vr_data BLOB;
 	vr_encrypted_data BLOB;
+	vr_dscritic VARCHAR2(2000);
+	vr_exc_saida EXCEPTION;
 
 	BEGIN
 		--
-	  vr_dschave_privada := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'
-															                      ,pr_cdacesso => 'PCPS_CHAVE_PRIVADA');
+		pc_obtem_chave(pr_cdacesso => 'PCPS_CHAVE_PRIVADA'
+		              ,pr_dschave => vr_dschave_privada
+ 								  ,pr_dscritic => vr_dscritic);
+    --
+    IF vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_saida;
+		END IF;
     --
 		vr_chave_privada := utl_raw.cast_to_raw(vr_dschave_privada);
 		vr_data := c2b(pr_data);
@@ -122,11 +187,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
 		pr_encrypted_data := b2c(vr_encrypted_data);
 
   EXCEPTION
+		WHEN vr_exc_saida THEN
+			pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina encrypt: '||SQLERRM;
   END pc_encrypt_3DES;
 
-  
   PROCEDURE pc_decrypt_3DES(pr_data            IN CLOB
                            ,pr_decrypted_data  OUT CLOB
 									         ,pr_dscritic        OUT VARCHAR2)  IS
@@ -150,11 +216,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
 	vr_chave_publica BLOB;
 	vr_data BLOB;
 	vr_decrypted_data BLOB;
+  vr_dscritic VARCHAR2(2000);
+	vr_exc_saida EXCEPTION;
 
   BEGIN
     --
-	  vr_dschave_publica := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'
-															                      ,pr_cdacesso => 'PCPS_CHAVE_PRIVADA');
+		pc_obtem_chave(pr_cdacesso => 'PCPS_CHAVE_PUBLICA'
+		              ,pr_dschave => vr_dschave_publica
+ 								  ,pr_dscritic => vr_dscritic);
+    --
+    IF vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_saida;
+		END IF;
     --
 		vr_chave_publica := utl_raw.cast_to_raw(vr_dschave_publica);
 	  --
@@ -167,6 +240,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
 		pr_decrypted_data := b2c(vr_decrypted_data);
 
   EXCEPTION
+    WHEN vr_exc_saida THEN
+			pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina pc_encrypt_3DES: '||SQLERRM;
   END pc_decrypt_3DES;
