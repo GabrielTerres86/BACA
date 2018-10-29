@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Biblioteca de funções da tela ESTORN
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 29/08/2018 - Tratar o estorno de pagamento da C/C em prejuízo
+ *   			               PJ 450 - Diego Simas - AMcom
  * --------------
  */
 $(document).ready(function() {
@@ -13,8 +14,18 @@ $(document).ready(function() {
 
 	highlightObjFocus( $('#frmCab') );
 
-	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
-	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'10px 3px 5px 3px'});
+	$('fieldset > legend').css({
+		'font-size': '11px',
+		'color': '#777',
+		'margin-left': '5px',
+		'padding': '0px 2px'
+	});
+	$('fieldset').css({
+		'clear': 'both',
+		'border': '1px solid #777',
+		'margin': '3px 0px',
+		'padding': '10px 3px 5px 3px'
+	});
 
 	return false;
 
@@ -145,7 +156,42 @@ function formataCampos(){
 			trocaBotao('estadoInicial();','ajustaBotaoContinuar()','Continuar');	
 		break;
 		
-		// Estorno
+		// Estornar Pagamento de Prejuízo C/C
+		case 'ECT':
+		
+			var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT');
+
+			var rNrdconta = $('label[for="nrdconta"]', '#frmEstornoPagamentoCT');
+
+			cNrdconta.addClass('conta pesquisa').css({
+				'width': '80px'
+			});
+
+			rNrdconta.addClass('rotulo').css({
+				width: "60px"
+			});
+
+			highlightObjFocus($('#frmEstornoPagamentoCT'));
+			cNrdconta.habilitaCampo();
+
+			cNrdconta.unbind('keypress').bind('keypress', function (e) {
+				if (divError.css('display') == 'block') {
+					return false;
+				}
+				// Se é a tecla ENTER,
+				if (e.keyCode == 13) {
+					if (normalizaNumero(cNrdconta.val()) == 0) {
+						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamentoCT');
+						return false;
+					}
+					return false;
+				}
+			});
+
+			trocaBotao('estadoInicial();', 'ajustaBotaoContinuarCT()', 'Continuar');
+			break;
+
+		// CONSULTAR Estorno
 		case 'C':
 			var cNrdconta = $('#nrdconta', '#frmEstornoPagamento');
 			var cNrctremp = $('#nrctremp', '#frmEstornoPagamento');			
@@ -191,6 +237,41 @@ function formataCampos(){
 			
 			// trocaBotao('estadoInicial()');
 			trocaBotao('estadoInicial();','ajustaBotaoContinuar()','Continuar');	
+			break;
+
+		// CONSULTAR ESTORNO DE PAGAMENTO DE PREJUIZO DE C/C
+		case 'CCT':
+			var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT');
+			
+			var rNrdconta = $('label[for="nrdconta"]', '#frmEstornoPagamentoCT');
+			
+			cNrdconta.addClass('conta pesquisa').css({
+				'width': '80px'
+			});
+			
+			rNrdconta.addClass('rotulo').css({
+				width: "60px"
+			});
+			
+			highlightObjFocus($('#frmEstornoPagamentoCT'));
+			cNrdconta.habilitaCampo();
+			
+			cNrdconta.unbind('keypress').bind('keypress', function (e) {
+				if (divError.css('display') == 'block') {
+					return false;
+				}
+				// Se é a tecla ENTER,
+				if (e.keyCode == 13) {
+					if (normalizaNumero(cNrdconta.val()) == 0) {
+						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamentoCT');
+					} else {
+						carregaTelaConsultarEstornosCT();
+					}					
+					return false;
+				}
+			});
+
+			trocaBotao('estadoInicial();', 'ajustaBotaoContinuarCT()', 'Continuar');
 		break;
 		
 		// Relatorio
@@ -274,6 +355,81 @@ function formataCampos(){
 			
 			trocaBotao('estadoInicial();','geraImpressaoEstorno()','Imprimir');			
 		break;
+
+		// Relatorio
+		case 'RCT':
+			var cNrdconta = $('#nrdconta', '#frmImpressaoEstornoCT');
+			var cDtiniest = $('#dtiniest', '#frmImpressaoEstornoCT');
+			var cDtfinest = $('#dtfinest', '#frmImpressaoEstornoCT');
+			
+			var rNrdconta = $('label[for="nrdconta"]', '#frmImpressaoEstornoCT');
+			var rDtiniest = $('label[for="dtiniest"]', '#frmImpressaoEstornoCT');
+			var rDtfinest = $('label[for="dtfinest"]', '#frmImpressaoEstornoCT');
+			
+			cNrdconta.addClass('conta pesquisa').css({
+				'width': '80px'
+			});
+
+			cDtiniest.addClass('data').css({
+				'width': '80px'
+			});
+
+			cDtfinest.addClass('data').css({
+				'width': '80px'
+			});
+
+			rNrdconta.addClass('rotulo').css({
+				width: "80px"
+			});
+
+			rDtiniest.addClass('rotulo').css({
+				'width': '80px'
+			});
+
+			rDtfinest.addClass('rotulo-linha').css({
+				'width': '97px'
+			});
+
+			highlightObjFocus($('#frmImpressaoEstornoCT'));
+			cNrdconta.habilitaCampo();
+			cDtiniest.habilitaCampo();
+			cDtfinest.habilitaCampo();
+			
+			cNrdconta.unbind('keypress').bind('keypress', function (e) {
+				if (divError.css('display') == 'block') {
+					return false;
+				}
+				// Se é a tecla ENTER,
+				if (e.keyCode == 13) {
+					cDtiniest.focus();
+					return false;
+				}
+			});
+
+			cDtiniest.unbind('keypress').bind('keypress', function (e) {
+				if (divError.css('display') == 'block') {
+					return false;
+				}
+				// Se é a tecla ENTER,
+				if (e.keyCode == 13) {
+					cDtfinest.focus();
+					return false;
+				}
+			});
+
+			cDtfinest.unbind('keypress').bind('keypress', function (e) {
+				if (divError.css('display') == 'block') {
+					return false;
+				}
+				// Se é a tecla ENTER,
+				if (e.keyCode == 13) {
+					geraImpressaoEstorno();
+					return false;
+				}
+			});
+
+			trocaBotao('estadoInicial();', 'geraImpressaoEstornoCT()', 'Imprimir');
+			break;
 	}
 	
     layoutPadrao();
@@ -340,6 +496,10 @@ function controlaPesquisas() {
     if (cddopcao == 'R') {
         nmformul = 'frmImpressaoEstorno';
     }
+
+	if (cddopcao == 'ECT') {
+		nmformul = 'frmEstornoPagamentoCT';
+	}
 
 	// Atribui a classe lupa para os links e desabilita todos
 	$('a','#' + nmformul).addClass('lupa').css('cursor','auto');	
@@ -471,6 +631,38 @@ function formataGridEstornos(){
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'left';    
 
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+	return false;
+}
+
+function formataGridEstornosCT() {
+
+	var divRegistro = $('#divEstornosCT');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({
+		'height': '120px'
+	});
+
+	var ordemInicial = new Array();
+	ordemInicial = [
+		[0, 0]
+	];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '70px';
+	arrayLargura[1] = '80px';
+	arrayLargura[2] = '70px';
+	arrayLargura[3] = '70px';
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
     return false;	
 }	
@@ -519,6 +711,67 @@ function formataTelaLancamentos() {
  
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
     return false;
+}
+
+function formataTelaLancamentosCT() {
+	var cTotalest = $('#totalest', '#frmEstornoPagamentoCT');
+	var cDsjustif = $('#dsjustificativa', '#frmEstornoPagamentoCT');
+
+	var rTotalest = $('label[for="totalest"]', '#frmEstornoPagamentoCT');
+	var rDsjustif = $('label[for="dsjustificativa"]', '#frmEstornoPagamentoCT');
+
+	var divRegistro = $('#divLancamentoParcelaCT');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	rDsjustif.addClass('rotulo').css({
+		width: "75px"
+	});
+	rTotalest.addClass('rotulo-linha').css({
+		'width': '80px',
+		'margin-left': '310px'
+	});
+
+	cDsjustif.addClass('alphanum').css({
+		'width': '562px',
+		'height': '80px',
+		'float': 'left',
+		'margin': '3px 0px 3px 3px',
+		'padding-right': '1px'
+	});
+	cTotalest.addClass('campo').css({
+		'width': '88px',
+		'padding-top': '3px',
+		'padding-bottom': '3px',
+		'margin-left': '09px'
+	});
+
+	cDsjustif.habilitaCampo();
+	cTotalest.desabilitaCampo();
+
+	// FORMATA O GRID DOS LANCAMENTOS DE PAGAMENTO
+	divRegistro.css({
+		'height': '120px'
+	});
+
+	var ordemInicial = new Array();
+	ordemInicial = [
+		[0, 0]
+	];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '14px';
+	arrayLargura[1] = '150px';
+	
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+
+	return false;
 }
 
 function formataDetalhesEstorno(){
@@ -695,10 +948,58 @@ function carregaLancamentosPagamentos(){
     return false;	
 }
 
+function carregaLancamentosPagamentosCT(cNrdconta) {
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, buscando os dados...");
+
+	// Carrega dados parametro através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/estorn/carrega_lancamentos_pagamentos_ct.php',
+		data: {
+			nrdconta: cNrdconta,
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+		},
+		success: function (response) {
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divLancamentosPagamentoCT').html(response);
+					formataTelaLancamentosCT();
+					hideMsgAguardo();
+					return false;
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+	return false;
+}
+
 function manterRotina(operacao){
 	
 	hideMsgAguardo();
 	
+	var cNrdconta = $('#nrdconta', '#frmEstornoPagamento').val();
+	var cNrctremp = $('#nrctremp', '#frmEstornoPagamento').val();
+	var cQtdlacto = $('#qtdlacto', '#frmEstornoPagamento').val();
+	var cDsjustificativa = $('#dsjustificativa', '#frmEstornoPagamento').val();
+	var cTotalest = 0;
+
 	switch (operacao){
 		
 		case 'VALIDA_DADOS':
@@ -708,22 +1009,28 @@ function manterRotina(operacao){
 		case 'EFETUA_ESTORNO':
 			showMsgAguardo("Aguarde, estornando os lan&ccedil;amentos...");
 		break;	
+
+		case 'ESTORNO_CT':
+			var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT').val();
+			var cTotalest = $('#totalest', '#frmEstornoPagamentoCT').val();
+			var cDsjustificativa = $('#dsjustificativa', '#frmEstornoPagamentoCT').val();	
+			var cQtdlacto = 0;
+			var cNrctremp = 0;
+			showMsgAguardo("Aguarde, estornando o pagamento de preju&iacute;zo...");		
+			break;
+
 	}
-	
-	var cNrdconta 		 = $('#nrdconta','#frmEstornoPagamento');
-    var cNrctremp 		 = $('#nrctremp','#frmEstornoPagamento');
-    var cQtdlacto 		 = $('#qtdlacto','#frmEstornoPagamento');
-    var cDsjustificativa = $('#dsjustificativa','#frmEstornoPagamento');
 	
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/estorn/manter_rotina.php", 
 		data: {
 			operacao: operacao,
-		    nrdconta: normalizaNumero(cNrdconta.val()),			
-			nrctremp: normalizaNumero(cNrctremp.val()),
-			dsjustificativa: removeCaracteresInvalidos(cDsjustificativa.val()),
-			qtdlacto: cQtdlacto.val(),
+			nrdconta: normalizaNumero(cNrdconta),
+			nrctremp: normalizaNumero(cNrctremp),
+			dsjustificativa: removeCaracteresInvalidos(cDsjustificativa),
+			qtdlacto: normalizaNumero(cQtdlacto),
+			totalest: normalizaNumero(cTotalest),
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept){
@@ -741,7 +1048,9 @@ function manterRotina(operacao){
 			}
 		}
 	});	
+	
 	return false;
+
 }
 
 function carregaTelaConsultarEstornos(){
@@ -757,7 +1066,8 @@ function carregaTelaConsultarEstornos(){
         type: 'POST',
         dataType: 'html',
         url: UrlSite + 'telas/estorn/carrega_consulta_estorno.php',
-        data:{nrdconta: normalizaNumero(cNrdconta.val()),
+		data: {
+			nrdconta: normalizaNumero(cNrdconta.val()),
               nrctremp: normalizaNumero(cNrctremp.val()),
               redirect: 'script_ajax'
 		},
@@ -787,6 +1097,50 @@ function carregaTelaConsultarEstornos(){
         }
     });
     return false;	
+}
+
+function carregaTelaConsultarEstornosCT() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, buscando os dados...");
+
+	var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT');
+	
+	// Carrega dados parametro através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/estorn/carrega_consulta_estorno_ct.php',
+		data: {
+			nrdconta: normalizaNumero(cNrdconta.val()),
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+		},
+		success: function (response) {
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divLancamentosPagamentoCT').html(response);
+					formataGridEstornosCT();
+					hideMsgAguardo();
+					return false;
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+
+	return false;
 }
 
 function carregaTelaConsultarDetalhesEstorno(){
@@ -877,6 +1231,36 @@ function geraImpressaoEstorno(){
 	return false;
 }
 
+function geraImpressaoEstornoCT() {
+	
+	var cNrdconta = $('#nrdconta', '#frmImpressaoEstornoCT');
+	var cDtiniest = $('#dtiniest', '#frmImpressaoEstornoCT');
+	var cDtfinest = $('#dtfinest', '#frmImpressaoEstornoCT');
+
+	if (cNrdconta.val() == '') {
+		showError('error', 'O campo n&uacute;mero da conta n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#nrdconta", "#frmImpressaoEstornoCT").focus();');
+		return false;
+	}
+
+	if (cDtiniest.val() == '') {
+		showError('error', 'O campo data inicial n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#dtiniest", "#frmImpressaoEstornoCT").focus();');
+		return false;
+	}
+
+	if (cDtfinest.val() == '') {
+		showError('error', 'O campo data final n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#dtfinest", "#frmImpressaoEstornoCT").focus();');
+		return false;
+	}
+
+	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+
+	var action = UrlSite + 'telas/estorn/gera_impressao_ct.php';
+	$('#sidlogin', '#frmImpressaoEstornoCT').val($('#sidlogin', '#frmMenu').val());
+	carregaImpressaoAyllos("frmImpressaoEstornoCT", action, "");
+	
+	return false;
+}
+
 function removeCaracteresInvalidos(str){
 	str.replace(/\r\n/g,' ').replace("'","");
 	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
@@ -903,6 +1287,27 @@ function ajustaBotaoContinuar(){
 	} else {
 		carregaLancamentosPagamentos();
 	}
+	return false;
+
+}
+
+function ajustaBotaoContinuarCT() {
+
+	if ($('#cddopcao', '#frmCab').val() == 'ECT') {
+		var cNrdconta = normalizaNumero($('#nrdconta', '#frmEstornoPagamentoCT').val());
+
+		if (cNrdconta == 0) {
+			showError('error', 'O campo Conta/DV n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#nrdconta", "#frmEstornoPagamentoCT").focus();');
+			return false;
+		}
+
+		carregaLancamentosPagamentosCT(cNrdconta);
+	} 
+
+	if ($('#cddopcao', '#frmCab').val() == 'CCT') {
+		carregaTelaConsultarEstornosCT();
+	}
+
 	return false;
 	
 }
