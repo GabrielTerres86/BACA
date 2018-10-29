@@ -992,7 +992,7 @@ BEGIN
                                                 , pr_cdbccxlt => 100
                                                 , pr_nrdolote => 8482
                                                 , pr_nrdconta => vr_nrdconta_new
-                                                , pr_nrdocmto => 1
+                                                , pr_nrdocmto => rw_craplot.nrseqdig
                                                 , pr_cdhistor => 1787
                                                 , pr_nrseqdig => rw_craplot.nrseqdig
                                                 , pr_vllanmto => vr_vloperac
