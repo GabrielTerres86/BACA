@@ -105,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 03/01/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -126,6 +126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                inclusa clausula que validar se o municipio pertence ao mesmo 
                                estado do municipio é o mesmo da praça financeira.
                                (INC0012121 - GSaquetta)
+      
+                  16/10/2018 - Substituir arquivo texto por tabela oracle
+                               ( Belli - Envolti - Chd INC0025460 ) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -687,7 +690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
     
       Dados referentes ao programa:
     
@@ -696,6 +699,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                   retorno da consulta e retornar a tab com os dados recebidos
                   
       Alteração : 
+                         
+      16/10/2018 - Substituir arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
         
     ..........................................................................*/
     
@@ -745,6 +751,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_cdcidade        crapcaf.cdcidade%TYPE;
     vr_de_campo        NUMBER;
     vr_dtvencto        DATE;
+    
+    -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
 
   BEGIN   
 
@@ -1024,18 +1033,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                              ,pr_vltitulo => NVL(vr_vlboleto,TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),5,10)) / 100)) = 1 THEN
            --> Garantir a gravação da tabela tbcobran_consulta_titulo
            COMMIT;
-           
-           BTCH0001.pc_gera_log_batch ( pr_cdcooper     => 3
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '||
-                                                        'Coop: '  || pr_cdcooper ||' - '||
-                                                        'Codbar: '|| vr_codbarras ||' - '||
-                                                        'Banco: ' || SUBSTR(vr_codbarras,1,3)||' -> '||
-                                                        '['||vr_cdctrlcs||']: '||' 950 - Titulo não registrado na CIP, '||
-                                                        'porém consulta ainda esta no periodo de convivencia.'
-                                                        
-                                       ,pr_nmarqlog     => 'npc_conviv_'||to_char(SYSDATE,'RRRRMM')||'.log');
-                      
+
+           -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
+           BEGIN   
+             -- Controlar geração de log de execução dos jobs                                
+             CECRED.pc_log_programa(
+                           pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'Coop: '  || pr_cdcooper ||' - '||
+                                               'Codbar: '|| vr_codbarras ||' - '||
+                                               'Banco: ' || SUBSTR(vr_codbarras,1,3)||' -> '||
+                                               '['||vr_cdctrlcs||']: '||' 950 - Titulo não registrado na CIP, '||
+                                               'porém consulta ainda esta no periodo de convivencia.' ||
+                                               ' npc_conviv_'||to_char(SYSDATE,'RRRRMM')||'.log'
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => 3 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => 'NPCB0002'
+                          ,pr_idprglog      => vr_idprglog
+                          );                                                          
+           EXCEPTION 
+             WHEN OTHERS THEN
+               -- No caso de erro de programa gravar tabela especifica de log  
+               CECRED.pc_internal_exception (pr_cdcooper => 3
+                                            ,pr_compleme => 'Coop: '  || pr_cdcooper ||' - '||
+                                                            'Codbar: '|| vr_codbarras ||' - '||
+                                                            'Banco: ' || SUBSTR(vr_codbarras,1,3)||' -> '||
+                                                            '['||vr_cdctrlcs||']: '||' 950 - Titulo não registrado na CIP, '||
+                                                            'porém consulta ainda esta no periodo de convivencia.' ||
+                                                            ' npc_conviv_'||to_char(SYSDATE,'RRRRMM')||'.log'
+                                            );      
+           END;                        
            
            --> limpar variaveis/parametro
            vr_cdctrlcs    := NULL;
