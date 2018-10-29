@@ -31,7 +31,7 @@
 	$dsbemfin			= (isset($_POST['dsbemfin'])) ? utf8_decode($_POST['dsbemfin']) : 0  ;
 	$nrmodbem			= (isset($_POST['nrmodbem'])) ? utf8_decode($_POST['nrmodbem']) : 0  ;
 
-    $urlServicoOperacao = $Url_SOA."ObterListaMarcasFipe";
+    $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaMarcasFipe";
     $data = '{
         "tabelaFIPE": {
             "tipoVeiculo": {

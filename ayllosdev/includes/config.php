@@ -96,9 +96,9 @@
 	
 	// Variaveis para Fipe
   // PROD
-  // $Url_SOA = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  // $Url_SOA = "http://servicosinternos.cecred.coop.br";
   // Homol 
-  $Url_SOA = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  $Url_SOA = "http://servicosinternosint.cecred.coop.br";
   $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	
 	

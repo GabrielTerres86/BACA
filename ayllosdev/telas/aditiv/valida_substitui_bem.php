@@ -19,6 +19,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
+	require_once('../gravam/uteis/funcoes_gravame.php');
 	isPostMethod();
 
   $cddopcao   = (isset($_POST['cddopcao']))   ? $_POST['cddopcao']   : '' ;
@@ -92,42 +93,40 @@
 		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
 	}
 	else {
-
-    // Verificar se é obrigatorio aprovação do coordenador
-    $aprovacao == 0;
-    if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
-      $aprovacao = $xmlObject->roottag->tags[1]->cdata;
-    }
+		parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
+		$retAliena = processarAlienacao($xmlResult, $Url_SOA, $Auth_SOA);
+		
+		if($retAliena == true){
+			processarBaixaAditiv($xmlResult, 0, $Url_SOA, $Auth_SOA);
+		}
+		// Verificar se é obrigatorio aprovação do coordenador
+    	$aprovacao == 0;
+    	if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
+      		$aprovacao = $xmlObject->roottag->tags[1]->cdata;
+    	}
     
-    // Se é necessário pedir aprovação do coordenador
-    if($aprovacao==1){
-		$funcaoSim = 'SenhaCoordenador();';
-    }else{
-      $funcaoSim = 'SubstituiBem();';
-    }  
+    	// Se é necessário pedir aprovação do coordenador
+    	if($aprovacao==1){
+			$funcaoSim = 'SenhaCoordenador();';
+    	}else{
+      		$funcaoSim = 'SubstituiBem();';
+    	}  
     
-    //echo ("console.log('aprovacao: $aprovacao');");
-    //echo ("console.log('funcaoSim: $funcaoSim');");
+    	//echo ("console.log('aprovacao: $aprovacao');");
+    	//echo ("console.log('funcaoSim: $funcaoSim');");
     
 		$funcaoNao = 'CancelaSubstituicao();';
 		$msgAvisoDefault = "Este processo irá primeiro alienar o novo veículo e depois baixar/cancelar a alienação do veículo a ser substituído.";
     
-    // Se ha mensagem
+    	// Se ha mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
-				$msgAviso = $xmlObject->roottag->tags[0]->cdata;
-        if ($msgAviso != '') {
-            $msgAviso = "<br/>".$msgAviso;
-        }  
-    }   
+			$msgAviso = $xmlObject->roottag->tags[0]->cdata;
+        	if ($msgAviso != '') {
+            	$msgAviso = "<br/>".$msgAviso;
+        	}  
+    	}   
 
-    // Mostrar confirmação    
-			echo "showConfirmacao(
-                ' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?'
-                ,'Confirma?- Ayllos'
-										,'".$funcaoSim."'
-										,'".$funcaoNao."'
-										,'sim.gif'
-										,'nao.gif'
-									);";
+    	// Mostrar confirmação    
+		echo "showConfirmacao(' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?','Confirma?- Ayllos','".$funcaoSim."','".$funcaoNao."','sim.gif','nao.gif');";
     }
 ?>

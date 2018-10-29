@@ -35,6 +35,7 @@
   $dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
   $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
+  $tpinclus = (isset($_POST["tpinclus"])) ? $_POST["tpinclus"] : '';
   
   validaDados();
   
@@ -44,12 +45,14 @@
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-  $xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
-  $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
-  $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
-  $xml 	   .= "     <nrgravam>".$nrgravam."</nrgravam>";
-  $xml 	   .= "     <dtmvttel>".$dtmvttel."</dtmvttel>";
-  $xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
+  	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
+  	$xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+  	$xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
+  	$xml 	   .= "     <nrgravam>".$nrgravam."</nrgravam>";
+  	$xml 	   .= "     <dtmvttel>".$dtmvttel."</dtmvttel>";
+  	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
+  	$xml       .= "     <tpinclus>".$tpinclus."</tpinclus>";
+  	$xml       .= "     <cdopeapr>".$_SESSION['cdopelib']."</cdopeapr>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

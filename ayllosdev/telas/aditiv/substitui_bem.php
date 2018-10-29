@@ -41,6 +41,7 @@
 	$nrcpfcgc       = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0 ;
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
     $cdoperad       = (isset($_POST['cdoperad']))   ? $_POST['cdoperad']   : 0  ;
+    $nrgravam       = (isset($GLOBALS["nrgravam"])) ? $GLOBALS["nrgravam"] : 0  ;
 
     $xmlCarregaDados  = "";
     $xmlCarregaDados .= "<Root>";
@@ -66,6 +67,7 @@
     $xmlCarregaDados .= "  <nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";
     $xmlCarregaDados .= "  <idseqbem>" . $idseqbem . "</idseqbem>";
     $xmlCarregaDados .= "  <cdopeapr>" . $cdoperad . "</cdopeapr>";
+    $xmlCarregaDados .= "  <nrgravam>" . $nrgravam . "</nrgravam>";
     $xmlCarregaDados .= " </Dados>";
     $xmlCarregaDados .= "</Root>";
 

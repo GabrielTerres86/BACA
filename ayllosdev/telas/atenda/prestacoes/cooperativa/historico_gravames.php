@@ -22,6 +22,8 @@
 	$dschassi = (isset($_POST['dschassi'])) ? $_POST['dschassi'] : '';
 	$nrregist = 1000;//(isset($_POST["nrregist"])) ? $_POST["nrregist"] : 15;
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
+	$dtrefere = (isset($_POST["dtrefere"])) ? $_POST["dtrefere"] : '';
+	$dtrefate = (isset($_POST["dtrefate"])) ? $_POST["dtrefate"] : '';
 
 	if ($nrctrpro.length > 0) {
 
@@ -47,8 +49,8 @@
 		$xml .= "		<tparquiv>TODAS</tparquiv>";
 		$xml .= "		<cdcoptel>".$glbvars["cdcooper"]."</cdcoptel>";			
 		$xml .= "		<nrseqlot>0</nrseqlot>";
-		$xml .= "		<dtrefere/>";
-		$xml .= "		<dtrefate/>";
+		$xml .= "		<dtrefere>".$dtrefere."</dtrefere>";
+		$xml .= "		<dtrefate>".$dtrefate."</dtrefate>";
 		$xml .= "		<cdagenci>0</cdagenci>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<nrctrpro>".$nrctrpro."</nrctrpro>";

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2016 
  * OBJETIVO     : Rotina para cancelar alienação no gravame
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : Outubro/2018 - Alteração para fazer o cancelamento pelo serviço SOA. (Thaise - Envolti)
  */
 ?> 
 
@@ -16,6 +16,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
+	require_once('uteis/funcoes_gravame.php');
 	isPostMethod();		
 	
 	// Carrega permissões do operador
@@ -34,6 +35,7 @@
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
   $tpcancel = (isset($_POST["tpcancel"])) ? $_POST["tpcancel"] : 0;
   $dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
+  $tpdopcao = (isset($_POST["tpdopcao"])) ? $_POST["tpdopcao"] : '';
   
   
   validaDados();
@@ -47,7 +49,7 @@
 	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
 	$xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
 	$xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
-	$xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
+	$xml 	   .= "     <tpcancel>".$tpdopcao."</tpcancel>";
 	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
 	$xml 	   .= "     <cdopeapr>".$_SESSION['cdopelib']."</cdopeapr>";
 	$xml 	   .= "  </Dados>";
@@ -64,16 +66,17 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
 					
 	} 
-		
-  if($tpcancel == "1"){ 
-  
-    echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
-          
-  }else{
-  
-    echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
-    
-  }
+
+	if($tpdopcao == 'A'){
+		parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
+		processarBaixaCancel($xmlResult, 2, $Url_SOA, $Auth_SOA);
+	} else {
+		if($tpcancel == "1"){ 
+    		echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
+  		} else{
+    		echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+  		}
+	}
 	  
   
   function validaDados(){
@@ -82,26 +85,25 @@
 			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["nrctrpro"] == '' ){ 
+    	IF($GLOBALS["nrctrpro"] == '' ){ 
 			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrctrpro\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["tpcancel"] != '1' && $GLOBALS["tpcancel"] != '2'){ 
+    	IF($GLOBALS["tpcancel"] != '1' && $GLOBALS["tpcancel"] != '2'){ 
 			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tpcancel\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["tpctrpro"] == 0 ){ 
+    	IF($GLOBALS["tpctrpro"] == 0 ){ 
 			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tpctrpro\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["idseqbem"] == 0 ){ 
+    	IF($GLOBALS["idseqbem"] == 0 ){ 
 			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idseqbem\',\'frmBens\');',false);
 		}
 		
-	IF($GLOBALS["dsjustif"] == '' ){ 
-		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
-	}
-				
+		IF($GLOBALS["dsjustif"] == '' ){ 
+			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+		}		
 	}	
   
  ?>

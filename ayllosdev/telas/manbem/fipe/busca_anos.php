@@ -28,7 +28,7 @@
     $cdModeloVeiculo	= (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ;
     $nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
 
-    $urlServicoOperacao = $Url_SOA."ObterListaMarcaModeloAnosFipe";
+    $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaMarcaModeloAnosFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
