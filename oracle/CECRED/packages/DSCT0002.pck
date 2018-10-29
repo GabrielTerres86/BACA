@@ -7966,8 +7966,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         ldc.dsdlinha,
         ldc.txjurmor,
         (SELECT COUNT(1)      FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder) AS qttitbor,
-        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vltitbor,
-        (SELECT SUM(vlsdprej) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vlprjbor
+        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vltitbor
       FROM crapbdt bdt
         INNER JOIN crapldc ldc ON bdt.cdcooper = ldc.cdcooper AND bdt.cddlinha = ldc.cddlinha AND ldc.tpdescto = 3
       WHERE bdt.cdcooper = pr_cdcooper
@@ -8103,7 +8102,6 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                       '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
                       '<inprejuz>'|| rw_crapbdt.inprejuz                                   ||'</inprejuz>' ||
                       '<dtprejuz>'|| to_char(rw_crapbdt.dtprejuz, 'DD/MM/RRRR')            ||'</dtprejuz>' ||
-                      '<vlprjbor>'|| to_char(rw_crapbdt.vlprjbor, 'fm999G999G999G990D00')  ||'</vlprjbor>' ||
                       '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
                       '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
                       '<vltitbor>'|| to_char(rw_crapbdt.vltitbor, 'fm999G999G999G990D00')  ||'</vltitbor>' ||
