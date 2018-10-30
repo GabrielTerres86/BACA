@@ -264,6 +264,7 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
 																	 , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
+																	 , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -342,7 +343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   :Rangel Decker - AMCom
-   Data    : Maio/2018                      Ultima atualizacao:
+   Data    : Maio/2018                      Ultima atualizacao: 30/10/2018
 
    Dados referentes ao programa:
 
@@ -353,6 +354,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)
                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom
                18/07/2018  -P450 - Pagamento Prejuizo de Forma Automática  - pc_paga_prejuizo_cc
+							 30/10/2018 - P450 - Ajuste no pagamento do prejuízo para fixar o DTHRTRAN que é gravado na 
+							              TBCCC_PREJUIZO_DETALHE - Reginaldo - AMcom
 ..............................................................................*/
 
   -- clob para conter o dados do excel/csv
@@ -2606,6 +2609,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   vr_des_erro VARCHAR2(2000);
 
 	vr_exc_saida EXCEPTION;
+	
+	vr_dthrtran DATE := SYSDATE; -- Data/hora da transação para armazenar nos lanctos da TBCC_PREJUIZO_DETALHE
  BEGIN
     pr_cdcritic := 0;
     pr_dscritic := NULL;
@@ -2670,6 +2675,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2323
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vllanciof
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -2723,6 +2729,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2323
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vllanciof
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -2770,6 +2777,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2727
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vljr60_ctneg + vr_vljur60_lcred
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -2844,6 +2852,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                , pr_cdhistor => 2718
                                , pr_idprejuizo => rw_contaprej.idprejuizo
                                , pr_vllanmto => vr_vljupre_prov
+															 , pr_dthrtran => vr_dthrtran
                                , pr_cdcritic => vr_cdcritic
                                , pr_dscritic => vr_dscritic);
 
@@ -2868,6 +2877,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2729
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vljupre_prov + vr_vljupre
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -2929,6 +2939,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                              , pr_cdhistor => 2725
                              , pr_idprejuizo => rw_contaprej.idprejuizo
                              , pr_vllanmto => vr_vlprinc
+														 , pr_dthrtran => vr_dthrtran
                              , pr_cdcritic => vr_cdcritic
                              , pr_dscritic => vr_dscritic);
 
@@ -2950,6 +2961,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2723
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrabono
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -3016,6 +3028,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2721
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -3026,6 +3039,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2733
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -4235,6 +4249,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
 																	 , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
+																	 , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
@@ -4274,7 +4289,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        ,pr_nrdconta
        ,pr_cdhistor
        ,pr_vllanmto
-       ,SYSDATE
+       ,nvl(pr_dthrtran, SYSDATE)
        ,pr_cdoperad
        ,pr_cdcooper
        ,vr_idprejuizo
