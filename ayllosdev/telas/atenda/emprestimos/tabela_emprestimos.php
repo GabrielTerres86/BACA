@@ -113,7 +113,9 @@
   <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>
 	<div style="margin-top:5px;" />
 	<a href="#" class="botao" id="btAprovar"   onClick="controlaOperacao('T_EFETIVA');">Efetivar</a>
-	<a href="#" class="botao" id="btGravames"  onClick="controlaOperacao('VAL_GRAVAMES');">Registrar GRV</a>    
+	<?php if ($flgGrvOnline == "N" ) { ?>
+	<a href="#" class="botao" id="btGravames"  onClick="controlaOperacao('VAL_GRAVAMES');">Registrar GRV</a>
+	<?php } else { echo "<!-- flgGrvOnline=$flgGrvOnline -->"; } ?>
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>

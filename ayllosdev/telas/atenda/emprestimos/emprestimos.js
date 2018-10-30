@@ -9040,10 +9040,11 @@ function limpaForm(form) {
 
 
 function showConfirmacaoEfetiva() {
-    showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+   // showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+	efetivaProposta();
 }
 
-function efetivaProposta() {
+function efetivaProposta(operacao) {
 
     showMsgAguardo('Aguarde, efetivando a proposta...');
     exibeRotina($('#divUsoGenerico'));
@@ -9065,7 +9066,7 @@ function efetivaProposta() {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
             dtdpagto: dtdpagto, idcobope: idcobope, 
-			flliquid: flliquid,
+			flliquid: flliquid, operacao: operacao,
 			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -10452,7 +10453,7 @@ function manterRotina( operacao ) {
 	}
 
 	showMsgAguardo( mensagem );
-	if(cddopcao == "I" && cdaditiv == 5){		
+	if(cddopcao == "I" && cdaditiv == 5){
 		ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
 								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem);
 	}else{
@@ -10631,7 +10632,7 @@ function selecionaComplemento(tr) {
 	$('#nranobem','.complemento').html($('#nranobem', tr).val());
 	$('#nrmodbem','.complemento').html($('#nrmodbem', tr).val());
     $('#uflicenc','.complemento').html($('#uflicenc', tr).val());
-    
+
 	return false;
 }
 
@@ -10656,7 +10657,7 @@ function mostraAplicacao(tpaplica) {
 			return false;
 		}
     });
-    
+
 	return false;
 }
 
@@ -10696,7 +10697,7 @@ function alteraSomenteBens() {
                 normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
                 arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
                 arrayAlienacoes[i]['dstipbem'] + ';' +
-                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES */
                 arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
                 arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
                 number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
@@ -10730,6 +10731,6 @@ function alteraSomenteBens() {
 			}
 		}
     });
-    
+
 	return false;
 }
