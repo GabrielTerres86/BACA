@@ -168,9 +168,14 @@
                06/10/2017 - Criar a procedure obtem-acesso-anterior (David)	 
                            
                04/04/2018 - Adicionada chamada pc_permite_lista_prod_tipo para verificar se o 
-                            tipo de conta permite a contrataçao dos produtos. PRJ366 (Lombardi).
+                            tipo de conta permite a contrataçao dos produtos. PRJ366 (Lombardi).                                           
 
 			   28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+         
+               30/10/2018 - Adicionada a chamada Pc_busca_modalidade_tipo para verificar a moda-
+                            lidade de portabilidade para remoçao de determinados itens do menu 
+                            mobile: Pre-aprovado, recarga celular, aplicacao e resgate aprovacao
+                            PRJ485 - Lucas Skroch (Supero)
                
 ..............................................................................*/
 
@@ -3128,6 +3133,8 @@ PROCEDURE permissoes-menu-mobile:
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_possuipr AS CHAR NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdmodtpo AS INTE                                    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
@@ -3254,6 +3261,55 @@ PROCEDURE permissoes-menu-mobile:
       aux_flgresga = TRUE.
     ELSE
       aux_flgresga = FALSE.
+    
+    /* INICIO PRJ485 */
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT crapass.inpessoa, /* pr_inpessoa */
+                                 INPUT crapass.cdtipcta, /* pr_cdtipo_conta */
+                                 OUTPUT 0,  /* pr_cdmodalidade_tipo */
+                                 OUTPUT "", /* pr_des_erro */
+                                 OUTPUT ""). /* pr_dscritic */
+    
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdmodtpo = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodtpo = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro                          
+                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+    
+    IF  aux_des_erro <> "0" OR aux_dscritic <> "" THEN
+      DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_des_erro,
+                         INPUT-OUTPUT aux_dscritic).
+                                  
+          RETURN "NOK".                
+      END.
+      
+    IF aux_cdmodtpo = 2 THEN
+      DO: 
+        aux_flgaprov = FALSE.
+        aux_flgsitrc = FALSE.
+        aux_flgaplic = FALSE.
+        aux_flgresga = FALSE.
+      END.
+
+    /* FIM PRJ485 */
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
