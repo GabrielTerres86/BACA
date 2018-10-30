@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE TELA_CUSTOD IS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela COBRAN
   --
   -- Alteracoes:
-  --
+  --           30/10/2018 - SCTASK0033039 - Alteração do periodo da custodia de cheques de 3 para 5 anos -- Jefferson Gubetti - Mouts
   ---------------------------------------------------------------------------*/
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -1937,6 +1937,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 			vr_dtlibera DATE := to_date(pr_dtlibera, 'DD/MM/RRRR');			
       vr_dtminimo DATE;
       vr_qtddmini NUMBER;
+      vr_prazo_custod NUMBER;
       -- Identifica o ultimo dia Util do ANO
       vr_dtultdia DATE;
       
@@ -2117,12 +2118,15 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
         END IF;
       END IF;      
       
-			-- Se o cheque não estiver no prazo mínimo ou no
-			-- prazo máximo (1095 dias)
-			IF   vr_dtlibera <= vr_dtminimo OR
-					 vr_dtlibera > (rw_crapdat.dtmvtolt + 1095)   THEN
+            -- Busca prazo máximo da custódia
+            vr_prazo_custod := gene0001.fn_param_sistema('CRED',0,'PRAZO_CUSTODIA_CHEQUES');
+
+            -- Se o cheque não estiver no prazo mínimo ou no 
+            -- prazo máximo (vr_prazo_custod)
+            IF   vr_dtlibera <= vr_dtminimo OR
+                 vr_dtlibera > (rw_crapdat.dtmvtolt + vr_prazo_custod)   THEN
 				-- Data para Deposito invalida
-        vr_cdcritic := 0;
+                vr_cdcritic := 0;
 				vr_dscritic := 'Data para Depósito inválida';
 				-- Executa RAISE para sair das validações
 				RAISE vr_exc_erro;
