@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 28/09/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 29/10/2018
 
      Dados referentes ao programa:
 
@@ -376,6 +376,9 @@ BEGIN
                               nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
 
                  28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
+
+                 29/10/2018 - P450 - Remoção de bloco do calculo de Risco da Melhora - 6 meses e remoção de 
+                              variaveis e chamadas relativas ao relatório 552 (Douglas Pagel/AMcom)
 
   ............................................................................. */
 
@@ -1224,9 +1227,6 @@ BEGIN
     --> crrl354
     vr_clobxml_354 CLOB;
     vr_txtauxi_354 VARCHAR2(32767);
-    --> crrl552
-    vr_clobxml_552 CLOB;
-    vr_txtauxi_552 VARCHAR2(32767);
     --> crrl581
     vr_clobxml_581 CLOB;
     vr_txtauxi_581 VARCHAR2(32767);
@@ -3903,16 +3903,6 @@ BEGIN
                              ,pr_texto_completo => vr_txtauxi_581
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><raiz>');
 
-      -- Somente abrir o arquivo 3 em caso de chamada pelo crps280
-      IF pr_cdprogra = 'CRPS280' THEN
-        -- Para o crr552.lst
-        dbms_lob.createtemporary(vr_clobxml_552, TRUE, dbms_lob.CALL);
-        dbms_lob.open(vr_clobxml_552, dbms_lob.lob_readwrite);
-         gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_552
-                                ,pr_texto_completo => vr_txtauxi_552
-                                ,pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><raiz>');
-      END IF;
-
       pc_log_programa(PR_DSTIPLOG     => 'O',
                       PR_CDPROGRAMA   => pr_cdprogra,
                       pr_cdcooper     => pr_cdcooper,
@@ -4381,110 +4371,6 @@ BEGIN
           pr_vltotdiv := pr_vltotdiv + vr_vldivida;
           pr_vltotprv := pr_vltotprv + vr_vlpreatr;
         END IF;
-
-        -- Somente em caso de chamada pelo crps280
-
-     --IF pr_cdprogra = 'CRPS280' THEN
-     -- Regra (IF) comentada para o projeto Contratação de Crédito
-     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
-
-          -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na
-          -- condição, vamos verificar o nível de risco "A".
-          -- ANTES => IF vr_qtpreatr <= 0 AND vr_percentu <> 0.5 AND
-          --
-          -- Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-            IF vr_qtpreatr <= 0 AND vr_tab_crapris(vr_des_chave_crapris).innivris <> 2 AND
-               vr_vldivida > 0  AND vr_dsorigem = 'E' THEN -- So emprestimo
-
-            vr_dsnivris := '';
-
-            -- Empréstimo Cooperativa
-               OPEN cr_crawepr(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                              ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp);
-
-            FETCH cr_crawepr
-              INTO rw_crawepr;
-            -- Verifica se encontrou registro
-            IF cr_crawepr%FOUND THEN
-              -- Fechar o cursor para buscar novamente
-              CLOSE cr_crawepr;
-              vr_dsnivris := rw_crawepr.dsnivris;
-            ELSE
-              -- Fechar o cursor para buscar novamente
-              CLOSE cr_crawepr;
-            END IF;
-
-            -- Somente continuar se nível não for A
-            IF UPPER(vr_dsnivris) <> 'A' AND vr_dsnivris <> ' ' THEN
-
-              -- Buscar estouro de conta
-              vr_flgexis_estouro := 0;
-              OPEN cr_crapris_est(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                 ,pr_cdorigem => 1 --> Conta
-                                 ,pr_cdmodali => 101 --> Adiant. a Depos
-                                 ,pr_dtrefere => pr_dtrefere
-                                 ,pr_inddocto => 1); --> Dcto 3020
-              FETCH cr_crapris_est
-                INTO vr_flgexis_estouro;
-              CLOSE cr_crapris_est;
-
-              -- Somente continuar se não encontrou estouro de conta
-              IF vr_flgexis_estouro = 0 THEN
-
-                -- Buscar quantidade de meses através dos registros na crapris
-                vr_qtd_crapris := 0;
-                   OPEN cr_crapris_count(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                        ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp
-                                        ,pr_cdorigem => 3);
-                FETCH cr_crapris_count
-                  INTO vr_qtd_crapris;
-                CLOSE cr_crapris_count;
-
-                -- Somente continuar se quantidade de meses é igual ou superior a 6
-                IF vr_qtd_crapris >= 6 THEN
-
-                  -- Se chegou neste ponto, as regras abaixo estão satisfeita e estaremos
-                  -- criando um novo registro no relatório 552:
-                  --  1) Niveis com risco A, nao podem ser melhorados, entao sao ignorados no relatorio
-                  --  2) Nao pode ter estouro de Conta
-                  --  3) Emprestimo com igual/mais de 6 meses
-                  --  4) Somente quem nao tem Rating
-
-                  -- Iremos enviar o registro do emprestimo no XML 3
-                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_552
-                                         ,pr_texto_completo => vr_txtauxi_552
-                                         ,pr_texto_novo     =>'<credito>'
-                                                                 ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
-                                                                 ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
-                                                                 ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zz.zzz.zz9'))||'</nrctremp>'
-                                                                 ||' <cdfinemp>'||vr_tab_crapris(vr_des_chave_crapris).cdfinemp||'</cdfinemp>'
-                                                                 ||' <cdlcremp>'||vr_tab_crapris(vr_des_chave_crapris).cdlcremp||'</cdlcremp>'
-                                                                 ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>' -- ver
-                                                                 ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>' -- ver
-                                                                 ||' <vlpreemp>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,'fm999g999g990d00')||'</vlpreemp>'
-                                                                 ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
-                                                                 ||' <desrisco>'||vr_tab_risco(vr_tab_crapris(vr_des_chave_crapris).innivris).dsdrisco||'</desrisco>'
-                                                                 ||'</credito>');
-
-                  -- Atualiza o Risco da proposta de Emprestimo
-                  BEGIN
-                       UPDATE crawepr SET
-                              crawepr.dsnivris = 'A',
-                           crawepr.dtaltniv = pr_rw_crapdat.dtmvtolt
-                     WHERE crawepr.rowid = rw_crawepr.rowid;
-                  EXCEPTION
-                    WHEN OTHERS THEN
-                         pr_dscritic := 'Erro ao atualizar crawepr. ' || SQLERRM;
-                      --Levantar Excecao
-                      RAISE vr_exc_erro;
-                  END;
-                END IF; --> >= 6 meses
-              END IF; --> Sem estou de conta
-            END IF; --> Nivel <> A
-          END IF; --> Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-         --END IF; --> Somente para crps280
-     -- Regra (END IF) comentada para o projeto Contratação de Crédito
-     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
 
 
         -- Alimentar varíaveis para detalhamento dos riscos atual e anterior
@@ -5584,15 +5470,6 @@ BEGIN
                              ,pr_texto_novo     => '</raiz>'
                              ,pr_fecha_xml      => TRUE);
 
-      -- Somente trabalhar com o arquivo 3 em caso de chamada pelo crps280
-      IF pr_cdprogra = 'CRPS280' THEN
-        -- Para o crr552.lst
-         gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_552
-                                ,pr_texto_completo => vr_txtauxi_552
-                                ,pr_texto_novo     => '</raiz>'
-                                ,pr_fecha_xml      => TRUE);
-      END IF;
-
       -- Solicitar a geração do relatório crrl581
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
                                  ,pr_cdprogra  => pr_cdprogra                          --> Programa chamador
@@ -5683,35 +5560,6 @@ BEGIN
       IF pr_dscritic IS NOT NULL THEN
         -- Gerar exceção
         RAISE vr_exc_erro;
-      END IF;
-
-      -- Somente trabalhar com o arquivo 3 em caso de chamada pelo crps280
-      IF pr_cdprogra = 'CRPS280' THEN
-
-        -- Solicitar a geração do relatório crrl552
-         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
-                                    ,pr_cdprogra  => pr_cdprogra                   --> Programa chamador
-                                    ,pr_dtmvtolt  => pr_rw_crapdat.dtmvtolt           --> Data do movimento atual
-                                    ,pr_dsxml     => vr_clobxml_552                  --> Arquivo XML de dados
-                                    ,pr_dsxmlnode => '/raiz/credito'               --> Nó base do XML para leitura dos dados
-                                    ,pr_dsjasper  => 'crrl552.jasper'              --> Arquivo de layout do iReport
-                                    ,pr_dsparams  => null                          --> Sem parâmetros
-                                    ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl552.lst' --> Arquivo final com o path
-                                    ,pr_qtcoluna  => 132                           --> 132 colunas
-                                    ,pr_flg_gerar => vr_flgerar                    --> Geraçao na hora
-                                    ,pr_flg_impri => 'S'                           --> Chamar a impressão (Imprim.p)
-                                    ,pr_nmformul  => '132col'                      --> Nome do formulário para impressão
-                                    ,pr_nrcopias  => 1                             --> Número de cópias
-                                    ,pr_cdrelato  => 552                           --> Qual a seq do cabrel
-                                    ,pr_des_erro  => pr_dscritic);                 --> Saída com erro
-        dbms_lob.close(vr_clobxml_552);
-        dbms_lob.freetemporary(vr_clobxml_552);
-
-        -- Testar se houve erro
-        IF pr_dscritic IS NOT NULL THEN
-          -- Gerar exceção
-          RAISE vr_exc_erro;
-        END IF;
       END IF;
 
       -- Quando execução em programa diferente do crps184
