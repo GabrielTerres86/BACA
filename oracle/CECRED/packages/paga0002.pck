@@ -160,11 +160,11 @@ create or replace package cecred.PAGA0002 is
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).
 
-             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  	  
+             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)      
 
-							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+               22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 
-			 17/04/2017 - Alterações referentes à Nova Plataforma de Cobrança - NPC (Renato-Amcom)
+       17/04/2017 - Alterações referentes à Nova Plataforma de Cobrança - NPC (Renato-Amcom)
                            
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
@@ -206,7 +206,7 @@ create or replace package cecred.PAGA0002 is
            ,dttransa DATE
            ,hrtransa INTEGER
            ,nrdocmto INTEGER
-					 ,insitlau INTEGER
+           ,insitlau INTEGER
            ,dssitlau VARCHAR2(100)
            ,dslindig VARCHAR2(300)
            ,dscedent VARCHAR2(300)
@@ -239,7 +239,7 @@ create or replace package cecred.PAGA0002 is
            ,vlrrecbr NUMBER
            ,vlrperce NUMBER
            ,idlancto NUMBER(15)
-					 ,dscritic craplau.dscritic%TYPE
+           ,dscritic craplau.dscritic%TYPE
            ,gps_cddpagto NUMBER
            ,gps_dscompet VARCHAR2(7)
            ,gps_cdidenti NUMBER
@@ -349,7 +349,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
                                ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
                                ,pr_xml_cdsegmto OUT VARCHAR2            --> Retorno XML com segmto convenio
-							   ,pr_xml_dsprotoc OUT VARCHAR2            --> Retorno XML com protocolo do comprovante gerado
+                 ,pr_xml_dsprotoc OUT VARCHAR2            --> Retorno XML com protocolo do comprovante gerado
                                ,pr_dsretorn     OUT VARCHAR2);          --> Retorno de critica (OK ou NOK)
 
   /* Gerar registro de Retorno = 02 - Entrada Confirmada */
@@ -830,6 +830,9 @@ create or replace package body cecred.PAGA0002 is
   --
   --              12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
   --                           na tabela CRAPLCM  - José Carvalho(AMcom)
+  --
+  --              30/10/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
+  --                           Correção da quantidade de parâmetros passados para LANC0001 - Heckmann (AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -7894,7 +7897,11 @@ create or replace package body cecred.PAGA0002 is
                                                 ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')                  -- cdhistor                                                
                                                 ,pr_vllanmto => rw_craplcs.vllanmto -- vllanmto                                                
                                                 ,pr_nrseqdig => rw_craplot.nrseqdig -- nrseqdig
-                                                ,pr_cdcooper =>pr_cdcooper
+                                                ,pr_cdcooper => rw_craplot.cdcooper
+												                        ,pr_cdpesqbb => vr_dadosdeb -- Remetente 
+                                                ,pr_cdoperad => pr_cdoperad          
+												                        ,pr_hrtransa => TO_CHAR(SYSDATE, 'SSSSS')
+												                        ,pr_cdcoptfn => pr_cdcooper
 
                                                 -- OUTPUT --
                                                 ,pr_tab_retorno => vr_tab_retorno
@@ -8791,7 +8798,7 @@ create or replace package body cecred.PAGA0002 is
        OR (lau.cdcooper  = pr_cdcooper -- Agendamentos GPS no CAIXA
       AND  lau.nrdconta  = pr_nrdconta
       AND  lau.nrseqagp <> 0
-	  AND (pr_cdtiptra IS NULL OR 2 IN (SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL) --Pagamento; DARF/DAS/GPS
+    AND (pr_cdtiptra IS NULL OR 2 IN (SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL) --Pagamento; DARF/DAS/GPS
                                               FROM dual
                                 CONNECT BY LEVEL <= regexp_count(pr_cdtiptra, '[^;]+')))
       AND  (pr_dtageini IS NULL
@@ -8832,7 +8839,7 @@ create or replace package body cecred.PAGA0002 is
 
       SELECT ass.cdcooper
             ,ass.nrdconta
-			,ass.nmprimtl
+      ,ass.nmprimtl
       FROM crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
@@ -9245,7 +9252,7 @@ create or replace package body cecred.PAGA0002 is
             CLOSE cr_crabass;
             CONTINUE;
           ELSE
-		    FETCH cr_crabass INTO rw_crabass;
+        FETCH cr_crabass INTO rw_crabass;
             -- Fecha cursor
             CLOSE cr_crabass;
           END IF;
@@ -9439,7 +9446,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).dttransa := rw_craplau.dttransa;
         vr_tab_dados_agendamento(vr_cdindice).hrtransa := rw_craplau.hrtransa;
         vr_tab_dados_agendamento(vr_cdindice).nrdocmto := rw_craplau.nrdocmto;
-				vr_tab_dados_agendamento(vr_cdindice).insitlau := rw_craplau.insitlau;
+        vr_tab_dados_agendamento(vr_cdindice).insitlau := rw_craplau.insitlau;
         vr_tab_dados_agendamento(vr_cdindice).dssitlau := vr_dssitlau;
         vr_tab_dados_agendamento(vr_cdindice).dscedent := rw_craplau.dscedent;
         vr_tab_dados_agendamento(vr_cdindice).dtvencto := rw_craplau.dtvencto;
@@ -9475,7 +9482,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
         vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
-		    vr_tab_dados_agendamento(vr_cdindice).dscritic := vr_dscrilau;
+        vr_tab_dados_agendamento(vr_cdindice).dscritic := vr_dscrilau;
         -- GPS
         vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
         vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;
@@ -9742,7 +9749,7 @@ create or replace package body cecred.PAGA0002 is
     rw_crapass cr_crapass%ROWTYPE;
     rw_crabass cr_crapass%ROWTYPE;
 
-		--> Buscar dados da cooperativa
+    --> Buscar dados da cooperativa
     CURSOR cr_crapcop (pr_cdcooper  crapcop.cdcooper%TYPE) IS
       SELECT crapcop.cdcooper,
              crapcop.nmrescop
@@ -9765,12 +9772,12 @@ create or replace package body cecred.PAGA0002 is
                        pr_cdempcon  crapcon.cdempcon%TYPE,
                        pr_cdsegmto  crapcon.cdsegmto%TYPE ) IS
       SELECT crapcon.cdcooper
-			      ,crapcon.flginter
-						,crapcon.nmextcon
-						,crapcon.cdhistor
-						,crapcon.nmrescon
-						,crapcon.cdsegmto
-						,crapcon.cdempcon
+            ,crapcon.flginter
+            ,crapcon.nmextcon
+            ,crapcon.cdhistor
+            ,crapcon.nmrescon
+            ,crapcon.cdsegmto
+            ,crapcon.cdempcon
         FROM crapcon
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
@@ -9820,7 +9827,7 @@ create or replace package body cecred.PAGA0002 is
     --Tabela de memoria de erros
     vr_tab_erro GENE0001.typ_tab_erro;
 
-		vr_idlancto craplau.idlancto%type;
+    vr_idlancto craplau.idlancto%type;
 
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -9906,9 +9913,9 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
       IF rw_crapope.nvoperad NOT IN (2,3) THEN
-			  vr_dscritic := 'Cancelamento somente permitido por coordenadores/gerentes.';
+        vr_dscritic := 'Cancelamento somente permitido por coordenadores/gerentes.';
         RAISE vr_exc_erro;
-		  END IF;
+      END IF;
 
     END IF;
 
@@ -9958,11 +9965,11 @@ create or replace package body cecred.PAGA0002 is
     --  pois o programa pr_crps705 (Responsavel pelo debito de agendamentos de TED) sera iniciado as 8:40.
     --  Qualquer mudanca na condicao abaixo devera ser previamente discutida com
     --  a equipe do financeiro (Juliana), do canais de atendimento (Jefferson),
-		--	Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).
+    --  Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).
 
     IF (rw_craplau.dtmvtopg = vr_datdodia AND
         gene0002.fn_busca_time > to_number(vr_dsvlrprm))        THEN
-			 vr_dscritic := 'Cancelamento permitido apenas ate '|| gene0002.fn_calc_hora(vr_dsvlrprm)||'hrs.';
+       vr_dscritic := 'Cancelamento permitido apenas ate '|| gene0002.fn_calc_hora(vr_dsvlrprm)||'hrs.';
        RAISE vr_exc_erro;
     END IF;
 
