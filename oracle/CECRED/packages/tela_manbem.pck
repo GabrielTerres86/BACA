@@ -1712,24 +1712,6 @@ create or replace package body cecred.tela_manbem is
         par_nmdcampo := 'dsbemfin';
         raise vr_exc_erro;
       end if;
-    ELSIF par_idseqbem > 0 then
-      open cr_crapbpr2;
-        fetch cr_crapbpr2 into v_crapbpr2;
-        if cr_crapbpr2%notfound then
-          v_cdcritic := 0;
-          v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
-          par_nmdcampo := 'dsbemfin';
-          close cr_crapbpr2;
-          raise vr_exc_erro;
-    end if;
-      close cr_crapbpr2;
-      /** Nao pode substituir nesses Status */
-      if v_crapbpr2.cdsitgrv = 1 then
-        v_cdcritic := 0;
-        v_dscritic := 'Bem a Substituir em Processamento Gravames! Favor selecionar outro bem!';
-        par_nmdcampo := 'dsbemfin';
-        raise vr_exc_erro;
-      end if;
     end if;
     
     --
@@ -1743,7 +1725,7 @@ create or replace package body cecred.tela_manbem is
           fetch cr_crapbpr2 into v_crapbpr2;
           if cr_crapbpr2%notfound then
             v_cdcritic := 0;
-            v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
+            v_dscritic := 'Bem selecionado para alteracao nao cadastrado!';
             par_nmdcampo := 'dsbemfin';
             close cr_crapbpr2;
             raise vr_exc_erro;

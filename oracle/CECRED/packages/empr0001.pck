@@ -11451,8 +11451,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             END IF;
           ELSE
 
-          /* Debita o valor do IOF complementar atraso da C/C */
-          empr0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+            /* Debita o valor do IOF complementar atraso da C/C */
+            empr0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci --> Código da agência
                                         ,pr_cdbccxlt => 100 --> Número do caixa
@@ -11468,11 +11468,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_nrseqdig => vr_nrseqdig
                                         ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
                                         ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
-          --Se Retornou erro
-          IF vr_des_erro <> 'OK' THEN
-            --Sair
-            RAISE vr_exc_ok;
+            --Se Retornou erro
+            IF vr_des_erro <> 'OK' THEN
+              --Sair
+              RAISE vr_exc_ok;
+            END IF;
           END IF;
+
         END IF;
 
         /* Lancamento de Valor Pago da Parcela */
@@ -11502,8 +11504,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
           --Marcar transacao como realizada
           vr_flgtrans := TRUE;
-        END IF;
-
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes

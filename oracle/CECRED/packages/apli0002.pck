@@ -121,8 +121,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							   
                  07/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				         23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
-							                pelo AD. (PRJ339 - Reinert)
+				 23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
+							  pelo AD. (PRJ339 - Reinert)
                  
                  18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
@@ -1224,7 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 15/08/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -1469,6 +1469,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
                 15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
 			                       pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+                             
+                26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
+                             não estava deixando excluir aplicação 
+                             PRJ 450 Jaison (Lucas Ranghetti INC0026191)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5981,20 +5985,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         BEGIN
           SELECT craplcm.ROWID
-                ,craplcm.cdhistor
-                ,craplcm.cdcooper
-                ,craplcm.dtmvtolt
-                ,craplcm.hrtransa
-                ,craplcm.nrdconta
-                ,craplcm.nrdocmto
-                ,craplcm.vllanmto
-            INTO vr_rowid
-                ,rw_craplcm.cdhistor
-                ,rw_craplcm.cdcooper
-                ,rw_craplcm.dtmvtolt
-                ,rw_craplcm.hrtransa
-                ,rw_craplcm.nrdconta
-                ,rw_craplcm.nrdocmto
+                   ,craplcm.cdhistor
+                   ,craplcm.cdcooper
+                   ,craplcm.dtmvtolt
+                   ,craplcm.hrtransa
+                   ,craplcm.nrdconta
+                   ,craplcm.nrdocmto
+                   ,craplcm.vllanmto
+              INTO  vr_rowid
+                   ,rw_craplcm.cdhistor
+                   ,rw_craplcm.cdcooper
+                   ,rw_craplcm.dtmvtolt
+                   ,rw_craplcm.hrtransa
+                   ,rw_craplcm.nrdconta
+                   ,rw_craplcm.nrdocmto
                 ,rw_craplcm.vllanmto
             FROM craplcm
            WHERE craplcm.cdcooper = pr_cdcooper
@@ -6715,7 +6719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 05/09/2014
+   Data    : Maio/2014                          Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -6726,6 +6730,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 05/09/2014 - Incluido tratamento de erro no retorno da pc_validar_nova_aplicacao
                              (Adriano).
                 
+                26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
+                             não estava deixando excluir aplicação 
+                             PRJ 450 Jaison (Lucas Ranghetti INC0026191)
   .......................................................................................*/
   PROCEDURE pc_excluir_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                      ,pr_cdageope IN crapage.cdagenci%TYPE --> Código da agência
@@ -7989,29 +7996,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         -- Excluir lancamentos 
         BEGIN
-          /*DELETE FROM craplcm
-           WHERE craplcm.rowid = rw_craplcm.rowid;*/
-           
-          lanc0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
-                                         , pr_dtmvtolt => NULL
-                                         , pr_cdagenci => NULL
-                                         , pr_cdbccxlt => NULL
-                                         , pr_nrdolote => NULL
-                                         , pr_nrdctabb => NULL
-                                         , pr_nrdocmto => NULL
-                                         , pr_cdhistor => NULL
-                                         , pr_nrctachq => NULL
-                                         , pr_nrdconta => NULL
-                                         , pr_cdpesqbb => NULL
-                                         , pr_rowid    => rw_craplcm.rowid
-                                         , pr_cdcritic => vr_cdcritic
-                                         , pr_dscritic => vr_dscritic); 
-                                         
-          IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
-             vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
+          DELETE FROM craplcm
+           WHERE craplcm.rowid = rw_craplcm.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir lancamentos!';
             RAISE vr_exc_erro;
-          END IF;                                 
-        
         END;
           
       END IF;  
@@ -10308,88 +10299,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         END IF;
       ELSE
         IF pr_idorigem <> 5 THEN
-          /** Obtem limites da cooperativa **/
-          vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                  ,pr_nmsistem => 'CRED'
-                                                  ,pr_tptabela => 'GENERI'
-                                                  ,pr_cdempres => 00
-                                                  ,pr_cdacesso => 'HRPLANCAPI'
-                                                  ,pr_tpregist => pr_cdagenci);
+      /** Obtem limites da cooperativa **/
+      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 00
+                                              ,pr_cdacesso => 'HRPLANCAPI'
+                                              ,pr_tpregist => pr_cdagenci);
 
-          --Se nao encontrou
-          IF vr_dstextab IS NULL THEN
-            -- Monta critica
-            vr_cdcritic := 55;
+      --Se nao encontrou
+      IF vr_dstextab IS NULL THEN
+        -- Monta critica
+        vr_cdcritic := 55;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                  
-            -- Gera execeção
-            RAISE vr_exc_erro;
-          END IF;
+              
+        -- Gera execeção
+        RAISE vr_exc_erro;
+      END IF;
+      
+			pr_idesthor := 2; --Dentro do limite (padrão)
+
+      -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
+      -- em questão e utilizada para restringir o horário mínimo para utilização de operações
+      -- referentes a aplicação.
+      pr_hrlimini := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 3
+                                                      ,pr_dstext  => vr_dstextab
+                                                      ,pr_delimitador => ' '));
+                                                      
+      -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
+      -- em questão e utilizada para restringir o horário máximo para utilização de operações
+      -- referentes a aplicação.
+      pr_hrlimfim := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 2
+                                                      ,pr_dstext  => vr_dstextab
+                                                      ,pr_delimitador => ' '));
+                                                      
+		  -- Busca dados da execução do processo
+        OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        
+        -- Se não encontrar
+        IF BTCH0001.cr_crapdat%NOTFOUND THEN
           
-          pr_idesthor := 2; --Dentro do limite (padrão)
+          -- Fechar o cursor pois haverá raise
+          CLOSE BTCH0001.cr_crapdat;
+          
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          
+          -- Gera exceção
+          RAISE vr_exc_erro;
+          
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE BTCH0001.cr_crapdat;
+			END IF;
 
-          -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
-          -- em questão e utilizada para restringir o horário mínimo para utilização de operações
-          -- referentes a aplicação.
-          pr_hrlimini := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 3
-                                                          ,pr_dstext  => vr_dstextab
-                                                          ,pr_delimitador => ' '));
-                                                          
-          -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
-          -- em questão e utilizada para restringir o horário máximo para utilização de operações
-          -- referentes a aplicação.
-          pr_hrlimfim := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 2
-                                                          ,pr_dstext  => vr_dstextab
-                                                          ,pr_delimitador => ' '));
-                                                          
-          -- Busca dados da execução do processo
-            OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-            FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-            
-            -- Se não encontrar
-            IF BTCH0001.cr_crapdat%NOTFOUND THEN
-              
-              -- Fechar o cursor pois haverá raise
-              CLOSE BTCH0001.cr_crapdat;
-              
-              -- Montar mensagem de critica
-              vr_cdcritic := 1;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-              
-              -- Gera exceção
-              RAISE vr_exc_erro;
-              
-            ELSE
-              -- Apenas fechar o cursor
-              CLOSE BTCH0001.cr_crapdat;
-          END IF;
+			IF (rw_crapdat.inproces >= 3) OR -- processo rodando
+				 (TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini)  OR
+					TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
+					pr_idesthor := 1; -- fora do limite
+			END IF;
 
-          IF (rw_crapdat.inproces >= 3) OR -- processo rodando
-             (TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini)  OR
-              TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
-              pr_idesthor := 1; -- fora do limite
-          END IF;
+      -- Verifica se o processo ainda esta rodando e valida os horarios limites
+      IF pr_tpvalida = 1 THEN
 
-          -- Verifica se o processo ainda esta rodando e valida os horarios limites
-          IF pr_tpvalida = 1 THEN
+        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR
+           TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
 
-            IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR
-               TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
-
-              -- Monta critica
+          -- Monta critica
               vr_cdcritic := 1282;
               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
-              -- Gera exceção
-              RAISE vr_exc_erro;
-              
-            END IF;
-                    
-          END IF;
-
+          -- Gera exceção
+          RAISE vr_exc_erro;
+          
         END IF;
-      END IF;
-            
+        
+        END IF;
+        
+        END IF;
+      END IF;      
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
 
@@ -11893,12 +11884,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                  , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
                                                  , pr_cdcritic  => vr_cdcritic      -- OUT
                                                  , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
-        
+                    
                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                   -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                    RAISE vr_exc_erro;	
+                    RAISE vr_exc_erro;
                 END IF;				
-           
+              
                 BEGIN
                   UPDATE craplot
                      SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -13295,13 +13286,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
-
+                       
                  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                    -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                    RAISE vr_exc_erro;	
+                     RAISE vr_exc_erro;
                  END IF;				
-				 
-                 
+                       
+                   
                  BEGIN
                    UPDATE craplot
                       SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -15578,7 +15569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                    , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
                   IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                     RAISE vr_exc_erro;	
+                      RAISE vr_exc_erro;
                   END IF;				
 				  
 			  
@@ -19155,7 +19146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
                              
                 05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
-                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)   
+                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
 
                 19/07/2018 - Inclusão de tratamento para bloquear resgate de aplicação enquanto o
                              processo batch estiver rodando (Jean Michel)
@@ -19288,7 +19279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     vr_exc_saida       EXCEPTION;
     vr_exc_desvio      EXCEPTION;
     vr_exc_erro        EXCEPTION;
-      
+    
     vr_hrlimini INTEGER;
     vr_hrlimfim INTEGER;
 	  vr_idesthor INTEGER;
@@ -21607,7 +21598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       --Registro do tipo calendario
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
- 
+
       vr_hrlimini INTEGER;
       vr_hrlimfim INTEGER;
   	  vr_idesthor INTEGER;
@@ -22337,8 +22328,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         --Levantar Excecao
         RAISE vr_exc_saida;
 
-      END IF;
-        
+        END IF;
+      
       --Verifica se conta for conta PJ e se exige asinatura multipla
       INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta

@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 09/10/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -717,17 +717,20 @@
                  16/04/2018 - Ajustes para o novo sistema do caixa eletronico 
                               PRJ363 - Douglas Quisinski
 
-				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
+                 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
                
-				 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
-				              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
+                 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
+                              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
 
                  01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
                               processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
 
-				 28/06/2018 - Adaptação para implantação dos serviços de resgate, aplicação e consulta de saldo
-				              via URA
+                 28/06/2018 - Adaptacao para implantacao dos servicos de resgate, aplicacao e consulta de saldo
+                              via URA
+                              
+                 26/10/2018 - Ajustar a validacao dos parametros de "CANAL_XXXXX" para que sejam feitas 
+                              valor a valor (Douglas)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1617,36 +1620,154 @@ PROCEDURE process-web-request :
                               DECI(GET-VALUE("nrcpfope"))
            aux_nripuser = GET-VALUE("nripuser").
 
-		    /* Projeto 363 - Novo caixa eletronico */
+		/* Projeto 363 - Novo caixa eletronico */
+        /* Tratamento deve ser realizado campo a campo, e utilizaremos a conta online como padrao para todos os campos */
+
         /* CANAL que esta fazendo a requisicao sempre sera enviado */
         IF  GET-VALUE("aux_cdorigem") <> "" AND 
             GET-VALUE("aux_cdorigem") <> ? THEN
         DO:
-            ASSIGN canal_cdorigem = INTE(GET-VALUE("aux_cdorigem"))
-                   canal_dsorigem = GET-VALUE("aux_dsorigem")
-                   canal_cdagenci = INTE(GET-VALUE("aux_cdagenci"))
-                   canal_nrdcaixa = INTE(GET-VALUE("aux_nrdcaixa"))
-                   canal_nmprogra = GET-VALUE("aux_nmprogra")
-                   canal_cdcoptfn = INTE(GET-VALUE("aux_cdcoptfn"))
-                   canal_cdagetfn = INTE(GET-VALUE("aux_cdagetfn"))
-                   canal_nrterfin = INTE(GET-VALUE("aux_nrterfin"))
-                   aux_nrcartao   = DECI(GET-VALUE("aux_nrcartao"))
-                   token_autenticacao = GET-VALUE("aux_token_aut").
+            ASSIGN canal_cdorigem = INTE(GET-VALUE("aux_cdorigem")).
         END.
         ELSE
             DO: 
                 /* Se nao foi informado o canal de origem, será considerado como IB */
-                ASSIGN canal_cdorigem = 3
-                       canal_dsorigem = "INTERNET"
-                       canal_cdagenci = 90
-                       canal_nrdcaixa = 900
-                       canal_nmprogra = "INTERNETBANK"
-                       canal_cdcoptfn = 0
-                       canal_cdagetfn = 0
-                       canal_nrterfin = 0
-                       aux_nrcartao   = 0
-                       token_autenticacao = "".
+                ASSIGN canal_cdorigem = 3.
             END.
+            
+        /* CANAL ORIGEM que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_dsorigem") <> "" AND 
+            GET-VALUE("aux_dsorigem") <> ? THEN
+        DO:
+            ASSIGN canal_dsorigem = GET-VALUE("aux_dsorigem").
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_dsorigem = "INTERNET".
+
+                /* Verificar se eh TAA */ 
+                IF canal_cdorigem = 4 THEN
+                    ASSIGN canal_dsorigem = "TAA".
+
+                /* Verificar se eh URA */ 
+                IF canal_cdorigem = 6 THEN
+                    ASSIGN canal_dsorigem = "URA".
+            END.
+
+        /* CANAL AGENCIA que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_cdagenci") <> "" AND 
+            GET-VALUE("aux_cdagenci") <> ? THEN
+        DO:
+            ASSIGN canal_cdagenci = INTE(GET-VALUE("aux_cdagenci")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_cdagenci = 90.
+
+                /* Verificar se eh TAA */ 
+                IF canal_cdorigem = 4 THEN
+                    ASSIGN canal_cdagenci = 91.
+
+                /* Verificar se eh URA */ 
+                IF canal_cdorigem = 6 THEN
+                    ASSIGN canal_cdagenci = 90.
+            END.
+
+
+        /* CANAL NRDCAIXA que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_nrdcaixa") <> "" AND 
+            GET-VALUE("aux_nrdcaixa") <> ? THEN
+        DO:
+            ASSIGN canal_nrdcaixa = INTE(GET-VALUE("aux_nrdcaixa")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_nrdcaixa = 900.
+            END.
+
+        /* CANAL NOME PROGRAMA que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_nmprogra") <> "" AND 
+            GET-VALUE("aux_nmprogra") <> ? THEN
+        DO:
+            ASSIGN canal_nmprogra = GET-VALUE("aux_nmprogra").
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_nmprogra = "INTERNETBANK".
+
+                /* Verificar se eh TAA */ 
+                IF canal_cdorigem = 4 THEN
+                    ASSIGN canal_nmprogra = "TAA".
+
+                /* Verificar se eh URA */ 
+                IF canal_cdorigem = 6 THEN
+                    ASSIGN canal_nmprogra = "URA".
+            END.
+
+        /* CANAL Cooperativa do ATM que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_cdcoptfn") <> "" AND 
+            GET-VALUE("aux_cdcoptfn") <> ? THEN
+        DO:
+            ASSIGN canal_cdcoptfn = INTE(GET-VALUE("aux_cdcoptfn")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_cdcoptfn = 0.
+            END.
+
+        /* CANAL Agencia do ATM que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_cdagetfn") <> "" AND 
+            GET-VALUE("aux_cdagetfn") <> ? THEN
+        DO:
+            ASSIGN canal_cdagetfn = INTE(GET-VALUE("aux_cdagetfn")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_cdagetfn = 0.
+            END.
+
+        /* CANAL NUMERO do ATM que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_nrterfin") <> "" AND 
+            GET-VALUE("aux_nrterfin") <> ? THEN
+        DO:
+            ASSIGN canal_nrterfin = INTE(GET-VALUE("aux_nrterfin")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_nrterfin = 0.
+            END.
+
+        /* CANAL NUMERO do CARTAO que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_nrcartao") <> "" AND 
+            GET-VALUE("aux_nrcartao") <> ? THEN
+        DO:
+            ASSIGN aux_nrcartao   = DECI(GET-VALUE("aux_nrcartao")).
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN aux_nrcartao = 0.
+            END.
+
+        /* CANAL TOKEN autenticacao que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_token_aut") <> "" AND 
+            GET-VALUE("aux_token_aut") <> ? THEN
+        DO:
+            ASSIGN token_autenticacao = GET-VALUE("aux_token_aut").
+        END.
+        ELSE
+            DO:
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN token_autenticacao = "".
+            END.
+
         
         /** Se parametro flmobile nao foi informado, considerar que a requisicao
         não originou do mobile **/
