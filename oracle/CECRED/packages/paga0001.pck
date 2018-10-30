@@ -19391,7 +19391,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                  ,pr_cdcritic => vr_cdcritic
                  ,pr_dscritic => vr_dscritic
                  );
-              rw_craplcm.vllanmto := pr_tab_lcm_consolidada(vr_index).vllancto;	 
               rw_craplcm.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1; 
               
               IF nvl(vr_cdcritic,0) > 0 OR 
@@ -26120,7 +26119,6 @@ end;';
                ,pr_dscritic => vr_dscritic
                );
                
-            rw_craplcm.vllanmto := rw_craplau.vllanaut;
               
           IF nvl(vr_cdcritic,0) > 0 OR 
             trim(vr_dscritic) IS NOT NULL THEN
