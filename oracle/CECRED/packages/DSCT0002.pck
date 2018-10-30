@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --  Programa:  DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom 
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/06/2017
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 09/09/2018
   --
   --  Dados referentes ao programa:
   --
@@ -219,7 +219,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   flgregis crapcob.flgregis%TYPE,
                   insittit craptdb.insittit%TYPE,
                   insitapr craptdb.insitapr%TYPE,
-                  nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE);
+                  nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE,
+                  dssittit VARCHAR2(100));
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -667,7 +668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --  Programa: DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 17/04/2017
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 09/09/2018
   --
   --  Dados referentes ao programa:
   --
@@ -714,6 +715,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --   16/07/2018 - Alteracoes para contemplar o novo sistema de criticas do border (Luis Fernando - GFT)
   --
   --   13/08/2018 - Adicionados mais parametros no calculo de liquidez - Luis Fernando (GFT)
+  --
+  --   19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da 
+  --                situação do titulo dssittit (Paulo Penteado GFT)
   -------------------------------------------------------------------------------------------------------------
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
@@ -3302,6 +3306,8 @@ END fn_letra_risco;
     --   Objetivo  : Buscar titulos de um determinado bordero a partir da craptdb 
     --
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --
+    --               19/09/2018 - Adicionado retorno da descrição da situação do titulo dssittit (Paulo Penteado GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -3327,12 +3333,17 @@ END fn_letra_risco;
              tdb.insittit,
              tdb.insitapr,
              cob.nrnosnum,
-             ttc.nrctrdsc
+             ttc.nrctrdsc,
+             CASE WHEN tdb.insittit = 2 AND tdb.dtdpagto > gene0005.fn_valida_dia_util(tdb.cdcooper, tdb.dtvencto) THEN 
+                       'Pago após vencimento'
+                  ELSE dsct0003.fn_busca_situacao_titulo(tdb.insittit, 1) 
+              END dssittit
         FROM craptdb tdb 
             ,crapcob cob
             ,crapcco cco
             ,crapsab sab
             ,tbdsct_titulo_cyber ttc
+            ,crapbdt bdt
        WHERE tdb.cdcooper = pr_cdcooper
          AND tdb.nrborder = pr_nrborder
          AND tdb.nrdconta = pr_nrdconta
@@ -3354,7 +3365,10 @@ END fn_letra_risco;
          AND ttc.cdcooper(+) = tdb.cdcooper
          AND ttc.nrborder(+) = tdb.nrborder
          AND ttc.nrdconta(+) = tdb.nrdconta
-         AND ttc.nrtitulo(+) = tdb.nrtitulo;
+         AND ttc.nrtitulo(+) = tdb.nrtitulo
+         --> Buscar bordero
+         AND bdt.cdcooper = tdb.cdcooper
+         AND bdt.nrborder = tdb.nrborder;
                            
                            
     --> Buscar bordero de desconto de titulo
@@ -3425,6 +3439,7 @@ END fn_letra_risco;
       pr_tab_tit_bordero(vr_idxtitul).insitapr := rw_craptdb.insitapr;
       pr_tab_tit_bordero(vr_idxtitul).flgregis := rw_craptdb.flgregis;
       pr_tab_tit_bordero(vr_idxtitul).nrctrdsc := rw_craptdb.nrctrdsc;
+      pr_tab_tit_bordero(vr_idxtitul).dssittit := rw_craptdb.dssittit;
 
       -->  Buscar restricoes de um determinado bordero ou titulo  
       pc_busca_restricoes ( pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
