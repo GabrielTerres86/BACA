@@ -223,7 +223,7 @@ BEGIN
      vr_flgexis_cta BOOLEAN;
      vr_segundo_ttl BOOLEAN;
      vr_cdcooper    NUMBER;
-     vr_cdmotivo    varchar2(100);
+     vr_cdmotivo    varchar2(4000);
      vr_nrispbif    NUMBER;
      vr_vloperac    NUMBER(12,2);
      vr_cdbandif    NUMBER;
@@ -1232,7 +1232,7 @@ BEGIN
                                           ,pr_nmtitdif => SUBSTR(vr_dslinharq,353,50)
                                           ,pr_nrcpfdif => vr_nrcpfdif
                                           ,pr_cdidenti => ''
-                                          ,pr_dsmotivo => vr_cdmotivo
+                                          ,pr_dsmotivo => substr(vr_cdmotivo,90)
                                           ,pr_cdagenci => 0
                                           ,pr_nrdcaixa => 0
                                           ,pr_cdoperad => '1'

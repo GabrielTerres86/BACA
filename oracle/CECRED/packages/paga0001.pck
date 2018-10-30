@@ -452,8 +452,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
          ,nrcpfcgc crapass.nrcpfcgc%type);
   TYPE typ_tab_autorizacao_favorecido IS TABLE OF typ_reg_autorizacao_favorecido INDEX BY VARCHAR2(100);
   
-  
-  
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_incrineg  INTEGER;
+  vr_dscedent  craplcm.dscedent%type;
   
   --Buscar informacoes de movimentação da internet
   CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%TYPE
@@ -1660,6 +1661,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	   04/07/2018 - Ajustado cursor cr_craprtc nas procedures pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
 	                para poder trazer todos os titulos do dia, para gerar em um unico arquivo de retorno.
 					(Alcemir Mout's) - SCTASK0010677.
+		
+       29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                    PRJ450 - Renato Cordeiro (AMcom)         
 		
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -5490,55 +5494,41 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       END IF;
 
       /* Cria o lancamento do DEBITO */
-      BEGIN
-        INSERT INTO craplcm
-             (craplcm.cdcooper
-             ,craplcm.dtmvtolt
-             ,craplcm.cdagenci
-             ,craplcm.cdbccxlt
-             ,craplcm.nrdolote
-             ,craplcm.dtrefere
-             ,craplcm.hrtransa
-             ,craplcm.cdoperad
-             ,craplcm.nrdconta
-             ,craplcm.nrdctabb
-             ,craplcm.nrdctitg
-             ,craplcm.nrdocmto
-             ,craplcm.nrseqdig
-             ,craplcm.cdhistor
-             ,craplcm.vllanmto
-             ,craplcm.cdcoptfn
-             ,craplcm.cdagetfn
-             ,craplcm.nrterfin
-             ,craplcm.cdpesqbb)
-        VALUES
-             (pr_cdcooper
-             ,pr_dtmvtocd
-             ,pr_cdagenci
-             ,pr_cdbccxlt
-             ,pr_nrdolote
-             ,pr_dtmvtocd
-             ,GENE0002.fn_busca_time
-             ,pr_cdoperad
-             ,pr_nrdconta
-             ,pr_nrdconta
-             ,gene0002.fn_mask(pr_nrdconta,'99999999')
-             ,rw_craplot.nrseqdig
-             ,rw_craplot.nrseqdig
-             ,pr_cdhisdeb
-             ,pr_vllanmto
-             ,pr_cdcoptfn
-             ,pr_cdagetfn
-             ,pr_nrterfin
-             ,vr_cdpesqbb)
-        RETURNING craplcm.ROWID INTO vr_rowid;
-      EXCEPTION
-        WHEN Others THEN
+      lanc0001.pc_gerar_lancamento_conta(
+              pr_cdcooper => pr_cdcooper
+             ,pr_dtmvtolt => pr_dtmvtocd
+             ,pr_cdagenci => pr_cdagenci
+             ,pr_cdbccxlt => pr_cdbccxlt
+             ,pr_nrdolote => pr_nrdolote
+             ,pr_dtrefere => pr_dtmvtocd
+             ,pr_hrtransa => GENE0002.fn_busca_time
+             ,pr_cdoperad => pr_cdoperad
+             ,pr_nrdconta => pr_nrdconta
+             ,pr_nrdctabb => pr_nrdconta
+             ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+             ,pr_nrdocmto => rw_craplot.nrseqdig
+             ,pr_nrseqdig => rw_craplot.nrseqdig
+             ,pr_cdhistor => pr_cdhisdeb
+             ,pr_vllanmto => pr_vllanmto
+             ,pr_cdcoptfn => pr_cdcoptfn
+             ,pr_cdagetfn => pr_cdagetfn
+             ,pr_nrterfin => pr_nrterfin
+             ,pr_cdpesqbb => vr_cdpesqbb
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+             
+      vr_rowid := vr_tab_retorno.rowidlct;
+         
+      IF vr_cdcritic > 0 OR 
+         vr_dscritic IS NOT NULL THEN
+                         
           -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415          
+          vr_dscritic := vr_dscritic ||
                          'CRAPLCM(7):' ||
                          ' cdcooper:'  || pr_cdcooper || 
                          ', dtmvtolt:' || pr_dtmvtocd || 
@@ -5559,10 +5549,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                          ', cdagetfn:' || pr_cdagetfn || 
                          ', nrterfin:' || pr_nrterfin || 
                          ', cdpesqbb:' || vr_cdpesqbb || 
-                         '. ' ||sqlerrm;
+                         '. ';
           --Levantar Excecao
           RAISE vr_exc_erro;
-      END;
+      END IF;   
+      
       --Numero documento debito recebe sequencia lote
       pr_nrdocdeb:= rw_craplot.nrseqdig;
 
@@ -6018,48 +6009,43 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       END IF;
       /* Cria o lancamento do CREDITO */
       BEGIN
-        INSERT INTO craplcm
-            (craplcm.cdcooper
-            ,craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.dtrefere
-            ,craplcm.hrtransa
-            ,craplcm.cdoperad
-            ,craplcm.nrdconta
-            ,craplcm.nrdctabb
-            ,craplcm.nrdctitg
-            ,craplcm.nrseqdig
-            ,craplcm.nrdocmto
-            ,craplcm.cdhistor
-            ,craplcm.vllanmto
-            ,craplcm.cdcoptfn
-            ,craplcm.cdagetfn
-            ,craplcm.nrterfin
-            ,craplcm.cdpesqbb)
-        VALUES
-            (pr_cdcooper
-            ,pr_dtmvtocd
-            ,pr_cdagenci
-            ,pr_cdbccxlt
-            ,pr_nrdolote
-            ,pr_dtmvtocd
-            ,GENE0002.fn_busca_time
-            ,pr_cdoperad
-            ,To_Number(pr_nrctatrf)
-            ,To_Number(pr_nrctatrf)
-            ,gene0002.fn_mask(pr_nrctatrf,'99999999')
-            ,rw_craplot.nrseqdig
-            ,rw_craplot.nrseqdig
-            ,pr_cdhiscre
-            ,pr_vllanmto
-            ,pr_cdcoptfn
-            ,pr_cdagetfn
-            ,pr_nrterfin
-            ,vr_cdpesqbb)
-        RETURNING craplcm.ROWID INTO vr_rowid;
+         lanc0001.pc_gerar_lancamento_conta(
+              pr_cdcooper => pr_cdcooper
+             ,pr_dtmvtolt => pr_dtmvtocd
+             ,pr_cdagenci => pr_cdagenci
+             ,pr_cdbccxlt => pr_cdbccxlt
+             ,pr_nrdolote => pr_nrdolote
+             ,pr_dtrefere => pr_dtmvtocd
+             ,pr_hrtransa => GENE0002.fn_busca_time
+             ,pr_cdoperad => pr_cdoperad
+             ,pr_nrdconta => To_Number(pr_nrctatrf)
+             ,pr_nrdctabb => To_Number(pr_nrctatrf)
+             ,pr_nrdctitg => gene0002.fn_mask(pr_nrctatrf,'99999999')
+             ,pr_nrseqdig => rw_craplot.nrseqdig
+             ,pr_nrdocmto => rw_craplot.nrseqdig
+             ,pr_cdhistor => pr_cdhiscre
+             ,pr_vllanmto => pr_vllanmto
+             ,pr_cdcoptfn => pr_cdcoptfn
+             ,pr_cdagetfn => pr_cdagetfn
+             ,pr_nrterfin => pr_nrterfin
+             ,pr_cdpesqbb => vr_cdpesqbb
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+             
+         vr_rowid := vr_tab_retorno.rowidlct;
+         IF nvl(vr_cdcritic,0) > 0 OR 
+            trim(vr_dscritic) IS NOT NULL THEN
+                
+           --Levantar Excecao
+           RAISE vr_exc_erro;   
+         END IF;
+         
       EXCEPTION
+        WHEN vr_exc_erro THEN
+          RAISE vr_exc_erro; 
         WHEN Others THEN
           -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
@@ -9662,58 +9648,50 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       /* Cria o lancamento do DEBITO */
 
       BEGIN
-        INSERT INTO craplcm
-              (craplcm.cdcooper
-              ,craplcm.dtmvtolt
-              ,craplcm.cdagenci
-              ,craplcm.cdbccxlt
-              ,craplcm.nrdolote
-              ,craplcm.dtrefere
-              ,craplcm.hrtransa
-              ,craplcm.cdoperad
-              ,craplcm.nrdconta
-              ,craplcm.nrdctabb
-              ,craplcm.nrdctitg
-              ,craplcm.nrdocmto
-              ,craplcm.nrsequni
-              ,craplcm.nrseqdig
-              ,craplcm.cdhistor
-              ,craplcm.vllanmto
-              ,craplcm.nrautdoc
-              ,craplcm.dscedent
-              ,craplcm.cdcoptfn
-              ,craplcm.cdagetfn
-              ,craplcm.nrterfin
-              ,craplcm.cdpesqbb)
-        VALUES
-              (rw_crapaut.cdcooper
-              ,rw_crapaut.dtmvtolt
-              ,rw_crapaut.cdagenci
-              ,11
-              ,11900
-              ,rw_crapaut.dtmvtolt
-              ,GENE0002.fn_busca_time
-              ,rw_crapaut.cdopecxa
-              ,pr_nrdconta
-              ,pr_nrdconta
-              ,gene0002.fn_mask(pr_nrdconta,'99999999')
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.nrseqdig
-              ,rw_crapaut.cdhistor
-              ,rw_crapaut.vldocmto
-              ,rw_crapaut.nrsequen
-              ,GENE0007.fn_caract_acento((CASE -- se não for informado cedente, utilizar o nome no convenio
-                  WHEN pr_dscedent IS NULL      OR
-                       pr_dscedent = rw_crapcon.nmextcon THEN
-                    rw_crapcon.nmrescon
-                  ELSE pr_dscedent
-                END),1)
-              ,pr_cdcoptfn
-              ,pr_cdagetfn
-              ,pr_nrterfin
-              ,vr_cdpesqbb);
-
+      
+         
+         -- se não for informado cedente, utilizar o nome no convenio
+         if pr_dscedent IS NULL OR pr_dscedent = rw_crapcon.nmextcon THEN
+            vr_dscedent := rw_crapcon.nmrescon;
+         ELSE 
+             vr_dscedent := pr_dscedent;
+         end if;
+      
+         lanc0001.pc_gerar_lancamento_conta(
+              pr_cdcooper => rw_crapaut.cdcooper
+             ,pr_dtmvtolt => rw_crapaut.dtmvtolt
+             ,pr_cdagenci => rw_crapaut.cdagenci
+             ,pr_cdbccxlt => 11
+             ,pr_nrdolote => 11900
+             ,pr_dtrefere => rw_crapaut.dtmvtolt
+             ,pr_hrtransa => GENE0002.fn_busca_time
+             ,pr_cdoperad => rw_crapaut.cdopecxa
+             ,pr_nrdconta => pr_nrdconta
+             ,pr_nrdctabb => pr_nrdconta
+             ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+             ,pr_nrdocmto => rw_craplot.nrseqdig
+             ,pr_nrsequni => rw_craplot.nrseqdig
+             ,pr_nrseqdig => rw_craplot.nrseqdig
+             ,pr_cdhistor => rw_crapaut.cdhistor
+             ,pr_vllanmto => rw_crapaut.vldocmto
+             ,pr_nrautdoc => rw_crapaut.nrsequen
+             ,pr_dscedent => vr_dscedent
+             ,pr_cdcoptfn => pr_cdcoptfn
+             ,pr_cdagetfn => pr_cdagetfn
+             ,pr_nrterfin => pr_nrterfin
+             ,pr_cdpesqbb => vr_cdpesqbb
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+             
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+                
+          --Levantar Excecao
+          RAISE vr_exc_erro;   
+        END IF;
 
         IF pr_idorigem <> 4 THEN /* TAA */
 
@@ -11442,84 +11420,77 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
       /* Cria o lancamento do DEBITO */
       BEGIN
-        INSERT INTO craplcm
-              (craplcm.cdcooper
-              ,craplcm.dtmvtolt
-              ,craplcm.cdagenci
-              ,craplcm.cdbccxlt
-              ,craplcm.nrdolote
-              ,craplcm.dtrefere
-              ,craplcm.hrtransa
-              ,craplcm.cdoperad
-              ,craplcm.nrdconta
-              ,craplcm.nrdctabb
-              ,craplcm.nrdctitg
-              ,craplcm.nrdocmto
-              ,craplcm.nrsequni
-              ,craplcm.nrseqdig
-              ,craplcm.cdhistor
-              ,craplcm.vllanmto
-              ,craplcm.nrautdoc
-              ,craplcm.dscedent
-              ,craplcm.cdcoptfn
-              ,craplcm.cdagetfn
-              ,craplcm.nrterfin
-              ,craplcm.cdpesqbb)
-        VALUES
-              (rw_crapaut.cdcooper
-              ,rw_crapaut.dtmvtolt
-              ,rw_crapaut.cdagenci
-              ,11
-              ,11900
-              ,rw_crapaut.dtmvtolt
-              ,gene0002.fn_busca_time
-              ,rw_crapaut.cdopecxa
-              ,pr_nrdconta
-              ,pr_nrdconta
-              ,gene0002.fn_mask(pr_nrdconta,'99999999')
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.nrseqdig
-              ,rw_crapaut.cdhistor
-              ,rw_crapaut.vldocmto
-              ,rw_crapaut.nrsequen
-              ,Upper(GENE0007.fn_caract_acento(pr_dscedent,1))
-              ,pr_cdcoptfn
-              ,pr_cdagetfn
-              ,pr_nrterfin
-              ,vr_cdpesqbb)
-        RETURNING craplcm.ROWID INTO rw_craplcm.rowid;
+         lanc0001.pc_gerar_lancamento_conta(
+              pr_cdcooper => rw_crapaut.cdcooper
+             ,pr_dtmvtolt => rw_crapaut.dtmvtolt
+             ,pr_cdagenci => rw_crapaut.cdagenci
+             ,pr_cdbccxlt => 11
+             ,pr_nrdolote => 11900
+             ,pr_dtrefere => rw_crapaut.dtmvtolt
+             ,pr_hrtransa => gene0002.fn_busca_time
+             ,pr_cdoperad => rw_crapaut.cdopecxa
+             ,pr_nrdconta => pr_nrdconta
+             ,pr_nrdctabb => pr_nrdconta
+             ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+             ,pr_nrdocmto => rw_craplot.nrseqdig
+             ,pr_nrsequni => rw_craplot.nrseqdig
+             ,pr_nrseqdig => rw_craplot.nrseqdig
+             ,pr_cdhistor => rw_crapaut.cdhistor
+             ,pr_vllanmto => rw_crapaut.vldocmto
+             ,pr_nrautdoc => rw_crapaut.nrsequen
+             ,pr_dscedent => Upper(GENE0007.fn_caract_acento(pr_dscedent,1))
+             ,pr_cdcoptfn => pr_cdcoptfn
+             ,pr_cdagetfn => pr_cdagetfn
+             ,pr_nrterfin => pr_nrterfin
+             ,pr_cdpesqbb => vr_cdpesqbb
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+         rw_craplcm.rowid := vr_tab_retorno.rowidlct;
+         
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           trim(vr_dscritic) IS NOT NULL THEN
+                
+          --Levantar Excecao
+          RAISE vr_exc_erro;   
+        END IF;
+         
       EXCEPTION
+        WHEN vr_exc_erro THEN
+          declare
+            vr_dscomplemento varchar2(4000) := null;
+          begin
+            vr_dscomplemento := rw_crapaut.cdcooper                              -- cdcooper
+                                ||'-'|| rw_crapaut.dtmvtolt 					 -- dtmvtolt
+                                ||'-'|| rw_crapaut.cdagenci                      -- cdagenci
+                                ||'-'|| 11                                       -- cdbccxlt
+                                ||'-'|| 11900                                    -- nrdolote
+                                ||'-'|| rw_crapaut.dtmvtolt                      -- dtrefere
+                                ||'-'|| gene0002.fn_busca_time                   -- hrtransa
+                                ||'-'|| rw_crapaut.cdopecxa                      -- cdoperad
+                                ||'-'|| pr_nrdconta                              -- nrdconta
+                                ||'-'|| pr_nrdconta                              -- nrdctabb
+                                ||'-'|| gene0002.fn_mask(pr_nrdconta,'99999999') -- nrdctitg
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrdocmto
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrsequni
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrseqdig
+                                ||'-'|| rw_crapaut.cdhistor                      -- cdhistor
+                                ||'-'|| rw_crapaut.vldocmto                      -- vllanmto
+                                ||'-'|| rw_crapaut.nrsequen                      -- nrautdoc
+                                ||'-'|| Upper(GENE0007.fn_caract_acento(pr_dscedent,1)) -- dscedent
+                                ||'-'|| pr_cdcoptfn                              -- cdcoptfn
+                                ||'-'|| pr_cdagetfn                              -- cdagetfn
+                                ||'-'|| pr_nrterfin                              -- nrterfin
+                                ||'-'|| vr_cdpesqbb;                             -- cdpesqbb           
+            CECRED.pc_internal_exception (pr_cdcooper => rw_crapcop.cdcooper, pr_compleme => vr_dscomplemento);
+          END;
+          -- Rollback da transação
+          ROLLBACK TO undopoint;
+          
+          RAISE vr_exc_erro; 
         WHEN Others THEN  
-          -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'CRAPLCM(13):' ||
-                           ' cdcooper:'  || rw_crapaut.cdcooper ||
-                           ', dtmvtolt:'  || rw_crapaut.dtmvtolt ||
-                           ', cdagenci:'  || rw_crapaut.cdagenci ||
-                           ', cdbccxlt:'  || '11' ||
-                           ', nrdolote:'  || '11900' ||
-                           ', dtrefere:'  || rw_crapaut.dtmvtolt ||
-                           ', hrtransa:'  || gene0002.fn_busca_time ||
-                           ', cdoperad:'  || rw_crapaut.cdopecxa ||
-                           ', nrdconta:'  || pr_nrdconta ||
-                           ', nrdctabb:'  || pr_nrdconta ||
-                           ', nrdctitg:'  || gene0002.fn_mask(pr_nrdconta,'99999999') ||
-                           ', nrdocmto:'  || rw_craplot.nrseqdig ||
-                           ', nrsequni:'  || rw_craplot.nrseqdig ||
-                           ', nrseqdig:'  || rw_craplot.nrseqdig ||
-                           ', cdhistor:'  || rw_crapaut.cdhistor ||
-                           ', vllanmto:'  || rw_crapaut.vldocmto ||
-                           ', nrautdoc:'  || rw_crapaut.nrsequen ||
-                           ', dscedent:'  || Upper(pr_dscedent) ||
-                           ', cdcoptfn:'  || pr_cdcoptfn ||
-                           ', cdagetfn:'  || pr_cdagetfn ||
-                           ', nrterfin:'  || pr_nrterfin ||
-                           ', cdpesqbb:'  || vr_cdpesqbb ||
-                           '. ' ||sqlerrm;
           declare
             vr_dscomplemento varchar2(4000) := null;
           begin
@@ -16237,35 +16208,37 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
         /* Credita na conta da cooperativa o valor do pagamento do boleto */
         BEGIN
-          INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdctabb
-            ,craplcm.cdcooper
-            ,craplcm.nrdocmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.vllanmto
-            ,craplcm.cdpesqbb)
-          VALUES
-            (rw_craplot.dtmvtolt
-            ,rw_craplot.cdagenci
-            ,rw_craplot.cdbccxlt
-            ,rw_craplot.nrdolote
-            ,pr_nrdconta
-            ,pr_nrdconta
-            ,pr_cdcooper
-            ,vr_nrdocmto
-            ,266
-            ,Nvl(rw_craplot.nrseqdig,0) + 1
-            ,pr_vllanmto
-            ,'Pagador '||pr_nrctasac)
-          RETURNING craplcm.vllanmto
-          INTO rw_craplcm.vllanmto;
+         lanc0001.pc_gerar_lancamento_conta(
+              pr_dtmvtolt => rw_craplot.dtmvtolt
+             ,pr_cdagenci => rw_craplot.cdagenci
+             ,pr_cdbccxlt => rw_craplot.cdbccxlt
+             ,pr_nrdolote => rw_craplot.nrdolote
+             ,pr_nrdconta => pr_nrdconta
+             ,pr_nrdctabb => pr_nrdconta
+             ,pr_cdcooper => pr_cdcooper
+             ,pr_nrdocmto => vr_nrdocmto
+             ,pr_cdhistor => 266
+             ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1
+             ,pr_vllanmto => pr_vllanmto
+             ,pr_cdpesqbb => 'Pagador '||pr_nrctasac
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+             
+             rw_craplcm.vllanmto := pr_vllanmto;
+             
+          IF nvl(vr_cdcritic,0) > 0 OR 
+           trim(vr_dscritic) IS NOT NULL THEN
+                
+            --Levantar Excecao
+            RAISE vr_exc_erro;   
+          END IF;
+           
         EXCEPTION
+          WHEN vr_exc_erro THEN
+            RAISE vr_exc_erro;
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
@@ -16359,37 +16332,37 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
       /* Debita na conta da cooperativa o valor do pagamento do boleto */
       BEGIN
-        INSERT INTO craplcm
-          (craplcm.dtmvtolt
-          ,craplcm.cdagenci
-          ,craplcm.cdbccxlt
-          ,craplcm.nrdolote
-          ,craplcm.nrdconta
-          ,craplcm.nrdctitg
-          ,craplcm.nrdctabb
-          ,craplcm.cdcooper
-          ,craplcm.nrdocmto
-          ,craplcm.cdhistor
-          ,craplcm.nrseqdig
-          ,craplcm.vllanmto
-          ,craplcm.cdpesqbb)
-        VALUES
-          (rw_craplot.dtmvtolt
-          ,rw_craplot.cdagenci
-          ,rw_craplot.cdbccxlt
-          ,rw_craplot.nrdolote
-          ,pr_nrdconta
-          ,gene0002.fn_mask(rw_crapepr.nrdconta,'99999999')
-          ,pr_nrdconta
-          ,pr_cdcooper
-          ,vr_nrdocmto
-          ,302
-          ,Nvl(rw_craplot.nrseqdig,0) + 1
-          ,pr_vllanmto
-          ,gene0002.fn_mask(pr_nrctasac,'99999999'))
-        RETURNING craplcm.vllanmto
-        INTO rw_craplcm.vllanmto;
+         lanc0001.pc_gerar_lancamento_conta(
+              pr_dtmvtolt => rw_craplot.dtmvtolt
+             ,pr_cdagenci => rw_craplot.cdagenci
+             ,pr_cdbccxlt => rw_craplot.cdbccxlt
+             ,pr_nrdolote => rw_craplot.nrdolote
+             ,pr_nrdconta => pr_nrdconta	
+             ,pr_nrdctitg => gene0002.fn_mask(rw_crapepr.nrdconta,'99999999')
+             ,pr_nrdctabb => pr_nrdconta
+             ,pr_cdcooper => pr_cdcooper
+             ,pr_nrdocmto => vr_nrdocmto
+             ,pr_cdhistor => 302
+             ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1
+             ,pr_vllanmto => pr_vllanmto
+             ,pr_cdpesqbb => gene0002.fn_mask(pr_nrctasac,'99999999')
+             ,pr_tab_retorno => vr_tab_retorno
+             ,pr_incrineg => vr_incrineg
+             ,pr_cdcritic => vr_cdcritic
+             ,pr_dscritic => vr_dscritic
+             );
+             rw_craplcm.vllanmto := pr_vllanmto;
+             
+        IF nvl(vr_cdcritic,0) > 0 OR 
+          trim(vr_dscritic) IS NOT NULL THEN
+                
+          --Levantar Excecao
+          RAISE vr_exc_erro;   
+        END IF;
+           
       EXCEPTION
+        WHEN vr_exc_erro THEN
+          RAISE vr_exc_erro;
         WHEN Others THEN
           vr_cdcritic:= 0;
           vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
@@ -19398,39 +19371,41 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
             --Criar Lancamento
             BEGIN
-              INSERT INTO craplcm
-                (craplcm.dtmvtolt
-                ,craplcm.cdagenci
-                ,craplcm.cdbccxlt
-                ,craplcm.nrdolote
-                ,craplcm.nrdconta
-                ,craplcm.nrdctabb
-                ,craplcm.nrdctitg
-                ,craplcm.nrdocmto
-                ,craplcm.cdhistor
-                ,craplcm.nrseqdig
-                ,craplcm.vllanmto
-                ,craplcm.cdpesqbb
-                ,craplcm.cdcooper
-                ,craplcm.hrtransa)
-              VALUES
-                (rw_craplot.dtmvtolt
-                ,rw_craplot.cdagenci
-                ,rw_craplot.cdbccxlt
-                ,rw_craplot.nrdolote
-                ,pr_tab_lcm_consolidada(vr_index).nrdconta
-                ,pr_tab_lcm_consolidada(vr_index).nrdconta
-                ,gene0002.fn_mask(pr_tab_lcm_consolidada(vr_index).nrdconta,'99999999')
-                ,vr_nrdocmto
-                ,pr_tab_lcm_consolidada(vr_index).cdhistor
-                ,nvl(rw_craplot.nrseqdig,0) + 1
-                ,pr_tab_lcm_consolidada(vr_index).vllancto
-                ,nvl(pr_tab_lcm_consolidada(vr_index).cdpesqbb,pr_cdpesqbb) -- (P340 - adicionado campo cdpesqbb na record)
-                ,pr_tab_lcm_consolidada(vr_index).cdcooper
-                ,gene0002.fn_busca_time)
-              RETURNING craplcm.nrseqdig
-              INTO rw_craplcm.nrseqdig;
+             lanc0001.pc_gerar_lancamento_conta(
+                  pr_dtmvtolt => rw_craplot.dtmvtolt
+                 ,pr_cdagenci => rw_craplot.cdagenci
+                 ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                 ,pr_nrdolote => rw_craplot.nrdolote
+                 ,pr_nrdconta => pr_tab_lcm_consolidada(vr_index).nrdconta
+                 ,pr_nrdctabb => pr_tab_lcm_consolidada(vr_index).nrdconta
+                 ,pr_nrdctitg => gene0002.fn_mask(pr_tab_lcm_consolidada(vr_index).nrdconta,'99999999')
+                 ,pr_nrdocmto => vr_nrdocmto
+                 ,pr_cdhistor => pr_tab_lcm_consolidada(vr_index).cdhistor
+                 ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                 ,pr_vllanmto => pr_tab_lcm_consolidada(vr_index).vllancto
+                 ,pr_cdpesqbb => nvl(pr_tab_lcm_consolidada(vr_index).cdpesqbb,pr_cdpesqbb) -- (P340 - adicionado campo cdpesqbb na record)
+                 ,pr_cdcooper => pr_tab_lcm_consolidada(vr_index).cdcooper
+                 ,pr_hrtransa => gene0002.fn_busca_time
+                 ,pr_tab_retorno => vr_tab_retorno
+                 ,pr_incrineg => vr_incrineg
+                 ,pr_cdcritic => vr_cdcritic
+                 ,pr_dscritic => vr_dscritic
+                 );
+              rw_craplcm.vllanmto := pr_tab_lcm_consolidada(vr_index).vllancto;	 
+              rw_craplcm.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1; 
+              
+              IF nvl(vr_cdcritic,0) > 0 OR 
+                trim(vr_dscritic) IS NOT NULL THEN
+                      
+                --Levantar Excecao
+                RAISE vr_exc_erro;   
+              END IF;
+                 
             EXCEPTION
+              WHEN vr_exc_erro THEN
+                cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
+                RAISE vr_exc_erro;
+                
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
@@ -26118,45 +26093,38 @@ end;';
           END IF;  
 
           -- cria registro na tabela de lançamentos
-          BEGIN
-            INSERT INTO craplcm
-              (cdcooper
-              ,dtmvtolt
-              ,cdagenci
-              ,cdbccxlt
-              ,nrdolote
-              ,nrdctabb
-              ,nrdocmto
-              ,vllanmto
-              ,nrdconta
-              ,cdhistor
-              ,nrseqdig
-              ,nrdctitg
-              ,nrautdoc
-              ,cdpesqbb)
-            VALUES
-              (pr_cdcooper
-              ,rw_craplot.dtmvtolt
-              ,rw_craplot.cdagenci
-              ,rw_craplot.cdbccxlt
-              ,rw_craplot.nrdolote
-              ,rw_craplau.nrdctabb
-              ,vr_nrdocmto
-              ,rw_craplau.vllanaut
-              ,vr_nrdconta
-              ,rw_craplau.cdhistor
-              ,rw_craplot.nrseqdig
-              ,rw_craplau.nrdctabb
-              ,vr_nrautdoc
-              ,'Lote ' || to_char(rw_craplau.dtmvtolt, 'dd')              || '/' ||
+          lanc0001.pc_gerar_lancamento_conta(
+                pr_cdcooper => pr_cdcooper
+               ,pr_dtmvtolt => rw_craplot.dtmvtolt
+               ,pr_cdagenci => rw_craplot.cdagenci
+               ,pr_cdbccxlt => rw_craplot.cdbccxlt
+               ,pr_nrdolote => rw_craplot.nrdolote
+               ,pr_nrdctabb => rw_craplau.nrdctabb
+               ,pr_nrdocmto => vr_nrdocmto
+               ,pr_vllanmto => rw_craplau.vllanaut
+               ,pr_nrdconta => vr_nrdconta
+               ,pr_cdhistor => rw_craplau.cdhistor
+               ,pr_nrseqdig => rw_craplot.nrseqdig
+               ,pr_nrdctitg => rw_craplau.nrdctabb
+               ,pr_nrautdoc => vr_nrautdoc
+               ,pr_cdpesqbb => 'Lote ' || to_char(rw_craplau.dtmvtolt, 'dd')              || '/' ||
                           to_char(rw_craplau.dtmvtolt, 'mm')              || '-' ||
                           GENE0002.fn_mask(vr_cdagenci, '999')            || '-' ||
                           GENE0002.fn_mask(rw_craplau.cdbccxlt, '999')    || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrseqdig, '99999')  || '-' ||
-                          rw_craplau.nrdocmto);
-          EXCEPTION
-            WHEN OTHERS THEN
+                        rw_craplau.nrdocmto
+               ,pr_tab_retorno => vr_tab_retorno
+               ,pr_incrineg => vr_incrineg
+               ,pr_cdcritic => vr_cdcritic
+               ,pr_dscritic => vr_dscritic
+               );
+               
+            rw_craplcm.vllanmto := rw_craplau.vllanaut;
+              
+          IF nvl(vr_cdcritic,0) > 0 OR 
+            trim(vr_dscritic) IS NOT NULL THEN
+                                
               ROLLBACK;
               pc_nao_efetivado(pr_cdcooper  => pr_cdcooper
                               ,pr_flultexe  => vr_flultexe
@@ -26177,9 +26145,8 @@ end;';
                  RAISE vr_exc_erro;
               END IF;                            
               
-              vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
               RAISE vr_exc_erro;
-          END;
+          END IF;
 
           -- Atualiza a capa do lote
           BEGIN
