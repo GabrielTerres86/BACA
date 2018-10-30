@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : James Prust Júnior
@@ -7,7 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 02/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
  *				  03/08/2018 - Criado a opção para estornar o pagamento de Prejuízo de Conta Corrente
- *				               PRJ 450 - Diego Simas - AMcom  
+ *				               PRJ 450 - Diego Simas - AMcom.  
  * --------------
  */	
 	require_once('../../includes/config.php');
