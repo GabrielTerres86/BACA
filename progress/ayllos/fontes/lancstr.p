@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2000.                         Ultima atualizacao: 26/08/2015
+   Data    : Abril/2000.                         Ultima atualizacao: 24/10/2018
 
    Dados referentes ao programa:
 
@@ -804,6 +804,16 @@ PROCEDURE proc_liberado:
                           ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
                           ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
                           ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                          
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+                          glb_cdcritic = aux_cdcritic.
+                          glb_dscritic = aux_dscritic.
+                          RUN fontes/critic.p.
+                          BELL.
+                          MESSAGE glb_dscritic.
+                          ASSIGN glb_cdcritic = 0.
+                          RETURN.
+                      END.
                       
                       IF  VALID-HANDLE(h-b1wgen0200) THEN
                           DELETE PROCEDURE h-b1wgen0200.

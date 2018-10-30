@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 24/10/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 24/10/2018
 
    Dados referentes ao programa:
 
@@ -2406,12 +2406,12 @@ DO WHILE TRUE:
 
       IF  glb_dscritic <> "" THEN
 		  DO:
-			MESSAGE "Erro na exclusao do lancamento.".
+			      MESSAGE "Erro na exclusao do lancamento.".
                       
             PAUSE 2 NO-MESSAGE.
                         
             UNDO, NEXT.
-          END.
+      END.
 
       /*DELETE craplcm.*/
       
@@ -2432,6 +2432,19 @@ DO WHILE TRUE:
           ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
           ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
           ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+      
+      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+          glb_cdcritic = aux_cdcritic.
+          glb_dscritic = aux_dscritic.
+          RUN fontes/critic.p.
+          BELL.
+          MESSAGE glb_dscritic.
+          ASSIGN glb_cdcritic = 0.
+                      
+          PAUSE 2 NO-MESSAGE.
+                      
+          UNDO, NEXT.
+      END.
       
       IF  VALID-HANDLE(h-b1wgen0200) THEN
           DELETE PROCEDURE h-b1wgen0200.
