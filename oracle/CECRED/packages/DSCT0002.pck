@@ -40,7 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
-  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT).
   --
   --    10/05/2018 - Inserção do campo 'cardbtit_c' para cálculo do % Geral de Liquidez
   --
@@ -196,7 +196,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   cdtipdoc  VARCHAR2(80),
                   dsopecoo  VARCHAR2(100),
                   innivris  crapris.innivris%TYPE, 
-                  qtdiaatr  crapris.qtdiaatr%TYPE
+                  qtdiaatr  crapris.qtdiaatr%TYPE,
+                  flverbor crapbdt.flverbor%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;  
@@ -222,7 +223,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   insittit craptdb.insittit%TYPE,
                   insitapr craptdb.insitapr%TYPE,
                   nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE,
-                  dssittit VARCHAR2(100));
+                  dssittit VARCHAR2(100),
+                  flverbor crapbdt.flverbor%TYPE);
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -267,7 +269,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nmextcop crapcop.nmextcop%TYPE,
                   nmcidade crapcop.nmcidade%TYPE,
                   nmoperad crapope.nmoperad%TYPE,
-                  dsopecoo crapope.nmoperad%TYPE);
+                  dsopecoo crapope.nmoperad%TYPE,
+                  flverbor crapbdt.flverbor%TYPE);
   TYPE typ_tab_dados_itens_bordero IS TABLE OF typ_rec_dados_itens_bordero
        INDEX BY PLS_INTEGER;        
        
@@ -622,25 +625,25 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
 
   PROCEDURE pc_atualiza_calculos_pagador ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
-                                     ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
-                                     ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
-	                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez
-                                     ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
-                                     ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
-                                     ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
-                                     ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
-                                     ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
+                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez 
+                                   ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
+                                   ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
+                                   ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
+                                   ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
+                                   ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
                                    ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
                                    ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
-                                     --------------> OUT <--------------
-                                     ,pr_pc_cedpag    OUT NUMBER
-                                     ,pr_qtd_cedpag   OUT NUMBER
-                                     ,pr_pc_conc      OUT NUMBER
-                                     ,pr_qtd_conc     OUT NUMBER
-                                     ,pr_pc_geral     OUT NUMBER
-                                     ,pr_qtd_geral    OUT NUMBER
-                                     ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
-                                     ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                   --------------> OUT <--------------
+                                   ,pr_pc_cedpag    OUT NUMBER
+                                   ,pr_qtd_cedpag   OUT NUMBER
+                                   ,pr_pc_conc      OUT NUMBER
+                                   ,pr_qtd_conc     OUT NUMBER
+                                   ,pr_pc_geral     OUT NUMBER
+                                   ,pr_qtd_geral    OUT NUMBER
+                                   ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                   ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   );
   
   PROCEDURE pc_busca_dados_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -2408,6 +2411,7 @@ END fn_letra_risco;
     --
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
     --               03/08/2018 - Inserção dos campos de Risco (Vitor Shimada Assanuma - GFT)
+    --               24/08/2018 - Inserção dos campo de Prejuizo (Vitor Shimada Assanuma - GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -2430,7 +2434,8 @@ END fn_letra_risco;
              bdt.cdopcolb,
              bdt.cdopcoan,
              DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc ,
-             bdt.qtdirisc
+             bdt.qtdirisc,
+             bdt.flverbor
         FROM crapbdt bdt
         LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
                              AND ris.nrdconta = bdt.nrdconta 
@@ -2651,6 +2656,7 @@ END fn_letra_risco;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
     pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.dsinrisc;
     pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdirisc, 0);
+    pr_tab_dados_border(vr_idxborde).flverbor := rw_crapbdt.flverbor;
     
     -- Verifica se tem operador coordenador de liberacao ou analise
     IF TRIM(rw_crapbdt.cdopcolb) IS NOT NULL THEN
@@ -3564,6 +3570,15 @@ END fn_letra_risco;
          AND tdb.dtvencto > pr_dtmvtolt - (pr_nrmespsq * 30);
     rw_craptdb cr_craptdb%ROWTYPE;
     
+    --> Verificar versão do bordero
+    CURSOR cr_crapbdt (pr_cdcooper crapbdt.cdcooper%TYPE,
+                       pr_nrborder crapbdt.nrborder%TYPE) IS
+      SELECT flverbor
+      FROM crapbdt
+      WHERE cdcooper = pr_cdcooper
+        AND nrborder = pr_nrborder;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+    
     ----------->>> TEMPTABLE <<<--------   
     --> Controlar sacado ja verificado
     TYPE typ_tab_nrinssac IS TABLE OF NUMBER
@@ -3582,7 +3597,11 @@ END fn_letra_risco;
     vr_idxtitbo        PLS_INTEGER;
     
   BEGIN
-  
+    -- Buscar o bordero para pegar a versão dele
+    OPEN cr_crapbdt(pr_cdcooper, pr_nrborder);
+    FETCH cr_crapbdt INTO rw_crapbdt;
+    CLOSE cr_crapbdt;
+    
     --> Buscar titulos de um determinado bordero a partir da craptdb 
     pc_busca_titulos_bordero (pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                              ,pr_nrborder => pr_nrborder  --> numero do bordero
@@ -3647,6 +3666,7 @@ END fn_letra_risco;
     pr_tab_dados_tits_bordero(vr_idxtitbo).nmcidade := pr_nmcidade;
     pr_tab_dados_tits_bordero(vr_idxtitbo).nmoperad := pr_nmoperad;  
     pr_tab_dados_tits_bordero(vr_idxtitbo).dsopecoo := pr_dsopecoo;  
+    pr_tab_dados_tits_bordero(vr_idxtitbo).flverbor := rw_crapbdt.flverbor;  
     
   EXCEPTION    
     WHEN vr_exc_erro THEN
@@ -5530,10 +5550,15 @@ END fn_letra_risco;
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7); 
-                          
-      --Alterado para Juros simples
-      vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
+      
+      -- Se for bordero novo utiliza Juros Simples, senão Juros Composto
+      IF vr_tab_dados_border(vr_idxborde).flverbor = 1 THEN
+        vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7); 
+        vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
+      ELSE
+        vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7);                    
+        vr_rel_txdanual := apli0001.fn_round((power(1 + (vr_tab_dados_border(vr_idxborde).txmensal / 100), 12) - 1) * 100,6);
+      END IF;
       
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
@@ -7301,6 +7326,7 @@ END fn_letra_risco;
     --
     --               05/09/2018 - Campos de restrição de volta mas somente para borderos antigos (Vitor S. Assanuma - GFT)
     --
+    --               30/10/2018 - Verificação se o borderô está no modelo antigo ou novo. (Vitor S. Assanuma - GFT)
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -7590,7 +7616,9 @@ END fn_letra_risco;
                          '<txdiaria>'|| TO_CHAR(vr_tab_dados_itens_bordero(vr_idxborde).txdiaria,'fm9999g999g990d000000') ||'</txdiaria>'||
                          '<dsmvtolt>'|| vr_dsmvtolt ||'</dsmvtolt>'||  
                          '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>' ||
-                         '<flgrestr>'|| pr_flgrestr ||'</flgrestr>');
+                         '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
+                         '<flverbor>'|| vr_tab_dados_itens_bordero(vr_idxborde).flverbor ||'</flverbor>' 
+                         );
 
       
       --> reordenar para exibição no relatorio
@@ -7611,13 +7639,14 @@ END fn_letra_risco;
       vr_idxord := vr_tab_tit_bordero_ord.first;
       WHILE vr_idxord IS NOT NULL  LOOP
         --Verifica se o valor líquido do título é 0, se for calcula
-        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid=0) THEN
+        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid = 0 AND vr_tab_tit_bordero_ord(vr_idxord).flverbor = 1) THEN
           IF  pr_dtmvtolt > vr_tab_tit_bordero_ord(vr_idxord).dtvencto THEN
               vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero_ord(vr_idxord).dtvencto, pr_dtmvtolt);
           ELSE
               vr_qtd_dias := vr_tab_tit_bordero_ord(vr_idxord).dtvencto -  pr_dtmvtolt;
           END IF;
-          vr_vldjuros := vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_qtd_dias * ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30);
+          vr_vldjuros := vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_qtd_dias * ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30); -- Juros Simples
+
           vr_tab_tit_bordero_ord(vr_idxord).vlliquid := ROUND((vr_tab_tit_bordero_ord(vr_idxord).vltitulo - vr_vldjuros),2);
         END IF;
       
@@ -7625,7 +7654,7 @@ END fn_letra_risco;
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt;
         ELSE
           IF (vr_tab_tit_bordero_ord(vr_idxord).insitapr <> 2) THEN
-          vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
+            vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
           ELSE
             vr_rel_qtdprazo := 0;
           END IF;
@@ -7922,6 +7951,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     --    14/09/2018 - Andrew Albuquerque     (GFT) - Alterada ordenação do dataset principal de extrato, para imprimir todos os Débitos e depois os Créditos.
     --    28/09/2018 - Vitor Shimada Assanuma (GFT) - Valor descontado, somando o valor dos titulos resgatados.
     --    03/10/2018 - Cássia de Oliveira     (GFT) - Alterado regra da situação do titulo.
+    --    26/10/2018 - Vitor Shimada Assanuma (GFT) - Retirado o histórico 2763 da listagem.
     -- .........................................................................*/
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
