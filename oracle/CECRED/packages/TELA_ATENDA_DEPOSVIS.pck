@@ -1695,7 +1695,8 @@ BEGIN
 DECLARE
   -- Recupera dados da CRAPLCM para compor saldo devedor até 59 dias e valores de juros +60
   CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE
-	                , pr_dtprejuz IN tbcc_prejuizo.dtinclusao%TYPE) IS
+	                , pr_dtprejuz IN tbcc_prejuizo.dtinclusao%TYPE
+									, pr_dtmvtolt IN crapsda.dtmvtolt%TYPE) IS
 	SELECT *
     FROM (
 		WITH lancamentos AS (
@@ -1727,6 +1728,29 @@ DECLARE
              AND sda.nrdconta = pr_nrdconta
              AND sda.dtmvtolt >= pr_dt59datr
 						 AND (pr_dtlimite IS NULL OR sda.dtmvtolt <= pr_dtlimite)
+					UNION
+					-- Cria registro para o dia atual (que não tem saldo na CRAPSDA)
+					SELECT pr_dtmvtolt   dtmvtolt
+               , 0             cdhistor
+               , 'X'           indebcre
+               , 0             vllanmto
+               , 0             vlsddisp
+               , 0             vlsdante
+               , nvl(SUM(decode(his.indebcre, 'C', vllanmto, vllanmto * -1)), 0) vldifsld
+            FROM craplcm lcm
+               , craphis his
+           WHERE his.cdcooper = lcm.cdcooper
+             AND his.cdhistor = lcm.cdhistor
+             AND lcm.cdcooper = pr_cdcooper
+             AND lcm.nrdconta = pr_nrdconta
+             AND lcm.dtmvtolt = pr_dtmvtolt
+						 AND NOT EXISTS (
+						      SELECT 1
+									  FROM crapsda aux
+									 WHERE aux.cdcooper = lcm.cdcooper
+									   AND aux.nrdconta = lcm.nrdconta
+										 AND aux.dtmvtolt = pr_dtmvtolt
+						     )
 		)
 		SELECT 'jur60_37' tipo
 				 , lct.dtmvtolt
@@ -1840,12 +1864,12 @@ DECLARE
 
 	-- Consulta o valor estornado de juros +60 na conta corrente em prejuízo
 	CURSOR cr_estjur60(pr_dtmvtolt DATE) IS
-	SELECT nvl(SUM(vllanmto), 0) total_estorno
+	SELECT nvl(SUM(decode(cdhistor, 2728, vllanmto, vllanmto * -1)), 0) total_estorno
 	  FROM tbcc_prejuizo_detalhe prj
 	 WHERE cdcooper = pr_cdcooper
 	   AND nrdconta = pr_nrdconta
 		 AND dtmvtolt = pr_dtmvtolt
-		 AND cdhistor = 2728;
+		 AND cdhistor IN (2727, 2728);
 
   -- Calendário da cooperativa
   rw_crapdat btch0001.rw_crapdat%TYPE;
@@ -2004,7 +2028,7 @@ BEGIN
 				pr_vlsld59d := pr_vlsld59d - rw_crapass.vllimcre;
 
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz) LOOP						  
+				FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz, rw_crapdat.dtmvtolt) LOOP
 					-- Descarta o primeiro registro, usado apenas para popular o saldo do dia anterior para a data que completa 60 dias de atraso
 					IF rw_craplcm.dtmvtolt = vr_data_59dias_atraso THEN
 						continue;
@@ -2082,10 +2106,30 @@ BEGIN
 							vr_saldo_dia := abs(vr_saldo_dia) - (nvl(rw_craplcm.jur60_37, 0) +
 							                                     nvl(rw_craplcm.jur60_38, 0) +
 																							     nvl(rw_craplcm.jur60_57, 0) +
-																							     nvl(rw_craplcm.jur60_2718, 0));
+																							     nvl(rw_craplcm.jur60_2718, 0) +
+																									 nvl(rw_craplcm.iof_prej, 0));
+																									 
+							IF vr_dtprejuz IS NOT NULL AND rw_craplcm.dtmvtolt >= vr_dtprejuz THEN
+								OPEN cr_estjur60(rw_craplcm.dtmvtolt);
+								FETCH cr_estjur60 INTO vr_est_jur60;
+								CLOSE cr_estjur60;
+								
+								IF vr_est_jur60 > 0 THEN
+									pr_vlju6037 := nvl(pr_vlju6037, 0) + vr_est_jur60;
+									vr_saldo_dia := vr_saldo_dia - vr_est_jur60;
+								END IF;
+								
+							END IF;
 
            -- Incorpora o débito ao saldo devedor até 59 dias de atraso
 							pr_vlsld59d := pr_vlsld59d + vr_saldo_dia;
+						ELSIF vr_saldo_dia = 0 AND vr_dtprejuz IS NOT NULL 
+						AND rw_craplcm.dtmvtolt >= vr_dtprejuz AND nvl(rw_craplcm.iof_prej, 0) > 0 THEN
+						  -- Caso tenha ocorrido débito de IOF no pagamento de prejuízo e tenha ocorrido estorno do 
+							-- pagamento no mesmo dia, é necessário acrescentar o valor do IOF ao saldo até 59 dias
+							-- mesmo que o saldo do dia tenha fechado com o mesmo valor do saldo do dia anteiror
+							-- (Reginaldo/AMcom - P450)
+						  pr_vlsld59d := pr_vlsld59d - abs(rw_craplcm.iof_prej);
          END IF;
        END LOOP;
 
@@ -2096,7 +2140,6 @@ BEGIN
 					IF pr_vlsld59d < 0 THEN
 						pr_vlsld59d := 0;
          END IF;
-
       END IF;
     END IF;
   EXCEPTION
