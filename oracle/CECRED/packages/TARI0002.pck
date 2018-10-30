@@ -4,13 +4,15 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0002 AS
   --
   --  Programa: TARI0002                         
   --  Autor   : Lucas Reinert
-  --  Data    : Fevereiro/2013                  Ultima Atualizacao: --/--/----
+  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 30/10/2018
   --
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Englobar procedures referente a tarifas
   --
-  --  Alteracoes: 
+  --  Alteracoes: 	  
+  -- 
+  -- 30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero) 
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_busca_pacote_tarifas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
@@ -1022,6 +1024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
               ,tcp.cdpacote
 							,tcp.dtadesao
 							,tp.cdtarifa_lancamento cdtarifa
+							,CASE WHEN tcp.dtass_eletronica IS NULL THEN '0' ELSE '1' END idasseletronica
+							,'Assinado eletronicamente em ' || TO_CHAR(tcp.dtass_eletronica, 'DD/MM/RRRR') || ' às ' || TO_CHAR(tcp.dtass_eletronica, 'HH24:MI') dsasseletronica
           FROM tbtarif_contas_pacote tcp
               ,tbtarif_pacotes       tp
          WHERE tcp.cdcooper = pr_cdcooper
@@ -1239,10 +1243,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => 
-        '<dtdiadebito>' || rw_tbtarif_contas_pacote.nrdiadebito || '</dtdiadebito>' ||
-        '<dspacote>' || rw_tbtarif_contas_pacote.dspacote || '</dspacote>' ||
-        '<vltarifa>' || rw_vltarifa.vltarifa || '</vltarifa>' ||
-        '<dtinicio_vigencia>' || rw_tbtarif_contas_pacote.dtinicio_vigencia || '</dtinicio_vigencia>');
+            '<dtdiadebito>' || rw_tbtarif_contas_pacote.nrdiadebito || '</dtdiadebito>' ||
+            '<dspacote>' || rw_tbtarif_contas_pacote.dspacote || '</dspacote>' ||
+            '<vltarifa>' || rw_vltarifa.vltarifa || '</vltarifa>' ||
+	        '<dtinicio_vigencia>' || rw_tbtarif_contas_pacote.dtinicio_vigencia || '</dtinicio_vigencia>' ||
+		    '<idasseletronica>' || rw_tbtarif_contas_pacote.idasseletronica || '</idasseletronica>' ||
+		    '<dsasseletronica><![CDATA[' || rw_tbtarif_contas_pacote.dsasseletronica || ']]></dsasseletronica>'
+		);
+
         vr_dtinivig := rw_tbtarif_contas_pacote.dtinicio_vigencia;
 			ELSE
 				

@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pct_tarifas" language="groovy" pageWidth="595" pageHeight="772" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5000000000000153"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="1079"/>
+	<property name="ireport.y" value="1453"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -70,6 +70,12 @@
 	</field>
 	<field name="idorigem" class="java.lang.Integer">
 		<fieldDescription><![CDATA[idorigem]]></fieldDescription>
+	</field>
+	<field name="idasseletronica" class="java.lang.String">
+		<fieldDescription><![CDATA[idasseletronica]]></fieldDescription>
+	</field>
+	<field name="dsasseletronica" class="java.lang.String">
+		<fieldDescription><![CDATA[dsasseletronica]]></fieldDescription>
 	</field>
 	<pageHeader>
 		<band height="50"/>
@@ -404,12 +410,13 @@
 			</textField>
 		</band>
 		<band height="191">
+			<printWhenExpression><![CDATA[$F{idasseletronica}.equals( "0" )]]></printWhenExpression>
 			<frame>
 				<reportElement uuid="cfce4fdf-f19a-4e0f-88c0-b164d103b984" x="47" y="0" width="500" height="191">
 					<printWhenExpression><![CDATA[$F{idorigem} != 3]]></printWhenExpression>
 				</reportElement>
 				<line>
-					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="78" width="210" height="1"/>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="78" width="300" height="1"/>
 				</line>
 				<textField>
 					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="85" width="500" height="11"/>
@@ -419,7 +426,7 @@
 					<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
 				</textField>
 				<line>
-					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="171" width="210" height="1"/>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="171" width="300" height="1"/>
 				</line>
 				<textField>
 					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="179" width="500" height="11"/>
@@ -427,6 +434,41 @@
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{nmextcop} + " - " + $F{nmrescop}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+		<band height="191">
+			<printWhenExpression><![CDATA[$F{idasseletronica}.equals( "1" )]]></printWhenExpression>
+			<frame>
+				<reportElement uuid="cfce4fdf-f19a-4e0f-88c0-b164d103b984" x="47" y="0" width="500" height="191">
+					<printWhenExpression><![CDATA[$F{idorigem} != 3]]></printWhenExpression>
+				</reportElement>
+				<line>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="68" width="300" height="1"/>
+				</line>
+				<textField>
+					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="75" width="500" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="161" width="300" height="1"/>
+				</line>
+				<textField>
+					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="169" width="500" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmextcop} + " - " + $F{nmrescop}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="52" width="500" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsasseletronica}]]></textFieldExpression>
 				</textField>
 			</frame>
 		</band>
