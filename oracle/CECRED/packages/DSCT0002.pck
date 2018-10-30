@@ -3801,13 +3801,13 @@ END fn_letra_risco;
                                     ,crapnrc.nrdconta
                                     ,crapnrc.tpctrrat
                                     ,crapnrc.nrctrrat) AS vloperac
-       FROM crapnrc WHERE 
-            crapnrc.nrctrrat = pr_nrctrlim
-             --crapnrc.cdcooper = pr_cdcooper
-             --AND nrdconta = pr_nrdconta
-             AND crapnrc.flgativo = 1
-             AND crapnrc.insitrat=1 
-             AND (rati0001.fn_valor_operacao(crapnrc.cdcooper
+       FROM crapnrc 
+      WHERE crapnrc.nrctrrat = pr_nrctrlim
+        AND crapnrc.cdcooper = pr_cdcooper
+        AND crapnrc.nrdconta = pr_nrdconta
+        AND crapnrc.flgativo = 1
+        AND crapnrc.insitrat = 1
+        AND (rati0001.fn_valor_operacao(crapnrc.cdcooper
                                     ,crapnrc.nrdconta
                                     ,crapnrc.tpctrrat
                                     ,crapnrc.nrctrrat),crapnrc.nrnotrat,crapnrc.cdcooper,crapnrc.nrdconta,crapnrc.tpctrrat,crapnrc.nrctrrat) IN (
@@ -4278,16 +4278,52 @@ END fn_letra_risco;
       pr_tab_dados_proposta(0).vlendivi := vr_vlendivi;
       pr_tab_grupo := vr_tab_grupo;
           
-      /* Ratings Ativos propostos - Pegar o de nota maior e maior valor */
+      -- Ratings Ativos propostos - Pegar o de nota maior e maior valor
       OPEN cr_rating_ativo;
       FETCH cr_rating_ativo INTO rw_rating_ativo;
       IF (cr_rating_ativo%FOUND) THEN
+        CLOSE cr_rating_ativo;
         pr_tab_dados_proposta(0).dsdopera := rw_rating_ativo.dsdopera;
         pr_tab_dados_proposta(0).nrctrrat := rw_rating_ativo.nrctrrat;
         pr_tab_dados_proposta(0).indrisco := rw_rating_ativo.indrisco;
         pr_tab_dados_proposta(0).nrnotrat := rw_rating_ativo.nrnotrat;
         pr_tab_dados_proposta(0).nrnotatl := rw_rating_ativo.nrnotatl;
         pr_tab_dados_proposta(0).vloperac := rw_rating_ativo.vloperac;
+      ELSE
+        CLOSE cr_rating_ativo;
+        -- O registro crapnrc do Rating pode nao existir (proposta de operacao). Entao cria ele aqui
+        RATI0001.pc_calcula_rating(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
+                                  ,pr_cdagenci => pr_cdagenci   --> Codigo Agencia
+                                  ,pr_nrdcaixa => pr_nrdcaixa   --> Numero Caixa
+                                  ,pr_cdoperad => pr_cdoperad   --> Codigo Operador
+                                  ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                  ,pr_tpctrato => 3             --> Tipo Contrato Rating
+                                  ,pr_nrctrato => pr_nrctrlim   --> Numero Contrato Rating
+                                  ,pr_flgcriar => vr_flgcriar   --> Indicado se deve criar o rating
+                                  ,pr_flgcalcu => 1             --> Indicador de calculo
+                                  ,pr_idseqttl => pr_idseqttl   --> Sequencial do Titular
+                                  ,pr_idorigem => pr_idorigem   --> Identificador Origem
+                                  ,pr_nmdatela => 'b1wgen0043'  --> Nome da tela
+                                  ,pr_flgerlog => 0             --> Identificador de geração de log
+                                  ,pr_tab_rating_sing      => vr_tab_rating_sing      --> Registros gravados para rati
+                                  ,pr_flghisto => 1
+                                  ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooper
+                                  ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
+                                  ,pr_tab_impress_risco_cl => vr_tab_impress_risco_cl --> Registro Nota e risco do coo
+                                  ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do coo
+                                  ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do R
+                                  ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetiv
+                                  ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
+                                  ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
+                                  ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
+                                  ,pr_des_reto             => vr_dscritic);           --> Ind. de retorno OK/NOK
+
+        pr_tab_dados_proposta(0).dsdopera := RATI0001.fn_busca_descricao_operacao(3);
+        pr_tab_dados_proposta(0).nrctrrat := pr_nrctrlim;
+        pr_tab_dados_proposta(0).nrnotrat := vr_tab_impress_risco_cl(vr_tab_impress_risco_cl.FIRST).vlrtotal;
+        pr_tab_dados_proposta(0).indrisco := vr_tab_impress_risco_cl(vr_tab_impress_risco_cl.FIRST).dsdrisco;
+        --pr_tab_dados_proposta(0).indrisco := vr_tab_impress_risco_cl(0).indrisco;
+        --pr_tab_dados_proposta(0).dsditrat := RATI0001.fn_busca_descricao_situacao(1);
       END IF;
        
       /*Histórico de Ratings*/
@@ -4304,45 +4340,7 @@ END fn_letra_risco;
         pr_tab_rating_hist(vr_idxrating).dsditrat := rw_rating_hist.dsditrat;
         vr_idxrating := vr_idxrating+1;
       END LOOP;
-      
-      /* O registro crapnrc do Rating pode nao existir (proposta de operacao) */
-      /* Entao cria ele aqui */
-      IF (cr_rating_ativo%NOTFOUND /*AND (vr_idxrating = 0)*/ ) THEN
-         RATI0001.pc_calcula_rating(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
-                              ,pr_cdagenci => pr_cdagenci   --> Codigo Agencia
-                              ,pr_nrdcaixa => pr_nrdcaixa   --> Numero Caixa
-                              ,pr_cdoperad => pr_cdoperad   --> Codigo Operador
-                              ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
-                              ,pr_tpctrato => 3             --> Tipo Contrato Rating
-                              ,pr_nrctrato => pr_nrctrlim   --> Numero Contrato Rating
-                              ,pr_flgcriar => vr_flgcriar   --> Indicado se deve criar o rating
-                              ,pr_flgcalcu => 1             --> Indicador de calculo
-                              ,pr_idseqttl => pr_idseqttl   --> Sequencial do Titular
-                              ,pr_idorigem => pr_idorigem   --> Identificador Origem
-                              ,pr_nmdatela => 'b1wgen0043'  --> Nome da tela
-                              ,pr_flgerlog => 0             --> Identificador de geração de log
-                              ,pr_tab_rating_sing      => vr_tab_rating_sing      --> Registros gravados para rati
-                              ,pr_flghisto => 1
-                              ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooper
-                              ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
-                              ,pr_tab_impress_risco_cl => vr_tab_impress_risco_cl --> Registro Nota e risco do coo
-                              ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do coo
-                              ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do R
-                              ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetiv
-                              ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
-                              ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
-                              ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
-                              ,pr_des_reto             => vr_dscritic);           --> Ind. de retorno OK/NOK
-         
-                       
-          pr_tab_dados_proposta(0).dsdopera := RATI0001.fn_busca_descricao_operacao(3);
-          pr_tab_dados_proposta(0).nrctrrat := pr_nrctrlim;
-          pr_tab_dados_proposta(0).nrnotrat := vr_tab_impress_risco_cl(vr_tab_impress_risco_cl.FIRST).vlrtotal;
-          pr_tab_dados_proposta(0).indrisco := vr_tab_impress_risco_cl(vr_tab_impress_risco_cl.FIRST).dsdrisco;
-          --pr_tab_dados_proposta(0).indrisco := vr_tab_impress_risco_cl(0).indrisco;
-          --pr_tab_dados_proposta(0).dsditrat := RATI0001.fn_busca_descricao_situacao(1);
-           
-      END IF;     
+      CLOSE cr_rating_hist;
     
   END pc_carrega_dados_proposta;
   
