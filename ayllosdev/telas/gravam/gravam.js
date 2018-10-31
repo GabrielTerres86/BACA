@@ -705,7 +705,7 @@ function formataFormularioBens() {
 	$('#vlmerbem', '#frmBens').css({ 'width': '234px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsbemfin', '#frmBens').css({ 'width': '400px', 'text-align': 'left' }).desabilitaCampo();
     $('#dscorbem', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo();
-	$('#tpchassi', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo();
+	$('#tpchassi', '#frmBens').css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $('#dschassi', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '17').addClass('alphanum');
 	$('#nrrenava', '#frmBens').css({ 'width': '234px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '14').addClass('renavan2');
     $('#ufdplaca', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '2').addClass('alphanum');

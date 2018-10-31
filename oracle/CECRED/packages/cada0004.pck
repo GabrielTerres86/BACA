@@ -48,6 +48,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
                               pc_carrega_dados_atenda (Claudio CIS Corporate)	 	   
                  
+                 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)	 	   
+                 
+                 26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -231,7 +235,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                dssititg  VARCHAR2(100),
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
-               cdsitdct  crapass.cdsitdct%TYPE);
+               cdsitdct  crapass.cdsitdct%TYPE,
+               cdscobeh  VARCHAR2(100));
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
@@ -5995,7 +6000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 26/10/2018
     --
     --  Dados referentes ao programa:
     --
@@ -6020,6 +6025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              20/09/2017 - Ajuste nos parametros da procedure fn_dstipcta
     --                           PRJ366 (Lombardi)
     --              
+    --           26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)    
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6173,6 +6179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).inpessoa := rw_crapass.inpessoa;
     pr_tab_cabec(vr_idxcab).qttitula := vr_qttitula;
     pr_tab_cabec(vr_idxcab).dssititg := rw_crapass.dsdctitg;
+    -- P442 - Score Behaviour Cooperado
+    pr_tab_cabec(vr_idxcab).cdscobeh := risc0005.fn_score_behaviour(pr_cdcooper,pr_nrdconta);
     
     pr_des_reto := 'OK';
     
@@ -7241,7 +7249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 23/06/2017
+       Data    : Outubro/2015.                         Ultima atualizacao: 26/10/2018
 
        Dados referentes ao programa:
 
@@ -7266,6 +7274,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	               23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				                "Desligamento por determinação do BACEN" 
 							   ( Jonata - RKAM P364).	
+                 
+                 
+                 26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
+                 
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -7411,6 +7423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
+                        '<cdscobeh>'|| vr_tab_cabec(i).cdscobeh      ||'</cdschbeh>'||
                         '</Registro>');
       
       END LOOP;

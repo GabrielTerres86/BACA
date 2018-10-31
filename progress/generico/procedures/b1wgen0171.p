@@ -11,7 +11,7 @@
   | automatica                      | grvm0001.pc_desfazer_baixa_automatica          |
   | gravames_processamento_retorno  | grvm0001.pc_gravames_processamento_retorno     |
   | gravames_historico              | grvm0001.pc_gravames_historico                 |
-  | gravames_impressao_relatorio	| grvm0001.pc_gravames_impressao_relatorio       |
+  | gravames_impressao_relatorio	  | grvm0001.pc_gravames_impressao_relatorio       |
   | gravames_inclusao_manual        | grvm0001.pc_gravames_inclusao_manual           | 
   | gravames_baixa_manual           | grvm0001.pc_gravames_baixa_manual              |
   | gravames_blqjud                 | grvm0001.pc_gravames_blqjud                    |
@@ -22,6 +22,8 @@
   | valida_eh_alienacao_fiduciaria  | grvm0001.pc_valida_eh_alienacao_fiduciaria     |
   | carrega-cooperativas            | TELA_GRAVAM.pc_buscar_cooperativas             |
   | gravames_busca_pa_associado     | TELA_GRAVAM.pc_gravames_busca_pa_associado     |
+  | valida_bens_alienados           | grvm0001.pc_valida_bens_alienados              |
+  | registrar_gravames              | grvm0001.pc_registrar_gravames                 |
   +---------------------------------+------------------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -42,7 +44,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Agosto/2013                     Ultima atualizacao: 20/05/2016
+   Data    : Agosto/2013                     Ultima atualizacao: 24/10/2018
 
    Dados referentes ao programa:
 
@@ -139,21 +141,25 @@
 
 			   20/05/2016 - Ajustes decorrente a conversção da tela GRAVAM
 							(Andrei - RKAM).
+              
+               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
+
+			   24/10/2018 - P442 - Direcionar a chamada das rotinas valida_eh_alienacao_fiduciaria, valida_bens_alienados 
+                             e registrar_gravames jah convertidas para a rotina Oracle (Marcos-Envolti)
+         
 ............................................................................. */
 DEF STREAM str_1.
 DEF STREAM str_2.
 
-/*{ sistema/generico/includes/b1wgen0002tt.i }*/
-
 { sistema/generico/includes/b1wgen0171tt.i }
-
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
-
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+DEF VAR aux_desretor AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdircop AS CHAR                                           NO-UNDO.
 DEF VAR aux_dssitgrv AS CHAR                                           NO-UNDO.
 DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
@@ -171,11 +177,6 @@ DEF VAR aux_qtsubstr AS INT                                            NO-UNDO.
 DEF VAR h-b1wgen0002 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0024 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                         NO-UNDO.
-
-
-
-
-
 
 /********************************* PROCEDURES *********************************/
 
@@ -219,124 +220,35 @@ PROCEDURE valida_eh_alienacao_fiduciaria:
     DEF  INPUT PARAM par_cdcooper AS INT                             NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INT                             NO-UNDO.
     DEF  INPUT PARAM par_nrctrpro AS INT                             NO-UNDO.
-    DEF  INPUT PARAM par_cddopcao AS CHAR                            NO-UNDO.
-
+    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-
-    /* Verifica Cooperativa */
-    FIND LAST crapcop
-        WHERE crapcop.cdcooper = par_cdcooper
-      NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL crapcop THEN
-        DO:
-            ASSIGN aux_cdcritic = 794.
-
-            RUN gera_erro (INPUT 3, /*par_cdcooper,*/
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 1, /*sequencia*/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-           RETURN "NOK".
-    END.
-
-    /* Verifica Associado */
-    IF  par_nrdconta = 0 THEN
-        DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = " Informar o numero da Conta! ".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 2, /*sequencia*/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-            RETURN "NOK".
-    END.
-
-    FIND LAST crapass WHERE crapass.cdcooper = par_cdcooper AND
-                            crapass.nrdconta = par_nrdconta
-                            NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL crapass THEN
-        DO:
-           ASSIGN aux_cdcritic = 9.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 3, /*sequencia*/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-           RETURN "NOK".
-    END.
-
-    /* Validar se eh Proposta Valida/Existente */
-    FIND FIRST crawepr
-         WHERE crawepr.cdcooper = par_cdcooper
-           AND crawepr.nrdconta = par_nrdconta
-           AND crawepr.nrctremp = par_nrctrpro
-       NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL crawepr   THEN DO: /* Contrato nao encontrado */
-
-        ASSIGN aux_cdcritic = 356.
-               aux_dscritic = "".
-
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT 0,
-                       INPUT 0,
-                       INPUT 4, /*sequencia*/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
-    END.
-
-    /** VALIDAR LINHA DE CREDITO DA PROPOSTA - ALIENACAO FIDUCIARIA **/
-    FIND FIRST craplcr
-         WHERE craplcr.cdcooper = crawepr.cdcooper
-           AND craplcr.cdlcremp = crawepr.cdlcremp
-           AND craplcr.tpctrato = 2
-        NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL craplcr THEN DO:
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = " Linha de Credito invalida para essa operacao! ".
-
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT 0,
-                       INPUT 0,
-                       INPUT 5, /*sequencia*/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
-
-    END.
-
-    /* Verificar se ha algum BEM tipo AUTOMOVEL/MOTO/CAMINHAO */
-    FIND FIRST crapbpr NO-LOCK
-         WHERE crapbpr.cdcooper = crawepr.cdcooper
-           AND crapbpr.nrdconta = crawepr.nrdconta
-           AND crapbpr.tpctrpro = 90
-           AND crapbpr.nrctrpro = crawepr.nrctremp
-           AND crapbpr.flgalien = TRUE
-           AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
-                crapbpr.dscatbem MATCHES "*MOTO*"      OR
-                crapbpr.dscatbem MATCHES "*CAMINHAO*")
-        NO-ERROR.
-
-    IF  NOT AVAIL crapbpr THEN DO:
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = " Proposta sem Bem valido ou Bem nao encontado! ".
-
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+    
+    RUN STORED-PROCEDURE pc_valida_alienacao_fiduc_prog
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper        /* Cooperativa              */ 
+                                        ,INPUT par_nrdconta        /* Numero da Conta Corrente */
+                                        ,INPUT par_nrctrpro        /* Emprestimo               */
+                                        ,OUTPUT ""                 /* Saida OK/NOK */
+                                        ,OUTPUT 0                  /* Codigo critica */
+                                        ,OUTPUT "").               /* Descriçao da crítica */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_valida_alienacao_fiduc_prog
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    ASSIGN aux_desretor = ""
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_desretor = pc_valida_alienacao_fiduc_prog.pr_des_reto
+                          WHEN pc_valida_alienacao_fiduc_prog.pr_des_reto <> ?
+           aux_cdcritic = pc_valida_alienacao_fiduc_prog.pr_cdcritic
+                          WHEN pc_valida_alienacao_fiduc_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_alienacao_fiduc_prog.pr_dscritic
+                          WHEN pc_valida_alienacao_fiduc_prog.pr_dscritic <> ?.
+    /* Se retornou erro */
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+    DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT 0,
                        INPUT 0,
@@ -362,29 +274,33 @@ PROCEDURE valida_bens_alienados:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    /* Irlan: Funcao bloqueada temporariamente para demais coops.
-       Apenas 1, 4, 7 */
-/*     IF  NOT CAN-DO("1,4,7",STRING(par_cdcooper)) THEN */
-/*         RETURN "OK".                                  */
-/* 23/12/2014 -> LIBERACAO PARA TODAS AS COOPERATIVAS */
-
-
-    /* Validar se eh Proposta Valida/Existente */
-    FIND FIRST crawepr
-         WHERE crawepr.cdcooper = par_cdcooper
-           AND crawepr.nrdconta = par_nrdconta
-           AND crawepr.nrctremp = par_nrctrpro
-       NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL crawepr   THEN DO: /* Contrato nao encontrado */
-
-        ASSIGN aux_cdcritic = 356.
-               aux_dscritic = "".
-
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+    
+    RUN STORED-PROCEDURE pc_valida_bens_alienados
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper        /* Cooperativa              */ 
+                                        ,INPUT par_nrdconta        /* Numero da Conta Corrente */
+                                        ,INPUT par_nrctrpro        /* Emprestimo               */
+                                        ,OUTPUT 0                  /* Codigo da Critica */
+                                        ,OUTPUT "").               /* Descriçao da crítica */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_valida_bens_alienados
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_bens_alienados.pr_cdcritic
+                          WHEN pc_valida_bens_alienados.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_bens_alienados.pr_dscritic
+                          WHEN pc_valida_bens_alienados.pr_dscritic <> ?.
+    /* Se retornou erro */
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+    DO:
+        
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT 0,
                        INPUT 0,
-                       INPUT 40, /*sequencia*/
+                       INPUT 1, /*sequencia*/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
 
@@ -397,94 +313,6 @@ PROCEDURE valida_bens_alienados:
                           " >> log/gravam.log").
         RETURN "NOK".
     END.
-    ELSE
-        /** Conforme liberando novas Coops, havera novas datas*/
-        IF  (crawepr.cdcooper = 1 AND
-             crawepr.dtmvtolt < 11/18/2014)
-        OR  (crawepr.cdcooper = 4 AND
-             crawepr.dtmvtolt < 07/23/2014)
-        OR  (crawepr.cdcooper = 7 AND
-             crawepr.dtmvtolt < 10/06/2014)
-        OR  (NOT CAN-DO("1,4,7",STRING(crawepr.cdcooper)) AND
-             crawepr.dtmvtolt < 02/26/2015) THEN
-            RETURN "OK".
-
-    /******* VALIDACOES *******/
-    RUN valida_eh_alienacao_fiduciaria (INPUT par_cdcooper,
-                                        INPUT par_nrdconta,
-                                        INPUT par_nrctrpro,
-                                        INPUT par_cddopcao,
-                                       OUTPUT TABLE tt-erro).
-    /** OBS: Sempre retornara OK pois a chamada da valida_bens_alienados
-             vem da "EFETIVAR" (LANCTRI e BO00084), nesses casos nao pode
-             impedir de seguir para demais contratos. **/
-    IF  RETURN-VALUE <> "OK" THEN
-        RETURN "OK".
-
-    IF  crawepr.flgokgrv = FALSE THEN DO:
-
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = "Opcao Registro de Gravames, na tela ATENDA " +
-                              "nao efetuada! Verifique.".
-
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT 0,
-                       INPUT 0,
-                       INPUT 7, /*sequencia*/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-
-        UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
-                          STRING(TIME,"HH:MM:SS") +
-                          " - GRAVAM '-->' "  +
-                          "ERRO: " + STRING(aux_cdcritic) + " - " +
-                          "'" + aux_dscritic + "'"              +
-                          " [valida_bens_alienados]"    +
-                          " >> log/gravam.log").
-        RETURN "NOK".
-    END.
-
-    FOR EACH crapbpr NO-LOCK  /* Todos Bens da Proposta */
-       WHERE crapbpr.cdcooper = par_cdcooper
-         AND crapbpr.nrdconta = par_nrdconta
-         AND crapbpr.tpctrpro = 90
-         AND crapbpr.nrctrpro = par_nrctrpro
-         AND crapbpr.flgalien = TRUE
-         AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
-              crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*") :
-
-
-        IF  crapbpr.cdsitgrv <> 2 THEN DO: /* Se nao tiver alienacao OK */
-
-            CASE crapbpr.cdsitgrv:
-                WHEN 0 THEN aux_dscritic = "Arquivo Gravame nao enviado. Verifique".
-                WHEN 1 THEN aux_dscritic = "Falta retorno arquivo Gravames. Verifique.".
-                WHEN 3 THEN aux_dscritic = "Arquivo Gravames com problemas de processamento. Verifique.".
-                WHEN 4 THEN aux_dscritic = "Bem baixado.".
-                WHEN 5 THEN aux_dscritic = "Bem cancelado.".
-            END CASE.
-
-            ASSIGN aux_cdcritic = 0.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 8, /*sequencia*/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-            UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
-                              STRING(TIME,"HH:MM:SS") +
-                              " - GRAVAM '-->' "  +
-                              "ERRO: " + STRING(aux_cdcritic) + " - " +
-                              "'" + aux_dscritic + "'"              +
-                              " [valida_bens_alienados]"    +
-                              " >> log/gravam.log").
-            RETURN "NOK".
-        END.
-    END.
-
 
     RETURN "OK".
 
@@ -502,8 +330,6 @@ PROCEDURE gravames_geracao_arquivo:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-
-    { sistema/generico/includes/var_oracle.i }
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -584,40 +410,34 @@ PROCEDURE registrar_gravames:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     EMPTY TEMP-TABLE tt-erro.
-
-    /* Irlan: Funcao bloqueada temporariamente para demais coops.
-       Apenas 1, 4, 7 */
-/*     IF  NOT CAN-DO("1,4,7",STRING(par_cdcooper)) THEN DO:           */
-/*                                                                     */
-/*         ASSIGN aux_cdcritic = 0                                     */
-/*                aux_dscritic = " Operacao bloqueada!".               */
-/*                                                                     */
-/*         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +       */
-/*                           " - GRAVAM '-->' "  +                     */
-/*                           "ERRO: " + STRING(aux_cdcritic) + " - " + */
-/*                           "'" + aux_dscritic + "'"              +   */
-/*                           " [registrar_gravames]"    +              */
-/*                           " >> log/gravam.log").                    */
-/*         RETURN "NOK".                                               */
-/*     END.                                                            */
-/** 23/12/2014 -> LIBERACAO PARA TODAS AS COOPERATIVAS */
-
-    /** Validar Data de Inclusao do Contrato **/
-    FIND FIRST crawepr
-         WHERE crawepr.cdcooper = par_cdcooper
-           AND crawepr.nrdconta = par_nrdconta
-           AND crawepr.nrctremp = par_nrctrpro
-       NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL crawepr   THEN DO: /* Contrato nao encontrado */
-
-        ASSIGN aux_cdcritic = 356.
-               aux_dscritic = "".
-
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+    
+    RUN STORED-PROCEDURE pc_registrar_gravames
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper        /* Cooperativa              */ 
+                                        ,INPUT par_nrdconta        /* Numero da Conta Corrente */
+                                        ,INPUT par_nrctrpro        /* Emprestimo               */
+                                        ,OUTPUT 0                  /* Codigo da Critica */
+                                        ,OUTPUT "").               /* Descriçao da crítica */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_registrar_gravames
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_registrar_gravames.pr_cdcritic
+                          WHEN pc_registrar_gravames.pr_cdcritic <> ?
+           aux_dscritic = pc_registrar_gravames.pr_dscritic
+                          WHEN pc_registrar_gravames.pr_dscritic <> ?.
+    /* Se retornou erro */
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+    DO:
+        
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT 0,
                        INPUT 0,
-                       INPUT 41, /*sequencia*/
+                       INPUT 1, /*sequencia*/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
 
@@ -630,115 +450,7 @@ PROCEDURE registrar_gravames:
                           " >> log/gravam.log").
         RETURN "NOK".
     END.
-    ELSE
-        /** Conforme liberando novas Coops, havera novas datas*/
-        IF  (crawepr.cdcooper = 1 AND
-             crawepr.dtmvtolt < 11/18/2014)
-        OR  (crawepr.cdcooper = 4 AND
-             crawepr.dtmvtolt < 07/23/2014)
-        OR  (crawepr.cdcooper = 7 AND
-             crawepr.dtmvtolt < 10/06/2014)
-        OR  (NOT CAN-DO("1,4,7",
-                        STRING(crawepr.cdcooper)) AND
-             crawepr.dtmvtolt < 02/26/2015) THEN DO:
-
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = " Operacao bloqueada![Data Contrato]".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 32, /*sequencia*/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-            UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
-                              STRING(TIME,"HH:MM:SS") +
-                              " - GRAVAM '-->' "  +
-                              "ERRO: " + STRING(aux_cdcritic) + " - " +
-                              "'" + aux_dscritic + "'"              +
-                              " [registrar_gravames]"    +
-                              " >> log/gravam.log").
-            RETURN "NOK".
-        END.
-
-
-    /******* VALIDACOES *******/
-    RUN valida_eh_alienacao_fiduciaria (INPUT par_cdcooper,
-                                        INPUT par_nrdconta,
-                                        INPUT par_nrctrpro,
-                                        INPUT par_cddopcao,
-                                       OUTPUT TABLE tt-erro).
-    IF  RETURN-VALUE <> "OK" THEN
-        RETURN "NOK".
-
-    IF  crapbpr.cdsitgrv <> 0 THEN DO:
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = " Situacao do Gravame invalida! ".
-
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT 0,
-                       INPUT 0,
-                       INPUT 33, /*sequencia*/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-
-        UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
-                          STRING(TIME,"HH:MM:SS") +
-                          " - GRAVAM '-->' "  +
-                          "ERRO: " + STRING(aux_cdcritic) + " - " +
-                          "'" + aux_dscritic + "'"              +
-                          " [registrar_gravames]"    +
-                          " >> log/gravam.log").
-        RETURN "NOK".
-    END.
-
-    IF  crawepr.flgokgrv = TRUE THEN DO:
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = " Proposta ja OK para envio ao GRAVAMES! ".
-
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT 0,
-                       INPUT 0,
-                       INPUT 34, /*sequencia*/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-
-        UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
-                          STRING(TIME,"HH:MM:SS") +
-                          " - GRAVAM '-->' "  +
-                          "ERRO: " + STRING(aux_cdcritic) + " - " +
-                          "'" + aux_dscritic + "'"              +
-                          " [registrar_gravames]"    +
-                          " >> log/gravam.log").
-        RETURN "NOK".
-    END.
-    /**** FIM VALIDACOES ***/
-
-
-    FIND CURRENT crawepr EXCLUSIVE-LOCK.
-
-    ASSIGN crawepr.flgokgrv = TRUE.
-
-    /* Registrar TODOS os bens da Proposta */
-    FOR EACH crapbpr EXCLUSIVE-LOCK
-       WHERE crapbpr.cdcooper = crawepr.cdcooper
-         AND crapbpr.nrdconta = crawepr.nrdconta
-         AND crapbpr.tpctrpro = 90
-         AND crapbpr.nrctrpro = crawepr.nrctremp
-         AND crapbpr.flgalien = TRUE
-         AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
-              crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*"):
-
-        ASSIGN crapbpr.flginclu = TRUE
-               crapbpr.cdsitgrv = 0
-               crapbpr.tpinclus = "A".
-    END.
-
-    RELEASE crawepr.
-    RELEASE crapbpr.
-
+    
 
     RETURN "OK".
 
@@ -777,7 +489,6 @@ PROCEDURE solicita_baixa_automatica:
     RUN valida_eh_alienacao_fiduciaria (INPUT par_cdcooper,
                                         INPUT par_nrdconta,
                                         INPUT par_nrctrpro,
-                                        INPUT "", /*par_cddopcao,*/
                                        OUTPUT TABLE tt-erro).
     /** OBS: Sempre retornara OK pois a chamada da solicita_baixa_automatica
              nos CRPS171,CRPS078,CRPS120_1,B1WGEN0136, nesses casos nao pode
@@ -794,7 +505,8 @@ PROCEDURE solicita_baixa_automatica:
          AND crapbpr.flgalien = TRUE
          AND (crapbpr.dscatbem MATCHES "*AUTOMOVEL*" OR
               crapbpr.dscatbem MATCHES "*MOTO*"      OR
-              crapbpr.dscatbem MATCHES "*CAMINHAO*") :
+              crapbpr.dscatbem MATCHES "*CAMINHAO*"  OR 
+              crapbpr.dscatbem MATCHES "*OUTROS VEICULOS*" ) :
 
         IF  crapbpr.tpdbaixa = "M" THEN /* Se já foi baixado manual */
             NEXT.
@@ -846,7 +558,6 @@ PROCEDURE desfazer_solicitacao_baixa_automatica:
     RUN valida_eh_alienacao_fiduciaria (INPUT par_cdcooper,
                                         INPUT par_nrdconta,
                                         INPUT par_nrctrpro,
-                                        INPUT "", /*par_cddopcao,*/
                                        OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN

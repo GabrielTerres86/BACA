@@ -98,6 +98,7 @@ create or replace package cecred.tela_manbem is
                              par_vlfipbem in crapbpr.vlfipbem%type,
                              par_dstpcomb in crapbpr.dstpcomb%type,
                              par_dsorigem in varchar2,
+                             par_nrgravam IN crapbpr.nrgravam%TYPE,
                              par_idseqnov OUT crapbpr.idseqbem%type,
                              par_cdcritic out number,
                              par_dscritic out varchar2);
@@ -142,7 +143,7 @@ create or replace package cecred.tela_manbem is
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                           ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
-                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhão ou Outros Veiculos)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                           ,pr_nrmodbem in varchar2 --> Ano Modelo
                           ,pr_nranobem in varchar2 --> Ano Fabricação
@@ -156,6 +157,7 @@ create or replace package cecred.tela_manbem is
                           ,pr_nrrenava in varchar2 --> Renavam
                           ,pr_uflicenc in varchar2 --> UF Licenciamento
                           ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
+                          ,pr_nmdavali IN VARCHAR2 --> Nome Interveniente
                           ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição                          
                            -------> OUT <--------
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -194,6 +196,20 @@ create or replace package cecred.tela_manbem is
                                  ,par_nrdplaca in crapbpr.nrdplaca%TYPE
                                  ,par_nrrenava in crapbpr.nrrenava%TYPE
                                  ,par_ufdplaca in crapbpr.ufdplaca%TYPE
+                                 ,par_nrgravam IN crapbpr.nrgravam%TYPE
+                                  --PRJ438 - Sprint 4                                     
+                                 ,par_cdufende IN crapbpr.cdufende%TYPE  
+                                 ,par_dscompend IN crapbpr.dscompend%TYPE 
+                                 ,par_dsendere IN crapbpr.dsendere%TYPE 
+                                 ,par_nmbairro IN crapbpr.nmbairro%TYPE 
+                                 ,par_nmcidade IN crapbpr.nmcidade%TYPE 
+                                 ,par_nrcepend IN crapbpr.nrcepend%TYPE 
+                                 ,par_nrendere IN crapbpr.nrendere%TYPE 
+                                 ,par_dsclassi IN crapbpr.dsclassi%TYPE 
+                                 ,par_vlareuti IN crapbpr.vlareuti%TYPE 
+                                 ,par_vlaretot IN crapbpr.vlaretot%TYPE 
+                                 ,par_nrmatric IN crapbpr.nrmatric%TYPE 
+                                 ,par_vlrdobem IN crapbpr.vlrdobem%TYPE
                                  ,par_flperapr OUT VARCHAR2
                                  ,par_cdcritic out NUMBER
                                  ,par_dscritic out varchar2);
@@ -241,7 +257,7 @@ create or replace package cecred.tela_manbem is
   
   /* Acionamento via tela das informações de Gravação dos Bens */
   procedure pc_grava_alienac_hipotec_web(par_nrdconta in crapbpr.nrdconta%TYPE --> Conta
-                                        ,par_dtmvtolt in crapbpr.dtmvtolt%TYPE --> Data
+                                        ,par_dtmvtolt VARCHAR2 --> Data
                                         ,par_tpctrato in crapbpr.tpctrpro%TYPE --> Tp Contrato
                                         ,par_nrctrato in crapbpr.nrctrpro%TYPE --> Contrato
                                         ,par_cddopcao IN VARCHAR2         --> Tipo da Ação
@@ -362,12 +378,13 @@ create or replace package body cecred.tela_manbem is
       Objetivo  : Package genérica contendo validações e manipulação de dados de bens.
                   Será utilizada pelas telas de empréstimos e de aditivos.
   
-      Alterações: 
+      Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
+                               PRJ438 - Sprint 4 - Paulo Martins (Mouts)
       
   ---------------------------------------------------------------------------------------------------------------*/
   
   -- Vetor com os atributos de alienação conforme posição
-  TYPE typ_tab_atributos_alienacao IS VARRAY(19) OF VARCHAR2(100);
+  TYPE typ_tab_atributos_alienacao IS VARRAY(31) OF VARCHAR2(100);
   vr_vet_atrib_alienac typ_tab_atributos_alienacao 
                        := typ_tab_atributos_alienacao('dscatbem'
                                                      ,'dsbemfin'
@@ -387,7 +404,20 @@ create or replace package body cecred.tela_manbem is
                                                      ,'cdcoplib'
                                                      ,'dsmarbem'
                                                      ,'vlfipbem'
-                                                     ,'dstpcomb');
+                                                     ,'dstpcomb'
+                                                     -- PRJ438 ->
+                                                     ,'cdufende'
+                                                     ,'dscompend'
+                                                     ,'dsendere' 
+                                                     ,'nmbairro' 
+                                                     ,'nmcidade' 
+                                                     ,'nrcepend' 
+                                                     ,'nrendere' 
+                                                     ,'dsclassi' 
+                                                     ,'vlareuti' 
+                                                     ,'vlaretot' 
+                                                     ,'nrmatric'
+                                                     ,'vlrdobem');
                                                      
   -- Vetor com os atributos de interveniente conforme posição
   TYPE typ_tab_atributos_intervenient IS VARRAY(19) OF VARCHAR2(100);
@@ -447,7 +477,23 @@ create or replace package body cecred.tela_manbem is
                         par_idgaropc in number,
                         par_dsorigem in varchar2,
                         par_dscritic in varchar2,
-                        par_dstransa in varchar2) is
+                        par_dstransa in varchar2) IS
+    /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_gera_log             
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Daniel Dallagnese - Envolti
+    Data     : Agosto/2018                           Ultima atualizacao:  
+  
+    Dados referentes ao programa:
+   
+    Frequencia: -----
+    Objetivo   : Rotina para geração de LOG das alterações de Bens
+  
+    Alterações :  
+                
+  ---------------------------------------------------------------------------------------------------------------*/                                 
     v_rowid       ROWID;
     v_nrsequex      number := 0;
     v_nrsequex_aux  varchar2(5);
@@ -1217,9 +1263,27 @@ create or replace package body cecred.tela_manbem is
                              par_vlfipbem in crapbpr.vlfipbem%type,
                              par_dstpcomb in crapbpr.dstpcomb%type,
                              par_dsorigem in varchar2,
+                             par_nrgravam IN crapbpr.nrgravam%TYPE,
                              par_idseqnov OUT crapbpr.idseqbem%type,
                              par_cdcritic OUT number,
-                             par_dscritic OUT varchar2) is
+                             par_dscritic OUT varchar2) IS
+
+    /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_substitui_bem             
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Daniel Dallagnese - Envolti
+    Data     : Agosto/2018                           Ultima atualizacao:  
+  
+    Dados referentes ao programa:
+   
+    Frequencia: -----
+    Objetivo   : Rotina para desativação do Bem anterior e criação do novo bem alienado
+  
+    Alterações :  
+                
+  ---------------------------------------------------------------------------------------------------------------*/                                 
     -- Buscar bem a substituir
     cursor cr_crapbpr(pr_tpctrpro crapbpr.tpctrpro%TYPE) is
       select crapbpr.nranobem,
@@ -1257,15 +1321,18 @@ create or replace package body cecred.tela_manbem is
     v_flperapr VARCHAR2(1);  
     --
     vr_exc_erro   exception;
-  begin
+    -- 
+    vr_idseqbem   NUMBER := par_idseqbem;
+  BEGIN
+    -- Se foi passado bem a sustituir
     if par_idseqbem > 0 then
       open cr_crapbpr(par_tpctrato);
-        fetch cr_crapbpr into v_crapbpr;
-        if cr_crapbpr%notfound then
-          par_cdcritic := 55;
-          close cr_crapbpr;
-          return;
-        end if;
+      fetch cr_crapbpr into v_crapbpr;
+      if cr_crapbpr%notfound then
+        par_cdcritic := 55;
+        close cr_crapbpr;
+        return;
+      end if;
       close cr_crapbpr;
       --
       /*** GRAVAMES ***/
@@ -1312,39 +1379,54 @@ create or replace package body cecred.tela_manbem is
                   'Substituicao de Bem Alienado em emprestimo.'); /* dstransa */
       
       /** GRAVAMES - Copia BEM para tipo 99 **/
-      if (par_cdcooper = 1 and par_dtmvtolt >= to_date('18112014', 'ddmmyyyy')) or
-         (par_cdcooper = 4 and par_dtmvtolt >= to_date('23072014', 'ddmmyyyy')) or
-         (par_cdcooper = 7 and par_dtmvtolt >= to_date('06102014', 'ddmmyyyy')) or
-         (par_cdcooper not in (1, 4, 7) and par_dtmvtolt >= to_date('26022015', 'ddmmyyyy')) then
-        -- Checar se já não existe outro bem substituido com o mesmo ID do bem em substituição
-        open cr_crapbpr(99);
-          fetch cr_crapbpr into v_crapbpr99;
-          if cr_crapbpr%found THEN
-            -- Vamos gerar novo id para o bem sustituido para evitar duplicação da PK
-            open cr_crapbpr2;
-            fetch cr_crapbpr2 into par_idseqbem;
-            par_idseqbem := nvl(par_idseqbem,0) + 1;
-            close cr_crapbpr2;            
-          end if;
-        close cr_crapbpr;
-        -- atualizar o Bem substituido
-        BEGIN
-          update crapbpr
-             set idseqbem = par_idseqbem,
-                 tpctrpro = 99,
-                 flginclu = 0,
-                 flcancel = 0,
-                 flgbaixa = 1,
-                 dtdbaixa = par_dtmvtolt,
-                 tpdbaixa = 'A'
-           where rowid = v_crapbpr.rowid;
-        EXCEPTION
-          WHEN OTHERS THEN
-            par_dscritic := 'Erro ao atualizar bem sustituido: '||SQLERRM;
-            RAISE vr_exc_erro;
-        END; 
-        /** GRAVAMES - Copia BEM para tipo 99 **/
+      
+      -- Checar se já não existe outro bem substituido com o mesmo ID do bem em substituição
+      open cr_crapbpr(99);
+      fetch cr_crapbpr into v_crapbpr99;
+      if cr_crapbpr%found THEN
+        -- Vamos gerar novo id para o bem sustituido para evitar duplicação da PK
+        open cr_crapbpr2;
+        fetch cr_crapbpr2 into par_idseqbem;
+        par_idseqbem := nvl(par_idseqbem,0) + 1;
+        close cr_crapbpr2;            
       end if;
+      close cr_crapbpr;
+      
+      -- Atualizar o Bem substituido
+      -- Caso ele já tenha sido baixado devido ao Gravames Online, não mudaremos a sua situação
+      BEGIN
+        UPDATE crapbpr
+           set idseqbem = par_idseqbem
+              ,tpctrpro = 99
+              ,flginclu = 0
+              ,flcancel = 0
+              ,flgbaixa = decode(cdsitgrv,4,0,1)                   -- Se não baixado ainda, setamos para baixar
+              ,dtdbaixa = decode(cdsitgrv,4,dtdbaixa,par_dtmvtolt) -- Se não baixado ainda, setamos para baixar
+              ,tpdbaixa = decode(cdsitgrv,4,tpdbaixa,'A')          -- Se não baixado ainda, setamos para baixar
+         WHERE ROWID = v_crapbpr.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          par_dscritic := 'Erro ao atualizar bem sustituido: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END; 
+      
+      -- Migrar Histórico Gravames do Bem sustituido
+      BEGIN
+        update crapgrv
+           SET idseqbem = par_idseqbem
+              ,tpctrpro = 99
+         WHERE cdcooper = par_cdcooper
+           AND nrdconta = par_nrdconta
+           AND tpctrpro = par_tpctrato
+           AND nrctrpro = par_nrctremp
+           AND idseqbem = vr_idseqbem;
+      EXCEPTION
+        WHEN OTHERS THEN
+          par_dscritic := 'Erro ao atualizar historico gravamos do bem sustituido: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;        
+        
+      /** GRAVAMES - Copia BEM para tipo 99 **/
     ELSE
       -- Log apenas de criação
       pc_gera_log(par_cdcooper,
@@ -1422,6 +1504,20 @@ create or replace package body cecred.tela_manbem is
                                      ,par_nrdplaca => par_nrdplaca
                                      ,par_nrrenava => par_nrrenava
                                      ,par_ufdplaca => par_ufdplaca
+                                     ,par_nrgravam => par_nrgravam
+                                     --PRJ438 --Sprint 4
+                                     ,par_cdufende => NULL            
+                                     ,par_dscompend => NULL 
+                                     ,par_dsendere => NULL 
+                                     ,par_nmbairro => NULL
+                                     ,par_nmcidade => NULL
+                                     ,par_nrcepend => NULL
+                                     ,par_nrendere => NULL 
+                                     ,par_dsclassi => NULL 
+                                     ,par_vlareuti => NULL 
+                                     ,par_vlaretot => NULL 
+                                     ,par_nrmatric => NULL        
+                                     ,par_vlrdobem => NULL                              
                                      ,par_flperapr => v_flperapr
                                      ,par_cdcritic => par_cdcritic
                                      ,par_dscritic => par_dscritic);
@@ -1429,11 +1525,6 @@ create or replace package body cecred.tela_manbem is
     IF par_cdcritic > 0 OR par_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
-    -- É necessário atualizar o campo flgokgrv da proposta
-    
-    
-
   exception
     when vr_exc_erro then
       if par_cdcritic <> 0 and
@@ -1477,7 +1568,25 @@ create or replace package body cecred.tela_manbem is
                                       par_dsmensag out varchar2,
                                       par_cdcritic out number,
                                       par_dscritic out varchar2) is         
+    /* .............................................................................
     
+        Programa: pc_valida_dados_alienacao
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel em validar os dados enviados para Alienação de novo bem
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/    
     
     --> Buscar dados da proposta de emprestimo
     CURSOR cr_crawepr IS
@@ -1563,7 +1672,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     --
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       if trim(par_dstipbem) is null then
         v_dscritic := 'O campo Tipo Veiculo e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dstipbem';
@@ -1578,7 +1687,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     -- Validar campos para Bens Móveis
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       if trim(par_dscorbem) is null then
         v_dscritic := 'O campo Cor Classe e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dscorbem';
@@ -1614,7 +1723,7 @@ create or replace package body cecred.tela_manbem is
         raise vr_exc_erro;
       end if;
       --
-      if trim(par_dscatbem) = 'CAMINHAO' and
+      if trim(par_dscatbem) IN ('CAMINHAO','OUTROS VEICULOS') and
          length(trim(par_dschassi)) > 17 then
         v_dscritic := 'Numero do chassi maior que o tamanho maximo.';
         par_nmdcampo := 'dschassi';
@@ -1672,7 +1781,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     /*Valida se já existe alguma proposta com o chassi informado pelo coolaborador*/
-    if trim(par_dscatbem) in ('MOTO', 'AUTOMOVEL', 'CAMINHAO') then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
       open cr_crapbpr;
         fetch cr_crapbpr into v_crapbpr;
         if cr_crapbpr%found then
@@ -1712,7 +1821,7 @@ create or replace package body cecred.tela_manbem is
         par_nmdcampo := 'dsbemfin';
         raise vr_exc_erro;
       end if;
-    ELSIF par_idseqbem > 0 then
+    /*ELSIF par_idseqbem > 0 then
       open cr_crapbpr2;
         fetch cr_crapbpr2 into v_crapbpr2;
         if cr_crapbpr2%notfound then
@@ -1723,13 +1832,13 @@ create or replace package body cecred.tela_manbem is
           raise vr_exc_erro;
     end if;
       close cr_crapbpr2;
-      /** Nao pode substituir nesses Status */
+      -- Nao pode substituir nesses Status 
       if v_crapbpr2.cdsitgrv = 1 then
         v_cdcritic := 0;
         v_dscritic := 'Bem a Substituir em Processamento Gravames! Favor selecionar outro bem!';
         par_nmdcampo := 'dsbemfin';
         raise vr_exc_erro;
-      end if;
+      end if;*/
     end if;
     
     --
@@ -1737,15 +1846,13 @@ create or replace package body cecred.tela_manbem is
       /** GRAVAMES - NAO PERMITIR ALTERAR DETERMINADAS SITUACOES */
       if par_cddopcao = 'A' and
          par_idseqbem <> 0 and
-         (par_dscatbem like '%AUTOMOVEL%' or
-          par_dscatbem like '%MOTO%' or
-          par_dscatbem like '%CAMINHAO%') then
+         (grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S') THEN
         /** Quando 0, significa Bem novo, nao critica */
         open cr_crapbpr2;
           fetch cr_crapbpr2 into v_crapbpr2;
           if cr_crapbpr2%notfound then
             v_cdcritic := 0;
-            v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
+            v_dscritic := 'Bem selecionado para alteracao nao cadastrado!';
             par_nmdcampo := 'dsbemfin';
             close cr_crapbpr2;
             raise vr_exc_erro;
@@ -1940,7 +2047,7 @@ create or replace package body cecred.tela_manbem is
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                           ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
-                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhao ou Outros Veiculos)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                           ,pr_nrmodbem in varchar2 --> Ano Modelo
                           ,pr_nranobem in varchar2 --> Ano Fabricação
@@ -1954,6 +2061,7 @@ create or replace package body cecred.tela_manbem is
                           ,pr_nrrenava in varchar2 --> Renavam
                           ,pr_uflicenc in varchar2 --> UF Licenciamento
                           ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
+                          ,pr_nmdavali IN VARCHAR2 --> Nome Interveniente
                           ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição                          
                            -------> OUT <--------
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -1969,7 +2077,7 @@ create or replace package body cecred.tela_manbem is
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Marcos Martini (Envolti)
-        Data    : Agosto/2018.                    Ultima atualizacao:
+        Data    : Agosto/2018.                    Ultima atualizacao: 18/10/2018
     
         Dados referentes ao programa:
     
@@ -1979,7 +2087,8 @@ create or replace package body cecred.tela_manbem is
     
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 18/10/2018 - P442 - Devolver informações para alienação do bem novo 
+                                 e desalienação do bem atual (Marcos-Envolti)
 
     ..............................................................................*/
     
@@ -2026,6 +2135,9 @@ create or replace package body cecred.tela_manbem is
          AND lim.tpctrlim = pr_tpctrato 
          AND lim.nrdconta = pr_nrdconta
          AND lim.nrctrlim = pr_nrctremp;
+    
+    -- XML
+    vr_xmlalien VARCHAR2(32767);
     
     --> SAida da validação
     vr_flgsenha NUMBER;
@@ -2185,11 +2297,40 @@ create or replace package body cecred.tela_manbem is
       RAISE vr_exc_erro;
     -- Em caso de retorno da mensagem
     ELSE
+      -- Caso houver Gravames Online
+      IF grvm0001.fn_tem_gravame_online(vr_cdcooper) = 'S' THEN
+        -- Acionaremos rotina que irá montar as informações
+        -- para desalienação do Bem anterior (já está na base)
+        -- e alienação do novo bem (Preenchido em tela)
+        grvm0001.pc_prepara_alienacao_aditiv(pr_cdcooper => vr_cdcooper -- Cooperativa
+                                            ,pr_nrdconta => pr_nrdconta -- Conta
+                                            ,pr_nrctremp => pr_nrctremp -- Contrato
+                                            ,pr_cdoperad => vr_cdoperad -- Operador
+                                            ,pr_idseqbem => pr_idseqbem -- Bem a substituir
+                                            ,pr_tpchassi => pr_tpchassi -- Tipo Chassi
+                                            ,pr_dschassi => pr_dschassi -- Chassi
+                                            ,pr_ufdplaca => pr_ufdplaca -- UF Placa
+                                            ,pr_nrdplaca => pr_nrdplaca -- Placa
+                                            ,pr_nrrenava => pr_nrrenava -- Renavam 
+                                            ,pr_uflicenc => pr_uflicenc -- UF Licenciamento
+                                            ,pr_nranobem => pr_nranobem -- Ano fabricacao
+                                            ,pr_nrmodbem => upper(SUBSTR(pr_nrmodbem,1,4)) -- Ano Modelo
+                                            ,pr_nrcpfbem => pr_nrcpfcgc -- CPF Interveniente
+                                            ,pr_nmdavali => pr_nmdavali -- Nome Interveniente
+                                            ,pr_dsxmlali => vr_xmlalien   -- XML de saida para alienação/desalienação
+                                            ,pr_dscritic => vr_dscritic); -- Critica de saida
+        
+        -- Tratar saida de erro
+        IF pr_dscritic IS NOT NULL THEN      
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
       -- Montar a mesma no XML de retorno  
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' 
                                    ||'<Root>'
                                    ||'  <mensagem>' ||vr_dsmensag|| '</mensagem>'
                                    ||'  <aprovaca>' ||vr_flgsenha|| '</aprovaca>'
+                                   ||'  '||vr_xmlalien
                                    ||'</Root>');        
     END IF;
            
@@ -2243,6 +2384,20 @@ create or replace package body cecred.tela_manbem is
                                  ,par_nrdplaca in crapbpr.nrdplaca%TYPE
                                  ,par_nrrenava in crapbpr.nrrenava%TYPE
                                  ,par_ufdplaca in crapbpr.ufdplaca%TYPE
+                                 ,par_nrgravam IN crapbpr.nrgravam%TYPE
+                                 --PRJ438 - Sprint 4                                     
+                                 ,par_cdufende IN crapbpr.cdufende%TYPE  
+                                 ,par_dscompend IN crapbpr.dscompend%TYPE 
+                                 ,par_dsendere IN crapbpr.dsendere%TYPE 
+                                 ,par_nmbairro IN crapbpr.nmbairro%TYPE 
+                                 ,par_nmcidade IN crapbpr.nmcidade%TYPE 
+                                 ,par_nrcepend IN crapbpr.nrcepend%TYPE 
+                                 ,par_nrendere IN crapbpr.nrendere%TYPE 
+                                 ,par_dsclassi IN crapbpr.dsclassi%TYPE 
+                                 ,par_vlareuti IN crapbpr.vlareuti%TYPE 
+                                 ,par_vlaretot IN crapbpr.vlaretot%TYPE 
+                                 ,par_nrmatric IN crapbpr.nrmatric%TYPE 
+                                 ,par_vlrdobem IN crapbpr.vlrdobem%TYPE
                                  ,par_flperapr OUT VARCHAR2
                                  ,par_cdcritic out NUMBER
                                  ,par_dscritic out varchar2) IS
@@ -2252,7 +2407,7 @@ create or replace package body cecred.tela_manbem is
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Marcos Martini (Envolti)
-        Data    : Setembro/2018.                    Ultima atualizacao:
+        Data    : Setembro/2018.                    Ultima atualizacao: 19/10/2018
     
         Dados referentes ao programa:
     
@@ -2262,8 +2417,8 @@ create or replace package body cecred.tela_manbem is
   
         Observacao: -----
     
-        Alteracoes: 
-
+        Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+  
     ..............................................................................*/                                 
     -- Verificar se o bem jah não existe
     CURSOR cr_crapbpr IS
@@ -2274,6 +2429,14 @@ create or replace package body cecred.tela_manbem is
             ,crapbpr.nranobem
             ,crapbpr.dschassi
             ,crapbpr.dstipbem
+            --PRJ438
+            ,crapbpr.dsendere||', '||
+            crapbpr.nrendere||' '||
+            crapbpr.dscompend||' - '||  
+            crapbpr.nmbairro||', '|| 
+            crapbpr.nmcidade||' - '|| 
+            crapbpr.cdufende end_completo
+            ,crapbpr.nrcepend
         from crapbpr
        where cdcooper = par_cdcooper
          and nrdconta = par_nrdconta
@@ -2290,6 +2453,10 @@ create or replace package body cecred.tela_manbem is
     v_flginclu    crapbpr.flginclu%TYPE := 0;
     v_cdsitgrv    crapbpr.cdsitgrv%TYPE := NULL;
     v_tpinclus    crapbpr.tpinclus%TYPE := ' ';
+    v_dtatugrv    crapbpr.dtatugrv%TYPE;
+    v_flgalfid    crapbpr.flgalfid%TYPE;
+    --PRJ438
+    v_dscorbem    crapbpr.dscorbem%TYPE;
     --
     vr_exc_erro   exception;
   BEGIN
@@ -2310,23 +2477,45 @@ create or replace package body cecred.tela_manbem is
       v_nrdplaca := ' ';
       v_nrrenava := 0;
       v_ufdplaca := ' ';
-    end if;
-    
+    end if;    
     
     /** GRAVAMES ***/
-    if par_tplcrato = 2 AND (par_dscatbem like '%AUTOMOVEL%' OR par_dscatbem like '%MOTO%' OR par_dscatbem like '%CAMINHAO%') THEN
-      v_flginclu := 1;
+    if par_tplcrato = 2 AND grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' THEN
+      -- Valores default alienação
       v_tpinclus := 'A';
-      -- Somente mudar situação gravames quando gravação veio da ADITIV
-      IF par_nmdatela = 'ADITIV' THEN
-        v_cdsitgrv := 0;
-      END IF;
+      -- Se recebemos o numero da alienacao
+      IF par_nrgravam IS NOT NULL THEN
+        v_cdsitgrv := 2; -- Alienado
+        v_flginclu := 0; -- Ja incluso
+        v_dtatugrv := SYSDATE; -- Alienado hoje
+        v_flgalfid := 1; -- Alienado OK
+      ELSE
+        v_cdsitgrv := 0; -- Setar não alienado
+        v_flginclu := 1; -- Pendente inclusão
+        v_dtatugrv := SYSDATE; -- Alienado hoje
+        v_flgalfid := 0; -- Não alienado
+      END IF;  
     end if;
     
     -- Verificar se o bem jah não existe
     OPEN cr_crapbpr;
     FETCH cr_crapbpr
      INTO rw_crapbpr;
+     /*PRJ438 - Gerar DSCORBEM*/
+     if cr_crapbpr%found then
+       v_dscorbem := par_dscorbem;
+       if trim(rw_crapbpr.end_completo) is not null then
+         v_dscorbem := rw_crapbpr.end_completo;
+       end if;
+     else
+       v_dscorbem := par_dsendere||', '||
+                     par_nrendere||' '||
+                     par_dscompend||' - '||  
+                     par_nmbairro||', '|| 
+                     par_nmcidade||' - '|| 
+                     par_cdufende;
+     end if;
+     v_dscorbem := substr(v_dscorbem,1,100);
     CLOSE cr_crapbpr;
     
     -- Se bem jah existir
@@ -2339,7 +2528,7 @@ create or replace package body cecred.tela_manbem is
                dscatbem = par_dscatbem,
                nranobem = par_nranobem,
                nrmodbem = par_nrmodbem,
-               dscorbem = par_dscorbem,
+               dscorbem = v_dscorbem,--par_dscorbem,
                dschassi = par_dschassi,
                nrdplaca = v_nrdplaca,
                flgsegur = v_flgsegur,
@@ -2350,13 +2539,23 @@ create or replace package body cecred.tela_manbem is
                nrcpfbem = par_nrcpfbem,
                vlmerbem = par_vlmerbem,
                dsbemfin = par_dsbemfin,
-               cdsitgrv = nvl(v_cdsitgrv,cdsitgrv),
-               flginclu = v_flginclu,
-               tpinclus = v_tpinclus,
                dstipbem = par_dstipbem,
                dsmarbem = par_dsmarbem,
                vlfipbem = par_vlfipbem,
-               dstpcomb = par_dstpcomb
+               dstpcomb = par_dstpcomb,
+               --PRJ438 - Sprint 4 
+               cdufende = nvl(par_cdufende,' '),
+               dscompend = nvl(par_dscompend,' '),
+               dsendere = nvl(par_dsendere,' '),
+               nmbairro = nvl(par_nmbairro,' '),
+               nmcidade = nvl(par_nmcidade,' '),
+               nrcepend = nvl(par_nrcepend,0),
+               nrendere = nvl(par_nrendere,0),
+               dsclassi = nvl(par_dsclassi,' '),
+               vlareuti = nvl(par_vlareuti,0),
+               vlaretot = nvl(par_vlaretot,0),
+               nrmatric = nvl(par_nrmatric,0),
+               vlrdobem = nvl(par_vlrdobem,0)
          where ROWID = rw_crapbpr.nrrowid;
       EXCEPTION
         WHEN OTHERS THEN
@@ -2403,12 +2602,27 @@ create or replace package body cecred.tela_manbem is
                             idseqbem,
                             dsbemfin,
                             cdsitgrv,
+                            nrgravam,
+                            dtatugrv,
+                            flgalfid,
                             flginclu,
                             tpinclus,
                             dstipbem,
                             dsmarbem,
                             vlfipbem,
-                            dstpcomb)
+                            dstpcomb,
+                            cdufende,
+                            dscompend,
+                            dsendere,
+                            nmbairro,
+                            nmcidade,
+                            nrcepend,
+                            nrendere,
+                            dsclassi,
+                            vlareuti,
+                            vlaretot,
+                            nrmatric,
+                            vlrdobem)
         values (par_cdcooper,
                 par_nrdconta,
                 par_tpctrato,
@@ -2419,7 +2633,7 @@ create or replace package body cecred.tela_manbem is
                 par_dscatbem,
                 par_nranobem,
                 par_nrmodbem,
-                par_dscorbem,
+                v_dscorbem, --par_dscorbem,
                 par_dschassi,
                 v_nrdplaca,
                 v_flgsegur,
@@ -2432,17 +2646,79 @@ create or replace package body cecred.tela_manbem is
                 par_idseqbem,
                 par_dsbemfin,
                 nvl(v_cdsitgrv,0),
+                par_nrgravam,
+                v_dtatugrv,
+                v_flgalfid,
                 v_flginclu,
                 v_tpinclus,
                 par_dstipbem,
                 par_dsmarbem,
                 par_vlfipbem,
-                par_dstpcomb);
+                par_dstpcomb,
+                nvl(par_cdufende,' '),
+                nvl(par_dscompend,' '),
+                nvl(par_dsendere,' '),
+                nvl(par_nmbairro,' '),
+                nvl(par_nmcidade,' '),
+                nvl(par_nrcepend,0),
+                nvl(par_nrendere,0),
+                nvl(par_dsclassi,' '),
+                nvl(par_vlareuti,0),
+                nvl(par_vlaretot,0),
+                nvl(par_nrmatric,0),
+                nvl(par_vlrdobem,0));
       EXCEPTION
         WHEN OTHERS THEN
           par_dscritic := 'Erro ao inserir Bem: '||SQLERRM;
           RAISE vr_exc_erro;
-      END;    
+      END; 
+      
+      -- Caso chamada oriunda da Aditiv
+      IF par_nmdatela = 'ADITIV' THEN
+        
+        -- Migrar histórico Inclusão Gravames para o bem atual gerado no dia
+        BEGIN
+          update crapgrv
+             SET idseqbem = par_idseqbem
+           WHERE cdcooper = par_cdcooper
+             AND nrdconta = par_nrdconta
+             AND tpctrpro = par_tpctrato
+             AND nrctrpro = par_nrctrato
+             AND dschassi = par_dschassi
+             AND trunc(dtenvgrv) = trunc(SYSDATE)
+             AND cdoperac = 1;
+        EXCEPTION
+          WHEN OTHERS THEN
+            par_dscritic := 'Erro ao migrar histórico gravames: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+      END IF;
+      
+    END IF;
+    
+    -- Qualquer alteração nos bens da proposta, desde que estejamos num bem alienável e linha de hipoteca
+    IF par_tplcrato = 2 AND grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' THEN    
+      -- Irá perder a situação OK de Gravame caso exista algum outro bem não alienado
+      BEGIN        
+        UPDATE crawepr wpr
+           SET wpr.flgokgrv = 0       
+         WHERE wpr.cdcooper = par_cdcooper
+           AND wpr.nrdconta = par_nrdconta
+           AND wpr.nrctremp = par_nrctrato
+           AND NOT EXISTS(SELECT 1
+                            FROM crapbpr bpr
+                           WHERE bpr.cdcooper = wpr.cdcooper
+                             AND bpr.nrdconta = wpr.nrdconta
+                             AND bpr.nrctrpro = wpr.nrctremp
+                             AND bpr.tpctrpro = 90
+                             AND bpr.flgalien = 1
+                             AND bpr.cdsitgrv <> 2);
+      EXCEPTION
+        WHEN OTHERS THEN
+          par_dscritic := 'Erro ao migrar histórico gravames: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END; 
     END IF;
     
   exception
@@ -2487,7 +2763,8 @@ create or replace package body cecred.tela_manbem is
     
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
+                                 PRJ438 - Sprint 4 - Paulo Martins (Mouts)
 
     ..............................................................................*/            
   
@@ -2677,6 +2954,31 @@ create or replace package body cecred.tela_manbem is
                 rw_crapbpr.vlfipbem := gene0002.fn_char_para_number(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
               ELSIF vr_node_name = 'dstpcomb' THEN
                 rw_crapbpr.dstpcomb := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              --Incluído PRJ438 - Sprint 4   
+              ELSIF vr_node_name = 'cdufende' THEN
+                rw_crapbpr.cdufende := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));                
+              ELSIF vr_node_name = 'dscompend' THEN 
+                rw_crapbpr.dscompend := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'dsendere' THEN
+                rw_crapbpr.dsendere := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nmbairro' THEN
+                rw_crapbpr.nmbairro := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nmcidade' THEN
+                rw_crapbpr.nmcidade := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nrcepend' THEN
+                rw_crapbpr.nrcepend := TO_NUMBER(replace(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)),'-'));                
+              ELSIF vr_node_name = 'nrendere' THEN
+                rw_crapbpr.nrendere := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                                
+              ELSIF vr_node_name = 'dsclassi' THEN
+                rw_crapbpr.dsclassi := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'vlareuti' THEN
+                rw_crapbpr.vlareuti := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                
+              ELSIF vr_node_name = 'vlaretot' THEN
+                rw_crapbpr.vlaretot := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                
+              ELSIF vr_node_name = 'nrmatric' THEN
+                rw_crapbpr.nrmatric := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));  
+              ELSIF vr_node_name = 'vlrdobem' THEN
+                rw_crapbpr.vlrdobem := gene0002.fn_char_para_number(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                                  
               END IF;
             END LOOP;
             -- Se vazio, utilizaremos o proximo id livre 
@@ -2716,6 +3018,20 @@ create or replace package body cecred.tela_manbem is
                                              ,par_nrdplaca => rw_crapbpr.nrdplaca
                                              ,par_nrrenava => rw_crapbpr.nrrenava
                                              ,par_ufdplaca => rw_crapbpr.ufdplaca
+                                             ,par_nrgravam => NULL
+                                             --PRJ438 --Sprint 4
+                                             ,par_cdufende => rw_crapbpr.cdufende              
+                                             ,par_dscompend => rw_crapbpr.dscompend 
+                                             ,par_dsendere => rw_crapbpr.dsendere 
+                                             ,par_nmbairro => rw_crapbpr.nmbairro 
+                                             ,par_nmcidade => rw_crapbpr.nmcidade 
+                                             ,par_nrcepend => rw_crapbpr.nrcepend 
+                                             ,par_nrendere => rw_crapbpr.nrendere 
+                                             ,par_dsclassi => rw_crapbpr.dsclassi 
+                                             ,par_vlareuti => rw_crapbpr.vlareuti 
+                                             ,par_vlaretot => rw_crapbpr.vlaretot 
+                                             ,par_nrmatric => rw_crapbpr.nrmatric 
+                                             ,par_vlrdobem => rw_crapbpr.vlrdobem
                                              ,par_flperapr => vr_aux_flperapr
                                              ,par_cdcritic => par_cdcritic
                                              ,par_dscritic => par_dscritic);
@@ -2885,6 +3201,7 @@ create or replace package body cecred.tela_manbem is
       END IF;  
     END IF;
     
+    /*
     -- Temos de garantir que os CPFs informados na lista de bens estejam na lista
     -- de CPFs informados na lista de Intervenientes, qualquer diferença irá gerar
     -- erro nas CCBs e no GRAVAME
@@ -2921,7 +3238,7 @@ create or replace package body cecred.tela_manbem is
       par_dscritic := 'O(s) documento(s) '||rtrim(par_dscritic,',')||' foi(ram) cadastrado(s) como Interveniente(s) porem nao foram relacionados a nenhum Bem';
       RAISE vr_exc_erro;
     END IF;
-    
+    */
     
     -- Novamente somente na alteração
     IF par_cddopcao = 'A' THEN
@@ -2980,7 +3297,26 @@ create or replace package body cecred.tela_manbem is
                                  ,par_dsinterv IN VARCHAR2         --> Lista de Intervenientes
                                  ,par_xmlalien IN OUT NOCOPY CLOB  --> XML montado
                                  ,pr_dscritic  out VARCHAR2) IS    --> Descricao da critica
-                                 
+    /* .............................................................................
+    
+        Programa: pc_converte_lista_xml
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Marcos Martini (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel em receber lista de informações de bens e intervenientes
+                    sepadados por ; e | entre cada registro e então converter para XML
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                     
     -- Varchar2 temporário de Envio das Informações
     vr_dstextxml VARCHAR2(32767);
     
@@ -3015,8 +3351,8 @@ create or replace package body cecred.tela_manbem is
                                  ,pr_texto_novo     => '<bemalien>');
           -- Para cada coluna
           FOR idxi IN 1..vr_lista_interna.count LOOP
-            -- Utilizar no máximo 19 posições que é o tamanho do array de nomes
-            IF idxi <= 19 THEN
+            -- Utilizar no máximo 30 posições que é o tamanho do array de nomes
+            IF idxi <= 31 THEN
               -- Enviaremos cada coluna mapeada
               gene0002.pc_escreve_xml(pr_xml            => par_xmlalien
                                      ,pr_texto_completo => vr_dstextxml
@@ -3093,7 +3429,7 @@ create or replace package body cecred.tela_manbem is
   
   /* Acionamento via tela das informações de Gravação dos Bens */
   procedure pc_grava_alienac_hipotec_web(par_nrdconta in crapbpr.nrdconta%TYPE --> Conta
-                                        ,par_dtmvtolt in crapbpr.dtmvtolt%TYPE --> Data
+                                        ,par_dtmvtolt in VARCHAR2 --> Data
                                         ,par_tpctrato in crapbpr.tpctrpro%TYPE --> Tp Contrato
                                         ,par_nrctrato in crapbpr.nrctrpro%TYPE --> Contrato
                                         ,par_cddopcao IN VARCHAR2         --> Tipo da Ação
@@ -3105,6 +3441,25 @@ create or replace package body cecred.tela_manbem is
                                         ,pr_retxml  in out nocopy xmltype --> Arquivo de retorno do XML
                                         ,pr_nmdcampo  out VARCHAR2        --> Nome do campo com erro
                                         ,pr_des_erro  out varchar2) is    --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_grava_alienac_hipotec_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Acionamento do processo de gravação da Alienação Hipotecária
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                     
     -- PArca de aprovação
     vr_flperapr VARCHAR2(1);
     vr_dsmensag VARCHAR2(100);
@@ -3154,7 +3509,7 @@ create or replace package body cecred.tela_manbem is
     pc_grava_alienacao_hipoteca(par_cdcooper => vr_cdcooper
                                ,par_cdoperad => vr_cdoperad
                                ,par_nrdconta => par_nrdconta
-                               ,par_dtmvtolt => par_dtmvtolt
+                               ,par_dtmvtolt => TO_DATE(par_dtmvtolt,'dd/mm/rrrr')
                                ,par_tpctrato => par_tpctrato
                                ,par_nrctrato => par_nrctrato
                                ,par_flsohbem => 'S' --> Somente Bens
@@ -3298,11 +3653,9 @@ END IF;*/
          par_dscritic is null then
         par_dscritic := gene0001.fn_busca_critica(pr_cdcritic => par_cdcritic);
       end if;
-      ROLLBACK;
     when others then
       par_cdcritic := 0;
       par_dscritic := 'Erro nao tratado na rotina TELA_MANBEM.PC_GRAVA_ALIENACAO_HIPOTECA: ' || sqlerrm;
-      ROLLBACK;
   end;
   
   /* Criação do Interveniente Garantidor quando preenchido em tela */
@@ -3330,7 +3683,26 @@ END IF;*/
                                   par_complend in crapavt.complend%type,
                                   par_nrcxapst in crapavt.nrcxapst%type,
                                   par_cdcritic out number,
-                                  par_dscritic out varchar2) is
+                                  par_dscritic out varchar2) IS
+  /* .............................................................................
+    
+        Programa: pc_cria_interveniente
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Gravação de novo Interveniente Garantidor
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                        
   BEGIN
     DECLARE
       CURSOR cr_crapavt IS
@@ -3459,6 +3831,26 @@ END IF;*/
                                       pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                       pr_nmdcampo out varchar2, --> Nome do campo com erro
                                       pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_cria_interveniente_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Direcionar para Gravação de novo Interveniente Garantidor
+                    após chamada via AyllosWeb
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                          
     vr_numteste   number;
     -- Variável de críticas
     vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
@@ -3864,6 +4256,26 @@ END IF;*/
                                  pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                  pr_nmdcampo out varchar2, --> Nome do campo com erro
                                  pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_valida_interv
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel D. (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel por direcionar para a validação do preenchimento do Interveniente Garantidor
+  
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                      
+                                 
     vr_numteste   number;
     -- Variável de críticas
     vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
@@ -3981,6 +4393,27 @@ END IF;*/
                                   pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                   pr_nmdcampo out varchar2, --> Nome do campo com erro
                                   pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_cpf_cadastrado_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel D. (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel por checar se o CPF enviado é de um COoperado, pois se
+                    for reaproveitaremos suas informações e não é necessário cadastro de 
+                    interveniente Garantidor
+  
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                       
     -- Variaveis de log
     vr_cdcooper   integer;
     vr_cdoperad   varchar2(100);

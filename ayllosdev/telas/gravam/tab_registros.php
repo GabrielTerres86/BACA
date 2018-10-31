@@ -1,6 +1,6 @@
 <?php 
 /*!
- * FONTE        : tab_registros.php                 Última alteração: 14/07/2016
+ * FONTE        : tab_registros.php                 Última alteração: 24/08/2016
  * CRIAÇÃO      : ANDREI - RKAM
  * DATA CRIAÇÃO : mAIO/2016
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING
@@ -74,7 +74,7 @@
       <input id="dscorbem" name="dscorbem" type="text" ></input>
 	  
 	  <label for="tpchassi"><? echo utf8ToHtml('Tipo chassi:') ?></label>
-      <input id="tpchassi" name="tpchassi" type="text" ></input>
+      <? echo selectTipoChassi('tpchassi', " - ") ?>
 
       <label for="dschassi"><? echo utf8ToHtml('Chassi/N&#186;. S&eacute;rie:') ?></label>
       <input id="dschassi" name="dschassi" type="text" ></input>
@@ -201,7 +201,7 @@
 												
 	<a href="#" class="botao" style="display:none;" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
-	<!--<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>
+	<!--<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>
 	-->
 </div>
 

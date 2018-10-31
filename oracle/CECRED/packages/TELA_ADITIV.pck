@@ -76,6 +76,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                    idseqbem crapbpr.idseqbem%TYPE,
                    dsbemsub varchar2(250),
                    dspropri varchar2(1000),
+                   dschssub crapadi.dschassi%TYPE,
                    dssitgrv varchar(25));
   TYPE typ_tab_aditiv IS TABLE OF typ_rec_aditiv
        INDEX BY PLS_INTEGER;
@@ -235,7 +236,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
                                   ,pr_tpctrato in varchar2 --> Tipo Contrato
-                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhão ou Outros Veiculos)
                                   ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                                   ,pr_dsmarbem in varchar2 --> Marca do Bem
                                   ,pr_nrmodbem in varchar2 --> Ano Modelo
@@ -253,6 +254,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                                   ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
                                   ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição
                                   ,pr_cdopeapr IN VARCHAR2 --> Operador da aprovação
+                                  ,pr_nrgravam IN VARCHAR2 --> Numero gravame
                                   ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                                   ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
                                   ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
@@ -1002,15 +1004,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   END;
   
   -- Bem substituido
-  FUNCTION fn_busca_bem_substituido(pr_cdcooper in crapbpr.cdcooper%type,
-                                    pr_nrdconta in crapbpr.nrdconta%type,
-                                    pr_tpctrpro in crapbpr.tpctrpro%type,
-                                    pr_nrctrpro in crapbpr.nrctrpro%type,
-                                    pr_idseqbem in crapbpr.idseqbem%type,
-                                    pr_dscritic out varchar2) RETURN varchar2 IS
+  FUNCTION fn_busca_chassi_substituido(pr_cdcooper in crapbpr.cdcooper%type,
+                                       pr_nrdconta in crapbpr.nrdconta%type,
+                                       pr_tpctrpro in crapbpr.tpctrpro%type,
+                                       pr_nrctrpro in crapbpr.nrctrpro%type,
+                                       pr_idseqbem in crapbpr.idseqbem%type,
+                                       pr_dscritic out varchar2) RETURN varchar2 IS
   /*---------------------------------------------------------------------------------------------------------------
                            
-    Programa : fn_busca_bem_substituido
+    Programa : fn_busca_chassi_substituido
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Daniel - Envolti
@@ -1025,7 +1027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
     -------------------------------------------------------------------------------------------------------------*/    
     cursor cr_crapbpr is
-      select c.dscatbem || ' ' || decode(trim(c.dsmarbem), null, null, c.dsmarbem || ' ') || c.dsbemfin || ', Chassi ' || c.dschassi || ', '
+      select c.dschassi
         from crapbpr c
        where c.cdcooper = pr_cdcooper
          and c.nrdconta = pr_nrdconta
@@ -1707,18 +1709,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         pr_tab_aditiv(vr_idxaditv).ufdplaca := rw_crapadi.ufdplaca;
         pr_tab_aditiv(vr_idxaditv).uflicenc := rw_crapadi.uflicenc;
         pr_tab_aditiv(vr_idxaditv).nmdavali := rw_crapadi.nmdavali;
-        
         -- Se houve substituição de bem
         IF rw_crapadi.idseqsub > 0 THEN
-        pr_tab_aditiv(vr_idxaditv).dsbemsub := fn_busca_bem_substituido(rw_crapadi.cdcooper,
-                                                                        rw_crapadi.nrdconta,
-                                                                        99,
-                                                                        rw_crapadi.nrctremp,
-                                                                        rw_crapadi.idseqsub,
-                                                                        vr_dscritic);
-        if vr_dscritic is not null then
-          raise vr_exc_erro;
-        end if;
+          pr_tab_aditiv(vr_idxaditv).dschssub := fn_busca_chassi_substituido(rw_crapadi.cdcooper,
+                                                                             rw_crapadi.nrdconta,
+                                                                             99,
+                                                                             rw_crapadi.nrctremp,
+                                                                             rw_crapadi.idseqsub,
+                                                                             vr_dscritic);
+          if vr_dscritic is not null then
+            raise vr_exc_erro;
+          end if;
+        ELSE
+          pr_tab_aditiv(vr_idxaditv).dschssub := ' ';
         END IF;
         
         -- Trazer  situação Gravames quando houver bem sustituido
@@ -2097,6 +2100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                                   ||  '<nrcpfcgc>' || vr_tab_aditiv(vr_idx).nrcpfcgc || '</nrcpfcgc>'
                                                   ||  '<nrsequen>' || vr_tab_aditiv(vr_idx).nrsequen || '</nrsequen>'
                                                   ||  '<idseqbem>' || vr_tab_aditiv(vr_idx).idseqbem || '</idseqbem>'
+                                                  ||  '<dschssub>' || vr_tab_aditiv(vr_idx).dschssub || '</dschssub>'
                                                   ||  '<dssitgrv>' || vr_tab_aditiv(vr_idx).dssitgrv || '</dssitgrv>'
                                                   ||  '<promissorias>');
 
@@ -4310,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
                                   ,pr_tpctrato in varchar2 --> Tipo Contrato
-                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
+                                  ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhão ou Outros Veiculos)
                                   ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                                   ,pr_dsmarbem in varchar2 --> Marca do Bem
                                   ,pr_nrmodbem in varchar2 --> Ano Modelo
@@ -4328,6 +4332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                   ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
                                   ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição
                                   ,pr_cdopeapr IN VARCHAR2 --> Operador da aprovação
+                                  ,pr_nrgravam IN VARCHAR2 --> Numero gravame
                                   ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                   ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -4451,11 +4456,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     -- Separa os dados do modelo. Ano e tipo de combustível chegam no mesmo campo. (Ex: "2018 GASOLINA")
     vr_nrmodbem := substr(vr_dsmodbem, 1, 4);
     vr_dstpcomb := ltrim(substr(vr_dsmodbem, 5));
-
+    
+    -- Se Gravames Online habilitado e não recebemos o numero da Alienação
+    IF grvm0001.fn_tem_gravame_online(vr_cdcooper) = 'S' THEN
+      IF pr_nrgravam IS NULL THEN
+        vr_dscritic := 'Numero da alienacao e obrigatorio para geracao de Aditivo Contrato de Substituicao de Veiculo!';
+        raise vr_exc_saida;
+      END IF;
+    END IF;
+    
     -- Guardar ID bem anterior, pois ele poderá ser alterado caso dê erro 
     -- na cópia do mesmo para tpctrato = 99 caso já exista outro bem substituido
     vr_idseqant := pr_idseqbem;
-    
 
     -- Chamar substituição de Bem
     tela_manbem.pc_substitui_bem(par_cdcooper => vr_cdcooper,
@@ -4490,6 +4502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                  par_vlfipbem => pr_vlfipbem,
                                  par_dstpcomb => upper(vr_dstpcomb),
                                  par_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem),
+                                 par_nrgravam => pr_nrgravam,
                                  par_idseqnov => vr_idseqnov,
                                  par_cdcritic => vr_cdcritic,
                                  par_dscritic => vr_dscritic);

@@ -1006,7 +1006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 14/07/2016
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -1014,6 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Objetivo   : Busca contratos
     
     Alterações : 14/07/2016 - Ajuste para agrupar os contratos encontrados (Andrei - RKAM).
+    
+                 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_propostas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1033,9 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        AND crapbpr.tpctrpro = 90
        AND crapbpr.nrctrpro = crawepr.nrctremp
        AND crapbpr.flgalien = 1
-       AND (crapbpr.dscatbem LIKE '%AUTOMOVEL%' OR
-            crapbpr.dscatbem LIKE '%MOTO%'      OR
-            crapbpr.dscatbem LIKE '%CAMINHAO%')
+       AND grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
        GROUP BY crawepr.nrdconta
                ,crapbpr.nrctrpro;          
                        
@@ -1957,7 +1957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
     
     Dados referentes ao programa:
     
@@ -1969,6 +1969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
     --                          - Incluir nome do módulo logado em variável
     --                            (Ana - Envolti) - SD: 660356 e 660394
+    -- 
+    --               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     --Cursor para encontrar os bens
@@ -2021,9 +2023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        and crapbpr.tpctrpro = pr_tpctrpro
        and crapbpr.nrctrpro = crawepr.nrctremp
        and crapbpr.flgalien = 1
-       and (   crapbpr.dscatbem like '%AUTOMOVEL%'
-            or crapbpr.dscatbem like '%MOTO%'
-            or crapbpr.dscatbem like '%CAMINHAO%');
+       and grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S';
     
     -- Cursor para encontrar o bem
     CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2068,9 +2068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        and crapbpr.tpctrpro = 90
        and crapbpr.nrgravam = pr_nrgravam
        and crapbpr.flgalien = 1
-       and (   crapbpr.dscatbem like '%AUTOMOVEL%'
-            or crapbpr.dscatbem like '%MOTO%'
-            or crapbpr.dscatbem like '%CAMINHAO%')
+       and grvm0001.fn_valida_categoria_alienavel(crapbpr.dscatbem) = 'S'
        and crawepr.cdcooper = crapbpr.cdcooper
        and crawepr.nrdconta = crapbpr.nrdconta
        and crawepr.nrctremp = crapbpr.nrctrpro;
@@ -2106,7 +2104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     vr_stsnrcal BOOLEAN;
     vr_inpessoa INTEGER;
     vr_dscpfbem VARCHAR2(30);
-    vr_dsjustif crapbpr.dsjstinc%TYPE;
+    vr_dsjustif VARCHAR2(4000);
     vr_tpjustif INTEGER := 0;
     vr_tpctrpro crapbpr.tpctrpro%TYPE;
     
@@ -2119,13 +2117,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     vr_crapepr  VARCHAR2(50);
     vr_dssitgrv VARCHAR2(50);
     
-    vr_tab_erro gene0001.typ_tab_erro;
-    
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
     -- Código do programa
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+    
+    -- Vetor com dados auxiliares para alienação B3
+    vr_vet_dados grvm0001.typ_reg_dados;
+    
     
   BEGIN
     vr_nrregist := pr_nrregist;
@@ -2149,34 +2149,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       RAISE vr_exc_erro;
     END IF;    
        
-    grvm0001.pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
+    grvm0001.pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper    -- Código da cooperativa
                                              ,pr_nrdconta => pr_nrdconta   -- Numero da conta do associado
                                              ,pr_nrctrpro => pr_nrctrpro   -- Numero do contrato
                                              ,pr_des_reto => vr_des_reto   -- Retorno Ok ou NOK do procedimento
-                                   ,pr_dscritic => vr_dscritic  -- Retorno da descricao da critica do erro
-                                   ,pr_tab_erro => vr_tab_erro  -- Retorno da PlTable de erros
-                                   );
+                                             ,pr_vet_dados => vr_vet_dados -- Vetor com dados para auxiliar alienação
+                                             ,pr_dscritic => vr_dscritic); -- Retorno da descricao da critica do erro
     --Se ocorreu erro
     IF vr_des_reto <> 'OK' THEN
-        
-      --Se possui erro
-      IF vr_tab_erro.COUNT > 0 THEN
-        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      ELSIF trim(vr_dscritic) IS NULL THEN 
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel validar alienacao feduciaria.';
-      END IF;
-        
       --Levantar Excecao  
       RAISE vr_exc_erro;
-        
     END IF; 
       
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_consultar_bens');
       
-    -- Verificar se já foi efetivado
+    -- Checar flag possui ctr  
     OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
                    ,pr_nrctremp => pr_nrctrpro);
@@ -2192,7 +2180,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       vr_crapepr := 'possuictr="0"'; 
           
     END IF;
-      
     --Fechar Cursor
     CLOSE cr_crapepr;
     
@@ -2584,9 +2571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                                       pr_cdagenci in crapass.cdagenci%type, -- Agência
                                       pr_nrdconta in crapgrv.nrdconta%type, -- Conta
                                       pr_nrctrpro in crapgrv.nrctrpro%type, -- Contrato
-                                      pr_flcritic in varchar2,
-                                      pr_tipsaida in varchar2,              -- Tipo da saída
-                                      pr_dschassi in varchar2,
+                                      pr_flcritic in varchar2,              -- Somente criticas
+                                      pr_tipsaida in varchar2,              -- Tipo da saída 
+                                      pr_dschassi in varchar2,              -- Lista de Chassis
                                       pr_nrregist IN INTEGER,               -- Quantidade de registros
                                       pr_nriniseq IN INTEGER,               -- Qunatidade inicial
                                       pr_xmllog   in varchar2,              -- XML com informações de LOG
@@ -2655,8 +2642,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
           ,grv.idseqbem
           ,ass.cdagenci
           ,ass.inpessoa
-          ,grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr) desflgsuc
-          ,row_number() over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
+          ,grv.dscritic
+          ,grv.dsmarbem
+          ,grv.dsbemfin
+          ,grv.nrcpfbem
+          ,grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic) desflgsuc
+          ,row_number() over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic))
                                           ,grv.dtenvgrv 
                                           ,grv.cdcooper 
                                           ,grv.cdoperac 
@@ -2664,7 +2655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                                           ,grv.nrdconta
                                           ,grv.nrctrpro
                                           ,grv.idseqbem
-                                  order by decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
+                                  order by decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic))
                                           ,grv.dtenvgrv DESC
                                           ,grv.cdcooper 
                                           ,grv.cdoperac 
@@ -2672,7 +2663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                                           ,grv.nrdconta
                                           ,grv.nrctrpro
                                           ,grv.idseqbem) nrseqreg          
-          ,count(1) over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
+          ,count(1) over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic))
                                       ,grv.dtenvgrv 
                                       ,grv.cdcooper 
                                       ,grv.cdoperac 
@@ -2689,18 +2680,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                             and nvl(pr_dtenvate,grv.dtenvgrv)
        and (pr_nrdconta = 0 OR grv.nrdconta = pr_nrdconta)
        and (pr_nrctrpro = 0 OR grv.nrctrpro = pr_nrctrpro)
-       and (pr_dschassi is NULL OR grv.dschassi = pr_dschassi)
+       and (pr_dschassi is NULL OR pr_dschassi LIKE '%'||grv.dschassi||'%')
        AND (pr_cdagenci = 0 OR ass.cdagenci = pr_cdagenci)
        AND ass.cdcooper = grv.cdcooper
        AND ass.nrdconta = grv.nrdconta
        -- Somente criticas irá trazer os sem retorno e com erro
-       AND (NVL(pr_flcritic,'N') = 'N' OR grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr) <> 'S')
+       AND (NVL(pr_flcritic,'N') = 'N' OR grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic) <> 'S')
        ORDER BY -- Quando relatorio precisamos separar as quebras
-                decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr)) 
+                decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr,grv.dscritic)) 
                ,grv.dtenvgrv DESC
                ,grv.cdcooper 
+               ,grv.nrseqlot DESC
                ,grv.cdoperac 
-               ,grv.nrseqlot
                ,grv.nrdconta
                ,grv.nrctrpro
                ,grv.idseqbem ;
@@ -2710,7 +2701,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                      ,pr_nrdconta IN crapass.nrdconta%TYPE
                      ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE
                      ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE
-                     ,pr_idseqbem IN crapbpr.idseqbem%TYPE) IS
+                     ,pr_idseqbem IN crapbpr.idseqbem%TYPE
+                     ,pr_dschassi IN crapbpr.dschassi%TYPE) IS
     SELECT crapbpr.dsmarbem
           ,crapbpr.dsbemfin
           ,crapbpr.nrcpfbem
@@ -2721,7 +2713,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
        AND crapbpr.tpctrpro = pr_tpctrpro
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.flgalien = 1
-       AND crapbpr.idseqbem = pr_idseqbem;
+       AND crapbpr.idseqbem = decode(nvl(pr_idseqbem,0),0,crapbpr.idseqbem,pr_idseqbem)
+       AND crapbpr.dschassi = decode(nvl(trim(pr_dschassi),' '),' ',crapbpr.dschassi,pr_dschassi);
     rw_crapbpr cr_crapbpr%ROWTYPE;           
     
     -- Tipo de pessoa
@@ -2865,7 +2858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     END;
     
     -- Validar opção informada
-    IF pr_tparquiv NOT IN('TODAS','INCLUSAO','BAIXA','CANCELAMENTO') THEN
+    IF pr_tparquiv NOT IN('TODAS','INCLUSAO','BAIXA','CANCELAMENTO','CONSULTA') THEN
       vr_cdcritic := 0;
       vr_dscritic := ' Tipo invalido para Geracao do Arquivo! ';
       RAISE vr_exc_erro;
@@ -2882,13 +2875,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     
     -- Buscar o codigo da operação
     CASE pr_tparquiv
-      WHEN 'BAIXA'        THEN
+      WHEN 'BAIXA' THEN
         vr_cdoperac := 3;
       WHEN 'CANCELAMENTO' THEN
         vr_cdoperac := 2;
-      WHEN 'INCLUSAO'     THEN
+      WHEN 'INCLUSAO' THEN
         vr_cdoperac := 1;
-      ELSE
+      WHEN 'CONSULTA' THEN
+        vr_cdoperac := 4;
+      ELSE 
         vr_cdoperac := 0;
     END CASE;
        
@@ -2940,26 +2935,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       END IF;
       
       -- Buscar dados do bem relacionado ao envio
+      rw_crapbpr := NULL;
       OPEN cr_crapbpr(pr_cdcooper => rw_crapgrv.cdcooper
                      ,pr_nrdconta => rw_crapgrv.nrdconta
                      ,pr_tpctrpro => rw_crapgrv.tpctrpro
                      ,pr_nrctrpro => rw_crapgrv.nrctrpro
-                     ,pr_idseqbem => rw_crapgrv.idseqbem);                  
+                     ,pr_idseqbem => rw_crapgrv.idseqbem
+                     ,pr_dschassi => rw_crapgrv.dschassi);                  
       FETCH cr_crapbpr INTO rw_crapbpr;      
       IF cr_crapbpr%NOTFOUND THEN        
-        --Padronização - Chamado 660394
-        -- Gera log
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => 'gravam.log'
-                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                     ' - '||vr_cdprogra||' --> '|| 
-                                                     'ERRO: Erro na localizacao do Bem [' || 
-                                                     'Cop:' || to_char(rw_crapgrv.cdcooper) || 
-                                                     'Cta:' || to_char(rw_crapgrv.nrdconta) || 
-                                                     'Tip:' || to_char(rw_crapgrv.tpctrpro) || 
-                                                     'Ctr:' || to_char(rw_crapgrv.nrctrpro) || 
-                                                     'IdBem:' || to_char(rw_crapgrv.idseqbem)||'][BPR]');  
+        -- Usar informações do histórico
+        rw_crapbpr.dsmarbem := rw_crapgrv.dsmarbem;
+        rw_crapbpr.dsbemfin := rw_crapgrv.dsbemfin;
+        rw_crapbpr.nrcpfbem := rw_crapgrv.nrcpfbem; 
       END IF;
         
       --Fechar o cursor
@@ -2975,7 +2963,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
           vr_tparquiv := 'C';        
         WHEN 3 THEN
           vr_dsoperac := 'BAIXA';
-          vr_tparquiv := 'B';        
+          vr_tparquiv := 'Q';        
+        WHEN 4 THEN
+          vr_dsoperac := 'CONSULTA';
+          vr_tparquiv := 'I';      
       END CASE;
       
       -- CPF apenas no relatório
@@ -3033,7 +3024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             END IF;            
             --Fecha o cursor
             CLOSE cr_craprto;                   
-          ELSIF rw_crapgrv.cdretlot = 0 AND (rw_crapgrv.cdretgrv <> 0 AND rw_crapgrv.cdretgrv <> 30) THEN
+          END IF;
+          IF rw_crapgrv.cdretlot = 0 AND (rw_crapgrv.cdretgrv <> 0 AND rw_crapgrv.cdretgrv <> 30) THEN
             -- Buscar critica GRV
             OPEN cr_craprto(pr_cdoperac => vr_tparquiv
                            ,pr_nrtabela => 2
@@ -3059,7 +3051,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             
             --Fecha o cursor
             CLOSE cr_craprto;
-          ELSIF rw_crapgrv.cdretlot = 0 AND rw_crapgrv.cdretctr <> 0 AND rw_crapgrv.cdretctr <> 90 THEN
+          END IF;
+          IF rw_crapgrv.cdretlot = 0 AND rw_crapgrv.cdretctr <> 0 AND rw_crapgrv.cdretctr <> 90 THEN
             -- Buscar critica contrato
             OPEN cr_craprto(pr_cdoperac => vr_tparquiv
                            ,pr_nrtabela => 3
@@ -3080,6 +3073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             END IF;
             --Fecha o cursor
             CLOSE cr_craprto;
+          ELSIF TRIM(rw_crapgrv.dscritic) IS NOT NULL THEN 
+            vr_desretor := 'Erro: ' || rw_crapgrv.dscritic;
           END IF;
         END IF;
         -- Enviar restante das informações
@@ -3117,15 +3112,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
 
     if pr_tipsaida = 'PDF' then
       -- Gera relatório crrl657
-      gene0002.pc_solicita_relato(pr_cdcooper    => vr_cdcooper    --> Cooperativa conectada
-                                   ,pr_cdprogra  => 'GRAVAM'--vr_nmdatela         --> Programa chamador
-                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento atual
+      gene0002.pc_solicita_relato(pr_cdcooper    => vr_cdcooper         --> Cooperativa conectada
+                                   ,pr_cdprogra  => 'GRAVAM'            --> Programa chamador
+                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
                                    ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
                                    ,pr_dsxmlnode => '/crrl670/gravames/situacao/registro' --> Nó base do XML para leitura dos dados                                  
                                    ,pr_dsjasper  => 'crrl670.jasper'    --> Arquivo de layout do iReport
                                    ,pr_dsparams  => NULL                --> Sem parâmetros
                                    ,pr_dsarqsaid => vr_nmarqpdf         --> Arquivo final com o path
-                                   ,pr_qtcoluna  => 234                  --> Colunas do relatorio
+                                   ,pr_qtcoluna  => 234                 --> Colunas do relatorio
                                    ,pr_flg_gerar => 'S'                 --> Geraçao na hora
                                    ,pr_cdrelato  => '670'               --> Códigod do relatório
                                    ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p) 
