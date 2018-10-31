@@ -4,7 +4,7 @@
     Sistema : Internet - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jorge
-    Data    : Abril/2011                   Ultima atualizacao: 18/06/2016
+    Data    : Abril/2011                   Ultima atualizacao: 22/10/2018
   
     Dados referentes ao programa:
   
@@ -59,6 +59,8 @@
 
 			    18/06/2018 - Excluido parametro qtdiaprt pois só será utilizado no novo IB
 				             pelo SOA. (PRJ352 - Protesto - Rafael)
+                             
+                22/10/2018 - Incluir parametro par_inavisms na chamada do IB66 (Lucas Ranghetti INC0025087)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -118,6 +120,7 @@ RUN STORED-PROCEDURE pc_InternetBank66
                              INPUT par_cdtpinsc,
                              INPUT par_nrcelsac,
                              INPUT 0, /* qtdiaprt */
+                             INPUT par_inavisms,
                              OUTPUT xml_dsmsgerr,
                              OUTPUT 0,   /* pr_cdcritic */
                              OUTPUT ""). /* pr_dscritic */

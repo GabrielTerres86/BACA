@@ -232,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 21/09/2018
+    Data    : Setembro/12                            Ultima alteracao: 19/10/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -265,6 +265,9 @@ create or replace package body cecred.PCAP0001 is
                              na geração do arquivo (pc_gerar_arq_enc_brde) (Carlos)
                              
                 21/09/2018 - SCTASK0029643 Deixar a última linha sem quebra (char(10)) (Carlos)
+
+                19/10/2018 - sctask0031953 Na rotina pc_gerar_arq_enc_brde, linha tipo 4, usar apenas
+                             espaços em branco quando a caixa postal for zero (Carlos)
   ............................................................................ */
 
   -- Cursor de associados
@@ -2134,7 +2137,12 @@ create or replace package body cecred.PCAP0001 is
                         RPAD(vr_tab_avalistas(vr_idxaval).nrendere,10,' ')        || -- Endereço do Avalista: Numero
                         RPAD(vr_tab_avalistas(vr_idxaval).complend,20,' ')        || -- Endereço do Avalista: Complemento
                         RPAD(vr_tab_avalistas(vr_idxaval).nmbairro,16,' ')        || -- Endereço do Avalista: Bairro                        
-                        RPAD(vr_tab_avalistas(vr_idxaval).nrcxapst,6,' ')         || -- Endereço do Avalista: Caixa postal
+
+                        CASE vr_tab_avalistas(vr_idxaval).nrcxapst
+                        WHEN 0 THEN '      ' -- Endereço do Avalista: Caixa postal
+                        ELSE        RPAD(vr_tab_avalistas(vr_idxaval).nrcxapst,6,' ')
+                        END                        
+                        ||
 
                         LPAD(' ',298,' ')                                         || --Filler
                         TO_CHAR(vr_cdseqlin,'fm00000');                              --Número sequencial

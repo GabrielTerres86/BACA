@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 26/05/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 23/08/2018
            
     Dados referentes ao programa:
                 
@@ -562,6 +562,10 @@
 			   
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+               21/08/2018 - Adicionado na efetua_cancelamento_limite validação para não permitir a exclusao de contrato com propostas pendentes na IBRATAN (Andrew Albuquerque - GFT)
+               
+               23/08/2018 - Alteraçao na efetua_cancelamento_limite: Registrar o cancelamento na tabela de histórico de alteraçao de contrato de limite (Andrew Albuquerque - GFT)
+               
                29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
                
 ..............................................................................*/
@@ -6606,6 +6610,23 @@ PROCEDURE efetua_cancelamento_limite:
 
         END. /* Final do DO .. TO */    
     
+        /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+        IF aux_dscritic = "" THEN
+          DO:
+            IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+              DO:
+                aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+              END.
+            ELSE
+              /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+              IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                DO:
+                  aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+                END.
+          END.
+          
         IF  aux_dscritic <> ""  THEN
             UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
@@ -6639,9 +6660,27 @@ PROCEDURE efetua_cancelamento_limite:
                    ELSE
                        ASSIGN aux_dscritic = "Registro de contrato nao " +
                                              "encontrado.".
+                                             
                LEAVE. 
 
             END.   
+    
+            /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+            IF aux_dscritic = "" THEN
+              DO:
+                IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+                  DO:
+                    aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                   "um processo de análise deste contrato em andamento".
+                  END.
+                ELSE
+                  /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+                  IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                    DO:
+                      aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                     "um processo de análise deste contrato em andamento".
+                    END.
+              END.
     
             IF  aux_dscritic <> ""  THEN
                 UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
@@ -6656,6 +6695,27 @@ PROCEDURE efetua_cancelamento_limite:
         FIND CURRENT craplim NO-LOCK NO-ERROR.
 
         RELEASE craplim.
+
+        /*AWAE: Registrar o cancelamento na tabela de histórico. */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+        RUN STORED-PROCEDURE pc_gravar_hist_alt_limite                  
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper  /* Codigo da Cooperativa */ 
+                                            ,INPUT par_nrdconta  /* Numero da Conta Corrente */
+                                            ,INPUT par_nrctrlim  /* Número do contrato de Limite */
+                                            ,INPUT 3             /* Tipo de Contrato */
+                                            ,"CANCELAMENTO"      /* Descriçao do Motivo */
+                                            ,OUTPUT 0            /* Código da Crítica */
+                                            ,OUTPUT "").         /* Descriçao da Crítica */
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_gravar_hist_alt_limite
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        /* Se retornou erro */
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_gravar_hist_alt_limite.pr_dscritic WHEN pc_gravar_hist_alt_limite.pr_dscritic <> ?.
+        IF  aux_dscritic <> "" THEN          
+          UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
         ASSIGN aux_flgtrans = TRUE.
         

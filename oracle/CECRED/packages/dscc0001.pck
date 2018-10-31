@@ -2707,6 +2707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Alteracoes: 26/05/2017 - Alterado para tipo de impressao 10 - Analise
                              PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+                
+                05/09/2018 - Inclusão da flag de restrição na chamada da impressão de bordero de titulos (Vitor S. Assanuma - GFT)
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -2810,7 +2812,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           vr_dscritic := 'Tipo de impressao invalido.';
           RAISE vr_exc_erro;
         END IF;
-
+      --> 11 - Extrato Bordero
+     ELSIF pr_idimpres IN (11) THEN
+        DSCT0002.pc_gera_extrato_bordero(pr_cdcooper => vr_cdcooper,
+                                             pr_cdagecxa => vr_cdagenci,
+                                             pr_nrdcaixa => vr_nrdcaixa,
+                                             pr_cdopecxa => vr_cdoperad,
+                                             pr_nmdatela => vr_nmdatela,
+                                             pr_idorigem => vr_idorigem,
+                                             pr_nrdconta => pr_nrdconta,
+                                             pr_idseqttl => pr_idseqttl,
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_dtmvtopr => rw_crapdat.dtmvtopr,
+                                             pr_inproces => rw_crapdat.inproces,
+                                             pr_idimpres => pr_idimpres,
+                                             pr_nrborder => pr_nrborder,
+                                             pr_dsiduser => pr_dsiduser,
+                                             pr_flgemail => pr_flgemail,
+                                             pr_flgerlog => pr_flgerlog,
+                                             pr_nmarqpdf => vr_nmarqpdf,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
       --> LIMITE DE DESCONTO
       ELSIF pr_idimpres IN ( 1,       --> COMPLETA 
                              2,       --> CONTRATO 

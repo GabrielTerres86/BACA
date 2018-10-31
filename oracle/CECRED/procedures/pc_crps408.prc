@@ -618,6 +618,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_nmarqdadped     VARCHAR2(50);
     vr_input_file_dad  utl_file.file_type;
     vr_input_file_ctr  utl_file.file_type;
+    vr_lista_nmarq     VARCHAR2(50);
 
     -- Variável que indica se foi gerado arquivo de requisicao de talao/formulario de cheque
     vr_flggerou        boolean;
@@ -1969,16 +1970,31 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                                         ') via SFTP - ' || vr_des_saida);          
         END IF;     
 
-        -- Verificar se conseguiu realizar o download do arquivo.
-        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/arq/ver/'||vr_nmarqped) THEN
-          
+        --Listar arquivo
+        gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/arq/ver/'
+                                   ,pr_pesq     => vr_nmarqped
+                                   ,pr_listarq  => vr_lista_nmarq
+                                   ,pr_des_erro => vr_dscritic);
+        vr_arquivo_zip := null; 
+        -- Verificar se encontrou arquivo
+        if trim(vr_lista_nmarq) is null then
           -- Necessário verificar se o Arquivo esta no diretório ainda, ou esta em salvar
-          IF gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/arq/'||vr_nmarqped) THEN -- Diretório onde arquivo é gerado
+          gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/arq/'
+                                     ,pr_pesq     => vr_nmarqped
+                                     ,pr_listarq  => vr_lista_nmarq
+                                     ,pr_des_erro => vr_dscritic);          
+          
+          
+          IF trim(vr_lista_nmarq) is not null THEN -- Diretório onde arquivo é gerado
             vr_arquivo_zip := vr_nom_diretorio||'/arq/'||vr_nmarqped;
-          ELSIF gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/salvar/'||vr_nmarqped) THEN -- Diretório Salvar
-            vr_arquivo_zip := vr_nom_diretorio||'/salvar/'||vr_nmarqped;            
           ELSE
-            vr_arquivo_zip := null; 
+            gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/salvar/'
+                                       ,pr_pesq     => vr_nmarqped
+                                       ,pr_listarq  => vr_lista_nmarq
+                                       ,pr_des_erro => vr_dscritic);         
+            IF trim(vr_lista_nmarq) is not null THEN                                
+               vr_arquivo_zip := vr_nom_diretorio||'/salvar/'||vr_nmarqped;            
+            END IF;
           END IF;
             
           if vr_arquivo_zip is not null then
@@ -2001,7 +2017,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           
           -- Envia e-mail para área de suprimentos com o Arquivo
           pc_envia_email_arq(pr_cdcooper => pr_cdcooper
-                            ,pr_dsorigem => vr_nom_diretorio||'/'||vr_nmarqped -- Caminho com nome do Arquivo
+                            ,pr_dsorigem => vr_arquivo_zip -- Caminho com nome do Arquivo
                             ,pr_des_erro => vr_des_saida);
           IF vr_des_saida IS NOT NULL THEN
             -- Envio Centralizado de Log de Erro
@@ -2016,21 +2032,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                               
         ELSE
           -- Remove arquivo do servidor
-          vr_comando := 'rm '||vr_nom_diretorio||'/arq/ver/'||vr_nmarqped||' 2>/dev/null';
-          -- Executar o comando no unix
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_des_saida);                           
-          IF vr_typ_saida = 'ERR' OR vr_des_saida IS NOT NULL THEN
-            -- Envio Centralizado de Log de Erro
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                       pr_ind_tipo_log => 2, -- ERRO TRATATO
-                                       pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
-                                                          ' -' || vr_cdprogra || ' --> ' ||
-                                                          'ERRO ao remover arquivo de validação (' || vr_nmarqped ||
-                                                          ') via SFTP - ' || vr_des_saida);
-          END IF;
+          gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_nom_diretorio ||'/arq/ver/'|| vr_nmarqped);
+          gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nom_diretorio||'/arq/ver/'||vr_nmarqped||' 2> /dev/null');          
         END IF;
         -- Fim SCTASK0017339   
 

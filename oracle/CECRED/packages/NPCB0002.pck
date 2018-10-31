@@ -16,6 +16,16 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
   --> Procedure para liberar sessoes apos fim do processamento
   procedure pc_libera_sessao_sqlserver_npc(pr_cdprogra_org in varchar2 default 'vazio');
 
+  procedure pc_existe_cns_tit_npc(pr_cdcooper  in tbcobran_consulta_titulo.cdcooper%type --> Código da cooperativa
+                                 ,pr_cdagenci  in tbcobran_consulta_titulo.cdagenci%type --> Código do PA
+                                 ,pr_dscodbar  in tbcobran_consulta_titulo.dscodbar%type --> Código de barras
+                                 --
+                                 ,pr_cdctrlcs out varchar2 --> Numero do controle da consulta
+                                 ,pr_dsxmltit out tbcobran_consulta_titulo.dsxml%type --> XML de retorno
+                                 ,pr_tpconcip out tbcobran_consulta_titulo.tpconsulta%type --> Tipo de Consulta CIP
+                                 ,pr_idloccns out varchar2 --> Indica se localizou a consulta na base Aimaro
+                                 );
+
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_consultar_valor_titulo(pr_cdcooper       IN NUMBER       -- Cooperativa
                                      ,pr_nrdconta       IN NUMBER       -- Número da conta
@@ -160,13 +170,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     --
     begin
       --
-    execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
-    --
-  exception
+      execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
+      --
+    exception
       when dblink_not_open then
         null;
-    when others then
-      begin
+      when others then
+        begin
           npcb0001.pc_gera_log_npc(pr_cdcooper => 3
                                   ,pr_nmrotina => 'npcb0002.plssn JDNPCSQL('||pr_cdprogra_org||')'
                                   ,pr_dsdolog  => sqlerrm);
@@ -188,13 +198,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
           npcb0001.pc_gera_log_npc(pr_cdcooper => 3
                                   ,pr_nmrotina => 'npcb0002.plssn JDNPCBISQL('||pr_cdprogra_org||')'
                                   ,pr_dsdolog  => sqlerrm);
-      exception
-        when others then
-          null;
-      end; 
+        exception
+          when others then
+            null;
+        end; 
     end;
     --
   end pc_libera_sessao_sqlserver_npc;
+
+  procedure pc_existe_cns_tit_npc(pr_cdcooper  in tbcobran_consulta_titulo.cdcooper%type --> Código da cooperativa
+                                 ,pr_cdagenci  in tbcobran_consulta_titulo.cdagenci%type --> Código do PA
+                                 ,pr_dscodbar  in tbcobran_consulta_titulo.dscodbar%type --> Código de barras
+                                 --
+                                 ,pr_cdctrlcs out varchar2 --> Numero do controle da consulta
+                                 ,pr_dsxmltit out tbcobran_consulta_titulo.dsxml%type --> XML de retorno
+                                 ,pr_tpconcip out tbcobran_consulta_titulo.tpconsulta%type --> Tipo de Consulta CIP
+                                 ,pr_idloccns out varchar2 --> Indica se localizou a consulta na base Aimaro
+                                 ) is
+    --
+    /* ..........................................................................
+
+      Programa : pc_existe_cns_tit_npc        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : AJFink - PRB0040364
+      Data     : Outubro/2018.                   Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Checar a base histórica de consultas de títulos da NPC CIP,
+                  se o título tenha é encontrato dentro do prazo de tempo
+                  parametrizado então retornar os dados encontrados.
+
+    ..........................................................................*/
+    --
+    cursor c_cns_npc(pr_cdcooper_crc tbcobran_consulta_titulo.cdcooper%type
+                    ,pr_cdagenci_crc tbcobran_consulta_titulo.cdagenci%type
+                    ,pr_dscodbar_crc tbcobran_consulta_titulo.dscodbar%type
+                    ,pr_nrminuto_crc number) is
+      select cns.cdctrlcs
+            ,cns.dsxml
+            ,cns.tpconsulta
+      from tbcobran_consulta_titulo cns
+      where cns.cdcritic = 0 --considerar somente consultas realizadas com sucesso
+        and cns.nrdident <> 0 --numero de identificacao da CIP deve ser diferente de zero
+        and cns.cdagenci = pr_cdagenci_crc
+        and cns.cdcooper = pr_cdcooper_crc
+        and cns.dhconsulta >= (sysdate-(nvl(pr_nrminuto_crc,0)/1440))
+        and cns.dscodbar = pr_dscodbar_crc;
+    r_cns_npc c_cns_npc%rowtype;
+    --
+    vr_idloccns varchar2(1) := 'N';
+    vr_nrminuto number(15);
+    vr_cdctrlcs tbcobran_consulta_titulo.cdctrlcs%type := null;
+    vr_dsxmltit tbcobran_consulta_titulo.dsxml%type := null;
+    vr_tpconcip tbcobran_consulta_titulo.tpconsulta%type := null;
+    --
+  begin
+    --
+    begin
+      --
+      vr_nrminuto := nvl(to_number(trim(gene0001.fn_param_sistema('CRED',0,'NPC_MIN_EXT_CNS_TIT'))),0);
+      --
+      --se a quantidade de minutos de validação é maior que zero então indica que devemos conferir
+      --a base do Aimaro
+      if vr_nrminuto > 0 then
+        --
+        open c_cns_npc(pr_cdcooper_crc => pr_cdcooper
+                      ,pr_cdagenci_crc => pr_cdagenci
+                      ,pr_dscodbar_crc => pr_dscodbar
+                      ,pr_nrminuto_crc => vr_nrminuto
+                      );
+        fetch c_cns_npc into r_cns_npc;
+        if c_cns_npc%found then
+          --
+          vr_idloccns := 'S';
+          vr_cdctrlcs := r_cns_npc.cdctrlcs;
+          vr_dsxmltit := r_cns_npc.dsxml;
+          vr_tpconcip := r_cns_npc.tpconsulta;
+          --
+        end if;
+        close c_cns_npc;
+        --
+      end if;
+    exception
+      when others then
+        begin
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          vr_idloccns := 'N';
+          vr_cdctrlcs := null;
+          vr_dsxmltit := null;
+          vr_tpconcip := null;
+        end;
+    end;
+    --
+    pr_idloccns := vr_idloccns;
+    pr_cdctrlcs := vr_cdctrlcs;
+    pr_dsxmltit := vr_dsxmltit;
+    pr_tpconcip := vr_tpconcip;
+    --
+  end pc_existe_cns_tit_npc;
 
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_consultar_valor_titulo(pr_cdcooper       IN NUMBER       -- Cooperativa
@@ -648,7 +752,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
-
+      begin
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => 'npcb0002.pc_consultar_valor_titulo');
+      exception
+        when others then
+          null;
+      end;
       -- Efetuar rollback
       ROLLBACK;
   END pc_consultar_valor_titulo;
@@ -691,18 +801,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
       Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
-    
+
       Dados referentes ao programa:
-    
+
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para consultar o titulo na CIP, realizar a gravação do 
                   retorno da consulta e retornar a tab com os dados recebidos
-                  
+
       Alteração : 
-                         
+
       16/10/2018 - Substituir arquivo texto por tabela oracle
-                   ( Belli - Envolti - Chd INC0025460 ) 
-        
+                   ( Belli - Envolti - Chd INC0025460 )
+
+      21/10/2018 - Incluir chamada da procedure pc_existe_cns_tit_npc e 
+                   tratamento para a consulta que será reaproveitada.
+                   (PRB0040364 - AJFink)
+
+      22/10/2018 - Para o PA 199 (Viacredi), se o código do municipio
+                   CAF retornar NULO, então atribuir 4903.
+                   Isso porque no CAF é "LUIS ALVES" e no correio "LUIZ ALVES".
+                   Situação repassada para a ABBC analisar.
+                   (INC0023777 - AJFink)
+
     ..........................................................................*/
     
     /****************************/
@@ -751,6 +871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_cdcidade        crapcaf.cdcidade%TYPE;
     vr_de_campo        NUMBER;
     vr_dtvencto        DATE;
+    vr_idloccns        varchar2(1);
     
     -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
     vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
@@ -831,88 +952,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        RETURN;
      
      ELSE
-       
-       -- Montar o número de controle do participante (código de controle da consulta)
-       vr_cdctrlcs := NPCB0001.fn_montar_NumCtrlPart(pr_cdbarras => vr_codbarras
-                                                    ,pr_cdagenci => pr_cdagenci
-                                                    ,pr_flmobile => pr_flmobile);
-       
-       -- Retornar o número de controle de consulta
-       pr_cdctrlcs := vr_cdctrlcs;
-       pr_flcontig := 0;
+       --
+       --PRB0040364
+       npcb0002.pc_existe_cns_tit_npc(pr_cdcooper => pr_cdcooper
+                                     ,pr_cdagenci => pr_cdagenci
+                                     ,pr_dscodbar => vr_codbarras
+                                     --
+                                     ,pr_cdctrlcs => vr_cdctrlcs
+                                     ,pr_dsxmltit => vr_xmltit
+                                     ,pr_tpconcip => vr_tpconcip
+                                     ,pr_idloccns => vr_idloccns);
+       --
+       if nvl(vr_idloccns,'N') = 'S' then --PRB0040364
+         -- Retornar o número de controle de consulta
+         pr_cdctrlcs := vr_cdctrlcs;
+         pr_flcontig := 0;
+         vr_dscritic := null;
+         --
+       else
 
-       /* BUSCAR O CÓDIGO DO MUNICIPIO DE PAGAMENTO */
-       -- Se o pagamento foi via Internet Banking ou Mobile
-       IF pr_cdagenci IN (90,91) OR pr_flmobile = 1 THEN
-         -- Deve buscar o municipio de residencia do cooperado
-         OPEN  cr_crapcop;
-         FETCH cr_crapcop INTO vr_cdcidade;
+         -- Montar o número de controle do participante (código de controle da consulta)
+         vr_cdctrlcs := NPCB0001.fn_montar_NumCtrlPart(pr_cdbarras => vr_codbarras
+                                                      ,pr_cdagenci => pr_cdagenci
+                                                      ,pr_flmobile => pr_flmobile);
          
-         -- Se não for encontrado registro
-         IF cr_crapcop%NOTFOUND THEN
-           vr_cdcidade := NULL;
+         -- Retornar o número de controle de consulta
+         pr_cdctrlcs := vr_cdctrlcs;
+         pr_flcontig := 0;
+
+         /* BUSCAR O CÓDIGO DO MUNICIPIO DE PAGAMENTO */
+         -- Se o pagamento foi via Internet Banking ou Mobile
+         IF pr_cdagenci IN (90,91) OR pr_flmobile = 1 THEN
+           -- Deve buscar o municipio de residencia do cooperado
+           OPEN  cr_crapcop;
+           FETCH cr_crapcop INTO vr_cdcidade;
+           -- Se não for encontrado registro
+           IF cr_crapcop%NOTFOUND THEN
+             vr_cdcidade := NULL;
+           END IF;
+           -- Fechar o cursor
+           CLOSE cr_crapcop;
+         ELSE
+           -- Deve buscar a cidade da agencia
+           OPEN  cr_crapage;
+           FETCH cr_crapage INTO vr_cdcidade;
+           -- Se não encontrou cidade
+           IF cr_crapage%NOTFOUND THEN
+             if pr_cdcooper = 1 and pr_cdagenci = 199 then --INC0023777
+               vr_cdcidade := 4903; --LUIZ ALVES
+             else
+               vr_cdcidade := NULL;
+             end if;
+           END IF;
+           -- Fechar o cursor 
+           CLOSE cr_crapage;
          END IF;
          
-         -- Fechar o cursor
-         CLOSE cr_crapcop;
-       ELSE
-         -- Deve buscar a cidade da agencia
-         OPEN  cr_crapage;
-         FETCH cr_crapage INTO vr_cdcidade;
+         -- CONSULTAR O TITULO NA CIP VIA WEBSERVICE
+         NPCB0003.pc_wscip_requisitar_titulo(pr_cdcooper => pr_cdcooper
+                                            ,pr_cdctrlcs => vr_cdctrlcs
+                                            ,pr_cdbarras => vr_codbarras
+                                            ,pr_dtmvtolt => pr_dtmvtolt
+                                            ,pr_cdcidade => vr_cdcidade
+                                            ,pr_dsxmltit => vr_xmltit
+                                            ,pr_tpconcip => vr_tpconcip
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
          
-         -- Se não encontrou cidade
-         IF cr_crapage%NOTFOUND THEN
-           vr_cdcidade := NULL;
-         END IF;
+         -- Se retornar o indicador de erro da rotina 
+         IF vr_des_erro = 'NOK' THEN
          
-         -- Fechar o cursor 
-         CLOSE cr_crapage;
-       END IF;
-       
-       -- CONSULTAR O TITULO NA CIP VIA WEBSERVICE
-       NPCB0003.pc_wscip_requisitar_titulo(pr_cdcooper => pr_cdcooper
-                                          ,pr_cdctrlcs => vr_cdctrlcs
-                                          ,pr_cdbarras => vr_codbarras
-                                          ,pr_dtmvtolt => pr_dtmvtolt
-                                          ,pr_cdcidade => vr_cdcidade
-                                          ,pr_dsxmltit => vr_xmltit
-                                          ,pr_tpconcip => vr_tpconcip
-                                          ,pr_des_erro => vr_des_erro
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
-       
-       -- Se retornar o indicador de erro da rotina 
-       IF vr_des_erro = 'NOK' THEN
-       
-         -- Gerar log para a tela ver log, quando há número de conta
-         IF pr_nrdconta IS NOT NULL THEN
+           -- Gerar log para a tela ver log, quando há número de conta
+           IF pr_nrdconta IS NOT NULL THEN
+             
+             -- Incluso rollback neste ponto, apenas para garantir que em futuras alterações não 
+             -- sejam inclusas operações DML e acabem por fim comitando informações indevidas
+             ROLLBACK;
+             
+             -- Chamar rotina generica para criação de log - LOGTEL
+             GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdoperad => pr_cdoperad
+                                 ,pr_dscritic => vr_cdcritic||'-'||vr_dscritic
+                                 ,pr_dsorigem => GENE0001.vr_vet_des_origens(pr_idorigem)
+                                 ,pr_dstransa => 'Consultar titulo NPC'
+                                 ,pr_dttransa => TRUNC(SYSDATE)
+                                 ,pr_flgtrans => 0 -- ERRO/FALSE
+                                 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                 ,pr_idseqttl => 1
+                                 ,pr_nmdatela => 'NPCB0000'
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrdrowid => vr_nrdrowid);
            
-           -- Incluso rollback neste ponto, apenas para garantir que em futuras alterações não 
-           -- sejam inclusas operações DML e acabem por fim comitando informações indevidas
-           ROLLBACK;
+             -- Realiza o commit para gravar as informações da VERLOG
+             COMMIT;
            
-           -- Chamar rotina generica para criação de log - LOGTEL
-           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                               ,pr_cdoperad => pr_cdoperad
-                               ,pr_dscritic => vr_cdcritic||'-'||vr_dscritic
-                               ,pr_dsorigem => GENE0001.vr_vet_des_origens(pr_idorigem)
-                               ,pr_dstransa => 'Consultar titulo NPC'
-                               ,pr_dttransa => TRUNC(SYSDATE)
-                               ,pr_flgtrans => 0 -- ERRO/FALSE
-                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                               ,pr_idseqttl => 1
-                               ,pr_nmdatela => 'NPCB0000'
-                               ,pr_nrdconta => pr_nrdconta
-                               ,pr_nrdrowid => vr_nrdrowid);
-         
-           -- Realiza o commit para gravar as informações da VERLOG
-           COMMIT;
-         
+           END IF;
+            
+           -- Nao deve abortar pois deve gerar tabela de consulta e verificar se critica é de contigencia 
+           --> RAISE vr_exc_erro;
          END IF;
-          
-         -- Nao deve abortar pois deve gerar tabela de consulta e verificar se critica é de contigencia 
-         --> RAISE vr_exc_erro;
-       END IF;
+
+       end if; --nvl(vr_idloccns,'N') = 'S'
 
        --> Se nao retornou critica, extrai dados do xml
        IF vr_dscritic IS NULL THEN
@@ -936,98 +1077,93 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
          --> Se retornou critica, extrais dados do codigo de barras
          pr_tbTituloCIP.NumCodBarras := vr_codbarras;
          --Retornar valor fatura
-         pr_tbTituloCIP.VlrTit     := TO_NUMBER(SUBSTR(vr_titulo5,05,10));
-         pr_tbTituloCIP.VlrTit     := pr_tbTituloCIP.VlrTit / 100;
-                  
+         pr_tbTituloCIP.VlrTit := TO_NUMBER(SUBSTR(vr_titulo5,05,10));
+         pr_tbTituloCIP.VlrTit := pr_tbTituloCIP.VlrTit / 100;
          --> Verificar se esta em contigencia
-         IF vr_cdcritic_req = 945 THEN
+         IF nvl(vr_cdcritic_req,0) = 945 THEN
            pr_flcontig := 1;
-                
-           vr_de_campo                := TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),1,4));
-           cxon0014.pc_calcula_data_vencimento 
-                                  ( pr_dtmvtolt => pr_dtmvtolt
-                                   ,pr_de_campo => vr_de_campo
-                                   ,pr_dtvencto => vr_dtvencto
-                                   ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
-                                   ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
-           
-           
+           vr_de_campo := TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),1,4));
+           cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => pr_dtmvtolt
+                                              ,pr_de_campo => vr_de_campo
+                                              ,pr_dtvencto => vr_dtvencto
+                                              ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
+                                              ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
            pr_tbTituloCIP.DtVencTit  := vr_dtvencto;
            
          END IF;
          
        END IF;
-       
-       -- Inserir o registro consultado na tabela de registro de consulta
-       BEGIN
-       
-         INSERT INTO tbcobran_consulta_titulo(cdctrlcs
-                                             ,nrdident
-                                             ,cdcooper
-                                             ,cdagenci
-                                             ,dtmvtolt
-                                             ,tpconsulta
-                                             ,dhconsulta
-                                             ,dscodbar
-                                             ,vltitulo
-                                             ,nrispbds
-                                             ,dsxml
-                                             ,cdcanal
-                                             ,cdoperad
-                                             ,cdcritic
-                                             ,flgcontingencia)
-                                      VALUES (vr_cdctrlcs                 -- cdctrlcs
-                                             ,nvl(pr_tbTituloCIP.NumIdentcTit,0) -- nrdident
-                                             ,pr_cdcooper                 -- cdcooper
-                                             ,pr_cdagenci                 -- cdagenci
-                                             ,pr_dtmvtolt                 -- dtmvtolt
-                                             ,vr_tpconcip                 -- tpconsulta
-                                             ,SYSDATE                     -- dhconsulta
-                                             ,pr_tbTituloCIP.NumCodBarras -- dscodbar
-                                             ,pr_tbTituloCIP.VlrTit       -- vltitulo
-                                             ,nvl(pr_tbTituloCIP.ISPBPartDestinatario,0) -- nrispbds
-                                             ,nvl(vr_xmltit,' ')          -- dsxml
-                                             ,NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0)  -- cdcanal 
-                                             ,pr_cdoperad                 -- cdoperad
-                                             ,nvl(vr_cdcritic_req,0)      -- cdcritic
-                                             ,pr_flcontig );              -- flgcontingencia
-       
-         
-       
-       EXCEPTION
-         WHEN OTHERS THEN
-           --> Gerar log para facilitar identificação de erros
-           BEGIN
-             NPCB0001.pc_gera_log_npc( pr_cdcooper => pr_cdcooper,
-                                       pr_nmrotina => 'pc_consultar_titulo_cip', 
-                                       pr_dsdolog  => 'Erro ao registrar consulta CIP -> '||
-                                                      ' cdctrlcs: '   ||vr_cdctrlcs ||
-                                                      ' ,nrdident: '  ||nvl(pr_tbTituloCIP.NumIdentcTit,0) ||
-                                                      ' ,cdcooper: '  ||pr_cdcooper                        ||
-                                                      ' ,cdagenci: '  ||pr_cdagenci                        ||
-                                                      ' ,dtmvtolt: '  ||pr_dtmvtolt                        ||
-                                                      ' ,tpconsulta: '||vr_tpconcip                        || 
-                                                      ' ,dhconsulta: '||SYSDATE                            ||
-                                                      ' ,dscodbar: '  ||pr_tbTituloCIP.NumCodBarras          ||
-                                                      ' ,vltitulo: '  ||pr_tbTituloCIP.VlrTit                ||
-                                                      ' ,nrispbds: '  ||nvl(pr_tbTituloCIP.ISPBPartDestinatario,0)|| 
-                                                      ' ,cdcanal: '   ||NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0) || 
-                                                      ' ,cdoperad: '  || pr_cdoperad                             ||
-                                                      ' ,xmltit:   '  || vr_xmltit ||
-                                                      ' ,cdcritic: '  || nvl(vr_cdcritic_req,0)                  ||
-                                                      ' ,flcontig: '  || pr_flcontig );                 
-             
-           EXCEPTION
-             WHEN OTHERS THEN
-               NULL;
-           END; 
-           vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
-           RAISE vr_exc_erro;
-       END;
-       
-       
+
+       --realizar o insert somente quanto a consulta não veio de reaproveitamento
+       if nvl(vr_idloccns,'N') = 'N' then --PRB0040364
+         -- Inserir o registro consultado na tabela de registro de consulta
+         BEGIN
+           INSERT INTO tbcobran_consulta_titulo
+             (cdctrlcs
+             ,nrdident
+             ,cdcooper
+             ,cdagenci
+             ,dtmvtolt
+             ,tpconsulta
+             ,dhconsulta
+             ,dscodbar
+             ,vltitulo
+             ,nrispbds
+             ,dsxml
+             ,cdcanal
+             ,cdoperad
+             ,cdcritic
+             ,flgcontingencia)
+           VALUES
+             (vr_cdctrlcs                 -- cdctrlcs
+             ,nvl(pr_tbTituloCIP.NumIdentcTit,0) -- nrdident
+             ,pr_cdcooper                 -- cdcooper
+             ,pr_cdagenci                 -- cdagenci
+             ,pr_dtmvtolt                 -- dtmvtolt
+             ,vr_tpconcip                 -- tpconsulta
+             ,SYSDATE                     -- dhconsulta
+             ,pr_tbTituloCIP.NumCodBarras -- dscodbar
+             ,pr_tbTituloCIP.VlrTit       -- vltitulo
+             ,nvl(pr_tbTituloCIP.ISPBPartDestinatario,0) -- nrispbds
+             ,nvl(vr_xmltit,' ')          -- dsxml
+             ,NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0)  -- cdcanal 
+             ,pr_cdoperad                 -- cdoperad
+             ,nvl(vr_cdcritic_req,0)      -- cdcritic
+             ,pr_flcontig );              -- flgcontingencia
+         EXCEPTION
+           WHEN OTHERS THEN
+             --> Gerar log para facilitar identificação de erros
+             vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
+             begin
+               npcb0001.pc_gera_log_npc( pr_cdcooper => pr_cdcooper,
+                                         pr_nmrotina => 'pc_consultar_titulo_cip', 
+                                         pr_dsdolog  => 'Erro ao registrar consulta CIP -> '||
+                                                        'cdctrlcs:'   ||vr_cdctrlcs ||
+                                                        ',nrdident:'  ||nvl(pr_tbTituloCIP.NumIdentcTit,0) ||
+                                                        ',cdcooper:'  ||pr_cdcooper                        ||
+                                                        ',cdagenci:'  ||pr_cdagenci                        ||
+                                                        ',dtmvtolt:'  ||pr_dtmvtolt                        ||
+                                                        ',tpconsulta: '||vr_tpconcip                        || 
+                                                        ',dhconsulta: '||SYSDATE                            ||
+                                                        ',dscodbar:'  ||pr_tbTituloCIP.NumCodBarras          ||
+                                                        ',vltitulo:'  ||pr_tbTituloCIP.VlrTit                ||
+                                                        ',nrispbds:'  ||nvl(pr_tbTituloCIP.ISPBPartDestinatario,0)|| 
+                                                        ',cdcanal:'   ||NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0) || 
+                                                        ',cdoperad:'  || pr_cdoperad                             ||
+                                                        ',xmltit:'  || vr_xmltit ||
+                                                        ',cdcritic:'  || nvl(vr_cdcritic_req,0)                  ||
+                                                        ',flcontig:'  || pr_flcontig );                 
+               
+             exception
+               when others then
+                 null;
+             end;
+             raise vr_exc_erro;
+         END;
+       end if; --nvl(vr_idloccns,'N') = 'N'
+
        --> Se retornou critica de titulo nao registrao
-       IF vr_cdcritic_req = 950 THEN
+       IF nvl(vr_cdcritic_req,0) = 950 THEN
          --> e ainda esta no periodo de convivencia
          IF NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
                                              ,pr_vltitulo => NVL(vr_vlboleto,TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),5,10)) / 100)) = 1 THEN
@@ -1088,8 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        
        
        --> Se possuir critica e se não é contigencia
-       IF (nvl(vr_cdcritic_req,0) > 0 OR trim(vr_dscritic_req) IS NOT NULL) AND 
-          pr_flcontig = 0 THEN
+       IF (nvl(vr_cdcritic_req,0) > 0 OR trim(vr_dscritic_req) IS NOT NULL) AND pr_flcontig = 0 THEN
          --> Garantir a gravação da tabela tbcobran_consulta_titulo
          COMMIT;
          vr_cdcritic := vr_cdcritic_req;
@@ -1129,24 +1264,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                           ,TRIM(pr_tbTituloCIP.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
        
        
-         -- Definir os valores do título
-         NPCB0001.pc_valor_calc_titulo_npc(pr_dtmvtolt  => pr_dtmvtolt
-                                          ,pr_tbtitulo  => pr_tbTituloCIP
-                                          ,pr_vlrtitulo => pr_vlrtitulo   -- Retornar valor do título
-                                          ,pr_vlrjuros  => pr_vlrjuros    -- Retornar valor dos juros
-                                          ,pr_vlrmulta  => pr_vlrmulta    -- Retornar valor da multa
-                                          ,pr_vlrdescto => pr_vlrdescto); -- Retornar valor de desconto
+       -- Definir os valores do título
+       NPCB0001.pc_valor_calc_titulo_npc(pr_dtmvtolt  => pr_dtmvtolt
+                                        ,pr_tbtitulo  => pr_tbTituloCIP
+                                        ,pr_vlrtitulo => pr_vlrtitulo   -- Retornar valor do título
+                                        ,pr_vlrjuros  => pr_vlrjuros    -- Retornar valor dos juros
+                                        ,pr_vlrmulta  => pr_vlrmulta    -- Retornar valor da multa
+                                        ,pr_vlrdescto => pr_vlrdescto); -- Retornar valor de desconto
          
          --> Se valor estiver diferente retornar critica
        IF pr_vlrtitulo IS NULL THEN
-          -- Se encontrou critica na validação deve gravar a consulta da mesma 
-          -- forma, sendo assim, é realizado o commit para que o rollback não 
-          -- limpe as informações
-          COMMIT;
-          
-          vr_dscritic := 'Problemas ao buscar valor do titulo.';
-          RAISE vr_exc_erro;
-        END IF;
+         -- Se encontrou critica na validação deve gravar a consulta da mesma 
+         -- forma, sendo assim, é realizado o commit para que o rollback não 
+         -- limpe as informações
+         COMMIT;
+         
+         vr_dscritic := 'Problemas ao buscar valor do titulo.';
+         RAISE vr_exc_erro;
+       END IF;
          
        -- Se não permitir pagamento parcial e não permitir valor divergente (3-Não aceitar pagamento com o valor divergente)
        IF pr_tbTituloCIP.IndrPgtoParcl = 'N' AND pr_tbTituloCIP.TpAutcRecbtVlrDivgte = '3' THEN         
@@ -1199,7 +1334,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
-
+      begin
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => 'npcb0002.pc_consultar_titulo_cip');
+      exception
+        when others then
+          null;
+      end;
       -- Efetuar rollback
       ROLLBACK;
   END pc_consultar_titulo_cip;

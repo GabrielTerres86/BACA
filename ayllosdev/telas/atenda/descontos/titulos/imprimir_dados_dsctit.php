@@ -31,6 +31,7 @@
 
                   15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo. (GFT) 
 
+				  26/10/2018 - Adicionada tratativa para extrato do bordero - Luis Fernando (GFT)
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -48,7 +49,7 @@
 	require_once("../../../../class/xmlfile.php");
 	
 	// Verifica permissão
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M", false)) <> "") {
 		?>
 <script language="javascript">
   alert('<?php echo $msgError; ?>');
@@ -145,12 +146,13 @@
 	else{
 		$flgnewbor = 0;
 	}
-	
+		
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7 // BORDERO DE TITULOS
+        $idimpres == 7 || // BORDERO DE TITULOS
+        $idimpres == 11   // EXTRATO DE BORDERO
         ) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
@@ -172,11 +174,7 @@
 
         if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			?>
-<script language="javascript">
-  alert('<?php echo $msg; ?>');
-</script>
-<?php
+			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 			exit();
 		}
 

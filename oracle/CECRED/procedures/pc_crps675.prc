@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 01/06/2017
+       Data    : Março/2014.                     Ultima atualizacao: 22/10/2018
 
        Dados referentes ao programa:
 
@@ -44,7 +44,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
                                 (Carlos)
 
                    01/06/2017 - #633147 Envio de e-mail usando a rotina pc_log_programa.
-                                Atenção para o aumento do campo crapsle.cdprogra para 30 chars (Carlos)
+                                Atenção para o aumento do campo crapsle.cdproga para 30 chars (Carlos)
+                                
+                   22/10/2018 - Alterar o envio da data de vencimento no arquivo para enviar
+                                a data do pagamento (Lucas Ranghetti #INC0025443)
     ............................................................................ */
 
     DECLARE
@@ -103,7 +106,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
         SELECT fat.cdcooper, fat.nrdconta,
                ass.nrcpfcgc, fat.dtvencimento,
                fat.nrcontrato, fat.nrconta_cartao,
-               fat.vlpagodia
+               fat.vlpagodia, fat.dtpagamento
           FROM tbcrd_fatura fat, crapass ass 
          WHERE fat.cdcooper = pr_cdcooper 
            AND fat.dtref_pagodia = pr_dtpagamento
@@ -257,7 +260,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
 													'000000000'                                     /* Filler                        */         ||
 													'000000000000'                                  /* Filler                        */         ||
 													lpad(nvl((rw_paga_fatura.vlpagodia * 100),0),12,'0') /* Valor do Débito               */    ||
-													TO_CHAR(rw_paga_fatura.dtvencimento,'DDMMYYYY') /* Data Venc. Fatura             */         ||
+													TO_CHAR(rw_paga_fatura.dtpagamento,'DDMMYYYY')  /* Data Venc. Fatura             */         ||
                           lpad(vr_contador,6,'0')                         /* Sequencial do Registro        */         );
 																																				
           -- grava registro de DETALHE no arquivo

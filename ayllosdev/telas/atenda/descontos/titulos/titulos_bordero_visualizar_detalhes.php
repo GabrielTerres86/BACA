@@ -7,6 +7,7 @@
 	                                                                  
 	 Objetivo  : Detalhes do título do borderô
 	 Alterações: 
+	  - 08/10/2018 - Alteração da permissão da tela para verificar o Consultar e não uma própria (Vitor S Assanuma - GFT)
 	
 	************************************************************************/
 	
@@ -26,7 +27,7 @@
 	setVarSession("nmrotina","DSC TITS - BORDERO");
 
 	// Valida permissão para a tela.
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
 		exibeErro($msgError);		
 	}	
 	// Verifica se o número da conta foi informado
@@ -123,7 +124,6 @@
 
 		<label for="vlslddvd"><? echo utf8ToHtml('Saldo Devedor:') ?></label>
 		<input type="text" name="vlslddvd" id="vlslddvd" value="<?=$dados->vlpagar?>" />
-		<br />
 
 		<label for="nrctrcyb"><? echo utf8ToHtml('Nº Contrato Cyber:') ?></label>
 		<input type="text" name="nrctrcyb" id="nrctrcyb" value="<?php echo formataNumericos('z.zzz.zz9',$dados->nrctrdsc,'.'); ?>" />

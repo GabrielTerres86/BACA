@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --
   --                 27/04/2018 - Adicionados campos de indicador de cancelamento automatico por inadimplencia, e, campo de qtde de dias para cancelamento por inadimplencia
   --                            Marcel (AMcom)
+  --
+  --                 23/08/2018 - Alteraçao na pc_renovar_lim_desc_titulo: Registrar a renovação na tabela de histórico de alteraçao 
+  --                              de contrato de limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -284,6 +287,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --             13/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
   --                          Diego Simas (AMcom)
   --  
+  --             23/08/2018 - Alteraçao na pc_renovar_lim_desc_titulo: Registrar a renovação na tabela de histórico de alteraçao 
+  --                          de contrato de limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -4455,6 +4460,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Objetivo  : Rotina referente a renovacao manual do limite de desconto de titulo
      
+     Alteração: 23/08/2018 - Alteraçao na pc_renovar_lim_desc_titulo: Registrar a renovação na tabela de histórico de alteraçao 
+                             de contrato de limite (Andrew Albuquerque - GFT)
+     
     ..............................................................................*/
     
   DECLARE
@@ -4975,6 +4983,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                          ,pr_cdcritic => vr_cdcritic                 --> Código da crítica
                          ,pr_dscritic => vr_dscritic);               --> Descrição da crítica 
 
+    -- awae: Gerar histórico de Majoração/manutenção de Proposta.
+    cecred.tela_atenda_dscto_tit.pc_gravar_hist_alt_limite(pr_cdcooper => pr_cdcooper
+                                                          ,pr_nrdconta => pr_nrdconta
+                                                          ,pr_nrctrlim => pr_nrctrlim
+                                                          ,pr_tpctrlim => 3 -- Limite Desconto Titulo
+                                                          ,pr_dsmotivo => 'RENOVAÇÃO MANUAL'
+                                                          ,pr_cdcritic => vr_cdcritic 
+                                                          ,pr_dscritic => vr_dscritic 
+                                                          );
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_saida;
+    END IF;
     
   EXCEPTION
     WHEN vr_exc_saida THEN     

@@ -1,4 +1,4 @@
-/*!
+ /*!
  * FONTE        : titulos.php
  * CRIAÇÃO      : Guilherme
  * DATA CRIAÇÃO : Março/2009
@@ -3378,7 +3378,7 @@ function efetuarPagamentoTitulosVencidos(fl_avalista, arr_titulos){
                 if (response == 1)
                     showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
                 else{
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir os pagamentos", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");      
+                    eval(response);
                 }
             }
         });
@@ -3465,6 +3465,7 @@ function visualizarDetalhesTitulo(){
     });
     return false;
 }
+
 
 // PRJ 438 - Inicio
 function carregaDadosConsultaMotivos() {

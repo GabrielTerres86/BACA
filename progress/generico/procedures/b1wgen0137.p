@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 23/08/2018
+    Data      : Abril/2012                      Ultima Atualizacao: 16/10/2018
     
     Dados referentes ao programa:
 
@@ -336,7 +336,7 @@
 
                 11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
 
-                23/08/2018 - sctask0016914 Reativado o batimento dos termos, porém quando chamado pelo crps620, verifica apenas os termos digitalizados
+                16/10/2018 - sctask0016914 Reativado o batimento dos termos, porém quando chamado pelo crps620, verifica apenas os termos digitalizados
                              no dia (Carlos)
 .............................................................................*/
 
@@ -579,7 +579,10 @@ PROCEDURE efetua_batimento_ged:
                            aux_dtcadfim = TODAY
                            aux_dtcrefim = TODAY
                            aux_dtterfim = TODAY.
-                END.      
+                END.
+
+            /* Batimento dos termos via crps fixado */
+            ASSIGN aux_dtterini = TODAY.
 
         END.
     ELSE /* TELA */

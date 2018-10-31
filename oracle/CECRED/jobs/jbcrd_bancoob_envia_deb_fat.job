@@ -1,7 +1,11 @@
 /*   Criação do Job para rodar CRPS675
      todos os dias as 11H exceto finais de semana e feriados   17/10/2017
      
-     Alteração:  
+     Alteração:
+	 
+	 18/09/2018 - Alteração do horário de execução para às 06h (Carlos)
+
+     23/10/2018 - Alteração do horário de execução para às 01:30h (Lucas Ranghetti SCTASK0033186)
 */
 DECLARE
   vr_dsplsql  VARCHAR2(2500);
@@ -49,11 +53,11 @@ BEGIN
   
   -- Faz a chamada ao programa paralelo atraves de JOB
   gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/               --> Código da cooperativa
-                        ,pr_cdprogra  => 'JBCRD_BANCOOB_ENVIA_DEB_FAT' --> Código do programa
+                        ,pr_cdprogra  => vr_jobname                 --> Código do programa
                         ,pr_dsplsql   => vr_dsplsql                 --> Bloco PLSQL a executar
-                        ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 11:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
+                        ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 01:30 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
                                          -- configurar para rodar diariamente as 18h
-                        ,pr_interva   => 'Freq=daily;Interval=1;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=11;ByMinute=00;BySecond=0'
+                        ,pr_interva   => 'Freq=daily;Interval=1;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=01;ByMinute=30;BySecond=0'
                                          --'freq=Daily; interval=1;'  --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
                         ,pr_jobname   => vr_jobname                   --> Nome randomico criado
                         ,pr_des_erro  => vr_dscritic);
