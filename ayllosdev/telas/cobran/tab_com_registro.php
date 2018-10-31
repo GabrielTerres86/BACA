@@ -21,6 +21,13 @@
  */	
 ?>
 
+<form action="<?php echo $UrlSite;?>telas/cobran/manter_rotina.php" method="post" id="frmExportarREM" name="frmExportarREM">
+	<input type="hidden" id="operacao" name="operacao" value="ER">
+	<input type="hidden" id="nrdconta" name="nrdconta" value="">
+	<input type="hidden" id="ls_nrdocmto" name="ls_nrdocmto" value="<?php echo implode(',', $ls_nrdoc); ?>">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+</form>
+
 <form id="frmTabela" class="formulario" >
 	<fieldset>
 	<legend>Boleto</legend>
@@ -222,7 +229,11 @@
 	
 	</fieldset>
 </form>
-
+<style>
+	#divBotoes a.botao {
+		margin-top: 3px;
+	}
+</style>
 <div id="divBotoes" style="padding-bottom:7px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<?php
@@ -230,7 +241,8 @@
 	?>
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
-		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="buscaExportar('C'); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="geraRemessa(false); return false;">Gerar Arquivo Remessa</a>
 		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;"><? echo utf8ToHtml('Imprimir carta anuência');  ?></a>
 	<?php
 	}

@@ -49,6 +49,7 @@
 	$nrregist 			= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 50  ;
 	
 	$inserasa 			= (isset($_POST['inserasa'])) ? $_POST['inserasa'] : ''  ;
+	$ls_nrdoc 			= array();
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -65,50 +66,65 @@
 	if ( $consulta == '8' ) {
 		$nrdconta = $nrdcontx;
 	}
-	
-	// Monta o xml de requisição
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0010.p</Bo>';
-	$xml .= '		<Proc>'.$procedure.'</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
-	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
-	$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
-	$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
-	$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
-	$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
-	$xml .= '		<numregis>'.$numregis.'</numregis>';	
-	$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
-	$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
-	$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
-	$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
-	$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
-	$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
-	$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
-	$xml .= '		<consulta>'.$consulta.'</consulta>';
-	$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
-	$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
-	$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
-	$xml .= '		<inestcri>'.$inestcri.'</inestcri>';
-	$xml .= '		<nriniseq>'.$nriniseq.'</nriniseq>';
-	$xml .= '		<nrregist>'.$nrregist.'</nrregist>';
-	$xml .= '		<inserasa>'.$inserasa.'</inserasa>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
+
+	function monta_xml($paginado) {
+		global $procedure, $glbvars, $nrdconta, $ininrdoc, $fimnrdoc, $nrinssac, $nmprimtl, $indsitua,
+			   $numregis, $iniseque, $inidtven, $fimdtven, $inidtdpa, $fimdtdpa, $inidtmvt, $fimdtmvt,
+			   $consulta, $tpconsul, $dsdoccop, $flgregis, $inestcri, $nriniseq, $nrregist, $inserasa;
+
+		// Monta o xml de requisição
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Cabecalho>';
+		$xml .= '		<Bo>b1wgen0010.p</Bo>';
+		$xml .= '		<Proc>'.$procedure.'</Proc>';
+		$xml .= '	</Cabecalho>';
+		$xml .= '	<Dados>';
+		$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+		$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+		$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
+		$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
+		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
+		$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
+		$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
+		$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
+		$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
+		$xml .= '		<numregis>'.$numregis.'</numregis>';	
+		$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
+		$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
+		$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
+		$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
+		$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
+		$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
+		$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
+		$xml .= '		<consulta>'.$consulta.'</consulta>';
+		$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
+		$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
+		$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
+		$xml .= '		<inestcri>'.$inestcri.'</inestcri>';
+		if (!$paginado) {
+			$xml .= '		<nriniseq>0</nriniseq>';
+			$xml .= '		<nrregist>99999</nrregist>';
+		} else {
+			$xml .= '		<nriniseq>'.$nriniseq.'</nriniseq>';
+			$xml .= '		<nrregist>'.$nrregist.'</nrregist>';
+		}
+		$xml .= '		<inserasa>'.$inserasa.'</inserasa>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
+
+		return $xml;
+	}
+
+	// Monta o XML sem paginação
+	$xml = monta_xml(false);
 	
 	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
 	$xmlResult 	= getDataXML($xml);
 	$xmlObjeto 	= getObjectXML($xmlResult);
-    
 	
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
@@ -117,11 +133,32 @@
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."','#frmOpcao').focus();"; }
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro, false);
 	} 
+
+	$registro 	= $xmlObjeto->roottag->tags[0]->tags;
+
+	foreach ($registro as $reg) {
+		$ls_nrdoc[] = getByTagName($reg->tags,'nrdocmto');
+	}
+
+	// Monta o XML com paginação
+	$xml = monta_xml(true);
 	
+	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+	$xmlResult 	= getDataXML($xml);
+	$xmlObjeto 	= getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra mensagem
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		$nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."','#frmOpcao').focus();"; }
+		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro, false);
+	} 
+
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;
 	$dados 		= $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	$qtregist	= $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];
-	
+
 	include('form_opcao_cabecalho.php');
 	include('form_opcao_c.php');
 	

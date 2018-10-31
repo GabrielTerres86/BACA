@@ -16,6 +16,13 @@
  */	
 ?>
 
+<form action="<?php echo $UrlSite;?>telas/cobran/manter_rotina.php" method="post" id="frmExportarREM" name="frmExportarREM">
+	<input type="hidden" id="operacao" name="operacao" value="ER">
+	<input type="hidden" id="nrdconta" name="nrdconta" value="">
+	<input type="hidden" id="ls_nrdocmto" name="ls_nrdocmto" value="<?php echo implode(',', $ls_nrdoc); ?>">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+</form>
+
 <form id="frmTabela" class="formulario" >
 	<fieldset>
 	<legend>Boleto</legend>
@@ -190,6 +197,7 @@
 	if ( $qtregist > 0 ) {
 	?>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="geraRemessa(false); return false;">Gerar Arquivo Remessa</a>
 	<?php
 	}
 	?>

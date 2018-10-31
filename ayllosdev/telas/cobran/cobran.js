@@ -1859,6 +1859,19 @@ function buscaExportar() {
     return false;
 }
 
+function geraRemessa(skipConfirm) {
+    if (!skipConfirm) {
+        showConfirmacao("Deseja gerar o arquivo de remessa?","Confirma&ccedil;&atilde;o - Ayllos","geraRemessa(true);","hideMsgAguardo();","sim.gif","nao.gif");
+        return;
+    }
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    $('#nrdconta', '#frmExportarREM').val(nrdconta)
+
+    $('#frmExportarREM').submit();
+    return false;
+}
+
 
 
 // opcao I

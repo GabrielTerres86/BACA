@@ -68,6 +68,8 @@
 	$vlabatim 		 = (isset($_POST['vlabatim'])) ? $_POST['vlabatim'] : 0;
 	$vldescto 		 = (isset($_POST['vldescto'])) ? $_POST['vldescto'] : 0;
 	$qtdiaprt		 = (isset($_POST['qtdiaprt'])) ? $_POST['qtdiaprt'] : 0;
+	
+	$ls_nrdocmto     = (isset($_POST['ls_nrdocmto'])) ? $_POST['ls_nrdocmto'] : '';
 		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
@@ -77,6 +79,7 @@
 	switch( $operacao ) {
 		case 'BA': $procedure = 'busca_associado'; 																						 	break;
 		case 'EA': $procedure = 'exporta_boleto'; 		$dsiduser = $nmarqint;															 	break;
+		case 'ER': $procedure = 'exporta_remessa'; 		$dsiduser = $nmarqint;															 	break;
 		case 'VI': $procedure = 'valida_instrucoes'; 	$retornoAposErro = 'bloqueiaFundo($(\'#divRotina\'));';							 	break;
 		case 'GI': $procedure = 'grava_instrucoes'; 	$retornoAposErro = 'bloqueiaFundo($(\'#divRotina\'));';	 $nrdconta = $nrdcoaux;  	break;
 		case 'IA': $procedure = 'integra_arquivo'; 		$dsnmarqv = $nmarqint;	$dsiduser = session_id();	arrayArquivos($arquivos); 		break;							 break;
@@ -97,81 +100,114 @@
 	}
 	
 	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "  <Cabecalho>";
-	$xml .= "	    <Bo>b1wgen0010.p</Bo>";
-	$xml .= "        <Proc>".$procedure."</Proc>";
-	$xml .= "  </Cabecalho>";
-	$xml .= "  <Dados>";
-	$xml .= "       <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
-	$xml .= "		<cdagenci>".$glbvars['cdagenci']."</cdagenci>";
-	$xml .= "		<nrdcaixa>".$glbvars['nrdcaixa']."</nrdcaixa>";
-	$xml .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
-	$xml .= "		<nmdatela>".$glbvars['nmdatela']."</nmdatela>";
-	$xml .= "		<idorigem>".$glbvars['idorigem']."</idorigem>";	
-	$xml .= "		<dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";	
-	$xml .= "		<cdprogra>COBRAN</cdprogra>";	
-	$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";	
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";	
-	$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
-	$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
-	$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
-	$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
-	$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
-	$xml .= '		<numregis>'.$numregis.'</numregis>';	
-	$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
-	$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
-	$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
-	$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
-	$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
-	$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
-	$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
-	$xml .= '		<consulta>'.$consulta.'</consulta>';
-	$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
-	$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
-	$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
-	$xml .= '		<dsiduser>'.$dsiduser.'</dsiduser>';
-	$xml .= '		<cdinstru>'.$cdinstru.'</cdinstru>';
-	$xml .= '		<nrcnvcob>'.$nrcnvcob.'</nrcnvcob>';
-	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
-	$xml .= '		<cdtpinsc>'.$cdtpinsc.'</cdtpinsc>';
-	$xml .= '		<vlabatim>'.$vlabatim.'</vlabatim>';
-	$xml .= '		<dtvencto>'.$dtvencto.'</dtvencto>';
-	$xml .= '		<nmarqint>'.$nmarqint.'</nmarqint>';
-	$xml .= '		<dsnmarqv>'.$dsnmarqv.'</dsnmarqv>';
-	$xml .= '		<vrsarqvs>'.$vrsarqvs.'</vrsarqvs>';
-	$xml .= '		<qtdiaprt>'.$qtdiaprt.'</qtdiaprt>';
-	$xml .=			xmlFilho($listaArquivos,'Arquivos','Itens');
-	$xml .= "  </Dados>";
-	$xml .= "</Root>";	
+	if ($operacao == 'ER') {
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Dados>";
+		$xml .= "	 <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "	 <ls_nrdocmto>".$ls_nrdocmto."</ls_nrdocmto>";	
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
 
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjeto = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xml, "COBRAN", "GERA_REMESSA_CNAB240", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+		//print_r($xmlObjeto);exit;
 
-		if ( $operacao == 'IA' ) {
-			$arquivo1	= $xmlObjeto->roottag->tags[0]->attributes['NMARQPDF'];
-			$arquivo2	= $xmlObjeto->roottag->tags[0]->attributes['NMARQPD2'];
-			if ( !empty($arquivo1) || !empty($arquivo2) ) 
-				$retornoAposErro = "mostraImprimir('".$arquivo1."', '".$arquivo2."'); ";
-		}	
-
-		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
-		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if ($msgErro == "") {
+				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+			}
+			if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
+			
+			echo 'hideMsgAguardo();';
+			echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+			exit;
+		}
 		
-		echo 'hideMsgAguardo();';
-		echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+		$nmarqrem = $xmlObjeto->roottag->tags[0]->cdata;
+		visualizaCSV($nmarqrem);
+		exit;
+
+	} else {
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Cabecalho>";
+		$xml .= "	    <Bo>b1wgen0010.p</Bo>";
+		$xml .= "        <Proc>".$procedure."</Proc>";
+		$xml .= "  </Cabecalho>";
+		$xml .= "  <Dados>";
+		$xml .= "       <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+		$xml .= "		<cdagenci>".$glbvars['cdagenci']."</cdagenci>";
+		$xml .= "		<nrdcaixa>".$glbvars['nrdcaixa']."</nrdcaixa>";
+		$xml .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
+		$xml .= "		<nmdatela>".$glbvars['nmdatela']."</nmdatela>";
+		$xml .= "		<idorigem>".$glbvars['idorigem']."</idorigem>";	
+		$xml .= "		<dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";	
+		$xml .= "		<cdprogra>COBRAN</cdprogra>";	
+		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";	
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";	
+		$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
+		$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
+		$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
+		$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
+		$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
+		$xml .= '		<numregis>'.$numregis.'</numregis>';	
+		$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
+		$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
+		$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
+		$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
+		$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
+		$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
+		$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
+		$xml .= '		<consulta>'.$consulta.'</consulta>';
+		$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
+		$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
+		$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
+		$xml .= '		<dsiduser>'.$dsiduser.'</dsiduser>';
+		$xml .= '		<cdinstru>'.$cdinstru.'</cdinstru>';
+		$xml .= '		<nrcnvcob>'.$nrcnvcob.'</nrcnvcob>';
+		$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
+		$xml .= '		<cdtpinsc>'.$cdtpinsc.'</cdtpinsc>';
+		$xml .= '		<vlabatim>'.$vlabatim.'</vlabatim>';
+		$xml .= '		<dtvencto>'.$dtvencto.'</dtvencto>';
+		$xml .= '		<nmarqint>'.$nmarqint.'</nmarqint>';
+		$xml .= '		<dsnmarqv>'.$dsnmarqv.'</dsnmarqv>';
+		$xml .= '		<vrsarqvs>'.$vrsarqvs.'</vrsarqvs>';
+		$xml .= '		<qtdiaprt>'.$qtdiaprt.'</qtdiaprt>';
+		$xml .=			xmlFilho($listaArquivos,'Arquivos','Itens');
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";	
+
+		// Executa script para envio do XML
+		$xmlResult = getDataXML($xml);
 		
-		exit();
+		// Cria objeto para classe de tratamento de XML
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		//----------------------------------------------------------------------------------------------------------------------------------	
+		// Controle de Erros
+		//----------------------------------------------------------------------------------------------------------------------------------
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+
+			if ( $operacao == 'IA' ) {
+				$arquivo1	= $xmlObjeto->roottag->tags[0]->attributes['NMARQPDF'];
+				$arquivo2	= $xmlObjeto->roottag->tags[0]->attributes['NMARQPD2'];
+				if ( !empty($arquivo1) || !empty($arquivo2) ) 
+					$retornoAposErro = "mostraImprimir('".$arquivo1."', '".$arquivo2."'); ";
+			}	
+
+			$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+			if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
+			
+			echo 'hideMsgAguardo();';
+			echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+			
+			exit();
+		}
+
 	}
 	
 	// Associado
@@ -214,7 +250,7 @@
 			exit();
 		}		
 		
-	} else if ( $operacao == 'EA' ) {
+	} else if ( $operacao == 'EA' || $operacao == 'ER' ) {
 		exibirErro('inform','Arquivo gerado com sucesso!','Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
 	
 	} else if ( $operacao == 'VI' ) {
