@@ -3818,14 +3818,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotinas para listar talonarios Web
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
-    --  Data     : Ago/2018.                   Ultima atualizacao: 21/08/2018
+    --  Data     : Ago/2018.                   Ultima atualizacao: 31/10/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para buscar lista de talonarios para entrega.
     --
-    --   Alteracoes: 
+    --   Alteracoes: 31/10/2018 - Estava passando cooperativa fixa. (Lombardi)
     -- .............................................................................
     -- Cursores 
         
@@ -3856,7 +3856,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       SELECT fdc.nrdigchq
         FROM crapfdc fdc
             ,crapcop cop
-       WHERE cop.cdcooper = 1
+       WHERE cop.cdcooper = pr_cdcooper
          AND fdc.cdcooper = cop.cdcooper
          AND fdc.cdbanchq = 85
          AND fdc.cdagechq = cop.cdagectl
