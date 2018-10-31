@@ -51,7 +51,7 @@
                26/08/2015 - Alterado parametro cdpesqbb para o Prj. Tarifas
                             - 218 (Jean Michel).
                             
-               19/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
+               31/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
                             estorno de lançamentos na conta corrente              
                             pc_estorna_lancto_prog (Fabio Adriano - AMcom).             
 ............................................................................. */
@@ -888,6 +888,16 @@ PROCEDURE proc_liberado:
                           ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
                           ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
                           ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                      
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+                          glb_cdcritic = aux_cdcritic.
+                          glb_dscritic = aux_dscritic.
+                          RUN fontes/critic.p.
+                          BELL.
+                          MESSAGE glb_dscritic.
+                          ASSIGN glb_cdcritic = 0.
+                          RETURN.
+                      END.
                       
                       IF  VALID-HANDLE(h-b1wgen0200) THEN
                           DELETE PROCEDURE h-b1wgen0200.
