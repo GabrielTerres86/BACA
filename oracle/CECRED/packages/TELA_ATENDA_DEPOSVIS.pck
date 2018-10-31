@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
   --
   --             23/08/2018 - Apresentar mensagem quando o valor do pagamento
   --                          é maior que o saldo devedor do empréstimo
-  --                          PJ 450 - Diego Simas - AMcom
+  --                          PJ 450 - Diego Simas - AMcom.
   --
   --
   ---------------------------------------------------------------------------------------------------------------

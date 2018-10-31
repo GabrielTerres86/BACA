@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                28/08/2018 - Criação de rotina para trazer o registro para estorno de prejuízo de conta corrente
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
-							PJ 450 - Diego Simas (AMcom)
+							PJ 450 - Diego Simas (AMcom).
 
 ..............................................................................*/
 

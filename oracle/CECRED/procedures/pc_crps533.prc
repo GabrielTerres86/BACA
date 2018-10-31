@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 18/05/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 11/06/2018
 
    Dados referentes ao programa:
 
@@ -330,6 +330,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             Chamado PRB0040059 (Gabriel - Mouts).
 
 			   17/08/2018 - SCTASK0018345-Borderô desconto cheque - Paulo Martins - Mouts
+
+               11/06/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente
+                            PRJ450 - Diego Simas - AMcom
+
 ............................................................................. */
 
      DECLARE
@@ -443,7 +447,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 ,cdsitdct crapass.cdsitdct%type
                 ,cdagenci crapass.cdagenci%type
                 ,cdsitdtl crapass.cdsitdtl%TYPE
-                ,vllimcre crapass.vllimcre%TYPE);
+                ,vllimcre crapass.vllimcre%TYPE
+                ,inprejuz crapass.inprejuz%TYPE);
 
        --Tipo de tabela para associados
        TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
@@ -489,6 +494,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.cdagenci
                ,crapass.cdsitdtl
                ,crapass.vllimcre
+               ,crapass.inprejuz
           FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper;
        rw_crapass cr_crapass%ROWTYPE;
@@ -583,6 +589,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        
        vr_flg_criou_lcm   BOOLEAN := FALSE;
        vr_nrseqdig        NUMBER;
+       vr_tabretor        LANC0001.typ_reg_retorno; --> Tabela de retorno
+       vr_nmtabela        VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+     vr_incrineg        INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
        
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
@@ -965,59 +974,46 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
            vr_nrseqdig := nvl(vr_tab_chqtco(idx).nrseqarq,0);
            
            WHILE NOT vr_flg_criou_lcm LOOP
-           BEGIN
-             --Inserir Lancamentos de deposito a vista (CRAPLCM)
-             INSERT INTO craplcm (craplcm.cdcooper
-                               ,craplcm.dtmvtolt
-                               ,craplcm.cdagenci
-                               ,craplcm.cdbccxlt
-                               ,craplcm.nrdolote
-                               ,craplcm.nrdconta
-                               ,craplcm.nrdctabb
-                               ,craplcm.nrdocmto
-                               ,craplcm.cdhistor
-                               ,craplcm.vllanmto
-                               ,craplcm.nrseqdig
-                               ,craplcm.cdpesqbb
-                               ,craplcm.dtrefere
-                               ,craplcm.cdbanchq
-                               ,craplcm.cdcmpchq
-                               ,craplcm.cdagechq
-                               ,craplcm.nrctachq
-                               ,craplcm.sqlotchq
-                               ,craplcm.nrlotchq
-                               ,craplcm.cdcoptfn)
-                          VALUES
-                               (vr_tab_chqtco(idx).cdcooper
-                               ,pr_dtmvtolt
-                               ,nvl(pr_cdagenci,0)
-                               ,nvl(pr_cdbccxlt,0)
-                               ,nvl(vr_nrlotetc,0)
-                               ,nvl(vr_tab_chqtco(idx).nrdconta,0)
-                               ,nvl(vr_tab_chqtco(idx).nrdctabb,0)
-                               ,nvl(vr_nrdocmt2,0)
-                               ,nvl(vr_tab_chqtco(idx).cdhistor,0)
-                               ,nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                 ,vr_nrseqdig
-                               ,nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
-                               ,pr_dtleiarq
-                               ,nvl(vr_tab_chqtco(idx).cdbandep,0)
-                               ,nvl(vr_tab_chqtco(idx).cdcmpdep,0)
-                               ,nvl(vr_tab_chqtco(idx).cdagedep,0)
-                               ,nvl(vr_tab_chqtco(idx).nrctadep,0)
-                               ,nvl(vr_tab_chqtco(idx).sqlotchq,0)
-                               ,nvl(vr_tab_chqtco(idx).nrlotchq,0)
-                               ,0)
-             RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;
-           EXCEPTION
-               WHEN DUP_VAL_ON_INDEX THEN
+
+             -- Chamada a LANC0001 -- 1
+             LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_tab_chqtco(idx).cdcooper
+                                               ,pr_dtmvtolt    => pr_dtmvtolt
+                                               ,pr_cdagenci    => nvl(pr_cdagenci,0)
+                                               ,pr_cdbccxlt    => nvl(pr_cdbccxlt,0)
+                                               ,pr_nrdolote    => nvl(vr_nrlotetc,0)
+                                               ,pr_nrdconta    => nvl(vr_tab_chqtco(idx).nrdconta,0)
+                                               ,pr_nrdctabb    => nvl(vr_tab_chqtco(idx).nrdctabb,0)
+                                               ,pr_nrdocmto    => nvl(vr_nrdocmt2,0)
+                                               ,pr_cdhistor    => nvl(vr_tab_chqtco(idx).cdhistor,0)
+                                               ,pr_vllanmto    => nvl(vr_tab_chqtco(idx).vllanmto,0)
+                                               ,pr_nrseqdig    => vr_nrseqdig
+                                               ,pr_cdpesqbb    => nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
+                                               ,pr_dtrefere    => pr_dtleiarq
+                                               ,pr_cdbanchq    => nvl(vr_tab_chqtco(idx).cdbandep,0)
+                                               ,pr_cdcmpchq    => nvl(vr_tab_chqtco(idx).cdcmpdep,0)
+                                               ,pr_cdagechq    => nvl(vr_tab_chqtco(idx).cdagedep,0)
+                                               ,pr_nrctachq    => nvl(vr_tab_chqtco(idx).nrctadep,0)
+                                               ,pr_sqlotchq    => nvl(vr_tab_chqtco(idx).sqlotchq,0)
+                                               ,pr_nrlotchq    => nvl(vr_tab_chqtco(idx).nrlotchq,0)
+                                               ,pr_cdcoptfn    => 0
+                                               -- OUTPUT --
+                                               ,pr_tab_retorno => vr_tabretor
+                                               ,pr_incrineg    => vr_incrineg
+                                               ,pr_cdcritic    => vr_cdcritic
+                                               ,pr_dscritic    => vr_dscritic);
+
+             -- Se houve crítica ou erro
+             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+               -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
+               IF nvl(pr_cdcritic, 0) = 92 THEN
                  vr_nrseqdig := vr_nrseqdig + 100000;
                  continue;
-             WHEN OTHERS THEN
+               ELSE
                  cecred.pc_internal_exception;
-               vr_dscritic:= 'Erro ao inserir craplcm na rotina pc_crps533.pc_processamento_tco: '||SQLERRM;
-               RAISE vr_exc_erro;
-           END;
+                 vr_des_erro := vr_dscritic;
+                 RAISE vr_exc_erro;
+               END IF;
+             END IF;
 
              vr_flg_criou_lcm := TRUE;
              
@@ -4569,61 +4565,46 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq,0);
                         
                         WHILE NOT vr_flg_criou_lcm LOOP
-                          BEGIN
-                          --Inserir lancamento
-                          INSERT INTO craplcm (cdcooper
-                                              ,dtmvtolt
-                                              ,dtrefere
-                                              ,cdagenci
-                                              ,cdbccxlt
-                                              ,nrdolote
-                                              ,nrdconta
-                                              ,nrdctabb
-                                              ,nrdocmto
-                                              ,cdhistor
-                                              ,vllanmto
-                                              ,nrseqdig
-                                              ,cdpesqbb
-                                              ,cdbanchq
-                                              ,cdcmpchq
-                                              ,cdagechq
-                                              ,nrctachq
-                                              ,nrlotchq
-                                              ,sqlotchq
-                                              ,cdcoptfn
-                                              ,cdagetfn
-                                              ,hrtransa)
-                                     VALUES   (pr_cdcooper
-                                              ,rw_craplot.dtmvtolt
-                                              ,pr_dtleiarq
-                                              ,nvl(rw_craplot.cdagenci,0)
-                                              ,nvl(rw_craplot.cdbccxlt,0)
-                                              ,nvl(rw_craplot.nrdolote,0)
-                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
-                                              ,nvl(vr_nrdocmto,0)
-                                              ,nvl(vr_cdhistor,0)
-                                              ,nvl(vr_vllanmto,0)
-                                                ,vr_nrseqdig
-                                              ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_cdbandep,0)
-                                              ,nvl(vr_cdcmpdep,0)
-                                              ,nvl(vr_cdagedep,0)
-                                              ,nvl(vr_nrctadep,0)
-                                              ,nvl(vr_nrlotchq,0)
-                                              ,nvl(vr_sqlotchq,0)
-                                              ,vr_cdcoptfn
-                                              ,vr_cdageapr
-                                              ,to_char(SYSDATE,'sssss'));
-                        EXCEPTION
-                            WHEN DUP_VAL_ON_INDEX THEN
+
+                          -- Chamada a LANC0001 -- 2
+                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                            ,pr_dtrefere => pr_dtleiarq
+                                                            ,pr_cdagenci => nvl(rw_craplot.cdagenci,0)
+                                                            ,pr_cdbccxlt => nvl(rw_craplot.cdbccxlt,0)
+                                                            ,pr_nrdolote => nvl(rw_craplot.nrdolote,0)
+                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
+                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
+                                                            ,pr_nrdocmto => nvl(vr_nrdocmto,0)
+                                                            ,pr_cdhistor => nvl(vr_cdhistor,0)
+                                                            ,pr_vllanmto => nvl(vr_vllanmto,0)
+                                                            ,pr_nrseqdig => vr_nrseqdig
+                                                            ,pr_cdpesqbb => nvl(vr_cdpesqbb,' ')
+                                                            ,pr_cdbanchq => nvl(vr_cdbandep,0)
+                                                            ,pr_cdcmpchq => nvl(vr_cdcmpdep,0)
+                                                            ,pr_cdagechq => nvl(vr_cdagedep,0)
+                                                            ,pr_nrctachq => nvl(vr_nrctadep,0)
+                                                            ,pr_nrlotchq => nvl(vr_nrlotchq,0)
+                                                            ,pr_sqlotchq => nvl(vr_sqlotchq,0)
+                                                            ,pr_cdcoptfn => vr_cdcoptfn
+                                                            ,pr_cdagetfn => vr_cdageapr
+                                                            ,pr_hrtransa => to_char(SYSDATE,'sssss')
+                                                            -- OUTPUT --
+                                                            ,pr_tab_retorno => vr_tabretor
+                                                            ,pr_incrineg    => vr_incrineg
+                                                            ,pr_cdcritic    => vr_cdcritic
+                                                            ,pr_dscritic    => vr_dscritic);
+
+                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                            IF nvl(pr_cdcritic, 0) = 92 THEN
                               vr_nrseqdig := vr_nrseqdig + 100000;
                               continue;
-                          WHEN OTHERS THEN
+                            ELSE
                               cecred.pc_internal_exception;
-                            vr_des_erro:= 'Erro ao inserir na tabela craplcm, deposito intercooperativa. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
+                              vr_des_erro:= vr_dscritic;
                             RAISE vr_exc_erro;
-                        END;
+                            END IF;
+                          END IF;
                           
                           vr_flg_criou_lcm := TRUE;
                           
@@ -4642,59 +4623,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq,0);               
                         
                         WHILE NOT vr_flg_criou_lcm LOOP
-                          BEGIN
-                          --Inserir lancamento
-                          INSERT INTO craplcm (cdcooper
-                                              ,dtmvtolt
-                                              ,dtrefere
-                                              ,cdagenci
-                                              ,cdbccxlt
-                                              ,nrdolote
-                                              ,nrdconta
-                                              ,nrdctabb
-                                              ,nrdocmto
-                                              ,cdhistor
-                                              ,vllanmto
-                                              ,nrseqdig
-                                              ,cdpesqbb
-                                              ,cdbanchq
-                                              ,cdcmpchq
-                                              ,cdagechq
-                                              ,nrctachq
-                                              ,nrlotchq
-                                              ,sqlotchq
-                                              ,cdcoptfn
-                                              ,hrtransa)
-                                     VALUES   (pr_cdcooper
-                                              ,rw_craplot.dtmvtolt
-                                              ,pr_dtleiarq
-                                              ,nvl(rw_craplot.cdagenci,0)
-                                              ,nvl(rw_craplot.cdbccxlt,0)
-                                              ,nvl(rw_craplot.nrdolote,0)
-                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
-                                              ,nvl(vr_nrdocmto,0)
-                                              ,nvl(vr_cdhistor,0)
-                                              ,nvl(vr_vllanmto,0)
-                                                ,vr_nrseqdig
-                                              ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_cdbandep,0)
-                                              ,nvl(vr_cdcmpdep,0)
-                                              ,nvl(vr_cdagedep,0)
-                                              ,nvl(vr_nrctadep,0)
-                                              ,nvl(vr_nrlotchq,0)
-                                              ,nvl(vr_sqlotchq,0)
-                                              ,0
-                                              ,to_char(SYSDATE,'sssss'));
-                        EXCEPTION
-                            WHEN DUP_VAL_ON_INDEX THEN
+
+                          -- Chamada a LANC0001 -- 3
+                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                            ,pr_dtrefere => pr_dtleiarq
+                                                            ,pr_cdagenci => nvl(rw_craplot.cdagenci,0)
+                                                            ,pr_cdbccxlt => nvl(rw_craplot.cdbccxlt,0)
+                                                            ,pr_nrdolote => nvl(rw_craplot.nrdolote,0)
+                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
+                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
+                                                            ,pr_nrdocmto => nvl(vr_nrdocmto,0)
+                                                            ,pr_cdhistor => nvl(vr_cdhistor,0)
+                                                            ,pr_vllanmto => nvl(vr_vllanmto,0)
+                                                            ,pr_nrseqdig => vr_nrseqdig
+                                                            ,pr_cdpesqbb => nvl(vr_cdpesqbb,' ')
+                                                            ,pr_cdbanchq => nvl(vr_cdbandep,0)
+                                                            ,pr_cdcmpchq => nvl(vr_cdcmpdep,0)
+                                                            ,pr_cdagechq => nvl(vr_cdagedep,0)
+                                                            ,pr_nrctachq => nvl(vr_nrctadep,0)
+                                                            ,pr_nrlotchq => nvl(vr_nrlotchq,0)
+                                                            ,pr_sqlotchq => nvl(vr_sqlotchq,0)
+                                                            ,pr_cdcoptfn => 0
+                                                            ,pr_hrtransa => to_char(SYSDATE,'sssss')
+                                                            -- OUTPUT --
+                                                            ,pr_tab_retorno => vr_tabretor
+                                                            ,pr_incrineg    => vr_incrineg
+                                                            ,pr_cdcritic    => vr_cdcritic
+                                                            ,pr_dscritic    => vr_dscritic);
+
+                          -- Se há alguma crítica ou erro
+                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                            -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
+                            IF nvl(vr_cdcritic, 0) = 92 THEN
                               vr_nrseqdig := vr_nrseqdig + 100000;
                               continue;
-                          WHEN OTHERS THEN
+                            ELSE
                               cecred.pc_internal_exception;
-                            vr_des_erro:= 'Erro ao inserir na tabela craplcm. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
-                            RAISE vr_exc_erro;
-                        END;
+                              vr_des_erro:= vr_dscritic;
+                              RAISE vr_exc_erro;
+                            END IF;
+                          END IF;
 
                           vr_flg_criou_lcm := TRUE;
 
@@ -4852,64 +4821,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq, 0);
 
                         WHILE NOT vr_flg_criou_lcm LOOP
-                        BEGIN
-                         INSERT INTO craplcm
-                           (cdcooper,
-                            dtmvtolt,
-                            dtrefere,
-                            cdagenci,
-                            cdbccxlt,
-                            nrdolote,
-                            nrdconta,
-                            nrdctabb,
-                            nrdocmto,
-                            cdhistor,
-                            vllanmto,
-                            nrseqdig,
-                            cdpesqbb,
-                            cdbanchq,
-                            cdagechq,
-                            cdcmpchq,
-                            nrctachq,
-                            nrlotchq,
-                            sqlotchq,
-                            cdcoptfn,
-                            dsidenti,
-                            hrtransa)
-                         VALUES
-                           (pr_cdcooper,
-                            rw_craplot2.dtmvtolt,
-                            pr_dtleiarq,
-                            nvl(rw_craplot2.cdagenci, 0),
-                            nvl(rw_craplot2.cdbccxlt, 0),
-                            nvl(rw_craplot2.nrdolote, 0),
-                            nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0),
-                            nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0),
-                            nvl(vr_nrdocmto, 0),
-                            (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END),
-                            nvl(vr_vllanmto, 0),
-                              vr_nrseqdig,
-                            vr_alinea_96,
-                            rw_crapfdc.cdbanchq,
-                            rw_crapfdc.cdagechq,
-                            rw_crapfdc.cdcmpchq,
-                            rw_crapfdc.nrctachq,
-                            nvl(vr_nrlotchq, 0),
-                            nvl(vr_sqlotchq, 0),
-                            0,
-                            2, -- dsidenti 
-                            to_char(SYSDATE, 'sssss'));
-                         EXCEPTION
-                             WHEN DUP_VAL_ON_INDEX THEN
+
+                          -- Chamada a LANC0001 -- 4
+                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                                            ,pr_dtmvtolt => rw_craplot2.dtmvtolt
+                                                            ,pr_dtrefere => pr_dtleiarq
+                                                            ,pr_cdagenci => nvl(rw_craplot2.cdagenci, 0)
+                                                            ,pr_cdbccxlt => nvl(rw_craplot2.cdbccxlt, 0)
+                                                            ,pr_nrdolote => nvl(rw_craplot2.nrdolote, 0)
+                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0)
+                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0)
+                                                            ,pr_nrdocmto => nvl(vr_nrdocmto, 0)
+                                                            ,pr_cdhistor => (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END)
+                                                            ,pr_vllanmto => nvl(vr_vllanmto, 0)
+                                                            ,pr_nrseqdig => vr_nrseqdig
+                                                            ,pr_cdpesqbb => vr_alinea_96
+                                                            ,pr_cdbanchq => rw_crapfdc.cdbanchq
+                                                            ,pr_cdagechq => rw_crapfdc.cdagechq
+                                                            ,pr_cdcmpchq => rw_crapfdc.cdcmpchq
+                                                            ,pr_nrctachq => rw_crapfdc.nrctachq
+                                                            ,pr_nrlotchq => nvl(vr_nrlotchq, 0)
+                                                            ,pr_sqlotchq => nvl(vr_sqlotchq, 0)
+                                                            ,pr_cdcoptfn => 0
+                                                            ,pr_dsidenti => 2
+                                                            ,pr_hrtransa => to_char(SYSDATE, 'sssss')
+                                                            -- OUTPUT --
+                                                            ,pr_tab_retorno => vr_tabretor
+                                                            ,pr_incrineg    => vr_incrineg
+                                                            ,pr_cdcritic    => vr_cdcritic
+                                                            ,pr_dscritic    => vr_dscritic);
+
+                          -- Se há alguma crítica ou erro
+                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                            -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
+                            IF nvl(vr_cdcritic, 0) = 92 THEN
                                -- Incrementar o nrseqdig e tentar inserir novamente
                                vr_nrseqdig := vr_nrseqdig + 100000;
                                continue;
-                           WHEN OTHERS THEN
+                            ELSE
                                cecred.pc_internal_exception;
-                             vr_des_erro:= 'Erro ao inserir na tabela craplcm (devolucao). Rotina'
-                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
-                             RAISE vr_exc_erro;
-                        END;
+                               vr_des_erro:= vr_dscritic;
+                               RAISE vr_exc_erro;
+                            END IF;
+                          END IF;
                         
                           vr_flg_criou_lcm := TRUE;
 

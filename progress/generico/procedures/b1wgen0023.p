@@ -30,7 +30,7 @@
 
     Programa: b1wgen0023.p
     Autor   : Guilherme
-    Data    : Junho/2009                       Ultima Atualizacao: 03/12/2014
+    Data    : Junho/2009                       Ultima Atualizacao: 06/07/2018
     
     Dados referentes ao programa:
 
@@ -80,6 +80,8 @@
                02/12/2014 - Inclusao da chamada do solicita_baixa_automatica
                             (Guilherme/SUPERO)
 
+               07/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
+
  .............................................................................*/
 
 { sistema/generico/includes/b1wgen0023tt.i }
@@ -87,6 +89,8 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
+
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -433,7 +437,19 @@ PROCEDURE baixa_epr_titulo:
     DEF VAR h-b1wgen0171 AS HANDLE                          NO-UNDO.
     DEF BUFFER crabcob FOR crapcob.
     
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
+    
+    
+    /* Identificar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p
+    PERSISTENT SET h-b1wgen0200. 
+    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_cdcritic = 0
@@ -630,29 +646,68 @@ PROCEDURE baixa_epr_titulo:
                     RETURN "NOK".
                 END.
 
-            /* Credita na conta da cooperativa o valor do pagamento do boleto */
-            CREATE craplcm.
-            ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrdconta = par_nrdconta
-                   craplcm.nrdctabb = par_nrdconta
-                   craplcm.cdcooper = par_cdcooper
-                   craplcm.nrdocmto = DECIMAL(aux_nrdocmto)
-                   craplcm.cdhistor = 266
-                   craplcm.nrseqdig = craplot.nrseqdig + 1
-                   craplcm.vllanmto = par_vllanmto
-                   craplcm.cdpesqbb = "Pagador " + STRING(par_nrctasac)
+                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt         /* par_dtmvtolt */
+                       ,INPUT craplot.cdagenci         /* par_cdagenci */
+                       ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
+                       ,INPUT craplot.nrdolote        /* par_nrdolote */
+                       ,INPUT par_nrdconta            /* par_nrdconta */
+                       ,INPUT DECIMAL(aux_nrdocmto)   /* par_nrdocmto */
+                       ,INPUT 266                    /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig + 1   /* par_nrseqdig */
+                       ,INPUT par_vllanmto           /* par_vllanmto */
+                       ,INPUT par_nrdconta           /* par_nrdctabb */
+                       ,INPUT "Pagador " + STRING(par_nrctasac) /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT 0                 /* par_nrautdoc */
+                       ,INPUT craplot.nrseqdig  /* par_nrsequni */
+                       ,INPUT 0                 /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT 0                 /* par_cdagechq */
+                       ,INPUT 0                 /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT ""              /* par_dtrefere */
+                       ,INPUT ""              /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT ""                /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT 0                 /* par_nrdctitg */
+                       ,INPUT ""                /* par_dscedent */
+                       ,INPUT 0                 /* par_cdcoptfn */
+                       ,INPUT 0                 /* par_cdagetfn */
+                       ,INPUT 0                 /* par_nrterfin */
+                       ,INPUT 0                 /* par_nrparepr */
+                       ,INPUT 0                 /* par_nrseqava */
+                       ,INPUT 0                 /* par_nraplica */
+                       ,INPUT 0                 /*par_cdorigem*/
+                       ,INPUT 0                 /* par_idlautom */
+                       ,INPUT 0                 /*par_inprolot*/ 
+                       ,INPUT 0                 /*par_tplotmov */
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
 
-                   craplot.vlinfodb = craplot.vlinfocr + craplcm.vllanmto
-                   craplot.vlcompdb = craplot.vlcompcr + craplcm.vllanmto
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO: 			 
+                           RUN gera_erro (INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT 1,     /** Sequencia **/
+                                          INPUT aux_cdcritic,
+                                          INPUT-OUTPUT aux_dscritic).
+                           RETURN "NOK".
+                        END.
+
+             ASSIGN craplot.vlinfodb = craplot.vlinfocr + par_vllanmto
+                    craplot.vlcompdb = craplot.vlcompcr + par_vllanmto
                    craplot.qtinfoln = craplot.qtinfoln + 1
                    craplot.qtcompln = craplot.qtcompln + 1
                    craplot.nrseqdig = craplot.nrseqdig + 1.
 
+            
             VALIDATE craplot.
-            VALIDATE craplcm.
+            
         END. /* Fim do credito na c/c da cooperativa */
     
     /* Debitar na conta da cooperativa */
@@ -706,30 +761,70 @@ PROCEDURE baixa_epr_titulo:
             RETURN "NOK".
         END.
 
-    /* Debita na conta da cooperativa o valor do pagamento do boleto */
-    CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-           craplcm.cdagenci = craplot.cdagenci
-           craplcm.cdbccxlt = craplot.cdbccxlt
-           craplcm.nrdolote = craplot.nrdolote
-           craplcm.nrdconta = par_nrdconta
-           craplcm.nrdctitg = STRING(crapepr.nrdconta,"99999999")           
-           craplcm.nrdctabb = par_nrdconta
-           craplcm.cdcooper = par_cdcooper
-           craplcm.nrdocmto = DECIMAL(aux_nrdocmto)
-           craplcm.cdhistor = 302
-           craplcm.nrseqdig = craplot.nrseqdig + 1
-           craplcm.vllanmto = par_vllanmto
-           craplcm.cdpesqbb = STRING(par_nrctasac,"99999999")
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt        /* par_dtmvtolt */
+                       ,INPUT craplot.cdagenci        /* par_cdagenci */
+                       ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
+                       ,INPUT craplot.nrdolote        /* par_nrdolote */
+                       ,INPUT par_nrdconta            /* par_nrdconta */
+                       ,INPUT DECIMAL(aux_nrdocmto)   /* par_nrdocmto */
+                       ,INPUT 302                    /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig + 1  /* par_nrseqdig */
+                       ,INPUT par_vllanmto           /* par_vllanmto */
+                       ,INPUT par_nrdconta           /* par_nrdctabb */
+                       ,INPUT STRING(par_nrctasac,"99999999") /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT 0                 /* par_nrautdoc */
+                       ,INPUT 0                 /* par_nrsequni */
+                       ,INPUT 0                 /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT 0                 /* par_cdagechq */
+                       ,INPUT 0                 /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT ""                /* par_dtrefere */
+                       ,INPUT ""                /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT ""                /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT STRING(crapepr.nrdconta,"99999999")   /* par_nrdctitg */
+                       ,INPUT ""                /* par_dscedent */
+                       ,INPUT 0                 /* par_cdcoptfn */
+                       ,INPUT 0                 /* par_cdagetfn */
+                       ,INPUT 0                 /* par_nrterfin */
+                       ,INPUT 0                 /* par_nrparepr */
+                       ,INPUT 0                 /* par_nrseqava */
+                       ,INPUT 0                 /* par_nraplica */
+                       ,INPUT 0                 /*par_cdorigem*/
+                       ,INPUT 0                 /* par_idlautom */
+                       ,INPUT 0                 /*par_inprolot*/ 
+                       ,INPUT 0                 /*par_tplotmov */ 
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
 
-           craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-           craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO: 			 
+                           RUN gera_erro (INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT 1,     /** Sequencia **/
+                                          INPUT aux_cdcritic,
+                                          INPUT-OUTPUT aux_dscritic).
+                           RETURN "NOK".
+                        END.
+
+    ASSIGN   craplot.vlinfodb = craplot.vlinfodb + par_vllanmto
+             craplot.vlcompdb = craplot.vlcompdb + par_vllanmto
            craplot.qtinfoln = craplot.qtinfoln + 1
            craplot.qtcompln = craplot.qtcompln + 1
            craplot.nrseqdig = craplot.nrseqdig + 1.
     VALIDATE craplot.
-    VALIDATE craplcm.
+    
     /* Fim do debito da c/c da cooperativa */
+    
+    
+    DELETE PROCEDURE h-b1wgen0200. 
     
     /* Fazer o pagamento do emprestimo */
     DO  aux_contador = 1 TO 10:
