@@ -1,12 +1,12 @@
 create table CECRED.TBRISCO_CENTRAL_PARAMETROS
 (
   cdcooper                     NUMBER(5)              not null,
-  perc_liquid_sem_garantia     NUMBER(3,2) DEFAULT 30 not null,
-  perc_cobert_aplic_bloqueada  NUMBER(3,2) DEFAULT 70 not null,
+  perc_liquid_sem_garantia     NUMBER(5,2) DEFAULT 30 not null,
+  perc_cobert_aplic_bloqueada  NUMBER(5,2) DEFAULT 70 not null,
   inrisco_melhora_minimo       NUMBER(5)   DEFAULT 2  NOT NULL,
   dthr_alteracao               DATE                   not null,
   cdoperador_alteracao         VARCHAR2(10)           not null
-)
+);
 
 -- Add comments to the table
 comment on table CECRED.TBRISCO_CENTRAL_PARAMETROS
