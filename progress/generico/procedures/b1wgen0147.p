@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 19/02/2018
+   Data    : 02/05/2013                         Ultima atualizacao: 23/07/2018
 
    Dados referentes ao programa:
 
@@ -40,8 +40,12 @@
 
 			   19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
 
+
+               23/07/2018 - PRJ450 - Gravar indexador do contrato (Guilherme/AMcom)
+
 .............................................................................*/
 
+{ sistema/generico/includes/b1wgen0200tt.i }
 { sistema/generico/includes/b1wgen0147tt.i }
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/gera_erro.i }
@@ -594,6 +598,7 @@ PROCEDURE atualiza-operacoes:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_nrctrbnd AS DECI NO-UNDO.
+    DEF VAR aux_cdindxdr AS DECI NO-UNDO.
     DEF VAR aux_dtfimctr AS DATE NO-UNDO.
     DEF VAR aux_dtinictr AS DATE NO-UNDO.
     DEF VAR aux_vlropepr AS DECI NO-UNDO.
@@ -835,6 +840,15 @@ PROCEDURE atualiza-operacoes:
 
                    aux_descprod = SUBSTR(aux_setlinha, 1229, 40).
 
+            IF TRIM(aux_descprod) = "FINAME PSI PJ" THEN
+               aux_cdindxdr = 11.
+            ELSE IF TRIM(aux_descprod) = "FINAME PJ" THEN
+               aux_cdindxdr = 22.
+            ELSE
+               aux_cdindxdr = 24.
+            /* SO TEM ESSES 3 PRODUTOS PARA BNDES */
+            
+
             /* Atualiza somente ATIVO na conta dos cooperados, 
               despreza PASSIVO */
             IF  aux_natopera <> "A" THEN
@@ -948,7 +962,8 @@ PROCEDURE atualiza-operacoes:
                        crapebn.cdnatope = aux_natopera
                        crapebn.cdperpca = aux_periocar
                        crapebn.dtpricar = aux_dtcarenc
-                       crapebn.dsprodut = aux_descprod. 
+                       crapebn.dsprodut = aux_descprod
+                       crapebn.cdindxdr = aux_cdindxdr. 
 
                 VALIDATE crapebn.
 
@@ -1373,6 +1388,7 @@ PROCEDURE atualiza-central-risco:
     DEF VAR aux_idseqbem AS INTE NO-UNDO.
     DEF VAR aux_nmarqdes AS CHAR NO-UNDO.
     DEF VAR aux_nrsequen AS INTE NO-UNDO.
+    DEF VAR aux_cdindxdr AS INTE NO-UNDO.
 
     ASSIGN aux_nmarqdes = "/usr/coop/cecred/salvar/"
            aux_nrsequen = 0.
@@ -1446,6 +1462,7 @@ PROCEDURE atualiza-central-risco:
             DO:
                 ASSIGN aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha, 7, 14))
                        aux_nrctrbnd = INTE(SUBSTR(aux_setlinha, 43, 10))
+                       aux_cdindxdr = INTE(SUBSTR(aux_setlinha,100,  2))
                        aux_txefeanu = DECI(STRING(
                                            SUBSTR(aux_setlinha, 771, 11),
                                            "9999,9999999"))
@@ -1480,7 +1497,8 @@ PROCEDURE atualiza-central-risco:
                                    EXCLUSIVE-LOCK NO-ERROR.
 
                 IF AVAIL crapebn THEN
-                    ASSIGN crapebn.txefeanu = aux_txefeanu.
+                    ASSIGN crapebn.txefeanu = aux_txefeanu
+                           crapebn.cdindxdr = aux_cdindxdr.
 
 
             END.
@@ -1642,6 +1660,12 @@ PROCEDURE cria-lancamento:
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI NO-UNDO.
 
+    
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1681,6 +1705,13 @@ PROCEDURE cria-lancamento:
                craplot.qtcompln = craplot.qtcompln + 1
                craplot.nrseqdig = craplot.nrseqdig + 1.
 
+
+         /* Identificar orgao expedidor */
+         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p
+            PERSISTENT SET h-b1wgen0200.
+       
+
         /* Responsavel por criar lancamento em conta corrente */
         FIND FIRST craplcm WHERE craplcm.cdcooper = par_cdcooper AND
                                  craplcm.nrdconta = par_nrdconta AND
@@ -1698,24 +1729,60 @@ PROCEDURE cria-lancamento:
                     END.
                 ELSE
                     DO:
-                        CREATE craplcm.
-                        ASSIGN craplcm.cdcooper = par_cdcooper
-                               craplcm.dtmvtolt = craplot.dtmvtolt
-                               craplcm.cdagenci = par_cdagenci
-                               craplcm.cdbccxlt = par_cdbccxlt
-                               craplcm.nrdolote = par_nrdolote
-                               craplcm.dtrefere = craplot.dtmvtolt
-                               craplcm.hrtransa = TIME
-                               craplcm.cdoperad = par_cdoperad
-                               craplcm.nrdconta = par_nrdconta
-                               craplcm.nrdctabb = par_nrdconta
-                               craplcm.nrseqdig = craplot.nrseqdig
-                               craplcm.nrsequni = craplot.nrseqdig
-                               craplcm.nrdocmto = craplot.nrseqdig
-                               craplcm.cdhistor = par_cdhistor
-                               craplcm.vllanmto = par_vllanmto.
-                        VALIDATE craplcm.
+                     RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
+                       ,INPUT par_cdagenci      /* par_cdagenci */
+                       ,INPUT par_cdbccxlt      /* par_cdbccxlt */
+                       ,INPUT par_nrdolote      /* par_nrdolote */
+                       ,INPUT par_nrdconta      /* par_nrdconta */
+                       ,INPUT craplot.nrseqdig  /* par_nrdocmto */
+                       ,INPUT par_cdhistor      /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig  /* par_nrseqdig */
+                       ,INPUT par_vllanmto      /* par_vllanmto */
+                       ,INPUT par_nrdconta      /* par_nrdctabb */
+                       ,INPUT ""                /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT 0                 /* par_nrautdoc */
+                       ,INPUT craplot.nrseqdig  /* par_nrsequni */
+                       ,INPUT 0                 /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT 0                 /* par_cdagechq */
+                       ,INPUT 0                 /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT craplot.dtmvtolt  /* par_dtrefere */
+                       ,INPUT TIME              /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT ""                /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT 0                 /* par_nrdctitg */
+                       ,INPUT ""               /* par_dscedent */
+                       ,INPUT 0                /* par_cdcoptfn */
+                       ,INPUT 0                /* par_cdagetfn */
+                       ,INPUT 0                /* par_nrterfin */
+                       ,INPUT 0                /* par_nrparepr */
+                       ,INPUT 0                /* par_nrseqava */
+                       ,INPUT 0                /* par_nraplica */
+                       ,INPUT 0                /*par_cdorigem*/
+                       ,INPUT 0                /* par_idlautom */
+                       ,INPUT 0                /*par_inprolot*/ 
+                       ,INPUT 0                /*par_tplotmov */
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
 
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:  
+							RUN gera_erro (INPUT aux_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, 
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+							RETURN "NOK".  
+                         END.  
                     END.
             END.
         ELSE
@@ -1735,6 +1802,9 @@ PROCEDURE cria-lancamento:
         LEAVE.
 
     END. /* fim do while true */
+    
+   
+    DELETE PROCEDURE h-b1wgen0200. 
 
     RETURN "OK".
 

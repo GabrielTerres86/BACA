@@ -91,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 05/06/2018
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 29/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -126,7 +126,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   -- 
   --             05/06/2018 - Adicionado calculo do saldo devedor do desconto de títulos (Paulo Penteado (GFT)) 
   -- 
-  --             04/10/2018 - Ajuste pc_gerar_acordo para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
+	--             29/10/2018 - Ajuste na "pc_cancelar_acordo" para estorno do IOF vinculado ao acordo para a 
+	--                         tabela CRAPSLD (vliofmes) quando o acordo é cancelado.
+	--  											 (Reginaldo - AMcom - P450)
+  --
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
   vr_formtnum   VARCHAR2(30) := '99999999999990D00';
@@ -1774,7 +1777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 30/11/2017
+      Data    : Julho/2016.                    Ultima atualizacao: 29/10/2018
 
       Dados referentes ao programa:
 
@@ -1801,6 +1804,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				               e inexistentes no Ayllos.
                                (GSaquetta - Chamado 848110).
 
+									29/10/2018 - Ajuste para estorno do IOF vinculado ao acordo para a tabela CRAPSLD
+									             quando o acordo é cancelado.
+															 (Reginaldo - AMcom - P450) 
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1817,6 +1824,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        WHERE nracordo = pr_nracordo;
     rw_tbacordo cr_tbacordo%ROWTYPE;  
     
+		--> Buscar informações de IOF vinculado ao contrato (ADP)
+		CURSOR cr_contrato IS
+		   SELECT ctr.vliofdev
+			      , ctr.vliofpag
+			   FROM tbrecup_acordo_contrato ctr
+				WHERE ctr.nracordo = pr_nracordo
+				  AND cdorigem = 1;
+		rw_contrato cr_contrato%ROWTYPE;
+
     --> Buscar parcelas do acordo
     CURSOR cr_parcelas IS         
       SELECT par.nrdconta_cob
@@ -2002,6 +2018,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         vr_dscritic := 'Erro ao atualizar o CYBER: '||SQLERRM;
         RAISE vr_exc_erro_det;
     END;
+		
+		-- Busca valor de IOF pendente do acordo
+		OPEN cr_contrato;
+		FETCH cr_contrato INTO rw_contrato;
+		
+		IF nvl(rw_contrato.vliofdev, 0) - nvl(rw_contrato.vliofpag, 0) > 0 THEN
+			BEGIN
+				-- Atualiza o IOF provisionado na CRAPSLD com o valor do IOF pendente do acordo a ser cancelado
+				UPDATE crapsld sld
+				   SET sld.vliofmes = nvl(sld.vliofmes, 0) + nvl(rw_contrato.vliofdev, 0) - nvl(rw_contrato.vliofpag, 0)
+				 WHERE sld.cdcooper = rw_tbacordo.cdcooper
+				   AND sld.nrdconta = rw_tbacordo.nrdconta;
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Erro ao atualizar valor do IOF na CRAPSLD: ' || SQLERRM;
+          RAISE vr_exc_erro_det;
+			END;
+			
+			-- Remove o vínculo dos lançamentos de IOF da TBGEN_IOF_LANCAMENTO com o acordo que está sendo cancelado
+			BEGIN
+				UPDATE tbgen_iof_lancamento 
+				   SET tbgen_iof_lancamento.nracordo = NULL
+         WHERE tbgen_iof_lancamento.nracordo = pr_nracordo;
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Erro ao atualizar numero do acordo na TBGEN_IOF_LANCAMENTO: ' || SQLERRM;
+          RAISE vr_exc_erro_det;
+			END;
+		END IF;
+		
+		CLOSE cr_contrato;
 
     BEGIN
       -- Alterar a situação do acordo para cancelado
