@@ -1525,6 +1525,9 @@ END pc_incluir_bordero_esteira;
   vr_tab_dados_dsctit_sr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Sem Registro
   vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
 
+  --- variavel cartoes
+  vr_vltotccr NUMBER;
+
   BEGIN
 
      --    Verificar se a data existe
@@ -1789,6 +1792,11 @@ END pc_incluir_bordero_esteira;
 
      vr_obj_bordero.put('parecerPreAnalise', 0);
 
+         -- retorna o limite dos cartoes do cooperado para todas as contas (usando a cada0004.lista_cartoes)
+        ccrd0001.pc_retorna_limite_cooperado(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_vllimtot => vr_vltotccr);
+
          -- Verificar se usa tabela juros
          vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                   ,pr_nmsistem => 'CRED'
@@ -1849,7 +1857,7 @@ END pc_incluir_bordero_esteira;
 
          -- Na Esteira de Crédito o valor total do endividamento utilizado no fluxo de aprovação será composto por:
          --   Valor do Endividamento da conta + valor do Borderô que está sendo inclusa + o valor de Borderôs aprovados e não efetivados.
-         vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0)));
+         vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0) + nvl(vr_vltotccr, 0)));
 
          vr_obj_bordero.put('propostasPendentesValor'     ,vr_vlprapne );
          vr_obj_bordero.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );

@@ -188,13 +188,15 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
 			else {
 				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
+				echo '}';
 			}
         }
 
         // tratamento para considerar cartao adicional
         if ($vllimcrd <> 0) {
-			// aqui e para ser adicional		
+			// aqui e titular
             if ($tpdpagto == 0 && $cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("0");';
             } else if ($tpdpagto == 1) {
@@ -214,7 +216,10 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
 			}else{
 				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
+				echo '}';
+				
 			}
 
 			//echo "$('#dddebito').attr('disabled', true);";
@@ -228,8 +233,8 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 			}
 
         } else {
-
-				//echo "$('#dddebito').attr('disabled', false);";				
+			// validacoes para cartao adicional
+				echo "$('#dddebito').attr('disabled', true);";				
             echo "$('#tpenvcrd').attr('disabled', false);";
             if ($cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("1");';

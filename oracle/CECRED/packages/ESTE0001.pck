@@ -1594,6 +1594,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_ind_opeatr   BOOLEAN;
     vr_qthisemp     crapprm.dsvlrprm%TYPE;
       
+    --- variavel cartoes
+    vr_vltotccr NUMBER;
+
   BEGIN
     
     --Verificar se a data existe
@@ -1752,6 +1755,12 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     
     
     IF rw_crawepr.inlcrcdc = 0 THEN
+      
+      -- retorna o limite dos cartoes do cooperado para todas as contas (usando a cada0004.lista_cartoes)
+      ccrd0001.pc_retorna_limite_cooperado(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_vllimtot => vr_vltotccr);
+
       --Verificar se usa tabela juros
       vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -1815,8 +1824,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 	        END IF;
       END LOOP;
       
-      
-      vr_obj_proposta.put('endividamentoContaValor'     ,vr_vlutiliz);
+      vr_obj_proposta.put('endividamentoContaValor'     ,(vr_vlutiliz + vr_vltotccr));
       vr_obj_proposta.put('propostasPendentesValor'     ,fn_decimal_ibra(vr_vlprapne) );
       vr_obj_proposta.put('limiteCooperadoValor'        ,fn_decimal_ibra(nvl(vr_vllimdis,0)) );
       

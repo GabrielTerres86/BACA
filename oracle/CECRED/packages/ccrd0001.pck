@@ -95,7 +95,10 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0001" AS
 
   PROCEDURE pc_retorna_limite_cooperado (pr_cdcooper   IN crapcop.cdcooper%type
                                         ,pr_nrdconta   IN crapass.nrdconta%type
-                                        ,pr_dtmvtolt   IN crapdat.dtmvtolt%type
+                                        ,pr_vllimtot   OUT NUMBER) ;
+                                        
+  PROCEDURE pc_retorna_limite_conta (pr_cdcooper   IN crapcop.cdcooper%type
+                                    ,pr_nrdconta   IN crapass.nrdconta%type
                                         ,pr_vllimtot   OUT NUMBER) ;
 
 END CCRD0001;
@@ -350,7 +353,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
 
   PROCEDURE pc_retorna_limite_cooperado (pr_cdcooper   IN crapcop.cdcooper%type
                                         ,pr_nrdconta   IN crapass.nrdconta%type
-                                        ,pr_dtmvtolt   IN crapdat.dtmvtolt%type
                                         ,pr_vllimtot   OUT NUMBER) IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -384,15 +386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
     rw_crapass_cpfcgc cr_crapass_cpfcgc%rowtype;
    
     -- variaveis
-    vr_tab_cartoes CADA0004.typ_tab_cartoes;   
     vr_vltotccr    NUMBER := 0;
     vr_vllimtot    NUMBER := 0;
-    vr_flgativo    INTEGER;
-    vr_nrctrhcj    NUMBER;
-    vr_flgliber    INTEGER;
-    vr_tab_erro    GENE0001.typ_tab_erro;
-    vr_des_erro    VARCHAR2(10);
-    vr_des_reto    VARCHAR2(10);
       
   BEGIN
     
@@ -402,26 +397,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
     
     FOR rw_crapass_cpfcgc in cr_crapass_cpfcgc (rw_crapass.nrcpfcgc) LOOP
 
-       cada0004.pc_lista_cartoes(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
-                                ,pr_cdagenci => rw_crapass_cpfcgc.cdagenci --> Codigo de agencia
-                                ,pr_nrdcaixa => 0 --> Numero do caixa
-                                ,pr_cdoperad => 1 --> Codigo do operador
-                                ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta --> Numero da conta
-                                ,pr_idorigem => 5 --> Identificado de oriem
-                                ,pr_idseqttl => 1 --> sequencial do titular
-                                ,pr_nmdatela => 'ATENDA' --> Nome da tela
-                                ,pr_flgerlog => 'N' --> identificador se deve gerar log S-Sim e N-Nao
-                                ,pr_flgzerar => 'N' --> Nao zerar limite
-                                ,pr_dtmvtolt => pr_dtmvtolt --> Data da cooperativa
-                                ,pr_flgprcrd => 1 --> considerar apenas limite titular
-                                 ------ OUT ------
-                                ,pr_flgativo    => vr_flgativo --> Retorna situação 1-ativo 2-inativo
-                                ,pr_nrctrhcj    => vr_nrctrhcj --> Retorna numero do contrato
-                                ,pr_flgliber    => vr_flgliber --> Retorna se esta liberado 1-sim 2-nao
-                                ,pr_vltotccr    => vr_vltotccr --> retorna total de limite do cartao 
-                                ,pr_tab_cartoes => vr_tab_cartoes --> retorna temptable com os dados dos convenios
-                                ,pr_des_reto    => vr_des_reto --> OK ou NOK
-                                ,pr_tab_erro    => vr_tab_erro);
+       
+       pc_retorna_limite_conta (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta
+                               ,pr_vllimtot => vr_vltotccr);
 
         vr_vllimtot := vr_vllimtot + vr_vltotccr;                        
 
@@ -429,7 +408,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
 
     pr_vllimtot := vr_vllimtot;
     
-  END pc_retorna_limite_cooperado;
+  END pc_retorna_limite_cooperado; -- pc_retorna_limite_cooperado
+
+PROCEDURE pc_retorna_limite_conta (pr_cdcooper   IN crapcop.cdcooper%type
+                                  ,pr_nrdconta   IN crapass.nrdconta%type
+                                  ,pr_vllimtot   OUT NUMBER) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_retorna_limite_conta
+  --  Sigla    : CRED
+  --  Autor    : Rafael Faria (Supero)
+  --  Data     : Autubro/2018.                   Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Retorna os limites dos cartoes referente a conta
+  --
+  -- Alteracoes: 
+  ---------------------------------------------------------------------------------------------------------------
+    -- retorna o limite do cartao para a cooperativa e conta
+    CURSOR cr_valorlimite(pr_cdcooper crawcrd.cdcooper%TYPE
+                         ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+      SELECT SUM(NVL(vllimite,0)) vllimite
+        FROM (SELECT crd.nrcctitg
+                     /* Caso a conta cartao tenha mais limite, considera o maior 
+                        mas seria uma inconsistencia na base. */
+                    ,MAX(crd.vllimcrd) as vllimite
+                FROM crawcrd crd
+               WHERE crd.cdcooper = pr_cdcooper
+                 AND crd.nrdconta = pr_nrdconta
+                 AND crd.cdadmcrd between 10 and 80 /* BANCOOB */
+                 AND crd.insitcrd in (2,3,4) /* 2-solic. 3-liberado, 4-em uso */
+               GROUP BY crd.nrcctitg
+              UNION ALL 
+              SELECT 0 
+                    ,tlc.vllimcrd as vllimite
+                FROM crawcrd crd
+                JOIN craptlc tlc ON (tlc.cdcooper = crd.cdcooper 
+                                 AND tlc.cdadmcrd = crd.cdadmcrd 
+                                 AND tlc.tpcartao = crd.tpcartao 
+                                 AND tlc.cdlimcrd = crd.cdlimcrd 
+                                 AND tlc.dddebito = 0)
+                WHERE crd.cdcooper = pr_cdcooper
+                  AND crd.nrdconta = pr_nrdconta
+                  AND NOT crd.cdadmcrd between 10 and 80 /* NAO BANCOOB */
+                  AND crd.insitcrd IN (4,7)); /* Em uso */
+    rw_valorlimite cr_valorlimite%rowtype;
+      
+  BEGIN
+
+    OPEN cr_valorlimite (pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_valorlimite INTO rw_valorlimite;
+    CLOSE cr_valorlimite;
+
+    pr_vllimtot := nvl(rw_valorlimite.vllimite, 0);
+
+  END pc_retorna_limite_conta; -- pc_retorna_limite_conta
+
 
 END CCRD0001;
 /
