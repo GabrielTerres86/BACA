@@ -1306,7 +1306,7 @@ PROCEDURE Gera_Impressao:
          rel_nmextemp       FORMAT "x(35)"
          "em  minha  Conta  Salario  no" 
          SKIP
-         crapccs.nrdconta   FORMAT "zzz,zzz,9"
+         crapccs.nrdconta   FORMAT "zzzz,zzz,9"
          ",mantida junto a" 
          rel_nmextcop       FORMAT "x(49)"
          ","
@@ -1339,7 +1339,7 @@ PROCEDURE Gera_Impressao:
          "cancelamento das  transferencias  que  vinham" 
          SKIP
          "sendo efetuadas da minha Conta Salario no" 
-         crapccs.nrdconta   FORMAT "zzz,zzz,9"
+         crapccs.nrdconta   FORMAT "zzzz,zzz,9"
          ",  mantida  junto  a  esta" 
          SKIP
          "cooperativa ,  para  o " 
