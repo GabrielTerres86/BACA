@@ -55,7 +55,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
    Sigla   : CRED
   
    Autor   : Dionathan
-   Data    : 14/04/2016                        Ultima atualizacao: 16/05/2018
+   Data    : 14/04/2016                        Ultima atualizacao: 23/10/2018
    
    Objetivo  : Envio de SMS (Package Genérica)
   
@@ -369,7 +369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   INTO rw_crapcrb;
   cr_crapcrb_found := cr_crapcrb%FOUND;
   CLOSE cr_crapcrb;
-  
+
   -- Cria um registro na CRAPCRB apenas para gerar log
   IF NOT cr_crapcrb_found THEN
     -- Rotina para solicitar o processo de envio / retorno dos arquivos dos Bureaux
@@ -384,11 +384,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                     pr_cdcriticidade => 0,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 3);
-  END IF;
+      END IF;
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_insere_evento_remessa_sms');
   
-    END IF;
+  END IF;
 
   -- Centralização da gravação dos Eventos da Remessa
   cybe0002.pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme   --> Tipo da remessa
@@ -553,35 +553,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   END pc_processa_arquivo_ftp;
   
   PROCEDURE pc_dispacha_lotes_sms(pr_dscritic OUT VARCHAR2) IS
-    /*.............................................................................
+  /*.............................................................................
     
-        Programa: pc_dispacha_lotes_sms
-        Sistema : CECRED
-        Sigla   : EMPR
-        Autor   : Dionathan
-      Data    : 14/04/2016                    Ultima atualizacao: 16/05/2018
+      Programa: pc_dispacha_lotes_sms
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Dionathan
+      Data    : 14/04/2016                    Ultima atualizacao: 23/10/2018
     
-        Dados referentes ao programa:
+      Dados referentes ao programa:
     
-        Frequencia: Sempre que for chamado
+      Frequencia: Sempre que for chamado
     
-        Objetivo  : Rotina para gerar o arquivo de remessa SMS e enviar para a ZENVIA
+      Objetivo  : Rotina para gerar o arquivo de remessa SMS e enviar para a ZENVIA
     
-        Alteracoes: 05/01/2017 - Alteração para que os arquivos gerados gravem o horário correto de 
-                                 envio, obedecendo o horário cadastrado na tela PARMDA.
-                                 Corrigido o tipo de layout utilizado. Parametrizado horário limite
-                                 de envio para as 21:00h. SoftDesk 588454 (Aline).
+      Alteracoes: 05/01/2017 - Alteração para que os arquivos gerados gravem o horário correto de 
+                               envio, obedecendo o horário cadastrado na tela PARMDA.
+                               Corrigido o tipo de layout utilizado. Parametrizado horário limite
+                               de envio para as 21:00h. SoftDesk 588454 (Aline).
 
-                  29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                             - Padronização erros comandos DDL
-                             - Pc_set_modulo, cecred.pc_internal_exception
-                             - Tratamento erros others
-                              (Ana - Envolti - Chamado 788828)
+                29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
+                           - Padronização erros comandos DDL
+                           - Pc_set_modulo, cecred.pc_internal_exception
+                           - Tratamento erros others
+                            (Ana - Envolti - Chamado 788828)
 
-                  16/05/2017 - Ajuste variáveis vr_dscritic e pr_dscritic
-                             - Inclusão parâmetros no log
-                              (Ana - Envolti - Chamado PRB0040049)
-    ..............................................................................*/
+                16/05/2018 - Ajuste variáveis vr_dscritic e pr_dscritic
+                           - Inclusão parâmetros no log
+                            (Ana - Envolti - Chamado PRB0040049)
+
+                23/10/2018 - Inclusão geração arquivos TXT e CFG
+                            (Ana - Envolti - Chamado REQ0030877)
+  ..............................................................................*/
     
     -- Variável de críticas
     vr_dscritic VARCHAR2(10000);
@@ -657,7 +660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
      CLOSE cr_sms;   
       
      vr_horacoop := to_char(to_date(to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
-     
+
      --Se o horário no momento for menor que a hora parametrizada na cooperativa, envia no horário da cooperativa.
      IF TO_NUMBER(vr_horaatual) < TO_NUMBER(vr_horacoop) THEN
         vr_dhenvio := to_date(to_char(trunc(sysdate), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
@@ -666,6 +669,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
              vr_dhenvio := to_date(to_char(trunc(sysdate+1), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
           END IF;
      END IF;
+
+
+--teste ana daqui req00
+      -- REQ0030877
+      -- criar arquivo .cfg
+      -- Abre arquivo em modo de escrita (W)
+      gene0001.pc_abre_arquivo(pr_nmdireto => rw_lote.dsdirenv --> Diretório do arquivo
+                              ,pr_nmarquiv => vr_nmarquiv || '.cfg' --> Nome do arquivo
+                              ,pr_tipabert => 'W' --> Modo de abertura (R,W,A)
+                              ,pr_utlfileh => vr_arquivo_cfg --> Handle do arquivo aberto
+                              ,pr_des_erro => vr_dscritic); --> Erro
+
+      -- gravar linha no arquivo
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_cfg
+                                    ,'1;' || vr_nmarquiv || '.txt' || CHR(13) || CHR(10) ||
+                                     '2;' || 'E' || CHR(13) || CHR(10) ||
+                                     '3;' || to_char(vr_dhenvio, 'DD/MM/RRRR;HH24:MI') || CHR(13) || CHR(10) ||
+                                     '5;' || rw_lote.dsagrupador || CHR(13) || CHR(10) ||
+                                     '6;' || to_char(vr_dhenvio + (60 / 60 / 24), 'DD/MM/RRRR;HH24:MI') || CHR(13) || CHR(10) ||
+                                     '7;' || vr_nmarquiv || '_ret.txt' || CHR(13) || CHR(10));
+      
+      -- criar arquivo .txt
+      -- Abre arquivo em modo de escrita (W)
+      gene0001.pc_abre_arquivo(pr_nmdireto => rw_lote.dsdirenv --> Diretório do arquivo
+                              ,pr_nmarquiv => vr_nmarquiv || '.txt' --> Nome do arquivo
+                              ,pr_tipabert => 'W' --> Modo de abertura (R,W,A)
+                              ,pr_utlfileh => vr_arquivo_rem --> Handle do arquivo aberto
+                              ,pr_des_erro => vr_dscritic); --> Erro
+      
+      -- Loop que percorre os SMS do lote
+      FOR rw_sms IN cr_sms(pr_idlote_sms => rw_lote.idlote_sms) LOOP
+
+        -- Construir a linha do arquivo - LAYOUT E -> ZENVIA
+        -- LAYOUT E -> celular;msg;id;remetente;dataEnvio
+        vr_linha := '55' || rw_sms.nrddd || rw_sms.nrtelefone || ';' || -- Celular
+                    TRIM(RPAD(REPLACE(rw_sms.dsmensagem,';','.'), 160-LENGTH(rw_sms.nmrescop),' ')) || ';' || -- mensagem de texto (deve possuir no maximo 160 caracteres considerando o remetente)
+                    rw_sms.idsms || ';' || -- Id interno (Lote/SMS)
+                    rw_sms.nmrescop || ';' || -- Remetente
+                   -- to_char(rw_sms.dhenvio_sms, 'dd/mm/yyyy hh24:mi:ss') || CHR(13); -- Data do envio
+                    to_char(vr_dhenvio, 'DD/MM/RRRR HH24:MI:SS') || CHR(13);
+        -- Gravar linha no arquivo                    
+
+        GENE0001.pc_escr_linha_arquivo(vr_arquivo_rem,vr_linha);
+
+      END LOOP; -- Fim do loop que percorre os SMS do lote
+--teste ana ate aqui req00
       
       -- Fechar os arquivos
       GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_cfg);
@@ -700,10 +749,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       IF vr_dscritic IS NULL THEN
         
         BEGIN
-        UPDATE tbgen_sms_lote lot
-           SET lot.idsituacao = 'E' -- Em espera de Retorno
-              ,lot.dtmvtolt = vr_dhenvio
-         WHERE lot.idlote_sms = rw_lote.idlote_sms;
+          UPDATE tbgen_sms_lote lot
+             SET lot.idsituacao = 'E' -- Em espera de Retorno
+                ,lot.dtmvtolt = vr_dhenvio
+           WHERE lot.idlote_sms = rw_lote.idlote_sms;
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
@@ -861,7 +910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       FROM tbgen_sms_lote lot
           ,crappbc        pbc
      WHERE lot.idtpreme = pbc.idtpreme
-       AND lot.idsituacao = 'E' --Em espera de Retorno
+       AND lot.idsituacao = 'E'  --Em espera de Retorno
        AND (SYSDATE-lot.dtmvtolt) <= 2; -- No máximo até 2 dias atrás
 
     rw_lote cr_lote%ROWTYPE;
@@ -887,7 +936,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                     ,pr_idlote_sms => rw_lote.idlote_sms
                                     ,pr_idtpreme   => rw_lote.idtpreme
                                     ,pr_idoperac   => idoperac_retorno) || '.txt'; -- Arquivo de retorno
-      
+
       --Grava log na rotina chamada
       pc_processa_arquivo_ftp(pr_nmarquiv => vr_nmarquiv      --> Nome arquivo a receber
                              ,pr_idoperac => idoperac_retorno --> Envio de arquivo
@@ -898,10 +947,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                              ,pr_ftp_pass => rw_lote.dspwdftp --> Senha para acesso ao FTP
                              ,pr_ftp_path => rw_lote.dsdrrftp --> Pasta no FTP para retorno do arquivo
                              ,pr_dscritic => vr_dscritic);    --> Retorno de crítica
-      
+
       -- Se ocorreu erro ao receber o arquivo pula para o proximo lote
       IF vr_dscritic IS NOT NULL THEN
-         
+
         --Já gravou tabela de log na pc_processa_arquivo_ftp - Ch 788828
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
                                              ,pr_dtmvtolt => rw_lote.dtmvtolt --> Data passada
@@ -927,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       
       -- Se ocorreu erro pula para o proximo lote
       IF pr_dscritic IS NOT NULL THEN
-         
+
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
@@ -959,7 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         -- Neste caso, deve pular para o próximo
         CONTINUE;
       END IF;
-      
+
       -- Abrir Arquivo
       gene0001.pc_abre_arquivo(pr_nmdireto => rw_lote.dsdirret||'/temp' --> Diretorio do arquivo
                               ,pr_nmarquiv => vr_nmarquiv      --> Nome do arquivo
@@ -969,7 +1018,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       
       -- Se ocorreu erro pula para o proximo lote
       IF vr_dscritic IS NOT NULL THEN
-         
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
@@ -1028,10 +1076,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
             --No 1o layout, o status era recebido no 5o campo do arquivo de retorno.
             --No início de 2017, esse layout foi alterado e o status passou a ser enviado no 6o campo
             BEGIN
-            UPDATE tbgen_sms_controle sms
+              UPDATE tbgen_sms_controle sms
                  SET sms.cdretorno = to_number(vr_tab_string(6)) -- Código do retorno
-             WHERE sms.idlote_sms = rw_lote.idlote_sms
-               AND sms.idsms = to_number(vr_tab_string(3));
+               WHERE sms.idlote_sms = rw_lote.idlote_sms
+                 AND sms.idsms = to_number(vr_tab_string(3));
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
