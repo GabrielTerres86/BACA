@@ -12,7 +12,7 @@ create table CECRED.TBRISCO_OPERACOES
   dtrisco_melhora     date,
   cdcritica_melhora   number
 
-)
+);
 
 comment on table CECRED.TBRISCO_OPERACOES
   is 'Centralizadora de Riscos da Operacao';
