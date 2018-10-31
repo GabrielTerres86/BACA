@@ -66,6 +66,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --                          PJ 450 - Diego Simas - AMcom
   --             10/09/2018 - Inclusão da coluna numero do grupo economico 
   --                          PJ 450 - Diego Simas - AMcom
+  --             31/10/2018 - Ajuste na "pc_consulta_preju_cc" para corrigir a quantidade de dias em atraso
+	--                          retornada pela procedure. (Reginaldo/AMcom/P450)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -844,7 +846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Diego Simas (AMcom)
-    Data     : Junho/2018                          Ultima atualizacao:
+    Data     : Junho/2018                          Ultima atualizacao: 31/10/2018
 
     Dados referentes ao programa:
 
@@ -852,7 +854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     Objetivo   : Consulta para verificar se a conta corrente está em prejuízo
                  e listar os detalhes na tela ATENDA/OCORRÊNCIAS/PREJUÍZOS.
 
-    Alterações :
+    Alterações :  31/10/2018 - P450 - Ajuste nq quantidade de dias em atraso retornada pela rotina (Reginaldo/AMcom).
 
     -------------------------------------------------------------------------------------------------------------*/
 
@@ -1012,11 +1014,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         FETCH cr_dat INTO rw_dat;
 
         IF cr_dat%FOUND THEN
-          CLOSE cr_dat;
-          -- Dias em Atraso   --
-          vr_qtdiaatr := ((rw_dat.dtmvtolt - rw_prejuizo.dtinclusao) + rw_prejuizo.qtdiaatr);
+          CLOSE cr_dat;		
           -- Dias em Prejuízo --
-          vr_qtdiapre := (rw_dat.dtmvtolt - rw_prejuizo.dtinclusao);
+		  vr_qtdiapre := (rw_dat.dtmvtolt - rw_prejuizo.dtinclusao);
+          -- Dias em Atraso   --
+          vr_qtdiaatr := rw_prejuizo.qtdiaatr;          
         ELSE
           CLOSE cr_dat;
         END IF;
