@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 26/05/2018
+    Data    : Fevereiro/2013                Ultima Atualizacao: 08/06/2018
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -160,6 +160,9 @@
                              Projeto Debitador Unico -- Josiane Stiehler (AMcom)
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+                08/06/2018  PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
+
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -169,6 +172,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1cabrelvar.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
@@ -9170,6 +9174,11 @@ PROCEDURE lan_tarifa_conta_corrente:
 	  DEF VAR aux_flgerlog AS CHAR                                       NO-UNDO.  
 	  DEF VAR aux_des_log  AS CHAR                                       NO-UNDO.  
 
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_contapli = 9
@@ -9322,40 +9331,66 @@ PROCEDURE lan_tarifa_conta_corrente:
              
             IF  NOT AVAIL craplcm THEN
                 DO:
-                    CREATE craplcm.
-                    ASSIGN craplcm.cdcooper = par_cdcooper
-                           craplcm.dtmvtolt = craplot.dtmvtolt
-                           craplcm.cdagenci = par_cdagenci
-                           craplcm.cdbccxlt = par_cdbccxlt
-                           craplcm.nrdolote = par_nrdolote
-                           craplcm.dtrefere = craplot.dtmvtolt
-                           craplcm.hrtransa = TIME
-                           craplcm.cdoperad = par_cdoperad
-                           craplcm.nrdconta = par_nrdconta
-                           craplcm.nrdctabb = par_nrdctabb
-                           craplcm.nrdctitg = par_nrdctitg
-                           craplcm.nrseqdig = craplot.nrseqdig
-                           craplcm.nrsequni = IF par_nrsequni = 0 THEN 
-                                                 craplot.nrseqdig
-                                              ELSE
-                                                 par_nrsequni
-                           craplcm.nrdocmto = IF par_nrdocmto > 0 THEN
-                                                 INT(aux_nraplica)
-                                              ELSE
-                                                 craplot.nrseqdig
-                           craplcm.cdhistor = par_cdhistor
-                           craplcm.vllanmto = par_vltarifa
-                           craplcm.cdpesqbb = par_cdpesqbb
-                           craplcm.cdbanchq = par_cdbanchq
-                           craplcm.cdagechq = par_cdagechq
-                           craplcm.nrctachq = par_nrctachq
-                           craplcm.nrctachq = par_nrctachq
-                           craplcm.cdcoptfn = par_cdcoptfn
-                           craplcm.cdagetfn = par_cdagetfn
-                           craplcm.nrterfin = par_nrterfin
-                           craplcm.nrautdoc = par_nrautdoc
-                           craplcm.dsidenti = par_dsidenti.		
-                    VALIDATE craplcm.
+                
+                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
+                       ,INPUT par_cdagenci      /* par_cdagenci */
+                       ,INPUT par_cdbccxlt      /* par_cdbccxlt */
+                       ,INPUT par_nrdolote      /* par_nrdolote */
+                       ,INPUT par_nrdconta      /* par_nrdconta */
+                       ,INPUT IF par_nrdocmto > 0 THEN
+                                 INT(aux_nraplica)
+                              ELSE
+                                 craplot.nrseqdig  /* par_nrdocmto */
+                       ,INPUT par_cdhistor      /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig  /* par_nrseqdig */
+                       ,INPUT par_vltarifa      /* par_vllanmto */
+                       ,INPUT par_nrdctabb      /* par_nrdctabb */
+                       ,INPUT par_cdpesqbb      /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT par_nrautdoc      /* par_nrautdoc */
+                       ,INPUT IF par_nrsequni = 0 THEN 
+                                 craplot.nrseqdig
+                              ELSE
+                                 par_nrsequni    /* par_nrsequni */
+                       ,INPUT par_cdbanchq      /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT par_cdagechq      /* par_cdagechq */
+                       ,INPUT par_nrctachq      /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT craplot.dtmvtolt  /* par_dtrefere */
+                       ,INPUT TIME              /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT par_dsidenti     /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT par_nrdctitg     /* par_nrdctitg */
+                       ,INPUT ""               /* par_dscedent */
+                       ,INPUT par_cdcoptfn     /* par_cdcoptfn */
+                       ,INPUT par_cdagetfn     /* par_cdagetfn */
+                       ,INPUT par_nrterfin     /* par_nrterfin */
+                       ,INPUT 0                /* par_nrparepr */
+                       ,INPUT 0                /* par_nrseqava */
+                       ,INPUT 0                /* par_nraplica */
+                       ,INPUT 0                /*par_cdorigem*/
+                       ,INPUT 0                /* par_idlautom */
+                       ,INPUT 0                /*par_inprolot*/ 
+                       ,INPUT 0                /*par_tplotmov */
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
+
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:  
+							  RUN gera_erro (INPUT par_cdcooper,        
+											 INPUT par_cdagenci,
+											 INPUT 1, /* nrdcaixa  */
+											 INPUT 1, /* sequencia */
+											 INPUT aux_cdcritic,        
+											 INPUT-OUTPUT aux_dscritic).
+							  UNDO, RETURN "NOK". 
+                        END.  
                 END.
             ELSE
                 DO:
