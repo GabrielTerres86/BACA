@@ -195,8 +195,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
                   dsopecoo  VARCHAR2(100),
-                  innivris  crapris.innivris%TYPE, 
-                  qtdiaatr  crapris.qtdiaatr%TYPE,
+                  innivris  VARCHAR2(1), 
+                  qtdiaatr  NUMBER,
                   flverbor crapbdt.flverbor%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
