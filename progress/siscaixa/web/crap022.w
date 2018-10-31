@@ -33,7 +33,9 @@
                 16/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                              PinPad Novo (Lucas Lunelli - [PROJ290])
                           
------------------------------------------------------------------------------*/
+                25/05/2018 - Alteraçao para a procedure valida-transacao2 - Everton Deserto(AMCom).            
+                          
+-----------------------------------------------------------------------------**/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -813,7 +815,7 @@ PROCEDURE process-web-request :
         END. /* Fim do Btn Cancela */
         ELSE DO:
             
-            RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+            RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,  /* 25/05/2018 - Alterada para procedure valida-transacao2 - Everton Deserto(AMCom) */
                                                INPUT v_pac,
                                                INPUT v_caixa).
           
