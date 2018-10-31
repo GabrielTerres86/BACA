@@ -349,7 +349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           WHEN (pr_protocolo.cdtippro = 1 OR pr_protocolo.cdtippro = 4) THEN -- Transferencia Realizada
             vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
-          WHEN pr_protocolo.cdtippro IN (2,15) THEN -- Pagamento / Convenio
+          WHEN pr_protocolo.cdtippro IN (2,6,15) THEN -- Pagamento / Convenio
             vr_dsprotoc := pr_protocolo.dscedent;          
           WHEN pr_protocolo.cdtippro = 3 THEN -- Capital;
             vr_dsprotoc := pr_protocolo.dsinform##1;

@@ -1633,7 +1633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2170,11 +2170,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2230,7 +2225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2391,11 +2386,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           CLOSE cr_crappro; 
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         /*IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2470,7 +2460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
