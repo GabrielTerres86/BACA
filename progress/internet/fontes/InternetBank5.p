@@ -512,6 +512,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
                                    "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
                                    "<dtbloqueio>" + (IF tt-consulta-blt.dtbloqueio = ? THEN " " ELSE STRING(tt-consulta-blt.dtbloqueio,"99/99/9999")) + "</dtbloqueio>" + 
+                                   "<insitcrt>"  + STRING(tt-consulta-blt.insitcrt) + "</insitcrt>" +
                                    "</BOLETO>".
 END.
 

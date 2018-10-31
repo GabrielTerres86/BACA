@@ -13378,6 +13378,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --
     END IF;
     
+    -- Atualizar a situação do protesto
+    rw_crapcob.insitcrt := 6; -- Protesto Anulado com Carta de Anuencia
+
+    --Atualizar Cobranca
+    BEGIN
+      UPDATE crapcob SET crapcob.insitcrt = rw_crapcob.insitcrt
+                        ,crapcob.dtsitcrt = pr_dtmvtolt
+      WHERE crapcob.rowid = rw_crapcob.rowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        vr_cdcritic := 1035;  --Erro ao atualizar cobranca
+        vr_dscritic := gene0001.fn_busca_critica(1035)||'crapcob:'||
+                            ' insitcrt: 6'||
+                            ' com rowid:'||rw_crapcob.rowid||
+                            '. '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
+    
+    
     -- LOG de processo
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad   --Operador
