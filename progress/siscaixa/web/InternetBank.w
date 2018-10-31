@@ -4995,6 +4995,7 @@ PROCEDURE proc_operacao62:
                                                   INPUT aux_idordena,
                                                   INPUT aux_flgerlog,
                                                   INPUT aux_cdsittit,
+                                                  INPUT aux_flmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 

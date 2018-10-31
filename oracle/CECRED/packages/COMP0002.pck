@@ -1472,7 +1472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
         IF LENGTH(vr_dslindig) = 55 THEN -- Convênio
           vr_dsinstit := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
-          vr_dscedent := '';
+          vr_dscedent := NVL(vr_protocolo(vr_ind).dscedent,'');
 					vr_cdtippag := 1;
         ELSE
           vr_dsinstit := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
@@ -2038,6 +2038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																	'<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
 																	'<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
+                                  '<flgagend>' || to_char(vr_protocolo(vr_ind).flgagend)                                                                             || '</flgagend>' ||
 																  '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
                                   '<infosac>'  ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||

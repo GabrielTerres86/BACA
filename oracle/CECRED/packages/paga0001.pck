@@ -9526,7 +9526,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
                                 ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
                                 ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
-                                ,pr_dscedent => rw_crapcon.nmextcon  --> Descritivo Cedente
+                                ,pr_dscedent => GENE0007.fn_caract_acento((CASE -- se não for informado cedente, utilizar o nome no convenio
+                                                  WHEN pr_dscedent IS NULL      OR
+                                                       pr_dscedent = rw_crapcon.nmextcon THEN
+                                                    rw_crapcon.nmrescon
+                                                  ELSE pr_dscedent
+                                                END),1)  --> Descritivo Cedente
                                 ,pr_flgagend => (pr_flgagend = 1)    --> Controle de agenda
                                 ,pr_nrcpfope => pr_nrcpfope          --> Número de operação
                                 ,pr_nrcpfpre => vr_nrcpfpre          --> Número pré operação
@@ -13721,6 +13726,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                              ,pr_nrdconta => rw_craplau.nrdconta    --Numero da conta
                              ,pr_idseqttl => rw_craplau.idseqttl    --Sequencial titular
                              ,pr_cdbarras => vr_dscodbar            --Codigo de Barras
+                             ,pr_dscedent => rw_craplau.dscedent    --Identificação do Pagamento
                              ,pr_cdseqfat => TO_NUMBER(vr_cdseqfat) --Codigo Sequencial fatura
                              ,pr_vlfatura => vr_vllanaut            --Valor fatura
                              ,pr_nrdigfat => vr_nrdigfat            --Numero Digito Fatura
