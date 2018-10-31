@@ -26,7 +26,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 10/10/2016
+   Data    : Marco/2001                      Ultima atualizacao: 04/10/2018
 
    Dados referentes ao programa:
 
@@ -157,6 +157,28 @@
                14/12/2016 - Ajustes para nao gravar estorno na crapaut com 
 			                nrseqaut zerado pois ocasionava problemas no
 							fechamento de caixa (SD535528 Tiago/Elton)
+                                                        
+               19/03/2018 - Alterado por causa da necessidade de abertura do 
+                            caixa online mesmo não tendo terminado o processo batch (noturno)        
+                            (Fabio Adriano - AMcom)
+							
+               13/04/2018 - Foi mudada a estratégia - criada a procedure valida-transacao2
+                            para verificar a abertura do caixa online mesmo se o processo
+                            batch (noturno) estiver em execução
+                            (Fabio Adriano - AMcom)
+                    
+               17/04/2018 - Foi criada a procedure valida-transacao3
+                            para verificar a abertura do caixa online mesmo 
+                            e travar a abertura do programa se o processo
+                            batch (noturno) estiver em execução ...
+                            específico para programas que possuiam a chamada 
+                            para a valida-transacao.
+                            (Fabio Adriano - AMcom)
+                            
+               04/10/2018 - Adicionado validacao de horario minimo para 
+                            login no caixa online, baseado na coluna hrinicxa
+                            da CRAPCOP. SCTASK0027519 - (Mateus Z / Mouts)
+                            
 ............................................................................ */
 
   
@@ -214,6 +236,7 @@ ASSIGN c-mes[1]  = "JAN"
        c-mes[11] = "NOV"
        c-mes[12] = "DEZ".
 
+
 PROCEDURE valida-transacao:
     DEF INPUT  PARAM p-cooper              AS CHAR.
     DEF INPUT  PARAM p-cod-agencia         AS INTE.
@@ -254,8 +277,10 @@ PROCEDURE valida-transacao:
                            INPUT c-desc-erro,
                            INPUT YES).
             RETURN "NOK".
+
         END.
     
+        
     IF  crapdat.inproces <> 1  THEN 
         DO:
             ASSIGN i-cod-erro  = 138
@@ -267,7 +292,7 @@ PROCEDURE valida-transacao:
                            INPUT c-desc-erro,
                            INPUT YES).
         END. 
-
+             
     /** --- Verifica se eh ultimo dia util do ano --- **/
     ASSIGN dt-dia-util = DATE(12,31,YEAR(TODAY)).
     
@@ -290,7 +315,21 @@ PROCEDURE valida-transacao:
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT YES).
-        END. 
+        END.
+        
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.    
      
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -302,6 +341,171 @@ PROCEDURE valida-transacao:
     RETURN "OK".
          
 END PROCEDURE.
+
+
+PROCEDURE valida-transacao2:
+    DEF INPUT  PARAM p-cooper              AS CHAR.
+    DEF INPUT  PARAM p-cod-agencia         AS INTE.
+    DEF INPUT  PARAM p-nro-caixa           AS INTE.
+
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
+    
+    RUN elimina-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa).
+    
+
+    IF  SEARCH("../../arquivos/cred_bloq") <> ? THEN
+        DO:
+           ASSIGN i-cod-erro  = 0
+                  c-desc-erro = "Sistema Bloqueado ".
+           RUN cria-erro (INPUT p-cooper,
+                          INPUT p-cod-agencia,
+                          INPUT p-nro-caixa,
+                          INPUT i-cod-erro,
+                          INPUT c-desc-erro,
+                          INPUT YES).
+           RETURN "NOK".
+        END.
+    
+    FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
+                             NO-LOCK NO-ERROR.
+                             
+    IF  NOT AVAIL crapdat THEN 
+        DO:
+            ASSIGN i-cod-erro  = 1
+                   c-desc-erro = " ".
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+
+        END. 
+
+    /** --- Verifica se eh ultimo dia util do ano --- **/
+    ASSIGN dt-dia-util = DATE(12,31,YEAR(TODAY)).
+    
+    /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
+    IF  WEEKDAY(dt-dia-util) = 1  THEN
+        dt-dia-util = DATE(12,29,YEAR(crapdat.dtmvtoan)).
+    
+    /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
+    IF  WEEKDAY(dt-dia-util) = 7  THEN
+        dt-dia-util = DATE(12,30,YEAR(crapdat.dtmvtoan)).
+       
+    IF  TODAY = dt-dia-util  THEN
+        DO:
+            ASSIGN i-cod-erro  = 914
+                   c-desc-erro = " ".
+
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+    END. 
+    
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.
+   
+    RUN verifica-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa).
+                        
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    RETURN "OK".
+         
+END PROCEDURE.
+
+
+/*somente a validação e bloqueio do acesso ao caixa online
+  para programas que não chamavam a valida-transacao*/
+PROCEDURE valida-transacao3:
+    DEF INPUT  PARAM p-cooper              AS CHAR.
+    DEF INPUT  PARAM p-cod-agencia         AS INTE.
+    DEF INPUT  PARAM p-nro-caixa           AS INTE.
+
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
+    
+    RUN elimina-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa).
+           
+    FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
+                             NO-LOCK NO-ERROR.
+                             
+    IF  NOT AVAIL crapdat THEN 
+        DO:
+            ASSIGN i-cod-erro  = 1
+                   c-desc-erro = " ".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+
+        END.
+    
+    /* abertura do caixa online mesmo não tendo terminado
+      o processo batch (noturno) - trava a abertura do programa*/
+    IF  crapdat.inproces <> 1  THEN 
+        DO:
+            ASSIGN i-cod-erro  = 138
+                   c-desc-erro = " ".
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.
+        
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.    
+     
+    RUN verifica-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa).
+                       
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    RETURN "OK".
+         
+END PROCEDURE.
+    
     
 PROCEDURE valida-agencia:
     DEF INPUT PARAM p-cooper        AS CHAR.
@@ -2234,5 +2438,3 @@ END.
 
 /* b1crap00.p */
 /* ......................................................................... */
-
-
