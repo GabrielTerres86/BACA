@@ -474,27 +474,7 @@ PROCEDURE gera_lancamento:
                 IF  VALID-HANDLE(h-b1wgen0200) THEN
                   DELETE PROCEDURE h-b1wgen0200.
                 
-                /*CREATE craplcm.
-                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                       craplcm.cdagenci = craplot.cdagenci
-                       craplcm.cdbccxlt = craplot.cdbccxlt
-                       craplcm.nrdolote = craplot.nrdolote
-                       craplcm.nrdconta = aux_nrdconta
-                       craplcm.nrdctabb = aux_nrdconta
-                       craplcm.nrctachq = crapdev.nrdconta
 
-                       craplcm.nrdocmto = crapdev.nrcheque
-                       craplcm.cdhistor = crapdev.cdhistor
-                       craplcm.nrseqdig = craplot.nrseqdig + 1
-                       craplcm.vllanmto = crapdev.vllanmto
-                       craplcm.cdoperad = crapdev.cdoperad
-                       craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                               STRING(crapdev.cdalinea)
-                                          ELSE "21"
-                       craplcm.cdcooper = aux_cdcooper
-                       craplcm.cdbanchq = crapdev.cdbanchq
-                       craplcm.cdagechq = crapdev.cdagechq.
-                VALIDATE craplcm. */
                 
                 ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                        craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
