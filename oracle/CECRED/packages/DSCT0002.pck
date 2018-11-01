@@ -7639,7 +7639,7 @@ END fn_letra_risco;
       vr_idxord := vr_tab_tit_bordero_ord.first;
       WHILE vr_idxord IS NOT NULL  LOOP
         --Verifica se o valor líquido do título é 0, se for calcula
-        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid = 0 AND vr_tab_tit_bordero_ord(vr_idxord).flverbor = 1) THEN
+        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid = 0 AND vr_tab_dados_itens_bordero(vr_idxborde).flverbor = 1) THEN
           IF  pr_dtmvtolt > vr_tab_tit_bordero_ord(vr_idxord).dtvencto THEN
               vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero_ord(vr_idxord).dtvencto, pr_dtmvtolt);
           ELSE
