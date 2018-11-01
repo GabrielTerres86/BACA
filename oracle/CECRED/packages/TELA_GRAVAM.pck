@@ -1957,7 +1957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 19/10/2018
+    Data     : Maio/2016                         Ultima atualizacao: 30/10/2018
     
     Dados referentes ao programa:
     
@@ -1971,6 +1971,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     --                            (Ana - Envolti) - SD: 660356 e 660394
     -- 
     --               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+    -- 
+    --               30/10/2018 - P442 - Ajustes no tamanho da variavel de Justificativa para evitar estouro (Marcos-Envolti)
+    
     -------------------------------------------------------------------------------------------------------------*/                               
   
     --Cursor para encontrar os bens
@@ -2104,7 +2107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     vr_stsnrcal BOOLEAN;
     vr_inpessoa INTEGER;
     vr_dscpfbem VARCHAR2(30);
-    vr_dsjustif crapbpr.dsjstinc%TYPE;
+    vr_dsjustif VARCHAR2(4000);
     vr_tpjustif INTEGER := 0;
     vr_tpctrpro crapbpr.tpctrpro%TYPE;
     
