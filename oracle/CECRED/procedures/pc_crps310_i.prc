@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 12/09/2018
+     Data    : Maio/2001                       Ultima atualizacao: 01/10/2018
      
      Dados referentes ao programa:
 
@@ -318,8 +318,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                      Nova regra para Risco Refin (Guilherme/AMcom)
 
                  15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
-
-                 22/08/2018 - Adicionado cálculo de risco do borderô (Luis Fernando - GFT)
 
                  12/09/2018 - P450 - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
                             - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
@@ -641,6 +639,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
+
 
           FROM crapcob cob               
               ,craptdb tdb
@@ -1112,7 +1111,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlvec180     crapris.vlvec180%TYPE; --> Valor a vencer nos próximos 180 dias
       vr_vlvec360     crapris.vlvec360%TYPE; --> Valor a vencer nos próximos 360 dias
       vr_vlvec999     crapris.vlvec999%TYPE; --> Valor a vencer para outros casos
-      vr_indocc       NUMBER;
       vr_vlprjano     crapris.vlprjano%TYPE; --> Valor prejuizo no ano corrente
       vr_vlprjaan     crapris.vlprjaan%TYPE; --> Valor prejuizo no ano anterior
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
@@ -5136,24 +5134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       PROCEDURE pc_atribui_risco_associado (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
                                            ,pr_cdagenci  IN crapass.cdagenci%TYPE     --> Codigo Agencia
                                            ,pr_des_erro  OUT VARCHAR2) IS
-      -- Cursor para verificar os ratings dos borderos 
-      CURSOR cr_crapbdt_rating (pr_cdcooper IN crapass.cdcooper%TYPE, pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT
-          bdt.nrborder,
-          bdt.cdcooper
-        FROM 
-          crapbdt bdt
-        WHERE 
-          bdt.cdcooper = pr_cdcooper
-          AND bdt.nrdconta = pr_nrdconta
-          AND bdt.insitbdt = 3
-      ;
-      rw_crapbdt_rating cr_crapbdt_rating%ROWTYPE;
-      -- Variavel de criticas
-      vr_cdcritic crapcri.cdcritic%type;
-      vr_dscritic varchar2(10000);
       
-      vr_dsinrisc NUMBER;
       BEGIN      
                         
       -- Busca dos associados unindo com seu saldo na conta
@@ -5170,26 +5151,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             IF vr_tab_risco(vr_tab_crapnrc(rw_crapass.nrdconta).indrisco) > vr_risco_rating THEN
               vr_risco_rating := vr_tab_risco(vr_tab_crapnrc(rw_crapass.nrdconta).indrisco);
             END IF;
+            
           END IF;
-            
-          -- Verifica riscos dos borderôs
-          OPEN cr_crapbdt_rating(pr_cdcooper=>pr_cdcooper,pr_nrdconta=>rw_crapass.nrdconta);
-          LOOP FETCH cr_crapbdt_rating INTO rw_crapbdt_rating;
-            EXIT WHEN cr_crapbdt_rating%NOTFOUND;
-            DSCT0003.pc_calcula_risco_bordero(pr_cdcooper=>pr_cdcooper,
-                                              pr_nrborder=>rw_crapbdt_rating.nrborder,
-                                              --OUT--
-                                              pr_dsinrisc=>vr_dsinrisc,
-                                              pr_cdcritic=>vr_cdcritic,
-                                              pr_dscritic=>vr_dscritic
-                                             );
-            IF (vr_dsinrisc>vr_risco_rating) THEN
-              vr_risco_rating := vr_dsinrisc;
-            END IF;
-            
-          END LOOP;
-          CLOSE cr_crapbdt_rating;
-          
           -- Inicializar sequencia de contrato de empréstimo
           vr_nrseqctr := 0;
           -- Vigência inicial com base na data atual

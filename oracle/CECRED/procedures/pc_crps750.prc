@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 19/10/2018
+  Data    : Abril/2017                      Ultima atualizacao: 29/10/2018
 
   Dados referentes ao programa:
 
@@ -38,6 +38,9 @@ BEGIN
               30/08/2018 - Debitador Unico - permitir executar na cadeia da CECRED alem do debitador (Fabiano B. Dias AMcom).
               
               19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)              
+              
+              29/10/2018 - Passar null para o pr_cdoperad onde ha a chamado do 750_1 que esta utilizando
+                           o user do banco (user que criou o objeto). (Fabricio)
 			  
  ............................................................................. */
 
@@ -561,7 +564,7 @@ BEGIN
                               ,pr_nrctremp     => rw_crappep.nrctremp  --> contrato de emprestimo
                               ,pr_nrparepr     => rw_crappep.nrparepr  --> numero da parcela
                               ,pr_cdagenci     => rw_crappep.cdagenci  --> código da agencia
-                              ,pr_cdoperad     => user  --> Código do operador
+                              ,pr_cdoperad     => NULL  --> Código do operador
                       ,pr_cdcritic     => vr_cdcritic --> Codigo da Critica
                               ,pr_dscritic     => vr_dscritic);
 
