@@ -6957,6 +6957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    09/07/2018 - Validar critica 080 apos a criacao da critica no
                                 relatorio (Lucas Ranghetti INC0018668)
+				   23/10/2018 - Adicionado cursor para encontrar cooperado pelo cpf (Bruno Mouts INC0024859 )
     ............................................................................ */
 
     DECLARE
@@ -7020,7 +7021,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split(); 
       vr_indice     NUMBER;
+
+	  vr_cpf        NUMBER;                                           --> Recebe o CPF do cooperado 
+
       vr_tplimcrd   NUMBER(1) :=  0; -- 0=concessao, 1=alteracao
+
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -7074,7 +7079,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_tab_enviasms      typ_tab_enviasms;
       
       ------------------------------- CURSORES ---------------------------------
-     
+     -- Faz a procura do cartão pelo CPF do cooperado
+	 CURSOR cr_crawcrd_cpf (pr_cdcooper IN crawcrd.cdcooper%TYPE,pr_nrcpftit IN crawcrd.nrcpftit%TYPE) IS
+        SELECT crd.nrdconta
+          FROM crawcrd crd
+         WHERE crd.cdcooper = pr_cdcooper
+           AND crd.nrcpftit = pr_nrcpftit 
+           AND crd.nrcrcard = 0
+           AND crd.insitcrd= 2;    -- Situação 2-solicitado
+           
+      rw_crawcrd_cpf cr_crawcrd_cpf%ROWTYPE;
+
       -- Busca as cooperativas
       CURSOR cr_crapcop_todas IS
         SELECT cop.nmrescop
@@ -9171,29 +9186,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
                 IF NVL(vr_nrctatp2,0) = 0 THEN
-                  
                   OPEN cr_crawcrd_outros_nrcctitg(pr_cdcooper => vr_cdcooper,
                                                   pr_nrcctitg => vr_nrdctitg);                                         
                   FETCH cr_crawcrd_outros_nrcctitg INTO rw_crawcrd_outros_nrcctitg;
 
-                  IF cr_crawcrd_outros_nrcctitg%FOUND THEN
+                 IF cr_crawcrd_outros_nrcctitg%FOUND THEN
                     CLOSE cr_crawcrd_outros_nrcctitg;                    
                     vr_nrctatp2 := rw_crawcrd_outros_nrcctitg.nrdconta;
-                  ELSE
+                 ELSE
                     CLOSE cr_crawcrd_outros_nrcctitg;                    
-                  OPEN cr_crawcrd_outros(pr_cdcooper => vr_cdcooper,
-                                         pr_nrseqcrd => vr_nroperac);                                         
-                  FETCH cr_crawcrd_outros INTO rw_crawcrd_outros;
-                  IF cr_crawcrd_outros%NOTFOUND THEN
-                    -- Fechar o cursor pois havera raise
-                    CLOSE cr_crawcrd_outros;                    
-                    CONTINUE;
-                  ELSE
-                    CLOSE cr_crawcrd_outros;                    
-                  END IF;
-                  vr_nrctatp2 := rw_crawcrd_outros.nrdconta;
-                  END IF;
-                END IF;                
+                 OPEN cr_crawcrd_outros(pr_cdcooper => vr_cdcooper,
+                                        pr_nrseqcrd => vr_nroperac);                                         
+                 FETCH cr_crawcrd_outros INTO rw_crawcrd_outros;
+                 
+                 IF cr_crawcrd_outros%NOTFOUND THEN
+                  CLOSE cr_crawcrd_outros;                    
+				 IF nvl(vr_tpdocmto,0) = 1 THEN --> se o Documento é um CPF ira buscar pelo cursor
+                 
+				 vr_cpf := TO_NUMBER(nvl(substr(vr_des_text,95,11),0));   --> CPF é extraido
+                 
+				 OPEN cr_crawcrd_cpf(pr_cdcooper => vr_cdcooper,pr_nrcpftit => vr_cpf);
+                 FETCH cr_crawcrd_cpf INTO rw_crawcrd_cpf;
+                 IF cr_crawcrd_cpf%FOUND THEN
+				 
+                   vr_nrctatp2 := rw_crawcrd_cpf.nrdconta;
+                 
+				 END IF;
+                 IF cr_crawcrd_cpf%NOTFOUND THEN
+                    CLOSE cr_crawcrd_cpf;
+                    CONTINUE;                                                                                                                                                                              
+                    END IF;
+                 END IF;
+                    CLOSE cr_crawcrd_cpf; 
+                 ELSE
+
+     			   vr_nrctatp2 := rw_crawcrd_outros.nrdconta;
+                 
+				 CLOSE cr_crawcrd_outros;                    
+                 END IF;
+                 END IF;
+                 END IF;                 
                 
                 -- Se não veio conta
                 IF NVL(vr_nrctatp2,0) = 0 THEN                  
