@@ -962,6 +962,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                  WHERE b.cdbccxlt = c.cdbcoctl
                    AND c.cdcooper = pr_cdcooper;
             rw_crapcop cr_crapcop%ROWTYPE;
+						
+						rw_crapdat btch0001.cr_crapdat%ROWTYPE;
         
             -- Variavel de criticas
             vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1191,6 +1193,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                     vr_dscritic := 'Erro ao criar solicitacao de portabilidade: ' || SQLERRM;
                     RAISE vr_exc_erro;
             END;
+						
+						-- Abre o cursor de data
+						OPEN btch0001.cr_crapdat(vr_cdcooper);
+						FETCH btch0001.cr_crapdat
+								INTO rw_crapdat;
+						CLOSE btch0001.cr_crapdat;
+						
+						DIGI0001.pc_gera_pend_digitalizacao(pr_cdcooper => vr_cdcooper  -- Cooperativa
+                                               ,pr_nrdconta => pr_nrdconta  -- Conta
+																							 ,pr_idseqttl => 1 -- Fixo    -- Sera gerado para o titular
+																							 ,pr_nrcpfcgc => rw_crapass.nrcpfcgc -- CPF do cooperado
+																							 ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data do dia
+																							 ,pr_lstpdoct => 78 -- DOC: PORT SALARIO - TERMO DE ADESAO
+																							 ,pr_cdoperad => vr_cdoperad  -- Operador 
+																							 ,pr_nrseqdoc => NULL
+																							 ,pr_cdcritic => vr_cdcritic
+																							 ,pr_dscritic => vr_dscritic);
+																							 
+            IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
+                RAISE vr_exc_erro;
+            END IF;																							 
         
             -- Efetua os inserts para apresentacao na tela VERLOG
             gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
