@@ -104,11 +104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                   RPAD('FASE ANTERIOR' ,30) ||'|'||
                   RPAD('MENSAGEM'      ,20) ||'|'||
                   RPAD('NR.CONTROLE'   ,20) ||'|'||
-                  RPAD('HR.FASE.ATU'   ,11) ||'|'||
                   RPAD('HR.FASE.ANT'   ,11) ||'|'||
                   RPAD('TEMPO ATRASO'  ,12) ||'|'||
-                  LPAD('QTD.MSG.ATRASO',14) ||'|'||
-                  LPAD('QTD.MSG.TOTAL' ,14) ||'|';
+                  LPAD('QTD.MSG.ATRASO',14) ||'|';
       --
       pc_adiciona_arquivo(pr_linha        => vr_linha
                          ,pr_abre_arquivo => 'SIM'
@@ -125,9 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                   RPAD('-',20,'-') ||'|'||
                   RPAD('-',20,'-') ||'|'||
                   RPAD('-',11,'-') ||'|'||
-                  RPAD('-',11,'-') ||'|'||
                   LPAD('-',12,'-') ||'|'||
-                  LPAD('-',14,'-') ||'|'||
                   LPAD('-',14,'-') ||'|';
       --
       pc_adiciona_arquivo(pr_linha        => vr_linha
@@ -214,11 +210,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
     DECLARE
     --Cursor para pegar informações para arquivo
       CURSOR cr_arquivo1 IS
-        SELECT nmfase
-              ,MIN(nrcontrole_if) nrcontrole_if
+        SELECT intipo
+              ,nmfase
+              ,MIN(nrseq_mensagem) nrseq_mensagem
               ,SUM(qtd_msg_atraso) qtd_msg_atraso
-          FROM (SELECT c.nmfase
-                      ,MIN(a.nrcontrole_if) nrcontrole_if
+          FROM (
+/*
+                SELECT 1 intipo
+                      ,c.nmfase
+                      ,MIN(a.nrseq_mensagem) nrseq_mensagem
                       ,TRIM(TO_CHAR(COUNT(a.nrcontrole_if),'00000')) qtd_msg_atraso
                   FROM tbspb_msg_enviada      a
                       ,tbspb_msg_enviada_fase b
@@ -234,10 +234,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                         > nvl(c.qttempo_alerta, 0)
                    AND b.cdfase         = pr_cdfase
+                   AND a.nmmensagem    <> 'STR0007'
                  GROUP BY c.nmfase
                 UNION
-                SELECT c.nmfase
-                      ,MIN(a.nrcontrole_if) nrcontrole_if
+*/
+                SELECT 2 intipo
+                      ,c.nmfase
+                      ,MIN(a.nrseq_mensagem) nrseq_mensagem
                       ,TRIM(TO_CHAR(COUNT(a.nrcontrole_if),'00000')) qtd_msg_atraso
                   FROM tbspb_msg_enviada      a
                       ,tbspb_msg_enviada_fase b
@@ -253,14 +256,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                                      FROM tbspb_msg_enviada_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
                                       AND bb.cdfase         = c.cdfase)
+                   AND a.nmmensagem    <> 'STR0007'
                  GROUP BY c.nmfase)
-          GROUP BY nmfase
+          GROUP BY nmfase,intipo
         UNION ALL
-        SELECT nmfase
-              ,MIN(nrcontrole_if) nrcontrole_if
+        SELECT intipo
+              ,nmfase
+              ,MIN(nrseq_mensagem) nrseq_mensagem
               ,SUM(qtd_msg_atraso) qtd_msg_atraso
-          FROM (SELECT c.nmfase
-                      ,MIN(a.nrcontrole_str_pag) nrcontrole_if
+          FROM (
+/*
+                SELECT 1 intipo
+                      ,c.nmfase
+                      ,MIN(a.nrseq_mensagem) nrseq_mensagem
                       ,TRIM(TO_CHAR(COUNT(a.nrcontrole_str_pag),'00000')) qtd_msg_atraso
                   FROM tbspb_msg_recebida      a
                       ,tbspb_msg_recebida_fase b
@@ -276,10 +284,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                         > nvl(c.qttempo_alerta, 0)
                    AND b.cdfase         = pr_cdfase
+                   AND a.nmmensagem    <> 'STR0007'
                  GROUP BY c.nmfase
                 UNION
-                SELECT c.nmfase
-                      ,MIN(a.nrcontrole_str_pag) nrcontrole_if
+*/
+                SELECT 2 intipo
+                      ,c.nmfase
+                      ,MIN(a.nrseq_mensagem) nrseq_mensagem
                       ,TRIM(TO_CHAR(COUNT(a.nrcontrole_str_pag),'00000')) qtd_msg_atraso
                   FROM tbspb_msg_recebida      a
                       ,tbspb_msg_recebida_fase b
@@ -297,12 +308,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                                       AND (bb.cdfase        = c.cdfase
                                         OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
                                         OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))
+                   AND a.nmmensagem    <> 'STR0007'
                  GROUP BY c.nmfase)
-          GROUP BY nmfase;
+          GROUP BY nmfase,intipo;
     rw_arquivo1 cr_arquivo1%ROWTYPE;
 
     --Cursor para pegar informações para arquivo
-      CURSOR cr_arquivo2(pr_nrcontrole_if tbspb_msg_enviada.nrcontrole_if%type) IS
+      CURSOR cr_arquivo2(pr_nrseq_mensagem tbspb_msg_enviada.nrseq_mensagem%type) IS
+/*
         SELECT a.nmmensagem
               ,TO_CHAR(b.dhmensagem,'HH24:MI:SS') hra_mensagem
               ,TO_CHAR(d.dhmensagem,'HH24:MI:SS') hra_mensagem_ant
@@ -310,6 +323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
               ,TO_CHAR(TRUNC((((b.dhmensagem - d.dhmensagem) * 1440) * 60) / 3600), 'FM9900') || ':' ||
                TO_CHAR(TRUNC(MOD((((b.dhmensagem - d.dhmensagem) * 1440) * 60), 3600) / 60), 'FM00') || ':' ||
                TO_CHAR(MOD((((b.dhmensagem - d.dhmensagem) * 1440) * 60), 60), 'FM00') tempo_formatado
+              ,a.nrcontrole_if
           FROM tbspb_msg_enviada      a
               ,tbspb_msg_enviada_fase b
               ,tbspb_fase_mensagem    c
@@ -324,8 +338,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                 > nvl(c.qttempo_alerta, 0)
            AND b.cdfase         = pr_cdfase
-           AND a.nrcontrole_if  = pr_nrcontrole_if
+           AND a.nrseq_mensagem = pr_nrseq_mensagem
+           AND a.nmmensagem    <> 'STR0007'
         UNION
+*/
         SELECT a.nmmensagem
               ,'00:00:00' hra_mensagem
               ,TO_CHAR(b.dhmensagem,'HH24:MI:SS') hra_mensagem_ant
@@ -333,6 +349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
               ,TO_CHAR(TRUNC((((SYSDATE - b.dhmensagem) * 1440) * 60) / 3600), 'FM9900') || ':' ||
                TO_CHAR(TRUNC(MOD((((SYSDATE - b.dhmensagem) * 1440) * 60), 3600) / 60), 'FM00') || ':' ||
                TO_CHAR(MOD((((SYSDATE - b.dhmensagem) * 1440) * 60), 60), 'FM00') tempo_formatado
+              ,a.nrcontrole_if
           FROM tbspb_msg_enviada      a
               ,tbspb_msg_enviada_fase b
               ,tbspb_fase_mensagem    c
@@ -343,12 +360,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND b.dhmensagem     > TRUNC(SYSDATE)
            AND ((SYSDATE - b.dhmensagem) * 1440)
                                 > nvl(c.qttempo_alerta, 0)
-           AND a.nrcontrole_if  = pr_nrcontrole_if
+           AND a.nrseq_mensagem = pr_nrseq_mensagem
            AND NOT EXISTS (SELECT 1
                              FROM tbspb_msg_enviada_fase bb
                             WHERE bb.nrseq_mensagem = b.nrseq_mensagem
                               AND bb.cdfase         = c.cdfase)
+           AND a.nmmensagem    <> 'STR0007'
       UNION ALL
+/*
         SELECT a.nmmensagem
               ,TO_CHAR(b.dhmensagem,'HH24:MI:SS') hra_mensagem
               ,TO_CHAR(d.dhmensagem,'HH24:MI:SS') hra_mensagem_ant
@@ -356,6 +375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
               ,TO_CHAR(TRUNC((((b.dhmensagem - d.dhmensagem) * 1440) * 60) / 3600), 'FM9900') || ':' ||
                TO_CHAR(TRUNC(MOD((((b.dhmensagem - d.dhmensagem) * 1440) * 60), 3600) / 60), 'FM00') || ':' ||
                TO_CHAR(MOD((((b.dhmensagem - d.dhmensagem) * 1440) * 60), 60), 'FM00') tempo_formatado
+              ,a.nrcontrole_str_pag nrcontrole_if
           FROM tbspb_msg_recebida      a
               ,tbspb_msg_recebida_fase b
               ,tbspb_fase_mensagem     c
@@ -369,8 +389,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                     > nvl(c.qttempo_alerta, 0)
            AND b.cdfase             = pr_cdfase
-           AND a.nrcontrole_str_pag = pr_nrcontrole_if
+           AND a.nrseq_mensagem     = pr_nrseq_mensagem
+           AND a.nmmensagem        <> 'STR0007'
         UNION
+*/
         SELECT a.nmmensagem
               ,'00:00:00' hra_mensagem
               ,TO_CHAR(b.dhmensagem,'HH24:MI:SS') hra_mensagem_ant
@@ -378,6 +400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
               ,TO_CHAR(TRUNC((((SYSDATE - b.dhmensagem) * 1440) * 60) / 3600), 'FM9900') || ':' ||
                TO_CHAR(TRUNC(MOD((((SYSDATE - b.dhmensagem) * 1440) * 60), 3600) / 60), 'FM00') || ':' ||
                TO_CHAR(MOD((((SYSDATE - b.dhmensagem) * 1440) * 60), 60), 'FM00') tempo_formatado
+              ,a.nrcontrole_str_pag nrcontrole_if
           FROM tbspb_msg_recebida      a
               ,tbspb_msg_recebida_fase b
               ,tbspb_fase_mensagem     c
@@ -385,13 +408,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND b.cdfase             = c.cdfase_anterior
            AND c.cdfase             = pr_cdfase
            AND b.dhmensagem         > TRUNC(SYSDATE)
-           AND a.nrcontrole_str_pag = pr_nrcontrole_if
+           AND a.nrseq_mensagem     = pr_nrseq_mensagem
            AND NOT EXISTS (SELECT 1
                              FROM tbspb_msg_recebida_fase bb
                             WHERE bb.nrseq_mensagem = b.nrseq_mensagem
                               AND (bb.cdfase        = c.cdfase
                                 OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
-                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)));
+                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))
+           AND a.nmmensagem        <> 'STR0007';
     rw_arquivo2 cr_arquivo2%ROWTYPE;
 
     --Cursor para pegar informações para arquivo
@@ -424,7 +448,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND NOT EXISTS (SELECT 1
                                      FROM tbspb_msg_enviada_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                                      AND bb.cdfase         = c.cdfase))
+                                              AND bb.cdfase         = c.cdfase)
+                           AND a.nmmensagem    <> 'STR0007')
       UNION ALL
         SELECT SUM(qtd_msg_total) qtd_msg_total
           FROM (SELECT TRIM(TO_CHAR(COUNT(a.nrcontrole_str_pag),'00000')) qtd_msg_total
@@ -455,7 +480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
                                               AND (bb.cdfase        = c.cdfase
                                                 OR bb.cdfase        = DECODE(c.cdfase,115,992,c.cdfase) -- para mensagens não tratadas no PC_CRPS531_1 a fase 115 passa a ser 992 ou 999
-                                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))));
+                                                OR bb.cdfase        = DECODE(c.cdfase,115,999,c.cdfase)))
+                           AND a.nmmensagem    <> 'STR0007')
+                                                );
     rw_arquivo3 cr_arquivo3%ROWTYPE;
     --
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -472,7 +499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
         IF rw_arquivo1.qtd_msg_atraso >= pr_qtalerta THEN
           --
           -- verifica tempo primeira mensagem atrasada
-          OPEN cr_arquivo2(rw_arquivo1.nrcontrole_if);
+          OPEN cr_arquivo2(rw_arquivo1.nrseq_mensagem);
           FETCH cr_arquivo2 INTO rw_arquivo2;
 
           -- Se não existe
@@ -510,12 +537,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
         vr_linha := RPAD(SUBSTR(rw_arquivo1.nmfase,1,30),30) ||'|'||
                     RPAD(SUBSTR(pr_nmfase_anterior,1,30),30) ||'|'||
                     RPAD(rw_arquivo2.nmmensagem         ,20) ||'|'||
-                    RPAD(rw_arquivo1.nrcontrole_if      ,20) ||'|'||
-                    RPAD(rw_arquivo2.hra_mensagem       ,11) ||'|'||
+                    RPAD(rw_arquivo2.nrcontrole_if      ,20) ||'|'||
                     RPAD(rw_arquivo2.hra_mensagem_ant   ,11) ||'|'||
                     RPAD(rw_arquivo2.tempo_formatado    ,12) ||'|'||
-                    LPAD(rw_arquivo1.qtd_msg_atraso     ,14) ||'|'||
-                    LPAD(rw_arquivo3.qtd_msg_total      ,14) ||'|';
+                    LPAD(rw_arquivo1.qtd_msg_atraso     ,14) ||'|';
         --
         pc_adiciona_arquivo(pr_linha        => vr_linha
                            ,pr_abre_arquivo => 'NAO'
