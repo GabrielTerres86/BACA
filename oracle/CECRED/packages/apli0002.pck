@@ -6017,7 +6017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             -- Gera exceção
             RAISE vr_exc_erro;
         END;
-        
+		
 
         
         /*RDCPRE OU RDCPOS*/
@@ -11889,7 +11889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                   -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
                     RAISE vr_exc_erro;
                 END IF;				
-                    
+              
                 BEGIN
                   UPDATE craplot
                      SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -17729,7 +17729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
        -- SM404
 			 vr_sltotres := vr_sltotgar;
 			 --
-/*
+
        BLOQ0001.pc_calc_bloqueio_garantia ( pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
                                             ,pr_vlsldpou => vr_sltotres -- SM404
@@ -17744,7 +17744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta ' || pr_nrdconta || '-->'||vr_dscritic;
           RAISE vr_exc_erro;
         END IF;
-*/
+
         -- Se há valor a bloquear de garantia em aplicações
         IF pr_innivblq IN(0,2) AND vr_vlblqapl > 0 Then
           IF vr_vlresgat > (nvl(vr_sltotres,0) + nvl(pr_vlsldinv,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqapl,0)) THEN
@@ -23058,7 +23058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_dscritic := 'Nao foi possivel resgatar. Ha valores bloqueados judicialmente';
       RAISE vr_exc_erro;
     END IF;
-/*
+
     BLOQ0001.pc_calc_bloqueio_garantia
                                     (pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
@@ -23076,7 +23076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       RAISE vr_exc_erro;
     END IF;
 
-*/
+
     -- Se há valor a bloquear de Garantia em Poupança
     IF vr_vlblqpou > 0 then
       IF vr_vlresgat > (nvl(vr_vlsldtot,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqpou,0)) THEN
