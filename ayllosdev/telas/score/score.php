@@ -25,6 +25,11 @@
 	include("../../includes/carrega_permissoes.php");	
 
 	setVarSession("opcoesTela",$opcoesTela);
+
+	// Verifica Permissão
+	if (($msgError = validaPermissao($glbvars["nmdatela"], "", "@")) <> "") {
+		exibeErro($msgError);
+	}
 		
 ?>
 <html>

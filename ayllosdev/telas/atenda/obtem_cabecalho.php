@@ -273,9 +273,9 @@ if ( isset($cabecalho[12]->cdata) ) {
 if ( isset($cabecalho[13]->cdata) ) {
 	echo '$("#nrcpfcgc","#frmCabAtenda").val("' . $cabecalho[13]->cdata . '");';
 }
-if ( isset($cabecalho[14]->cdata) ) {
-	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
-}
+//if ( isset($cabecalho[14]->cdata) ) {
+//	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
+//}
 if ( isset($cabecalho[15]->cdata) ) {
 	echo '$("#indnivel","#frmCabAtenda").val("' . $cabecalho[15]->cdata . '");';
 }
@@ -288,11 +288,14 @@ if ( isset($cabecalho[17]->cdata) ) {
 if ( isset($cabecalho[18]->cdata) ) {
 	echo '$("#cdempres","#frmCabAtenda").val("' . $cabecalho[18]->cdata . '");';
 }
-if ( isset($cabecalho[19]->cdata) ) {
-	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
-}
-if ( isset($cabecalho[20]->cdata) ) {
-	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//if ( isset($cabecalho[19]->cdata) ) {
+//	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
+//}
+//if ( isset($cabecalho[20]->cdata) ) {
+//	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//}
+if ( isset($cabecalho[28]->cdata) ) {
+	echo '$("#cdscobeh","#frmCabAtenda").val("' . $cabecalho[28]->cdata . '");';
 }
 if ( isset($cabecalho[21]->cdata) ) {
 	echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';
@@ -698,6 +701,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Previd&ecirc;ncia"; 
 				$urlRotina = "";
 				$strValue = ( isset($valores[22]->cdata) ) ? ($valores[22]->cdata == "1" OR $valores[22]->cdata == "2")  ? "SIM" : "NAO" : "NAO"; 
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "SCORE": {
+				$nomeRotina = "Score Comportamental"; 
+				$urlRotina = "score_comportamental";
+				$strValue = "";
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}

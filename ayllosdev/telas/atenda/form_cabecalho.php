@@ -80,12 +80,14 @@
   <input name="indnivel" type="text" id="indnivel" />
   <label for="cdempres">Empresa:</label>
   <input name="cdempres" type="text" id="cdempres" />
-  <label for="cdsecext">Se&ccedil;&atilde;o:</label>
+  <!--<label for="cdsecext">Se&ccedil;&atilde;o:</label>
   <input name="cdsecext" type="text" id="cdsecext" />
   <label for="cdturnos">Turno:</label>
   <input name="cdturnos" type="text" id="cdturnos" />
   <label for="cdtipsfx">Tipo Sal&aacute;rio:</label>
-  <input name="cdtipsfx" type="text" id="cdtipsfx" />
+  <input name="cdtipsfx" type="text" id="cdtipsfx" />-->
+  <label for="cdscobeh">Score Comportamental:</label>
+  <input name="cdscobeh" type="text" id="cdscobeh" />
 	<br style="clear:both" />
 	<hr style="background-color:#666; height:1px;" />
   <label for="qtdevolu">Devolu&ccedil;&otilde;es:</label>
