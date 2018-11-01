@@ -3679,7 +3679,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 28/06/2016
+v    --  Data     : Junho/2013.                   Ultima atualizacao: 28/06/2016
     --
     --  Dados referentes ao programa:
     --
@@ -14051,8 +14051,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
              ,pr_cdagenci => rw_craplot.cdagenci
              ,pr_cdbccxlt => rw_craplot.cdbccxlt
              ,pr_nrdolote => rw_craplot.nrdolote
-             ,pr_nrdconta => pr_nrdconta
-             ,pr_nrdctabb => gene0002.fn_mask(rw_crapepr.nrdconta,'99999999')
+             ,pr_nrdconta => pr_nrdconta	
+             ,pr_nrdctitg => gene0002.fn_mask(rw_crapepr.nrdconta,'99999999')
+             ,pr_nrdctabb => pr_nrdconta
              ,pr_cdcooper => pr_cdcooper
              ,pr_nrdocmto => vr_nrdocmto
              ,pr_cdhistor => 302
@@ -16655,7 +16656,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                  ,pr_cdcritic => vr_cdcritic
                  ,pr_dscritic => vr_dscritic
                  );
-              rw_craplcm.vllanmto := pr_tab_lcm_consolidada(vr_index).vllancto;
+              rw_craplcm.vllanmto := pr_tab_lcm_consolidada(vr_index).vllancto;	 
+              rw_craplcm.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1; 
               
               IF nvl(vr_cdcritic,0) > 0 OR 
                 trim(vr_dscritic) IS NOT NULL THEN
