@@ -75,6 +75,12 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
                              , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER;
 
+	-- Gera número de documento para lançar um determinado histórico na CRAPLCM sem duplicidade						 
+  FUNCTION fn_gera_nrdocmto_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
+		                              , pr_nrdconta IN craplcm.nrdconta%TYPE
+																	, pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+																	, pr_cdhistor IN craplcm.cdhistor%TYPE)	RETURN craplcm.nrdocmto%TYPE;													 
+
    PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
                                    ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -634,6 +640,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
 		RETURN vr_vljuros;
 	END fn_juros_remun_prov;
+
+	-- Gera número de documento para lançar um determinado histórico na CRAPLCM sem duplicidade
+	FUNCTION fn_gera_nrdocmto_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
+		                              , pr_nrdconta IN craplcm.nrdconta%TYPE
+																	, pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+																	, pr_cdhistor IN craplcm.cdhistor%TYPE) RETURN craplcm.nrdocmto%TYPE IS
+																	
+	  CURSOR cr_craplcm(pr_nrdocmto craplcm.nrdocmto%TYPE) IS
+		SELECT 1
+		  FROM craplcm 
+		 WHERE cdcooper = pr_cdcooper
+		   AND nrdconta = pr_nrdconta
+			 AND dtmvtolt = pr_dtmvtolt
+			 AND cdhistor = pr_cdhistor
+			 AND nrdocmto = pr_nrdocmto;
+			
+		vr_jaexiste INTEGER;
+		vr_prefixo  INTEGER := 99999;
+		vr_nrdocmto craplcm.nrdocmto%TYPE;
+	BEGIN
+		LOOP
+			vr_nrdocmto := to_number(to_char(vr_prefixo, '00000') || to_char(pr_cdhistor));
+			
+			OPEN cr_craplcm(vr_nrdocmto);
+			FETCH cr_craplcm INTO vr_jaexiste;
+			
+			IF cr_craplcm%NOTFOUND THEN
+				CLOSE cr_craplcm;
+				EXIT;
+			END IF;
+			
+			vr_prefixo := vr_prefixo - 1;
+			CLOSE cr_craplcm;
+		END LOOP;
+		
+		RETURN vr_nrdocmto;
+	END fn_gera_nrdocmto_craplcm;
 
   -- Subrotina para escrever texto na variável CLOB do XML
   PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB,
@@ -3228,7 +3271,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                               , pr_nrdconta => pr_nrdconta
                                               , pr_nrdctabb => pr_nrdconta
                                               , pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')
-                                              , pr_nrdocmto => 999992323
+                                              , pr_nrdocmto => fn_gera_nrdocmto_craplcm(pr_cdcooper
+																							                                        , pr_nrdconta
+																																											, pr_dtmvtolt
+																																											, 2323)
                                               , pr_cdhistor => 2323
                                               , pr_vllanmto => pr_vllanmto
                                               , pr_cdpesqbb => to_char(pr_vlbasiof,'fm000g000g000d00')
