@@ -5740,7 +5740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 01/11/2018
 
       Dados referentes ao programa:
 
@@ -5748,7 +5748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Objetivo  : Rotina responsavel por realizar as leituras no sistema cecred a fim
                   de montar o objeto json contendo a proposta do cartão
 
-      Alteração :
+      Alteração : 01/11/2018 - PJ345 - Ajustes para erro no envio dos arquivos (Rafael Faria - Supero)
 
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -6408,36 +6408,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando);
 
-      -- Se NAO encontrou o arquivo
-      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
-        vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
-        RAISE vr_exc_erro;
+      -- Se encontrou o arquivo
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+        -- Converter arquivo PDF para clob em base64 para enviar via json
+        este0001.pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
+                                        ,pr_json_value_arq => vr_json_valor
+                                        ,pr_dscritic       => vr_dscritic);
+
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Gerar objeto json para a imagem
+        vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
+        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+        vr_obj_imagem.put('emissaoData' ,este0001.fn_data_ibra(SYSDATE));
+        vr_obj_imagem.put('validadeData','');
+        -- incluir objeto imagem na proposta
+        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
+
+        -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
       END IF;
-
-      -- Converter arquivo PDF para clob em base64 para enviar via json
-      este0001.pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
-                                      ,pr_json_value_arq => vr_json_valor
-                                      ,pr_dscritic       => vr_dscritic);
-
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Gerar objeto json para a imagem
-      vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
-      vr_obj_imagem.put('conteudo'    ,vr_json_valor);
-      vr_obj_imagem.put('emissaoData' ,este0001.fn_data_ibra(SYSDATE));
-      vr_obj_imagem.put('validadeData','');
-      -- incluir objeto imagem na proposta
-      vr_lst_doctos.append(vr_obj_imagem.to_json_value());
-
-      -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
-      gene0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
 
     END IF;
 
     -- Incluiremos os documentos ao json principal
-    vr_obj_proposta.put('documentos',vr_lst_doctos);
+    IF json_ac.array_count(vr_lst_doctos) > 0  THEN
+      vr_obj_proposta.put('documentos',vr_lst_doctos);
+    END IF;
 
     vr_obj_proposta.put('contratoNumero',vr_nrctrcrd/*rw_crawcrd.nrctrcrd*/);
 
