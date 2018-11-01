@@ -2686,7 +2686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
      WHERE (pr_cdcooper = 0 OR grv.cdcooper = pr_cdcooper)
        AND (pr_cdoperac = 0 OR grv.cdoperac = pr_cdoperac)
        AND (pr_nrseqlot = 0 OR grv.nrseqlot = pr_nrseqlot)
-       AND grv.dtenvgrv between nvl(pr_dtenvgrv,grv.dtenvgrv) 
+       AND trunc(grv.dtenvgrv) between nvl(pr_dtenvgrv,grv.dtenvgrv) 
                             and nvl(pr_dtenvate,grv.dtenvgrv)
        and (pr_nrdconta = 0 OR grv.nrdconta = pr_nrdconta)
        and (pr_nrctrpro = 0 OR grv.nrctrpro = pr_nrctrpro)
