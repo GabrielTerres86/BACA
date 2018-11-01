@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 19/10/2018
+   Data    : Marco/96.                       Ultima atualizacao: 31/10/2018
 
    Dados referentes ao programa:
 
@@ -248,6 +248,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                             Prj. 402 (Jean Michel).
 
                19/10/2018 - P442 - Inclusão de OUTROS VEICULOS em comentario (Marcos-Envolti)
+               
+               31/10/2018 - PJ450 RF04 - Gravando saldo refinanciado na crapepr através da 
+                            RISC0004.pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -331,6 +334,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,wepr.nrctrliq##9
           ,wepr.nrctrliq##10
           ,wepr.rowid
+          ,wepr.idquapro
       FROM crawepr wepr
      WHERE wepr.cdcooper = pr_cdcooper
        AND wepr.nrdconta = pr_nrdconta
@@ -691,6 +695,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vlavsdeb NUMBER := 0;
   vr_inusatab BOOLEAN := FALSE;
   vr_crapass  BOOLEAN := FALSE;
+  
+  vr_vlsaldo_refinanciado NUMBER := 0;
   
   vr_qtprecal crapepr.qtprecal%TYPE;
   vr_vljurmes NUMBER := 0;
@@ -1746,6 +1752,7 @@ BEGIN
     vr_tab_nrctrliq(9):=  NVL(rw_crawepr.nrctrliq##9,0);
     vr_tab_nrctrliq(10):= NVL(rw_crawepr.nrctrliq##10,0);
     
+    vr_vlsaldo_refinanciado := 0;
     
     FOR vr_contador IN 1..10 LOOP
       
@@ -2134,6 +2141,10 @@ BEGIN
           END IF; -- Fim vr_valor > 0 
         END IF; -- rw_crawepr.qtdialib > 0
           
+        --Acumula o valor refinanciado para gravar na crapepr
+        IF rw_crawepr.idquapro in(2,3,4) THEN
+           vr_vlsaldo_refinanciado := vr_vlsaldo_refinanciado + vr_vlsderel;
+        END IF;  
         -- Gera Debito Emprestimo(Saldo Devedor)
         BEGIN
           INSERT INTO craplcm
@@ -2610,6 +2621,19 @@ BEGIN
         END IF;
       END IF; -- Fim vr_tab_crawepr(vr_contador).nrctrliq > 0
     END LOOP; -- vr_contador 1..10
+    
+    -- Chama a rotina que grava o valor refinanciado na crapepr
+    IF vr_vlsaldo_refinanciado > 0 THEN
+       RISC0004.pc_gravar_saldo_refin(pr_cdcooper             => pr_cdcooper
+                                     ,pr_nrdconta             => rw_crabepr.nrdconta
+                                     ,pr_nrctremp             => rw_crabepr.nrctremp
+                                     ,pr_devedor_calculado    => vr_vlsaldo_refinanciado
+                                     ,pr_dscritic             => vr_dscritic);
+       
+       IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+       END IF;                              
+    END IF;
     
     IF (rw_crawepr.qtdialib > 0 AND rw_crawepr.tpemprst = 0) OR 
        (rw_crawepr.dtlibera > rw_crapdat.dtmvtolt AND rw_crawepr.tpemprst = 1) THEN

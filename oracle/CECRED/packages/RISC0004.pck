@@ -155,6 +155,13 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                   ,pr_dtmvtoan IN DATE             -- Data da central anterior
                                      ,pr_dscritic OUT VARCHAR2);
 
+  -- Grava saldo refinanciado na crapepr                                
+  PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
+                                 ,pr_nrdconta            NUMBER     --> Conta
+                                 ,pr_nrctremp            NUMBER     --> Contrato
+                                 ,pr_devedor_calculado   NUMBER     --> Valor refinanciado
+                                 ,pr_dscritic OUT VARCHAR2);
+
 END RISC0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
@@ -173,6 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
   --                          PJ 450 - Diego Simas - AMcom  
+  --             31/10/2018 - inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1834,6 +1842,30 @@ END pc_carrega_tabela_riscos;
         pr_dscritic := 'Erro nao tratado na RISC0004.pc_central_risco_grupo --> ' || SQLERRM;
 
   END pc_central_grava_dtdrisco;
+  
+  -- Grava saldo refinanciado na crapepr                                
+  PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
+                                 ,pr_nrdconta            NUMBER     --> Conta
+                                 ,pr_nrctremp            NUMBER     --> Contrato
+                                 ,pr_devedor_calculado   NUMBER     --> Valor refinanciado
+                                 ,pr_dscritic            OUT VARCHAR2) IS
+  BEGIN
+    
+    UPDATE crapepr r
+       SET r.vlsaldo_refinanciado = pr_devedor_calculado
+     WHERE r.cdcooper = pr_cdcooper
+       AND r.nrdconta = pr_nrdconta
+       AND r.nrctremp = pr_nrctremp;
+       
+  EXCEPTION
+    WHEN OTHERS THEN
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na RISC0004.pc_gravar_saldo_refin --> ' 
+                      ||'Conta: ' || pr_nrdconta
+                      ||'. Contrato: ' || pr_nrctremp  
+                      ||'. Detalhes: ' || SQLERRM;
+          
+  END pc_gravar_saldo_refin; 
 
 END RISC0004;
 /
