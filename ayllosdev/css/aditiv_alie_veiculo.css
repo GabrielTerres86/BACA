@@ -35,13 +35,13 @@
     ,#frmTipo label  {
         font-size: 11px;
     }
-    #frmTipo input[type="text"].menor, #ufdplaca{
-        width:45px!important;
+    #frmTipo input[type="text"].menor, #frmTipo select#ufdplaca{
+        width:45px;
         padding: 0!important;
         min-width: 30px;
     }
     #frmTipo label.menor{
-        min-width:46px!important;
+        min-width:46px;
     }
     #frmTipo #nrdplaca{
          width:101px!important;
@@ -52,12 +52,11 @@
         margin: 3px;
         padding: 0px 3px 5px 3px;
     }
-     #frmTipo fieldset legend{
+    #frmTipo fieldset legend{
        text-align: center;
     }
-    #frmTipo #nrmodbem, #frmTipo #nrmodbemC
-    {
-        width:102px!important;
+    #frmTipo #nrmodbem, #frmTipo #nrmodbemC {
+        width:90px;
     }
     select[readonly] {
         background: #eee;
@@ -114,4 +113,26 @@
         background: #ccc!important;
     }
     /*************************** Form Interveniente ************************/
-    
+	
+	label#lbsemfip {
+		min-width: 30px;
+		text-indent: -15px;
+		display:none;
+	}
+	input#dssemfip {
+		width: 13px;
+		height: 13px;
+		padding: 0;
+		margin:5px 0 5px 2px;
+		vertical-align: bottom;
+		position: relative;
+		top: -1px;
+		overflow: hidden;
+		display:none;
+	}
+	label#lsanobem {
+		min-width: 20px;
+	}
+	#frmTipo input#nranobem.menor {
+		width: 30px;
+	}

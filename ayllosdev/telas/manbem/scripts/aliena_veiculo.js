@@ -230,7 +230,7 @@ function SubstituiBem(){
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text(); 
 	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text();
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
 		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
 		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
 		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
@@ -410,4 +410,12 @@ function formataDoc()
                         valObjDoc.substring(12,14)
                     );
     }
+}
+
+function transportaValorInput(idElement) {
+	
+	if ( $("#" + idElement).val() != -1 ) {
+		$("#" + idElement + "C").val( $("#" + idElement).find('option:selected').text() ); //$('#nrmodbem option:selected', '#frmTipo').text()
+	}
+	
 }

@@ -74,8 +74,6 @@ var modeloBem;
 var glb_nriniseq; 
 var glb_nrregist;
 
-var dschssub = 0;
-
 //Labels/Campos do cabeçalho
 var rCddopcao, rNrdconta, rNrctremp, rNraditiv, rDtmvtolx, rCdaditiv, rCdaditix, rTpctrato,
 	cCddopcao, cNrdconta, cNrctremp, cNraditiv, cDtmvtolx, cCdaditiv, cCdaditix, cTpctrato, cTodosCabecalho, btnOK1, btnOK2;
@@ -271,7 +269,7 @@ function manterRotina( operacao ) {
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
 
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
 		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
 		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
 		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
@@ -911,7 +909,7 @@ function formataTipo1( tpdescto ) {
 		$('select, input', '#'+frmTipo1).habilitaCampo();
 		cDtmvtolt.val('').desabilitaCampo();
 		cDtmvtolt.focus();
-		trocaBotao( 'gravar', 1 );
+		trocaBotao( 'gravar' );
 
 		//
 		if ( tpdescto == '2' ) {
@@ -1387,7 +1385,7 @@ function formataTipo5() {
 			$('select, input', '#'+frmTipo5).habilitaCampo();
 			cDtmvtolt.val('').desabilitaCampo();
 			cDtmvtolt.focus();
-			trocaBotao( 'gravar', 5 );
+			trocaBotao( 'gravar' );
 			cVlfipbem.desabilitaCampo();
 			cVlfipbem.addClass("campoTelaSemBorda");
 			cVlfipbem.removeClass("campo");
@@ -1410,30 +1408,76 @@ function formataTipo5() {
 
 			busca_uf_pa(nrdconta);
 			$("#uflicenc").prop("readonly", true);
-
-			$("#"+idElementTpVeiulo).change( function() {
-				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
-					$("#" + idElementMarca + "C").hide();
+			
+			$('#dssemfip', '#frmTipo').change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
+					removeErroCampo($("#" + idElementMarca + "C", '#'+frmTipo5));
+					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show();
-					$("#" + idElementModelo + "C").hide();
+					removeErroCampo($("#" + idElementModelo + "C", '#'+frmTipo5));
+					$("#" + idElementModelo + "C").val('').hide();
 					$("#" + idElementModelo).show();
-					$("#" + idElementAno + "C").hide();
+					removeErroCampo($("#" + idElementAno + "C", '#'+frmTipo5));
+					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show();
 				} else {
+					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
 					$("#" + idElementMarca + "C").show();
-					$("#" + idElementMarca).hide();
+					transportaValorInput(idElementMarca);
+					$("#" + idElementMarca).val('').hide();
+					removeErroCampo($("#" + idElementModelo, '#'+frmTipo5));
 					$("#" + idElementModelo + "C").show();
-					$("#" + idElementModelo).hide();
+					transportaValorInput(idElementModelo);
+					$("#" + idElementModelo).val('').hide();
+					removeErroCampo($("#" + idElementAno, '#'+frmTipo5));
 					$("#" + idElementAno + "C").show().habilitaCampo();
-					$("#" + idElementAno).hide();
+					transportaValorInput(idElementAno);
+					$("#" + idElementAno).val('').hide();
 					cVlfipbem.val('');
+				}
+			});
+
+			$("#"+idElementTpVeiulo).change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS']) && !($('#dssemfip', '#frmTipo').is(':checked')) ) {
+					removeErroCampo($("#" + idElementMarca + "C", '#'+frmTipo5));
+					$("#" + idElementMarca + "C").val('').hide();
+					$("#" + idElementMarca).show();
+					removeErroCampo($("#" + idElementModelo + "C", '#'+frmTipo5));
+					$("#" + idElementModelo + "C").val('').hide();
+					$("#" + idElementModelo).show();
+					removeErroCampo($("#" + idElementAno + "C", '#'+frmTipo5));
+					$("#" + idElementAno + "C").val('').hide();
+					$("#" + idElementAno).show();
+					if (in_array(cDscatbem.val(), [''])) {
+						$('#dssemfip').removeAttr('checked').hide();
+						$('#lbsemfip').hide();
+						$("#frmTipo select#dstipbem").css({ "width": "150" });
+					} else {
+						$('#dssemfip').show();
+						$('#lbsemfip').show();
+						$("#frmTipo select#dstipbem").css({ "width": "80" });
+					}
+				} else {
+					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
+					$("#" + idElementMarca + "C").show();
+					$("#" + idElementMarca).val('').hide();
+					removeErroCampo($("#" + idElementModelo, '#'+frmTipo5));
+					$("#" + idElementModelo + "C").show();
+					$("#" + idElementModelo).val('').hide();
+					removeErroCampo($("#" + idElementAno, '#'+frmTipo5));
+					$("#" + idElementAno + "C").show().habilitaCampo();
+					$("#" + idElementAno).val('').hide();
+					cVlfipbem.val('');
+					$("#frmTipo select#dstipbem").css({ "width": "150" });
+					$('#dssemfip').removeAttr('checked').hide();
+					$('#lbsemfip').hide();
 				}
 			});
 
 		} else {
 			$('select, input', '#'+frmTipo5).desabilitaCampo();
 		}
-		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) ) {
+		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) || $('#dssemfip', '#frmTipo').is(':checked') ) {
 			$("#dsmarbemC").show();
 			$("#dsbemfinC").show();
 			$("#nrmodbemC").show();
@@ -1761,7 +1805,7 @@ function formataTipo7() {
 		$('select, input', '#'+frmTipo7).habilitaCampo();
 		cDtmvtolt.val('').desabilitaCampo();
 		cDtmvtolt.focus();
-		trocaBotao( 'gravar', 7 );
+		trocaBotao( 'gravar' );
 	} else {
 		$('select, input', '#'+frmTipo7).desabilitaCampo();
 	}
@@ -1936,7 +1980,7 @@ function formataTipo8() {
 		$('select, input', '#'+frmTipo8).habilitaCampo();
 		cDtmvtolt.val('').desabilitaCampo();
 		cDtmvtolt.focus();
-		trocaBotao( 'gravar', 8 );
+		trocaBotao( 'gravar' );
 	} else {
 		$('select, input', '#'+frmTipo8).desabilitaCampo();
 	}
@@ -2500,16 +2544,13 @@ function btnContinuar() {
 
 }
 
-function trocaBotao( acao, tpForm ) {
+function trocaBotao( acao ) {
 
 	$('#divBotoes','#divRotina').html('');
 
 	if ( acao == 'gravar' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>');
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="manterRotina(\'VD\'); return false;">Continuar</a>');
-		if(tpForm == 5){
-			$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btConsultar" onClick="mostraTabelaHistoricoGravames(1,1000); return false;">Hist&oacute;rico Gravame</a>');
-		}	
 	} else if ( acao == 'imprimir' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Cancelar</a>');
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="Gera_Impressao(); return false;">Imprimir</a>');
@@ -2690,66 +2731,15 @@ function ConsulAditivos(tipsaida,cdcooper) {
 	return false;
 }
 
-function getCurrentDate(){
-	var date = new Date();
-
-	var day = date.getDate();
-	var month = date.getMonth()+1;
-	var year = date.getFullYear();
-
-	var currentDate =  (day<10 ? '0' : '') + day + '/' +
-    	(month<10 ? '0' : '') + month + '/' +
-    	year;
-
-    return currentDate;
-}
-
-function mostrarHistGravamesFormTipo5(nriniseq, nrregist){
-	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
-	limpaDivGenerica();
-	exibeRotina($('#divUsoGenerico'));
-
-	var dtrefere = getCurrentDate();
-	var dtrefate = getCurrentDate();
-	var cdcoptel = cdcooper;
-	var nrctrpro = nrctremp;
-
-	// Executa script de confirmação através de ajax
-	$.ajax({
-		type: 'POST',
-		dataType: 'html',
-		//url: UrlSite + 'telas/manbem/historico_gravames.php',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
-		data: {
-			nrdconta: nrdconta,
-			nrctrpro: nrctrpro,
-			cdcoptel: cdcoptel,
-			dtrefere: dtrefere,
-			dtrefate: dtrefate,
-			nriniseq: nriniseq,
-			nrregist: nrregist,
-			redirect: 'html_ajax'
-			},
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			$('#divUsoGenerico').html(response);
-			controlaLayoutHistoricoGravames( );
-		}
-	});
-	return false;
-}
-
 
 function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
 	limpaDivGenerica();
+	$('#divUsoGenerico').css('width','750px');
 	exibeRotina($('#divUsoGenerico'));
 
-	var dschassi = $("#dschassi","#frmTipo").val() + ',' + dschssub;
+	var dschassi = $("#dschassi","#frmTipo").val();
 	var cdcoptel = cdcooper;
 	var nrctrpro = nrctremp;
 
@@ -2781,7 +2771,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '91em', 'left': '26em' });
+	$('#divUsoGenerico').css({ 'width': '1095px', 'left': '325px' });
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
@@ -2813,7 +2803,7 @@ function controlaLayoutHistoricoGravames() {
 	arrayLargura[4] = '65px';	//Conta/DV
 	arrayLargura[5] = '65px';	//Contrato
 	arrayLargura[6] = '140px';	//Chassi
-	arrayLargura[7] = '193px';	//Bem
+	arrayLargura[7] = '190px';	//Bem
 	arrayLargura[8] = '101px';	//Data Envio
 	arrayLargura[9] = '101px';	//Data Ret
 	arrayLargura[10] = '';		//Situação

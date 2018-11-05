@@ -21,7 +21,6 @@
 <?
 
 	$msg['inicio'] = "O(s) ve&iacute;culo(s) ser&aacute;(&atilde;o) automaticamente baixado(s) do contrato antigo e alienado(s) no novo contrato.<br/><br/>Foi verificado se este(s) ve&iacute;culo(s) n&atilde;o possui(em) restri&ccedil&otilde;es para aliena&ccedil&atilde;o?";
-	$msg['aguarde'] = "Aguarde, processando os gravames";
 	$msg['erro_baixa_vi'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na baixa de gravame do contrato sendo liquidado";
 	$msg['erro_inclusao_vi'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na inclus&atilde;o do gravame";
 	$msg['erro_baixa_vd'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na inclus&atilde;o do gravame";
@@ -162,15 +161,15 @@
 			}
 			$exibeErro = "";
 
+			$qtdGravameB3 = 0;
 			foreach ($xmlObj->roottag->tags AS $t) {
 				if (strtoupper($t->name) == 'GRAVAMEB3') {
-					$qtdGravameB3 = 0;
 					$gravamesb3 = $t->attributes;
 					$nomgrupo = $gravamesb3['NOMGRUPO'];
 					$flgobrig = $gravamesb3['FLGOBRIG'];
 
+					$qtdGravame = 0;
 					foreach ($t->tags as $gravame) {
-						$qtdGravame = 0;
 						$gravameAttr = $gravame->attributes;
 						$iduriservico = $gravameAttr['IDURISERVICO'];
 						$cdoperac = $gravameAttr['CDOPERAC'];
@@ -204,28 +203,19 @@
 									  "propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
-						
-						// Abre ou cria o arquivo bloco1.txt
-						// "a" representa que o arquivo é aberto para ser escrito
-						$fp = fopen("gravames".time().".txt", "a");
-
-						// Escreve "exemplo de escrita" no bloco1.txt
-						$escreve = fwrite($fp, $data);
-
-						// Fecha o arquivo
-						fclose($fp);
-
-						//echo dirname(__FILE__).'<br>';
 
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
-						$errorMessage = $dataInteracao = $idRegistro = '';
+						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
+							$retContr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
+							$retGravame = $xmlRet->roottag->tags[0]->tags[1]->cdata;
+							$identificador = $xmlRet->roottag->tags[0]->tags[3]->cdata;
 							$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[2]->cdata);
-							$idRegistro = $xmlRet->roottag->tags[0]->tags[1]->cdata;
+							$idRegistro = $xmlRet->roottag->tags[0]->tags[3]->cdata;
 						} else {
 							$errorMessage = retornarMensagemErro($xmlRet);
 							$errorQtd++;
@@ -238,9 +228,10 @@
 							}
 
 						}
-						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac;
+						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac . " - " . $retGravame . " - " . $retContr . " - " . $identificador;
 
-						//gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac);
+						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $retGravame, $retContr, $identificador);
+						//gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador)
 
 						$qtdGravame++;
 					}
