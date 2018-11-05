@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 05/10/2018
+  --  Data     : Março/2018.                   Ultima atualização: 01/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -288,6 +288,9 @@ create or replace package body cecred.cobr0011 IS
   --
   -- Alterações: 05/10/2018 - Remover inst autom de protesto quando titulo devolvido pelo cartorio
   --
+  --             31/10/2018 - Alterado conta de centralização da cooperativa para conta de compensação (P352 - Cechet).
+  --
+  --             01/11/2018 - Incluido rotina de trace na chamada SPB para envio de TED (P352 - Cechet)
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -696,6 +699,13 @@ create or replace package body cecred.cobr0011 IS
       
       vr_indebcre craphis.indebcre%TYPE;
 			vr_cddbanco INTEGER;
+      vr_des_erro VARCHAR2(1000);   
+      
+      -- variaveis copiadas da CXON0020 (Cechet)
+      vr_trace_nmmensagem tbspb_msg_enviada.nmmensagem%TYPE;
+      vr_nrseq_mensagem10 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem20 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;      
 
       -------------------- Programa Principal -----------------
       BEGIN        
@@ -919,6 +929,59 @@ create or replace package body cecred.cobr0011 IS
           RAISE vr_exc_saida;
         END IF;
         CLOSE cr_crapban;
+        
+        -- copiado da CXON0020 com orientacao do Diego Vicentini      
+        -- Fase 10 - controle mensagem SPB
+        sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                   ,pr_idorigem               => 'E'
+                                   ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                   ,pr_nrcontrole             => vr_nrctrlif
+                                   ,pr_nrcontrole_str_pag     => NULL
+                                   ,pr_nrcontrole_dev_or      => NULL
+                                   ,pr_dhmensagem             => sysdate
+                                   ,pr_insituacao             => 'OK'
+                                   ,pr_dsxml_mensagem         => null
+                                   ,pr_dsxml_completo         => null
+                                   ,pr_nrseq_mensagem_xml     => null
+                                   ,pr_nrdconta               => pr_nrdconta
+                                   ,pr_cdcooper               => pr_cdcooper
+                                   ,pr_cdproduto              => 30 -- TED
+                                   ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                   ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                   ,pr_dscritic               => vr_dscritic
+                                   ,pr_des_erro               => vr_des_erro);
+        -- Se ocorreu erro
+        IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levantar Excecao
+          vr_cdcritic := 0;
+          RAISE vr_exc_saida;
+        END IF;
+        
+        -- copiado da CXON0020 com orientacao do Diego Vicentini              
+        -- Fase 20 - controle mensagem SPB
+        sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                   ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                   ,pr_nrcontrole             => vr_nrctrlif
+                                   ,pr_nrcontrole_str_pag     => NULL
+                                   ,pr_nrcontrole_dev_or      => NULL
+                                   ,pr_dhmensagem             => sysdate
+                                   ,pr_insituacao             => 'OK'
+                                   ,pr_dsxml_mensagem         => null
+                                   ,pr_dsxml_completo         => null
+                                   ,pr_nrseq_mensagem_xml     => null
+                                   ,pr_nrdconta               => pr_nrdconta
+                                   ,pr_cdcooper               => pr_cdcooper
+                                   ,pr_cdproduto              => 30 -- TED
+                                   ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                   ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                   ,pr_dscritic               => vr_dscritic
+                                   ,pr_des_erro               => vr_des_erro);
+        -- Se ocorreu erro
+        IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levantar Excecao
+          vr_cdcritic := 0;
+          RAISE vr_exc_saida;
+        END IF;        
         
         SSPB0001.pc_proc_envia_tec_ted
                           (pr_cdcooper => pr_cdcooper -- INTEGER
@@ -2519,7 +2582,7 @@ create or replace package body cecred.cobr0011 IS
     --
 		CURSOR cr_crapcop(pr_cdcooper craplot.cdcooper%TYPE
 		                 ) IS
-		  SELECT crapcop.nrctactl
+		  SELECT crapcop.nrctacmp
 			  FROM crapcop
 			 WHERE crapcop.cdcooper <> 3
 			   AND crapcop.flgativo = 1
@@ -2695,8 +2758,8 @@ create or replace package body cecred.cobr0011 IS
 																 ,rw_craplot.dtmvtolt         -- dtrefere
 																 ,GENE0002.fn_busca_time      -- hrtransa
 																 ,0                           -- nrautdoc -- Fixo
-																 ,rw_crapcop.nrctactl         -- nrdconta
-																 ,rw_crapcop.nrctactl         -- nrdctabb
+																 ,rw_crapcop.nrctacmp         -- nrdconta
+																 ,rw_crapcop.nrctacmp         -- nrdctabb
 																 ,' '                         -- nrdctitg -- Fixo
 																 ,vr_sqdoclan                 -- nrdocmto
 																 ,rw_craplot.nrdolote         -- nrdolote
@@ -2740,7 +2803,7 @@ create or replace package body cecred.cobr0011 IS
 			--
 			vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
 																		 'nrseqdig',''||3
-																		 ||';'||rw_crapcop.nrctactl||';'||to_char(rw_craplot.dtmvtolt,'dd/mm/yyyy')||'');
+																		 ||';'||rw_crapcop.nrctacmp||';'||to_char(rw_craplot.dtmvtolt,'dd/mm/yyyy')||'');
 			--
 			INSERT INTO tbfin_recursos_movimento(cdcooper
 																					,nrdconta
@@ -2767,7 +2830,7 @@ create or replace package body cecred.cobr0011 IS
 																					,dsinform
 																					,idlancto
 																					) VALUES(3                          -- cdcooper -- Fixo
-																									,rw_crapcop.nrctactl        -- nrdconta
+																									,rw_crapcop.nrctacmp        -- nrdconta
 																									,rw_craplot.dtmvtolt        -- dtmvtolt
 																									,vr_sqdoclan                -- nrdocmto
 																									,nvl(rw_craplot.nrseqdig,0) -- nrseqdig
@@ -2800,7 +2863,7 @@ create or replace package body cecred.cobr0011 IS
 		END;
 		-- Atualiza o saldo
 		pc_atualiza_saldo(pr_cdcooper => 3                   -- IN -- Fixo
-										 ,pr_nrdconta => rw_crapcop.nrctactl -- IN
+										 ,pr_nrdconta => rw_crapcop.nrctacmp -- IN
 										 ,pr_dtmvtolt => rw_craplot.dtmvtolt -- IN
 										 ,pr_vllanmto => pr_vllanmto         -- IN
 										 ,pr_dsdebcre => rw_craphis.indebcre -- IN
@@ -2830,7 +2893,7 @@ create or replace package body cecred.cobr0011 IS
     --
 		CURSOR cr_crapcop(pr_cdcooper craplot.cdcooper%TYPE
 		                 ) IS
-		  SELECT crapcop.nrctactl
+		  SELECT crapcop.nrctacmp
 			  FROM crapcop
 			 WHERE crapcop.cdcooper <> 3
 			   AND crapcop.flgativo = 1
@@ -2894,6 +2957,7 @@ create or replace package body cecred.cobr0011 IS
 		END IF;
 		--
 		CLOSE cr_crapcop;
+
 		-- Gerar novo titulo usando a fn_sequence 
 		vr_sqdoclan := fn_sequence(pr_nmtabela => 'CRAPLCM'
 															,pr_nmdcampo => 'NRDOCMTO'
@@ -2934,8 +2998,8 @@ create or replace package body cecred.cobr0011 IS
 																 ,pr_craplot.dtmvtolt         -- dtrefere
 																 ,GENE0002.fn_busca_time      -- hrtransa
 																 ,0                           -- nrautdoc -- Fixo
-																 ,rw_crapcop.nrctactl         -- nrdconta
-																 ,rw_crapcop.nrctactl         -- nrdctabb
+																 ,rw_crapcop.nrctacmp         -- nrdconta
+																 ,rw_crapcop.nrctacmp         -- nrdctabb
 																 ,' '                         -- nrdctitg -- Fixo
 																 ,vr_sqdoclan                 -- nrdocmto
 																 ,pr_craplot.nrdolote         -- nrdolote

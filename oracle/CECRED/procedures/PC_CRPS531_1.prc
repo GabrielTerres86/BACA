@@ -32,7 +32,7 @@ end;
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 17/07/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 01/11/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -321,6 +321,8 @@ end;
 
              12/09/2018 - Substituido insert na craplcm para utilizar rotina centralizadora LANC0001.
                           PRJ450 - Regulatorio (Odirlei-AMcom)    
+                          
+             01/11/2018 - Ignorar confirmação STR0008R1 para TEDs de protesto (P352 - Cechet)
                           
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -9118,6 +9120,8 @@ END pc_trata_arquivo_ldl;
                 RAISE vr_exc_next;
               END IF;
               -- Fim Projeto 475
+            ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) = '9' THEN -- TED de Protesto
+              NULL;
             -- STR0004
             ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) <> '3'  THEN
               -- Gera critica
