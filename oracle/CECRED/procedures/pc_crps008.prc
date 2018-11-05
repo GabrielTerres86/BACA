@@ -1497,8 +1497,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                        RAISE vr_exc_saida;
                      END IF;
                      -- guarda dados par serem utilizados mais a frente
-                     rw_craplcm.vllanmto := rw_crapsld(idx).vljuresp;
-                     rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljuresp * vr_txcpmfcc,2);
+                     rw_craplcm.vllanmto := rw_crapsld(idx).vljurmes;
+                     rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljurmes * vr_txcpmfcc,2);
                      rw_craplcm.rowid    := vr_tab_retorno.rowidlct;
                    
                    EXCEPTION
