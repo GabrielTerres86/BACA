@@ -1,12 +1,13 @@
 //*********************************************************************************************//
 //*** Fonte: mancar.js                                                 						***//
 //*** Autor: Andr� Clemer                                            						***//
-//*** Data : Abril/2018                  �ltima Altera��o: --/--/----  					    ***//
+//*** Data : Abril/2018                  Última Alteração: 11/10/2018  					    ***//
 //***                                                                  						***//
 //*** Objetivo  : Biblioteca de fun��es da tela MANCAR                 						***//
 //***                                                                  						***//	 
-//*** Altera��es:                                                                           ***//	  
+//*** Alterações:                                                                           ***//	  
 //***                           									                        ***//
+//*** 11/10/2018 - Ajuste na mensagem de exclusão de cartório (Cechet)                      ***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -354,14 +355,14 @@ function selecionaCartorio(opcao) {
                 $('#dscidade', '#frmManCar').val($('#dscidade', self).val());
                 $('#flgativo', '#frmManCar').val($('#flgativo', self).val());
 			}else if(opcao == 'E'){
-				showConfirmacao('Voc� tem certeza de que deseja excluir este cart�rio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirCartorio(' + idcartorio + ');', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+				showConfirmacao('Voc&ecirc; tem certeza de que deseja excluir este cart&oacute;rio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirCartorio(' + idcartorio + ');', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 			}
 		}
 		
 	});
 
     if (! flgSelected && opcao == 'E') {
-        showError("error", "Favor selecionar o cart�rio que deseja excluir!", "Alerta - Ayllos", "");
+        showError("error", "Favor selecionar o cart&oacute;rio que deseja excluir!", "Alerta - Ayllos", "");
     }
 	
 	return false;
