@@ -22,7 +22,12 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --              20/02/2018 - Removido tabela "craptip" do cursor "cr_crapass" na procedure
 --                           pc_integraliza_cotas. PRJ366 (Lombardi).
 --
---              15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+--              23/05/2018 - Verificacao de valor minimo de capital quando for a primeira
+--                           integralizacao na proc pc_integraliza_cotas. PRJ366 (Lombardi).
+							   
+--                01/08/2018 - PRJ450 - Centralização de lançamento na craplcm (José Amcom)
+
+--                15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
 --	                         pc_estorna_lancto_conta (Fabio Adriano - AMcom)
 
 ---------------------------------------------------------------------------------------------------------
@@ -431,11 +436,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                 ,pr_flgnegat IN INTEGER -- flag que indica se permite negativar
                                 ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2) IS -- Descrição da crítica
-                                
-  vr_tab_retorno    LANC0001.typ_reg_retorno;
-  vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
-                                
 
+ vr_tab_retorno    LANC0001.typ_reg_retorno;
+ vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
     CURSOR cr_crapass(pr_cdcooper      IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
     SELECT crapass.cdcooper
@@ -446,6 +449,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
      WHERE crapass.cdcooper = pr_cdcooper
        AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
+    
+    CURSOR cr_craplct(pr_cdcooper      IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
+    SELECT 1
+      FROM craplct 
+     WHERE craplct.cdcooper = pr_cdcooper
+       AND craplct.nrdconta = pr_nrdconta;
+    rw_craplct cr_craplct%ROWTYPE;
     
     -- Erros do processo
 
@@ -542,6 +553,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       
       CLOSE cr_crapass;    
 
+      OPEN cr_craplct (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_craplct INTO rw_craplct;
+      
+      IF cr_craplct%FOUND THEN
       CADA0003.pc_busca_valor_minimo_capital(pr_cdcooper  => pr_cdcooper
                                             ,pr_cdagenci  => pr_cdagenci
                                             ,pr_nrdcaixa  => pr_nrdcaixa
@@ -572,6 +588,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           
         --Levantar Excecao
         RAISE vr_exc_erro;
+              
+          END IF;
+        ELSE
+          CADA0006.pc_valor_min_capital(pr_cdcooper         => pr_cdcooper
+                                       ,pr_inpessoa         => rw_crapass.inpessoa
+                                       ,pr_cdtipo_conta     => rw_crapass.cdtipcta
+                                       ,pr_vlminimo_capital => vr_vlminimo
+                                       ,pr_des_erro         => vr_des_reto
+                                       ,pr_dscritic         => vr_dscritic);
+          --Se Ocorreu erro
+          IF vr_des_reto = 'NOK' THEN
+            pr_dscritic := vr_dscritic;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;    
           
       END IF;
       
@@ -647,9 +678,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                             ,pr_qtinfoln => vr_qtinfoln
                             ,pr_qtcompln => vr_qtcompln
                             ,pr_nrseqdig => vr_nrseqdig);
-                            
-    -- cria lançamento de depositos a vista - craplcm                        
-    -- Inserir registro de crédito:
+
+    -- cria lançamento de depositos a vista - craplcm
+-- Inserir registro de crédito:
     LANC0001.pc_gerar_lancamento_conta(pr_cdagenci =>vc_cdagenci             -- cdagenci
                                       ,pr_cdbccxlt =>vc_cdbccxlt             -- cdbccxlt
                                       ,pr_cdhistor =>vr_craplcm_cdhist       -- cdhistor
