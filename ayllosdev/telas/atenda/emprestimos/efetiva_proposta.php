@@ -75,7 +75,7 @@
 		// Controle de Erros
 		//----------------------------------------------------------------------------------------------------------------------------------
 		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacao(\'A_NOVA_PROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar a proposta?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaOperacao(\'A_NOVA_PROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
 			exit();
 		}
 
@@ -112,7 +112,7 @@
 		$xmlObj = getObjectXML($xmlResult);
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
 		}
 
 		$registros  = $xmlObj->roottag->tags[0]->tags;
@@ -152,11 +152,11 @@
 		$xmlObj = getObjectXML($xmlResult);
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
 		} else {
 			$mensagem = $xmlObj->roottag->tags[0]->cdata;
 			if ($mensagem != '' && $operacao == '') {
-				echo "showConfirmacao('$mensagem', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetivaProposta(\'EFE_PRP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
+				echo "showConfirmacao('$mensagem', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta(\'EFE_PRP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
 				exit();
 			}
 			$exibeErro = "";
@@ -168,7 +168,7 @@
 					$nomgrupo = $gravamesb3['NOMGRUPO'];
 					$flgobrig = $gravamesb3['FLGOBRIG'];
 
-					$qtdGravame = 0;
+						$qtdGravame = 0;
 					foreach ($t->tags as $gravame) {
 						$gravameAttr = $gravame->attributes;
 						$iduriservico = $gravameAttr['IDURISERVICO'];
@@ -203,7 +203,7 @@
 									  "propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
-
+						
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
@@ -221,7 +221,7 @@
 							$errorQtd++;
 
 							if ( $flgobrig == "S" && $flgaborta == "S" ) {
-								exibirErro('error',$msg['erro_baixa_vi'],'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));',false);
+								exibirErro('error',$msg['erro_baixa_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
 								exit;
 							} else if ( $flgobrig == "S" && $flgaborta == "N" ) {
 								$exibeErro = 'grupo';
@@ -237,7 +237,7 @@
 					}
 
 					if ( $exibeErro == 'grupo' ) {
-						exibirErro('error',$msg['erro_inclusao_vi'],'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));',false);
+						exibirErro('error',$msg['erro_inclusao_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
 						exit;
 					}
 
@@ -252,7 +252,7 @@
 		}
 
 		$msgProposta .= $msg['efetivar_proposta'];
-		$retorno = "showConfirmacao('$msgProposta', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetivaProposta(\'GRVEFEPROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
+		$retorno = "showConfirmacao('$msgProposta', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta(\'GRVEFEPROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
 
 	}
 
