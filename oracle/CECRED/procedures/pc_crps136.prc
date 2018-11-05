@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Outubro/95.                     Ultima atualizacao: 25/04/2016
+   Data    : Outubro/95.                     Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -66,6 +66,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
                25/04/2016 - Incluido chamada à procedure TARI0001.pc_verifica_tarifa_operacao,
 							              alteração feita para o Projeto de Tarifas - 218 fase 2 
                             (Reinert).														
+                            
+               26/10/0218 - Incluido validação para não cobrar cheques de contra ordem definitiva 
+                            caso já tenha sido cobrado a provisoria. (Anderson-Alan, Supero)
+                            
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -80,6 +84,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
   -- Cursor genérico de calendário
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
        
+ -- Busca contagem de tarifas das ordens definitivas
+  CURSOR cr_crapcor_tar(pr_cdcooper IN crapcor.cdcooper%TYPE,
+                        pr_nrdconta IN crapcor.nrdconta%TYPE,
+                        pr_nrcheque IN crapcor.nrcheque%TYPE) IS
+    SELECT COUNT(1) AS QTDTARIFADOS
+      FROM crapcor cor
+     WHERE cor.cdcooper = pr_cdcooper
+       AND cor.nrdconta = pr_nrdconta
+       AND cor.nrcheque = nrcheque
+       AND cor.cdlantar > 0
+       AND cor.cdhistor NOT IN (816,818,817,825,835);
   
   -- Cursor Cadastro de Contra-Ordens
   CURSOR cr_crapcor(pr_cdcooper IN crapcor.cdcooper%TYPE,
@@ -88,6 +103,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
           ,cor.nrdconta  
           ,cor.dtvalcor
           ,cor.nrcheque
+          ,cor.dtmvtolt
+          ,cor.progress_recid
           ,his.tplotmov tplotmov
           ,NVL(his.cdhistor,0) cdhistor
           ,ROW_NUMBER () OVER (PARTITION BY cor.nrdconta ORDER BY cor.nrdconta) nrseq
@@ -99,7 +116,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
        AND cor.cdhistor NOT IN (816,818,817,825,835)          
        AND his.cdcooper (+) = cor.cdcooper
        AND his.cdhistor (+) = cor.cdhistor
-       ORDER BY cor.nrdconta;
+  ORDER BY -- Ordenacao essencial para garantir o retorno dos cheques Provisorios seguidas de seus Permanentes.
+           cor.nrdconta,
+           cor.nrcheque,
+           cor.dtvalcor,
+           cor.dtmvtolt;
        -- 816 - CANCELADO - NAO ENTREGUE
        -- 817 - PERDA/EXTRAVIO - CHEQUE PREENCHIDO
        -- 818 - FURTO/ROUBO C/ BO - CHEQUE PREENCHIDO
@@ -135,6 +156,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
       AND ass.nrdconta (+) = tco.nrdconta;
   rw_craptco cr_craptco%ROWTYPE; 
   
+  -- Cursor Leitura tarifas provisorias
+  CURSOR cr_craplat (pr_rowid IN ROWID) IS
+    SELECT lat.cdlantar
+      FROM craplat lat
+      WHERE lat.rowid = pr_rowid;
+
+  -------------------------------------------------------------------------
+  TYPE typ_tab_cor_cheque_provi IS TABLE OF NUMBER(23) INDEX BY BINARY_INTEGER;
+  
+  TYPE typ_reg_cor IS RECORD(
+      vr_tab_cor_cheque typ_tab_cor_cheque_provi,
+      vr_progress_re  NUMBER
+  );
+  
+  TYPE typ_tab_contra_ordem IS TABLE OF typ_reg_cor INDEX BY VARCHAR2(20);
+  
+  vr_tab_cor_prov typ_tab_contra_ordem;
+  vr_tab_cor_defin typ_tab_contra_ordem;
+  vr_tab_cor_def_inpro typ_tab_contra_ordem;
+  vr_index_crapcor VARCHAR(20);
+  vr_crapcor_nrcheque_id NUMBER(10);
+  
   ------------------------------- VARIAVEIS -------------------------------
   -- Código do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS136';
@@ -165,6 +208,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dtvigenc DATE;
   vr_cdfvlcop crapfco.cdfvlcop%TYPE;
   vr_vltarifa crapfco.vltarifa%TYPE;
+  vr_cnt_cor_lantar craplat.cdlantar%TYPE;
+  vr_cdlantar craplat.cdlantar%TYPE;
   
   -- Valores Tarifa
   vr_cdbattar VARCHAR2(10);
@@ -176,6 +221,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
   
   vr_qtemiper NUMBER := 0;
   vr_qtemipro NUMBER := 0;
+  vr_qtemiper_inpro NUMBER := 0;
   
   vr_ctordpro VARCHAR2(10);
   vr_ctordper VARCHAR2(10);
@@ -314,6 +360,7 @@ BEGIN
     IF rw_crapcor.nrseq = 1 THEN
       vr_qtemiper := 0;
       vr_qtemipro := 0;
+      vr_qtemiper_inpro := 0;
       vr_vlcobper := 0;
       vr_vlcobpro := 0;
     END IF;                           
@@ -343,11 +390,64 @@ BEGIN
       CONTINUE;
     END IF;
     
+    -- Cria o indice para collection
+    vr_index_crapcor := LPAD(rw_crapcor.cdcooper , 10, '0' ) ||  LPAD(rw_crapcor.nrdconta, 10,'0');
      
+    -- Verifica se é provisoria ou permanente
     IF rw_crapcor.dtvalcor IS NOT NULL THEN
+      
+      -- Validacao para garantir definicao da collection.
+      IF NOT vr_tab_cor_prov.EXISTS(vr_index_crapcor) OR NOT vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.EXISTS(rw_crapcor.nrcheque) THEN
+          
+          -- Contador de Ordens Provisorias
       vr_qtemipro := vr_qtemipro + 1;
+          
+          -- Seta o progress_recid para atualizar a culona cdlantar do registro na crapcor.
+          vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque(rw_crapcor.nrcheque) := rw_crapcor.progress_recid;
+          
+      END IF;
+      
     ELSE 
+      -- Busca cdlantar da tabela crapcor
+      OPEN cr_crapcor_tar(pr_cdcooper => rw_crapcor.cdcooper,
+                          pr_nrdconta => rw_crapcor.nrdconta,
+                          pr_nrcheque => rw_crapcor.nrcheque);
+      FETCH cr_crapcor_tar INTO vr_cnt_cor_lantar;
+      CLOSE cr_crapcor_tar;
+      
+      -- Verifica se nao existe codigo de tarifa definido na crapcor para esse cheque
+      IF vr_cnt_cor_lantar = 0 THEN
+          
+          -- Verifica se o registro esta na vr_tab_cor_prov
+          IF vr_tab_cor_prov.EXISTS(vr_index_crapcor) AND vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.EXISTS(rw_crapcor.nrcheque) THEN
+              
+              -- Contador de ordens permanentes com provisorias
+              vr_qtemiper_inpro := vr_qtemiper_inpro + 1;
+              
+              -- Validacao para garantir definicao da collection.
+              IF NOT vr_tab_cor_def_inpro.EXISTS(vr_index_crapcor) OR NOT vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque.EXISTS(rw_crapcor.nrcheque) THEN
+                
+                -- Seta o progress_recid para atualizar a culona cdlantar do registro na crapcor.
+                vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque(rw_crapcor.nrcheque) := rw_crapcor.progress_recid;
+                
+              END IF;
+              
+          ELSE
+              -- Contador de ordens permanentes
       vr_qtemiper := vr_qtemiper + 1;
+              
+              -- Validacao para garantir definicao da collection.
+              IF NOT vr_tab_cor_defin.EXISTS(vr_index_crapcor) OR NOT vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque.EXISTS(rw_crapcor.nrcheque) THEN
+                
+                -- Seta o progress_recid para atualizar a culona cdlantar do registro na crapcor.
+                vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque(rw_crapcor.nrcheque) := rw_crapcor.progress_recid;
+                
+    END IF;  
+              
+          END IF;
+          
+      END IF;
+      
     END IF;  
     
     -- Efetua lançamento quando ultimo registro da conta
@@ -451,6 +551,67 @@ BEGIN
           
 			END IF;
 			
+      -- Calcula Valor a Ser Tarifado Contra Ordem - Provisoria
+      IF vr_qtemipro > 0 THEN
+				/* Efetua verificacao para cobrancas de tarifas sobre operacoes */
+				tari0001.pc_verifica_tarifa_operacao(pr_cdcooper => vr_cdcooper              --> Codigo da Cooperativa
+																						,pr_cdoperad => '1'                      --> Codigo Operador
+																						,pr_cdagenci => 1                        --> Codigo Agencia
+																						,pr_cdbccxlt => 100                      --> Codigo banco caixa
+																						,pr_dtmvtolt => rw_crapdat.dtmvtolt      --> Data Lancamento
+																						,pr_cdprogra => 'CUST0001'               --> Nome do Programa que chama a rotina
+																						,pr_idorigem => 7                        --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
+																						,pr_nrdconta => vr_nrdconta              --> Numero da Conta
+																						,pr_tipotari => 4                        --> Tipo de Tarifa(1-Saque,2-Consulta)
+																						,pr_tipostaa => 0                        --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+																						,pr_qtoperac => vr_qtemipro              --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
+																						,pr_qtacobra => vr_qtacobra              --> Quantidade de registros a cobrar tarifa na operação
+																						,pr_fliseope => vr_fliseope              --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
+																						,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+																						,pr_dscritic => vr_dscritic);            --> Descricao da critica
+				
+				-- Se ocorreu erro
+				IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        
+					-- Envio centralizado de log de erro
+					btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+																		,pr_ind_tipo_log => 2 -- Erro tratato
+																		,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
+																										 || vr_cdprogra || ' --> '||
+																												gene0002.fn_mask_conta(rw_crapcor.nrdconta)||'- '
+																										 || vr_dscritic );
+					-- Limpa valores das variaveis de critica
+					vr_cdcritic:= 0;
+					vr_dscritic:= NULL;                                           
+					
+          --Proximo Registro
+          CONTINUE;
+				END IF;
+        
+				-- Se não for isento de tarifa
+                IF   vr_fliseope <> 1 THEN
+                     -- Se ultrapassou o limite de operacoes permitidas no pacote    
+                     IF   vr_qtacobra > 0 THEN
+                          -- Atribui novo valor total a cobrar
+                          vr_vlcobpro := vr_tab_tarifa(vr_ctordper).vltarifa * vr_qtacobra;
+                     -- Senao, o cooperado nao possui pacote, cobra tarifa normal
+                     ELSE
+                          vr_vlcobpro := vr_tab_tarifa(vr_ctordpro).vltarifa * vr_qtemipro;
+                          
+                     END IF;
+                -- Operacao isenta pelo pacote de tarifas
+                ELSE
+                     vr_vlcobpro := 0;
+                END IF;
+                
+                --Caso o valor das provisorias for igual a zero, considera
+               IF vr_vlcobpro = 0 THEN
+                     vr_qtemiper := vr_qtemiper + vr_qtemiper_inpro;
+                     
+              END IF;
+              
+      END IF;
+      
       -- Calcula Valor a Ser Tarifado Contra Ordem - Permanente
       IF vr_qtemiper > 0 THEN        
 				/* Efetua verificacao para cobrancas de tarifas sobre operacoes */
@@ -498,63 +659,10 @@ BEGIN
                      ELSE
                          vr_vlcobper := vr_tab_tarifa(vr_ctordper).vltarifa * vr_qtemiper;
                      END IF;
+              
                 -- Operacao isenta pelo pacote de tarifas
                 ELSE
                      vr_vlcobper := 0;
-               END IF;  
-
-      END IF;
-
-      -- Calcula Valor a Ser Tarifado Contra Ordem - Provisoria
-      IF vr_qtemipro > 0 THEN        
-				/* Efetua verificacao para cobrancas de tarifas sobre operacoes */
-				tari0001.pc_verifica_tarifa_operacao(pr_cdcooper => vr_cdcooper              --> Codigo da Cooperativa
-																						,pr_cdoperad => '1'                      --> Codigo Operador
-																						,pr_cdagenci => 1                        --> Codigo Agencia
-																						,pr_cdbccxlt => 100                      --> Codigo banco caixa
-																						,pr_dtmvtolt => rw_crapdat.dtmvtolt      --> Data Lancamento
-																						,pr_cdprogra => 'CUST0001'               --> Nome do Programa que chama a rotina
-																						,pr_idorigem => 7                        --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
-																						,pr_nrdconta => vr_nrdconta              --> Numero da Conta
-																						,pr_tipotari => 4                        --> Tipo de Tarifa(1-Saque,2-Consulta)
-																						,pr_tipostaa => 0                        --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
-																						,pr_qtoperac => vr_qtemipro              --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
-																						,pr_qtacobra => vr_qtacobra              --> Quantidade de registros a cobrar tarifa na operação
-																						,pr_fliseope => vr_fliseope              --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
-																						,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-																						,pr_dscritic => vr_dscritic);            --> Descricao da critica
-							
-				-- Se ocorreu erro
-				IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-
-					-- Envio centralizado de log de erro
-					btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-																		,pr_ind_tipo_log => 2 -- Erro tratato
-																		,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-																										 || vr_cdprogra || ' --> '||
-																												gene0002.fn_mask_conta(rw_crapcor.nrdconta)||'- '
-																										 || vr_dscritic );
-					-- Limpa valores das variaveis de critica
-					vr_cdcritic:= 0;
-					vr_dscritic:= NULL;                                           
-					
-          --Proximo Registro
-          CONTINUE;
-				END IF;
-
-				-- Se não for isento de tarifa
-                IF   vr_fliseope <> 1 THEN
-                     -- Se ultrapassou o limite de operacoes permitidas no pacote    
-                     IF   vr_qtacobra > 0 THEN
-                          -- Atribui novo valor total a cobrar
-                          vr_vlcobpro := vr_tab_tarifa(vr_ctordper).vltarifa * vr_qtacobra;
-                     -- Senao, o cooperado nao possui pacote, cobra tarifa normal
-                     ELSE
-                          vr_vlcobpro := vr_tab_tarifa(vr_ctordpro).vltarifa * vr_qtemipro;
-                     END IF;
-                -- Operacao isenta pelo pacote de tarifas
-                ELSE
-                     vr_vlcobpro := 0;
                 END IF;                 
 
       END IF;
@@ -565,58 +673,6 @@ BEGIN
 				-- Se não isenta tarifa
 				IF vr_fliseope <> 1 THEN
 		
-					-- Caso Valor Tenha Tarifa Contra Ordem - Permanente
-					IF vr_vlcobper > 0 THEN        				
-            -- Criar Lançamento automatico Tarifas
-            TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => vr_cdcooper
-                                            , pr_nrdconta     => vr_nrdconta
-                                            , pr_dtmvtolt     => rw_crapdat.dtmvtolt
-                                            , pr_cdhistor     => vr_tab_tarifa(vr_ctordper).cdhistor
-                                         	  , pr_vllanaut     => vr_vlcobper
-                                            , pr_cdoperad     => '1'
-                                            , pr_cdagenci     => 1
-                                            , pr_cdbccxlt     => 100
-                                            , pr_nrdolote     => 8452
-                                            , pr_tpdolote     => 1
-                                            , pr_nrdocmto     => 0
-                                            , pr_nrdctabb     => vr_nrdconta
-                                            , pr_nrdctitg     => vr_nrdctitg
-                                            , pr_cdpesqbb     => 'Fato gerador tarifa:' || TO_CHAR(rw_crapcor.nrcheque)
-                                            , pr_cdbanchq     => 0
-                                            , pr_cdagechq     => 0
-                                            , pr_nrctachq     => 0
-                                            , pr_flgaviso     => TRUE
-                                            , pr_tpdaviso     => 2
-                                            , pr_cdfvlcop     => vr_tab_tarifa(vr_ctordper).cdfvlcop
-                                            , pr_inproces     => rw_crapdat.inproces
-                                            , pr_rowid_craplat=> vr_rowid
-                                            , pr_tab_erro     => vr_tab_erro
-                                            , pr_cdcritic     => vr_cdcritic
-                                            , pr_dscritic     => vr_dscritic
-                                            );
-            -- Se ocorreu erro
-            IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              -- Se possui erro no vetor
-              IF vr_tab_erro.Count > 0 THEN
-								vr_cdcritic:= vr_tab_erro(1).cdcritic;
-								vr_dscritic:= vr_tab_erro(1).dscritic;
-							ELSE
-								vr_cdcritic:= 0;
-								vr_dscritic:= 'Erro no lancamento Tarifa';
-							END IF;
-              -- Envio centralizado de log de erro
-							btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-																				,pr_ind_tipo_log => 2 -- Erro tratato
-																				,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-																												 || vr_cdprogra || ' --> '||
-																														gene0002.fn_mask_conta(rw_crapcor.nrdconta)||'- '
-																												 || vr_dscritic );
-							-- Limpa valores das variaveis de critica
-							vr_cdcritic:= 0;
-							vr_dscritic:= NULL;                                           
-						END IF;
-          END IF;
-				
 					-- Caso Valor Tenha Tarifa Contra Ordem - Provisoria
 					IF vr_vlcobpro > 0 THEN
 	        
@@ -647,6 +703,42 @@ BEGIN
 																						, pr_cdcritic     => vr_cdcritic
 																						, pr_dscritic     => vr_dscritic
 																						);
+              
+              
+              IF vr_tab_cor_prov.EXISTS(vr_index_crapcor) AND vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.COUNT  >  0 THEN
+                
+                -- Leitura do codigo cdlantar pelo rowid do insert da tarifa
+                OPEN cr_craplat(pr_rowid => vr_rowid);
+                FETCH cr_craplat INTO vr_cdlantar;
+                -- Se não encontrar
+                IF cr_craplat%NOTFOUND THEN
+                  -- Fechar o cursor pois efetuaremos raise
+                  CLOSE cr_craplat;
+                  -- Montar mensagem de critica
+                  vr_cdcritic:= 1;
+                  RAISE vr_exc_saida;
+							ELSE
+                  -- Apenas fechar o cursor
+                  CLOSE cr_craplat;
+							END IF;
+                
+                vr_crapcor_nrcheque_id :=  vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.FIRST;
+                LOOP
+                  
+                  UPDATE crapcor cor
+                     SET cor.cdlantar = vr_cdlantar
+                   WHERE cor.cdcooper = rw_crapcor.cdcooper
+                     AND cor.nrdconta = rw_crapcor.nrdconta
+                     AND cor.dtmvtolt = rw_crapcor.dtmvtolt
+                     AND cor.progress_recid = vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque(vr_crapcor_nrcheque_id);
+                   
+                   EXIT WHEN vr_crapcor_nrcheque_id = vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.LAST;
+                   vr_crapcor_nrcheque_id :=  vr_tab_cor_prov(vr_index_crapcor).vr_tab_cor_cheque.NEXT(vr_crapcor_nrcheque_id);
+                   
+                 END LOOP;
+                 
+						END IF;
+	          
 						-- Se ocorreu erro
 						IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 							-- Se possui erro no vetor
@@ -657,6 +749,7 @@ BEGIN
 								vr_cdcritic:= 0;
 								vr_dscritic:= 'Erro no lancamento Tarifa';
 							END IF;
+              
 							-- Envio centralizado de log de erro
 							btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
 																				,pr_ind_tipo_log => 2 -- Erro tratato
@@ -669,6 +762,130 @@ BEGIN
 							vr_dscritic:= NULL;                                           
 						END IF;
 	          
+					END IF;
+					
+          -- Caso Valor Tenha Tarifa Contra Ordem - Permanente
+					IF vr_vlcobper > 0 THEN
+            -- Criar Lançamento automatico Tarifas
+            TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => vr_cdcooper
+                                            , pr_nrdconta     => vr_nrdconta
+                                            , pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                                            , pr_cdhistor     => vr_tab_tarifa(vr_ctordper).cdhistor
+                                         	  , pr_vllanaut     => vr_vlcobper
+                                            , pr_cdoperad     => '1'
+                                            , pr_cdagenci     => 1
+                                            , pr_cdbccxlt     => 100
+                                            , pr_nrdolote     => 8452
+                                            , pr_tpdolote     => 1
+                                            , pr_nrdocmto     => rw_crapcor.nrcheque
+                                            , pr_nrdctabb     => vr_nrdconta
+                                            , pr_nrdctitg     => vr_nrdctitg
+                                            , pr_cdpesqbb     => 'Fato gerador tarifa:' || TO_CHAR(rw_crapcor.nrcheque)
+                                            , pr_cdbanchq     => 0
+                                            , pr_cdagechq     => 0
+                                            , pr_nrctachq     => 0
+                                            , pr_flgaviso     => TRUE
+                                            , pr_tpdaviso     => 2
+                                            , pr_cdfvlcop     => vr_tab_tarifa(vr_ctordper).cdfvlcop
+                                            , pr_inproces     => rw_crapdat.inproces
+                                            , pr_rowid_craplat=> vr_rowid
+                                            , pr_tab_erro     => vr_tab_erro
+                                            , pr_cdcritic     => vr_cdcritic
+                                            , pr_dscritic     => vr_dscritic
+                                            );
+                                            
+            
+            IF vr_tab_cor_defin.EXISTS(vr_index_crapcor) AND vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque.COUNT  >  0 THEN
+              
+              -- Leitura do codigo cdlantar pelo rowid do insert da tarifa
+              OPEN cr_craplat(pr_rowid => vr_rowid);
+              FETCH cr_craplat INTO vr_cdlantar;
+              -- Se não encontrar
+              IF cr_craplat%NOTFOUND THEN
+                -- Fechar o cursor pois efetuaremos raise
+                CLOSE cr_craplat;
+                -- Montar mensagem de critica
+                vr_cdcritic:= 1;
+                RAISE vr_exc_saida;
+              ELSE
+                -- Apenas fechar o cursor
+                CLOSE cr_craplat;
+              END IF;
+              
+              vr_crapcor_nrcheque_id :=  vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque.FIRST;
+              LOOP
+                
+                UPDATE crapcor cor
+                   SET cor.cdlantar = vr_cdlantar
+                 WHERE cor.cdcooper = rw_crapcor.cdcooper
+                   AND cor.nrdconta = rw_crapcor.nrdconta
+                   AND cor.dtmvtolt = rw_crapcor.dtmvtolt
+                   AND cor.progress_recid = vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque(vr_crapcor_nrcheque_id);
+                 
+                 EXIT WHEN vr_crapcor_nrcheque_id = vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque.LAST;
+                 vr_crapcor_nrcheque_id :=  vr_tab_cor_defin(vr_index_crapcor).vr_tab_cor_cheque.NEXT(vr_crapcor_nrcheque_id);
+                 
+              END LOOP;
+              
+            END IF;
+            
+            IF vr_vlcobpro = 0 THEN
+              IF vr_tab_cor_def_inpro.EXISTS(vr_index_crapcor) AND vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque.COUNT  >  0 THEN
+                
+                -- Leitura do codigo cdlantar pelo rowid do insert da tarifa
+                OPEN cr_craplat(pr_rowid => vr_rowid);
+                FETCH cr_craplat INTO vr_cdlantar;
+                -- Se não encontrar
+                IF cr_craplat%NOTFOUND THEN
+                  -- Fechar o cursor pois efetuaremos raise
+                  CLOSE cr_craplat;
+                  -- Montar mensagem de critica
+                  vr_cdcritic:= 1;
+                  RAISE vr_exc_saida;
+                ELSE
+                  -- Apenas fechar o cursor
+                  CLOSE cr_craplat;
+                END IF;
+                
+                vr_crapcor_nrcheque_id :=  vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque.FIRST;
+                LOOP
+                  
+                  UPDATE crapcor cor
+                     SET cor.cdlantar = vr_cdlantar
+                   WHERE cor.cdcooper = rw_crapcor.cdcooper
+                     AND cor.nrdconta = rw_crapcor.nrdconta
+                     AND cor.dtmvtolt = rw_crapcor.dtmvtolt
+                     AND cor.progress_recid = vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque(vr_crapcor_nrcheque_id);
+                   
+                   EXIT WHEN vr_crapcor_nrcheque_id = vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque.LAST;
+                   vr_crapcor_nrcheque_id :=  vr_tab_cor_def_inpro(vr_index_crapcor).vr_tab_cor_cheque.NEXT(vr_crapcor_nrcheque_id);
+                   
+                END LOOP;
+                
+              END IF;
+            END IF;
+            
+            -- Se ocorreu erro
+            IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Se possui erro no vetor
+              IF vr_tab_erro.Count > 0 THEN
+								vr_cdcritic:= vr_tab_erro(1).cdcritic;
+								vr_dscritic:= vr_tab_erro(1).dscritic;
+							ELSE
+								vr_cdcritic:= 0;
+								vr_dscritic:= 'Erro no lancamento Tarifa';
+							END IF;
+              -- Envio centralizado de log de erro
+							btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+																				,pr_ind_tipo_log => 2 -- Erro tratato
+																				,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
+																												 || vr_cdprogra || ' --> '||
+																														gene0002.fn_mask_conta(rw_crapcor.nrdconta)||'- '
+																												 || vr_dscritic );
+							-- Limpa valores das variaveis de critica
+							vr_cdcritic:= 0;
+							vr_dscritic:= NULL;                                           
+						END IF;
 					END IF;
 					
 				END IF;
