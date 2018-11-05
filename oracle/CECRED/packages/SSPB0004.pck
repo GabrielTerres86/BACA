@@ -255,7 +255,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND NOT EXISTS (SELECT 1
                                      FROM tbspb_msg_enviada_fase bb
                                     WHERE bb.nrseq_mensagem = b.nrseq_mensagem
-                                      AND bb.cdfase         = c.cdfase)
+                                      AND (bb.cdfase        = c.cdfase
+                                        OR bb.cdfase        = DECODE(c.cdfase,55,43,c.cdfase)))
                    AND a.nmmensagem    <> 'STR0007'
                  GROUP BY c.nmfase)
           GROUP BY nmfase,intipo
