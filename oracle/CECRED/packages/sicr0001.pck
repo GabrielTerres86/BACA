@@ -5,7 +5,7 @@ create or replace package cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
+     Data    : Abril/2013                       Ultima atualizacao: 05/11/2018
 
      Dados referentes ao programa:
 
@@ -56,6 +56,9 @@ create or replace package cecred.SICR0001 is
 				                      ( Belli - Envolti - Chamado REQ0014479 )
   							  
                 05/07/2018 - Incluido pr_inpriori na pc_obtem_agendamentos_debito para o "debitador unico" (Fabiano B. Dias - AMcom)
+
+                05/11/2018 - Diferenciar faturas(iniciam com 8) de titulos(iniciam com 2) na busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
+				
   ..............................................................................*/
 
   -- Chave = dsorigem||fldebito||fltiptra||fltipdoc||lpad(cdcooper,5,'0')||lpad(cdagenci,3,'0')||lpad(nrdconta,9,'0')||ROWID
@@ -235,7 +238,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
+     Data    : Abril/2013                       Ultima atualizacao: 05/09/2018
 
      Dados referentes ao programa:
 
@@ -345,8 +348,14 @@ create or replace package body cecred.SICR0001 is
                  29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
                               (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
+                              
+                 04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
 
                  05/07/2018 - Incluido pr_inpriori na pc_obtem_agendamentos_debito para o "debitador unico" (Fabiano B. Dias - AMcom)
+
+                 05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+                              - Estava concatenando "_EXEC" no final desse parâmetro
+				                (Ana - Envolti - Chamado INC0023351)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -417,7 +426,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Lucas Lunelli
-  --   Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
+  --   Data    : Abril/2013                       Ultima atualizacao: 05/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -452,6 +461,9 @@ create or replace package body cecred.SICR0001 is
   --                          (Ana - Envolti - Chamado 788828)				  
   --
   --              05/07/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+  --
+  --              05/11/2018 - Diferenciar faturas(iniciam com 8) de titulos(iniciam com 2) na busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -599,6 +611,7 @@ create or replace package body cecred.SICR0001 is
                 AND crapscn.cdsegmto in (2, 3) -- agua / energia
                 AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4)) -- empresa convenio
                 AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))  -- segmento convenio
+                AND TO_NUMBER(SUBSTR(rw_craplau.dscodbar,1,1)) = 8 -- 8=fatura, 2=titulo -- 05/11/2018. 
                 AND crapcon.cdcooper = pr_cdcooper;
            EXCEPTION
              WHEN NO_DATA_FOUND THEN
@@ -3018,6 +3031,8 @@ create or replace package body cecred.SICR0001 is
   --                            é feito na rotina chamadora pc_efetua_debito_autiomatico
   --                          - Tratamento erros others
   --                            (Ana - Envolti - Chamado 788828)
+  --
+  --             04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
   --------------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -3025,6 +3040,7 @@ create or replace package body cecred.SICR0001 is
       -- VARIAVEIS
       vr_nrctasic crapcop.nrctasic%TYPE;
       vr_cdagenci crapage.cdagenci%TYPE;
+      vr_cdempres varchar2(10);
       vr_dstexarq VARCHAR2(200) := '';
       -- VARIAVEIS PARA CAULCULO DE DIGITOS A COMPLETAR COM ZEROS OU ESPAÇOS
       vr_resultado VARCHAR2(25);
@@ -3118,6 +3134,12 @@ create or replace package body cecred.SICR0001 is
 
       vr_cdagenci :=  SUBSTR(gene0002.fn_mask(pr_cdagenci,'999'),2,2);
 
+      IF rw_crapscn.cdempres IN('RQ','5Y') THEN
+         vr_cdempres:= 'RL';
+      ELSE
+         vr_cdempres:= rw_crapscn.cdempres;
+      END IF;
+
       vr_dstexarq := 'F' || vr_resultado ||
                          gene0002.fn_mask(vr_nrctasic,'9999') ||
                          gene0002.fn_mask(pr_nrctacns,'999999') ||
@@ -3130,7 +3152,7 @@ create or replace package body cecred.SICR0001 is
                          LPAD(pr_cdseqtel,60, ' ') ||
                          RPAD(' ',16) ||
                          gene0002.fn_mask(vr_cdagenci,'99') ||
-                         RPAD(TRIM(rw_crapscn.cdempres),10,' ') || '0';
+                         RPAD(TRIM(vr_cdempres),10,' ') || '0';
 
         BEGIN
           -- INSERE REGISTRO NA TABELA DE REGISTROS DE DEBITO EM CONTA NAO EFETUADOS
@@ -3780,7 +3802,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 30/01/2018
+  --   Data    : Novembro/2015                       Ultima atualizacao: 05/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3798,6 +3820,10 @@ create or replace package body cecred.SICR0001 is
   --
   --             26/03/2018 - Incluido Chamada 509_PRIORI e 642_PRIORI para 
   --                           o "debitador unico" (Fabiano B. Dias - AMcom) 
+  --             05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+  --                          - Estava concatenando "_EXEC" no final desse parâmetro
+  --                            (Ana - Envolti - Chamado INC0023351)
+
 --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     CURSOR cr_crapprm (pr_cdcooper crapprm.cdcooper%TYPE,
@@ -3874,19 +3900,20 @@ create or replace package body cecred.SICR0001 is
     FETCH cr_crapprm INTO rw_crapprm_qtd;
     IF cr_crapprm%NOTFOUND THEN
       pr_cdcritic := 1132;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'_EXEC.';
+      --INC0023351
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'.';
       CLOSE cr_crapprm;
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapprm;
-    
+
     --> Pode ocorrer situação com data de agendamento de horarios para o próximo dia.
     --> debitador. Exemplo 4#09/08/2018#3 ou 4 (normal)
     BEGIN
       SELECT to_number(TRIM(substr(rw_crapprm_qtd.dsvlrprm,1,decode(instr(rw_crapprm_qtd.dsvlrprm,'#'),0,length(rw_crapprm_qtd.dsvlrprm),instr(rw_crapprm_qtd.dsvlrprm,'#')-1))))
         INTO rw_crapprm_qtd.dsvlrprm
         FROM dual;
-    END;    
+    END;      
 
     --  Se tipo de operação for Incrementar
     IF pr_cdtipope = 'I' THEN
