@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
                                                ,pr_dscritic OUT VARCHAR2               --> Descricao da Critica
- 																							 ,pr_inpriori IN VARCHAR2 DEFAULT 'T') IS   --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
+                                               ,pr_inpriori IN VARCHAR2 DEFAULT 'T') IS   --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
   BEGIN
 
   /* .............................................................................
@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008                        Ultima atualizacao: 03/07/2018
+   Data    : Abril/2008                        Ultima atualizacao: 30/10/2018
 
    Dados referentes ao programa:
 
@@ -63,7 +63,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             Melhora de performance (Fabiano Girardi - AMcom).         
 							
                03/07/2018 - Inclusão do pr_inpriori: Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos).
-                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)								
+                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)
+
+               30/10/2018 - Ajuste para o job do paralelismo considerar o pr_inpriori(Fabiano B. Dias - AMcom)
+							
      ............................................................................. */
 
      
@@ -640,7 +643,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                                  'wpr_stprogra,' ||chr(13)||
                                                  'wpr_infimsol,' ||chr(13)||
                                                  'wpr_cdcritic,' ||chr(13)||
-                                                 'wpr_dscritic'  ||chr(13)||
+                                                 'wpr_dscritic,' ||chr(13)||
+                                                 ''''||pr_inpriori||'''' || -- 30/10/2018.
                                                  ');'||chr(13)||
                         'end;';
           -- Faz a chamada ao programa paralelo atraves de JOB
@@ -780,8 +784,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
 		 
          --Nao retirar este commit, nem para testar.
          COMMIT;
-    
-       /* Valido somente para InternetBank, por isto pac 90 */
+/*
+       -- Valido somente para InternetBank, por isto pac 90
        PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                              ,pr_nrdconta => 0             --Numero da Conta
                                              ,pr_cdagenci => 90            --Código da Agencia
@@ -794,7 +798,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          --Levantar Excecao
          RAISE vr_exc_saida;
        END IF;
-
+*/
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 
                                                       ,pr_cdprogra => vr_cdprogra);
