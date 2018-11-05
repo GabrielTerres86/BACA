@@ -122,6 +122,13 @@ FUNCTION fn_busca_niv_risco_ge(pr_cdcooper     IN NUMBER
                               ,pr_nrdgrupo     IN NUMBER)
   RETURN crapris.innivris%TYPE;
 
+-- Busca o risco melhora do contrato de empréstimo
+FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
+                              , pr_nrdconta   NUMBER
+                              , pr_nrctremp   NUMBER
+                              , pr_tpctrato   NUMBER)
+  RETURN INTEGER;
+
 -- Busca a quantidade de dias em atraso e o risco final para uma conta/contrato na central de riscos (diária)
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
                               , pr_nrdconta    IN NUMBER
@@ -180,7 +187,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
   --                          PJ 450 - Diego Simas - AMcom  
-  --             31/10/2018 - inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
+  --
+  --             30/10/2018 - Inclusão da function fn_busca_risco_melhora e atribuicao 
+  --						  da variavel vr_inrisco_melhora (Douglas Pagel/AMcom)
+  --
+  --             31/10/2018 - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -620,6 +631,39 @@ BEGIN
   RETURN vr_risco_grupo;
 END fn_busca_niv_risco_ge;
 
+-- Busca o risco melhora do contrato de emprestimo --
+FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
+                              , pr_nrdconta   NUMBER
+                              , pr_nrctremp   NUMBER
+                              , pr_tpctrato   NUMBER)
+  RETURN INTEGER AS vr_risco_melhora INTEGER;
+
+    --- >>> CURSORES <<< ---
+    CURSOR cr_tbrisco_operacoes IS
+    SELECT r.inrisco_melhora 
+      FROM tbrisco_operacoes r
+     WHERE r.cdcooper = pr_cdcooper
+       AND r.nrdconta = pr_nrdconta
+       AND r.nrctremp = pr_nrctremp
+       AND r.tpctrato = pr_tpctrato;
+    rw_tbrisco_operacoes cr_tbrisco_operacoes%ROWTYPE;
+    
+BEGIN
+  OPEN cr_tbrisco_operacoes;
+
+  FETCH cr_tbrisco_operacoes INTO rw_tbrisco_operacoes;
+
+  IF cr_tbrisco_operacoes%NOTFOUND THEN
+     vr_risco_melhora := NULL;
+  ELSE
+     vr_risco_melhora := rw_tbrisco_operacoes.inrisco_melhora; 
+  END IF;
+
+  CLOSE cr_tbrisco_operacoes;
+
+  RETURN vr_risco_melhora;
+END fn_busca_risco_melhora;
+
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
                               , pr_nrdconta    IN NUMBER
                               , pr_nrctremp    IN NUMBER
@@ -990,7 +1034,12 @@ BEGIN
 
       vr_inrisco_refin := rw_crapepr.inrisco_refin;
       vr_inrisco_inclusao := fn_traduz_nivel_risco(rw_crapepr.dsnivori);
-      vr_inrisco_melhora     := CASE WHEN rw_crapepr.dsnivris = 'A' THEN 2 ELSE NULL END; -- Risco Melhora só melhora para 2(A), se não, não melhora
+                             
+      vr_inrisco_melhora     := fn_busca_risco_melhora(pr_cdcooper   => pr_cdcooper
+                                                      ,pr_nrdconta   => rw_crapris.nrdconta
+                                                      ,pr_nrctremp   => vr_nrctremp
+                                                      ,pr_tpctrato   => 90);
+                              
                                 --CASE WHEN rw_crapepr.dsnivris < rw_crapepr.dsnivori THEN fn_traduz_nivel_risco(rw_crapepr.dsnivris) ELSE NULL END;
       vr_qtdias_atraso_refin := rw_crapepr.qtdias_atraso_refin;
     ELSE
@@ -1001,13 +1050,21 @@ BEGIN
     END IF;
 
     -- Calcula o risco Operação
-    vr_inrisco_operacao := greatest(nvl(vr_inrisco_agravado, 2)
-                                  , nvl(vr_inrisco_rating, 2)
-                                  , vr_inrisco_atraso
-                                  , nvl(vr_inrisco_refin, 2)
-                                  , CASE WHEN vr_inrisco_melhora < vr_inrisco_inclusao
-                                         THEN vr_inrisco_melhora
-                                         ELSE vr_inrisco_inclusao END);
+            
+    -- O Risco da Operação é o PIOR risco 
+    IF vr_inrisco_melhora IS NULL THEN
+      vr_inrisco_operacao := GREATEST(NVL(vr_inrisco_inclusao,2)
+                                     ,NVL(vr_inrisco_atraso,2)
+                                     ,NVL(vr_inrisco_rating,2)
+                                     ,NVL(vr_inrisco_agravado,2)
+                                     ,NVL(vr_inrisco_refin,2) );
+    ELSE
+      -- Quando há MELHORA, não considera INCLUSAO e REFIN
+      vr_inrisco_operacao := GREATEST(NVL(vr_inrisco_atraso,2)
+                                     ,NVL(vr_inrisco_rating,2)
+                                     ,NVL(vr_inrisco_agravado,2)
+                                     ,NVL(vr_inrisco_melhora,2) );
+    END IF;
 
     -- Calcula risco grupo
     IF nvl(rw_crapris.nrdgrupo, 0) > 0 THEN
