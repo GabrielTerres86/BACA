@@ -3189,7 +3189,7 @@ BEGIN
           vr_setlinha := '70'||                                                                                          --> Informacao inicial
                           TO_CHAR(rw_dat.dtmvtolt,'YYMMDD')||','||                                                       --> Data AAMMDD do Arquivo
                           TO_CHAR(rw_dat.dtmvtolt,'DDMMYY')||','||                                                       --> Data DDMMAA
-                        gene0002.fn_mask(8086, pr_dsforma => '9999')||','||                                              --> Conta Origem
+                        gene0002.fn_mask(8066, pr_dsforma => '9999')||','||                                              --> Conta Origem
                         gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                              --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_vlrrend_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','||    --> Total Valor PF
                         gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                              --> Fixo
