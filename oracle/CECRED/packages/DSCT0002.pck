@@ -40,7 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
-  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT).
   --
   --    10/05/2018 - Inserção do campo 'cardbtit_c' para cálculo do % Geral de Liquidez
   --
@@ -622,25 +622,25 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
 
   PROCEDURE pc_atualiza_calculos_pagador ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
-                                     ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
-                                     ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
-	                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez
-                                     ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
-                                     ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
-                                     ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
-                                     ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
-                                     ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
+                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez 
+                                   ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
+                                   ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
+                                   ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
+                                   ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
+                                   ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
                                    ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
                                    ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
-                                     --------------> OUT <--------------
-                                     ,pr_pc_cedpag    OUT NUMBER
-                                     ,pr_qtd_cedpag   OUT NUMBER
-                                     ,pr_pc_conc      OUT NUMBER
-                                     ,pr_qtd_conc     OUT NUMBER
-                                     ,pr_pc_geral     OUT NUMBER
-                                     ,pr_qtd_geral    OUT NUMBER
-                                     ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
-                                     ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                   --------------> OUT <--------------
+                                   ,pr_pc_cedpag    OUT NUMBER
+                                   ,pr_qtd_cedpag   OUT NUMBER
+                                   ,pr_pc_conc      OUT NUMBER
+                                   ,pr_qtd_conc     OUT NUMBER
+                                   ,pr_pc_geral     OUT NUMBER
+                                   ,pr_qtd_geral    OUT NUMBER
+                                   ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                   ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   );
   
   PROCEDURE pc_busca_dados_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -3582,7 +3582,7 @@ END fn_letra_risco;
     vr_idxtitbo        PLS_INTEGER;
     
   BEGIN
-  
+    
     --> Buscar titulos de um determinado bordero a partir da craptdb 
     pc_busca_titulos_bordero (pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                              ,pr_nrborder => pr_nrborder  --> numero do bordero
@@ -5531,9 +5531,9 @@ END fn_letra_risco;
         RAISE vr_exc_erro;
       END IF;
       vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7); 
-                          
+      
       --Alterado para Juros simples
-      vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
+        vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
       
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
@@ -7611,7 +7611,7 @@ END fn_letra_risco;
       vr_idxord := vr_tab_tit_bordero_ord.first;
       WHILE vr_idxord IS NOT NULL  LOOP
         --Verifica se o valor líquido do título é 0, se for calcula
-        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid=0) THEN
+        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid = 0 AND vr_tab_dados_itens_bordero(vr_idxborde).flverbor = 1) THEN
           IF  pr_dtmvtolt > vr_tab_tit_bordero_ord(vr_idxord).dtvencto THEN
               vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero_ord(vr_idxord).dtvencto, pr_dtmvtolt);
           ELSE
@@ -7625,7 +7625,7 @@ END fn_letra_risco;
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt;
         ELSE
           IF (vr_tab_tit_bordero_ord(vr_idxord).insitapr <> 2) THEN
-          vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
+            vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
           ELSE
             vr_rel_qtdprazo := 0;
           END IF;
