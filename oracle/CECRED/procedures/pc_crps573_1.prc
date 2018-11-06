@@ -4317,7 +4317,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               pr_stperidx := ' PercIndx="100"';
             ELSE
               -- Validar se está no BNDES/FINAME
-              vr_ind_ebn := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
+              vr_ind_ebn := lpad(pr_cdcooper,3,'0')||lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
               IF vr_tab_crapebn.EXISTS(vr_ind_ebn) THEN
                 pr_coddindx := vr_tab_crapebn(vr_ind_ebn).cdindxdr;
               ELSE
