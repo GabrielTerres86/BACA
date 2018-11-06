@@ -474,8 +474,29 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 END CCRD0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
-  -- Rotina para o processamento do dos carquivos de domicilio bancario
 
+/*---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa: CCRD0006
+  --  Autor   : Andrei Vieira
+  --  Data    : Junho/2017                     Ultima Atualizacao: 
+  --  Dados referentes ao programa:
+  --
+  --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
+  --
+  --  Alteracoes: 14/06/2017 - Criação da rotina.
+  --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
+  --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
+  --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
+ 
+                  16/10/2018 - Ajustes efetuados:              
+                               > INC0025235: Correção para considerar o inpessoa corretamente para contas
+                                             administrativas;
+                               > PRB0040361: Não efetuar o envio do arquivo ASLC033 (quando possuir qualquer movimentação
+                                             da CABAL) enquanto não for recebido todo o valor finaneiciro para demais bandeiras.
+                                             (Adriano).
+ 
+*/
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
 
@@ -7586,7 +7607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
      ORDER BY arq.tparquivo,lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, to_date(arq.dtreferencia,'YYYY-MM-DD');
 
     -- Cursor para informações dos lançamentos
-    CURSOR cr_tabela(pr_idlancto tbdomic_liqtrans_lancto.idlancto%TYPE) IS
+    CURSOR cr_tabela(pr_idlancto       tbdomic_liqtrans_lancto.idlancto%TYPE,
+                     pr_tpforma_transf tbdomic_liqtrans_pdv.tpforma_transf%TYPE) IS
       SELECT pdv.nrliquidacao
             ,ctz.nrcnpjcpf_centraliza
             ,ctz.tppessoa_centraliza
@@ -7601,7 +7623,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        WHERE ctz.idlancto = pr_idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND nvl(pdv.cdocorrencia,'00') <> '30'  -- 30 = Lancto recusado por falta de transferência financeira
-       ORDER BY ctz.cdagencia_centraliza,ctz.nrcta_centraliza,to_date(pdv.dtpagamento,'YYYY-MM-DD');
+         AND pdv.tpforma_transf         = pr_tpforma_transf 
+       ORDER BY ctz.cdagencia_centraliza,
+                ctz.nrcta_centraliza,
+                to_date(pdv.dtpagamento,'YYYY-MM-DD');
 
     -- Cursor sobre as agencias
     CURSOR cr_crapcop IS
@@ -7615,7 +7640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT nrcpfcgc,
-             inpessoa
+             decode(inpessoa,3,2,inpessoa) inpessoa
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta;
@@ -7723,7 +7748,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                       ,pr_idatualiza => 'S') = 'S') THEN
 
 
-        FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
+        FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto,
+                                   rw_lancamento.tpforma_transf) LOOP
           -- Limpa a variavel de erro
           vr_dserro  := NULL;
           vr_cdocorr := NULL;
@@ -7888,7 +7914,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         END LOOP;  -- loop cr_tabela
 
+        IF rw_lancamento.tparquivo = 3 THEN
+        
         -- Efetua a atualizacao da situacao na tabela de lancamentos
+          BEGIN
+
+            UPDATE tbdomic_liqtrans_lancto tllan
+               SET tllan.insituacao      = 1 -- Enviado para CIP/Aguardando Aprovação
+                  ,tllan.dhprocessamento = SYSDATE
+             WHERE tllan.idlancto = rw_lancamento.idlancto           
+               AND (SELECT COUNT(*)
+                      FROM tbdomic_liqtrans_pdv        tlpdv
+                          ,tbdomic_liqtrans_centraliza tlcen
+                     WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                       AND tlcen.idlancto = tllan.idlancto
+                       AND tlpdv.cdocorrencia IS NOT NULL -- não esteja mais pendente de processamento
+                    ) = (SELECT COUNT(*)
+                           FROM tbdomic_liqtrans_pdv        tlpdv
+                               ,tbdomic_liqtrans_centraliza tlcen
+                          WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                            AND tlcen.idlancto = tllan.idlancto);           
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+        ELSE
+                 
+          -- Efetua a atualizacao da situacao na tabela de lancamentos
         BEGIN
           UPDATE tbdomic_liqtrans_lancto
              SET insituacao = 1 -- Enviado para CIP/Aguardando Aprovação
@@ -7899,6 +7953,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
+
+      END IF;
 
       END IF;
     END LOOP;  -- loop cr_lancamento
