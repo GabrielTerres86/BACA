@@ -21,7 +21,7 @@ $idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
 $cdalcada = (!empty($_POST['cdalcada'])) ? $_POST['cdalcada'] : '';
 $fnreject = (!empty($_POST['fnreject'])) ? $_POST['fnreject'] : "hideMsgAguardo();fechaRotina($('#telaRejeicao'));estadoInicial();";
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+if (($msgError = validaPermissao('CADRES','',$cddopcao)) <> '') {
 	exibeErroNew($msgError);
 }
 

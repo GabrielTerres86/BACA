@@ -42,6 +42,8 @@ if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 }	
 
     $labelRot = $_POST['labelRot'];	
+	// utilizada variavel para controle da origem da tela
+	$telaOrigem = ((!empty($_POST['opeProdutos'])) ? $_POST['opeProdutos'] : '');
 
 // Carrega permiss&otilde;es do operador
 include("../../../includes/carrega_permissoes.php");	
@@ -129,6 +131,8 @@ include("../../../includes/carrega_permissoes.php");
 
 
 <script type="text/javascript">	
+
+	var telaOrigem = '<?php echo $telaOrigem; ?>';
 
 	// Mostra div da rotina
 	mostraRotina();

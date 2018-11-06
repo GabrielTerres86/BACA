@@ -378,6 +378,10 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         $tot_percdesc = 0;
                         foreach ($xmlSubGru as $sgr) {
                             $cat_dssubgru = $sgr->attributes['DSSUBGRU'];
+							$cat_cdsubgru = $sgr->attributes['CDSUBGRU'];
+							if ($cat_cdsubgru == '28'){
+								continue;
+							}
                             ?>
                             <fieldset>
                                 <legend align="left"><?php echo $cat_dssubgru; ?></legend>
@@ -589,18 +593,7 @@ $(".clsDesCategoria").hover(
         var qtdTarif = $('.clsTar' + numLinha, $(this).find('table')[indTable]).length;
         for (indTar = 0; indTar < qtdTarif; indTar++) {
             var vlTarSemDesc = converteMoedaFloat($('.clsTarValorOri' + numLinha + '' + indTar, $(this).find('table')[indTable]).html());
-            /*
-            var cdcatego = parseInt($('#perdesconto_' + numLinha).attr('cdcatego'));
 
-            if (cat_coo.indexOf(cdcatego) > -1) {
-                var _percDesc = converteMoedaFloat(vlr_des_coo);
-                vlTarSemDesc = vlTarSemDesc - (vlTarSemDesc * (_percDesc / 100));
-            }
-            if (cat_cee.indexOf(cdcatego) > -1) {
-                var _percDesc = converteMoedaFloat(vlr_des_cee);
-                vlTarSemDesc = vlTarSemDesc - (vlTarSemDesc * (_percDesc / 100));
-            }
-            */
             var cdcatego = parseInt($('#perdesconto_' + numLinha).attr('cdcatego'));
             var auxPerc = 0;
             if (cat_coo.indexOf(cdcatego) > -1) {
@@ -609,12 +602,20 @@ $(".clsDesCategoria").hover(
             if (cat_cee.indexOf(cdcatego) > -1) {
                 auxPerc = converteMoedaFloat(vlr_des_cee);
             }
-            var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val()) + auxPerc;
+
+            var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val());
             if (vlPerDesconto > 100) {
                 vlPerDesconto = 100;
             }
-            var vlTarComDesc = vlTarSemDesc * (vlPerDesconto / 100);
-            vlTarComDesc = number_format((vlTarComDesc == 0 ? vlTarSemDesc : (vlTarSemDesc - vlTarComDesc)),2,',','.');
+            var vlTarComDesc = vlTarSemDesc * (vlPerDesconto / 100),
+				valorTotal = vlTarSemDesc - vlTarComDesc;
+			
+			// tem desconto COO ou CEE
+			if (auxPerc > 0) {
+				vlTarComDesc = valorTotal * (auxPerc / 100);
+				valorTotal = valorTotal - vlTarComDesc;
+			}
+            vlTarComDesc = number_format((vlTarComDesc == 0 ? vlTarSemDesc : valorTotal),2,',','.');
             $('.clsTarValorDes' + numLinha + '' + indTar, $(this).find('table')[indTable]).html(vlTarComDesc);
         }
     }

@@ -21,7 +21,7 @@ $cdcooper  = (!empty($_POST['cdcooper']))  ? $_POST['cdcooper']  : $glbvars['cdc
 $idrecipr  = (!empty($_POST['idrecipr']))  ? $_POST['idrecipr']  : '';
 $fnconfirm = (!empty($_POST['fnconfirm'])) ? $_POST['fnconfirm'] : "hideMsgAguardo();fechaRotina($('#telaAprovacao'));estadoInicial();";
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+if (($msgError = validaPermissao('CADRES','',$cddopcao)) <> '') {
 	exibeErroNew($msgError);
 }
 

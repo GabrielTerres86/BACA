@@ -357,6 +357,8 @@ function selecionaConvenio(linha, idrecipr, insitceb, convenios) {
 
 	table.appendTo("#divConveniosRegistros .divRegistros");
 
+    atualizarDescontos();
+
     // habilita tooltip
     $('.imgEditar').tooltip();	
     $('.imgExcluir').tooltip();
@@ -370,8 +372,6 @@ function selecionaConvenio(linha, idrecipr, insitceb, convenios) {
 
     validaHabilitacaoCamposBtn();
     blockBackground(parseInt($("#divRotina").css("z-index")));    
-
-    atualizarDescontos();
 
     return false;
  }
@@ -3125,20 +3125,24 @@ function abrirAprovacao(hideBtnDetalhes) {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            var telaAprovacao = $('#telaAprovacao');
-            $("#divConteudoOpcao").hide();
-            telaAprovacao.html(response);
-            telaAprovacao.find('#btVoltar').click(function (){
-                acessaOpcaoContratos();
-                telaAprovacao.html('');
-            });
-            if (hideBtnDetalhes) {
-                telaAprovacao.find('#btDetalhes').hide();
+            if (response.substr(0, 14) == 'hideMsgAguardo') {
+                eval(response);
             } else {
-                telaAprovacao.find('#btDetalhes').click(function (){
-                    telaAprovacao.hide();
-                    acessaOpcaoDescontos('C');
+                var telaAprovacao = $('#telaAprovacao');
+                $("#divConteudoOpcao").hide();
+                telaAprovacao.html(response);
+                telaAprovacao.find('#btVoltar').click(function () {
+                    acessaOpcaoContratos();
+                    telaAprovacao.html('');
                 });
+                if (hideBtnDetalhes) {
+                    telaAprovacao.find('#btDetalhes').hide();
+                } else {
+                    telaAprovacao.find('#btDetalhes').click(function () {
+                        telaAprovacao.hide();
+                        acessaOpcaoDescontos('C');
+                    });
+                }
             }
         }
     });
@@ -3178,18 +3182,22 @@ function abrirRejeicao() {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            var telaRejeicao = $('#telaRejeicao');
-            $("#divConteudoOpcao").hide();
-            telaRejeicao.html(response);
-            telaRejeicao.find('#btVoltar').click(function (){
-                acessaOpcaoContratos();
-            });
+            if (response.substr(0, 14) == 'hideMsgAguardo') {
+                eval(response);
+            } else {
+                var telaRejeicao = $('#telaRejeicao');
+                $("#divConteudoOpcao").hide();
+                telaRejeicao.html(response);
+                telaRejeicao.find('#btVoltar').click(function () {
+                    acessaOpcaoContratos();
+                });
+            }
         }
     });
 }
 
 function carregaCobranca() {
-    acessaRotina("#labelRot21", "COBRANCA", "Cobran&ccedil;a", "cobranca", "0");
+    acessaRotina("#labelRot21", "COBRANCA", "Cobran&ccedil;a", "cobranca", "RECIPROCIDADE");
 }
 
 function acessaTarifa(tipo) {
