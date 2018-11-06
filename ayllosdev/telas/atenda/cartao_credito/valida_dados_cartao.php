@@ -196,7 +196,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 
         // tratamento para considerar cartao adicional
         if ($vllimcrd <> 0) {
-			// aqui e titular
+			// aqui e para ser adicional		
             if ($tpdpagto == 0 && $cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("0");';
             } else if ($tpdpagto == 1) {
@@ -233,8 +233,8 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 			}
 
         } else {
-			// validacoes para cartao adicional
-				echo "$('#dddebito').attr('disabled', true);";				
+
+				//echo "$('#dddebito').attr('disabled', false);";				
             echo "$('#tpenvcrd').attr('disabled', false);";
             if ($cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("1");';
