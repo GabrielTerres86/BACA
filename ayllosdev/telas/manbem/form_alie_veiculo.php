@@ -13,7 +13,7 @@
  	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
  	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
 
-    <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
+    <link href="../manbem/css/alie_veiculo.css" rel="stylesheet" type="text/css">
 
 	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/aliena_veiculo.js"></script>
