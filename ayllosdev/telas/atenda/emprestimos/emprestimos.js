@@ -3293,7 +3293,7 @@ function controlaLayout(operacao) {
 				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
 				$('#' + nomeForm).limpaFormulario();
 				idlsbemfin = contAlienacao + 1;
-				rNrBem.html('( ' + idlsbemfin + 'º Bem )');
+				rNrBem.html('( ' + idlsbemfin + '&ordm; Bem )');
 			}
 		}
 
@@ -3322,9 +3322,9 @@ function controlaLayout(operacao) {
 							cUfPlaca.habilitaCampo();
 							cNrPlaca.habilitaCampo();
 							cRenavan.habilitaCampo();
-							busca_uf_pa_ass();
+							//busca_uf_pa_ass();
 						}
-						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) ) {
+						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 							if ($(this).val() == 'USADO') { modeloBem = ''; }
 							$('#nrmodbem').val(-1).change();
 							var bemFin = $('#dsbemfin').val();
@@ -3332,7 +3332,7 @@ function controlaLayout(operacao) {
 						}
 					});
 
-					$('#dssemfip', '#frmTipo').change( function() {
+					$('#dssemfip', '#frmTipo').unbind('change').bind('change', function() {
 						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 							removeErroCampo($("#" + idElementMarca + "C"));
 							$("#" + idElementMarca + "C").val('').hide();
@@ -4843,7 +4843,7 @@ function atualizaTela() {
 		$('#dssitgrv', '#frmTipo').val( arrayAlienacoes[contAlienacao]['dssitgrv'] );
 
 		if ( in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) ) {
-			if ( !arrayAlienacoes[contAlienacao]['vlfipbem'] ) {
+			if ( !arrayAlienacoes[contAlienacao]['vlfipbem'] || arrayAlienacoes[contAlienacao]['vlfipbem'] == 0 ) {
 				$('#dssemfip', '#frmTipo').attr('checked', true);
 			}
 			$('input#dssemfip').css({ "display": "inline" });
@@ -4899,7 +4899,7 @@ function atualizaTela() {
 			bemCarregadoUfPa = true;
 		}
 		
-		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) && !in_array(operacao, ['C_ALIENACAO']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 			urlPagina= "telas/manbem/fipe/busca_marcas.php";
 			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
 			data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax', dsmarbem: arrayAlienacoes[contAlienacao]['dsmarbem'], dsbemfin: arrayAlienacoes[contAlienacao]['dsbemfin'], nrmodbem: nrmodbemtmp });
@@ -5189,7 +5189,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();');
 
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
 		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));');
 		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));');
@@ -5931,11 +5931,13 @@ function validaAlienacao(nmfuncao, operacao) {
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
 	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
-	if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+
+	if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked')) {
 		dsmarbem = $('#dsmarbemC', '#frmTipo').val().toUpperCase();
 		dsbemfin = $('#dsbemfinC', '#frmTipo').val().toUpperCase();
 		nrmodbem = $('#nrmodbemC', '#frmTipo').val().toUpperCase();
 	}
+
 	var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val().toUpperCase()); // inteiro
 	var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
 	var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
