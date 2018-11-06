@@ -126,6 +126,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --
   --             05/06/2018 - Adicionado calculo do saldo devedor do desconto de títulos (Paulo Penteado (GFT))
   --
+  --             04/10/2018 - Ajuste pc_gerar_acordo para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
+  --
 	--             29/10/2018 - Ajuste na "pc_cancelar_acordo" para estorno do IOF vinculado ao acordo para a 
 	--                         tabela CRAPSLD (vliofmes) quando o acordo é cancelado.
 	--  											 (Reginaldo - AMcom - P450)
@@ -198,6 +200,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
                08/05/2018 - Inclusao dos valores de IOF provisionado ao acordo.
                             PRJ450 (Odirlei-AMcom)
+
+               05/06/2018 - Adicionado tratamento para saldo devedor do desconto de titulos (Paulo Penteado (GFT)) 
+
    ..............................................................................*/
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
@@ -1265,6 +1270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				               na tabela CRAPSAB.
                                Marcelo Coelho (Mouts) - Chamado 785483
 
+			      04/10/2018 - Ajuste para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
     ..............................................................................*/
 
     ---------------> CURSORES <-------------
@@ -1291,7 +1297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        WHERE ass.cdcooper = enc.cdcooper
          AND ass.nrdconta = enc.nrdconta
          AND ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
+         AND ass.nrdconta = pr_nrdconta
+		 AND trim(enc.cdufende) is not null
+         AND nvl(enc.nrcepend,0) <> 0;
     rw_crapass cr_crapass%ROWTYPE;
 
     --> Buscar sacado
