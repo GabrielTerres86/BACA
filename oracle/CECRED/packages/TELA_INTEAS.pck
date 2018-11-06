@@ -12,7 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Frequencia: -----
       Objetivo  : Rotinas referentes tela de integração com sistema Easy-Way
 
-      Alteracoes:
+      Alteracoes: 
+                  10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                               (Marcelo Telles Coelho - Mouts). 
 
                   16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
 
@@ -120,7 +122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 16/08/2018
+      Data     : Abril/2016.                   Ultima atualizacao: 20/10/2016
 
       Dados referentes ao programa:
 
@@ -559,7 +561,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND (avt.nrcpfcgc > 0 OR
               avt.nrdctato > 0);
     
-  -----------> VAIAVEIS <-----------
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    --> Verificar se a pessoa é Reportável (FATCA/CRS)
+    CURSOR cr_reportavel (pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+    SELECT inreportavel
+      FROM tbreportaval_fatca_crs
+     WHERE nrcpfcgc = pr_nrcpfcgc;
+    rw_reportavel cr_reportavel%ROWTYPE;
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    --> Buscar endereço do reportavel
+    CURSOR cr_dados_reportavel ( pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT e.nmlogradouro
+          ,e.nrlogradouro
+          ,e.dscomplemento
+          ,e.nrcep    dscodigo_postal
+          ,e.nmbairro dsbairro
+          ,f.dscidade
+          ,f.cdestado dsuf
+          ,a.tppessoa
+          ,c.cdpais
+          ,b.nridentificacao
+          ,d.cdtipo_proprietario
+          ,d.cdtipo_declarado
+          ,c.cdpais dsnacionalidade
+      FROM tbcadast_pessoa a
+          ,tbcadast_pessoa_estrangeira b
+          ,crapnac c
+          ,tbreportaval_fatca_crs d
+          ,tbcadast_pessoa_endereco e
+          ,crapmun f
+     WHERE a.nrcpfcgc     = pr_nrcpfcgc
+       AND b.idpessoa     = a.idpessoa
+       AND c.cdnacion     = b.cdpais
+       AND d.nrcpfcgc     = a.nrcpfcgc
+       AND e.idpessoa     = a.idpessoa
+       AND e.tpendereco   = DECODE(a.tppessoa,1,10,9)
+       AND f.idcidade     = e.idcidade;
+    rw_dados_reportavel cr_dados_reportavel%ROWTYPE;
+
+  -----------> VARIAVEIS <-----------        
 
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
@@ -579,6 +620,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     vr_idsitcnt      VARCHAR2(1);
     vr_flpriass      BOOLEAN;
+    vr_logcompl      VARCHAR2(5000);
+    
+    ---------> VARIAVEIS AUXILIARES PARA ENDERECAMENTO <---------
+    vr_aux_endereco  VARCHAR2(1000);
+    vr_aux_nrendere  INTEGER;
+    vr_aux_complend  VARCHAR2(1000);
+    vr_aux_nrcepend  INTEGER;
+    vr_aux_nmbairro  VARCHAR2(1000);
+    vr_aux_nmcidade  VARCHAR2(1000);
+    vr_aux_cdufende  VARCHAR2(100);
+    vr_aux_tplograd  VARCHAR2(100);
   -----------> TEMPTABLES <----------- 
     -- Temptable para controlar se ja processou o cpf/cnpj       
     TYPE typ_tab_nrcpfcnpj IS TABLE OF NUMBER
@@ -615,6 +667,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha  VARCHAR2(3200);
       vr_dscritic VARCHAR2(2000);
     BEGIN
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      --> Buscar reportável FATCA/CRS
+      OPEN cr_reportavel ( pr_nrcpfcgc => pr_nrcpfcgc);
+      FETCH cr_reportavel INTO rw_reportavel;
+      IF cr_reportavel%NOTFOUND THEN
+        rw_reportavel.inreportavel := 'N';
+      END IF;
+      CLOSE cr_reportavel;
+
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      IF rw_reportavel.inreportavel = 'S' THEN
+        --> Buscar Endereço reportável FATCA/CRS
+        OPEN cr_dados_reportavel ( pr_nrcpfcgc => pr_nrcpfcgc);
+        FETCH cr_dados_reportavel INTO rw_dados_reportavel;
+        IF cr_dados_reportavel%NOTFOUND THEN
+          rw_reportavel.inreportavel := 'N';
+        END IF;
+        CLOSE cr_dados_reportavel;
+      END IF;
       
       --> Buscar endereço do cooperado
       OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
@@ -683,6 +754,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                              ||     --> Tipo de declarado
                     chr(13)||chr(10);                                    --> quebrar linha
          
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      IF rw_reportavel.inreportavel = 'S' THEN
+        vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
+                                       pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
+        rpad(fn_remove_caract_espec(nvl(pr_nmprimtl,' ')),60,' ')             ||     --> Nome do Contribuinte
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nmlogradouro,' ')),80,' ')       ||     --> Logradouro
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nrlogradouro,0)), 8,' ')         ||     --> Número
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscomplemento,' ')),40,' ')      ||     --> Complemento
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscodigo_postal,0)), 8,' ')      ||     --> CEP
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsbairro,' ')),20,' ')           ||     --> Bairro
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscidade,' ')),30,' ')           ||     --> Descrição Cidade
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsuf,' ')), 2,' ')               ||     --> UF
+        rpad(fn_remove_caract_espec(nvl(rw_craptfc.nrtelefo,' ')),15,' ')              ||     --> Telefone
+        lpad(nvl(pr_dtnasctl,' '),8,' ')              ||     --> Data de Nascimento
+        rpad(nvl(pr_nrinsmun,' '),20,' ')             ||     --> Inscrição Municipal
+        lpad(nvl(pr_dtadmiss,' '),8,' ')              ||     --> Data da Inclusão no sistema de origem
+        lpad(nvl(pr_dtaltera,' '),8,' ')              ||     --> Data última alteração sistema de origem
+
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.tppessoa,0)),1,' ')            ||     --> Tipo número de identificação (1 - CPF, 2 - CNPJ)
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdpais,' ')),3,' ')            ||     --> Código do País
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nridentificacao,' ')),20,' ')  ||     --> Numero de Identificação Fiscal (NIF)
+        rpad(' ', 3,' ')                              ||     --> Natureza da Relação
+        rpad(' ',40,' ')                              ||     --> Descrição do Estado (se estrangeiro)
+        rpad(fn_remove_caract_espec(nvl(rw_crapcem.dsdemail,' ')),60,' ')              ||     --> Email
+        pr_dspessoa                                   ||     --> PF/PJ(F - PF; J – PJ)
+        rpad(nvl(pr_nrinsest,' '),20,' ')             ||     --> Inscrição Estadual
+        vr_idsitcnt                                   ||     --> Status do Contribuinte
+        rpad(fn_remove_caract_espec(nvl(rw_crapenc.tp_lograd,' ')),10,' ')             ||     --> Tipo de Logradouro
+        nvl(pr_isento_inscr_estadual,' ')             ||     --> Isento de Inscrição Estadual
+        lpad(' ',19,' ')                              ||     --> GIIN (Global Intermediary Identification Number)
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdtipo_proprietario,' ')),10,' ')||     --> Tipo de Proprietário
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsnacionalidade,' ')),2,' ')     ||     --> Nacionalidade
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdtipo_declarado,' ')),10,' ')   ||     --> Tipo de Declarado
+        chr(13)||chr(10);                                    --> quebrar linha
+      END IF;
+         
       pc_escreve_clob(vr_dslinha);
       
       /* Geração de Log */
@@ -745,15 +852,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         RAISE vr_prox_reg;
       END IF;
         
-      IF pr_cdsitdct IN (1, -- normal
-                                 3, -- contas que não podem ter movimento de produtos
-                                 5, -- cooperado com restrição
-                                 6  -- Normal sem talão
+      IF pr_cdsitdct IN (1, -- Operante 
+                         2, -- Em prejuízo
+                         3, -- Encerrada pela Cooperativa
+                         5, -- Inoperante
+                         9  -- Em Análise
                                  )THEN
         vr_idsitcnt := 'A';
-      ELSIF pr_cdsitdct IN (4, -- encerrada
-                                    2,
-                                    9) THEN  -- encerrada por outros motivos
+      ELSIF pr_cdsitdct = 4 THEN -- Encerrada por demissão
         vr_idsitcnt := 'I';        
       END IF;
       
@@ -949,7 +1055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     END IF;
     
-
+    vr_logcompl := 'Início Geração do Arquivo de Cadastro dos Cooperados';    
     --> Buscar os CPFs/CNPJs a serem enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
@@ -963,6 +1069,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                            pr_dtfimger => pr_dtfimger)) THEN
         CONTINUE;
       END IF;
+    
+      /* Armazena a ultima conta do processamento para caso apresente algum erro, sabermos qual a conta / cpf */
+      vr_logcompl := 'Gerando associado, Cooper: ' || rw_crapass_nrcpfcgc.cdcooper || ', Conta: ' || rw_crapass_nrcpfcgc.nrdconta || ', CPF/CNPJ: ' || rw_crapass_nrcpfcgc.nrcpfcgc;
           
       -- loop para garantir que todas as pessoas sejam enviadas para o arquivo.
       -- Visto que os dados principais do associado devem ser os da conta mais atualizada
@@ -1013,7 +1122,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         -- Verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
+          
+          -- Mesma condicao de fora do IF, para nao ficar em loop infinito em caso de critica na pc_trata_conta.
+          IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
+            EXIT;
+          ELSE
             continue;  
+          END IF;
+          
         END IF;
         
         -- Sair do loop qnd processar a mesma conta entre os dois cursores
@@ -1024,6 +1140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       END LOOP;    
     END LOOP; -- Fim  Loop cr_crapass_nrcpfcgc
     
+    pc_gera_log_easyway(pr_nmarqlog,'Inicio da leitura dos Procuradores e Representantes, arquivo: '||vr_nmarqimp); 
+    vr_logcompl := 'Inicio da leitura dos Procuradores e Representantes';
     
     --> Buscar os Procuradores e Responsáveis dos cooperados enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
@@ -1038,6 +1156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                              pr_dtfimger => pr_dtfimger)) THEN
           CONTINUE;
         END IF;
+        
+        /* Armazena a ultima conta do processamento para caso apresente algum erro, sabermos qual a conta / cpf */
+        vr_logcompl := 'Gerando procurador, Cooper: ' || rw_crapass_nrcpfcgc.cdcooper || ', Conta: ' || rw_crapass_nrcpfcgc.nrdconta || ', CPF/CNPJ: ' || rw_crapass_nrcpfcgc.nrcpfcgc;
         
         --->>> TERCEIROS DOS ASSOCIADOS (PROCURADORES E SOCIOS) <<<---
         IF rw_crapass_nrcpfcgc.inpessoa = 1 THEN
@@ -1084,15 +1205,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                  ', endereço não encontrado';
                   RAISE vr_exc_erro;
                 END IF;
-                rw_crapcrl.dsendres := rw_crapenc.endereco;
-                rw_crapcrl.nrendere := rw_crapenc.nrendere;
-                rw_crapcrl.complend := rw_crapenc.complend;
-                rw_crapcrl.nrcepend := rw_crapenc.nrcepend;
-                rw_crapcrl.nmbairro := rw_crapenc.nmbairro;
-                rw_crapcrl.nmcidade := rw_crapenc.nmcidade;
-                rw_crapcrl.cdufresd := rw_crapenc.cdufende;
-                rw_crapcrl.tplograd := rw_crapenc.tp_lograd;
+                vr_aux_endereco := rw_crapenc.endereco;
+                vr_aux_nrendere := rw_crapenc.nrendere;
+                vr_aux_complend := rw_crapenc.complend;
+                vr_aux_nrcepend := rw_crapenc.nrcepend;
+                vr_aux_nmbairro := rw_crapenc.nmbairro;
+                vr_aux_nmcidade := rw_crapenc.nmcidade;
+                vr_aux_cdufende := rw_crapenc.cdufende;
+                vr_aux_tplograd := rw_crapenc.tp_lograd;
                 CLOSE cr_crapenc;
+              ELSE
+                vr_aux_endereco := rw_crapcrl.dsendres;
+                vr_aux_nrendere := rw_crapcrl.nrendere;
+                vr_aux_complend := rw_crapcrl.complend;
+                vr_aux_nrcepend := rw_crapcrl.nrcepend;
+                vr_aux_nmbairro := rw_crapcrl.nmbairro;
+                vr_aux_nmcidade := rw_crapcrl.nmcidade;
+                vr_aux_cdufende := rw_crapcrl.cdufresd;
+                vr_aux_tplograd := rw_crapcrl.tplograd;
               END IF;
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
@@ -1103,14 +1233,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapcrl.nmdavali,    
                               pr_dtnasctl  => rw_crapcrl.dtnascto,  
-                              pr_endereco  => rw_crapcrl.dsendres,
-                              pr_nrendere  => rw_crapcrl.nrendere,
-                              pr_complend  => rw_crapcrl.complend,
-                              pr_nrcepend  => rw_crapcrl.nrcepend,
-                              pr_nmbairro  => rw_crapcrl.nmbairro,
-                              pr_nmcidade  => rw_crapcrl.nmcidade,
-                              pr_cdufende  => rw_crapcrl.cdufresd,
-                              pr_tplograd  => rw_crapcrl.tplograd,
+                              pr_endereco  => vr_aux_endereco,
+                              pr_nrendere  => vr_aux_nrendere,
+                              pr_complend  => vr_aux_complend,
+                              pr_nrcepend  => vr_aux_nrcepend,
+                              pr_nmbairro  => vr_aux_nmbairro,
+                              pr_nmcidade  => vr_aux_nmcidade,
+                              pr_cdufende  => vr_aux_cdufende,
+                              pr_tplograd  => vr_aux_tplograd,
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1169,15 +1299,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                  ', endereço não encontrado';
                   RAISE vr_exc_erro;
                 END IF;
-                rw_crapavt.dsendres := rw_crapenc.endereco;
-                rw_crapavt.nrendere := rw_crapenc.nrendere;
-                rw_crapavt.complend := rw_crapenc.complend;
-                rw_crapavt.nrcepend := rw_crapenc.nrcepend;
-                rw_crapavt.nmbairro := rw_crapenc.nmbairro;
-                rw_crapavt.nmcidade := rw_crapenc.nmcidade;
-                rw_crapavt.cdufresd := rw_crapenc.cdufende;
-                rw_crapavt.tplograd := rw_crapenc.tp_lograd;
+                vr_aux_endereco := rw_crapenc.endereco;
+                vr_aux_nrendere := rw_crapenc.nrendere;
+                vr_aux_complend := rw_crapenc.complend;
+                vr_aux_nrcepend := rw_crapenc.nrcepend;
+                vr_aux_nmbairro := rw_crapenc.nmbairro;
+                vr_aux_nmcidade := rw_crapenc.nmcidade;
+                vr_aux_cdufende := rw_crapenc.cdufende;
+                vr_aux_tplograd := rw_crapenc.tp_lograd;
                 CLOSE cr_crapenc;
+              ELSE
+                vr_aux_endereco := rw_crapavt.dsendres;
+                vr_aux_nrendere := rw_crapavt.nrendere;
+                vr_aux_complend := rw_crapavt.complend;
+                vr_aux_nrcepend := rw_crapavt.nrcepend;
+                vr_aux_nmbairro := rw_crapavt.nmbairro;
+                vr_aux_nmcidade := rw_crapavt.nmcidade;
+                vr_aux_cdufende := rw_crapavt.cdufresd;
+                vr_aux_tplograd := rw_crapavt.tplograd;
               END IF;
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
@@ -1188,14 +1327,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapavt.nmdavali,    
                               pr_dtnasctl  => rw_crapavt.dtnascto,  
-                              pr_endereco  => rw_crapavt.dsendres,
-                              pr_nrendere  => rw_crapavt.nrendere,
-                              pr_complend  => rw_crapavt.complend,
-                              pr_nrcepend  => rw_crapavt.nrcepend,
-                              pr_nmbairro  => rw_crapavt.nmbairro,
-                              pr_nmcidade  => rw_crapavt.nmcidade,
-                              pr_cdufende  => rw_crapavt.cdufresd,
-                              pr_tplograd  => rw_crapavt.tplograd,
+                              pr_endereco  => vr_aux_endereco,
+                              pr_nrendere  => vr_aux_nrendere,  
+                              pr_complend  => vr_aux_complend,  
+                              pr_nrcepend  => vr_aux_nrcepend,
+                              pr_nmbairro  => vr_aux_nmbairro,  
+                              pr_nmcidade  => vr_aux_nmcidade,
+                              pr_cdufende  => vr_aux_cdufende,
+                              pr_tplograd  => vr_aux_tplograd,
                               pr_dtmvtolt  => rw_crapavt.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1211,6 +1350,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
           END LOOP;
         END IF;
     END LOOP;
+    
+    vr_logcompl := 'Fim do processamento dos registros do arquivo';
     
     IF vr_texto_completo IS NOT NULL THEN
       pc_escreve_clob('',TRUE);
@@ -1261,8 +1402,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
+      IF(TRIM(vr_nmarqimp) IS NOT NULL) THEN        
+        pc_gera_log_easyway(pr_nmarqlog, 'Não foi possivel gerar arquivo de cadastro dos cooperados: '|| pr_dscritic);
+        pc_gera_log_easyway(pr_nmarqlog, 'Ultimo processo:' || vr_logcompl);
+      END IF;
+      
     WHEN OTHERS THEN      
-      pr_dscritic := 'Não foi possivel gerar arquivo de cadstro dos cooperados: '||SQLERRM;
+      IF(TRIM(vr_nmarqimp) IS NOT NULL) THEN
+        pc_gera_log_easyway(pr_nmarqlog, 'Não foi possivel gerar arquivo de cadastro dos cooperados: '|| pr_dscritic);
+        pc_gera_log_easyway(pr_nmarqlog, 'Ultimo processo:' || vr_logcompl);
+      END IF;
+      pr_dscritic := 'Não foi possivel gerar arquivo de cadastro dos cooperados: '||SQLERRM;
       --pc_gera_log( pr_dscritic);
   END pc_gera_arq_cadastro_ass;
   
