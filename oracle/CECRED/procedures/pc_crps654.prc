@@ -42,7 +42,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                                  (Jorge/Thiago) - SD 294256
                     
                     02/06/2016 - Ajuste para melhora de desempenho, conforne
-                                 solicitado no chamado 463036 (Kelvin)             
+                                 solicitado no chamado 463036 (Kelvin) 
+
+                    27/04/2018 - Ajuste no nome do arquivo gerado no relatorio e 
+                                 adicionado hora/minuto/segundo ao nrdocto(Projeto Debitador Unico - Fabiano B. Dias - AMcom).            
 
                     04/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
                                  pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
@@ -63,7 +66,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dscritic   VARCHAR2(4000);
       vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro;
-
+      vr_horaminseg NUMBER; -- 27/04/2018-deb.unico.
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -491,7 +494,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                  rw_crapdat.dtmvtolt,
                  1, /* debitado */
                  rw_crappla.nrdconta,
-                 rw_crappla.nrctrpla,
+                 rw_crappla.nrctrpla || vr_horaminseg, -- debitador unico
                  rw_craplot.nrseqdig,
                  2,
                  0,
@@ -597,7 +600,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                075, /*PG. PLANO C/C*/
                rw_crappla.nrctrpla,
                rw_crappla.nrdconta,
-               rw_crappla.nrctrpla,
+               rw_crappla.nrctrpla || vr_horaminseg,
                rw_craplot.nrseqdig,
                vr_vldebito);
           EXCEPTION
@@ -743,7 +746,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                                   pr_dsxmlnode => '/raiz/pac/plano',              --> No base do XML para leitura dos dados
                                   pr_dsjasper  => 'crrl137.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
-                                  pr_dsarqsaid => vr_nom_diretorio||'/crrl137.lst',  --> Arquivo final
+                                  pr_dsarqsaid => vr_nom_diretorio||'/crrl137_'||to_char( gene0002.fn_busca_time )||'.lst',  --> Arquivo final
                                   pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 132,                            --> Quantidade de colunas
                                   pr_sqcabrel  => 1,                              --> Sequencia do cabecalho
