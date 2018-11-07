@@ -310,7 +310,7 @@ atualizacaoDesconto = false;
 		</td>
 	</tr>
 	<tr class="corPar">
-		<td>Aplica&ccedil;&otilde;es</td>
+		<td>Investimentos</td>
 		<td align="right">
 			<input type="hidden" id="vlaplicacoes_old" value="<?php echo $vr_aplicacoes; ?>">
 			<span>R$</span>
