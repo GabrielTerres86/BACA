@@ -72,6 +72,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --Tipo de Tabela de Lancamento Tarifa
   TYPE typ_tab_dados_tarifa IS TABLE OF typ_dados_tarifa INDEX BY VARCHAR2(4);
 
+  -- P450 - Regulatório de crédito
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_incrineg  INTEGER;
+  vr_fldebita  boolean;
+
+
   PROCEDURE pc_efetua_baixa_tit_car(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Codigo Cooperativa
                                    ,pr_cdagenci    IN INTEGER                    --Codigo Agencia
                                    ,pr_nrdcaixa    IN INTEGER                    --Numero Caixa
@@ -215,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     Sistema  : Procedimentos envolvendo desconto titulos
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Julho/2013.                   Ultima atualizacao: 16/02/2018
+    Data     : Julho/2013.                   Ultima atualizacao: 27/06/2018
   
    Dados referentes ao programa:
   
@@ -287,6 +293,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             de juros do titulo antigamente escrita da rotina pc_efetua_baixa_titulo. Com isso, essa rtoina 
                             pode ser utilizada na dsct0003 para abatimento de juros das operações de crédito.
                             (Paulo Penteado (GFT)) 
+                            
+               27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
+                            da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				               
                             
                19/07/2018 - Alterado as procedures pc_efetua_baixa_tit_car e pc_efetua_baixa_titulopara: Para os borderôs inclusos 
                             no sistema antes da nova versão de funcionalidade do bordero, quando houver o pagamento da operação de 
@@ -1321,41 +1330,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
          END IF;
         /*###################################FIM REGRAS####################################################*/
         --Gravar lancamento
-        BEGIN
-          INSERT INTO craplcm
-              (craplcm.dtmvtolt
-              ,craplcm.cdagenci
-              ,craplcm.cdbccxlt
-              ,craplcm.nrdolote
-              ,craplcm.nrdconta
-              ,craplcm.nrdocmto
-              ,craplcm.vllanmto
-              ,craplcm.cdhistor
-              ,craplcm.nrseqdig
-              ,craplcm.nrdctabb
-              ,craplcm.nrautdoc
-              ,craplcm.cdcooper
-              ,craplcm.cdpesqbb)
-          VALUES
-              (pr_dtmvtolt --tiago lancamento tem quer ser com dtmvtolt da crapdat
-              ,1
-              ,100
-              ,10301 --Utilizando este nr de lote pois nao cria mais o lote e este nr ficou reservado
-              ,rw_craptdb.nrdconta
-              ,NVL(vr_nrseqdig,0) 
-              ,rw_craptdb.vltitulo
-              ,591
-              ,NVL(vr_nrseqdig,0)
-              ,rw_craptdb.nrdconta
-              ,0
-              ,pr_cdcooper
-              ,rw_craptdb.nrdocmto)
-          RETURNING craplcm.nrseqdig
-                   ,craplcm.vllanmto
-          INTO rw_craplcm.nrseqdig
-              ,rw_craplcm.vllanmto;
-        EXCEPTION
-          WHEN OTHERS THEN
+        -- P450 - Regutatório de crédito
+        lanc0001.pc_gerar_lancamento_conta(
+                    pr_dtmvtolt => pr_dtmvtolt
+                   ,pr_cdagenci => 1
+                   ,pr_cdbccxlt => 100
+                   ,pr_nrdolote => 10301
+                   ,pr_nrdconta => rw_craptdb.nrdconta
+                   ,pr_nrdctabb => rw_craptdb.nrdconta
+                   ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                   ,pr_cdcooper => pr_cdcooper
+                   ,pr_nrdocmto => NVL(vr_nrseqdig,0) 
+                   ,pr_cdhistor => 591
+                   ,pr_nrseqdig => NVL(vr_nrseqdig,0)
+                   ,pr_vllanmto => rw_craptdb.vltitulo
+                   ,pr_nrautdoc => 0
+                   -- retorno
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+           IF vr_incrineg = 0 THEN -- Erro de sistema/BD
             -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -1377,7 +1374,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ', cdpesqbb:'   || rw_craptdb.nrdocmto || 
                                '. ' ||sqlerrm; 
             RAISE vr_exc_erro;
-        END;
+           ELSE
+             CONTINUE;
+           END IF;
+        END IF;
+            
+        rw_craplcm.nrseqdig:= NVL(vr_nrseqdig,0);
+        rw_craplcm.vllanmto:= rw_craptdb.vltitulo;
         
        -- Projeto Ligeirinho -  paralelismo
        -- busca a sequencia para as execuções de paralelismo
@@ -1451,48 +1454,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
         
         IF (NVL(vr_vliofcpl,0) > 0) AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
-          -- Grava na tabela de lancamentos
-          BEGIN
-            INSERT INTO craplcm
-                (craplcm.dtmvtolt
-                ,craplcm.cdagenci
-                ,craplcm.cdbccxlt
-                ,craplcm.nrdolote
-                ,craplcm.nrdconta
-                ,craplcm.nrdocmto
-                ,craplcm.vllanmto
-                ,craplcm.cdhistor
-                ,craplcm.nrseqdig
-                ,craplcm.nrdctabb
-                ,craplcm.nrautdoc
-                ,craplcm.cdcooper
-                ,craplcm.cdpesqbb)
-            VALUES
-                (pr_dtmvtolt
-                ,1
-                ,100
-                ,10301
-                ,rw_craptdb.nrdconta
-                ,NVL(vr_nrseqdig,0) 
-                ,vr_vliofcpl
-                ,2321
-                ,NVL(vr_nrseqdig,0)
-                ,rw_craptdb.nrdconta
-                ,0
-                ,pr_cdcooper
-                ,rw_craptdb.nrdocmto)
-            RETURNING craplcm.dtmvtolt
-                     ,craplcm.cdagenci
-                     ,craplcm.cdbccxlt
-                     ,craplcm.nrdolote
-                     ,craplcm.nrseqdig
-                 INTO vr_dtmvtolt_lcm
-                     ,vr_cdagenci_lcm
-                     ,vr_cdbccxlt_lcm
-                     ,vr_nrdolote_lcm
-                     ,vr_nrseqdig_lcm;
-          EXCEPTION
-            WHEN OTHERS THEN
+          -- P450 - Regutatório de crédito
+          lanc0001.pc_gerar_lancamento_conta(
+                    pr_dtmvtolt => pr_dtmvtolt
+                   ,pr_cdagenci => 1
+                   ,pr_cdbccxlt => 100
+                   ,pr_nrdolote => 10301
+                   ,pr_nrdconta => rw_craptdb.nrdconta
+                   ,pr_nrdctabb => rw_craptdb.nrdconta
+                   ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                   ,pr_cdcooper => pr_cdcooper
+                   ,pr_nrdocmto => NVL(vr_nrseqdig,0) 
+                   ,pr_cdhistor => 2321
+                   ,pr_nrseqdig => NVL(vr_nrseqdig,0)
+                   ,pr_vllanmto => vr_vliofcpl
+                   ,pr_nrautdoc => 0
+                   -- retorno
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic);
+
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
               CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
               -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -1514,7 +1498,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ', cdpesqbb:'  || rw_craptdb.nrdocmto  || 
                                '. ' ||sqlerrm; 
               RAISE vr_exc_erro;
-          END;
+                  ELSE --  vr_incrineg = 1 = Erro de negócio
+                    vr_cdcritic := 0;
+                    vr_dscritic := 'Lançameno não foi efetuado' ||
+                                     'craplcm(2):' ||
+                                     ' dtmvtolt:'   || pr_dtmvtolt  ||
+                                     ', cdagenci:'  || '1'      || 
+                                     ', cdbccxlt:'  || '100'    || 
+                                     ', nrdolote:'  || '10301'  ||
+                                     ', nrdconta:'  || rw_craptdb.nrdconta  ||
+                                     ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
+                                     ', vllanmto:'  || vr_vliofcpl  ||
+                                     ', cdhistor:'  || '2321'       ||
+                                     ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
+                                     ', nrdctabb:'  || rw_craptdb.nrdconta  ||
+                                     ', nrautdoc:'  || '0'          ||
+                                     ', cdcooper:'  || pr_cdcooper  ||
+                                     ', cdpesqbb:'  || rw_craptdb.nrdocmto  || 
+                                     '. ';
+                    RAISE vr_exc_erro;
+                END IF;	
+            END IF; 
+            vr_dtmvtolt_lcm:= pr_dtmvtolt;
+            vr_cdagenci_lcm:= 1;
+            vr_cdbccxlt_lcm:= 100;
+            vr_nrdolote_lcm:= 10301;
+            vr_nrseqdig_lcm:= NVL(vr_nrseqdig,0);
 
           -- Projeto Ligeirinho -  paralelismo
           -- busca a sequencia para as execuções de paralelismo
@@ -2639,6 +2648,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ELSE
                 vr_cdhistor:= 1101;
               END IF;
+
+              -- PJ 450 Regulatório de credito
+              -- Verifica se pode ou não fazer o débito/credito
+              vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                      pr_nrdconta => rw_craptdb.nrdconta,
+                                                      pr_cdhistor => vr_cdhistor);
+
+              IF vr_fldebita = FALSE THEN   
+                 continue;
+              END IF;
               
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
@@ -2741,41 +2760,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
               end if;  
               --Gravar lancamento
-              BEGIN
-                INSERT INTO craplcm
-                  (craplcm.dtmvtolt
-                  ,craplcm.cdagenci
-                  ,craplcm.cdbccxlt
-                  ,craplcm.nrdolote
-                  ,craplcm.nrdconta
-                  ,craplcm.nrdocmto
-                  ,craplcm.vllanmto
-                  ,craplcm.cdhistor
-                  ,craplcm.nrseqdig
-                  ,craplcm.nrdctabb
-                  ,craplcm.nrautdoc
-                  ,craplcm.cdcooper
-                  ,craplcm.cdpesqbb)
-                VALUES
-                  (rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craptdb.nrdconta
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,rw_craptdb.vltitulo - pr_tab_titulos(vr_index_titulo).vltitulo
-                  ,vr_cdhistor
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,rw_craptdb.nrdconta
-                  ,0
-                  ,pr_cdcooper
-                  ,rw_craptdb.nrdocmto)
-                RETURNING craplcm.nrseqdig
-                         ,craplcm.vllanmto
-                INTO rw_craplcm.nrseqdig
-                    ,rw_craplcm.vllanmto;
-              EXCEPTION
-                WHEN OTHERS THEN
+          -- P450 - Regulatório de crédito
+          lanc0001.pc_gerar_lancamento_conta(
+                      pr_dtmvtolt => rw_craplot.dtmvtolt
+                     ,pr_cdagenci => rw_craplot.cdagenci
+                     ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                     ,pr_nrdolote => rw_craplot.nrdolote
+                     ,pr_nrdconta => rw_craptdb.nrdconta
+                     ,pr_nrdctabb => rw_craptdb.nrdconta
+                     ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                     ,pr_cdcooper => pr_cdcooper
+                     ,pr_nrdocmto => Nvl(rw_craplot.nrseqdig,0)
+                     ,pr_cdhistor => vr_cdhistor
+                     ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0)
+                     ,pr_vllanmto => rw_craptdb.vltitulo - pr_tab_titulos(vr_index_titulo).vltitulo 
+                     ,pr_nrautdoc => 0
+                     -- retorno
+                     ,pr_tab_retorno => vr_tab_retorno
+                     ,pr_incrineg => vr_incrineg
+                     ,pr_cdcritic => vr_cdcritic
+                     ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                   -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
                   CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
                   -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -2797,7 +2804,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ', cdpesqbb:'   || rw_craptdb.nrdocmto ||
                                '. ' ||sqlerrm; 
                   RAISE vr_exc_erro;
-              END;
+                 END IF;
+              END IF;              
+              rw_craplcm.nrseqdig := Nvl(rw_craplot.nrseqdig,0);
+              rw_craplcm.vllanmto := rw_craptdb.vltitulo - pr_tab_titulos(vr_index_titulo).vltitulo;
+             
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
                  se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
@@ -2845,6 +2856,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ELSE
                 vr_cdhistor:= 1102;
               END IF;
+              
+              -- PJ 450 Regulatório de credito
+              -- Verifica se pode ou não fazer o débito/credito
+              vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                      pr_nrdconta => rw_craptdb.nrdconta,
+                                                      pr_cdhistor => vr_cdhistor);
+
+              IF vr_fldebita = FALSE THEN   
+                 continue;
+              END IF;
+
+              
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
                  se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
@@ -2946,41 +2969,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               END IF;
               
               --Gravar lancamento
-              BEGIN
-                INSERT INTO craplcm
-                  (craplcm.dtmvtolt
-                  ,craplcm.cdagenci
-                  ,craplcm.cdbccxlt
-                  ,craplcm.nrdolote
-                  ,craplcm.nrdconta
-                  ,craplcm.nrdocmto
-                  ,craplcm.vllanmto
-                  ,craplcm.cdhistor
-                  ,craplcm.nrseqdig
-                  ,craplcm.nrdctabb
-                  ,craplcm.nrautdoc
-                  ,craplcm.cdcooper
-                  ,craplcm.cdpesqbb)
-                VALUES
-                  (rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craptdb.nrdconta
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,pr_tab_titulos(vr_index_titulo).vltitulo - rw_craptdb.vltitulo
-                  ,vr_cdhistor
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,rw_craptdb.nrdconta
-                  ,0
-                  ,pr_cdcooper
-                  ,rw_craptdb.nrdocmto)
-                RETURNING craplcm.nrseqdig
-                         ,craplcm.vllanmto
-                INTO rw_craplcm.nrseqdig
-                    ,rw_craplcm.vllanmto;
-              EXCEPTION
-                WHEN OTHERS THEN
+              -- P450 - Regulatório de crédito
+              lanc0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => rw_craplot.dtmvtolt
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => rw_craptdb.nrdconta
+                         ,pr_nrdctabb => rw_craptdb.nrdconta
+                         ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_nrdocmto => Nvl(rw_craplot.nrseqdig,0)
+                         ,pr_cdhistor => vr_cdhistor
+                         ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0)
+                         ,pr_vllanmto => pr_tab_titulos(vr_index_titulo).vltitulo - rw_craptdb.vltitulo
+                         ,pr_nrautdoc => 0
+                         -- retorno
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                   -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
                   CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
                   -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3002,7 +3013,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                    ', cdpesqbb:' || rw_craptdb.nrdocmto ||
                                    '. ' ||sqlerrm; 
                   RAISE vr_exc_erro;
-              END;
+                 END IF;
+              END IF;
+
+              rw_craplcm.nrseqdig:= Nvl(rw_craplot.nrseqdig,0);
+              rw_craplcm.vllanmto:= pr_tab_titulos(vr_index_titulo).vltitulo - rw_craptdb.vltitulo;          
+
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
                  deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
@@ -3140,7 +3156,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 			  
-              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
+              -- PJ 450 Regulatório de credito
+              -- Verifica se pode ou não fazer o débito/credito
+              vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                      pr_nrdconta => rw_craptdb.nrdconta,
+                                                      pr_cdhistor => 2321);
+
+              IF vr_fldebita = FALSE THEN   
+                 continue;
+              END IF;
 
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
@@ -3150,6 +3174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 				/* Ajuste quando paralelismo #40089 */
               if not paga0001.fn_exec_paralelo then
                 -- Vamos verificar se o valo do IOF complementar é maior que 0
+              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
                   /* Leitura do lote */
                   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => vr_dtmvtolt
@@ -3245,50 +3270,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
                 END IF;  
                 
-                -- Grava na tabela de lancamentos
-                BEGIN
-                  INSERT INTO craplcm
-                      (craplcm.dtmvtolt
-                      ,craplcm.cdagenci
-                      ,craplcm.cdbccxlt
-                      ,craplcm.nrdolote
-                      ,craplcm.nrdconta
-                      ,craplcm.nrdocmto
-                      ,craplcm.vllanmto
-                      ,craplcm.cdhistor
-                      ,craplcm.nrseqdig
-                      ,craplcm.nrdctabb
-                      ,craplcm.nrautdoc
-                      ,craplcm.cdcooper
-                      ,craplcm.cdpesqbb)
-                  VALUES
-                      (rw_craplot.dtmvtolt
-                      ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt
-                      ,rw_craplot.nrdolote
-                      ,rw_craptdb.nrdconta
-                      ,NVL(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                      ,vr_vliofcpl
-                      ,2321
-                      ,NVL(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                      ,rw_craptdb.nrdconta
-                      ,0
-                      ,pr_cdcooper
-                      ,rw_craptdb.nrdocmto)
-                  RETURNING craplcm.dtmvtolt
-                           ,craplcm.cdagenci
-                           ,craplcm.cdbccxlt
-                           ,craplcm.nrdolote
-                           ,craplcm.nrseqdig
-                           ,craplcm.vllanmto
-                       INTO vr_dtmvtolt_lcm
-                           ,vr_cdagenci_lcm
-                           ,vr_cdbccxlt_lcm
-                           ,vr_nrdolote_lcm
-                           ,vr_nrseqdig_lcm
-                           ,rw_craplcm.vllanmto;
-                EXCEPTION
-                  WHEN OTHERS THEN
+                --Gravar lancamento
+                -- P450 - Regulatório de crédito
+                lanc0001.pc_gerar_lancamento_conta(
+                            pr_dtmvtolt => rw_craplot.dtmvtolt
+                           ,pr_cdagenci => rw_craplot.cdagenci
+                           ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                           ,pr_nrdolote => rw_craplot.nrdolote
+                           ,pr_nrdconta => rw_craptdb.nrdconta
+                           ,pr_nrdctabb => rw_craptdb.nrdconta
+                           ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                           ,pr_cdcooper => pr_cdcooper
+                           ,pr_nrdocmto => NVL(rw_craplot.nrseqdig,0) 
+                           ,pr_cdhistor => 2321
+                           ,pr_nrseqdig => NVL(rw_craplot.nrseqdig,0)
+                           ,pr_vllanmto => vr_vliofcpl
+                           ,pr_nrautdoc => 0
+                           -- retorno
+                           ,pr_tab_retorno => vr_tab_retorno
+                           ,pr_incrineg => vr_incrineg
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+
+                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                     -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
                     CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
                     -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3310,7 +3315,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                    ', cdpesqbb:' || rw_craptdb.nrdocmto ||
                                    '. ' ||sqlerrm; 
                     RAISE vr_exc_erro;
-                END;
+                   END IF;
+                END IF;    
+                vr_dtmvtolt_lcm := rw_craplot.dtmvtolt;
+                vr_cdagenci_lcm := rw_craplot.cdagenci;
+                vr_cdbccxlt_lcm := rw_craplot.cdbccxlt;
+                vr_nrdolote_lcm := rw_craplot.nrdolote;
+                vr_nrseqdig_lcm := NVL(rw_craplot.nrseqdig,0);
+                rw_craplcm.vllanmto:=  vr_vliofcpl;          
 
                 /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                 PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
@@ -3401,6 +3413,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             END;
           ELSIF pr_indbaixa = 2 THEN
             
+            -- PJ 450 Regulatório de credito
+            -- Verifica se pode ou não fazer o débito/credito
+            vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                    pr_nrdconta => rw_craptdb.nrdconta,
+                                                    pr_cdhistor => 591);
+
+            IF vr_fldebita = FALSE THEN   
+               CONTINUE;
+            END IF;
+          
             /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
              PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
              se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
@@ -3504,41 +3526,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             END IF;
             
             --Gravar lancamento
-            BEGIN
-              INSERT INTO craplcm
-                  (craplcm.dtmvtolt
-                  ,craplcm.cdagenci
-                  ,craplcm.cdbccxlt
-                  ,craplcm.nrdolote
-                  ,craplcm.nrdconta
-                  ,craplcm.nrdocmto
-                  ,craplcm.vllanmto
-                  ,craplcm.cdhistor
-                  ,craplcm.nrseqdig
-                  ,craplcm.nrdctabb
-                  ,craplcm.nrautdoc
-                  ,craplcm.cdcooper
-                  ,craplcm.cdpesqbb)
-              VALUES
-                  (rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craptdb.nrdconta
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,pr_tab_titulos(vr_index_titulo).vltitulo
-                  ,591
-                  ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-                  ,rw_craptdb.nrdconta
-                  ,0
-                  ,pr_cdcooper
-                  ,rw_craptdb.nrdocmto)
-              RETURNING craplcm.nrseqdig
-                       ,craplcm.vllanmto
-              INTO rw_craplcm.nrseqdig
-                  ,rw_craplcm.vllanmto;
-            EXCEPTION
-              WHEN OTHERS THEN
+            -- P450 - Regulatório de crédito
+            lanc0001.pc_gerar_lancamento_conta(
+                        pr_dtmvtolt => rw_craplot.dtmvtolt
+                       ,pr_cdagenci => rw_craplot.cdagenci
+                       ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                       ,pr_nrdolote => rw_craplot.nrdolote
+                       ,pr_nrdconta => rw_craptdb.nrdconta
+                       ,pr_nrdctabb => rw_craptdb.nrdconta
+                       ,pr_cdpesqbb => rw_craptdb.nrdocmto
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_nrdocmto => Nvl(rw_craplot.nrseqdig,0)
+                       ,pr_cdhistor => 591
+                       ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0)
+                       ,pr_vllanmto => pr_tab_titulos(vr_index_titulo).vltitulo
+                       ,pr_nrautdoc => 0
+                       -- retorno
+                       ,pr_tab_retorno => vr_tab_retorno
+                       ,pr_incrineg => vr_incrineg
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+               IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                 -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
                 -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3560,7 +3570,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                    ', cdpesqbb:' || rw_craptdb.nrdocmto ||
                                    '. ' ||sqlerrm; 
                 RAISE vr_exc_erro;
-            END;
+               END IF;
+            END IF; 
+            rw_craplcm.nrseqdig:= Nvl(rw_craplot.nrseqdig,0);
+            rw_craplcm.vllanmto:= pr_tab_titulos(vr_index_titulo).vltitulo;
+            
             
             /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
               PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
@@ -3635,21 +3649,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             END IF;
           END IF; /* Final da baixa por vencimento */
 
-          pc_abatimento_juros_titulo(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => rw_craptdb.nrdconta
-                                         ,pr_nrborder => rw_craptdb.nrborder
-                                         ,pr_cdbandoc => rw_craptdb.cdbandoc
-                                         ,pr_nrdctabb => rw_craptdb.nrdctabb
-                                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                                         ,pr_nrdocmto => rw_craptdb.nrdocmto
-                              ,pr_dtmvtolt => pr_dtmvtolt
-                                    ,pr_cdagenci => vr_cdagenci
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
+          -- PJ 450 Regulatório de credito
+          -- Verifica se pode ou não fazer o débito/credito
+          vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                  pr_nrdconta => rw_craptdb.nrdconta,
+                                                  pr_cdhistor => 597);
 
-          IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
-                    RAISE vr_exc_erro;
+          IF vr_fldebita = TRUE THEN
+            pc_abatimento_juros_titulo(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_craptdb.nrdconta
+                                      ,pr_nrborder => rw_craptdb.nrborder
+                                      ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                      ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                      ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                      ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_cdagenci => vr_cdagenci
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+            IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
           END IF;
 
           /* Verifica se deve liquidar o bordero caso sim Liquida */
@@ -4805,40 +4826,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           END IF;
       ELSE
           vr_cdhistorresg := vr_cdhistor_resgate;
-      END IF;  
-      
-      --> Cria lancamento da conta do associado ..................      
-      BEGIN
-        INSERT INTO craplcm
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
-                     nrdocmto,
-                     vllanmto,
-                     cdhistor,
-                     nrseqdig,
-                     nrdctabb,
-                     nrautdoc,
-                     cdpesqbb,
-                     cdcooper)
-             VALUES (rw_craplot.dtmvtolt               -- dtmvtolt
-                    ,rw_craplot.cdagenci               -- cdagenci
-                    ,rw_craplot.cdbccxlt               -- cdbccxlt
-                    ,rw_craplot.nrdolote               -- nrdolote
-                    ,rw_craptdb.nrdconta               -- nrdconta
-                    ,rw_craplot.nrseqdig               -- nrdocmto
-                    ,vr_vllanmto                       -- vllanmto  
-                    ,vr_cdhistorresg                   -- cdhistor
-                    ,rw_craplot.nrseqdig               -- nrseqdig
-                    ,rw_craptdb.nrdconta               -- nrdctabb
-                    ,0                                 -- nrautdoc
-                    ,rw_craptdb.nrdocmto               -- cdpesqbb
-                    ,pr_cdcooper);                     -- cdcooper
+      END IF;
 
-      EXCEPTION
-        WHEN OTHERS THEN
+
+------------------------------------------------------------
+      --Gravar lancamento
+      -- P450 - Regulatório de crédito
+      lanc0001.pc_gerar_lancamento_conta(
+                  pr_dtmvtolt => rw_craplot.dtmvtolt
+                 ,pr_cdagenci => rw_craplot.cdagenci
+                 ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                 ,pr_nrdolote => rw_craplot.nrdolote
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                 ,pr_nrdctabb => rw_craptdb.nrdconta
+                 ,pr_cdpesqbb => rw_craptdb.nrdocmto 
+                 ,pr_cdcooper => pr_cdcooper
+                 ,pr_nrdocmto => rw_craplot.nrseqdig
+                 ,pr_cdhistor => vr_cdhistorresg
+                 ,pr_nrseqdig => rw_craplot.nrseqdig 
+                 ,pr_vllanmto => vr_vllanmto
+                 ,pr_nrautdoc => 0
+                 -- retorno
+                 ,pr_tab_retorno => vr_tab_retorno
+                 ,pr_incrineg => vr_incrineg
+                 ,pr_cdcritic => pr_cdcritic
+                 ,pr_dscritic => pr_dscritic);
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+         IF vr_incrineg = 0 THEN -- Erro de sistema/BD
           -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
           -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -4860,7 +4875,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                          ', cdcooper:' || pr_cdcooper         ||
                          '. ' ||sqlerrm; 
           RAISE vr_exc_erro;
-      END;
+          ELSE --  vr_incrineg = 1 -- Erro de negócio
+            vr_cdcritic := 0;
+            vr_dscritic := 'Lançamento não foi efetuado - '||
+                           'craplcm(7):'||
+                           ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                           ', cdagenci:' || rw_craplot.cdagenci ||
+                           ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                           ', nrdolote:' || rw_craplot.nrdolote ||
+                           ', nrdconta:' || rw_craptdb.nrdconta ||
+                           ', nrdocmto:' || rw_craplot.nrseqdig ||
+                           ', vllanmto:' || vr_vllanmto         ||
+                           ', cdhistor:' || vr_cdhistorresg     ||
+                           ', nrseqdig:' || rw_craplot.nrseqdig ||
+                           ', nrdctabb:' || rw_craptdb.nrdconta ||
+                           ', nrautdoc:' || '0'                 ||
+                           ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                           ', cdcooper:' || pr_cdcooper         ||
+                           '. ';
+            
+            RAISE vr_exc_erro;
+         END IF;
+      END IF; 
+------------------------------------------------------------
       
       --> Atualizar Titulo do Bordero de desconto
       BEGIN
