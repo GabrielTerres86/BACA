@@ -4933,9 +4933,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        
         IF pr_dtmvtolt >= vr_dtcorte THEN
           -- Nova forma a partir de 01/11/2018
-        IF pr_fatanual >= 0 AND pr_fatanual <= 0.01 then
+        IF pr_fatanual >= 0 AND pr_fatanual <= 1 then
           RETURN 0;
-        ELSIF pr_fatanual > 0.01 AND pr_fatanual <= 360000 THEN
+        ELSIF pr_fatanual > 1.01 AND pr_fatanual <= 360000 THEN
           RETURN 1;
         ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
           RETURN 2;
