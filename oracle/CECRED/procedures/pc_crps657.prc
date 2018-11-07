@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CRIA/ATUALIZA PREJUIZO CYBER
    Sigla   : CRED
    Autor   : James Prust Junior
-   Data    : Agosto/2013.                     Ultima atualizacao: 31/10/2018
+   Data    : Agosto/2013.                     Ultima atualizacao: 09/10/2018
 
    Dados referentes ao programa:
 
@@ -40,9 +40,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
                             
                09/10/2018 - Padrões - Tratar erro de lay-out no arquivo de entrada.
                             (Belli - Envolti - Chd REQ0029189)
-                            
-               31/10/2018 - Padrões - Complemento de descrições no retorno de erros.
-                            (Belli - Envolti - Chd REQ0031662) 
      ............................................................................. */
 
      DECLARE
@@ -287,21 +284,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrcpfcgc IN NUMBER         --> Cpf/Cnpj
                                        ,pr_tpinsttu IN INTEGER        --> Tipo Instrucao 
                                        ) IS
-    /* 
-    Programa: pc_crps657
-    Sistema : Cooperativa de Credito
-    Sigla   : CRED
-    Data    : 09/10/2018                              Ultima atualizacao: 00/00/0000
-    Autor   : Belli - Envolti - Chamado REQ0029189
-
-    Dados referentes ao programa:
-
-    Frequencia: Disparado pela propria procedure.
-    Objetivo  : Verificar Pagamento.
-
-    Alteracoes:                
-
-    */
        BEGIN
          DECLARE 
            --Variaveis Locais                              
@@ -355,21 +337,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
                                            ,pr_nrctaavl OUT INTEGER   --> Numero Conta Avalista 1
                                            ,pr_tab_erro OUT gene0001.typ_tab_erro  --> Tabela Critica
                                            ,pr_des_reto OUT VARCHAR2) IS  --> Retorno de erro
-    /* 
-    Programa: pc_crps657
-    Sistema : Cooperativa de Credito
-    Sigla   : CRED
-    Data    : 09/10/2018                              Ultima atualizacao: 00/00/0000
-    Autor   : Belli - Envolti - Chamado REQ0029189
-
-    Dados referentes ao programa:
-
-    Frequencia: Disparado pela propria procedure.
-    Objetivo  : Buscar dados do Emprestimo.
-
-    Alteracoes:                
-
-    */                                           
        BEGIN
          DECLARE 
            --Variaveis Locais                              
@@ -489,28 +456,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
                                                ,pr_pesq     IN  VARCHAR2     --Filtro dos Arquivos
                                               ) 
        IS 
-    /* 
-    Programa: pc_crps657
-    Sistema : Cooperativa de Credito
-    Sigla   : CRED
-    Data    : 09/10/2018                              Ultima atualizacao: 31/10/2018
-    Autor   : Belli - Envolti - Chamado REQ0029189
-
-    Dados referentes ao programa:
-
-    Frequencia: Disparado pela propria procedure.
-    Objetivo  : converter arquivos unix.
-
-    Alteracoes:                
-               31/10/2018 - Padrões - Complemento de descrições no retorno de erros.
-                           (Belli - Envolti - Chd REQ0031662)
-
-    */                                                                       
        BEGIN
          DECLARE
            --variaveis Locais 
            vr_index    INTEGER;
-           -- Variavel vr_cdcritic não utilizada nessa procedure - 31/10/2018 - REQ0031662
+           vr_cdcritic INTEGER;
            vr_dscritic VARCHAR2(4000);
            -- Eliminada variavel vr_nmarqtmp VARCHAR2(200); -- Belli 
            vr_listadir VARCHAR2(2000);
@@ -562,8 +512,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
              --Se ocorreu erro dar RAISE
              IF vr_typ_saida = 'ERR' THEN
                pr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 09/10/2018 - Chd REQ0029189
-               pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                              ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662
+               pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                vr_dsparame := vr_dsparame || ' (1) vr_comando:' || vr_comando;
                RAISE vr_exc_erro_tratado;
              END IF;
@@ -579,8 +528,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
              --Se ocorreu erro dar RAISE
              IF vr_typ_saida = 'ERR' THEN
                pr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 09/10/2018 - Chd REQ0029189
-               pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                              ' ' || vr_dscritic; -- ajuste complmento - 31/10/2018 - REQ0031662
+               pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                vr_dsparame := vr_dsparame || ' (2) vr_comando:' || vr_comando;
                RAISE vr_exc_erro_tratado;
              END IF;
@@ -591,7 +539,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
          EXCEPTION
            -- Padrões - 09/10/2018 - Chd REQ0029189
            WHEN vr_exc_erro_tratado THEN
-              -- Deixar as descrições já ajustadas - 31/10/2018 - REQ0031662
+             pr_cdcritic := 0;
+             pr_dscritic := vr_dscritic;
              RAISE vr_exc_erro_tratado;
            WHEN vr_exc_others THEN 
              RAISE vr_exc_others; 
@@ -789,8 +738,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
          --Se ocorreu erro dar RAISE
          IF vr_typ_saida = 'ERR' THEN
            vr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 15/03/2018 - Chamado 801483
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)  ||
-                          ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662           
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);           
            vr_dsparame := vr_dsparame || ' (3) vr_comando:' || vr_comando;
            RAISE vr_exc_saida;
          END IF;
@@ -807,8 +755,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
          --Se ocorreu erro dar RAISE
          IF vr_typ_saida = 'ERR' THEN
            vr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 15/03/2018 - Chamado 801483
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                          ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662         
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);         
            vr_dsparame := vr_dsparame || ' (4) vr_comando:' || vr_comando;
            RAISE vr_exc_saida;
          END IF;
@@ -825,8 +772,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
          --Se ocorreu erro dar RAISE
          IF vr_typ_saida = 'ERR' THEN
            vr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 15/03/2018 - Chamado 801483
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                          ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662        
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
            vr_dsparame := vr_dsparame || ' (5) vr_comando:' || vr_comando;
            RAISE vr_exc_saida;
          END IF;
@@ -1250,8 +1196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
            --Se ocorreu erro dar RAISE
            IF vr_typ_saida = 'ERR' THEN
              vr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 15/03/2018 - Chamado 801483
-             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                            ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662        
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
              vr_dsparame := vr_dsparame || ' (6) vr_comando:' || vr_comando;
              RAISE vr_exc_saida;
            END IF; 
@@ -1267,8 +1212,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
            --Se ocorreu erro dar RAISE
            IF vr_typ_saida = 'ERR' THEN
              vr_cdcritic := 1114; -- Nao foi possivel executar comando unix - 15/03/2018 - Chamado 801483
-             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                            ' ' || vr_dscritic; -- ajuste complemento - 31/10/2018 - REQ0031662        
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
              vr_dsparame := vr_dsparame || ' (7) vr_comando:' || vr_comando;
              RAISE vr_exc_saida;
            END IF; 
