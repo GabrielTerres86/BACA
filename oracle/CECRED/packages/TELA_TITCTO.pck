@@ -143,8 +143,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
 
-  PROCEDURE pc_obtem_dados_conciliacao (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
-                                    pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
+  PROCEDURE pc_obtem_dados_conciliacao(pr_cdcooper IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
+                                       pr_tpcobran IN CHAR,                  --> Filtro de tipo de cobranca
                                        pr_dtvencto IN DATE,                  --> Data de vencimento
                                        pr_dtmvtolt IN DATE,                  --> Data da movimentacao
                                     --> out
@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     Objetivo  : Centralizar rotinas relacionadas a tela Acompanhamento do Desconto de Título
 
     Alteração : 22/10/2018 - Adicionado a procedure pc_obtem_dados_conciliacao_tit para gerar conciliação contábil com informações 
-                             de lançamento dos borderôs da nova carteira de desconto de titulo.
+                             de lançamento dos borderôs da nova carteira de desconto de titulo. (Paulo Penteado GFT)
   */
   /* tratamento de erro */
   vr_exc_erro exception;
@@ -807,8 +807,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
            pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_resumo_dia_web ' ||sqlerrm;
   END pc_obtem_dados_resumo_dia_web;
 
-  PROCEDURE pc_obtem_dados_conciliacao (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
-                                    pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
+  PROCEDURE pc_obtem_dados_conciliacao(pr_cdcooper IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
+                                       pr_tpcobran IN CHAR,                  --> Filtro de tipo de cobranca
                                        pr_dtvencto IN DATE,                  --> Data de vencimento
                                        pr_dtmvtolt IN DATE,                  --> Data da movimentacao
                                     --> out
@@ -1283,6 +1283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     
     vr_cdhisven VARCHAR2(1000);
     vr_cdhisant VARCHAR2(1000);
+    vr_cdhisrec VARCHAR2(1000);
     
     -- Resgatados no dia
     CURSOR cr_resgatados IS
@@ -1314,7 +1315,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                    AND tdb.cdcooper = lcb.cdcooper)) qttitulo
           ,nvl(SUM(vllanmto),0) vltitulo
       FROM tbdsct_lancamento_bordero lcb 
-     WHERE lcb.cdhistor = dsct0003.vr_cdhistordsct_liberacred --2665
+     WHERE lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisrec,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(vr_cdhisant, '[^,]+', 1, LEVEL) IS NOT NULL)
        AND lcb.dtmvtolt = pr_dtvencto
        AND lcb.cdcooper = pr_cdcooper;
     rw_recebidos_dia cr_recebidos_dia%ROWTYPE;
@@ -1401,6 +1403,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_vencidos_no_dia;
     
     -- Recebidos no dia
+    vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
+                   dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
+                   dsct0003.vr_cdhistordsct_apropjurmta;       --2669
+    
     OPEN cr_recebidos_dia;
     FETCH cr_recebidos_dia INTO rw_recebidos_dia;
     IF cr_recebidos_dia%FOUND THEN
@@ -1410,10 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_recebidos_dia;
     
     -- Saldo anterior
-    vr_cdhisant := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
-                   dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
-                   dsct0003.vr_cdhistordsct_apropjurmta||','|| --2669
-                   vr_cdhisven;
+    vr_cdhisant := vr_cdhisrec||','||vr_cdhisven;
     
     OPEN cr_saldo_anterior;
     FETCH cr_saldo_anterior INTO rw_saldo_anterior;

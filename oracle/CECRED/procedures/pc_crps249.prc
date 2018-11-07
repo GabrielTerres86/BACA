@@ -642,6 +642,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                              (Renato Cordeiro - AMcom)
 
                20/09/2018 - Considerar o valor dos juros de mora na carteira de desconto de titulos do cooperado. (Paulo Penteado GFT)
+               
+               25/10/2018 - Adicionado no cursor crapljt da procedure pc_proc_cbl_mensal a condição flverbor = 0 para contabilizar
+                            somente as rendas a apropriar do produto da versão antiga do borderô. (Paulo Penteado GFT)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -3641,8 +3644,12 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
              crapljt.vlrestit,
              crapljt.dtrefere,
              crapljt.rowid
-        from crapljt
-       where crapljt.cdcooper = pr_cdcooper
+        from crapbdt
+            ,crapljt
+       where crapbdt.flverbor = 0
+         AND crapbdt.nrborder = crapljt.nrborder
+         AND crapbdt.cdcooper = crapljt.cdcooper
+         AND crapljt.cdcooper = pr_cdcooper
          and crapljt.dtrefere >= pr_dtrefere;
     -- Contratos de limite de crédito
     cursor cr_craplim (pr_cdcooper in craplim.cdcooper%type,
@@ -4291,7 +4298,6 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
             -- Incluir nome do módulo logado
             gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
             IF rw_crapcob.flgregis = 1 THEN
-               IF rw_craptdb6.flverbor = 0 THEN
                -- Separando as informacoes por agencia e por tipo de pessoa
                IF rw_crapass.inpessoa = 1 THEN
                   vr_arq_op_cred(13)(rw_crapass.cdagenci)(1) := vr_arq_op_cred(13)(rw_crapass.cdagenci)(1) + rw_crapljt.vldjuros;
@@ -4303,7 +4309,6 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
                vr_tab_agencia(rw_crapass.cdagenci).vr_aprjurcr := vr_tab_agencia(rw_crapass.cdagenci).vr_aprjurcr + rw_crapljt.vldjuros;
                vr_tab_agencia(999).vr_aprjurcr := vr_tab_agencia(999).vr_aprjurcr + rw_crapljt.vldjuros;
-               END IF;
             ELSE
 
                -- Separando as informacoes por agencia e por tipo de pessoa

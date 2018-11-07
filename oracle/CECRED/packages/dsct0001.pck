@@ -4801,7 +4801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                                 ,pr_nrdconta => rw_craptdb.nrdconta
                                                 ,pr_nrborder => rw_craptdb.nrborder
-                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resopcr
                                                 ,pr_vllanmto => vr_vlliqori
@@ -4815,7 +4815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                                 ,pr_nrdconta => rw_craptdb.nrdconta
                                                 ,pr_nrborder => rw_craptdb.nrborder
-                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resbaix
                                                 ,pr_vllanmto => rw_craptdb.vltitulo
