@@ -1348,7 +1348,6 @@ PROCEDURE estorna_baixa_epr_titulo:
               ,INPUT craplcm.nrctachq               /* PAR_nrctachq */
               ,INPUT craplcm.nrdconta               /* PAR_nrdconta */
               ,INPUT craplcm.cdpesqbb               /* PAR_cdpesqbb */
-              ,INPUT ""                             /* par_rowid */
               ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
               ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
                 
