@@ -189,7 +189,7 @@ PROCEDURE tranf-salario-intercooperativa:
           ,INPUT 1022                           /* par_cdhistor */
           ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
           ,INPUT craplcs.vllanmto               /* par_vllanmto */
-          ,INPUT craplcm.nrdconta               /* par_nrdctabb */
+          ,INPUT crapccs.nrctatrf               /* par_nrdctabb */
           ,INPUT aux_dadosdeb /* Remetente */   /* par_cdpesqbb */
           ,INPUT 0                              /* par_vldoipmf */
           ,INPUT 0                              /* par_nrautdoc */
