@@ -4935,7 +4935,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           -- Nova forma a partir de 01/11/2018
         IF pr_fatanual >= 0 AND pr_fatanual <= 1 then
           RETURN 0;
-        ELSIF pr_fatanual > 1.01 AND pr_fatanual <= 360000 THEN
+        ELSIF pr_fatanual > 1 AND pr_fatanual <= 360000 THEN
           RETURN 1;
         ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
           RETURN 2;
@@ -5034,7 +5034,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                        ,pr_totalcli      IN INTEGER                    -- Total de Cliente
                                        ,pr_nom_direto    IN VARCHAR2                   -- Diretorio da cooperativa
                                        ,pr_nom_dirmic    IN VARCHAR2                   -- Diretorio micros da cooperativa
-                                       ,pr_numparte      IN OUT INTEGER           	   -- Numero da parte do arquivo
+                                       ,pr_numparte      IN OUT INTEGER                -- Numero da parte do arquivo
                                        ,pr_xml_3040      IN OUT NOCOPY CLOB            -- XML do arquivo 3040
                                        ,pr_xml_3040_temp IN OUT VARCHAR2               -- XML do arquivo 3040
                                        ,pr_cdcritic      OUT crapcri.cdcritic%TYPE     -- Codigo da critica
@@ -5916,9 +5916,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
            -- Prejuizo com calc diferenciado 
            IF vr_vldivida <> 0  THEN 
              vr_vlpercen := vr_tab_percentual(vr_tab_individ(vr_idx_individ).innivris).percentual / 100;
-									IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
-										 vr_vlpreatr := ROUND(( (vr_tab_individ(vr_idx_individ).vlsld59d) * vr_vlpercen),2);
-									ELSE 
+                  IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
+                     vr_vlpreatr := ROUND(( (vr_tab_individ(vr_idx_individ).vlsld59d) * vr_vlpercen),2);
+                  ELSE 
              vr_vlpreatr := ROUND(( (vr_vldivida - vr_tab_individ(vr_idx_individ).vljura60) * vr_vlpercen),2);
            END IF;
                 END IF;
@@ -6154,7 +6154,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                         vr_caracesp := vr_caracesp || ';17';
                       END IF;
                         
-                    END IF;  															
+                    END IF;                                
                   END IF;
                       
                 END IF;
@@ -6411,11 +6411,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
             AND vr_tab_venc(vr_indice_venc).cdvencto <= 290 THEN
               IF vr_flgfirst = 1 THEN
                      -- Para conta corrente, não desconta o valor dos juros +60 (os juros já foram subtraídos do valor da dívida - vlsld59d)
-										 IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
-											 vr_vldivnor := vr_ttldivid - vr_vljurfai;
-										 ELSE
+                     IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
+                       vr_vldivnor := vr_ttldivid - vr_vljurfai;
+                     ELSE
                  vr_vldivnor := vr_ttldivid - vr_tab_individ(vr_idx_individ).vljura60 - vr_vljurfai;
-										 END IF;
+                     END IF;
                  vr_flgfirst := 0;
               ELSE
                 -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
