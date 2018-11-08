@@ -1421,7 +1421,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
     END IF;
-    
+
 
     --Atualizar Lancamento de credito de beneficios do INSS
     begin
@@ -2534,8 +2534,8 @@ create or replace package body cecred.INSS0001 as
                              (Adriano).        
                              
                  27/07/2015 - Ajuste para efetuar o log no arquivo proc_message.log
-                              (Adriano).         
-                      
+                              (Adriano).                            
+                
                  25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
                               (Belli - Envolti - Chamado REQ0020667)                   
                 
@@ -3714,7 +3714,7 @@ create or replace package body cecred.INSS0001 as
                                           ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
                                           ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
                                           );
-
+         
         -- Conforme tipo de erro realiza acao diferenciada
         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
           IF vr_incrineg = 0 THEN -- Erro de sistema/BD
@@ -3722,7 +3722,7 @@ create or replace package body cecred.INSS0001 as
             RAISE vr_exc_erro;              
           END IF;
         END IF;      
-         
+        
         
         /*M195 verificar na lista de parametros de historicos pemitidos
           e inserir tbfolha_lanaut*/
@@ -17998,97 +17998,111 @@ create or replace package body cecred.INSS0001 as
                               somente o registro mais antigo da tabela junto com o NB
                               (Lucas Ranghetti #626129)
 		------------------------------------------------------------------------------------------------------------------*/
-  	-- Tratamento de erros
-		vr_cdcritic INTEGER;        -- Código da crítica
-		vr_dscritic VARCHAR(4000);  -- Descrição da crítica
-		vr_exc_saida EXCEPTION;     -- Exceção
-
+  	  -- Tratamento de erros
+    vr_cdcritic INTEGER; -- Código da crítica
+    vr_dscritic VARCHAR(4000); -- Descrição da crítica
+    vr_exc_saida EXCEPTION; -- Exceção
+  
     -- Cursor para verificacao do beneficiário do inss
-    CURSOR cr_verifica (pr_cdcooper IN tbinss_dcb.cdcooper%TYPE
-												 ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
-												 ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
-      SELECT MAX(dcb.dtcompet) dtcomp,
-             dcb.dtvencpv
+    CURSOR cr_verifica(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE,
+                       pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
+                       pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
+      SELECT MAX(dcb.dtcompet) dtcomp, dcb.dtvencpv
         FROM tbinss_dcb dcb
        WHERE dcb.cdcooper = pr_cdcooper
          AND dcb.nrdconta = pr_nrdconta
          AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
-      GROUP BY dcb.dtvencpv;
+       GROUP BY dcb.dtvencpv;
     rw_verifica cr_verifica%ROWTYPE;
-    
-		-- Cursor para buscar última data de vencimento do beneficiário do inss
-		CURSOR cr_tbinss_dcb (pr_cdcooper IN tbinss_dcb.cdcooper%TYPE
-												 ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
-												 ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE)IS
-		  SELECT dtvencpv
-            ,nrrecben
-        FROM (SELECT dcb.dtvencpv
-                    ,dcb.nrrecben
-									FROM tbinss_dcb dcb
-                 WHERE dcb.cdcooper  = pr_cdcooper
-									 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
-									 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
+  
+    -- Cursor para buscar última data de vencimento do beneficiário do inss
+    CURSOR cr_tbinss_dcb(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE,
+                         pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
+                         pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
+      SELECT dtvencpv, nrrecben
+        FROM (SELECT dcb.dtvencpv, dcb.nrrecben
+                FROM tbinss_dcb dcb
+               WHERE dcb.cdcooper = pr_cdcooper
+                 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+                 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
                ORDER BY dcb.dtvencpv)
-       WHERE ROWNUM = 1;      
-			rw_tbinss_dcb cr_tbinss_dcb%ROWTYPE;
-
-      -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
-      CURSOR cr_craplcm_inss(pr_cdcooper IN crapcop.cdcooper%TYPE
-                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                            ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
-                            ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
-        SELECT 1
-          FROM craplcm lcm
-         WHERE lcm.cdcooper = pr_cdcooper
-           AND lcm.nrdconta = pr_nrdconta
-           AND lcm.cdhistor = 1399
-           AND lcm.dtmvtolt <= pr_dtmvtolt
-           AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
-           --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
-           AND SUBSTR(lcm.cdpesqbb, 1, INSTR(lcm.cdpesqbb, ';') - 1) = pr_nrrecben;
-      rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
-
-		BEGIN
-  	  -- Incluir nome do módulo logado - Chamado 664301
-		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_verifica_renovacao_vida');    
-      
+       WHERE ROWNUM = 1;
+    rw_tbinss_dcb cr_tbinss_dcb%ROWTYPE;
+  
+    -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
+    CURSOR cr_craplcm_inss(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                           pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
+                           pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
+                           pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
+      SELECT 1
+        FROM craplcm lcm
+       WHERE lcm.cdcooper = pr_cdcooper
+         AND lcm.nrdconta = pr_nrdconta
+         AND lcm.cdhistor = 1399
+         AND lcm.dtmvtolt <= pr_dtmvtolt
+         AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
+            --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
+         AND SUBSTR(lcm.cdpesqbb, 1, INSTR(lcm.cdpesqbb, ';') - 1) =
+             pr_nrrecben;
+    rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
+  
+  BEGIN
+    -- Incluir nome do módulo logado - Chamado 664301
+    GENE0001.pc_set_modulo(pr_module => 'INSS0001',
+                           pr_action => 'INSS0001.fn_verifica_renovacao_vida');
+  
+    -- Busca última data de vencimento mais próxima do beneficiário
+    OPEN cr_verifica(pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta,
+                     pr_nrrecben => pr_nrrecben);
+    FETCH cr_verifica
+      INTO rw_verifica;
+    IF cr_verifica%FOUND THEN
+      CLOSE cr_verifica;
+    
       -- Busca última data de vencimento mais próxima do beneficiário
-		  OPEN cr_verifica(pr_cdcooper => pr_cdcooper,
-			                 pr_nrdconta => pr_nrdconta,
-											 pr_nrrecben => pr_nrrecben);
-			FETCH cr_verifica INTO rw_verifica;
-      IF cr_verifica%FOUND THEN
-        
-        -- Busca última data de vencimento mais próxima do beneficiário
-        OPEN cr_tbinss_dcb(pr_cdcooper => pr_cdcooper,
-                           pr_nrdconta => pr_nrdconta,
-                           pr_nrrecben => pr_nrrecben);
-        FETCH cr_tbinss_dcb INTO rw_tbinss_dcb;
-        
+      OPEN cr_tbinss_dcb(pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_nrrecben => pr_nrrecben);
+      FETCH cr_tbinss_dcb
+        INTO rw_tbinss_dcb;
+      
+      IF cr_tbinss_dcb%FOUND THEN
+        CLOSE cr_tbinss_dcb;
         -- Verifica se a prova de vida já venceu
-        IF (rw_tbinss_dcb.dtvencpv <= (pr_dtmvtolt + 60)) OR rw_tbinss_dcb.dtvencpv IS NULL THEN
-
+      
+        IF (rw_tbinss_dcb.dtvencpv <= (pr_dtmvtolt + 60)) OR
+           rw_tbinss_dcb.dtvencpv IS NULL THEN
+        
           -- Verificar se a conta possui LCM 1399 nos ultimos 3 meses
           OPEN cr_craplcm_inss(pr_cdcooper => pr_cdcooper,
                                pr_dtmvtolt => pr_dtmvtolt,
                                pr_nrdconta => pr_nrdconta,
                                pr_nrrecben => rw_tbinss_dcb.nrrecben);
-          FETCH cr_craplcm_inss INTO rw_craplcm_inss;
-
-          IF cr_craplcm_inss%FOUND THEN
-            RETURN 1; -- Tem LCM nos ultimos 3 meses / Notificar
-        ELSE
-            RETURN 0; -- Apesar de Vencido, nao tem LCM nos ultimos 3 meses / Não Notificar
-        END IF;
+          FETCH cr_craplcm_inss
+            INTO rw_craplcm_inss;
         
+          IF cr_craplcm_inss%FOUND THEN
+            CLOSE cr_craplcm_inss;
+            RETURN 1; -- Tem LCM nos ultimos 3 meses / Notificar
+          ELSE
+            CLOSE cr_craplcm_inss;
+            RETURN 0; -- Apesar de Vencido, nao tem LCM nos ultimos 3 meses / Não Notificar
+          END IF;
+        
+        ELSE
+          RETURN 0; -- Em dia
+        END IF;
       ELSE
-          RETURN 0;  -- Em dia
+        CLOSE cr_tbinss_dcb;
+        RETURN 0; -- Em dia
       END IF;
-      ELSE
-        RETURN 0;  -- Em dia
-      END IF;
-
-	END fn_verifica_renovacao_vida;
+    ELSE
+      CLOSE cr_verifica;
+      RETURN 0; -- Em dia
+    END IF;
+  
+  END fn_verifica_renovacao_vida;
 
 
   --Processar a planilha de pagamentos do INSS 
@@ -19138,7 +19152,7 @@ create or replace package body cecred.INSS0001 as
                       'pc_banco, erro: ' || SQLERRM;
         RAISE vr_exc_erro;
     END pc_banco;
-
+                                     
     -- Processa informações geradas em arquivo - 22/01/2018 - Chamado 828247    
     PROCEDURE pc_arq
       IS
@@ -19254,34 +19268,34 @@ create or replace package body cecred.INSS0001 as
               -- Alteracao
               vr_historic := linha2;
             else
-              linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
-              -- Hora
-              vr_posicao := instr(linha, ' ');
-              vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
-              linha := substr(linha, instr(linha, ': ') + 2);
-                
-              -- Conta
-              vr_posicao := instr(linha, ' ');
-              vr_nrdconta := substr(linha, 1, vr_posicao - 1);
-              linha := substr(linha, instr(linha, ': ') + 2);
-                
-              -- Nome
-              vr_posicao := instr(linha, ' |');
-              vr_nmdconta := trim(substr(linha, 1, vr_posicao - 1));
-              linha := substr(linha, instr(linha, ': ') + 2);
-                
-              -- Numero do Beneficiario
-              vr_posicao := instr(linha, ' ');
-              vr_nrrecben := substr(linha, 1, vr_posicao - 1);
-              linha := substr(linha, instr(linha, ': ') + 2);
-                
-              -- Operador
-              vr_posicao := instr(linha, ' |');
-              vr_operador := trim(substr(linha, 1, vr_posicao - 1));
-              linha := substr(linha, instr(linha, ': ') + 2);
-                
-              -- Alteracao
-              vr_historic := linha;
+            linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
+            -- Hora
+            vr_posicao := instr(linha, ' ');
+            vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
+            linha := substr(linha, instr(linha, ': ') + 2);
+              
+            -- Conta
+            vr_posicao := instr(linha, ' ');
+            vr_nrdconta := substr(linha, 1, vr_posicao - 1);
+            linha := substr(linha, instr(linha, ': ') + 2);
+              
+            -- Nome
+            vr_posicao := instr(linha, ' |');
+            vr_nmdconta := trim(substr(linha, 1, vr_posicao - 1));
+            linha := substr(linha, instr(linha, ': ') + 2);
+              
+            -- Numero do Beneficiario
+            vr_posicao := instr(linha, ' ');
+            vr_nrrecben := substr(linha, 1, vr_posicao - 1);
+            linha := substr(linha, instr(linha, ': ') + 2);
+              
+            -- Operador
+            vr_posicao := instr(linha, ' |');
+            vr_operador := trim(substr(linha, 1, vr_posicao - 1));
+            linha := substr(linha, instr(linha, ': ') + 2);
+              
+            -- Alteracao
+            vr_historic := linha;
             END IF;
             
             -- Cria sequncial com a data e as horas
@@ -19521,7 +19535,7 @@ create or replace package body cecred.INSS0001 as
     vr_dscritic  VARCHAR2(1000);
     vr_cdcritic  INTEGER;
     vr_exc_saida EXCEPTION;
-
+    
     -- Objetos para armazenar as variáveis da notificação
     vr_variaveis_notif NOTI0001.typ_variaveis_notif;
     vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
