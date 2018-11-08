@@ -428,23 +428,16 @@ PROCEDURE cria-lancamento-debito:
                             
                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
                             DO:   
-                                IF aux_incrineg = 0 THEN 
-                                    /*  TRATAR ERRO INSERCAO/BANCO DADOS
-                                        TJ - QUAL CODIGO DE CRITICA CORRETO? 
-                                        Se for outro mudar abaixo glb_cdcritic */
-                                    DO: 
-                                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                        " - " + glb_cdprogra + "' --> '"  +
-                                                aux_dscritic + "' - Conta/dv: '"          +
-                                                STRING(par_nrdconta, "zzzz,zzz,9")        + 
-                                                " >> log/proc_batch.log").
+                                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                                     " - " + glb_cdprogra + "' --> '"  +
+                                             aux_dscritic + "' - Conta/dv: '"          +
+                                             STRING(par_nrdconta, "zzzz,zzz,9")        + 
+                                             " >> log/proc_batch.log").
 
-                                    /* 11/06/2018 - TJ -Apagar handle associado */
-                                    IF  VALID-HANDLE(h-b1wgen0200) THEN
-                                        DELETE PROCEDURE h-b1wgen0200.
-
-                                    RETURN "NOK".
-                                    END.
+                                 /* 11/06/2018 - TJ -Apagar handle associado */
+                                 IF  VALID-HANDLE(h-b1wgen0200) THEN
+                                     DELETE PROCEDURE h-b1wgen0200.
+                                 RETURN "NOK".
                             END.
                         ELSE 
                             /* 11/06/2018 - TJ - Apagar handle associado se nao houve erro */
