@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 08/08/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -8778,7 +8778,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                      --Acumular no Total Adiantamento deposito o disponivel + cheque salario + limite credito + bloqueado
                      vr_tab_rel_vlsadian(rw_crapass.inpessoa):= vr_tab_rel_vlsadian(rw_crapass.inpessoa) +
                                                                   --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
-                                                                  ((nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0)) + 
+                                                                  ((nvl(vr_rel_vlsddisp_006,0) - nvl(rw_crapsld.vlblqprj,0)) + 
                                                                    nvl(rw_crapsld.vlsdchsl,0) +
                                                                  nvl(rw_crapass.vllimcre,0) + nvl(vr_vlbloque,0));
                      END IF;
@@ -8823,7 +8823,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                    vr_tab_rel_vlsaqblq(rw_crapass.inpessoa):= vr_tab_rel_vlsaqblq(rw_crapass.inpessoa) + (vr_vlbloque * -1);
                    --Acumular no Total adiantamento o disponivel + cheque salario + limite credito + bloqueado
                    vr_tot_vladiant:= nvl(vr_tot_vladiant,0) + ( --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
-                                                               (nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0))  + 
+                                                               (nvl(vr_rel_vlsddisp_006,0) - nvl(rw_crapsld.vlblqprj,0))  + 
                                                                 nvl(rw_crapsld.vlsdchsl,0) +
                                                                nvl(rw_crapass.vllimcre,0) + nvl(vr_vlbloque,0));
 
