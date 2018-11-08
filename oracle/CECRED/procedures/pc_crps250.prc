@@ -1607,10 +1607,10 @@ BEGIN
 --           pr_rowid => vr_rowid,
   --         pr_nmtabela => vr_nmtabela,
            pr_incrineg => vr_incrineg,
-           pr_cdcritic => pr_cdcritic,
-           pr_dscritic => pr_dscritic)
+           pr_cdcritic => vr_cdcritic,
+           pr_dscritic => vr_dscritic)
            ;
-           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+           if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
               RAISE vr_exc_saida;
            end if;
       END;
