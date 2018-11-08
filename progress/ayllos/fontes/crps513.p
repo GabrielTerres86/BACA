@@ -246,13 +246,10 @@ ASSIGN aux_lshistor = "0144,0229,0729,0870"
        aux_lshsttrf = "0470".
 
 ASSIGN aux_flgfirst = TRUE
-/*
+
        aux_nmarquiv = "compbb/deb558*" + 
                       STRING(glb_dtmvtolt,"999999") + "*" + 
                       STRING(aux_cdconven,"999999999") + "*".
-*/
-       aux_nmarquiv = "compbb/deb558".
-        
 
 /*  Verifica se existe arquivo a ser integrado  */
 
