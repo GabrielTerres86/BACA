@@ -4125,7 +4125,12 @@ PROCEDURE grava_efetivacao_proposta:
 
                       IF   aux_cdcritic <> 0    OR
                            aux_dscritic <> ""   THEN
+                        DO:
+                         CREATE tt-erro.
+                         ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                        END.
 
                   END. /* NOT CAN-FIND */
 
@@ -4191,7 +4196,12 @@ PROCEDURE grava_efetivacao_proposta:
 
                       IF   aux_cdcritic <> 0    OR
                            aux_dscritic <> ""   THEN
+                        DO:
+                         CREATE tt-erro.
+                         ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                        END.
 
                   END. /* NOT CAN-FIND */
 
@@ -4803,7 +4813,7 @@ PROCEDURE grava_efetivacao_proposta:
                          INPUT par_idorigem,      /* Origem  */
                         OUTPUT 0,
                         OUTPUT "").
-
+            
           CLOSE STORED-PROC pc_efetiva_proposta_sp 
              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
@@ -4813,9 +4823,14 @@ PROCEDURE grava_efetivacao_proposta:
                  aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                                    WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
           IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-            UNDO EFETIVACAO, LEAVE EFETIVACAO.
+            DO:
+              CREATE tt-erro.
+              ASSIGN tt-erro.cdcritic = aux_cdcritic
+                     tt-erro.dscritic = aux_dscritic.
+              UNDO EFETIVACAO, LEAVE EFETIVACAO.
+            END.
         END.
-       
+        
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:

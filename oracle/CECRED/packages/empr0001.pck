@@ -8199,23 +8199,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        ,pr_des_reto => pr_des_reto  --> Retorno OK / NOK
                                        ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
 
-        IF vr_cdcritic IS NOT NULL
-           OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
+        IF TRIM(UPPER(pr_des_reto)) = 'NOK' OR
+           pr_tab_erro.COUNT() > 0 THEN
+           RAISE vr_exc_erro;
         END IF;
 
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
-        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_cdbccxlt
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
 
       WHEN OTHERS THEN
         -- Retorno não OK
