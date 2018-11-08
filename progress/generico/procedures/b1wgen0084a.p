@@ -496,6 +496,7 @@ PROCEDURE busca_pagamentos_parcelas:
                                                        ,INPUT crapepr.vlemprst \* vltotope *\
                              ,INPUT aux_dscatbem     \* Descrição da categoria do bem, valor default NULO  *\
                                                        ,INPUT crapepr.cdlcremp     \* Linha de crédito do empréstimo *\
+                                                       ,INPUT crapepr.cdfinemp     \* Finalidade do crédito do empréstimo *\
                                                        ,INPUT par_dtmvtolt     \* Data do movimento *\
                                                        ,INPUT aux_qtdiaiof     \* Quantidade de dias em atraso *\
                                                        ,OUTPUT 0               \* Valor do IOF principal *\
@@ -889,6 +890,41 @@ PROCEDURE calcula_atraso_parcela:
                                         INPUT aux_qtdiasld,
                                         OUTPUT par_vljinpar).
        
+       /* calculado na include crps310.i */
+       /*
+       IF   aux_qtdiasld > 59   THEN
+            DO:
+                /* Considerando valor da parcela ate 59 dias */
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT 59,
+                                                 OUTPUT par_vljinp59).
+                
+                /* Comentado por Irlan. Nao eh necessario calcular, basta subtrair
+                   par_vljinpar - par_vljinpar */
+                
+                /* Considerando valor da parcela retirando os 59 dias */
+
+                /*
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar + par_vljinp59,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT aux_qtdiasld - 59,
+                                                 OUTPUT par_vljinp60).
+                */
+
+                par_vljinp60 = par_vljinpar - par_vljinp59.
+
+            END.
+       
+       ELSE
+            DO:
+                /* Considerando valor da parcela ate 59 dias */
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT aux_qtdiasld,
+                                                 OUTPUT par_vljinp59).
+            END.
+       */
        /* Valor atual parcela */
        ASSIGN par_vlatupar = crabpep.vlsdvpar + par_vljinpar.
 
@@ -912,18 +948,27 @@ PROCEDURE calcula_atraso_parcela:
                     /* Projeto 410 - Novo IOF */
 
                    /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
-                   ASSIGN aux_vlbasiof = crabpep.vlsdvsji / (EXP((1 + crabepr.txmensal / 100 ), 
+                   ASSIGN aux_vlbasiof = crabpep.vlparepr / (EXP((1 + crabepr.txmensal / 100 ), 
                                                                     ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
+                   
+
+                   /* BAse do IOF Complementar é o menor valor entre o Principal ou o Saldo Devedor */           
+                   IF aux_vlbasiof > crabpep.vlsdvsji THEN
+                   DO:
+                       ASSIGN aux_vlbasiof = crabpep.vlsdvsji.
+                   END.  
                    
                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                    RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                /* Somente IOF Complementar do Atraso */
+                                                       ,INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
                                                        ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
                                                        ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
                                                        ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
                                                        ,INPUT crabepr.vlemprst /* vltotope */
                                            ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
                                                        ,INPUT crabepr.cdlcremp     /* Linha de crédito do empréstimo */
+                                                       ,INPUT crabepr.cdfinemp     /* Finalidade do crédito do empréstimo */
                                                        ,INPUT par_dtmvtolt     /* Data do movimento */
                                            ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
                                                        ,OUTPUT 0               /* Valor do IOF principal */
@@ -957,6 +1002,17 @@ PROCEDURE calcula_atraso_parcela:
                      DO:
                        ASSIGN par_vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
                      END.
+                     
+                   IF par_vliofcpl <> ? AND crabpep.vlpagiof > 0 THEN
+                     DO:
+                       ASSIGN par_vliofcpl = par_vliofcpl - crabpep.vlpagiof.
+                       IF par_vliofcpl < 0 THEN
+                         DO:
+                           ASSIGN par_vliofcpl = 0.
+                         END.
+                     END.  
+                     
+                     
                      
        /* Valor a pagar - multa e juros de mora  */
        ASSIGN  par_vlpagsld = IF   par_vlpagpar <> 0   THEN
@@ -1257,23 +1313,24 @@ PROCEDURE gera_pagamentos_parcelas:
         IF  crapprm.dsvlrprm = "S" THEN
             DO:
                 /* buscar ultimo boleto do contratos */
-                FOR EACH tbepr_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
-                   WHERE tbepr_cobranca.cdcooper = par_cdcooper AND
-                         tbepr_cobranca.nrdconta = par_nrdconta AND    
-                         tbepr_cobranca.nrctremp = par_nrctremp
+                FOR EACH tbrecup_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
+                   WHERE tbrecup_cobranca.cdcooper = par_cdcooper AND
+                         tbrecup_cobranca.nrdconta = par_nrdconta AND    
+                         tbrecup_cobranca.nrctremp = par_nrctremp AND
+                         tbrecup_cobranca.tpproduto = 0
                          NO-LOCK    
-                         BY tbepr_cobranca.nrboleto DESC:
+                         BY tbrecup_cobranca.nrboleto DESC:
                     
                         /* verificar se o boleto do contrato está em aberto */
                         FOR FIRST crapcob FIELDS (dtvencto vltitulo)
-                            WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                              AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                              AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                              AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                            WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                              AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                              AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                              AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                               AND crapcob.incobran = 0 NO-LOCK:
                 
                             ASSIGN  aux_cdcritic = 0
-                                    aux_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                                    aux_dscritic = "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + 
                                                    " em aberto." +      
                                                    " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
                                                    " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
@@ -1283,10 +1340,10 @@ PROCEDURE gera_pagamentos_parcelas:
                 
                         /* verificar se o boleto do contrato está em pago, pendente de processamento */
                         FOR FIRST crapcob FIELDS (dtvencto vltitulo dtdpagto)
-                            WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                              AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                              AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                              AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                            WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                              AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                              AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                              AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                               AND crapcob.incobran = 5 NO-LOCK:
                 
                                 FOR FIRST crapret      
@@ -1300,7 +1357,7 @@ PROCEDURE gera_pagamentos_parcelas:
                                       NO-LOCK:    
                 
                                     ASSIGN  aux_cdcritic = 0
-                                            aux_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                                            aux_dscritic = "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + 
                                                            " esta pago pendente de processamento." +       
                                                            " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
                                                            " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
