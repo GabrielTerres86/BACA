@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 15/08/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 19/10/2018
 
     Dados referentes ao programa:
 
@@ -321,7 +321,9 @@
               16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
                            PJ 450 - Diego Simas (AMcom)
                            
-              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts              
+              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
+
+              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
                            
 ............................................................................. */
 
@@ -2719,7 +2721,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO",crapbpr.dscatbem)
+                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
@@ -2756,7 +2758,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO",crapbpr.dscatbem)
+                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
@@ -4785,6 +4787,35 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
          
+        /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
+        IF crapass.inpessoa = 1 THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          RUN STORED-PROCEDURE pc_efetiva_proposta_sp
+                               aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT par_cdcooper,      /* Cooperativa */
+                         INPUT par_nrdconta,      /* Número da conta */
+                         INPUT par_nrctremp,      /* Número emrepstimo */
+                         INPUT par_cdagenci,      /* Agencia */
+                         INPUT par_nrdcaixa,      /* Caixa */
+                         INPUT par_cdoperad,      /* Operador   */
+                         INPUT par_nmdatela,      /* Tabela   */
+                         INPUT par_idorigem,      /* Origem  */
+                        OUTPUT 0,
+                        OUTPUT "").
+
+          CLOSE STORED-PROC pc_efetiva_proposta_sp 
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          ASSIGN aux_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
+                                   WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
+                 aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
+                                   WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
+          IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+            UNDO EFETIVACAO, LEAVE EFETIVACAO.
+        END.
+       
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
