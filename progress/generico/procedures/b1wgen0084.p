@@ -4125,7 +4125,12 @@ PROCEDURE grava_efetivacao_proposta:
 
                       IF   aux_cdcritic <> 0    OR
                            aux_dscritic <> ""   THEN
+                        DO:
+                         CREATE tt-erro.
+                         ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                        END.
 
                   END. /* NOT CAN-FIND */
 
@@ -4191,7 +4196,12 @@ PROCEDURE grava_efetivacao_proposta:
 
                       IF   aux_cdcritic <> 0    OR
                            aux_dscritic <> ""   THEN
+                        DO:
+                         CREATE tt-erro.
+                         ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                        END.
 
                   END. /* NOT CAN-FIND */
 
@@ -4786,7 +4796,7 @@ PROCEDURE grava_efetivacao_proposta:
 
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
-       
+         
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
@@ -4813,7 +4823,12 @@ PROCEDURE grava_efetivacao_proposta:
                  aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                                    WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
           IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+            DO:
+              CREATE tt-erro.
+              ASSIGN tt-erro.cdcritic = aux_cdcritic
+                     tt-erro.dscritic = aux_dscritic.
             UNDO EFETIVACAO, LEAVE EFETIVACAO.
+        END.
         END.
        
        ASSIGN aux_flgtrans = TRUE.
