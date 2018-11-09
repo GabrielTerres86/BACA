@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-10-19T14:40:09 -->
+<!-- 2018-11-08T14:38:26 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -314,10 +314,10 @@
 						<text><![CDATA[BANCO:]]></text>
 					</staticText>
 					<staticText>
-						<reportElement mode="Transparent" x="180" y="0" width="111" height="15" forecolor="#000000" uuid="4259da99-61ff-4cc2-a584-1bc77e419892">
-							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<reportElement mode="Transparent" x="246" y="0" width="111" height="15" forecolor="#000000" uuid="4259da99-61ff-4cc2-a584-1bc77e419892">
 							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						</reportElement>
 						<textElement verticalAlignment="Middle">
 							<paragraph firstLineIndent="5"/>
@@ -325,12 +325,15 @@
 						<text><![CDATA[CNPJ EMPREGADOR:]]></text>
 					</staticText>
 					<textField>
-						<reportElement x="50" y="0" width="130" height="15" uuid="8bd0b7a6-9239-4830-b1e4-c07307a9db6c"/>
+						<reportElement x="50" y="0" width="196" height="15" uuid="8bd0b7a6-9239-4830-b1e4-c07307a9db6c">
+							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						</reportElement>
 						<textElement verticalAlignment="Middle"/>
 						<textFieldExpression><![CDATA[$F{banco}]]></textFieldExpression>
 					</textField>
 					<textField>
-						<reportElement x="291" y="0" width="174" height="15" uuid="53fd92e7-bf01-4c06-a85c-c71f62166168"/>
+						<reportElement stretchType="ContainerHeight" x="357" y="0" width="108" height="15" uuid="53fd92e7-bf01-4c06-a85c-c71f62166168"/>
 						<textElement verticalAlignment="Middle"/>
 						<textFieldExpression><![CDATA[$F{nrcnpj_empregador}]]></textFieldExpression>
 					</textField>
@@ -433,7 +436,7 @@
 					<textField>
 						<reportElement x="60" y="0" width="90" height="15" uuid="8cb743cc-e0a5-4b7c-95d6-3d5c4501d7e0"/>
 						<textElement verticalAlignment="Middle"/>
-						<textFieldExpression><![CDATA[$F{pa}]]></textFieldExpression>
+						<textFieldExpression><![CDATA[$F{cdagencia}]]></textFieldExpression>
 					</textField>
 					<textField>
 						<reportElement x="200" y="0" width="264" height="15" uuid="5c80c607-877c-4555-b745-6ce291ee3fee"/>
@@ -505,7 +508,7 @@
 					<textField>
 						<reportElement x="131" y="0" width="40" height="15" uuid="61eb0e8e-ffed-40dc-813b-53af1ccd9c2f"/>
 						<textElement verticalAlignment="Middle"/>
-						<textFieldExpression><![CDATA[$F{cdagencia}]]></textFieldExpression>
+						<textFieldExpression><![CDATA[$F{pa}]]></textFieldExpression>
 					</textField>
 					<textField>
 						<reportElement x="266" y="0" width="198" height="15" uuid="95268a2e-eb0d-47c2-b119-3f6acae2a2ce"/>

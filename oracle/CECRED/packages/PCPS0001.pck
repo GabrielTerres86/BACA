@@ -20,6 +20,16 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
 														  ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
 														  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
 														  ,pr_des_erro OUT VARCHAR2); --> Erros do processo
+															
+    PROCEDURE pc_valida_conta_salario (pr_cdcooper     IN crapttl.cdcooper%TYPE
+				                              ,pr_nrdconta     IN crapttl.nrdconta%TYPE
+                                      ,pr_dscritic     OUT crapcri.dscritic%TYPE); --> Descricao Erro
+																			
+    PROCEDURE pc_valida_emp_conta_salario (pr_cdcooper     IN crapttl.cdcooper%TYPE
+																					,pr_nrdconta     IN crapttl.nrdconta%TYPE
+																					,pr_nrdocnpj     IN crapemp.nrdocnpj%TYPE DEFAULT NULL
+																					,pr_cdempres     IN crapemp.cdempres%TYPE
+																					,pr_dscritic     OUT crapcri.dscritic%TYPE);																			
   
 
 END PCPS0001;
@@ -43,12 +53,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
   ---------------------------------------------------------------------------------------------------------------*/
   
    PROCEDURE pc_busca_dominio(pr_nmdominio IN tbcc_dominio_campo.nmdominio%TYPE --> Nr. da Conta
-                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
-                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                              ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                              ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                              ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+                             ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
         /* .............................................................................
         
             Programa: pc_busca_dominio
@@ -181,6 +191,233 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
                                            pr_dscritic || '</Erro></Root>');        
     END pc_busca_dominio;
+		
+		PROCEDURE pc_valida_conta_salario (pr_cdcooper     IN crapttl.cdcooper%TYPE
+				                              ,pr_nrdconta     IN crapttl.nrdconta%TYPE
+			                                ,pr_dscritic     OUT crapcri.dscritic%TYPE) IS --> Descricao Erro
+			/* .............................................................................
+        
+            Programa: pc_valida_conta_salario
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Outubro/2018                 Ultima atualizacao: 29/10/2018
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Valida se o empregador da nova conta salário não é o mesmo de uma conta salário
+						já existente para o cooperado em outra cooperativa.
+        
+            Observacao: -----
+        
+            Alteracoes:
+        ..............................................................................*/
+				
+				-- Cursor das contas do CPF
+				CURSOR cr_contas(pr_nrcpfcgc crapass.nrcpfcgc%TYPE
+				                ,pr_cdcooper crapass.cdcooper%TYPE
+				                ,pr_nrdconta crapass.nrdconta%TYPE
+												,pr_nrcpfemp crapttl.nrcpfemp%TYPE) IS
+				      SELECT 1
+								FROM crapass ass
+										,tbcc_tipo_conta ttc
+										,crapttl ttl
+							 WHERE ass.cdtipcta = ttc.cdtipo_conta
+								 AND ass.inpessoa = ttc.inpessoa
+								 AND ass.nrcpfcgc = pr_nrcpfcgc
+								 AND ass.nrdconta = ttl.nrdconta
+								 AND ass.cdcooper = ttl.cdcooper
+								 AND ass.dtdemiss IS NULL
+								 AND ass.cdcooper = pr_cdcooper
+								 AND ass.nrdconta <> pr_nrdconta
+								 AND ttc.cdmodalidade_tipo = 2
+								 AND ttl.nrcpfemp = pr_nrcpfemp
+								 AND ttl.idseqttl = 1;
+				rw_contas cr_contas%ROWTYPE;
+				
+				-- Cursor dos empregadores
+				CURSOR cr_empregadores(pr_cdcooper crapttl.cdcooper%TYPE
+				                      ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+							SELECT ttl.nrcpfemp
+							      ,ttl.nrcpfcgc
+										,ttc.cdmodalidade_tipo
+								FROM crapttl ttl
+								    ,crapass ass
+										,tbcc_tipo_conta ttc
+							 WHERE ttl.cdcooper = pr_cdcooper
+								 AND ttl.nrdconta = pr_nrdconta
+								 AND ttl.idseqttl = 1
+								 --AND ttl.nrcpfemp <> 0
+								 AND ass.cdcooper = ttl.cdcooper
+								 AND ass.nrdconta = ttl.nrdconta
+								 AND ass.inpessoa = ttc.inpessoa
+								 AND ass.cdtipcta = ttc.cdtipo_conta;
+			  rw_empregadores cr_empregadores%ROWTYPE;
+
+				-- Variaveis de critica
+				vr_dscritic VARCHAR2(4000);
+        vr_exc_saida EXCEPTION;
+				
+		BEGIN
+			  --
+				OPEN cr_empregadores(pr_cdcooper => pr_cdcooper
+														,pr_nrdconta => pr_nrdconta);
+				FETCH cr_empregadores INTO rw_empregadores;
+				--
+				IF cr_empregadores%NOTFOUND THEN
+					CLOSE cr_empregadores;
+					vr_dscritic := 'Registro na crapttl do cooperado nao localizado.';
+					RAISE vr_exc_saida;
+				END IF;
+				--
+				CLOSE cr_empregadores;
+				--			
+		    OPEN cr_contas(pr_nrcpfcgc => rw_empregadores.nrcpfcgc
+											,pr_cdcooper => pr_cdcooper
+											,pr_nrdconta => pr_nrdconta
+											,pr_nrcpfemp => rw_empregadores.nrcpfemp);
+				FETCH cr_contas INTO rw_contas;
+				--
+				IF cr_contas%FOUND THEN
+					CLOSE cr_contas;
+					vr_dscritic := 'CPF ja possui conta salario para este empregador.';
+					RAISE vr_exc_saida;
+				END IF;
+				CLOSE cr_contas;
+				--
+		EXCEPTION
+		    WHEN vr_exc_saida THEN
+					pr_dscritic := vr_dscritic;
+				WHEN OTHERS THEN
+					pr_dscritic := 'Erro geral na rotina na procedure pc_valida_conta_salario. Erro: ' || SQLERRM;
+			
+		END pc_valida_conta_salario;
+		
+		PROCEDURE pc_valida_emp_conta_salario (pr_cdcooper     IN crapttl.cdcooper%TYPE
+																					,pr_nrdconta     IN crapttl.nrdconta%TYPE
+																					,pr_nrdocnpj     IN crapemp.nrdocnpj%TYPE DEFAULT NULL
+																					,pr_cdempres     IN crapemp.cdempres%TYPE
+																					,pr_dscritic     OUT crapcri.dscritic%TYPE) IS --> Descricao Erro
+			/* .............................................................................
+        
+            Programa: pc_valida_emp_conta_salario
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Outubro/2018                 Ultima atualizacao: 29/10/2018
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Valida se o empregador da conta salário não é o mesmo de uma conta salário
+						já existente para o cooperado em outra cooperativa.
+        
+            Observacao: -----
+        
+            Alteracoes:
+        ..............................................................................*/
+				
+				-- Cursor de cpf e modalidade 2
+				CURSOR cr_modalidade(pr_cdcooper crapass.cdcooper%TYPE
+				                    ,pr_nrdconta crapass.nrdconta%TYPE) IS
+						  SELECT ass.nrcpfcgc
+							  FROM crapass ass
+								    ,tbcc_tipo_conta ttc
+							 WHERE ass.cdcooper = pr_cdcooper
+							   AND ass.nrdconta = pr_nrdconta
+								 AND ass.cdtipcta = ttc.cdtipo_conta
+								 AND ass.inpessoa = ttc.inpessoa
+								 AND ttc.cdmodalidade_tipo = 2;
+				
+				-- Cursor da empresa
+				CURSOR cr_empresa(pr_cdcooper crapemp.cdcooper%TYPE
+				                 ,pr_cdempres crapemp.cdempres%TYPE) IS
+				      SELECT emp.nrdocnpj
+							  FROM crapemp emp
+							 WHERE emp.cdcooper = pr_cdcooper
+							   AND emp.cdempres = pr_cdempres;
+
+
+        -- Cursor das contas do CPF
+				CURSOR cr_contas(pr_nrcpfcgc crapass.nrcpfcgc%TYPE
+				                ,pr_cdcooper crapass.cdcooper%TYPE
+				                ,pr_nrdconta crapass.nrdconta%TYPE
+												,pr_nrcpfemp crapttl.nrcpfemp%TYPE) IS
+				      SELECT 1
+								FROM crapass ass
+										,tbcc_tipo_conta ttc
+										,crapttl ttl
+							 WHERE ass.cdtipcta = ttc.cdtipo_conta
+								 AND ass.inpessoa = ttc.inpessoa
+								 AND ass.nrcpfcgc = pr_nrcpfcgc
+								 AND ass.nrdconta = ttl.nrdconta
+								 AND ass.cdcooper = ttl.cdcooper
+								 AND ass.dtdemiss IS NULL
+								 AND ass.cdcooper = pr_cdcooper
+								 AND ass.nrdconta <> pr_nrdconta
+								 AND ttc.cdmodalidade_tipo = 2
+								 AND ttl.nrcpfemp = pr_nrcpfemp
+								 AND ttl.idseqttl = 1;
+				rw_contas cr_contas%ROWTYPE;
+
+				-- Variaveis de critica
+				vr_dscritic VARCHAR2(4000);
+        vr_exc_saida EXCEPTION;
+				
+				-- Variaveis internas
+				vr_nrdocnpj crapemp.nrdocnpj%TYPE;
+				vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
+				
+		BEGIN
+		  --
+		  OPEN cr_modalidade(pr_cdcooper => pr_cdcooper
+			                  ,pr_nrdconta => pr_nrdconta);
+			FETCH cr_modalidade INTO vr_nrcpfcgc;
+			--
+			IF cr_modalidade%NOTFOUND THEN
+				RETURN;
+			END IF;
+			--
+			CLOSE cr_modalidade;
+		  --
+			vr_nrdocnpj := pr_nrdocnpj;
+			IF nvl(vr_nrdocnpj,0) = 0 THEN
+				OPEN cr_empresa(pr_cdcooper => pr_cdcooper
+				               ,pr_cdempres => pr_cdempres);
+				FETCH cr_empresa INTO vr_nrdocnpj;
+				--
+				IF cr_empresa%NOTFOUND THEN
+				  CLOSE cr_empresa;					
+					vr_dscritic := 'Registro na crapemp nao localizado.';
+					RAISE vr_exc_saida;
+				END IF;
+				-- 
+				CLOSE cr_empresa;
+			END IF;
+			--
+			OPEN cr_contas(pr_nrcpfcgc => vr_nrcpfcgc
+				            ,pr_cdcooper => pr_cdcooper
+				            ,pr_nrdconta => pr_nrdconta
+										,pr_nrcpfemp => vr_nrdocnpj);
+			FETCH cr_contas INTO rw_contas;
+			--
+			IF cr_contas%FOUND THEN
+			   CLOSE cr_contas;
+				 vr_dscritic := 'CPF ja possui conta salario para este empregador.';
+				 RAISE vr_exc_saida;
+			END IF;
+			CLOSE cr_contas;
+			--
+		EXCEPTION
+		    WHEN vr_exc_saida THEN
+					pr_dscritic := vr_dscritic;
+				WHEN OTHERS THEN
+					pr_dscritic := 'Erro geral na rotina na procedure pc_valida_conta_salario. Erro: ' || SQLERRM;
+			
+		END pc_valida_emp_conta_salario;
 
 END PCPS0001;
 /

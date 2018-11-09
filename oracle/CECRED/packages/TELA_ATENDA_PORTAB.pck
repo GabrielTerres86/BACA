@@ -39,9 +39,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
 
   PROCEDURE pc_solicita_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdbccxlt IN crapban.cdbccxlt%TYPE --> Codigo do banco folha
-                                     ,pr_nrispbif IN crapban.nrispbif%TYPE --> ISPB do banco folha
-                                     ,pr_nrcnpjif IN crapban.nrcnpjif%TYPE --> CNPJ do banco folha
-                                     ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																		 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                      ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
                                      ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
@@ -261,6 +259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             ,vr_nmprimtl
             ,vr_inpessoa;
       IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
         vr_dscritic := 'Cooperado não encontrado.';
         RAISE vr_exc_erro;
       END IF;
@@ -290,6 +289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
             ,vr_nrdocnpj_cop
             ,vr_cdagectl_cop;
       IF cr_crapban_crapcop%NOTFOUND THEN
+				CLOSE cr_crapban_crapcop;
         vr_dscritic := 'Instituição Destinatária não encontrada.';
         RAISE vr_exc_erro;
       END IF;
@@ -316,6 +316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
               ,vr_nmpessot;
       
         IF cr_crapttl%NOTFOUND THEN
+					CLOSE cr_crapttl;
           vr_dscritic := 'Codigo da empresa do titular da conta não encontrado.';
           RAISE vr_exc_erro;
         END IF;
@@ -862,8 +863,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 
   PROCEDURE pc_solicita_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdbccxlt IN crapban.cdbccxlt%TYPE --> Codigo do banco folha
-                                     ,pr_nrispbif IN crapban.nrispbif%TYPE --> ISPB do banco folha
-                                     ,pr_nrcnpjif IN crapban.nrcnpjif%TYPE --> CNPJ do banco folha
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                      ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -890,14 +889,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     DECLARE
     
       -- Selecionar o banco folha
-      CURSOR cr_crapban(pr_cdbccxlt IN crapban.cdbccxlt%TYPE
-                       ,pr_nrispbif IN crapban.nrispbif%TYPE
-                       ,pr_nrcnpjif IN crapban.nrcnpjif%TYPE) IS
-        SELECT 1
+      CURSOR cr_crapban(pr_cdbccxlt IN crapban.cdbccxlt%TYPE) IS
+        SELECT crapban.nrcnpjif
+				      ,nvl(crapban.nrispbif, 0) nrispbif
           FROM crapban
-         WHERE crapban.cdbccxlt = pr_cdbccxlt
-           AND crapban.nrispbif = pr_nrispbif
-           AND crapban.nrcnpjif = pr_nrcnpjif;
+         WHERE crapban.cdbccxlt = pr_cdbccxlt;
       rw_crapban cr_crapban%ROWTYPE;
     
       -- Selecionar o CPF, Nome
@@ -1022,23 +1018,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         RAISE vr_exc_erro;
       END IF;
     
-      IF TRIM(pr_nrispbif) IS NULL THEN
-        vr_dscritic := 'ISPB do Banco Folha nao encontrado.';
-        RAISE vr_exc_erro;
-      END IF;
-    
-      IF TRIM(pr_nrcnpjif) IS NULL THEN
-        vr_dscritic := 'CNPJ do Banco Folha nao encontrado.';
-        RAISE vr_exc_erro;
-      END IF;
-    
       -- Busca dados do Banco Folha
-      OPEN cr_crapban(pr_cdbccxlt, pr_nrispbif, pr_nrcnpjif);
+      OPEN cr_crapban(pr_cdbccxlt);
       FETCH cr_crapban
         INTO rw_crapban;
     
       IF cr_crapban%NOTFOUND THEN
+				CLOSE cr_crapban;
         vr_dscritic := 'Banco Folha nao encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+			CLOSE cr_crapban;			
+			
+		  IF rw_crapban.nrcnpjif = 0 THEN
+        vr_dscritic := 'CNPJ do Banco Folha nao encontrado.';
         RAISE vr_exc_erro;
       END IF;
     
@@ -1049,9 +1042,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Valida dados do cooperado
       IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
         vr_dscritic := 'Dados do cooperado nao encontrados.';
         RAISE vr_exc_erro;
       END IF;
+			CLOSE cr_crapass;
     
       IF TRIM(rw_crapass.nmprimtl) IS NULL THEN
         vr_dscritic := 'Nome do cooperado nao encontrado.';
@@ -1069,9 +1064,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         INTO rw_craptfc;
     
       IF length(rw_craptfc.nrdddtfc) <> 2 THEN
+				CLOSE cr_craptfc;
         vr_dscritic := 'DDD do cooperado invalido.';
         RAISE vr_exc_erro;
       END IF;
+			CLOSE cr_craptfc;
     
       IF length(rw_craptfc.nrtelefo) > 9 OR
          length(rw_craptfc.nrtelefo) < 6 THEN
@@ -1083,6 +1080,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       OPEN cr_crapcem(vr_cdcooper, pr_nrdconta);
       FETCH cr_crapcem
         INTO rw_crapcem;
+				
+			CLOSE cr_crapcem;
     
       -- Busca CNPJ e Nome da empresa do cooperado    
       OPEN cr_crapttl(vr_cdcooper, pr_nrdconta);
@@ -1090,9 +1089,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         INTO rw_crapttl;
     
       IF cr_crapttl%NOTFOUND THEN
+				CLOSE cr_crapttl;
         vr_dscritic := 'Dados do empregador nao encontrados.';
         RAISE vr_exc_erro;
       END IF;
+			CLOSE cr_crapttl;
     
       IF TRIM(rw_crapttl.nmextemp) IS NULL THEN
         vr_dscritic := 'Nome do empregador nao encontrado.';
@@ -1110,9 +1111,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         INTO rw_crapcop;
     
       IF cr_crapcop%NOTFOUND THEN
+				CLOSE cr_crapcop;
         vr_dscritic := 'Dados da Instituicao Financeira Destinataria nao encontrados.';
         RAISE vr_exc_erro;
       END IF;
+			CLOSE cr_crapcop;
     
       IF TRIM(rw_crapcop.nrispbif) IS NULL THEN
         vr_dscritic := 'ISPB da Instituicao Financeira Destinataria nao encontrada.';
@@ -1141,6 +1144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
          WHERE cdcooper = vr_cdcooper
            AND nrdconta = pr_nrdconta;
       EXCEPTION
+				WHEN no_data_found THEN
+					vr_nrsolicitacao := 1;
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao buscar Numero de solicitacao: ' || SQLERRM;
           RAISE vr_exc_erro;
@@ -1181,8 +1186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           ,rw_crapcem.dsdemail
           ,pr_cdbccxlt
           ,1
-          ,pr_nrispbif
-          ,pr_nrcnpjif
+          ,rw_crapban.nrispbif
+          ,rw_crapban.nrcnpjif
           ,rw_crapttl.nrcpfemp
           ,rw_crapttl.nmextemp
           ,rw_crapcop.nrispbif
@@ -1267,12 +1272,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'ISPB Banco Folha',
                                 pr_dsdadant => ' ',
-                                pr_dsdadatu => pr_nrispbif);
+                                pr_dsdadatu => rw_crapban.nrispbif);
       -- Gera o log para o CNPJ Banco Folha
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'CNPJ Banco Folha',
                                 pr_dsdadant => ' ',
-                                pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(pr_nrcnpjif, 2));
+                                pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(rw_crapban.nrcnpjif, 2));
       -- Gera o log para o CNPJ Empregador
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'CNPJ Empregador',
@@ -1587,6 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       OPEN cr_portab_envia(vr_cdcooper, pr_nrdconta);
       FETCH cr_portab_envia
         INTO rw_portab_envia;
+			CLOSE cr_portab_envia;
     
       IF rw_portab_envia.cdsituacao = 1 THEN
         -- A solicitar
@@ -1602,9 +1608,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         INTO rw_motivo;
     
       IF cr_motivo%NOTFOUND THEN
+				CLOSE cr_motivo;
         vr_dscritic := 'Erro ao buscar motivo de cancelamento: ' || SQLERRM;
         RAISE vr_exc_erro;
       END IF;
+			CLOSE cr_motivo;
     
       vr_motivo := rw_motivo.dscodigo;
     

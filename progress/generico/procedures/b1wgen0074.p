@@ -1550,6 +1550,29 @@ PROCEDURE Valida_Dados_Altera:
                */
                
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                RUN STORED-PROCEDURE pc_valida_conta_salario
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
+                                                     INPUT crapass.nrdconta, /* Número da conta */
+                                                     OUTPUT ""). /* Descriçao da crítica */
+
+                CLOSE STORED-PROC pc_valida_conta_salario
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                    
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_dscritic = pc_valida_conta_salario.pr_dscritic
+                  WHEN pc_valida_conta_salario.pr_dscritic <> ?.
+
+                IF aux_dscritic <> ""  THEN
+                  DO:
+                     ASSIGN par_dscritic = aux_dscritic
+                        par_nmdcampo = "cdtipcta".
+                    
+                    LEAVE ValidaAltera.
+                  END.
+                  
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                  
                
                RUN STORED-PROCEDURE pc_permite_produto_tipo
                aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */

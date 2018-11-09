@@ -1,54 +1,54 @@
 /*!
  * FONTE        : contas.js
- * CRIA«√O      : Alexandre Scola (DB1)
- * DATA CRIA«√O : Janeiro/2010 
- * OBJETIVO     : Biblioteca de funÁıes da tela CONTAS
+ * CRIA√á√ÉO      : Alexandre Scola (DB1)
+ * DATA CRIA√á√ÉO : Janeiro/2010 
+ * OBJETIVO     : Biblioteca de fun√ß√µes da tela CONTAS
  * --------------
- * ALTERA«’ES   :
+ * ALTERA√á√ïES   :
  * --------------
- * 001: [12/02/2010] Rodolpho Telmo     (DB1): Ao alterar titular da conta, mudar o cabeÁalho automaticamente
- * 002: [23/03/2010] Rodolpho Telmo     (DB1): [REMOVIDO] Criado comportamento ao prescionar a tecla ESC, ativa o bot„o voltar corrente da tela
- * 003: [26/03/2010] Rodolpho Telmo     (DB1): [REMOVIDO] Criado comportamento ao prescionar a tecla INSERT, ativa o bot„o incluir corrente da tela
+ * 001: [12/02/2010] Rodolpho Telmo     (DB1): Ao alterar titular da conta, mudar o cabe√ßalho automaticamente
+ * 002: [23/03/2010] Rodolpho Telmo     (DB1): [REMOVIDO] Criado comportamento ao prescionar a tecla ESC, ativa o bot√£o voltar corrente da tela
+ * 003: [26/03/2010] Rodolpho Telmo     (DB1): [REMOVIDO] Criado comportamento ao prescionar a tecla INSERT, ativa o bot√£o incluir corrente da tela
  * 004: [30/03/2010] Rodolpho Telmo     (DB1): Retirado o MasketInput, e adicionado o dateEntry
- * 006: [01/04/2010] Rodolpho Telmo     (DB1): Criada funÁ„o formataCabecalho()
- * 007: [07/04/2010] Rodolpho Telmo     (DB1): Criada funÁ„o imprimeFichaCadastral()
+ * 006: [01/04/2010] Rodolpho Telmo     (DB1): Criada fun√ß√£o formataCabecalho()
+ * 007: [07/04/2010] Rodolpho Telmo     (DB1): Criada fun√ß√£o imprimeFichaCadastral()
  * 008: [18/01/2011] David (CECRED)          : Inicializar variavel idseqttl no fechamento das rotinas
- * 009: [18/11/2011] David (CECRED)          : Ajustar par‚metro na funÁ„o obtemCabecalho() para atender atualizaÁ„o do cabeÁalho em background
+ * 009: [18/11/2011] David (CECRED)          : Ajustar par√¢metro na fun√ß√£o obtemCabecalho() para atender atualiza√ß√£o do cabe√ßalho em background
  * 010: [03/07/2012] Jorge Hamaguchi (CECRED): Ajuste do esquema de impressao em funcao imprimeFichaCadastral() e retirado campo "redirect" popup.
- * 011: [24/03/2012] Adriano(CECRED)         : Criado as vari·veis glboais cpfprocu, dtdenasc, cdhabmen, verrespo, permalte, arrayFilhos.
+ * 011: [24/03/2012] Adriano(CECRED)         : Criado as vari√°veis glboais cpfprocu, dtdenasc, cdhabmen, verrespo, permalte, arrayFilhos.
  * 012: [11/08/2014] Jonata (Rkam)           : Nova rotina de Prot. ao Credito.
  * 013: [05/01/2015] James Prust Junior      : Incluir o item Liberar/Bloquear
  * 014: [03/08/2015] Gabriel (RKAM)          : Reformulacao cadastral.
  * 015: [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
- * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declaraÁ„o de pessoa exposta politicamente.
+ * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declara√ß√£o de pessoa exposta politicamente.
  * 017: [14/09/2016] Kelvin (CECRED) 		 : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 018: [27/03/2017] Reinert			  	 : Incluido function "dossieDigidoc". (Projeto 357)
  * 019: [11/07/2017] Andrino (MOUTS) 		 : Desenvolvimento da melhoria 364 - Grupo Economico
- * 020: [14/07/2017] Lucas Reinert           : AlteraÁ„o para o cancelamento manual de produtos. Projeto 364.
+ * 020: [14/07/2017] Lucas Reinert           : Altera√ß√£o para o cancelamento manual de produtos. Projeto 364.
  * 021: [17/10/2017] Kelvin (CECRED)         : Adicionando a informacao nmctajur no cabecalho da tela contas (PRJ339).
- * 022: [04/11/2017] Jonata (RKAM)           : Ajuste para inclus„o da nova rotina Impedimentos (P364).
+ * 022: [04/11/2017] Jonata (RKAM)           : Ajuste para inclus√£o da nova rotina Impedimentos (P364).
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
-var flgMostraAnota = false; // Flag que indica se anotaÁıes devem ser mostradas apÛs as mensagens
+var flgMostraAnota = false; // Flag que indica se anota√ß√µes devem ser mostradas ap√≥s as mensagens
 
-var nrdconta = ""; // Vari·vel global para armazenar nr. da conta/dv
-var nrdctitg = ""; // Vari·vel global para armazenar nr. da conta integraÁ„o
-var inpessoa = ""; // Vari·vel global para armazenar o tipo de pessoa (fÌsica/jurÌdica)
-var idseqttl = ""; // Vari·vel global para armazenar nr. da sequencia dos titulares
-var cpfprocu = ""; // Vari·vel global para armazenar nr. do cpf dos titulares
-var dtdenasc = ""; // Vari·vel global para armazenar a data de nascimento do titular
-var cdhabmen = ""; // Vari·vel global para armazenar o tipo de responsabilidade legal
-var verrespo = false; //Vari·vel global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
-var permalte = false; // Est· vari·vel sera usada para controlar se a "AlteraÁ„o/Exclus„o/Inclus„o - Resp. Legal" dever· ser feita somente na tela contas
+var nrdconta = ""; // Vari√°vel global para armazenar nr. da conta/dv
+var nrdctitg = ""; // Vari√°vel global para armazenar nr. da conta integra√ß√£o
+var inpessoa = ""; // Vari√°vel global para armazenar o tipo de pessoa (f√≠sica/jur√≠dica)
+var idseqttl = ""; // Vari√°vel global para armazenar nr. da sequencia dos titulares
+var cpfprocu = ""; // Vari√°vel global para armazenar nr. do cpf dos titulares
+var dtdenasc = ""; // Vari√°vel global para armazenar a data de nascimento do titular
+var cdhabmen = ""; // Vari√°vel global para armazenar o tipo de responsabilidade legal
+var verrespo = false; //Vari√°vel global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
+var permalte = false; // Est√° vari√°vel sera usada para controlar se a "Altera√ß√£o/Exclus√£o/Inclus√£o - Resp. Legal" dever√° ser feita somente na tela contas
 var arr_guias_dadosp = [false, true, false, true, true, true, true]; // Array para descobrir em qual guia da rotina Dados pessoias o operador ja passou
 var arr_guias_comercial = [false, false, false]; // Array para descobrir em qual guia da rotina Comercial PF o operador ja passou
 var arr_guias_contacorrente = [false, false, false, false];// Array para descobrir em qual guia da rotina Conta Corrente o operador ja passou
 
-var arrayFilhos = new Array(); // Vari·vel global para armazenar os responsaveis legais
+var arrayFilhos = new Array(); // Vari√°vel global para armazenar os responsaveis legais
 
-var contWinAnot = 0; // Para impress„o das anotaÁıes
-var nrJanelas   = 0; // Vari·vel para contagem do n˙mero de janelas abertas para impress„osa dajsdj
+var contWinAnot = 0; // Para impress√£o das anota√ß√µes
+var nrJanelas   = 0; // Vari√°vel para contagem do n√∫mero de janelas abertas para impress√£osa dajsdj
 
 //Variaveis de controle para uso da rotina Produtos
 var produtosTelasServicos = new Array();
@@ -65,7 +65,7 @@ $(document).ready(function () {
     var cNrConta = $('#nrdconta', '#frmCabContas');
     var cSeqTitular = $('#idseqttl', '#frmCabContas');
 
-    // ALTERA«√O 001
+    // ALTERA√á√ÉO 001
     // Quando alterar o titular, automaticamente carregar os dados deste novo titular selecionado
     cSeqTitular.change(function () {
         flgcadas = 'C';
@@ -74,7 +74,7 @@ $(document).ready(function () {
 
     // Evento onKeyUp no campo "nrdconta"
     cNrConta.bind('keyup', function (e) {
-        // Seta m·scara ao campo
+        // Seta m√°scara ao campo
         if (!$(this).setMaskOnKeyUp("INTEGER", "zzzz.zzz-z", "", e)) {
             return false;
         }
@@ -82,7 +82,7 @@ $(document).ready(function () {
 
     // Evento onKeyDown no campo "nrdconta"
     cNrConta.bind('keydown', function (e) {
-        // Captura cÛdigo da tecla pressionada
+        // Captura c√≥digo da tecla pressionada
         var keyValue = getKeyValue(e);
 
         if (keyValue == 118) { // Se for F7
@@ -97,14 +97,14 @@ $(document).ready(function () {
             cSeqTitular.val('1');
         }
 
-        // Se o bot„o enter foi pressionado, carrega dados da conta
+        // Se o bot√£o enter foi pressionado, carrega dados da conta
         if (keyValue == 13) {
             flgcadas = 'C';
             obtemCabecalho();
             return false;
         }
 
-        // Seta m·scara ao campo
+        // Seta m√°scara ao campo
         return $(this).setMaskOnKeyDown("INTEGER", "zzzz.zzz-z", "", e);
     });
 
@@ -115,9 +115,9 @@ $(document).ready(function () {
             return true;
         }
 
-        // Valida n˙mero da conta
+        // Valida n√∫mero da conta
         if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
-            showError("error", "Conta/dv inv·lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+            showError("error", "Conta/dv inv√°lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
             limparDadosCampos();
             return false;
         }
@@ -149,7 +149,7 @@ $(document).ready(function () {
 
 });
 
-// FunÁ„o para setar foco na rotina
+// Fun√ß√£o para setar foco na rotina
 function focoRotina(id, flgEvent) {
     if (!flgAcessoRotina || $("#labelRot" + id).html() == "&nbsp;") {
         return false;
@@ -168,7 +168,7 @@ function focoRotina(id, flgEvent) {
     }
 }
 
-// FunÁ„o para fechar div com mensagens de alerta
+// Fun√ß√£o para fechar div com mensagens de alerta
 function encerraMsgsAlerta() {
     // Esconde div
     $("#divMsgsAlerta").css("visibility", "hidden");
@@ -179,10 +179,10 @@ function encerraMsgsAlerta() {
         // Mostra div 
         $("#divAnotacoes").css("visibility", "visible");
 
-        // Bloqueia conte˙do que est· ·tras do div de AnotaÁıes
+        // Bloqueia conte√∫do que est√° √°tras do div de Anota√ß√µes
         blockBackground(parseInt($("#divAnotacoes").css("z-index")));
 
-        // Flag para n„o mostrar a tela de anotaÁıes
+        // Flag para n√£o mostrar a tela de anota√ß√µes
         flgMostraAnota = false;
     } else {
         // Esconde div de bloqueio
@@ -190,10 +190,10 @@ function encerraMsgsAlerta() {
     }
 }
 
-// FunÁ„o para acessar rotinas da tela CONTAS
+// Fun√ß√£o para acessar rotinas da tela CONTAS
 function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
 
-    // Verifica se È uma chamada v·lida
+    // Verifica se √© uma chamada v√°lida
     if (!flgAcessoRotina) {
         return false;
     }
@@ -223,7 +223,7 @@ function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
     permalte = false;
 
     // Carrega biblioteca javascript da rotina
-    // Ao carregar efetua chamada do conte˙do da rotina atravÈs de ajax
+    // Ao carregar efetua chamada do conte√∫do da rotina atrav√©s de ajax
     $.getScript(urlScript + ".js", function () {
 
         nmrotina = removeAcentos(nomeTitulo);
@@ -244,7 +244,7 @@ function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N„o foi possÌvel concluir a requisiÁ„o.", "Alerta - Ayllos", "");
+                showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o.", "Alerta - Ayllos", "");
             },
             success: function (response) {
                 $("#divRotina").html(response);
@@ -263,15 +263,15 @@ function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
 }
 
 function removeAcentos(str) {
-    return str.replace(/[‡·‚„‰Â]/g, "a").replace(/[¿¡¬√ƒ≈]/g, "A").replace(/[“”‘’÷ÿ]/g, "O").replace(/[ÚÛÙıˆ¯]/g, "o").replace(/[»… À]/g, "E").replace(/[ËÈÍÎ]/g, "e").replace(/[«]/g, "C").replace(/[Á]/g, "c").replace(/[ÃÕŒœ]/g, "I").replace(/[ÏÌÓÔ]/g, "i").replace(/[Ÿ⁄€‹]/g, "U").replace(/[˘˙˚¸]/g, "u").replace(/[ˇ]/g, "y").replace(/[—]/g, "N").replace(/[Ò]/g, "n");
+    return str.replace(/[√†√°√¢√£√§√•]/g, "a").replace(/[√Ä√Å√Ç√É√Ñ√Ö]/g, "A").replace(/[√í√ì√î√ï√ñ√ò]/g, "O").replace(/[√≤√≥√¥√µ√∂√∏]/g, "o").replace(/[√à√â√ä√ã]/g, "E").replace(/[√®√©√™√´]/g, "e").replace(/[√á]/g, "C").replace(/[√ß]/g, "c").replace(/[√å√ç√é√è]/g, "I").replace(/[√¨√≠√Æ√Ø]/g, "i").replace(/[√ô√ö√õ√ú]/g, "U").replace(/[√π√∫√ª√º]/g, "u").replace(/[√ø]/g, "y").replace(/[√ë]/g, "N").replace(/[√±]/g, "n");
 }
 
-// FunÁ„o para visualizar div da rotina
+// Fun√ß√£o para visualizar div da rotina
 function mostraRotina() {
     $("#divRotina").css("visibility", "visible");
 }
 
-// FunÁ„o para esconder div da rotina e carregar dados da conta novamente
+// Fun√ß√£o para esconder div da rotina e carregar dados da conta novamente
 function encerraRotina(flgCabec) {
 
     $("#divRotina").css("visibility", "hidden");
@@ -322,7 +322,7 @@ function sequenciaImpedimentos() {
     }
 }
 
-// FunÁ„o para carregar dados da conta informada
+// Fun√ß√£o para carregar dados da conta informada
 function obtemCabecalho(id, opbackgr, assincrono) {
     opbackgr = (typeof opbackgr == 'undefined') ? true : opbackgr;
     assincrono = (typeof assincrono == 'undefined') ? true : assincrono;
@@ -336,19 +336,19 @@ function obtemCabecalho(id, opbackgr, assincrono) {
     // Se nenhum dos tipos de conta foi informado
     if (nrdconta == '') {
         hideMsgAguardo();
-        showError("error", "Informe o n˙mero da Conta/dv.", "Alerta - Ayllos", "$('#nrdconta').focus()");
+        showError("error", "Informe o n√∫mero da Conta/dv.", "Alerta - Ayllos", "$('#nrdconta').focus()");
         limparDadosCampos();
         return false;
     }
 
     if (!validaNroConta(nrdconta)) {
         hideMsgAguardo();
-        showError("error", "Conta/dv inv·lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+        showError("error", "Conta/dv inv√°lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
         limparDadosCampos();
         return false;
     }
 
-    // Carrega dados da conta atravÈs de ajax
+    // Carrega dados da conta atrav√©s de ajax
     $.ajax({
         type: "POST",
         async: assincrono,
@@ -361,7 +361,7 @@ function obtemCabecalho(id, opbackgr, assincrono) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N„o foi possÌvel concluir a requisiÁ„o.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+            showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
         },
         success: function (response) {
             try {
@@ -384,13 +384,13 @@ function obtemCabecalho(id, opbackgr, assincrono) {
 				}
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N„o foi possÌvel concluir a requisiÁ„o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+                showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
             }
         }
     });
 }
 
-// FunÁ„o para limpar campos com dados da conta
+// Fun√ß√£o para limpar campos com dados da conta
 function limparDadosCampos() {
     // Limpa campos com dados pessoais da conta
     for (i = 0; i < document.frmCabContas.length; i++) {
@@ -409,7 +409,7 @@ function limparDadosCampos() {
     return true;
 }
 
-// FunÁ„o para carregar os titulares da conta 
+// Fun√ß√£o para carregar os titulares da conta 
 function obtemTitular() {
 
     var nmextttl = $("#nmextttl", "#frmCabContas").val(); // nome do titular
@@ -427,7 +427,7 @@ function obtemTitular() {
     // Se nenhum dos tipos de conta foi informado
     if (nrdconta == "") {
         hideMsgAguardo();
-        showError("error", "Informe o n˙mero da Conta/dv.", "Alerta - Ayllos", "$('#nrdconta').focus()");
+        showError("error", "Informe o n√∫mero da Conta/dv.", "Alerta - Ayllos", "$('#nrdconta').focus()");
         return false;
     }
 
@@ -435,13 +435,13 @@ function obtemTitular() {
     if (nrdconta != "") {
         if (!validaNroConta(nrdconta)) {
             hideMsgAguardo();
-            showError("error", "Conta/dv inv·lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+            showError("error", "Conta/dv inv√°lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
             limparDadosCampos();
             return false;
         }
     }
 
-    // Carrega dados da conta atravÈs de ajax
+    // Carrega dados da conta atrav√©s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/contas/obtem_titulares.php",
@@ -451,22 +451,22 @@ function obtemTitular() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N„o foi possÌvel concluir a requisiÁ„o.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+            showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o.", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N„o foi possÌvel concluir a requisiÁ„o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
+                showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
             }
         }
     });
 }
 
 /*!
- * ALTERA«√O : 006
- * OBJETIVO  : FunÁ„o para formatar os campos do cabeÁalho de contas, a fim de limparmos o cÛdigo do formul·rio
+ * ALTERA√á√ÉO : 006
+ * OBJETIVO  : Fun√ß√£o para formatar os campos do cabe√ßalho de contas, a fim de limparmos o c√≥digo do formul√°rio
  */
 function formataCabecalho() {
 
@@ -483,7 +483,7 @@ function formataCabecalho() {
     $('br', '#frmCabContas').css({ 'clear': 'both' });
     $('a', '#frmCabContas').css({ 'float': 'right', 'font-size': '11px', 'padding-top': '4px' });
 
-    // RÛtulos comum a PF e PJ
+    // R√≥tulos comum a PF e PJ
     $('label[for="nrdconta"]', '#frmCabContas').addClass('rotulo rotulo-60');
     $('label[for="idseqttl"]', '#frmCabContas').css({ 'width': '68px' });
     $('label[for="cdagenci"]', '#frmCabContas').addClass('rotulo rotulo-40');
@@ -512,7 +512,7 @@ function formataCabecalho() {
         $('#divRotinaPF', '#frmCabContas').css('visibility', 'visible');
         grupoPF.desabilitaCampo();
 
-        // RÛtulos para PF
+        // R√≥tulos para PF
         $('label[for="nmextttl"],label[for="nrcpfcgc"]', '#divRotinaPF').addClass('rotulo rotulo-40');
         $('label[for="inpessoa"],label[for="cdsitdct"]', '#divRotinaPF').addClass('rotulo-30');
         $('label[for="cdsexotl"]', '#divRotinaPF').css({ 'width': '35px' });
@@ -535,7 +535,7 @@ function formataCabecalho() {
         $('#divRotinaPJ', '#frmCabContas').css('visibility', 'visible');
         grupoPJ.desabilitaCampo();
 
-        // RÛtulos para PJ
+        // R√≥tulos para PJ
         $('label[for="nmextttl"],label[for="nmfansia"]', '#divRotinaPJ').addClass('rotulo rotulo-90');
         $('label[for="nrcpfcgc"]', '#divRotinaPJ').addClass('rotulo rotulo-40');
         $('label[for="inpessoa"],label[for="cdsitdct"]', '#divRotinaPJ').addClass('rotulo-linha');
@@ -557,8 +557,8 @@ function formataCabecalho() {
 }
 
 /*!
- * ALTERA«√O : 007
- * OBJETIVO  : FunÁ„o para abrir um PDF com a ficha cadastral do titular vigente na tela
+ * ALTERA√á√ÉO : 007
+ * OBJETIVO  : Fun√ß√£o para abrir um PDF com a ficha cadastral do titular vigente na tela
  */
 function imprimeFichaCadastral(divBloqueio) {
 
@@ -579,7 +579,7 @@ function imprimeFichaCadastral(divBloqueio) {
 
 
 /*!
- * OBJETIVO  : FunÁ„o para abrir um PDF com a declaracao de pessoa exposta politicamente
+ * OBJETIVO  : Fun√ß√£o para abrir um PDF com a declaracao de pessoa exposta politicamente
  */
 function imprimeDeclaracao() {
 
@@ -621,7 +621,7 @@ function imprimeDeclaracao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N„o foi possÌvel concluir a requisiÁ„o.", "Alerta - Ayllos", "");
+            showError("error", "N√£o foi poss√≠vel concluir a requisi√ß√£o.", "Alerta - Ayllos", "");
         },
         success: function (response) {
             $("#divRotina").html(response); //append dos campos em frmCabContas
@@ -647,10 +647,10 @@ function trataCadastramento() {
 
     // Se vem da MATRIC, abrir 1.era rotina dependendo o tipo de pessoa
     if (inpessoa == 1) {
-        acessaRotina('Dados Pessoais', 'Dados Pessoais', 'dados_pessoais');
+        acessaRotina("INFORMATIVOS", "Conta Corrente", "conta_corrente_pf");
     }
     else {
-        acessaRotina('IDENTIFICACAO', 'IdentificaÁ„o', 'identificacao_juridica');
+        acessaRotina('IDENTIFICACAO', 'Identifica√ß√£o', 'identificacao_juridica');
     }
 
 }
@@ -660,7 +660,7 @@ function dossieDigdoc(cdproduto){
 	var mensagem = 'Aguarde, acessando dossie...';
 	showMsgAguardo( mensagem );
 
-	// Carrega dados da conta atravÈs de ajax
+	// Carrega dados da conta atrav√©s de ajax
 	$.ajax({
 		type	: 'POST',
 		dataType: 'html',
@@ -709,7 +709,7 @@ function retornaImpedimentos(){
 	acessaRotina('IMPEDIMENTOS DESLIGAMENTO', 'Impedimentos', 'impedimentos_desligamento');
 }
 
-// Rotina generica para buscar nome da pessoa e validar se poder· ser alterado
+// Rotina generica para buscar nome da pessoa e validar se poder√° ser alterado
 function buscaNomePessoa_gen(nrcpfcgc,nmdcampo, nmdoform){
 
     var nrdocnpj = nrcpfcgc;
@@ -732,7 +732,7 @@ function buscaNomePessoa_gen(nrcpfcgc,nmdcampo, nmdoform){
     }
     
 
-    // Carrega conte˙do da opÁ„o atravÈs de ajax
+    // Carrega conte√∫do da op√ß√£o atrav√©s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + 'telas/contas/busca_nome_pessoa.php',

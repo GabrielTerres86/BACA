@@ -414,7 +414,7 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 
-	acessaRotina('CONTA CORRENTE','Conta Corrente','conta_corrente_pf');		
+	acessaRotina('IMPRESSOES','Impressões','impressoes');	
 }
 
 function validaPais(campo){

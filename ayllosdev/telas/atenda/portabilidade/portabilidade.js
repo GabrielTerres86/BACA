@@ -292,8 +292,6 @@ function solicitaPortabilidade(skipConfirm) {
 		data: {
 			nrdconta: nrdconta,
             cdbccxlt: cdbccxlt,
-		  	nrispbif: nrispbif_banco_folha,
-			nrcnpjif: normalizaNumero(nrcnpjif),
 			cddopcao: 'S',
 			redirect: "script_ajax" // Tipo de retorno do ajax
 		},
@@ -326,8 +324,12 @@ function exibeCancelamento() {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
-			fechaRotina($('#divRotina'));
-			$("#divUsoGenerico").html(response);
+			if (response.substr(0, 14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				fechaRotina($('#divRotina'));
+				$("#divUsoGenerico").html(response);
+			}
 		}
 	});
 }

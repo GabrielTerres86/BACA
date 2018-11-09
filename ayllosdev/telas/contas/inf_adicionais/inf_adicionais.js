@@ -405,7 +405,7 @@ function proximaRotina () {
 		acessaRotina('IMUNIDADE TRIBUTARIA','Imunidade Tributaria','imunidade_tributaria');	
 	} else {
 		if (flgcadas == 'M') {
-			acessaRotina('IMPRESSOES','Impressões','impressoes');	
+			acessaRotina('Dados Pessoais', 'Dados Pessoais', 'dados_pessoais');
 		} else {	
 			showMsgAguardo('Aguarde, carregando tela ATENDA ...');
 			setaParametros('ATENDA','',nrdconta,flgcadas); 	

@@ -19,8 +19,6 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'S',f
 	
 $nrdconta = ( ( !empty($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0 );
 $cdbccxlt = ( ( !empty($_POST['cdbccxlt']) ) ? $_POST['cdbccxlt'] : '' );
-$nrispbif = ( ( !empty($_POST['nrispbif']) ) ? $_POST['nrispbif'] : '' );
-$nrcnpjif = ( ( !empty($_POST['nrcnpjif']) ) ? $_POST['nrcnpjif'] : '' );
 
 // Monta o xml de requisição
 $xml  = "";
@@ -28,8 +26,6 @@ $xml .= "<Root>";
 $xml .= "	<Dados>";
 $xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 $xml .= "		<cdbccxlt>".$cdbccxlt."</cdbccxlt>";
-$xml .= "		<nrispbif>".$nrispbif."</nrispbif>";
-$xml .= "		<nrcnpjif>".$nrcnpjif."</nrcnpjif>";
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 
@@ -40,7 +36,7 @@ $xmlObject = getObjectXML($xmlResult);
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	exibirErro('error',addslashes($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 }
 
 exibirErro('inform','Solicita&ccedil;&atilde;o de Portabilidade registrada com sucesso.','Alerta - Ayllos','acessaOpcaoAba(2,0,\"0\");bloqueiaFundo(divRotina)',false);

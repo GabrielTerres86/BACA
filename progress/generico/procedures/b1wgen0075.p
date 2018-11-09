@@ -586,6 +586,30 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 40.
                LEAVE Valida.
             END.
+            
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_valida_emp_conta_salario
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
+                                               INPUT crapass.nrdconta, /* Número da conta */
+                                               INPUT DECI(par_nrcpfemp), /*CNPJ da empresa*/
+                                               INPUT par_cdempres, /*Código da empresa*/
+                                               OUTPUT ""). /* Descriçao da crítica */
+
+          CLOSE STORED-PROC pc_valida_emp_conta_salario
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              
+          { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_dscritic = pc_valida_emp_conta_salario.pr_dscritic
+            WHEN pc_valida_emp_conta_salario.pr_dscritic <> ?.
+
+          IF aux_dscritic <> ""  THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdtipcta"
+                      aux_cdcritic = 0.
+              LEAVE Valida.
+            END.
 
         /* cnpj da empresa */
         IF  NOT ValidaCpfCnpj(STRING(par_nrcpfemp)) AND 
@@ -2745,4 +2769,3 @@ PROCEDURE Grava_Dados_Ppe:
 
 
 END PROCEDURE.
-
