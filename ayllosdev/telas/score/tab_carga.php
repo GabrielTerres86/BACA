@@ -72,7 +72,7 @@
 </div>
 
 <div id="divBotoes" style="padding-bottom: 15px;">
-	<!-- <a href="#" class="botao" id="btVoltar">Voltar</a> -->
+	<a href="#" class="botao" id="btVoltar">Voltar</a> 
 	<a href="#" class="botao" id="btAprovar">Aprovar</a>
 	<a href="#" class="botao" id="btRejeitar">Rejeitar</a>																				
 </div>

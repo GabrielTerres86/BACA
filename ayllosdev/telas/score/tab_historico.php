@@ -17,9 +17,9 @@
 				<tr>
 					<th><? echo utf8ToHtml('Código'); ?></th>
 					<th><? echo utf8ToHtml('Modelo Score'); ?></th>
-					<th><? echo utf8ToHtml('Data Atualização'); ?></th>
-					<th><? echo utf8ToHtml('Data Início'); ?></th>
-					<th><? echo utf8ToHtml('Data Final'); ?></th>
+					<th><? echo utf8ToHtml('Data Base'); ?></th>
+					<th><? echo utf8ToHtml('Início Carga'); ?></th>
+					<th><? echo utf8ToHtml('Término Carga'); ?></th>
 					<th><? echo utf8ToHtml('Usuário Responsável'); ?></th>
 					<th><? echo utf8ToHtml('Quantidade'); ?></th>
 					<th><? echo utf8ToHtml('Quantidade Física'); ?></th>
@@ -90,6 +90,9 @@
 			</tbody>
 		</table>
 	</div>
+</div>
+<div id="divBotoes" style="padding-bottom: 15px;">
+	<a href="#" class="botao" id="btVoltar">Voltar</a> 
 </div>
 
 <div id="divMotivo" style="height:50px; display: none;">

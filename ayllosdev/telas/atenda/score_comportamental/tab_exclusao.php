@@ -66,5 +66,5 @@
 </div>
 
 <div id="divBotoes" style="margin-top: 5px; margin-bottom: 10px; text-align: center;">
-	<a href="#" class="botao" id="btVoltar" onClick="encerraRotina(true); return false;">Voltar</a>																				
+	<a href="#" class="botao" id="btVoltar" onClick="$('#labelRot1').trigger('click');">Voltar</a>																				
 </div>

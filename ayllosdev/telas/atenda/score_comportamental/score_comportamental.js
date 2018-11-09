@@ -53,7 +53,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 function controlaLayout(){
     var divRegistro = $('div.divRegistros');
     $('#divConteudoOpcao').css('height', '100%');
-    $('#divRotina').css({ 'width': '865px', 'left': '425px' });
+    $('#divRotina').css({ 'width': '930px', 'left': '370px' });
     
     var tabela      = $('table', divRegistro );
     var linha       = $('table > tbody > tr', divRegistro );
@@ -63,7 +63,7 @@ function controlaLayout(){
     var arrayLargura = new Array();
     var arrayAlinha = new Array();
     
-    arrayLargura[0] = '82px';   //Modelo
+    arrayLargura[0] = '172px';   //Modelo
     arrayLargura[1] = '95px';  //Data
     arrayLargura[2] = '196px';   //Classe
     arrayLargura[3] = '80px';   //Pontuação
@@ -83,7 +83,7 @@ function controlaLayout(){
 }
 
 function initBotoes(){
-    $('#btExclusao').unbind('click').bind('click', function(){
+    $('#btExclusao', '#divBotoes').unbind('click').bind('click', function(){
         var linhaSel = $('table', '#divScore').find('tr.corSelecao');
         var cdmodelo = $(linhaSel).attr('id');
         var dtbase = $(linhaSel).find('td#dtbase').find('span').text();

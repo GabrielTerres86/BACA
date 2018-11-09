@@ -27,7 +27,7 @@
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opcao:') ?></label>
 	<select id="cddopcao" name="cddopcao">
-    	<option value="C"><? echo utf8ToHtml('C - Cargas de score disponíveis') ?></option>
+    	<option value="C"><? echo utf8ToHtml('C - Cargas de Scores') ?></option>
 		<option value="H"><? echo utf8ToHtml('H - Histórico das cargas de score') ?></option>	
   	</select>
   
