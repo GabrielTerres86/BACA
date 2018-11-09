@@ -117,6 +117,15 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica
                                    
+  PROCEDURE pc_busca_modalidade_web(pr_cdcooper IN crapass.cdcooper%TYPE
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);
+                                   
   PROCEDURE pc_valida_tipo_conta_coop(pr_cdcooper      IN tbcc_tipo_conta_coop.cdcooper%TYPE --> Codigo da cooperativa
                                      ,pr_inpessoa      IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
                                      ,pr_cdtipo_conta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE --> codigo do tipo de conta
@@ -2235,6 +2244,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         ROLLBACK;
     END;
   END pc_busca_modalidade_tipo;
+  
+  PROCEDURE pc_busca_modalidade_web(pr_cdcooper IN crapass.cdcooper%TYPE
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_buscaa_modadlidade_web
+        Sistema : CECRED
+        Sigla   : CADA
+        Autor   : Lucas Skroch - SUpero
+        Data    : Novembro/18.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar a modalidade da conta
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_modalidade_conta NUMBER;
+      
+      -- Busca situacoes de conta
+      CURSOR cr_modalidade_conta (pr_cdcooper IN crapass.cdcooper%TYPE
+                                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+            select NVL(cta.cdmodalidade_tipo,0)
+             from crapass a,
+                  tbcc_tipo_conta cta
+            where a.inpessoa = cta.inpessoa 
+              and a.cdtipcta = cta.cdtipo_conta           
+              and a.cdcooper = pr_cdcooper
+              and a.nrdconta = pr_nrdconta;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+  
+      open cr_modalidade_conta(pr_cdcooper
+                              ,pr_nrdconta);
+      fetch cr_modalidade_conta into vr_modalidade_conta;
+      close cr_modalidade_conta;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Dados>' || vr_modalidade_conta || '</Dados></Root>');   
+      
+    EXCEPTION  
+      WHEN OTHERS THEN
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina CADA0006: ' || SQLERRM;
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_busca_modalidade_web;
   
   PROCEDURE pc_valida_tipo_conta_coop(pr_cdcooper      IN tbcc_tipo_conta_coop.cdcooper%TYPE --> Codigo da cooperativa
                                      ,pr_inpessoa      IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
