@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
                                 ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
 END EMPR0008;
 /
-CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   ---------------------------------------------------------------------------
   --
   --  Programa : EMPR0008
@@ -707,14 +707,17 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
         END IF;
         
         -- Chamada da rotina centralizadora em substituição ao DELETE
-        LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL 
-                                       , pr_dtmvtolt => NULL 
+        LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
+                                       , pr_dtmvtolt => NULL
                                        , pr_cdagenci => NULL
-                                       , pr_cdbccxlt => NULL 
-                                       , pr_nrdolote => NULL 
-                                       , pr_nrdctabb => NULL 
-                                       , pr_nrdocmto => NULL 
-                                       , pr_cdhistor => NULL 
+                                       , pr_cdbccxlt => NULL
+                                       , pr_nrdolote => NULL
+                                       , pr_nrdctabb => NULL
+                                       , pr_nrdocmto => NULL
+                                       , pr_cdhistor => NULL
+                                       , pr_nrctachq => NULL
+                                       , pr_nrdconta => NULL
+                                       , pr_cdpesqbb => NULL
                                        , pr_rowid    => rw_craplcm.rowid
                                        , pr_cdcritic => vr_cdcritic
                                        , pr_dscritic => vr_dscritic);
