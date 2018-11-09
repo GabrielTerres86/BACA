@@ -179,6 +179,9 @@
 
                 07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)                
                             
+                08/11/2018 - Ajuste para arredondar par_vlmrapar em duas casas, devido a diferenca entre LCM e LEM
+                             PRJ450 - Regulatorio(Odirlei-AMcom)
+
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -943,6 +946,9 @@ PROCEDURE calcula_atraso_parcela:
                    aux_txdiaria =   aux_txdiaria / 100
                    
                    par_vlmrapar = crabpep.vlsdvsji * aux_txdiaria * aux_qtdiamor.
+                                   
+                   /** Necessario arredondar devido a diferencas entre LCM e LEM **/
+                   par_vlmrapar = ROUND(par_vlmrapar,2).
                                    
                     /* Calcular IOF por atraso */	   
                     /* Projeto 410 - Novo IOF */
