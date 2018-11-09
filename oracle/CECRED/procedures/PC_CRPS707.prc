@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 26/10/2018
+   Data    : Setembro/2016                        Ultima atualizacao: 08/06/2018
 
    Dados referentes ao programa:
 
@@ -46,17 +46,13 @@ BEGIN
                       
          26/07/2017 - #713816 Ajustes para garantir o fechamento do arquivo para que o move
                       do mesmo ocorra (Carlos)
-                      
+
          08/08/2017 - Ajuste para não fechar o arquivo quando for encontrado inconsistências em algum 
                       registro, pois o arquivo todo deve ser processado e os registros com problema serão
                       encaminhaoos via e-mail para a área responsável tomar as devidas providências junto ao SICREDI
                       (Adriano).
-                      			 
-          06/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom). 
-
-          26/10/2018 - Correcao para enviar e-mail quando encontrar um arquivo vazio e nao parar o processemento dos demais arquivos
-                       (Jonata - Mouts PRB0040391).
                       
+			   06/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom). 
 
    ............................................................................. */
 
@@ -1333,7 +1329,7 @@ BEGIN
              IF vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;
-             
+
              IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                    ,pr_dtarquiv => vr_dtarquiv
                                    ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1342,26 +1338,26 @@ BEGIN
                                        
                IF trim(vr_dscritic) IS NULL THEN
                  vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-               END IF;
-                   
+           END IF;
+
                RAISE vr_exc_saida;
                    
              END IF;
 
            ELSE
-             IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
-                                   ,pr_dtarquiv => vr_dtarquiv
-                                   ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
-                                   ,pr_arqcomerro => FALSE
-                                   ,pr_dscritic => vr_dscritic) THEN
-              
-               IF trim(vr_dscritic) IS NULL THEN
-                 vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-               END IF;
+           IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                 ,pr_dtarquiv => vr_dtarquiv
+                                 ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                 ,pr_arqcomerro => FALSE
+                                 ,pr_dscritic => vr_dscritic) THEN
+            
+             IF trim(vr_dscritic) IS NULL THEN
+               vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
+           END IF;
 
-               RAISE vr_exc_saida;
-                       
-             END IF;
+             RAISE vr_exc_saida;
+                     
+           END IF;
              
            END IF;
              
@@ -1382,23 +1378,7 @@ BEGIN
              
              -- Arquivo vazio
              ROLLBACK;
-                          
-             -- Gerar email ao Financeiro
-             gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper
-                                       ,pr_cdprogra => 'PC_CRPS707'
-                                       ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS')
-                                       ,pr_des_assunto => 'TEDs SICREDI - ARQUIVO SEM CONTEUDO'
-                                       ,pr_des_corpo => 'Erro ao processar arquivo ['||vr_idxtexto||'] --> Arquivo vazio!'
-                                       ,pr_des_anexo => NULL
-                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                       ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
-                                       ,pr_flg_enviar => 'S' --> Enviar o e-mail na hora
-                                       ,pr_des_erro => vr_dscritic);
-                                       
-             IF vr_dscritic IS NOT NULL THEN
-               RAISE vr_exc_saida;
-             END IF;                                       
-
+             
              -- Gerar alerta no LOG
              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                         pr_ind_tipo_log => 2, --> erro tratado
@@ -1406,9 +1386,9 @@ BEGIN
                                                            ' - '|| vr_cdprogra ||' --> Erro ao processar arquivo ['
                                                            ||vr_idxtexto||'] --> Arquivo vazio!',
                                         pr_nmarqlog     => vr_nmarqlog);
-             
-             -- Gravar para envio do e-mail
-             COMMIT;
+                                        
+             -- Erro critico, saida do processo
+             EXIT;
              
            WHEN vr_exc_email THEN
 

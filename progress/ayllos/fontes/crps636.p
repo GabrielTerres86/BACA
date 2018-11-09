@@ -164,11 +164,6 @@
                               
                  23/08/2018 - Alterar para chamar a rotina de email do oracle com enviar na hora
                               setado como nao (Lucas Ranghetti TASK0024332)
-
-                 05/11/2018 - Antes de atribuir valor da tabela CRAPLFT na variavel de CPF, validar se a
-                              informacao nao esta nula. Problemas ao gerar arquivo da CREDIFIESC, dia 30/10/2018.
-                              Heitor (Mouts) - INC0026530
-
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -2794,11 +2789,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                               TRIM(SUBSTR(craplft.nrrefere,1,17)).
                 END.
         
-            IF craplft.nrcpfcgc <> ? THEN
-                ASSIGN aux_nrcpfcgc = TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)) +
-                                      FILL(" ", 14 - LENGTH(STRING(craplft.nrcpfcgc))).
-            ELSE
-                ASSIGN aux_nrcpfcgc = FILL(" ", 14).
+            ASSIGN aux_nrcpfcgc = TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)) +
+                                  FILL(" ", 14 - LENGTH(STRING(craplft.nrcpfcgc))).
         
             DATE(craplft.dtlimite) NO-ERROR.
         
