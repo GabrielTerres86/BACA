@@ -84,6 +84,9 @@ BEGIN
                               senao subtrair do valor da divida o Juros60 para emprestimos em prejuizo. (P450 - Jaison)
 
                  10/10/2018 - P450 - Ajustes gerais no Juros60/ADP/Empr. (Guilherme/AMcom)
+                 
+                 09/11/2018 - PJ450 - Inclusão de Limite NÃO Utilizado nas Informações Agregadas
+                              (Renato Cordeiro - AMcom)
 
   ............................................................................ */
 
@@ -1246,7 +1249,7 @@ BEGIN
         vr_tab_rowid.delete;
       END IF;  
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
-      IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+      IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
         IF rw_crapris.cdmodali = 101 THEN -- ADP  -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
           vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
         ELSE
@@ -1317,7 +1320,7 @@ BEGIN
           CONTINUE;
         END IF;
         -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
-        IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+        IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
           IF rw_crapris.cdmodali = 101 THEN -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
 						vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
           ELSE
