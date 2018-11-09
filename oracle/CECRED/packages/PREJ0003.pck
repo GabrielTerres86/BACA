@@ -1510,7 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     Sistema :
     Sigla   : PREJ
     Autor   : Rangel Decker  AMcom
-    Data    : Junho/2018.                  Ultima atualizacao:
+    Data    : Junho/2018.                  Ultima atualizacao: 09/11/2018
 
     Dados referentes ao programa:
 
@@ -1518,7 +1518,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  :Alteração do Tipo de Conta em prejuízo liquidado
 
-    Alteracoes:
+    Alteracoes: 09/11/2018 - Ajustes nos cursores da liquidação
+	                           (Reginaldo/AMcom/P450)	                    
     ..............................................................................*/
 
   -- Recupera informações dos prejuízo a serem liquidados (saldo devedor total igual a zero)
@@ -1563,21 +1564,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
           ass.cdcooper 
      FROM crapass ass
     WHERE ass.inprejuz = 0
-     and  ass.cdsitdct = 2;   
+      AND ass.cdsitdct = 2
+			AND EXISTS (
+			      SELECT 1
+						  FROM tbcc_prejuizo prj
+						 WHERE prj.cdcooper = ass.cdcooper
+						   AND prj.nrdconta = ass.nrdconta
+			    ) ;   	
   rw_cr_conta_nprej_sitprej cr_conta_nprej_sitprej%ROWTYPE;    
   
   -- Prejuizo mais recente
   CURSOR cr_prej_recente (pr_cdcooper  IN crapass.cdcooper%TYPE,     -- tbcc_prejuizo.cdcooper%TYPE,
                           pr_nrdconta IN crapass.nrdconta%TYPE ) IS -- tbcc_prejuizo.nrdconta%TYPE ) IS
-    SELECT DISTINCT
-           MAX(tbprj.dtinclusao) dtinc,
+    SELECT cdsitdct_original 
+		  FROM (SELECT DISTINCT
+										 tbprj.dtinclusao,
            tbprj.cdsitdct_original 
     FROM tbcc_prejuizo tbprj
     WHERE tbprj.cdcooper = pr_cdcooper
      AND  tbprj.nrdconta = pr_nrdconta
-     AND  ROWNUM = 1
-    GROUP BY tbprj.cdsitdct_original
-    ORDER BY dtinc desc;
+						ORDER BY dtinclusao DESC)
+		WHERE rownum = 1;
   rw_prej_recente cr_prej_recente%ROWTYPE;
 
   vr_cdcritic  NUMBER(3);
@@ -1626,25 +1633,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     -- Percorre a lista dos prejuízos que devem ser liquidados
     FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
-      
         -- Restaura a situação da conta corrente e retira a flag de "em prejuízo"
         BEGIN                              
-            
-            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
-                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN    
-            BEGIN        
         UPDATE crapass a
-           SET a.inprejuz = 0,
-               a.cdsitdct = rw_conta_liquida.cdsitdct_original
-         WHERE a.cdcooper = pr_cdcooper
-           AND a.nrdconta = rw_conta_liquida.nrdconta;
-            END;    
-            ELSE BEGIN
-                   UPDATE crapass a
                      SET a.inprejuz = 0
                    WHERE a.cdcooper = pr_cdcooper
                      AND a.nrdconta = rw_conta_liquida.nrdconta;  
-                 END;    
+										 
+            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
+                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN           
+              UPDATE crapass a
+                 SET a.cdsitdct = rw_conta_liquida.cdsitdct_original
+              WHERE a.cdcooper = pr_cdcooper
+                AND a.nrdconta = rw_conta_liquida.nrdconta;       
             END IF;
       EXCEPTION
         WHEN OTHERS THEN

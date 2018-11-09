@@ -203,7 +203,7 @@ FOR EACH crablot WHERE crablot.cdcooper  = glb_cdcooper  AND
             ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
   
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-            glb_cdcritic = 1065.  // Lançamento de débito na conta */
+            glb_cdcritic = 1390.  // Lançamento de débito na conta */
             RUN fontes/critic.p.
             UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
                             " - " + glb_cdprogra + "' --> '" +
