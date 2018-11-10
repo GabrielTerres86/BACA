@@ -325,6 +325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
       vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307    
 
+      EXC_LCT_NAO_EXISTE exception;
       --
       BEGIN
 
@@ -466,8 +467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                 IF cr_craplcm%NOTFOUND THEN
                   CLOSE cr_craplcm;
                   vr_cdcritic := 0;
-                  vr_dscritic := 'Nao foi possivel recuperar os dados do lancamento para estornar.';
-                  RAISE vr_erro;
+                  vr_dscritic := 'Nao foi possivel recuperar os dados do lancto para estornar:'||
+                  pr_cdcooper||'/'||pr_nrdconta||'/'||pr_nrctremp||'/'||r_craplem.dtmvtolt;
+                  RAISE EXC_LCT_NAO_EXISTE;
                 END IF;
         
                 -- Chamada da rotina centralizadora em substituição ao DELETE
@@ -497,6 +499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
               CLOSE cr_craplcm;
               
             EXCEPTION
+              WHEN EXC_LCT_NAO_EXISTE THEN
+                RAISE vr_erro ;              
               WHEN OTHERS THEN
                 vr_dscritic := 'Falha na exclusao CRAPLCM, cooper: ' || pr_cdcooper || 
                                ', conta: ' || pr_nrdconta;
