@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 01/10/2018
+     Data    : Maio/2001                       Ultima atualizacao: 09/11/2018
      
      Dados referentes ao programa:
 
@@ -334,6 +334,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               e não do vencimento do cartão para os novos emprestimos de cessao.
                               PRJ450 - Regulatorio(Odirlei-AMcom)
                               
+                 09/11/2018 - Alteração na chamada da função de cálculo de juros +60 do PP para considerar o campo "vlsdeved
+                              e não o "vlsdevat". (Reginaldo/AMcom/P450)             
 
   ............................................................................ */
 
@@ -3190,8 +3192,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                                            ,pr_mesrefju => pr_rw_crapepr.mesrefju
                                                                            ,pr_anorefju => pr_rw_crapepr.anorefju
                                                                            ,pr_txjuremp => pr_rw_crapepr.txjuremp
-                                                                           ,pr_dtlibera => pr_rw_crapepr.dtlibera
-                                                                           ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
+                                                                           ,pr_dtlibera => pr_rw_crapepr.dtlibera  
+                                                                           -- Alterado o vlsdevat para vlsdeved (Reginaldo/AMcom/P450) - 09/11/2018
+                                                                           ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdeved,0)),0);
           END IF; 
                                                                          
         END IF;
