@@ -15,7 +15,7 @@ BEGIN
   Sistema : Prejuizo - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Junho/2017.                    Ultima atualizacao: 08/08/2018
+  Data    : Junho/2017.                    Ultima atualizacao: 09/11/2018
 
   Dados referentes ao programa:
 
@@ -29,6 +29,9 @@ BEGIN
               05/07/2018 - P410 - Inclusão do Pagamento do IOF do Prejuizo (Marcos-Envolti)
               
               08/08/2018 - P410 - Diminuir do valor principal da LEM o valor do IOF (Marcos-Envolti)
+              
+              09/11/2018 - Ajustes para nao debitar IOF em conta corrente para pagamentos de conta em prejuizo CC.
+                           PRJ450 - Regulatorio(Odirlei-AMcom)
               
     ............................................................................. */
 
@@ -467,36 +470,57 @@ BEGIN
           
           -- Se houver pagamento de IOF
           IF vr_vlpiofpr > 0 THEN
-            -- Lançar em C/C o Pagamento
-            empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                          ,pr_cdagenci => 1 --rw_craplot_8457.cdagenci
-                                          ,pr_cdbccxlt => 100
-                                          ,pr_cdoperad => '1'
-                                          ,pr_cdpactra => 1 --rw_craplot_8457.cdagenci
-                                          ,pr_nrdolote => 8457 --rw_craplot_8457.nrdolote
-                                          ,pr_nrdconta => rw_crapepr.nrdconta
-                                          ,pr_cdhistor => 2317
-                                          ,pr_vllanmto => vr_vlpiofpr
-                                          ,pr_nrparepr => 0
-                                          ,pr_nrctremp => rw_crapepr.nrctremp
-                                          ,pr_nrseqava => 0
-                                          ,pr_idlautom => 0 
-                                          ,pr_des_reto => vr_des_reto
-                                          ,pr_tab_erro => vr_tab_erro );
-            IF vr_des_reto <> 'OK' THEN
-              IF vr_tab_erro.count() > 0 THEN -- RMM
-                -- Atribui críticas às variaveis
-                vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-                vr_dscritic := 'Falha ao inserir LCM IOF '||vr_tab_erro(vr_tab_erro.first).dscritic;
-                RAISE vr_exc_erro;
-              ELSE
-                vr_cdcritic := 0;
-                vr_dscritic := 'Falha ao inserir LCM IOF - '||sqlerrm;
-                raise vr_exc_erro;
+          
+            -- Lança débito na conta corrente somente se não está em prejuízo
+					  IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) = FALSE THEN
+              -- Lançar em C/C o Pagamento
+              empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            ,pr_cdagenci => 1 --rw_craplot_8457.cdagenci
+                                            ,pr_cdbccxlt => 100
+                                            ,pr_cdoperad => '1'
+                                            ,pr_cdpactra => 1 --rw_craplot_8457.cdagenci
+                                            ,pr_nrdolote => 8457 --rw_craplot_8457.nrdolote
+                                            ,pr_nrdconta => rw_crapepr.nrdconta
+                                            ,pr_cdhistor => 2317
+                                            ,pr_vllanmto => vr_vlpiofpr
+                                            ,pr_nrparepr => 0
+                                            ,pr_nrctremp => rw_crapepr.nrctremp
+                                            ,pr_nrseqava => 0
+                                            ,pr_idlautom => 0 
+                                            ,pr_des_reto => vr_des_reto
+                                            ,pr_tab_erro => vr_tab_erro );
+              IF vr_des_reto <> 'OK' THEN
+                IF vr_tab_erro.count() > 0 THEN -- RMM
+                  -- Atribui críticas às variaveis
+                  vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                  vr_dscritic := 'Falha ao inserir LCM IOF '||vr_tab_erro(vr_tab_erro.first).dscritic;
+                  RAISE vr_exc_erro;
+                ELSE
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Falha ao inserir LCM IOF - '||sqlerrm;
+                  raise vr_exc_erro;
+                END IF; 
               END IF; 
-            END IF; 
-          END IF;         
+            ELSE
+              -- Lançar débito no do IOF no extrato do prejuízo, para contabilização 
+              PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                                              , pr_nrdconta => rw_crapepr.nrdconta
+                                              , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              , pr_cdhistor => 2795 --> IOF.REC.PREJU
+                                              , pr_vllanmto => vr_vlpiofpr
+                                              , pr_nrctremp => rw_crapepr.nrctremp
+                                              , pr_cdcritic => vr_cdcritic
+                                              , pr_dscritic => vr_dscritic);
+            
+              IF vr_cdcritic > 0 AND 
+                 vr_dscritic IS NOT NULL THEN
+                 
+                RAISE vr_exc_erro;                
+              END IF;         
+            END IF;
+          END IF;
+                   
                                                                       
           -- Armazenar informações para aproveitamento posterior
           IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
@@ -756,6 +780,19 @@ BEGIN
       END LOOP; -- FIM LOOP PRINCIPAL
       --
   EXCEPTION
+      
+      WHEN vr_exc_erro THEN
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        -- Devolvemos código e critica encontradas
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := vr_dscritic;
+        -- Efetuar rollback
+        ROLLBACK;
+      
       WHEN vr_exc_erro_principal THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
