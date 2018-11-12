@@ -427,7 +427,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																						  <div class="bloco_full">
 
 																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
-																						     <a tabindex="39 name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <a tabindex="39" name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
 																						     <p id="valueRot32" class="txtNormal">&nbsp;</p>
 																							</div>
 																							
@@ -436,6 +436,19 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
+
+                                                                                          <div class="bloco_full">
+
+                                                                                            <div class="bloco_line" onMouseOver="focoRotina(34, true);" onMouseOut="focoRotina(34, false);">
+                                                                                             <a tabindex="41" name="41" class="txtNormalBold SetFocus" id="labelRot34">&nbsp;</a>
+                                                                                             <p id="valueRot34" class="txtNormal">&nbsp;</p>
+                                                                                            </div>
+                                                                                            
+                                                                                            <div class="bloco_line" onMouseOver="focoRotina(35, true);" onMouseOut="focoRotina(35, false);">
+                                                                                             <a tabindex="42" name="42" class="txtNormalBold SetFocus" id="labelRot35">&nbsp;</a>
+                                                                                             <p id="valueRot35" class="txtNormal">&nbsp;</p>
+                                                                                            </div>
+                                                                                          </div>
 																						  																
 																						</td>
 																					</tr>																			

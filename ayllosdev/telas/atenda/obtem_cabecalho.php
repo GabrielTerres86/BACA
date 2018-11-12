@@ -705,7 +705,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				break;
 			}
 			case "SCORE": {
-				$nomeRotina = "Score Comportamental"; 
+				$nomeRotina = "Score"; 
 				$urlRotina = "score_comportamental";
 				$strValue = "";
 				$telaPermitadaAcessoBacen = 0;

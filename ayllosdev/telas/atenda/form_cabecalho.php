@@ -86,7 +86,7 @@
   <input name="cdturnos" type="text" id="cdturnos" />
   <label for="cdtipsfx">Tipo Sal&aacute;rio:</label>
   <input name="cdtipsfx" type="text" id="cdtipsfx" />-->
-  <label for="cdscobeh">Score Comportamental:</label>
+  <label for="cdscobeh">Score:</label>
   <input name="cdscobeh" type="text" id="cdscobeh" />
 	<br style="clear:both" />
 	<hr style="background-color:#666; height:1px;" />

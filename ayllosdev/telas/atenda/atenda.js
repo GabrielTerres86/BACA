@@ -652,7 +652,7 @@ function formataCabecalho() {
     //rCdsecext.addClass('rotulo-linha').css({ 'width': '39px' });
     //rCdturnos.addClass('rotulo-linha').css({ 'width': '39px' });
     //rCdtipsfx.addClass('rotulo-linha').css({ 'width': '71px' });
-    rCdscobeh.addClass('rotulo-linha').css({ 'width': '131px' });
+    rCdscobeh.addClass('rotulo-linha').css({ 'width': '104px' });
     rQtdevolu.addClass('rotulo').css({ 'width': '111px' });
     rQtdddeve.addClass('rotulo-linha').css({ 'width': '105px' });
     rDtabtcct.addClass('rotulo-linha').css({ 'width': '78px' });
@@ -713,7 +713,7 @@ function formataCabecalho() {
     //cCdsecext.css({ 'width': '45px' });
     //cCdturnos.css({ 'width': '38px' });
     //cCdtipsfx.css({ 'width': '30px' });
-    cCdscobeh.css({ 'width': '143px' });
+    cCdscobeh.css({ 'width': '170px' });
     cQtdevolu.css({ 'width': '80px' });
     cQtdddeve.css({ 'width': '80px' });
     cDtabtcct.css({ 'width': '70px' });
