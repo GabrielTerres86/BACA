@@ -943,12 +943,25 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   vr_inrisco_final    tbrisco_central_ocr.inrisco_final%TYPE;
 
   vr_qtdias_atraso_refin crapepr.qtdias_atraso_refin%TYPE;
+  vr_qtddiatr_ces        INTEGER;
+  vr_dtcorte_cessao DATE := NULL;
+  
 BEGIN
   -- Carrega o calendário de datas da cooperativa
   OPEN cr_dat(pr_cdcooper);
   FETCH cr_dat INTO rw_crapdat;
   CLOSE cr_dat;
-
+  
+  --> Buscar data de corte para 
+  BEGIN
+    vr_dtcorte_cessao := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                           pr_cdcooper => pr_cdcooper, 
+                                                           pr_cdacesso => 'DTCESSAO_CORTE_ATRASO'),'DD/MM/RRRR');
+        
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dtcorte_cessao := to_date('01/01/2000','DD/MM/RRRR');        
+  END;
 
   vr_idx_grp  := NULL;
   vr_execucao := 1;
@@ -1005,11 +1018,39 @@ BEGIN
     END IF;
     CLOSE cr_tbrisco;
 
-    -- Calcula o risco Atraso
-    vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
-                                                    THEN fn_calcula_risco_atraso_adp(rw_crapris.qtdiaatr)
-                                                    ELSE fn_calcula_risco_atraso(rw_crapris.qtdiaatr) END);
+    -- iniciar rowtype antes do IF para nao deixar sujeira
+    rw_tbcessao := NULL;
+      
+    IF vr_cdmodali = 299 THEN
+    
+      --> Buscar cessao de cartão
+      OPEN cr_tbcessao (pr_cdcooper  => pr_cdcooper,
+                        pr_nrdconta  => rw_crapris.nrdconta,
+                        pr_nrctremp  => rw_crapris.nrctremp);
+      FETCH cr_tbcessao INTO rw_tbcessao;
+      CLOSE cr_tbcessao;
+        
+    END IF;
+    
+    --> Se for cessão e que a data do contrato seja a partir da data de corte
+    IF rw_tbcessao.incessao = 'S' AND 
+       rw_crapris.dtinictr >= vr_dtcorte_cessao THEN
+       
+      --> Calcular qtd dias de atraso a partir do do vencto
+      vr_qtddiatr_ces := rw_crapdat.dtmvtoan - rw_tbcessao.dtvencto;    
+    
+      -- Calcula o risco Atraso
+      vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
+                                                      THEN fn_calcula_risco_atraso_adp(vr_qtddiatr_ces)
+                                                      ELSE fn_calcula_risco_atraso(vr_qtddiatr_ces) END);
+    
+    ELSE 
+      -- Calcula o risco Atraso
+      vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
+                                                      THEN fn_calcula_risco_atraso_adp(rw_crapris.qtdiaatr)
+                                                      ELSE fn_calcula_risco_atraso(rw_crapris.qtdiaatr) END);
 
+    END IF;
     -- Calcula o risco Agravado
     vr_inrisco_agravado := fn_busca_risco_agravado(pr_cdcooper
                                                  , rw_crapris.nrdconta
