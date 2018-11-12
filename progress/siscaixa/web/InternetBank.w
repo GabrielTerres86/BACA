@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 09/10/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 08/10/2018
 
    Dados referentes ao programa:
 
@@ -724,10 +724,16 @@
 				              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
 
                  01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
-                              processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
+                              processar a instruçao 95. Prj. 285 - Nova Conta Online (Douglas)
 
 				 28/06/2018 - Adaptação para implantação dos serviços de resgate, aplicação e consulta de saldo
 				              via URA
+
+                 08/10/2018 - Adicionar os parametros do codigo de barras para serem utilizados no
+                              cadastro da fatura em debito automatico (IB99). Esses parametros sao 
+                              necessarios para que o caadastro tenha o mesmo comportamento que o TAA.
+                              (Douglas - Prj 363 - Novo Caixa Eletrônico)
+                      
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1339,6 +1345,12 @@ DEF VAR canal_cdagetfn AS INTE NO-UNDO.
 DEF VAR canal_nrterfin AS INTE NO-UNDO.
 DEF VAR aux_nrcartao AS DECI NO-UNDO.
 DEF VAR token_autenticacao AS CHAR NO-UNDO.
+
+/* Identificacao da fatura para debito automatico */
+DEF VAR aux_fatura01 AS CHAR NO-UNDO.
+DEF VAR aux_fatura02 AS CHAR NO-UNDO.
+DEF VAR aux_fatura03 AS CHAR NO-UNDO.
+DEF VAR aux_fatura04 AS CHAR NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -6075,7 +6087,12 @@ PROCEDURE proc_operacao99:
            aux_cdhisdeb = INTE(GET-VALUE("cdhisdeb"))
            aux_flcadast = INTE(GET-VALUE("flcadast"))
            aux_cdhistor = INTE(GET-VALUE("cdhistor"))
-           aux_idmotivo = INTE(GET-VALUE("idmotivo")).
+           aux_idmotivo = INTE(GET-VALUE("idmotivo"))
+           aux_fatura01 = GET-VALUE("aux_lindigi1")
+           aux_fatura02 = GET-VALUE("aux_lindigi2")
+           aux_fatura03 = GET-VALUE("aux_lindigi3")
+           aux_fatura04 = GET-VALUE("aux_lindigi4")
+           aux_cdbarras = GET-VALUE("aux_cdbarras").
 
     RUN sistema/internet/fontes/InternetBank99.p 
                                          (INPUT aux_cdcooper,
@@ -6102,6 +6119,13 @@ PROCEDURE proc_operacao99:
                                           INPUT canal_cdagetfn,
                                           INPUT canal_nrterfin,
                                           /* Projeto 363 - Novo ATM */
+                                          /* Linha digitavel e codigo de barras para permitir a 
+                                             inclusao de fatura em debito automativo no TAA */
+                                          INPUT aux_fatura01,
+                                          INPUT aux_fatura02,
+                                          INPUT aux_fatura03,
+                                          INPUT aux_fatura04,
+                                          INPUT aux_cdbarras,
                                          OUTPUT aux_dsmsgerr,
                                          OUTPUT TABLE xml_operacao).
 
