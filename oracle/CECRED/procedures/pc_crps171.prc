@@ -789,12 +789,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
-       INTO rw_crapdat;
-       
-      -- TJ ######  PARA TESTE 
-         rw_crapdat.dtmvtolt := to_date('29062018','ddmmyyyy');
-      ---- APAGAR ############ 
-      
+       INTO rw_crapdat;      
       
       -- Se não encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
