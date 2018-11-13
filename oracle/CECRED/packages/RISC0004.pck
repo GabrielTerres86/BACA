@@ -788,6 +788,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
        , ris1.inpessoa
        , ris1.vldivida
        , ris1.rowid
+       , ris1.dtinictr
     FROM crapris ris1
    WHERE ris1.cdcooper = pr_cdcooper
      AND ris1.dtrefere = pr_dtrefere
@@ -806,6 +807,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
        , ris3.inpessoa
        , ris3.vldivida
        , ris3.rowid
+       , ris3.dtinictr
     FROM crapris ris3
    WHERE ris3.cdcooper = pr_cdcooper
      AND ris3.dtrefere = pr_dtrefere
@@ -919,6 +921,18 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   rw_grupos cr_grupos%ROWTYPE;
 
      
+  
+  --> Buscar cessao de cartão
+  CURSOR cr_tbcessao (pr_cdcooper  tbcrd_cessao_credito.cdcooper%TYPE,
+                      pr_nrdconta  tbcrd_cessao_credito.nrdconta%TYPE,
+                      pr_nrctremp  tbcrd_cessao_credito.nrctremp%TYPE)IS
+    SELECT ces.dtvencto,
+           'S' incessao
+      FROM tbcrd_cessao_credito ces
+     WHERE ces.cdcooper = pr_cdcooper
+       AND ces.nrdconta = pr_nrdconta
+       AND ces.nrctremp = pr_nrctremp;  
+  rw_tbcessao cr_tbcessao%ROWTYPE; 
      
   ----------- VARIAVEIS ------------------
   rw_crapdat cr_dat%ROWTYPE;     -- Calendário de datas da cooperativa
