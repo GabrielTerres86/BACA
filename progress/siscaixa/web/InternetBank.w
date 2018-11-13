@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 08/10/2018
+   Data    : Julho/2004.                       Ultima atualizacao: 12/11/2018
 
    Dados referentes ao programa:
 
@@ -733,7 +733,9 @@
                               cadastro da fatura em debito automatico (IB99). Esses parametros sao 
                               necessarios para que o caadastro tenha o mesmo comportamento que o TAA.
                               (Douglas - Prj 363 - Novo Caixa Eletrônico)
-                      
+
+                 12/11/2018 - Remover a vaidação de senha no fluxo de inclusão de cheque em custódia
+                              (Card de Melhoria 780 - Douglas)                      
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -8530,13 +8532,6 @@ PROCEDURE proc_operacao178:
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
                               
-    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
-        DO:
-            RUN proc_operacao2.
-
-            IF   RETURN-VALUE = "NOK"   THEN
-                 RETURN "NOK".
-        END.           
                               
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
