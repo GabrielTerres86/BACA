@@ -18,9 +18,6 @@
  *                26/12/2017 - Ajustar o controle de critica para exibir corretamente as mensagens de erro devolvidas pelo Oracle (Douglas - Chamado 820998)
  * -------------- 
  */
-?> 
-
-<?	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
