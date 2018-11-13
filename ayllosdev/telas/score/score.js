@@ -12,6 +12,7 @@ function estadoInicial(){
     $('#frmFiltro').css('display', 'none');
     $('#divTabela').html('').css('display','none');
 	$('#frmCons').css({'display':'none'});
+    fechaRotina($('#divRotina'));
 }
 
 function formataCabecalho() {
@@ -233,6 +234,7 @@ function processarCarga(opcao, cdmodelo, dtbase, dsrejeicao){
         success: function (response) {
 
             hideMsgAguardo();
+            refreshCarga();
             try {
                 eval(response);
             } catch (error) {
