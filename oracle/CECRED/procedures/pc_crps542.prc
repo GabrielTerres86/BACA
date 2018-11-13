@@ -43,6 +43,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS542 ( pr_cdcooper IN crapcop.cdcooper%
                     08/06/2015 - #273450 Ajuste das definições de tipo number para conterem 8 casas 
                                  decimais, aumentando assim a precisão dos cálculos;
                                  Remoção de variável não utilizada no procedimento pc_escreve_clob (Carlos)
+                                 
+                    13/11/2018 -  Caso não forem encontrados os dados da empresa, atribuir zero e continuar 
+                                  a execução, pois na rotina que efetua o cálculo do empréstimo será ignorada 
+                                  essa informação e utilizará a data de vencimento original da parcela 
+                                  (PRB0040215 - Kelvin)
     ............................................................................ */
 
     DECLARE
@@ -433,6 +438,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS542 ( pr_cdcooper IN crapcop.cdcooper%
             -- Desconsiderar prejuizo
             RAISE vr_exc_pula;
           END IF;
+          
           -- Buscar a configuração de empréstimo cfme a empresa da conta
           empr0001.pc_config_empresti_empresa(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data atual
@@ -444,10 +450,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS542 ( pr_cdcooper IN crapcop.cdcooper%
                                              ,pr_cdcritic => pr_cdcritic      --> Código do erro
                                              ,pr_des_erro => pr_dscritic);    --> Retorno de Erro
           -- Se houve erro na rotina
-          IF pr_dscritic IS NOT NULL OR pr_cdcritic IS NOT NULL THEN
-            -- Levantar exceção
-            RAISE vr_exc_erro;
+          IF pr_dscritic IS NOT NULL OR pr_cdcritic IS NOT NULL THEN  
+            /*******************Kelvin/Rodrigo******************************************
+            Caso não forem encontrados os dados da empresa, atribuir zero e continuar 
+            a execução, pois na rotina que efetua o cálculo do empréstimo será ignorada 
+            essa informação e utilizará a data de vencimento original da parcela.
+            ***************************************************************************/
+            pr_cdcritic := NULL;        
+            pr_dscritic := NULL; 
+            vr_tab_diapagto := 0;
           END IF;
+
           -- Povoar variáveis para o calculo com os valores do empréstimo
           vr_diapagto := vr_tab_diapagto;
           vr_qtprepag := NVL(rw_crapepr.qtprepag,0);
@@ -747,4 +760,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS542 ( pr_cdcooper IN crapcop.cdcooper%
 
   END pc_crps542;
 /
-
