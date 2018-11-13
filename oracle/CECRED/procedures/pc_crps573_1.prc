@@ -7133,7 +7133,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                   continue;
                 END IF;
 								-- Reginaldo/AMcom/P450 (13/11/2018) - Correção da inconsistência nos valores dos vencimentos para a modalidade 101
-								IF vr_tab_venc_agreg(vr_indice_venc_agreg).cdmodali <> 101 THEN
+								IF vr_tab_agreg(vr_indice_agreg).cdorigem <> 1 THEN
                 -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
                 vr_vlacumul := fn_normaliza_juros(vr_ttldivid
                                                  ,vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida
