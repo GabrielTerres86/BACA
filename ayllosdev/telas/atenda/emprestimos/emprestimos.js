@@ -3322,7 +3322,7 @@ function controlaLayout(operacao) {
 							cUfPlaca.habilitaCampo();
 							cNrPlaca.habilitaCampo();
 							cRenavan.habilitaCampo();
-							//busca_uf_pa_ass();
+							busca_uf_pa_ass();
 						}
 						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 							if ($(this).val() == 'USADO') { modeloBem = ''; }
@@ -3414,13 +3414,13 @@ function controlaLayout(operacao) {
 					cAnoFab.val('');
 					cCPF.val('');
 					cChassi.val('');
-					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show().html('');
 					removeErroCampo($("#" + idElementMarca + "C"));
-					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo + "C").val('').hide();
 					$("#" + idElementModelo).show().html('');
 					removeErroCampo($("#" + idElementModelo + "C"));
-					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show().html('');
 					removeErroCampo($("#" + idElementAno + "C"));
 					busca_uf_pa_ass();
@@ -4489,33 +4489,43 @@ function attArray(novaOp, cdcooper) {
 
         arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
-        arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nrrenava'] = normalizaNumero( $('#nrrenava', '#frmTipo').val().toUpperCase() );
-        arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
-        arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val().toUpperCase();
-        //arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
-        //arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmTipo').val();
-        //arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmTipo').val();
-        //arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmTipo').val();
-        arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc option:selected', '#frmTipo').val().toUpperCase();//$('#uflicenc', '#frmTipo').val(); // GRAVAMES */
-		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
 
-		arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
-		arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
-		arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
-		arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
-		var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
-			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+		if (arrayAlienacoes[atual]['dscatbem'] == "" && arrayAlienacoes[atual]['dstipbem'] == "") {
+
+			deletaAlienacao(operacao);
+			return false;
+
 		} else {
-			arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
-			arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
-			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+
+			arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
+			arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nrrenava'] = normalizaNumero( $('#nrrenava', '#frmTipo').val().toUpperCase() );
+			arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
+			arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val().toUpperCase();
+			//arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
+			//arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmTipo').val();
+			//arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmTipo').val();
+			//arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmTipo').val();
+			arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc option:selected', '#frmTipo').val().toUpperCase();//$('#uflicenc', '#frmTipo').val(); // GRAVAMES */
+			arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
+
+			arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+			arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+			arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
+			var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+			if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
+				arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+			} else {
+				arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
+				arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
+				arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+			}
+
 		}
 
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
@@ -4939,8 +4949,6 @@ function atualizaTela() {
 			$('#dscorbem', '#frmTipo').val('').desabilitaCampo();
 		}
 
-		$('#lsbemfin','#frmTipo').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
-
         if (arrayAlienacoes[contAlienacao]['dstipbem'] == 'ZERO KM') {
             $('#ufdplaca', '#frmTipo').val('').desabilitaCampo();
             $('#nrdplaca', '#frmTipo').val('').desabilitaCampo();
@@ -4949,6 +4957,8 @@ function atualizaTela() {
 		booBoxMarcas = false;
 
         contAlienacao++;
+
+		$('#lsbemfin','#frmTipo').html( '( ' + contAlienacao + '&ordm; Bem )' );
 
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
