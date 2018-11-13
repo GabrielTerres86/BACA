@@ -43,7 +43,7 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);		
 					
 	}  else {
-		echo "showError('inform','Opera&ccedil;&atilde;o realizada com sucesso','Notifica&ccedil;&atilde;o - Ayllos','refreshCarga();');";
+		exibirErro('inform', 'Opera&ccedil;&atilde;o realizada com sucesso', 'Notifica&ccedil;&atilde;o - Ayllos', 'estadoInicial();', false);
 	}
 
 		
