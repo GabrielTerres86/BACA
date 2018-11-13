@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 10/10/2018
+       Data    : Julho/2018                       Ultima atualizacao: 09/11/2018
 
        Dados referentes ao programa:
 
@@ -59,6 +59,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                   Colateral Financeiro - Heckmann (AMcom)
 
                      10/10/2018 - P450 - Ajustes Gerais Juros60/ADP/Empr. (Guilherme/AMcom)
+                     
+                     19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável e 
+                                  onde há Caminhao apenas, utilizar também Outros Veiculos (Marcos-Envolti)
+																	
+										 09/11/2018 - P450 - Correção na geração dos vencimentos para a modalidade 101 nas tags <Agreg>
+										              (Reginaldo/AMcom)
+                     
     .............................................................................................................................*/
 
     DECLARE
@@ -7125,12 +7132,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                   vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
                   continue;
                 END IF;
+								-- Reginaldo/AMcom/P450 (13/11/2018) - Correção da inconsistência nos valores dos vencimentos para a modalidade 101
+								IF vr_tab_venc_agreg(vr_indice_venc_agreg).cdmodali <> 101 THEN
                 -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
                 vr_vlacumul := fn_normaliza_juros(vr_ttldivid
                                                  ,vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida
                                                  ,vr_tab_agreg(vr_indice_agreg).vljura60
                                                  ,false);
                 vr_vljurfai := vr_vljurfai + vr_vlacumul;
+								ELSE
+								  -- Reginaldo/AMcom/P450 (13/11/2018) - Correção da inconsistência nos valores dos vencimentos para a modalidade 101
+								  vr_vljurfai := vr_vljurfai + vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida; 
+								END IF;
               END IF;
               vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
             END LOOP;
