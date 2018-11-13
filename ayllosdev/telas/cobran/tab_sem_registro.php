@@ -11,6 +11,8 @@
  *	             			             por Beneficiário e  Sacado por Pagador  Chamado 229313 (Jean Reddiga - RKAM).
  *
  * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança (Odirlei - AMcom)
+ *
+ * [03/07/2017] Jean Michel  		   : Inclusao da funcao formataTabela(), PRJ340 (Jean Michel)
  */	
 ?>
 
@@ -188,6 +190,7 @@
 		controlaOperacao(<? echo "'".$operacao."','".($nriniseq + $nrregist)."','".$nrregist."'"; ?>);
 	});	
 	
+	$('#divRegistros','#divTela').formataTabela();
 	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
 
 </script>
