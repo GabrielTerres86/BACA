@@ -139,7 +139,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
         echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
         echo "$('#dddebito').attr('disabled', true);";
         echo "$('#tpenvcrd').attr('disabled', true);";
-        if (!($cdadmcrd > 10 && cdadmcrd < 18))
+        if (!($cdadmcrd > 10 && $cdadmcrd < 18))
             echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
 
 
@@ -222,7 +222,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				
 			}
 
-			//echo "$('#dddebito').attr('disabled', true);";
+			echo "$('#dddebito').attr('disabled', true);";
 			if ($nrctrcrd == 0) {
             echo "desativa('vllimpro');";
             echo "$('#tpdpagto').attr('disabled', true);";

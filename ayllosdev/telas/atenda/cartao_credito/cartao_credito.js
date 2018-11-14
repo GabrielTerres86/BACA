@@ -1786,7 +1786,7 @@ function validarNovoCartao() {
         if (adm == "") {
             if (($("#dsadmcrd", "#frmNovoCartao").val() || "").indexOf(";") != -1) {
                 var admAdicional = ($("#dsadmcrd", "#frmNovoCartao").val() || "").split(";");
-                dsadmcrd = ($("#dsadmcrd", "#frmNovoCartao").text() || "").trim(); // Texto no option
+                dsadmcrd = ($("#dsadmcrd option:selected", "#frmNovoCartao").text() || "").trim(); // Texto no option
                 cdadmcrd = (admAdicional[0] || 0); // Value na coordenada zero do option
 			} else {
                 dsadmcrd = $("#dsadmcrd", "#frmNovoCartao").val();
@@ -4499,20 +4499,21 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
                     cdadmcrd = auxADM.split(";")[1];
                 }
             }
-        } else {
-
-            if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
+        }
+    }   
+	if(inpessoa == 2){
+		 if ($('#dsadmcrd option:selected').text().length > 0 ) {
+            if ($('#dsadmcrd option:selected').text().toUpperCase().indexOf("DEB") > -1) {
                 cdadmcrd = 17;
             } else {
                 cdadmcrd = 15;
             }
-        }
-    }   
-	if(inpessoa > 1){
+        } else {
 		 if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
 			cdadmcrd = 17;
 		} else {
 			cdadmcrd = 15;
+            }
 		}
 	}
 // Carrega conte�do da op��o atrav�s de ajax
