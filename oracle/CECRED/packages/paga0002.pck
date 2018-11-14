@@ -4,7 +4,6 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 16/07/2018
    Data    : 13/04/2011                        Ultima atualizacao: 31/08/2018
 
    Dados referentes ao programa:
