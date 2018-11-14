@@ -27,7 +27,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 07/06/2018
+   Data    : Outubro/2011                      Ultima atualizacao: 14/11/2018
 
    Dados referentes ao programa:
 
@@ -112,7 +112,10 @@
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
 
                07/06/2018 - Alterado a inclusao na CRAPLCM para a Centralizadora de 
-                            Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom                      
+                            Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom      
+							
+			   14/11/2018 - Remoção de comandos MESSAGE deixados no código após testes
+			                Reginaldo/AMcom/P450                
                            
 -----------------------------------------------------------------------------*/
 
