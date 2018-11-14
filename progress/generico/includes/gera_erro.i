@@ -11,6 +11,10 @@
                efetua chamada da include.
 
    Alteracoes: 08/11/2007 - Output no parametro par_dscritic (David).
+   
+			   14/11/2018 - Tratamento para sobreescrever registro quando
+							receber um nrsequen ja existente, evitando 
+							crashes na apliccao (Pablão).
 
 ..............................................................................*/
 
@@ -23,7 +27,17 @@ PROCEDURE gera_erro:
     DEF  INPUT        PARAM par_cdcritic LIKE craperr.cdcritic      NO-UNDO.
     DEF  INPUT-OUTPUT PARAM par_dscritic LIKE craperr.dscritic      NO-UNDO.
     
-    CREATE tt-erro.
+	/*Verifica se o registro ja existe e atualiza, senao cria novo*/
+	FIND tt-erro WHERE tt-erro.cdcooper = par_cdcooper AND
+                       tt-erro.cdagenci = par_cdagenci AND
+                       tt-erro.nrdcaixa = par_nrdcaixa AND
+                       tt-erro.nrsequen = par_nrsequen NO-LOCK NO-ERROR.
+	
+	IF  NOT AVAILABLE tt-erro  THEN
+	DO:
+		CREATE tt-erro.
+	END.
+	
     ASSIGN tt-erro.cdcooper = par_cdcooper
            tt-erro.cdagenci = par_cdagenci
            tt-erro.nrdcaixa = par_nrdcaixa

@@ -970,7 +970,13 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 																		 ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE DEFAULT 0 -- Nr. da Conta
 																		 ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE DEFAULT 0 -- NB
 																		 ) RETURN INTEGER;
-																		 
+  
+  --Procedure para chamar a fn_verifica_renovacao_vida no Progress e evitar estouro de cursor
+  PROCEDURE pc_verifica_renovacao_vida(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE -- Cooperativa
+																		  ,pr_dtmvtolt IN tbinss_dcb.dtvencpv%TYPE -- Data de movimento
+	                                    ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE DEFAULT 0 -- Nr. da Conta
+																		  ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE DEFAULT 0 -- NB
+                                      ,pr_flrenova OUT INTEGER);
                                      
   --Processar a planilha de pagamentos do INSS 
   PROCEDURE pc_exec_pagto_benef_plani (pr_cdcooper  IN INTEGER    -- Codigo da Cooperativa
@@ -18104,6 +18110,22 @@ create or replace package body cecred.INSS0001 as
   
   END fn_verifica_renovacao_vida;
 
+  --Procedure para chamar a fn_verifica_renovacao_vida no Progress e evitar estouro de cursor
+  PROCEDURE pc_verifica_renovacao_vida(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE -- Cooperativa
+																		  ,pr_dtmvtolt IN tbinss_dcb.dtvencpv%TYPE -- Data de movimento
+	                                    ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE DEFAULT 0 -- Nr. da Conta
+																		  ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE DEFAULT 0 -- NB
+                                      ,pr_flrenova OUT INTEGER) IS
+                                     
+  BEGIN
+    
+    pr_flrenova := fn_verifica_renovacao_vida(pr_cdcooper => pr_cdcooper -- Cooperativa
+																		         ,pr_dtmvtolt => pr_dtmvtolt -- Data de movimento
+	                                           ,pr_nrdconta => pr_nrdconta -- Nr. da Conta
+																		         ,pr_nrrecben => pr_nrrecben -- NB
+                                             );
+                                     
+  END pc_verifica_renovacao_vida;
 
   --Processar a planilha de pagamentos do INSS 
   PROCEDURE pc_exec_pagto_benef_plani (pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa

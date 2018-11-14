@@ -4773,27 +4773,27 @@ PROCEDURE verifica_prova_vida_inss:
        Cooperativas: 
        Viacredi; Concredi; Credcrea e Viacredi Alto Vale,
        Acredicoop; Credicomin; Credifiesc; Credifoz e Transpocred. */              
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+	
+    RUN STORED-PROCEDURE pc_verifica_renovacao_vida
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,     /* Código da Cooperativa */
+								 INPUT aux_dtmvtolt      /* Data de movimento */
+                                 INPUT par_nrdconta,     /* Numero da Conta */ 
+                                 INPUT 0, 				 /* Nr. Rec. Ben */
+                                OUTPUT "").              /* Flag se renova */
+
+    /* Código da crítica */    
+    CLOSE STORED-PROC pc_verifica_renovacao_vida
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
-    RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
-                       aux_ponteiro = PROC-HANDLE
-                       ("SELECT inss0001.fn_verifica_renovacao_vida(" + STRING(par_cdcooper) + /* Cooperativa */
-                                                                   ",to_date('" + STRING(aux_dtmvtolt) + "', 'DD/MM/RRRR')" + /* Data de movimento */
-                                                                   "," + STRING(par_nrdconta) + /* Nr. da Conta */                                                                      
-                                                                   ",0" +                        /* Nr. Rec. Ben */
-                                                                   ") FROM dual").
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
     
-    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
-       ASSIGN aux_flgpvida = INT(proc-text).
-    END.
-    
+    ASSIGN aux_flgpvida = pc_verifica_renovacao_vida.pr_flrenova
+                          WHEN pc_verifica_renovacao_vida.pr_flrenova <> ?.
+	
     IF aux_flgpvida = 1 THEN
         par_flgdinss = YES.
-    
-    CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
-       WHERE PROC-HANDLE = aux_ponteiro.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
