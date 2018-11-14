@@ -16,13 +16,6 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
-	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
-		
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-	
-		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
-	}
-	
 	$nrseq_mensagem_xml   = isset($_POST["nrseq_mensagem_xml"])   ? $_POST["nrseq_mensagem_xml"]   : 0;
 	$cdcooper             = isset($_POST["cdcooper"])             ? $_POST["cdcooper"] : 0;
 	$nrdconta             = isset($_POST["nrdconta"])             ? $_POST["nrdconta"] : 0;
