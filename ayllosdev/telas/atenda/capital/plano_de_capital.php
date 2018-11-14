@@ -33,6 +33,9 @@
                             (Jonata - RKAM / M294).   
                           
 			   14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando (Jonata - RKAM P364).
+			   
+			   14/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
+
                           
 	***********************************************************************/
 	
@@ -158,10 +161,10 @@
 	<label for="dtproatu"><? echo utf8ToHtml('Data da Próxima Atualização:') ?></label>
 	<input type="text" name="dtproatu" id="dtproatu" value="<?php echo $plano[10]->cdata; ?>" autocomplete="no" echo class="campo"></td>
 		
-  <label for="tpautori"><? echo utf8ToHtml('Tipo de Autorização:') ?></label>														
-	<input type="radio" name="tpautori" onClick="controlaBotoes('1');" id="senha" checked value="1" class="radio" /> 
+	<label for="tpautori"><? echo utf8ToHtml('Tipo de Autorização:') ?></label>														
+	<input type="radio" name="tpautori" onClick="controlaBotoes('1');" id="senha"<?php if ($plano[14]->cdata == 1) { echo " checked"; } ?> value="1" class="radio" /> 
 	<label for="senha" class="radio">Senha</label> 														
-	<input type="radio" name="tpautori" onClick="controlaBotoes('2');" id="autorizacao" value="2" class="radio" /> 
+	<input type="radio" name="tpautori" onClick="controlaBotoes('2');" id="autorizacao"<?php if ($plano[14]->cdata == 2) { echo " checked='checked'"; } ?> value="2" class="radio" /> 
 	<label for="autorizacao" class="radio">Assinatura</label>	
     
 </form>
@@ -284,5 +287,15 @@ $("#vlprepla","#frmNovoPlano").focus();
 		$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
 		
 	<?}?>
+	
+	<?php 
+	
+		if ($plano[14]->cdata == 1) { 
+			echo "$('#senha','#frmNovoPlano').attr('checked', 'checked');"; 
+		}elseif($plano[14]->cdata == 2){
+			echo "$('#autorizacao','#frmNovoPlano').attr('checked', 'checked');"; 
+		}
+	
+	?>
 	
 </script>

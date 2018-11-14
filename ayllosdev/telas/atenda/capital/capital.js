@@ -38,6 +38,9 @@
 			  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
                            15 - Plano de Cotas. Ajuste para chamar a rotina de senha do coordenador. 
 						   PRJ366 (Lombardi).
+			  
+			  14/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
+
  					
 *************************************************************************/
 
@@ -420,6 +423,7 @@ function cancelarPlanoAtual() {
         url: UrlSite + "telas/atenda/capital/excluir_novo_plano.php",
         data: {
             nrdconta: nrdconta,
+			tpautori: $("input[name='tpautori']:checked", "#frmNovoPlano").val(),
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -535,7 +539,7 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['PLANO_CAPITAL'])) {
 	
 		nomeForm = 'frmNovoPlano';		
-        altura = '240px';
+        altura = '260px';
         largura = '425px';
 
         $('#' + nomeForm).css('margin-top', '4px')

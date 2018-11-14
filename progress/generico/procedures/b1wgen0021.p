@@ -21,7 +21,7 @@
 
    Programa: b1wgen0021.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                     Ultima atualizacao: 26/09/2017
+   Data    : 21/06/2007                     Ultima atualizacao: 13/11/2018
 
    Objetivo  : BO CAPITAL
 
@@ -147,6 +147,8 @@
                04/04/2018 - Adicionadas chamadas das proc's pc_valida_adesao_produto  e 
                             pc_valida_valor_de_adesao para verificar se tipo de conta 
                             permite o produto 15 - Plano de Cotas. PRJ366 (Lombardi).
+							
+			   13/11/2018 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts)
                
 ..............................................................................*/
 
@@ -782,7 +784,8 @@ PROCEDURE obtem-novo-plano:
                    tt-novo-plano.dtlimini = ?
                    tt-novo-plano.dtultcor = crappla.dtultcor
                    tt-novo-plano.dtprocor = 
-                                    ADD-INTERVAL(crappla.dtultcor, 1, "years").
+                                    ADD-INTERVAL(crappla.dtultcor, 1, "years")
+				   tt-novo-plano.flgtpaut = crappla.flgtpaut.
         END.
     ELSE
         DO:
@@ -802,7 +805,8 @@ PROCEDURE obtem-novo-plano:
                    tt-novo-plano.qtpremax = 999
                    tt-novo-plano.dtdpagto = aux_dtdpagto
                    tt-novo-plano.dtinipla = aux_dtdpagto
-                   tt-novo-plano.dtlimini = aux_dtlimini.
+                   tt-novo-plano.dtlimini = aux_dtlimini
+				   tt-novo-plano.flgtpaut = 1.
         END.
      
     /*************************************************************/
@@ -1474,6 +1478,7 @@ PROCEDURE cria-plano:
     DEF  INPUT PARAM par_flgpagto AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qtpremax AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpautori AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
@@ -1686,6 +1691,7 @@ PROCEDURE cria-plano:
                crappla.vlprepla = par_vlprepla
                crappla.cdtipcor = par_cdtipcor
                crappla.vlcorfix = par_vlreajus
+               crappla.flgtpaut = par_tpautori
                crappla.dtultcor = par_dtmvtolt WHEN par_cdtipcor <> 0.
     
         RELEASE craplot.
@@ -1838,6 +1844,7 @@ PROCEDURE altera-plano:
     DEF  INPUT PARAM par_flgpagto AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qtpremax AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpautori AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
@@ -1949,6 +1956,7 @@ PROCEDURE altera-plano:
                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                crappla.cdopeori = par_cdoperad
                crappla.cdageori = par_cdagenci
+               crappla.flgtpaut = par_tpautori
                crappla.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
@@ -2094,6 +2102,7 @@ PROCEDURE cancelar-plano-atual:
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpautori AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-cancelamento.
@@ -2214,7 +2223,8 @@ PROCEDURE cancelar-plano-atual:
                crappla.cdageexc = par_cdagenci
                crappla.dtinsexc = TODAY
 			   /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-               crappla.dtcancel = crapdat.dtmvtolt.
+               crappla.dtcancel = crapdat.dtmvtolt
+			   crappla.flgtpaut = par_tpautori.
 
         /* Exclui registro de lancamento de plano de capital para nao ter
            problema com a chave da tabela, no caso de uma nova inclusao

@@ -89,6 +89,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                              Marcelo Telles Coelho - Mouts
                 01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                              Marcelo Telles Coelho - Mouts
+							 
+				19/10/2018 - Ajuste na rotina para prever erro de alocamento de lote (Andrey Formigari - Mouts)
 
 ..............................................................................*/
 
@@ -4993,6 +4995,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   END;
 
               ELSE
+				  
+				  ROLLBACK;
+				  
                   BEGIN
                     UPDATE craplfp
                        SET idsitlct = 'E'  --Erro
@@ -5006,6 +5011,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                           -- Executa a exceção
                           RAISE vr_exc_erro;
                    END;
+				   
+				   COMMIT;
+                   
+                   vr_dscritic := 'Nao foi possivel efetuar a transferencia.'; 
+                   RAISE vr_exc_erro;
 
               END IF;
 

@@ -42,7 +42,7 @@
 				<reportElement uuid="d126988b-b251-434c-abca-58a4c6fdff97" mode="Opaque" x="120" y="108" width="220" height="51">
 					<printWhenExpression><![CDATA[$F{idtpemp}=="C"]]></printWhenExpression>
 				</reportElement>
-				<imageExpression><![CDATA["LogoSistemaCecredAilos60%.png"]]></imageExpression>
+				<imageExpression><![CDATA["LogoSistemaAilos60%.png"]]></imageExpression>
 			</image>
 		</band>
 	</background>
