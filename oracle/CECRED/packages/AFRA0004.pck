@@ -457,7 +457,7 @@ create or replace package body CECRED.AFRA0004 is
       
     --> chama rotina conforme codigo Operacao (tbcc_dominio_campo, dominio: CDOPERAC_ANALISE_FRAUDE)
     CASE 
-      WHEN pr_cdoperacao IN (1, 7)  THEN  /* TITULOS, DDA */
+      WHEN pr_cdoperacao IN (1, 8)  THEN  /* TITULOS, DDA */
         IF pr_idanalis > 0 THEN
           OPEN cr_craptit (pr_idanalis => pr_idanalis);
           FETCH cr_craptit INTO rw_craptit;
@@ -472,7 +472,7 @@ create or replace package body CECRED.AFRA0004 is
                                ,pr_cdagenci => vr_cdagenci           -- Codigo da agencia
                                ,pr_dtmvtocd => rw_crapdat.dtmvtocd   -- Data do movimento
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt   -- Data de pagamento 
-                               ,pr_flgpgdda => CASE pr_cdoperacao WHEN 7 THEN 1 ELSE 0 END --Tipo titulo
+                               ,pr_flgpgdda => CASE pr_cdoperacao WHEN 8 THEN 1 ELSE 0 END --Tipo titulo
                                ,pr_cdcritic => pr_cdcritic           -- retorno codigo critica 
                                ,pr_dscritic => pr_dscritic);         -- retorno descricao critica
                                       
@@ -685,6 +685,12 @@ create or replace package body CECRED.AFRA0004 is
          AND agb.cdcidade = caf.cdcidade;         
     rw_crapagb cr_crapagb%ROWTYPE;
     
+    CURSOR cr_crapban(pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
+      SELECT crapban.nmextbcc
+        FROM crapban
+       WHERE crapban.cdbccxlt = pr_cdbccxlt;
+    rw_crapban cr_crapban%ROWTYPE;
+    
     --> Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
@@ -818,6 +824,7 @@ create or replace package body CECRED.AFRA0004 is
     vr_inpessoa crapcti.inpessoa%TYPE;   --> Tipo de pessoa da conta
     vr_intipcta crapcti.intipcta%TYPE;   --> Tipo da conta
     vr_idagenda INTEGER;                 --> Tipo de agendamento
+    vr_fcrapagb BOOLEAN := FALSE;
     
   --  PRAGMA AUTONOMOUS_TRANSACTION;
       
@@ -938,12 +945,24 @@ create or replace package body CECRED.AFRA0004 is
     OPEN cr_crapagb (pr_cddbanco => vr_cddbanco,
                      pr_cdageban => vr_cdageban);
     FETCH cr_crapagb INTO rw_crapagb;    
+    
     IF cr_crapagb%NOTFOUND THEN
       CLOSE cr_crapagb;
-      vr_dscritic := 'Nao foi possivel localizar dados da agencia destino.';     
-      RAISE vr_exc_erro;      
+      vr_fcrapagb := FALSE;
+      
+      -- Se não encontrar a agencia buscar apenas o nome do banco
+      OPEN cr_crapban(pr_cdbccxlt => vr_cddbanco);
+      FETCH cr_crapban INTO rw_crapban;
+      
+      IF cr_crapban%NOTFOUND THEN
+         CLOSE cr_crapban;
+         RAISE vr_exc_naomonit;           
     END IF;
+      
+      CLOSE cr_crapban;
+    ELSE
     CLOSE cr_crapagb;
+      vr_fcrapagb := TRUE;
     
     --> caso esteja nulo deve considerar todos os UFs
     IF TRIM(vr_dsufsmon) IS NOT NULL THEN
@@ -955,6 +974,7 @@ create or replace package body CECRED.AFRA0004 is
         RAISE vr_exc_naomonit;
       END IF;
     END IF;
+    END IF;    
     
     --> Se eh para trazer somente novos favorecidos
     IF rw_crapcop.flnvfted = 1 THEN
@@ -1040,7 +1060,7 @@ create or replace package body CECRED.AFRA0004 is
       END IF;
     END IF;
     ------------> MONTAR CORPO E-MAIL <------------
-    
+    IF vr_fcrapagb THEN
     vr_conteudo := 'Dados do Favorecido: '|| vr_nmtitula ||'<br>'||
                    'Banco: '       || vr_cddbanco ||'-'|| rw_crapagb.nmresbcc ||'<br>'||
                    'Agencia: '     || vr_cdageban||'-'|| rw_crapagb.nmageban ||'<br>'||
@@ -1050,6 +1070,17 @@ create or replace package body CECRED.AFRA0004 is
                    'Limite diário TED: R$'|| to_char(rw_crapsnh.vllimted,'fm999g999g999g990d00')||'<br>'||
                    'Dados cooperado: '|| gene0002.fn_mask_conta(vr_nrdconta)||'<br>'||
                    'PA: '|| rw_crapass.cdagenci ||' - '||rw_crapass.nmresage|| '<br>';
+    ELSE
+      vr_conteudo := 'Dados do Favorecido: '|| vr_nmtitula ||'<br>'||
+                     'Banco: '       || vr_cddbanco ||' - '||rw_crapban.nmextbcc||' <br>'||
+                     'Agencia: '     || vr_cdageban||'- Nao encontrado <br>'||
+                     'Estado: Nao encontrado <br>'||
+                     'Conta: '       || gene0002.fn_mask_conta(vr_nrctatrf)||'<br>'||
+                     'IP Transacao: '|| vr_iptransa ||'<br>'||
+                     'Limite diário TED: R$'|| to_char(rw_crapsnh.vllimted,'fm999g999g999g990d00')||'<br>'||
+                     'Dados cooperado: '|| gene0002.fn_mask_conta(vr_nrdconta)||'<br>'||
+                     'PA: '|| rw_crapass.cdagenci ||' - '||rw_crapass.nmresage|| '<br>';      
+    END IF;
      
     -- Se for pessoa fisica
     IF rw_crapass.inpessoa = 1 THEN
@@ -1647,7 +1678,7 @@ create or replace package body CECRED.AFRA0004 is
         Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
         Sigla    : CRED
         Autor    : Teobaldo Jamunda - AMcom
-        Data     : Abril/2018.                    Ultima atualizacao: 28/08/2018
+        Data     : Abril/2018.                    Ultima atualizacao: 17/09/2018
 
         Dados referentes ao programa:
 
@@ -1657,6 +1688,7 @@ create or replace package body CECRED.AFRA0004 is
 
         Alteracoes: 28/08/2018 - Inserido parametro com descricao do tipo de titulo (Tiago - RITM0025395) 
         
+                    17/09/2018 - Correções referentes a monitoração de DDA (Tiago - RITM0025395)        
     ----------------------------------------------------------------------------*/
 
     --Selecionar informacoes dos titulares da conta
@@ -1842,6 +1874,10 @@ create or replace package body CECRED.AFRA0004 is
              InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0) THEN
             --Ignorar registro
             CONTINUE;
+          ELSE
+            IF InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0 THEN
+              CONTINUE;
+          END IF;
           END IF;
 
           --Verificar as autenticacoes
@@ -1873,6 +1909,13 @@ create or replace package body CECRED.AFRA0004 is
           FETCH cr_craptit INTO rw_craptit;
           --Se nao encontrar
           IF cr_craptit%FOUND THEN
+            
+             -- Se estiver monitorando DDAs, pegar no email apenas titulos DDA
+             IF    pr_flgpgdda = 1  
+              AND  rw_craptit.flgpgdda = 0 THEN
+                CONTINUE;
+             END IF;
+          
             --Codigo banco Caixa
             vr_cdbccxlt:= to_number(SUBSTR(rw_craptit.dscodbar,1,3));
             IF  vr_cdbccxlt IN (1,85)  THEN
