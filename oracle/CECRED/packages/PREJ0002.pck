@@ -465,11 +465,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
               FETCH cr_craplcm INTO rw_craplcm;
         
                 IF cr_craplcm%NOTFOUND THEN
-                  CLOSE cr_craplcm;
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Nao foi possivel recuperar os dados do lancto para estornar:'||
-                  pr_cdcooper||'/'||pr_nrdconta||'/'||pr_nrctremp||'/'||r_craplem.dtmvtolt;
-                  RAISE EXC_LCT_NAO_EXISTE;
+                  if (prej0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, 
+                                                      pr_nrdconta => pr_nrdconta)) then
+                    delete tbcc_prejuizo_detalhe a
+                    where a.cdcooper=pr_cdcooper
+                      and a.nrdconta=pr_nrdconta
+                      and a.cdhistor=2386;
+                  else
+                    CLOSE cr_craplcm;
+                    vr_cdcritic := 0;
+                    vr_dscritic := 'Nao foi possivel recuperar os dados do lancto para estornar:'||
+                    pr_cdcooper||'/'||pr_nrdconta||'/'||pr_nrctremp||'/'||r_craplem.dtmvtolt;
+                    RAISE EXC_LCT_NAO_EXISTE;
+                  end if;
                 END IF;
         
                 -- Chamada da rotina centralizadora em substituição ao DELETE
