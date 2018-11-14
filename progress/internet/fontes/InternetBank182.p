@@ -16,6 +16,9 @@
 
    Alteracoes: 27/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Douglas Quisinski)
+							
+		       14/11/2018 - Ajuste para passar a modalidade do tpo da conta do cooperado
+							atraves do servico (PRJ 485 - Lucas Skroch)
 
 ..............................................................................*/
 
@@ -54,6 +57,11 @@ DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+
+/*  INICIO Projeto 485 - Portabilidade de salario */
+DEF VAR aux_cdmodali AS INTE                                           NO-UNDO.
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
+/*  FIM Projeto 485 - Portabilidade de salario */
 
 /*  Projeto 363 - Novo ATM */
 DEF VAR aux_flgemiss AS INTE                                           NO-UNDO.
@@ -272,7 +280,36 @@ ASSIGN aux_idpessoa = 0
        aux_dscritic = pc_retorna_idpessoa.pr_dscritic
                       WHEN pc_retorna_idpessoa.pr_dscritic <> ?.      
 
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }       
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }  
+
+/*  INICIO Projeto 485 - Portabilidade de salario
+   buscar a modalidade da conta de acordo com o tipo de conta do cooperado */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+   RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+       aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT crapass.inpessoa, /* pr_inpessoa */
+                           INPUT crapass.cdtipcta, /* pr_cdtipo_conta */
+                           OUTPUT 0,  /* pr_cdmodalidade_tipo */
+                           OUTPUT "", /* pr_des_erro */
+                           OUTPUT ""). /* pr_dscritic */
+    
+   CLOSE STORED-PROC pc_busca_modalidade_tipo 
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+   ASSIGN aux_cdmodali = 0
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+                    WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+          aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro                          
+                    WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+          aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                    WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+/* FIM Projeto 485 - Portabilidade de salario */
 
   FIND FIRST tbtaa_limite_saque 
        WHERE tbtaa_limite_saque.cdcooper = par_cdcooper
@@ -430,8 +467,11 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                aux_dtadmiss + 
                                "</dtadmiss><dtdemiss>" + 
                                aux_dtdemiss +
-                               "</dtdemiss></CORRENTISTA>" +
+                               "</dtdemiss><cdmodali>" + /* INICIO Projeto 485 - Portabilidade de salario */
+                               STRING(aux_cdmodali) +
+                               "</cdmodali></CORRENTISTA>" + /* FIM Projeto 485 - Portabilidade de salario */
                                aux_xml.
+                               
 
 RETURN "OK".
 
