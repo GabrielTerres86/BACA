@@ -27,6 +27,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             09/11/2016 - inclusao de LOG. (Jean Michel)
 
             28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
+
+            01/11/2018 - Replicação de Propostas (Andrey Formigari - Mouts)
 ...............................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -67,6 +69,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
        FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctlinati AS CHARACTER FORMAT "X(256)":U
+	   FIELD aux_operador AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctljusti AS CHARACTER FORMAT "X(256)":U.
   
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -168,7 +171,8 @@ ab_unmap.aux_idtipfor ab_unmap.aux_idforpri ab_unmap.aux_idorifor ~
 ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ab_unmap.aux_cdageban ~
 ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ab_unmap.aux_cdtipcta ~
 ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ab_unmap.aux_nrpispas ~
-ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati
+ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati ~
+ab_unmap.aux_operador
 &Scoped-Define DISPLAYED-FIELDS gnapfdp.cddddfax gnapfdp.cddddfor ~
 gnapfdp.cdufforn gnapfdp.dsendfor gnapfdp.dsobserv gnapfdp.dsreffor ~
 gnapfdp.dtforati gnapfdp.dtforina gnapfdp.dtultalt gnapfdp.flgcoope ~
@@ -190,7 +194,7 @@ ab_unmap.aux_idorifor ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ~
 ab_unmap.aux_cdageban ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ~
 ab_unmap.aux_cdtipcta ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ~
 ab_unmap.aux_nrpispas ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ~
-ab_unmap.aux_ctlinati
+ab_unmap.aux_ctlinati ab_unmap.aux_operador
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -274,6 +278,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.aux_datahoje AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_operador AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -1064,6 +1072,8 @@ PROCEDURE htmOffsets :
     ("idorifor":U,"gnapfdp.idorifor":U,gnapfdp.idorifor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_operador":U,"ab_unmap.aux_operador":U,ab_unmap.aux_operador:HANDLE IN FRAME {&FRAME-NAME}). 	
 END PROCEDURE.
 
 
@@ -1460,6 +1470,9 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
           ASSIGN ab_unmap.aux_idforpri = TRUE.
        ELSE
           ASSIGN ab_unmap.aux_idforpri = FALSE.
+          
+	  IF GET-VALUE("aux_cdoperad") <> "" THEN
+	     ASSIGN ab_unmap.aux_operador = GET-VALUE("aux_cdoperad").
           
        IF GET-VALUE("aux_idsitfor") = "on" THEN
           ASSIGN ab_unmap.aux_idsitfor = TRUE.
