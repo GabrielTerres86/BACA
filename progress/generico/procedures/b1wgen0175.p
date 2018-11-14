@@ -7954,6 +7954,199 @@ PROCEDURE altera-alinea:
     END.
     
     IF  aux_dscritic <> "" THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT 0,
+                           INPUT 0,
+                           INPUT 1, /*sequencia*/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE excluir-cheque-devolu:
+    
+    DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                 NO-UNDO.
+    DEF INPUT PARAM par_cdbanchq AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_cdagechq AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrdconta LIKE crapass.nrdconta                 NO-UNDO.
+    DEF INPUT PARAM par_nrctachq LIKE crapass.nrdconta                 NO-UNDO.
+    DEF INPUT PARAM par_nrdocmto AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                               NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.    
+	
+    DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
+
+    /* Limpeza de variaveis */
+    ASSIGN aux_dscritic = "".
+
+    /* Busca data de movimentacao */
+    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
+                             NO-LOCK NO-ERROR.
+
+    /* Retorna critica caso nao encontre */
+    IF NOT AVAILABLE crapdat THEN
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Data de movimentacao nao encontrada.".
+
+    /* Busca diretorio da cooperativa */
+    FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+
+    /* Abortar se nao encontrar diretorio */
+    IF NOT AVAILABLE crapcop THEN   
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Diretorio da cooperativa nao encontrado.". 
+
+    /* Cursor que cddepart parametrizado */
+    FIND FIRST crapprm WHERE crapprm.cdcooper = 0
+                         AND crapprm.nmsistem = "CRED"
+                         AND crapprm.cdacesso = "EXCLUIR_DEVOLU_CDDEPART"
+                             NO-LOCK NO-ERROR.
+
+    /* Se nao encontrar aborta operacao */
+    IF NOT AVAILABLE crapprm THEN
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Parametrizacao de departamento nao encontrada.".
+			 
+    /* Cursor que busca operadores */
+    FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                         AND crapope.cdoperad = par_cdoperad
+                         AND crapope.cdsitope = 1 
+                             NO-LOCK NO-ERROR.
+
+    /* Se operador nao possui permissoes retorna critica */
+    IF NOT AVAILABLE crapope THEN
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Operador nao existe ou esta inativo.".
+    ELSE
+      DO:
+        /* Nivel de operador deve ser 2 ou 3 */
+        IF crapope.nvoperad < 2 THEN
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = "Nivel de operador nao permitido.". 
+        ELSE
+          DO:
+            /* Inicialmente departamentos 4 e 20 sao permitidos */
+            IF NOT CAN-DO(crapprm.dsvlrprm,STRING(crapope.cddepart)) THEN
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Departamento de operador nao permitido.". 
+          END.
+
+      END.
+
+    /* Se retornou alguma critica deve abortar operacao */
+    IF  aux_dscritic <> "" THEN
+      DO:
+        RUN gera_erro (INPUT par_cdcooper,
+                       INPUT 0,
+                       INPUT 0,
+                       INPUT 1, /*sequencia*/
+                       INPUT aux_cdcritic,
+                       INPUT-OUTPUT aux_dscritic).
+        RETURN "NOK".
+      END.
+
+    /* Exclusao permitida somente antes da primeira execucao */
+    RUN verifica_hora_execucao(INPUT par_cdcooper,
+                               INPUT crapdat.dtmvtolt,
+                               INPUT 4,
+                               OUTPUT ret_execucao,
+                               OUTPUT TABLE tt-erro).
+
+    /* Abortar operacao */						
+    IF ret_execucao THEN DO:
+
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Hora limite para excluir cheques " +
+                            "foi ultrapassada!".
+
+      RUN gera_erro (INPUT par_cdcooper,
+                     INPUT 0,
+                     INPUT 0,
+                     INPUT 1,
+                     INPUT aux_cdcritic,
+                     INPUT-OUTPUT aux_dscritic).
+
+      RETURN "NOK".
+
+    END.
+
+    /* Buscar cheque enviado pela tela devolu */
+    FIND FIRST crapdev WHERE crapdev.cdcooper = par_cdcooper
+                         AND crapdev.cdbanchq = par_cdbanchq
+                         AND crapdev.cdagechq = par_cdagechq
+                         AND (crapdev.nrctachq = par_nrctachq OR
+                              crapdev.nrdctabb = par_nrdconta)
+                         AND crapdev.nrcheque = par_nrdocmto
+                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+    /* Abortar se nao encontrar registro */
+    IF NOT AVAILABLE crapdev THEN   
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = "Cheque nao encontrado.". 
+    ELSE
+      
+      DO:	
+
+        /* Nao pode possuir lancamento na conta do cooperado */
+        FIND FIRST craplcm WHERE craplcm.cdcooper = crapdev.cdcooper
+                             AND craplcm.nrdconta = crapdev.nrctachq
+                             AND craplcm.nrdocmto = crapdev.nrcheque
+                             AND craplcm.vllanmto = crapdev.vllanmto
+                             AND craplcm.dtmvtolt = crapdat.dtmvtoan
+                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+        IF AVAILABLE craplcm THEN
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = "Devolucao nao pode possuir lancamento em conta.".
+        ELSE
+          DO:
+            /* Gerar log fisico no arquivo devolu.log */ 
+            UNIX SILENT VALUE("echo " + STRING(crapdat.dtmvtolt,"99/99/9999") + " "
+                            + STRING(TIME,"HH:MM:SS") + "' --> '"
+                            + STRING(par_cdoperad)
+                            + "-" + TRIM(crapope.nmoperad) + ", "
+                            + "excluiu a devolucao do cheque "
+                            + STRING(crapdev.nrcheque,"zzz,zz9")
+                            + " da conta/dv "
+                            + STRING(crapdev.nrctachq,"zzzz,zzz,9")
+                            + " do Banco " + STRING(crapdev.cdbanchq, "zz9")
+                            + ", valor " + STRING(crapdev.vllanmto, "zzz,zz9.99")
+                            + " com alinea "+ STRING(crapdev.cdalinea,"z9") + " - "
+                            + "'('"  
+                            + STRING(crapdev.nrdctabb) + ", " 
+                            + STRING(crapdev.cdhistor) + ", " 
+                            + STRING(crapdev.insitdev) + ", " 
+                            + STRING(crapdev.cdbccxlt) + ", " 
+                            + STRING(crapdev.dtmvtolt,"99/99/9999") + ", " 
+                            + STRING(crapdev.cdoperad) + ", "
+                            + STRING(crapdev.nrdctacr) + ", " 
+                            + STRING(crapdev.nrdolote) + ", " 
+                            + STRING(crapdev.cdbanchq) + ", " 
+                            + STRING(crapdev.cdpesqui) + ", " 
+                            + STRING(crapdev.cdagechq) + ", " 
+                            + STRING(crapdev.nrctachq) + ", " 
+                            + STRING(crapdev.indctitg) + ", " 
+                            + STRING(crapdev.nrdctitg) + ", " 
+                            + STRING(crapdev.indevarq) 
+                            + "')' "                  
+                            + " >> /usr/coop/" + TRIM(crapcop.dsdircop)
+                            + "/log/devolu.log" ).
+						
+            /* Deletar registro */
+            DELETE crapdev.
+          END.
+
+      END.
+
+    /* Abortar em caso de critica */
+    IF  aux_dscritic <> "" THEN
       DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT 0,
