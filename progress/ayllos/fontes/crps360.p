@@ -68,6 +68,7 @@ DEF STREAM str_5.   /*  Para arquivo                */
 { includes/var_batch.i }   
 { sistema/generico/includes/var_oracle.i }
 { includes/gera_log_batch.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
@@ -160,6 +161,11 @@ DEF        VAR aux_qtdecheq AS INT                                   NO-UNDO.
 DEF        VAR aux_totdcheq AS DECIMAL                               NO-UNDO.
 DEF        VAR tot_qtdecheq AS INT                                   NO-UNDO.
 DEF        VAR tot_totdcheq AS DECIMAL                               NO-UNDO.
+
+DEF        VAR h-b1wgen0200 AS HANDLE                                NO-UNDO.
+DEF        VAR aux_incrineg AS INT                                   NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_nrdconta LIKE crapchd.nrdconta                    NO-UNDO.
 
@@ -753,55 +759,106 @@ DO  i = 1 TO aux_contador:
           
                END.  /*  Fim do DO WHILE TRUE  */
 
-               CREATE craplcm.
-               ASSIGN craplcm.dtmvtolt = glb_dtmvtolt
-                      craplcm.cdagenci = 1
-                      craplcm.cdbccxlt = 100
-                      craplcm.nrdolote = 4650
-                      craplcm.nrdconta = aux_nrdconta 
-                      craplcm.dtrefere = aux_dtleiarq
-                      craplcm.nrdocmto = aux_nrcheque
-                      craplcm.cdhistor = aux_cdhistor
-                      craplcm.nrseqdig = craplot.nrseqdig + 1
-                      craplcm.vllanmto = aux_vlcheque
-                      craplcm.nrdctabb = aux_nrdconta
-                      craplcm.nrdctitg = STRING(aux_nrdconta,"99999999")
-                      craplcm.cdpesqbb = STRING(aux_nralinea,"99")
-                      craplcm.vldoipmf = 0
-                      craplcm.nrautdoc = 0
-                      craplcm.nrsequni = 0
-                      craplcm.cdbanchq = crapchd.cdbanchq
-                      craplcm.cdcmpchq = crapchd.cdcmpchq
-                      craplcm.cdagechq = crapchd.cdagechq
-                      craplcm.nrctachq = crapchd.nrctachq
-                      craplcm.nrlotchq = 0
-                      craplcm.sqlotchq = 0
-                      craplcm.cdcooper = glb_cdcooper
-                      craplcm.dsidenti = "BB"
-                      
-                      craplot.nrseqdig = craplot.nrseqdig + 1
+               IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p
+                   PERSISTENT SET h-b1wgen0200.
+
+               RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                 (INPUT glb_dtmvtolt                              /* par_dtmvtolt */
+                 ,INPUT 1                                         /* par_cdagenci */
+                 ,INPUT 100                                       /* par_cdbccxlt */
+                 ,INPUT 4650                                      /* par_nrdolote */
+                 ,INPUT aux_nrdconta                              /* par_nrdconta */
+                 ,INPUT aux_nrcheque                              /* par_nrdocmto */
+                 ,INPUT aux_cdhistor                              /* par_cdhistor */
+                 ,INPUT craplot.nrseqdig + 1                      /* par_nrseqdig */
+                 ,INPUT aux_vlcheque                              /* par_vllanmto */
+                 ,INPUT aux_nrdconta                              /* par_nrdctabb */
+                 ,INPUT STRING(aux_nralinea,"99")                 /* par_cdpesqbb */
+                 ,INPUT 0                                         /* par_vldoipmf */
+                 ,INPUT 0                                         /* par_nrautdoc */
+                 ,INPUT 0                                         /* par_nrsequni */
+                 ,INPUT crapchd.cdbanchq                          /* par_cdbanchq */
+                 ,INPUT crapchd.cdcmpchq                          /* par_cdcmpchq */
+                 ,INPUT crapchd.cdagechq                          /* par_cdagechq */
+                 ,INPUT crapchd.nrctachq                          /* par_nrctachq */
+                 ,INPUT 0                                         /* par_nrlotchq */
+                 ,INPUT 0                                         /* par_sqlotchq */
+                 ,INPUT aux_dtleiarq                              /* par_dtrefere */
+                 ,INPUT ""                                        /* par_hrtransa */
+                 ,INPUT 0                                         /* par_cdoperad */
+                 ,INPUT "BB"                                      /* par_dsidenti */
+                 ,INPUT glb_cdcooper                              /* par_cdcooper */
+                 ,INPUT STRING(aux_nrdconta,"99999999")           /* par_nrdctitg */
+                 ,INPUT ""                                        /* par_dscedent */
+                 ,INPUT 0                                         /* par_cdcoptfn */
+                 ,INPUT 0                                         /* par_cdagetfn */
+                 ,INPUT 0                                         /* par_nrterfin */
+                 ,INPUT 0                                         /* par_nrparepr */
+                 ,INPUT 0                                         /* par_nrseqava */
+                 ,INPUT 0                                         /* par_nraplica */
+                 ,INPUT 0                                         /* par_cdorigem */
+                 ,INPUT 0                                         /* par_idlautom */
+                 /* CAMPOS OPCIONAIS DO LOTE                                                            */
+                 ,INPUT 0                              /* Processa lote                                 */
+                 ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                 /* CAMPOS DE SAÍDA                                                                     */
+                 ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                 ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                 ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                 ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+
+               /* Trata critica se retornada */
+               IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+               DO:
+                      RUN gera_log_batch_prog("E", 1,
+                      STRING(TIME,"HH:MM:SS") +
+                      " - " + glb_cdprogra + "' --> '" +
+                      glb_dscritic + "' --> '").
+                 ASSIGN glb_cdcritic = 0
+                        aux_flgrejei = TRUE.
+
+                 CREATE crawrel.
+                 ASSIGN crawrel.cdagenci = 1
+                        crawrel.nrdconta = aux_nrdconta
+                        crawrel.nmprimtl = aux_dscritic
+                        crawrel.nralinea = aux_nralinea
+                        crawrel.cdcmpchq = crapchd.cdcmpchq
+                        crawrel.cdbanchq = crapchd.cdbanchq
+                        crawrel.cdagechq = crapchd.cdagechq
+                        crawrel.nrctachq = crapchd.nrctachq
+                        crawrel.nrcheque = aux_nrcheque
+                        crawrel.vlcheque = aux_vlcheque.
+
+                 NEXT.
+               END.
+
+               IF  VALID-HANDLE(h-b1wgen0200) THEN
+                 DELETE PROCEDURE h-b1wgen0200.
+
+               /* continua processamento do registro se não houve nenhuma critica */
+               ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                       craplot.qtcompln = craplot.qtcompln + 1
                       craplot.qtinfoln = craplot.qtinfoln + 1
-                      craplot.vlcompdb = craplot.vlcompdb +
-                                         craplcm.vllanmto
+                      craplot.vlcompdb = craplot.vlcompdb + aux_vlcheque
+
                       craplot.vlcompcr = 0
                       craplot.vlinfodb = craplot.vlcompdb
                       craplot.vlinfocr = 0. 
 
                 VALIDATE craplot.
-                VALIDATE craplcm.
 
                /*   Tratamento de Cheques Bloqueados  */
-               IF   craplcm.cdhistor = 24    OR
-                    craplcm.cdhistor = 27    OR
-                    craplcm.cdhistor = 657   THEN
+               IF   aux_cdhistor = 24    OR
+                    aux_cdhistor = 27    OR
+                    aux_cdhistor = 657   THEN
                     DO:
-                        IF   craplcm.vllanmto = crapdpb.vllanmto THEN
+                        IF   aux_vlcheque = crapdpb.vllanmto THEN
                              crapdpb.inlibera = 2.   /* Dep. Estornado */
                         ELSE
                              /*  Deposito com varios cheques */
                              crapdpb.vllanmto = (crapdpb.vllanmto - 
-                                                 craplcm.vllanmto). 
+                                                 aux_vlcheque).
                     END.
       
 			   IF crapass.inpessoa = 1 THEN

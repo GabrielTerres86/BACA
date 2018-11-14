@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 06/08/2018
+   Data    : Janeiro/92.                     Ultima atualizacao: 05/11/2018
 
    Dados referentes ao programa:
 
@@ -158,6 +158,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
 			                em paralelo por Agência - Andreatta (MOUTs)
                             
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
+
+               05/11/2018 - Correção de erro na composição do saldo após débito do histórico 37 (Reginaldo/AMcom/P450)
                             
      ............................................................................. */
 
@@ -1498,8 +1500,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                        RAISE vr_exc_saida;
                      END IF;
                      -- guarda dados par serem utilizados mais a frente
-                     rw_craplcm.vllanmto := rw_crapsld(idx).vljuresp;
-                     rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljuresp * vr_txcpmfcc,2);
+                     rw_craplcm.vllanmto := rw_crapsld(idx).vljurmes;
+                     rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljurmes * vr_txcpmfcc,2);
                      rw_craplcm.rowid    := vr_tab_retorno.rowidlct;
 
                    EXCEPTION

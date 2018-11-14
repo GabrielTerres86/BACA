@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 26/07/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 05/11/2018
 
    Dados referentes ao programa:
 
@@ -243,6 +243,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             valor final da diferença (Renato Darosci - Supero)
 
                26/07/2018 - P450 - Gravar saldo da conta transitória (Diego Simas/AMcom)
+							
+							 05/11/2018 - Correção na chamada da "PREJ0003.fn_verifica_preju_conta"
+							              (Reginaldo / AMcom / P450)
 							
      ............................................................................. */
 
@@ -1505,7 +1508,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              END IF; -- FIM  vliofmes > 0
 
              IF rw_crapsld.vljuresp > 0 --Se o juros do cheque especial for maior zero
-               AND NOT prej0003.fn_verifica_preju_conta(rw_crapsld.nrdconta, pr_cdcooper) THEN -- E se a conta não estiver em prejuizo
+               AND NOT prej0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                                      , pr_nrdconta => rw_crapsld.nrdconta) THEN -- E se a conta não estiver em prejuizo
                
                -- Condicao para verificar se permite incluir as linhas parametrizadas
                IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapsld.nrdconta || ',') > 0 THEN

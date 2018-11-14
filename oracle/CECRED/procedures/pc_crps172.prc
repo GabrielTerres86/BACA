@@ -9,7 +9,7 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96                     Ultima atualizacao: 06/04/2017
+   Data    : Novembro/96                     Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -110,6 +110,8 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 
 			   07/03/2018 - Revertendo alteração realizada no chamado 813105 - (Antonio R Jr - Mouts)
 							 
+               05/07/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+				 
                11/07/2018 - Ao fazer update Controle restart, se não encontrar o registro, criar,
                             pois programa passou a executar durante o dia no Debitador.
                             (Elton - AMcom)               
@@ -254,6 +256,10 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
   vr_mesanopt        VARCHAR2(7);
   vr_indpagto        INTEGER   := 0;
   
+  -- Tabela de retorno LANC0001 (PRJ450 05/07/2018).
+  vr_tab_retorno     lanc0001.typ_reg_retorno;
+  vr_incrineg        number;
+	
 BEGIN
   
   -- Hora da transacao
@@ -490,49 +496,71 @@ BEGIN
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao atualizar CRAPLOT. ' || sqlerrm;
       end;
-      -- Gera lancamentos em depositos a vista
-      begin
-        insert into craplcm(cdagenci,
-                            cdbccxlt,
-                            cdhistor,
-                            dtmvtolt,
-                            cdpesqbb,
-                            nrdconta,
-                            nrdctabb,
-                            nrdctitg,
-                            nrdocmto,
-                            nrdolote,
-                            nrseqdig,
-                            vllanmto,
-                            cdcooper,
-                            hrtransa)
-          values(rw_craplot.cdagenci,
-                 rw_craplot.cdbccxlt,
-                 127,
-                 rw_crapdat.dtmvtolt,
-                 vr_cdprogra,
-                 rw_crappla.nrdconta,
-                 rw_crappla.nrdconta,
-                 to_char(rw_crappla.nrdconta, '00000000'),
-                 rw_crappla.nrctrpla,
-                 rw_craplot.nrdolote,
-                 rw_craplot.nrseqdig,
-                 rw_crappla.vlprepla,
-                 pr_cdcooper,
-                 vr_hrtransa)
-          returning nrdconta,
-                    nrdocmto,
-                    nrseqdig,
-                    vllanmto
-               into vr_nrdconta_lcm,
-                    vr_nrdocmto_lcm,
-                    vr_nrseqdig_lcm,
-                    vr_vllanmto_lcm;
-      exception
-        when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir em CRAPLCM. ' || sqlerrm;
-      end;
+  
+      -- PRJ450 - 05/07/2018.
+      lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                        , pr_cdagenci => rw_craplot.cdagenci
+                                        , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                        , pr_nrdolote => rw_craplot.nrdolote
+                                        , pr_nrdconta => rw_crappla.nrdconta
+                                        , pr_nrdocmto => rw_crappla.nrctrpla
+                                        , pr_cdhistor => 127   
+                                        , pr_nrseqdig => rw_craplot.nrseqdig
+                                        , pr_vllanmto => rw_crappla.vlprepla
+                                        , pr_nrdctabb => rw_crappla.nrdconta
+                                        , pr_cdpesqbb => vr_cdprogra
+                                        --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                        --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                        --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                        --, pr_cdbanchq => lt_d_nrbanori
+                                        --, pr_cdcmpchq => lt_d_cdcmpori
+                                        --, pr_cdagechq => lt_d_nrageori
+                                        --, pr_nrctachq => lt_d_nrctarem
+                                        --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                        --, pr_sqlotchq => lt_d_nrsequen
+                                        --, pr_dtrefere => rw_craprda.dtmvtolt
+                                        , pr_hrtransa => vr_hrtransa
+                                        --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                        --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_nrdctitg => to_char(rw_crappla.nrdconta, '00000000')
+                                        --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                        --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                        --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                        --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                        --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                        --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                        --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                        --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                        --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                        -------------------------------------------------
+                                        -- Dados do lote (Opcional)
+                                        -------------------------------------------------
+                                        --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                        --, pr_tplotmov  => 1
+                                        , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                        , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                        , pr_cdcritic  => vr_cdcritic      -- OUT
+                                        , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+      
+      vr_nrdconta_lcm := rw_crappla.nrdconta;
+      vr_nrdocmto_lcm := rw_crappla.nrctrpla;
+      vr_nrseqdig_lcm := rw_craplot.nrseqdig;
+      vr_vllanmto_lcm := rw_crappla.vlprepla;
+					
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+         -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+         IF vr_incrineg = 0 THEN  
+            vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+            RAISE vr_exc_saida;	
+         ELSE
+            -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
+            -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
+            -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
+            CONTINUE;  
+         END IF;  
+      END IF;		  
+
       -- Gera aviso de debito em conta corrente
       begin
         insert into crapavs(cdagenci,

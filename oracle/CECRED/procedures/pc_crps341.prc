@@ -110,6 +110,9 @@ BEGIN
                              corretamente; e tratamento para ir para o próximo registro do cr_craplau ao invés de 
                              sair do looping (Carlos)
                              
+                12/07/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
+                                    na tabela CRAPLCM e também na CRAPLOT - Josiane (AMcom) 
+                             
                 06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
                              após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
                              Alteração específica neste programa acrescentando o tratamento para a origem
@@ -166,7 +169,8 @@ BEGIN
                       pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT ass.nrdconta,
              ass.dtelimin,
-             ass.cdsitdtl
+             ass.cdsitdtl,
+             ass.inprejuz
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -255,6 +259,14 @@ BEGIN
     TYPE typ_tab_cheques_altovale IS TABLE OF typ_reg_cheques_altovale INDEX BY VARCHAR2(100); --> Nossa chave será a nrdconta + nrdocmto
     -- PL/Table com a estrutura do registro acima
     vr_tab_cheques_altovale typ_tab_cheques_altovale;
+
+    -- ** Consite lançamento - Daniel(AMcom)
+    -- Variáveis para rotina LANC0001
+    vr_rcraplot       LANC0001.cr_craplot%ROWTYPE; 
+    vr_incrineg       INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno    LANC0001.typ_reg_retorno;  
+    vr_fldebita       BOOLEAN DEFAULT TRUE;
+
 
     --Procedure para escrever na variavel CLOB
     PROCEDURE pc_escreve_clob(pr_des_dados IN VARCHAR2) IS
@@ -459,6 +471,15 @@ BEGIN
           IF cr_craplot%NOTFOUND THEN
             --Fecha o cursor
             CLOSE cr_craplot;
+            /* Identifica se pode ou não efetuar o lançamento na conta do cooperado */ --**
+            vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_tab_cheques_altovale(vr_indice).cdcooper,
+                                                    pr_nrdconta => pr_tab_cheques_altovale(vr_indice).nrdconta,
+                                                    pr_cdhistor => pr_tab_cheques_altovale(vr_indice).cdhistor);
+            /* se não puder efetuar o lançamento, vai para o proximo registro */
+            IF vr_fldebita = FALSE THEN
+               CONTINUE;
+            END IF;
+                        
             --Cria o lote
             BEGIN
               INSERT INTO craplot
@@ -529,51 +550,43 @@ BEGIN
           --Fecha cursor
           CLOSE cr_craplcm;
         END IF;
+        
+        -- PJ450 - Regulatório de crédito
         --Cria registro na craplcm referente ao cheque em questao
-        BEGIN
-          INSERT INTO craplcm
-            (craplcm.dtmvtolt,
-             craplcm.dtrefere,
-             craplcm.cdagenci,
-             craplcm.cdbccxlt,
-             craplcm.nrdolote,
-             craplcm.nrdconta,
-             craplcm.nrdctabb,
-             craplcm.nrdctitg,
-             craplcm.nrdocmto,
-             craplcm.cdhistor,
-             craplcm.vllanmto,
-             craplcm.nrseqdig,
-             craplcm.cdcooper,
-             craplcm.cdbanchq,
-             craplcm.cdagechq,
-             craplcm.nrctachq,
-             craplcm.cdpesqbb)
-          VALUES
-            (rw_craplot.dtmvtolt,
-             rw_craplot.dtmvtolt,
-             rw_craplot.cdagenci,
-             rw_craplot.cdbccxlt,
-             rw_craplot.nrdolote,
-             pr_tab_cheques_altovale(vr_indice).nrdconta,
-             pr_tab_cheques_altovale(vr_indice).nrdctabb,
-             pr_tab_cheques_altovale(vr_indice).nrdctitg,
-             vr_nrdocmto,
-             pr_tab_cheques_altovale(vr_indice).cdhistor,
-             pr_tab_cheques_altovale(vr_indice).vllanmto,
-             rw_craplot.nrseqdig + 1,
-             pr_tab_cheques_altovale(vr_indice).cdcooper,
-             pr_tab_cheques_altovale(vr_indice).cdbanchq,
-             pr_tab_cheques_altovale(vr_indice).cdagechq,
-             pr_tab_cheques_altovale(vr_indice).nrctachq,
-             'LANCAMENTO DE CONTA MIGRADA');
-        EXCEPTION
-          WHEN OTHERS THEN
-            --Monta mensagem de erro
-            vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_processamento_tco. ' || SQLERRM;
-            --Gera RAISE
+        LANC0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_craplot.dtmvtolt
+                                           ,pr_dtrefere => rw_craplot.dtmvtolt
+                                           ,pr_cdagenci => rw_craplot.cdagenci
+                                           ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                           ,pr_nrdolote => rw_craplot.nrdolote
+                                           ,pr_nrdconta => pr_tab_cheques_altovale(vr_indice).nrdconta
+                                           ,pr_nrdctabb => pr_tab_cheques_altovale(vr_indice).nrdctabb
+                                           ,pr_nrdctitg => pr_tab_cheques_altovale(vr_indice).nrdctitg
+                                           ,pr_nrdocmto => vr_nrdocmto
+                                           ,pr_cdhistor => pr_tab_cheques_altovale(vr_indice).cdhistor
+                                           ,pr_vllanmto => pr_tab_cheques_altovale(vr_indice).vllanmto
+                                           ,pr_nrseqdig => rw_craplot.nrseqdig + 1 --vr_nrseqint
+                                           ,pr_cdcooper => pr_tab_cheques_altovale(vr_indice).cdcooper
+                                           ,pr_cdbanchq => pr_tab_cheques_altovale(vr_indice).cdbanchq
+                                           ,pr_cdagechq => pr_tab_cheques_altovale(vr_indice).cdagechq
+                                           ,pr_nrctachq => pr_tab_cheques_altovale(vr_indice).nrctachq
+                                           ,pr_cdpesqbb => 'LANCAMENTO DE CONTA MIGRADA'
+                                           ,pr_inprolot => 0
+                                           ,pr_tplotmov => 0
+                                           -- OUTPUT --
+                                           ,pr_tab_retorno => vr_tab_retorno
+                                           ,pr_incrineg => vr_incrineg
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);   
+                                           
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF vr_incrineg = 0 THEN
             RAISE vr_exc_erro;
-        END;
+          ELSE
+           CONTINUE;
+          END IF;    
+        END IF;   
+        
+
         --Atualiza os dados do lote
         BEGIN
           UPDATE craplot
@@ -1248,6 +1261,84 @@ BEGIN
               vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
+
+          -- PJ450 - Insere o lançamento
+          LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                            ,pr_dtrefere => rw_craplot.dtmvtolt
+                                            ,pr_cdagenci => rw_craplot.cdagenci
+                                            ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                            ,pr_nrdolote => rw_craplot.nrdolote
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_nrdctabb => pr_nrdctabb
+                                            ,pr_nrdctitg => pr_nrdctitg
+                                            ,pr_nrdocmto => pr_nrdocmto
+                                            ,pr_cdhistor => pr_cdhistor
+                                            ,pr_vllanmto => pr_vllanaut
+                                            ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdbanchq => rw_crapfdc.cdbanchq
+                                            ,pr_cdagechq => rw_crapfdc.cdagechq
+                                            ,pr_nrctachq => rw_crapfdc.nrctachq
+                                            ,pr_cdpesqbb => to_char(pr_dtmvtolt, 'dd/mm/yyyy') ||'-'||
+                                                            gene0002.fn_mask(pr_cdagenci, '999') || '-'||
+                                                            gene0002.fn_mask(pr_cdbccxlt, '999') ||'-'||
+                                                            gene0002.fn_mask(pr_nrdolote, '999999') || '-'||
+                                                            gene0002.fn_mask(pr_nrseqdig, '99999')
+                                            -- OUTPUT --
+                                            ,pr_tab_retorno => vr_tab_retorno
+                                            ,pr_incrineg => vr_incrineg
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);   
+          
+          rw_craplcm.nrseqdig:=  rw_craplot.nrseqdig + 1;
+                                          
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+		     	    	RAISE vr_exc_erro;
+             ELSE
+                --Atualiza registro de lancamento automatico
+          BEGIN
+                  UPDATE craplau lau
+                     SET lau.insitlau = 3
+                   WHERE lau.rowid = pr_craplau_rowid;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    --Monta mensagem de erro
+                    vr_dscritic := 'Erro ao atualizar a tabela de Lancamentos automaticos (CRAPLAU) - Conta: ' || pr_nrdconta || '. Detalhes: ' || sqlerrm;
+                    --Gera excecao
+                    RAISE vr_exc_erro;
+                END;
+                pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
+                                   pr_cdagenci => pr_cdagenci,
+                                   pr_nrdcaixa => pr_nrdcaixa,
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_dtmvtopr => pr_dtmvtopr,
+                                   pr_nrcustod => vr_nrcustod,
+                                   pr_cdseqtel => pr_cdseqtel,
+                                   pr_vllanaut => pr_vllanaut,
+                                   pr_cdhistor => pr_cdhistor,
+                                   pr_nrdctabb => pr_nrdctabb,
+                                   pr_nrdocmto => pr_nrdocmto,
+                                   pr_nrseqdig => pr_nrseqdig,
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_des_reto => pr_des_reto,
+                                   pr_tab_erro => pr_tab_erro);
+                -- Se retornar erro
+                IF pr_des_reto <> 'OK' THEN
+                  IF pr_tab_erro.COUNT > 0 THEN
+                    -- Montar mensagem de erro
+                    vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+                    vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+                  ELSE
+                    -- Por algum motivo retornou erro mais a tabela veio vazia
+                    vr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada pc_proc_rejeitados';
+                  END IF;
+                  --Gera excecao
+                  RAISE vr_exc_erro;
+                END IF;
+                --
+                RETURN;
+      	  END IF;  
+
           BEGIN
             UPDATE craplot lot
                SET lot.qtinfoln = lot.qtinfoln + 1,
@@ -1428,7 +1519,7 @@ BEGIN
         ELSIF NOT rw_crapass.dtelimin IS NULL THEN  --Se associado jah foi eliminado
           -- Montar mensagem de critica
           vr_cdcritic := 410;
-        ELSIF rw_crapass.cdsitdtl IN (5, 6, 7, 8) THEN
+        ELSIF rw_crapass.cdsitdtl IN (5, 6, 7, 8) or rw_crapass.inprejuz = 1 THEN
           -- Montar mensagem de critica
           vr_cdcritic := 695;
         ELSIF rw_crapass.cdsitdtl IN (2, 4) THEN
