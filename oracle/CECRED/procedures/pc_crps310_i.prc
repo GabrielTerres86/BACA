@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 12/09/2018
+     Data    : Maio/2001                       Ultima atualizacao: 09/11/2018
      
      Dados referentes ao programa:
 
@@ -314,21 +314,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
 
-                 15/08/2018 - P450 - Tratamento Risco Inclusão
-                                     Nova regra para Risco Refin (Guilherme/AMcom)
+                 15/06/2018 - P450 - Tratamento Risco Inclusão (Guilherme/AMcom)
+                                   - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
+
+                 19/06/2018 - P450 - Nova regra para Risco Refin (Guilherme/AMcom)
 
                  15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
 
                  22/08/2018 - Adicionado cálculo de risco do borderô (Luis Fernando - GFT)
 
-                 12/09/2018 - P450 - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
-                            - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
+  			     24/08/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
 
+                 12/09/2018 - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
                  20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
 
                  01/10/2018 - P450 - Ajuste do juros60 nos Vencimentos/VRI (Guilherme/AMcom)
 
-  			     24/09/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
+                 08/10/2018 - Alterado calcula de atraso de cessão de credito a partir da data de inclusao do emprestimo
+                              e não do vencimento do cartão para os novos emprestimos de cessao.
+                              PRJ450 - Regulatorio(Odirlei-AMcom)
+                              
+                 09/11/2018 - Alteração na chamada da função de cálculo de juros +60 do PP para considerar o campo "vlsdeved
+                              e não o "vlsdevat". (Reginaldo/AMcom/P450)             
 
   ............................................................................ */
 
@@ -1039,7 +1046,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_tab_crappep_maior typ_tab_crappep_maior;
 
       -- Temp Table para armazenar se é emprestimos de cessao de credito
-      TYPE typ_tab_cessoes IS TABLE OF DATE
+      TYPE typ_rec_cessoes 
+           IS RECORD (dtmvtolt DATE,
+                      dtvencto DATE );
+      TYPE typ_tab_cessoes IS TABLE OF typ_rec_cessoes
         INDEX BY VARCHAR2(50); -- cdcooper + nrdconta + nrctremp
       vr_tab_cessoes typ_tab_cessoes;
       
@@ -1209,6 +1219,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_idx_ass_ris   PLS_INTEGER:=0;
 
       vr_dsmensag varchar2(400);
+
+      vr_dtcorte_cessao DATE := NULL;
 
 
       -- variaveis para criação de rotina paralela
@@ -2878,6 +2890,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_aux_nivel        PLS_INTEGER;           --> Nivel do risco
         vr_nivel_atraso     PLS_INTEGER;           --> Nivel do risco
         vr_qtdiaatr         crapris.qtdiaatr%TYPE; --> Quantidade de dias em atraso
+        vr_qtdiaatr_cessao  crapris.qtdiaatr%TYPE; --> Quantidade de dias em atraso cessao
         vr_rowid            ROWID;                 --> Guardar o ID do registro criado
         --vr_vljura60         crapris.vljura60%TYPE; --> Juros do risco
         vr_vldiv060         crapris.vldiv060%TYPE; --> Valor do atraso quando prazo inferior a 60
@@ -3002,6 +3015,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_nivel_atraso := 9;
         END CASE;
 
+
+        --> Verificar se é uma sessão de cartão e calcular o nivel de risco conforme a data de vencimento  
+        IF vr_tab_cessoes.exists(vr_idxpep) THEN    
+          -- Calcular diferença de dias entre a parcela e o dia atual
+          vr_dtvencto := vr_tab_cessoes(vr_idxpep).dtvencto;
+          vr_qtdiaatr_cessao := pr_rw_crapdat.dtmvtolt - vr_dtvencto; 
+          
+          -- RISCO ATRASO Cessão
+          CASE
+            WHEN vr_qtdiaatr_cessao <= 0 THEN
+              vr_nivel_atraso := 2;
+            WHEN vr_qtdiaatr_cessao < 15 THEN
+              vr_nivel_atraso := 2;
+            WHEN vr_qtdiaatr_cessao <= 30 THEN
+              vr_nivel_atraso := 3;
+            WHEN vr_qtdiaatr_cessao <= 60 THEN
+              vr_nivel_atraso := 4;
+            WHEN vr_qtdiaatr_cessao <= 90 THEN
+              vr_nivel_atraso := 5;
+            WHEN vr_qtdiaatr_cessao <= 120 THEN
+              vr_nivel_atraso := 6;
+            WHEN vr_qtdiaatr_cessao <= 150 THEN
+              vr_nivel_atraso := 7;
+            WHEN vr_qtdiaatr_cessao <= 180 THEN
+              vr_nivel_atraso := 8;
+            ELSE
+              vr_nivel_atraso := 9;
+          END CASE;
+          
+        END IF;
+        
 
         -- PROCEDURE pc_lista_emp_prefix     / TPEMPRST = 1 / PP
         ----------------------- RISCO REFIN -----------------------
@@ -3141,7 +3185,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                                            ,pr_anorefju => pr_rw_crapepr.anorefju
                                                                            ,pr_txjuremp => pr_rw_crapepr.txjuremp
                                                                            ,pr_dtlibera => pr_rw_crapepr.dtlibera
-                                                                           ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
+                                                                           -- Alterado o vlsdevat para vlsdeved (Reginaldo/AMcom/P450) - 09/11/2018
+                                                                           ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdeved,0)),0);
           END IF;
                                                                          
         END IF;
@@ -3256,7 +3301,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           
           IF vr_tab_cessoes.exists(vr_idxpep) THEN    
               -- Calcular diferença de dias entre a parcela e o dia atual
-            vr_diasvenc := vr_tab_cessoes(vr_idxpep) - pr_rw_crapdat.dtmvtolt;
+            vr_diasvenc := vr_tab_cessoes(vr_idxpep).dtmvtolt - pr_rw_crapdat.dtmvtolt;
           ELSE
             -- Calcular diferença de dias entre a parcela e o dia atual
           vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
@@ -6891,11 +6936,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crappep_maior(vr_idxpep) := rw_crappep_maior.dtvencto;
       END LOOP;
       
+      --> Buscar data de corte para 
+      BEGIN
+        vr_dtcorte_cessao := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                               pr_cdcooper => pr_cdcooper, 
+                                                               pr_cdacesso => 'DTCESSAO_CORTE_ATRASO'),'DD/MM/RRRR');
+        
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dtcorte_cessao := to_date('01/01/2000','DD/MM/RRRR');        
+      END;
+      
       --> Buscar vencimentos daos emprestimos de cessao de cartao
       FOR rw_cessao_carga IN cr_cessao_carga LOOP
         vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_cessao_carga.nrdconta,10,'0')||lpad(rw_cessao_carga.nrctremp,10,'0');
+        
+        --> Apos a data de corte deve utilizar a data de efetivação do contrato para contagem de atraso
+        IF rw_cessao_carga.dtmvtolt < vr_dtcorte_cessao THEN
         vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
-        vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtvencto;
+          vr_tab_cessoes(vr_idxpep).dtmvtolt := rw_cessao_carga.dtvencto;
+          vr_tab_cessoes(vr_idxpep).dtvencto := rw_cessao_carga.dtvencto;
+        ELSE
+          vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtmvtolt;
+          vr_tab_cessoes(vr_idxpep).dtmvtolt := rw_cessao_carga.dtmvtolt;
+          vr_tab_cessoes(vr_idxpep).dtvencto := rw_cessao_carga.dtvencto;
+        END IF;
+        
       END LOOP;
      
       r_craplem.delete;
