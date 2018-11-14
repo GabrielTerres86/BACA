@@ -11,7 +11,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADEPAC AS
           ,nrdiadebito         tbtarif_contas_pacote.nrdiadebito%TYPE        --> Dia do debito
           ,perdesconto_manual  tbtarif_contas_pacote.perdesconto_manual%TYPE --> % desconto manual
           ,qtdmeses_desconto   tbtarif_contas_pacote.qtdmeses_desconto%TYPE	 --> Qtd meses desconto
-          ,cdreciprocidade     VARCHAR2(10));                                --> Possui reciprocidade
+          ,cdreciprocidade     VARCHAR2(10)                                  --> Possui reciprocidade
+          ,dtass_eletronica    VARCHAR2(20));                                --> Data assinatura eletronica
           
   -- Definicao de tipo de tabela para acumulo Aplicacoes
   TYPE typ_tab_tbtarif_pacotes IS
@@ -80,6 +81,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADEPAC AS
                              ,pr_qtdmeses_desconto  IN INTEGER               --> qtd de meses de desconto
                              ,pr_nrdconta           IN crapass.nrdconta%TYPE --> nr da conta
                              ,pr_idparame_reciproci IN INTEGER               --> codigo de reciprocidade
+                             ,pr_idtipo_autorizacao IN VARCHAR2              --> tipo autorizacao (S=Senha, A=Assinatura)
                              ,pr_xmllog             IN VARCHAR2              --> XML com informações de LOG
                              ,pr_cdcritic           OUT PLS_INTEGER          --> Código da crítica
                              ,pr_dscritic           OUT VARCHAR2             --> Descrição da crítica
@@ -179,14 +181,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
   --
   --    Programa: TELA_ADEPAC
   --    Autor   : lucas Lombardi
-  --    Data    : Marco/2016                   Ultima Atualizacao: 
+  --    Data    : Marco/2016                   Ultima Atualizacao: 30/10/2018
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : Package ref. a tela ADEPAC (Ayllos Web)
   --
   --    Alteracoes:                              
-  --    
+  --    			
+  --    30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero)
   ---------------------------------------------------------------------------------------------------------------
   
   /*Consulta tarifas*/
@@ -227,6 +230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
             ,tcp.qtdmeses_desconto
             ,tcp.cdreciprocidade
             ,tcp.dtadesao
+            ,tcp.dtass_eletronica
         FROM tbtarif_contas_pacote tcp
             ,tbtarif_pacotes       tp
        WHERE tcp.nrdconta = pr_nrdconta
@@ -277,6 +281,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
       vr_tbtarif_pacotes(vr_ind_pacotes).cdreciprocidade := rw_tbtarif_pacotes.cdreciprocidade;
       
       vr_tbtarif_pacotes(vr_ind_pacotes).dtadesao := to_char(rw_tbtarif_pacotes.dtadesao,'DD/MM/RRRR');
+      
+      vr_tbtarif_pacotes(vr_ind_pacotes).dtass_eletronica := to_char(rw_tbtarif_pacotes.dtass_eletronica,'DD/MM/RRRR HH24:MI');
       
       vr_nrregist := vr_nrregist + 1;
 
@@ -409,6 +415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'reg', pr_posicao => vr_contador - 1, pr_tag_nova => 'perdesconto_manual', pr_tag_cont => TO_CHAR(vr_tbtarif_pacotes(vr_contador).perdesconto_manual), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'reg', pr_posicao => vr_contador - 1, pr_tag_nova => 'qtdmeses_desconto',  pr_tag_cont => TO_CHAR(vr_tbtarif_pacotes(vr_contador).qtdmeses_desconto),  pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'reg', pr_posicao => vr_contador - 1, pr_tag_nova => 'cdreciprocidade',    pr_tag_cont => TO_CHAR(vr_tbtarif_pacotes(vr_contador).cdreciprocidade),    pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'reg', pr_posicao => vr_contador - 1, pr_tag_nova => 'dtass_eletronica',   pr_tag_cont => TO_CHAR(vr_tbtarif_pacotes(vr_contador).dtass_eletronica),   pr_des_erro => vr_dscritic);
 
     END LOOP;
     
@@ -1136,6 +1143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
                              ,pr_qtdmeses_desconto  IN INTEGER               --> qtd de meses de desconto
                              ,pr_nrdconta           IN crapass.nrdconta%TYPE --> nr da conta
                              ,pr_idparame_reciproci IN INTEGER               --> codigo de reciprocidade
+                             ,pr_idtipo_autorizacao IN VARCHAR2              --> tipo autorizacao (S=Senha, A=Assinatura)
                              ,pr_xmllog             IN VARCHAR2              --> XML com informações de LOG
                              ,pr_cdcritic           OUT PLS_INTEGER          --> Código da crítica
                              ,pr_dscritic           OUT VARCHAR2             --> Descrição da crítica
@@ -1205,6 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
     vr_dstransa           VARCHAR2(1000);
     vr_nrdrowid           ROWID;
     vr_flgfound           BOOLEAN;
+    vr_dtass_eletronica   DATE;
     
     -- Variaveis de log
     vr_cdcooper crapcop.cdcooper%TYPE;
@@ -1286,6 +1295,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
     
     vr_dstransa := 'Adesão serviços cooperativos';
     
+    -- se assinatura for do tipo [S]enha eletronica, preencher a data da assinatura
+    IF (UPPER(pr_idtipo_autorizacao) = 'S') THEN
+      vr_dtass_eletronica := SYSDATE;
+    ELSE
+      vr_dtass_eletronica := NULL;
+    END IF;
+
     --Insere novo pacote
     BEGIN
       INSERT INTO tbtarif_contas_pacote (cdcooper
@@ -1299,6 +1315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
                                         ,perdesconto_manual
                                         ,qtdmeses_desconto
                                         ,cdreciprocidade
+                                        ,dtass_eletronica
                                         ,cdoperador_adesao
                                         ,dtcancelamento)
                                 VALUES (vr_cdcooper
@@ -1312,6 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
                                        ,pr_perdesconto_manual
                                        ,pr_qtdmeses_desconto
                                        ,pr_idparame_reciproci
+                                       ,vr_dtass_eletronica
                                        ,vr_cdoperad
                                        ,NULL);
     EXCEPTION
@@ -1354,6 +1372,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADEPAC AS
                              ,pr_nmdcampo => 'Inicio da vigencia'
                              ,pr_dsdadant => NULL
                              ,pr_dsdadatu => to_char(vr_dtinicio_vigencia,'DD/MM/RRRR'));
+
+    IF (vr_dtass_eletronica IS NOT NULL) THEN
+      -- Gerar informacoes do item
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                              ,pr_nmdcampo => 'Data da assinatura eletronica'
+                              ,pr_dsdadant => NULL
+                              ,pr_dsdadatu => to_char(vr_dtass_eletronica,'DD/MM/RRRR HH24:MI:SS'));
+    END IF;
     
     -- Efetua commit
     COMMIT;

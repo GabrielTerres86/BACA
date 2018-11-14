@@ -3266,6 +3266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                ,pr_flgerlog => 'N' --> identificador se deve gerar log S-Sim e N-Nao
                                ,pr_flgzerar => 'N' --> Nao zerar limite
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data da cooperativa
+                               ,pr_flgprcrd => 1 --> considerar apenas limite titular
                                 ------ OUT ------
                                ,pr_flgativo    => vr_flgativo --> Retorna situação 1-ativo 2-inativo
                                ,pr_nrctrhcj    => vr_nrctrhcj --> Retorna numero do contrato
@@ -3297,6 +3298,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Enviar flag de encontro e valor de Limite de Crédito
       vr_obj_generic2.put('temCartaoCredito'
                          ,(vr_flgativo > 0));
+      
+      -- ajustado para retornar o limite correto devido a erros na pc_lista_cartoes
+      -- cartao segunda via, cartao adicional
+      ccrd0001.pc_retorna_limite_conta (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_vllimtot => vr_vltotccr);
+
       vr_obj_generic2.put('limiteCartaoCredit'
                          ,este0001.fn_decimal_ibra(vr_vltotccr));
     
@@ -3370,7 +3378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
     
       -- Enviar o saldo utilizado
-      vr_obj_generic2.put('saldoDevedor', este0001.fn_decimal_ibra(vr_vlutiliz));
+      vr_obj_generic2.put('saldoDevedor', este0001.fn_decimal_ibra(vr_vlutiliz + vr_vltotccr));
     
       -- Verificar co-responsabilidade
       empr0003.pc_gera_co_responsavel(pr_cdcooper           => pr_cdcooper

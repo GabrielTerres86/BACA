@@ -1561,6 +1561,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   vr_dscomando varchar2(1000);
   vr_vllimati     craplim.vllimite%TYPE;
 
+  --- variavel cartoes
+  vr_vltotccr NUMBER;
+
   BEGIN
 
      --    Verificar se a data existe
@@ -1694,6 +1697,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
 
      --if  rw_crawlim.inlcrcdc = 0 then
+        -- retorna o limite dos cartoes do cooperado para todas as contas (usando a cada0004.lista_cartoes)
+        ccrd0001.pc_retorna_limite_cooperado(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_vllimtot => vr_vltotccr);
+     
          -- Verificar se usa tabela juros
          vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                   ,pr_nmsistem => 'CRED'
@@ -1746,7 +1754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
              end if;
          end loop;
 
-         vr_obj_proposta.put('endividamentoContaValor'     ,vr_vlutiliz);
+         vr_obj_proposta.put('endividamentoContaValor'     ,vr_vlutiliz + vr_vltotccr);
          vr_obj_proposta.put('propostasPendentesValor'     ,vr_vlprapne );
          vr_obj_proposta.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );
 

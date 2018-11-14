@@ -474,6 +474,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 END CCRD0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
+  -- Rotina para o processamento do dos carquivos de domicilio bancario
 
 /*---------------------------------------------------------------------------------------------------------------
   --
@@ -7998,6 +7999,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT VARCHAR2)  IS
 
+/*                                    
+                   25/06/2018 - Tratamento de Históricos de Credito/Debito   
+                                José Carvalho  AMcom 
+*/            
+                        
+     vr_tab_retorno    LANC0001.typ_reg_retorno;
+     vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+                                    
+
     -- Registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -8438,41 +8448,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               RAISE vr_exc_saida;
             END IF;
 
-            -- insere o registro na tabela de lancamentos
             BEGIN
-              INSERT INTO craplcm
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 nrseqdig,
-                 vllanmto,
-                 nrdctabb,
-                 nrdctitg,
-                 cdcooper,
-                 dtrefere,
-                 cdoperad,
-                 CDPESQBB)
-              VALUES
-                (trunc(vr_dtprocesso),                                     --dtmvtolt
-                 1,                                                 --cdagenci
-                 100,                                               --cdbccxlt
-                 vr_nrdolote,                                       --nrdolote
-                 vr_nrdconta,                                       --nrdconta
-                 vr_nrseqdiglcm,                                    --nrdocmto
-                 vr_cdhistor,                                       --cdhistor
-                 vr_nrseqdiglcm,                                    --nrseqdig
-                 rw_tabela.vlpagamento,                             --vllanmto
-                 vr_nrdconta,                                       --nrdctabb
-                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
-                 vr_cdcooper,                                       --cdcooper
-                 rw_tabela.dtpagamento,                             --dtrefere
-                 '1',                                               --cdoperad
-                 rw_tabela.nrliquidacao);                           --CDPESQBB
+            -- insere o registro na tabela de lancamentos
+              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>trunc(vr_dtprocesso)    -- dtmvtolt
+                                                ,pr_cdagenci=>1                        -- cdagenci
+                                                ,pr_cdbccxlt =>100                     -- cdbccxlt
+                                                ,pr_nrdolote =>vr_nrdolote             -- nrdolote 
+                                                ,pr_nrdconta =>vr_nrdconta             -- nrdconta 
+                                                ,pr_nrdocmto =>vr_nrseqdiglcm          -- nrdocmto 
+                                                ,pr_cdhistor =>vr_cdhistor             -- cdhistor
+                                                ,pr_nrseqdig =>vr_nrseqdiglcm          -- nrseqdig
+                                                ,pr_vllanmto =>rw_tabela.vlpagamento   -- vllanmto 
+                                                ,pr_nrdctabb =>vr_nrdconta             -- nrdctabb
+                                                ,pr_nrdctitg =>GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg 
+                                                ,pr_cdcooper =>vr_cdcooper             -- cdcooper
+                                                ,pr_dtrefere =>rw_tabela.dtpagamento   -- dtrefere
+                                                ,pr_cdoperad =>1                       -- cdoperad
+                                                ,pr_cdpesqbb =>rw_tabela.nrliquidacao  -- cdpesqbb                                                                                                
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tab_retorno
+                                                ,pr_incrineg => vr_incrineg
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_saida;
+              END IF;   
             EXCEPTION
+              WHEN vr_exc_saida THEN
+                raise vr_exc_saida; -- Apenas passar a critica 
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
                 RAISE vr_exc_saida;

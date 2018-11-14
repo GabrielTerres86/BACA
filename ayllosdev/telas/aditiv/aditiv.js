@@ -83,7 +83,6 @@ $(document).ready(function() {
 	estadoInicial();
 });
 
-
 // seletores
 function estadoInicial() {
 
@@ -146,7 +145,6 @@ function atualizaSeletor(){
 
 	return false;
 }
-
 
 // controle
 function controlaOperacao(nriniseq, nrregist) {
@@ -216,7 +214,6 @@ function verificarModBem(modBem){
 	return modBemVerificado;
 }
 
-
 function manterRotina( operacao ) {
 
 	if(cddopcao == "I" && cdaditiv == 5)
@@ -272,7 +269,7 @@ function manterRotina( operacao ) {
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
 
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
 		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
 		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
 		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
@@ -444,12 +441,8 @@ function manterRotina( operacao ) {
 		});
 	}
 	
-	
 	return false;
-
-
 }
-
 
 // imprimir
 function Gera_Impressao() {	
@@ -491,7 +484,6 @@ function Gera_Impressao() {
 			2000
 		);
 }
-
 
 // formata
 function formataCabecalho() {
@@ -559,7 +551,6 @@ function formataCabecalho() {
 		return false;
 
 	});
-
 
 	btnOK2.unbind('click').bind('click', function() {
 		if ( divError.css('display') == 'block' ) { return false; }
@@ -728,7 +719,6 @@ function formataCabecalho() {
 		}
 	});
 
-
 	layoutPadrao();
 	return false;
 }
@@ -802,10 +792,8 @@ function controlaLayout() {
 
 	}
 
-
 	return false;
 }
-
 
 // tipo
 function mostraTipo() {
@@ -1426,8 +1414,8 @@ function formataTipo5() {
 			busca_uf_pa(nrdconta);
 			$("#uflicenc").prop("readonly", true);
 			
-			$("#"+idElementTpVeiulo).change( function() {
-				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS'])) {
+			$('#dssemfip', '#frmTipo').change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 					removeErroCampo($("#" + idElementMarca + "C", '#'+frmTipo5));
 					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show();
@@ -1437,7 +1425,44 @@ function formataTipo5() {
 					removeErroCampo($("#" + idElementAno + "C", '#'+frmTipo5));
 					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show();
+				} else {
+					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
+					$("#" + idElementMarca + "C").show();
+					transportaValorInput(idElementMarca);
+					$("#" + idElementMarca).val('').hide();
+					removeErroCampo($("#" + idElementModelo, '#'+frmTipo5));
+					$("#" + idElementModelo + "C").show();
+					transportaValorInput(idElementModelo);
+					$("#" + idElementModelo).val('').hide();
+					removeErroCampo($("#" + idElementAno, '#'+frmTipo5));
+					$("#" + idElementAno + "C").show().habilitaCampo();
+					transportaValorInput(idElementAno);
+					$("#" + idElementAno).val('').hide();
+					cVlfipbem.val('');
+				}
+			});
+
+			$("#"+idElementTpVeiulo).change( function() {
+				if (!in_array(cDscatbem.val(), ['OUTROS VEICULOS']) && !($('#dssemfip', '#frmTipo').is(':checked')) ) {
+					removeErroCampo($("#" + idElementMarca + "C", '#'+frmTipo5));
+					$("#" + idElementMarca + "C").val('').hide();
+					$("#" + idElementMarca).show();
+					removeErroCampo($("#" + idElementModelo + "C", '#'+frmTipo5));
+					$("#" + idElementModelo + "C").val('').hide();
+					$("#" + idElementModelo).show();
+					removeErroCampo($("#" + idElementAno + "C", '#'+frmTipo5));
+					$("#" + idElementAno + "C").val('').hide();
+					$("#" + idElementAno).show();
+					if (in_array(cDscatbem.val(), [''])) {
+						$('#dssemfip').removeAttr('checked').hide();
+						$('#lbsemfip').hide();
+						$("#frmTipo select#dstipbem").css({ "width": "150" });
 		} else {
+						$('#dssemfip').show();
+						$('#lbsemfip').show();
+						$("#frmTipo select#dstipbem").css({ "width": "80" });
+					}
+				} else {
 					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
 					$("#" + idElementMarca + "C").show();
 					$("#" + idElementMarca).val('').hide();
@@ -1448,13 +1473,16 @@ function formataTipo5() {
 					$("#" + idElementAno + "C").show().habilitaCampo();
 					$("#" + idElementAno).val('').hide();
 					cVlfipbem.val('');
+					$("#frmTipo select#dstipbem").css({ "width": "150" });
+					$('#dssemfip').removeAttr('checked').hide();
+					$('#lbsemfip').hide();
 				}
 			});
 
 		} else {
 			$('select, input', '#'+frmTipo5).desabilitaCampo();
 		}
-		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) ) {
+		if ( cddopcao == 'C' || in_array(cDscatbem.val(), ['OUTROS VEICULOS']) || $('#dssemfip', '#frmTipo').is(':checked') ) {
 			$("#dsmarbemC").show();
 			$("#dsbemfinC").show();
 			$("#nrmodbemC").show();

@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0002 IS
 -- Objetivo  : Agrupar rotinas genéricas dos sistemas Oracle
 --
 -- Alteracoes: 
+--             30/10/2018 - SCTASK0033039 - Alteração do periodo da custodia de cheques de 3 para 5 anos -- Jefferson Gubetti - Mouts
 ---------------------------------------------------------------------------------------------------------------
   
   -- Buscar lista de remessas de custodias.
@@ -151,6 +152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
 
       vr_dtminimo DATE;
       vr_qtddmini NUMBER;
+      vr_prazo_custod NUMBER;
 
       -- Identifica o ultimo dia Util do ANO
       vr_dtultdia DATE;
@@ -324,10 +326,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         EXIT WHEN vr_qtddmini = 2;
       END LOOP;
 
+      -- Busca prazo máximo da custódia
+      vr_prazo_custod := gene0001.fn_param_sistema('CRED',0,'PRAZO_CUSTODIA_CHEQUES');
+
       -- Se o cheque não estiver no prazo mínimo ou no 
-      -- prazo máximo (1095 dias)
+      -- prazo máximo (vr_prazo_custod)
       IF   pr_dtlibera <= vr_dtminimo OR
-           pr_dtlibera > (pr_dtmvtolt + 1095)   THEN
+           pr_dtlibera > (pr_dtmvtolt + vr_prazo_custod)   THEN
         -- Data para Deposito invalida
         pr_cdtipmvt := nvl(pr_cdtipmvt,21);
         pr_cdocorre := nvl(pr_cdocorre,'12');
@@ -1751,6 +1756,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         -- Criando um array com todas as informações do cheque
         vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
 
+		vr_ret_cheque(5) := translate( vr_ret_cheque(5),' .-',' ');
+
         vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
         vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco
         vr_cdagechq := to_number(vr_ret_cheque(3));			-- Agencia
@@ -1808,6 +1815,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
           -- Criando um array com todas as informações do cheque
           vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
+
+		  vr_ret_cheque(5) := translate( vr_ret_cheque(5),' .-',' ');
 
           vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
           vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco

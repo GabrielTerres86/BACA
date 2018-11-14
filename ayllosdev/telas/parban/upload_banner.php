@@ -6,7 +6,7 @@
 	 * DATA CRIACAO : 28/02/2018
 	 * OBJETIVO     : Rotina para salvar informações de mensagens manuais da tela ENVNOT
 	 * --------------
-	 * ALTERCOES   : 
+	 * ALTERCOES   : 18/10/2018 - Ajuste na validacao do arquivo apos o move_upload (Andrey Formigari - Mouts)
 	 * -------------- 
 	**/
 	
@@ -164,15 +164,22 @@
 		}
 
 		if($moveImg){
-
 			try {
 			  shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg . ' -u '.$user.':'.$pass.' '.$_UP['srvImg']);			
 			} catch(Exception $e){
 				//echo("<script> console.log('Exception');</script> ");
 				gerarErro(utf8_decode("Erro ao carregar arquivo!"));
 				exit;
-			}			
-		}	
+			}
+		}
+		
+		$url = $_UP['srvImg'] . $nmarqimg;
+		$get_http_response_code = get_http_response_code($url);
+		if ($get_http_response_code <> 200) {
+			gerarErro(utf8_decode("Não foi possível enviar a imagem, repita o processo. Codigo HTTP: " . $get_http_response_code));
+			exit;
+		}
+		
 		$inexibir_banner = 1;
 	}else{
 		$nmarqimg = $_POST["nmimagem_banner"];

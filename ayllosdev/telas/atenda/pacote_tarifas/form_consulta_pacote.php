@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Lombardi
  * DATA CRIAÇÃO : 18/03/2016
  * OBJETIVO     : Tela do formulario de detalhamento de tarifas
+ * ALTERACAO    :
+ * 
+ * 30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero) 
  */	 
 
 	session_start();
@@ -100,6 +103,12 @@
 		
 			<div style="margin-top: 10px;"></div>
 			
+			<label for="tipo_autorizacao" class="rotulo" style="width:119px;" >Tipo de Autoriza&ccedil;&atilde;o:</label>
+			<label style="font-weight: normal;"><input type="radio" name="tipo_autorizacao" value='S' style="border:none;"> Senha</label>
+			<label style="font-weight: normal; margin-left: 5px;"><input type="radio" name="tipo_autorizacao" value='A' style="border:none;"> Assinatura</label>
+
+			<div style="margin-top: 10px;"></div>
+			
 			<label for="cdreciprocidade">Reciprocidade:</label>
 			<input type="text" name="cdreciprocidade" style="text-align: right;" id="cdreciprocidade">
 			
@@ -127,8 +136,12 @@
 			<label for="qtdmeses_desconto">Qtd. meses desconto:</label>
 			<input class="inteiro" name="qtdmeses_desconto" style="text-align: right;" id="qtdmeses_desconto" maxlength="4" type="text" value="" />
 			
+			<div style="margin-top: 10px;"></div>
+
+			<label for="tipo_autorizacao" class="rotulo" style="width:119px;">Tipo de Autoriza&ccedil;&atilde;o:</label>
+			<label style="font-weight: normal;"><input type="radio" name="tipo_autorizacao" value='S' style="border:none;"> Senha</label>
+			<label style="font-weight: normal; margin-left: 5px;"><input type="radio" name="tipo_autorizacao" value='A' style="border:none;"> Assinatura</label>
 		<?}?>
-		
 	</fieldset>
 </form>	
 

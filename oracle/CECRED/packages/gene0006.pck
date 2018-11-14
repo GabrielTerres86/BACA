@@ -1633,7 +1633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -1643,6 +1643,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;
           
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
+            END IF;
+          ELSE
+            pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+          END IF;
+        END IF;
+        
           -- Identificar a origem do comprovante
           -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
           -- Quando não for TAA será devolvido como INTERNET
@@ -2170,11 +2187,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2230,7 +2242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2239,6 +2251,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;   
+        
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
+            END IF;
+          ELSE
+            pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+          END IF;
+        END IF;
         
       END LOOP;         
       
@@ -2391,11 +2420,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           CLOSE cr_crappro; 
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         /*IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2470,7 +2494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2479,6 +2503,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;   
+        
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
+            END IF;
+          ELSE
+            pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+          END IF;
+        END IF;
         
         -- Identificar a origem do comprovante
         -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA

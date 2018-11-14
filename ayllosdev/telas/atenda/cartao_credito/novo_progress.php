@@ -168,6 +168,22 @@
 	$json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
 
 	$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
+
+	// Validação para saber se houve ou não alteração no nome da empresa, se houver habilita edição do campo empresa do plástico
+	// Augusto - Supero
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "VALIDA_ALT_EMPR_PLASTICO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
+		exibirErro('error', $msgErro, 'Alerta - Ayllos', $funcaoAposErro);
+	}
+	$habilitarEdicaoEmpresaPlastico = (!empty($xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata : "0");
 ?>
 
 <style>
@@ -286,6 +302,7 @@
 			<div id="empresa">
 				<label for="nmempres"><? echo utf8ToHtml('Empresa do Plástico:') ?></label>
 				<input type="text" name="nmempres" id="nmempres" class="campo" value="<?echo $nmtitcrd; ?>" />
+				<input type="hidden" name="flgEditEmpPlas" id ="flgEditEmpPlas" value="<?=$habilitarEdicaoEmpresaPlastico?>" />
 			</div>
 			
 			<hr style="background-color:#666; height:1px; width:480px;" id="hr2"/>

@@ -128,6 +128,8 @@
 DEF TEMP-TABLE bb-instr-tit-sacado-dda  NO-UNDO LIKE tt-instr-tit-sacado-dda.
 DEF TEMP-TABLE bb-descto-tit-sacado-dda NO-UNDO LIKE tt-descto-tit-sacado-dda.
 
+DEF VAR aux_flmobile  AS LOGI                                         NO-UNDO.
+
 DEF VAR i             AS INTE                                         NO-UNDO.
 DEF VAR j             AS INTE                                         NO-UNDO.
 DEF VAR k             AS INTE                                         NO-UNDO.
@@ -346,6 +348,7 @@ PROCEDURE lista-titulos-sacado:
     DEF  INPUT PARAM par_cdsittit AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idordena AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flmobile AS LOGI                           NO-UNDO.
     
     DEF OUTPUT PARAM par_qttitulo AS INTE                           NO-UNDO.
 
@@ -369,7 +372,8 @@ PROCEDURE lista-titulos-sacado:
            aux_dscritic = ""
            aux_cdderror = ""
            aux_dsderror = ""
-           aux_dsreturn = "NOK".
+           aux_dsreturn = "NOK"
+           aux_flmobile = par_flmobile. /* Alimentar variavel global para utilizar nas procedures PRIVATEs */
            
     DO WHILE TRUE:
 
@@ -2601,8 +2605,8 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
 
                 ASSIGN bb-descto-tit-sacado-dda.dsdescto =
                        IF bb-descto-tit-sacado-dda.vldesct > 0 THEN
-                          (
-						    (IF bb-descto-tit-sacado-dda.cdtpdesc = "" THEN "R$ " ELSE "") +
+                          ((IF NOT aux_flmobile THEN "DESCONTO: " ELSE "") +
+						     (IF bb-descto-tit-sacado-dda.cdtpdesc = "" THEN "R$ " ELSE "") +
                              TRIM(STRING(bb-descto-tit-sacado-dda.vldesct,
                                         "zzz,zzz,zzz,zz9.99")) +
                              bb-descto-tit-sacado-dda.cdtpdesc + 

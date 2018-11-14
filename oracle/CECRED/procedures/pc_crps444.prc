@@ -372,6 +372,11 @@ BEGIN
 								11/07/2018 - Incluídos históricos para o relatório CRITICAITG.txt
                            - Removido histórico 0729TRANSF.CTA. no relatório CRITICAITG.txt
 													 (Reinert)
+
+                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                              PRJ450 - Renato Cordeiro (AMcom)         
+
+
      ............................................................................. */
 
   DECLARE
@@ -1047,6 +1052,10 @@ BEGIN
      vr_vllctacm           NUMBER;   
      vr_vllctage           NUMBER; 
      vr_typ_said           VARCHAR2(4);  
+
+     vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+     vr_tab_retorno lanc0001.typ_reg_retorno;
+     vr_incrineg  INTEGER;
 
      --Procedure para limpar os dados das tabelas de memoria
      PROCEDURE pc_limpa_tabela IS
@@ -4011,6 +4020,34 @@ BEGIN
                  vr_cdhislcm:= 59;
                END IF;
                --Inserir lancamento
+               lanc0001.pc_gerar_lancamento_conta(
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_cdhistor => nvl(vr_cdhislcm,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => pr_cdcooper,
+                                 pr_cdbanchq => rw_crapfdc.cdbanchq,
+                                 pr_cdagechq => rw_crapfdc.cdagechq,
+                                 pr_nrctachq => rw_crapfdc.nrctachq,
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
+               if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+                 RAISE vr_exc_saida;
+               end if;
+               rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
+               rw_craplcm.cdhistor:=nvl(vr_cdhislcm,0);
+/*
                INSERT INTO craplcm
                  (craplcm.dtmvtolt
                  ,craplcm.dtrefere
@@ -4049,7 +4086,10 @@ BEGIN
                  ,rw_crapfdc.nrctachq)
                RETURNING craplcm.nrseqdig,craplcm.cdhistor
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
+*/
              EXCEPTION
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
@@ -4301,6 +4341,32 @@ BEGIN
              END IF;
              --Inserir Lancamento
              BEGIN
+
+               lanc0001.pc_gerar_lancamento_conta(
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_cdhistor => nvl(vr_cdhistor,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => pr_cdcooper,
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
+               if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+                 RAISE vr_exc_saida;
+               end if;
+               rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
+               rw_craplcm.cdhistor:=nvl(vr_cdhistor,0);
+/*
                INSERT INTO craplcm
                  (craplcm.dtmvtolt
                  ,craplcm.dtrefere
@@ -4333,7 +4399,10 @@ BEGIN
                  ,pr_cdcooper)
                RETURNING craplcm.nrseqdig,craplcm.cdhistor
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
+*/
              EXCEPTION
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento debito. '||sqlerrm;
@@ -4440,6 +4509,32 @@ BEGIN
              END IF;
              --Inserir Lancamento
              BEGIN
+               lanc0001.pc_gerar_lancamento_conta(
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_cdhistor => nvl(vr_cdhistor,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => nvl(pr_cdcooper,0),
+                                 pr_dsidenti => nvl(vr_dsidenti,' '),
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic );
+               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
+                 RAISE vr_exc_saida;
+               end if;
+               rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
+               rw_craplcm.cdhistor:=nvl(vr_cdhistor,0);
+/*
                INSERT INTO craplcm
                  (craplcm.dtmvtolt
                  ,craplcm.dtrefere
@@ -4474,7 +4569,11 @@ BEGIN
                  ,nvl(vr_dsidenti,' '))
                RETURNING craplcm.nrseqdig,craplcm.cdhistor
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
+*/
              EXCEPTION
+               
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento debito. '||sqlerrm;

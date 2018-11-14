@@ -51,6 +51,8 @@
 				<div>
 					<label for="dstipbem"> Tipo Veículo :</label>
 					<? echo selectTipoVeiculo('dstipbem', getByTagName($dados,'dstipbem')) ?>
+					<input type="checkbox" id="dssemfip" name="dssemfip" value="scales" />
+					<label for="dssemfip" id="lbsemfip">Sem Fipe</label>
 				</div>
 				<div>
 					<label for="dsmarbem"> Marca :</label>
@@ -63,10 +65,10 @@
 					<input name="dsbemfin" id="dsbemfinC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'dsbemfin') ?>" />
 				</div>
 				<div>
-                    <label for="nrmodbem" >Ano Mod./Fab.:</label>
+                    <label for="nrmodbem" >Ano Modelo:</label>
 					<select name="nrmodbem" id="nrmodbem"></select>
 					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
-					<label for="nranobem" style='display:none'>Ano Fab.:</label>
+					<label for="nranobem" id="lsanobem">Fab:</label>
 					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
 				</div>
 				<div>

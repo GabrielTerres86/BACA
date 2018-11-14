@@ -1,5 +1,4 @@
 var errorMessage = "";
-
 $(function(){
 	$('#vlrdobem').maskMoney();
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
@@ -75,7 +74,9 @@ function TrataDados(){
 function validaCamposAditiv(){
 	var invalidos=0;
 	errorMessage = "";
-	if (in_array($('#dscatbem', '#frmTipo').val(),['OUTROS VEICULOS'])) {
+	
+	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
 		if(!validaCampo('dsmarbemC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('dsbemfinC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('nrmodbemC', '#frmTipo')){invalidos=invalidos+1;}
@@ -84,7 +85,6 @@ function validaCamposAditiv(){
 	if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
 	}
-	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nranobem', '#frmTipo')){invalidos=invalidos+1;}	
 	if(!validaCampo('vlrdobem', '#frmTipo')){invalidos=invalidos+1;}
@@ -230,7 +230,7 @@ function SubstituiBem(){
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text(); 
 	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text();
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
 		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
 		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
 		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
@@ -410,4 +410,12 @@ function formataDoc()
                         valObjDoc.substring(12,14)
                     );
     }
+}
+
+function transportaValorInput(idElement) {
+	
+	if ( $("#" + idElement).val() != -1 ) {
+		$("#" + idElement + "C").val( $("#" + idElement).find('option:selected').text() ); //$('#nrmodbem option:selected', '#frmTipo').text()
+	}
+	
 }

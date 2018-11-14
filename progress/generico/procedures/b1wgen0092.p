@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 29/10/2018
     
    Dados referentes ao programa:
    
@@ -242,6 +242,10 @@
               20/07/2018 - Incluir tratamento para caso for inclusao manual na verificacao
                            da critica "Operacao nao finalizada, tente novamente." 
                            (Lucas Ranghetti INC0019645)
+						 
+              29/10/2018 - Incluir validacao para nao validar o historico 453
+                           da Vivo quando for cancelamento de debito 
+                           (Lucas Ranghetti SCTASK0024876)						 
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -334,9 +338,10 @@ PROCEDURE busca-autori:
                         LEAVE Busca.
                     END.                          
 
-                /* Se nao for celesc ou wbt, deve validar */
+                /* Se nao for celesc, wbt ou vivo deve validar */
                 IF  (INT(par_cdhistor) <> 667) AND
-                    (INT(par_cdhistor) <> 2016) THEN
+                    (INT(par_cdhistor) <> 2016) AND
+                    (INT(par_cdhistor) <> 453)	THEN
                     IF  crapatr.nmempres <> "" AND par_cddopcao <> "R" THEN
                         DO:
                             ASSIGN aux_dscritic =  "Debito autorizado pelo convenio " + 

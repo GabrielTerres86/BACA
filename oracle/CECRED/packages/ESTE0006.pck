@@ -1270,7 +1270,6 @@ END pc_incluir_bordero_esteira;
           ,UPPER(bdt.cdopeapr) as cdopeapr
           ,'0,0,0,0,0,0,0,0,0,0' dsliquid
           ,'BT' as tpproduto
-          ,bdt.dsprotoc
       FROM crapbdt bdt
      INNER JOIN craplim lim -- apenas para chegar nas informações de linha de credito com um passo a menos no oracle engine. Menor custo para o banco.
         ON lim.nrdconta = bdt.nrdconta
@@ -1525,6 +1524,9 @@ END pc_incluir_bordero_esteira;
   vr_tab_dados_dsctit_cr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
   vr_tab_dados_dsctit_sr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Sem Registro
   vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
+
+  --- variavel cartoes
+  vr_vltotccr NUMBER;
 
   BEGIN
 
@@ -1790,6 +1792,11 @@ END pc_incluir_bordero_esteira;
 
      vr_obj_bordero.put('parecerPreAnalise', 0);
 
+         -- retorna o limite dos cartoes do cooperado para todas as contas (usando a cada0004.lista_cartoes)
+        ccrd0001.pc_retorna_limite_cooperado(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_vllimtot => vr_vltotccr);
+
          -- Verificar se usa tabela juros
          vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                   ,pr_nmsistem => 'CRED'
@@ -1850,18 +1857,18 @@ END pc_incluir_bordero_esteira;
 
          -- Na Esteira de Crédito o valor total do endividamento utilizado no fluxo de aprovação será composto por:
          --   Valor do Endividamento da conta + valor do Borderô que está sendo inclusa + o valor de Borderôs aprovados e não efetivados.
-         vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0)));
+         vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0) + nvl(vr_vltotccr, 0)));
 
          vr_obj_bordero.put('propostasPendentesValor'     ,vr_vlprapne );
          vr_obj_bordero.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );
 
          -- Busca PDF gerado pela análise automática do Motor
-         /*vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
+         vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
                                                           ,pr_nrdconta => pr_nrdconta
-                                                          ,pr_nrctremp => rw_crapbdt.nrctrlim);*/
+                                                          ,pr_nrctremp => rw_crapbdt.nrctrlim);
 
-         vr_obj_bordero.put('protocoloPolitica'          ,trim(rw_crapbdt.dsprotoc));
-         
+         vr_obj_bordero.put('protocoloPolitica'          ,vr_dsprotoc);
+
          -- Copiar parâmetro
          vr_nmarquiv := pr_nmarquiv;
 
@@ -1927,7 +1934,7 @@ END pc_incluir_bordero_esteira;
                  gene0001.pc_oscommand_shell(pr_des_comando => 'rm '||vr_nmarquiv);
              end if;
          end if;
-         /*
+
          --  Se encontrou PDF de análise Motor
          if  vr_dsprotoc is not null then
              -- Diretorio para salvar
@@ -1982,7 +1989,7 @@ END pc_incluir_bordero_esteira;
              -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
              gene0001.pc_oscommand_shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
          end if;
-         */
+
          -- Incluiremos os documentos ao json principal
          vr_obj_bordero.put('documentos',vr_lst_doctos);
 

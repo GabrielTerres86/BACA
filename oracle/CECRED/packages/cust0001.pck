@@ -47,6 +47,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --                          da conta quando tiver critica. (Daniel)
 --             17/08/2018 - SCTASK0018345 - Paulo Martins - Mouts
 --	           27/09/2018 - INC0023556 - Ajuste não permitir exclusão cheque liberado -- Paulo Martins - Mouts
+--             30/10/2018 - SCTASK0033039 - Alteração do periodo da custodia de cheques de 3 para 5 anos -- Jefferson Gubetti - Mouts
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -553,6 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_auxqtd   NUMBER;
       vr_dtminimo DATE;
       vr_qtddmini NUMBER;
+      vr_prazo_custod NUMBER;
 
       -- Identifica o ultimo dia Util do ANO
       vr_dtultdia DATE;
@@ -797,10 +799,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           EXIT WHEN vr_qtddmini = 2;
         END LOOP;
 
+        -- Busca prazo máximo da custódia
+        vr_prazo_custod := gene0001.fn_param_sistema('CRED',0,'PRAZO_CUSTODIA_CHEQUES');
+
         -- Se o cheque não estiver no prazo mínimo ou no 
-        -- prazo máximo (1095 dias)
+        -- prazo máximo (vr_prazo_custod)
         IF   pr_dtlibera <= vr_dtminimo OR
-             pr_dtlibera > (pr_dtmvtolt + 1095)   THEN
+             pr_dtlibera > (pr_dtmvtolt + vr_prazo_custod)   THEN
           -- Data para Deposito invalida
           pr_cdtipmvt := nvl(pr_cdtipmvt,21);
           pr_cdocorre := nvl(pr_cdocorre,'12');

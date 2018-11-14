@@ -1,4 +1,16 @@
 <?	
+
+/***************************************************************************************
+ * FONTE        : tab_pacote_tarifas.php				Última alteração: --/--/----
+ * CRIAÇÃO      : Lombardi
+ * DATA CRIAÇÃO : Abril/2016
+ * OBJETIVO     : 
+ 
+	 Alterações   : 
+  		 
+     30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero) 
+ 
+ **************************************************************************************/
 	
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');	
@@ -41,6 +53,7 @@
 						<input type="hidden" id="hd_perdesconto_manual"  value="<? echo getByTagName($registro->tags,'perdesconto_manual'); ?>" />
 						<input type="hidden" id="hd_qtdmeses_desconto"   value="<? echo getByTagName($registro->tags,'qtdmeses_desconto'); ?>" />
 						<input type="hidden" id="hd_cdreciprocidade"	 value="<? echo getByTagName($registro->tags,'cdreciprocidade'); ?>" />
+						<input type="hidden" id="hd_dtass_eletronica"	 value="<? echo getByTagName($registro->tags,'dtass_eletronica'); ?>" />
 					</td>
 					<td><? echo getByTagName($registro->tags,'dtinicio_vigencia'); ?></td>
 					<td><? echo getByTagName($registro->tags,'flgsituacao'); ?></td>

@@ -14,6 +14,7 @@
  * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
  * 004: [30/09/2016] Incluido validacao para Data validade da licenca 'dtvallic' (Tiago/Thiago M310)
  * 005: [13/07/2017] Incluido campo Identificador do Regime tributário 'tpregtrb' (Diogo M410)
+ * 006: [18/10/2018] Remoção de caracteres especiais no campo dsendweb. (Douglas/Jefferson - Mouts)
  */
 ?>
  
@@ -63,6 +64,7 @@
 	// limpeza dos caracteres nos campos 
 	$nmfatasi = trim(str_replace( $array1, $array2, $nmfatasi));
 	$nmtalttl = trim(str_replace( $array1, $array2, $nmtalttl));
+	$dsendweb = trim(str_replace( $array1, $array2, $dsendweb));
 	
 	if( $operacao == 'AV') validaDados();
 	

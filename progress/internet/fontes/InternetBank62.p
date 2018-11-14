@@ -61,7 +61,7 @@ DEF  INPUT PARAM par_nritmfin AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_idordena AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgerlog AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdsittit AS INTE                                  NO-UNDO.
-
+DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -174,10 +174,10 @@ RUN lista-titulos-sacado IN h-b1wgen0079
                                INPUT par_dtvenfin,
                                INPUT par_nritmini,
                                INPUT par_nritmfin,
-							   INPUT par_cdsittit, /* Situacao */
-							   /*INPUT 0, */  /** Situacao **/
+							                 INPUT par_cdsittit, /* Situacao */							   
                                INPUT par_idordena,
                                INPUT par_flgerlog,
+                               INPUT par_flmobile,
                               OUTPUT aux_qttitulo,
                               OUTPUT TABLE tt-titulos-sacado-dda,
                               OUTPUT TABLE tt-instr-tit-sacado-dda,

@@ -1489,6 +1489,7 @@ PROCEDURE lista-grupo-titulos-sacado:
                                       INPUT par_cdsittit,
                                       INPUT par_idordena,
                                       INPUT FALSE,
+                                      INPUT FALSE,
                                      OUTPUT par_qttitulo,
                                      OUTPUT TABLE tt-titulos-sacado-dda,
                                      OUTPUT TABLE tt-instr-tit-sacado-dda,

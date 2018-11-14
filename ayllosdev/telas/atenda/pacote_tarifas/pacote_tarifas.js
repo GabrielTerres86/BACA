@@ -7,11 +7,13 @@
                   ATENDA
 
       Altera&ccedil;&otilde;es:
-	  25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+	  25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).	 
+
+      30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero) 
 
  ***********************************************************************/
 // Variaveis para consulta do pacote de tarifas
-var glb_cdpacote = 0, glb_dspacote, glb_dtinicio_vigencia, glb_dtcancelamento, glb_dtdiadebito, glb_perdesconto_manual, glb_qtdmeses_desconto, glb_cdreciprocidade, glb_dtadesao, glb_flgsituacao;
+var glb_cdpacote = 0, glb_dspacote, glb_dtinicio_vigencia, glb_dtcancelamento, glb_dtdiadebito, glb_perdesconto_manual, glb_qtdmeses_desconto, glb_cdreciprocidade, glb_dtass_eletronica, glb_dtadesao, glb_flgsituacao;
  
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
@@ -163,6 +165,7 @@ function formataTelaPrincipal(){
 		glb_perdesconto_manual = $(this).find('#hd_perdesconto_manual').val();
 		glb_qtdmeses_desconto  = $(this).find('#hd_qtdmeses_desconto').val();
 		glb_cdreciprocidade    = $(this).find('#hd_cdreciprocidade').val();
+		glb_dtass_eletronica   = $(this).find('#hd_dtass_eletronica').val();
 		glb_flgsituacao        = $(this).find('#hd_flgsituacao').val();
 	});
 	  
@@ -269,6 +272,7 @@ function formataTelaPacote(opcao) {
 	cDtdiadebito = $('#dtdiadebito','#frmConsultaPacote');
 	cPerdesconto_manual = $('#perdesconto_manual','#frmConsultaPacote');
 	cQtdmeses_desconto = $('#qtdmeses_desconto','#frmConsultaPacote');
+	cTipoAutorizacao = $('input[type=radio][name=tipo_autorizacao]','#frmConsultaPacote');
 	cCdreciprocidade = $('#cdreciprocidade','#frmConsultaPacote');
 	
 	rCdpacote = $('label[for="cdpacote"]','#frmConsultaPacote');
@@ -313,6 +317,13 @@ function formataTelaPacote(opcao) {
 		cDtdiadebito.val(glb_dtdiadebito);
 		cPerdesconto_manual.val(glb_perdesconto_manual);
 		cQtdmeses_desconto.val(glb_qtdmeses_desconto);
+		
+		if (glb_dtass_eletronica) {
+			cTipoAutorizacao.closest('[value=S]').prop('checked', true);
+		} else {
+			cTipoAutorizacao.closest('[value=A]').prop('checked', true);
+		}
+		
 		cCdreciprocidade.val((glb_cdreciprocidade > 0) ? "Sim" : "Não");
 		
 		cCdpacote.desabilitaCampo();
@@ -322,6 +333,7 @@ function formataTelaPacote(opcao) {
 		cDtdiadebito.desabilitaCampo();
 		cPerdesconto_manual.desabilitaCampo();
 		cQtdmeses_desconto.desabilitaCampo();
+		cTipoAutorizacao.desabilitaCampo();
 		cCdreciprocidade.desabilitaCampo();
 	}
 	$('input','#frmConsultaPacote').trigger('blur');
@@ -398,6 +410,12 @@ function valida_inclusao(reciprocidade,nrdconta,idparame_reciproci,inpessoa){
 		return false;
 	}
 	
+	var tipoAutorizacao = cTipoAutorizacao.closest(':checked').val();
+	if (!tipoAutorizacao) {
+		showError('error','Informe o tipo de autoriza&ccedil;&atilde;o', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+		return false;
+	}
+	
 	// Carrega conteúdo da opção através do Ajax
     $.ajax({
         type: 'POST',
@@ -416,20 +434,19 @@ function valida_inclusao(reciprocidade,nrdconta,idparame_reciproci,inpessoa){
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
-			
 			var perdesconto_manual = $('#perdesconto_manual').val().replace(',00','');
 			if (perdesconto_manual == "") 
 				perdesconto_manual = 0;
 			
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 				if (reciprocidade == "S") {
-					chamaCONFRP(idparame_reciproci,inpessoa,'incluiPacote(' + nrdconta + ');',(perdesconto_manual > 0) ? 'S' : 'N');
+					chamaCONFRP(idparame_reciproci,inpessoa,'incluiPacote(' + nrdconta + ', "'+ tipoAutorizacao +'");',(perdesconto_manual > 0) ? 'S' : 'N');
 				}
 				else {
 					if (perdesconto_manual > 0) {
-						 pedeSenhaCoordenador(2,'incluiPacote(' + nrdconta + ');','divRotina');
+						 pedeSenhaCoordenador(2,'incluiPacote(' + nrdconta + ', "'+ tipoAutorizacao +'");','divRotina');
 					} else {
-						incluiPacote(nrdconta);
+						incluiPacote(nrdconta, tipoAutorizacao);
 					}
 				}
 			} else {
@@ -479,7 +496,16 @@ function chamaCONFRP(idparame_reciproci,inpessoa,executafuncao,senha_coordenador
     });
 }
 
-function incluiPacote(nrdconta) {
+function incluiPacote(nrdconta, tipoAutorizacao) {
+	// tipo autorização com senha
+	if (tipoAutorizacao == 'S') {
+		solicitaSenhaMagnetico('incluiPacoteAux('+ nrdconta +')', nrdconta);
+	} else {
+		incluiPacoteAux(nrdconta);
+	}
+}
+
+function incluiPacoteAux(nrdconta) {
 	// Executa script de atraves de ajax
 	$.ajax({		
 		type: 'POST',
@@ -492,6 +518,7 @@ function incluiPacote(nrdconta) {
             qtdmeses_desconto  : $('#qtdmeses_desconto').val(),
             nrdconta           : nrdconta,
 			idparame_reciproci : $('#glb_idparame_reciproci').val(),
+			idtipo_autorizacao : $('input[type=radio][name=tipo_autorizacao]:checked','#frmConsultaPacote').val(),
 			redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {

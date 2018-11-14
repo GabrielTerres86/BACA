@@ -162,6 +162,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                19/08/2018 - Incluso trattaiva para efetuar apenas leitura de titulos
                             descontados e liberados (GFT)
 
+
+                31/10/2018 - Incluso a tratativa para não filtrar somente lotes 4.
+                			Relatorio 266 - Contratos de cheques.	            
+
  ............................................................................ */
   --
   -- Dados da cooperativa
@@ -729,10 +733,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                        rw_crapepr.cdagenci,
                        rw_crapepr.cdbccxlt,
                        rw_crapepr.nrdolote,
-                       4);
+                       null);
         fetch cr_craplot into rw_craplot;
         --
         if cr_craplot%found then
+        	if rw_craplot.tplotmov not in (4, 5) then
+               close cr_craplot;
+               continue;
+          end if;
           open cr_crapass2 (pr_cdcooper,
                             rw_crapepr.nrdconta);
             fetch cr_crapass2 into rw_crapass2;
@@ -837,10 +845,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                        rw_crapepr.cdagenci,
                        rw_crapepr.cdbccxlt,
                        rw_crapepr.nrdolote,
-                       4);
+                       null);
         fetch cr_craplot into rw_craplot;
         --
         if cr_craplot%found then
+          if rw_craplot.tplotmov not in (4, 5) then
+             close cr_craplot;
+             continue;
+          end if;
           open cr_crapass2 (pr_cdcooper,
                             rw_crapepr.nrdconta);
             fetch cr_crapass2 into rw_crapass2;
@@ -954,10 +966,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                        rw_crapepr.cdagenci,
                        rw_crapepr.cdbccxlt,
                        rw_crapepr.nrdolote,
-                       4);
+                       null);
         fetch cr_craplot into rw_craplot;
         --
         if cr_craplot%found then
+           if rw_craplot.tplotmov not in (4, 5) then
+              close cr_craplot;
+              continue;
+          end if;
           open cr_crapass2 (pr_cdcooper,
                             rw_crapepr.nrdconta);
             fetch cr_crapass2 into rw_crapass2;

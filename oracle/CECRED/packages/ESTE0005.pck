@@ -1579,38 +1579,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
            AND dtinclus >= add_months(TRUNC(SYSDATE),-pr_dtinclus);
       rw_crapspc cr_crapspc%ROWTYPE;
 
-	  CURSOR cr_valorlimite(pr_cdcooper crapcop.cdcooper%TYPE,
-                            pr_nrdconta crapass.nrdconta%TYPE) IS
-       SELECT SUM(limite)
-         FROM
-         (SELECT crd.nrcctitg, 
-                 /* Caso a conta cartao tenha mais limite, considera o maior 
-                    mas seria uma inconsistencia na base. */
-                 MAX(crd.vllimcrd) as limite
-            FROM crawcrd crd
-           WHERE crd.cdcooper = pr_cdcooper
-             AND crd.nrdconta = pr_nrdconta
-             AND crd.cdadmcrd between 10 and 80 /* BANCOOB */
-             AND crd.insitcrd in (2,3,4) /* 2-solic. 3-liberado, 4-em uso */
-        GROUP BY crd.nrcctitg
-
-        UNION ALL 
-
-          SELECT 0, 
-                 tlc.vllimcrd as limite
-            FROM crawcrd crd
-            JOIN craptlc tlc
-              ON tlc.cdcooper = crd.cdcooper
-             AND tlc.cdadmcrd = crd.cdadmcrd
-             AND tlc.tpcartao = crd.tpcartao
-             AND tlc.cdlimcrd = crd.cdlimcrd
-             AND tlc.dddebito = 0         
-           WHERE crd.cdcooper = pr_cdcooper
-             AND crd.nrdconta = pr_nrdconta
-             AND NOT crd.cdadmcrd between 10 and 80 /* NAO BANCOOB */
-             AND crd.insitcrd IN (4,7) /* Em uso */
-        );
-
     BEGIN
       --Verificar se a data existe
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -2401,6 +2369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                ,pr_flgerlog => 'N' --> identificador se deve gerar log S-Sim e N-Nao
                                ,pr_flgzerar => 'N' --> Nao zerar limite
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data da cooperativa
+                               ,pr_flgprcrd => 1 --> considerar apenas limite titular
                                 ------ OUT ------
                                ,pr_flgativo    => vr_flgativo --> Retorna situação 1-ativo 2-inativo
                                ,pr_nrctrhcj    => vr_nrctrhcj --> Retorna numero do contrato
@@ -2429,13 +2398,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         END LOOP;
       END IF;
 
-	  --> O total do limite do cartao retornado pela cada004.pc_lista_cartao nao nos atende.
-      OPEN cr_valorlimite(pr_cdcooper => pr_cdcooper,
-                          pr_nrdconta => pr_nrdconta);
-      FETCH cr_valorlimite INTO vr_vltotccr;
-      IF cr_valorlimite%NOTFOUND THEN
-        vr_vltotccr := 0;
-      END IF;
+      -- ajustado para retornar o limite correto devido a erros na pc_lista_cartoes
+      -- cartao segunda via, cartao adicional
+      ccrd0001.pc_retorna_limite_conta (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_vllimtot => vr_vltotccr);
 
       -- Enviar flag de encontro e valor de Limite de Crédito
       vr_obj_generic2.put('temCartaoCredito',(vr_flgativo > 0));
@@ -2476,6 +2443,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       END IF;
 
       
+      -- ajustado para retornar o limite correto devido a erros na pc_lista_cartoes
+      -- cartao segunda via, cartao adicional
+      ccrd0001.pc_retorna_limite_conta (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_vllimtot => vr_vltotccr);
+      
       -- Então chamaremos a rotina para busca do endividamento total
       gene0005.pc_saldo_utiliza(pr_cdcooper    => pr_cdcooper
                                ,pr_tpdecons    => 3
@@ -2507,7 +2480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       END IF;
 
       -- Enviar o saldo utilizado
-      vr_obj_generic2.put('saldoDevedor', este0001.fn_decimal_ibra(vr_vlutiliz));
+      vr_obj_generic2.put('saldoDevedor', este0001.fn_decimal_ibra(vr_vlutiliz + vr_vltotccr));
 
       -- Buscar contrato de desconto cheques
       OPEN cr_craplim_chq;
@@ -5767,7 +5740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 01/11/2018
 
       Dados referentes ao programa:
 
@@ -5775,7 +5748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Objetivo  : Rotina responsavel por realizar as leituras no sistema cecred a fim
                   de montar o objeto json contendo a proposta do cartão
 
-      Alteração :
+      Alteração : 01/11/2018 - PJ345 - Ajustes para erro no envio dos arquivos (Rafael Faria - Supero)
 
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -6017,6 +5990,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     -- Analise finalizada
     vr_flganlok boolean := FALSE;
 
+    --- variavel cartoes
+    vr_tab_cartoes             CADA0004.typ_tab_cartoes;
+    vr_flgativo INTEGER;
+    vr_nrctrhcj NUMBER;
+    vr_flgliber INTEGER;
+    vr_vltotccr NUMBER;
+    vr_tab_erro GENE0001.typ_tab_erro;
+    vr_des_erro VARCHAR2(10);
+    vr_des_reto VARCHAR2(10);
+
   BEGIN
 
     --Verificar se a data existe
@@ -6162,6 +6145,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     /*1-pre-aprovado, 2-analise manual, 3-nao conceder */
     vr_obj_proposta.put('parecerPreAnalise',0);
 
+    -- retorna o limite dos cartoes do cooperado para todas as contas (usando a cada0004.lista_cartoes)
+    ccrd0001.pc_retorna_limite_cooperado(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_vllimtot => vr_vltotccr);
     --Verificar se usa tabela juros
     vr_dstextab:= tabe0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'
@@ -6222,7 +6209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       END IF;
     END LOOP;
 
-    vr_obj_proposta.put('endividamentoContaValor',vr_vlutiliz);
+    vr_obj_proposta.put('endividamentoContaValor',vr_vlutiliz+vr_vltotccr);
     vr_obj_proposta.put('propostasPendentesValor',este0001.fn_decimal_ibra(vr_vlprapne) );
     vr_obj_proposta.put('limiteCooperadoValor'   ,este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)) );
     vr_obj_proposta.put('protocoloPolitica',vr_dsprotoc);
@@ -6421,36 +6408,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando);
 
-      -- Se NAO encontrou o arquivo
-      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
-        vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
-        RAISE vr_exc_erro;
+      -- Se encontrou o arquivo
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+        -- Converter arquivo PDF para clob em base64 para enviar via json
+        este0001.pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
+                                        ,pr_json_value_arq => vr_json_valor
+                                        ,pr_dscritic       => vr_dscritic);
+
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Gerar objeto json para a imagem
+        vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
+        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+        vr_obj_imagem.put('emissaoData' ,este0001.fn_data_ibra(SYSDATE));
+        vr_obj_imagem.put('validadeData','');
+        -- incluir objeto imagem na proposta
+        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
+
+        -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
       END IF;
-
-      -- Converter arquivo PDF para clob em base64 para enviar via json
-      este0001.pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
-                                      ,pr_json_value_arq => vr_json_valor
-                                      ,pr_dscritic       => vr_dscritic);
-
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Gerar objeto json para a imagem
-      vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
-      vr_obj_imagem.put('conteudo'    ,vr_json_valor);
-      vr_obj_imagem.put('emissaoData' ,este0001.fn_data_ibra(SYSDATE));
-      vr_obj_imagem.put('validadeData','');
-      -- incluir objeto imagem na proposta
-      vr_lst_doctos.append(vr_obj_imagem.to_json_value());
-
-      -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
-      gene0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
 
     END IF;
 
     -- Incluiremos os documentos ao json principal
-    vr_obj_proposta.put('documentos',vr_lst_doctos);
+    IF json_ac.array_count(vr_lst_doctos) > 0  THEN
+      vr_obj_proposta.put('documentos',vr_lst_doctos);
+    END IF;
 
     vr_obj_proposta.put('contratoNumero',vr_nrctrcrd/*rw_crawcrd.nrctrcrd*/);
 

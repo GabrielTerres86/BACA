@@ -6,7 +6,8 @@
  * OBJETIVO     : 
  
 	 Alterações   : 
-  
+  		 
+     30/10/2018 - Merge Changeset 26538 referente ao P435 - Tarifas Avulsas (Peter - Supero) 
  
  **************************************************************************************/
 
@@ -25,6 +26,7 @@
 	$qtdmeses_desconto  = (isset($_POST['qtdmeses_desconto']))  ? $_POST['qtdmeses_desconto']  : 0;
 	$nrdconta           = (isset($_POST['nrdconta']))  			? $_POST['nrdconta']  		   : 0;
 	$idparame_reciproci = (isset($_POST['idparame_reciproci'])) ? $_POST['idparame_reciproci'] : 0;
+	$idtipo_autorizacao = (isset($_POST['idtipo_autorizacao'])) ? $_POST['idtipo_autorizacao'] : 0;
 	
     $xmlValidaInclusao  = "";
 	$xmlValidaInclusao .= "<Root>";
@@ -35,6 +37,7 @@
 	$xmlValidaInclusao .= "	   <qtdmeses_desconto>".$qtdmeses_desconto."</qtdmeses_desconto>";
 	$xmlValidaInclusao .= "	   <nrdconta>".$nrdconta."</nrdconta>";
 	$xmlValidaInclusao .= "	   <idparame_reciproci>".$idparame_reciproci."</idparame_reciproci>";
+	$xmlValidaInclusao .= "	   <idtipo_autorizacao>".$idtipo_autorizacao."</idtipo_autorizacao>";
 	$xmlValidaInclusao .= "   </Dados>";
 	$xmlValidaInclusao .= "</Root>";
   

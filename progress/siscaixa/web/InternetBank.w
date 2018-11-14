@@ -717,17 +717,17 @@
                  16/04/2018 - Ajustes para o novo sistema do caixa eletronico 
                               PRJ363 - Douglas Quisinski
 
-                 19/04/2018 - Incluido operacao217 referente ao servico SOA 
+				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
                
-                 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
-                              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
+				 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
+				              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
 
                  01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
                               processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
 
                  28/06/2018 - Adaptacao para implantacao dos servicos de resgate, aplicacao e consulta de saldo
-                              via URA
+				              via URA
                               
                  26/10/2018 - Ajustar a validacao dos parametros de "CANAL_XXXXX" para que sejam feitas 
                               valor a valor (Douglas)
@@ -1620,7 +1620,7 @@ PROCEDURE process-web-request :
                               DECI(GET-VALUE("nrcpfope"))
            aux_nripuser = GET-VALUE("nripuser").
 
-		/* Projeto 363 - Novo caixa eletronico */
+		    /* Projeto 363 - Novo caixa eletronico */
         /* Tratamento deve ser realizado campo a campo, e utilizaremos a conta online como padrao para todos os campos */
 
         /* CANAL que esta fazendo a requisicao sempre sera enviado */
@@ -1763,11 +1763,11 @@ PROCEDURE process-web-request :
             ASSIGN token_autenticacao = GET-VALUE("aux_token_aut").
         END.
         ELSE
-            DO:
+            DO: 
                 /* Se nao foi informado o canal de origem, será considerado como IB */
                 ASSIGN token_autenticacao = "".
             END.
-
+        
         
         /** Se parametro flmobile nao foi informado, considerar que a requisicao
         não originou do mobile **/
@@ -4995,6 +4995,7 @@ PROCEDURE proc_operacao62:
                                                   INPUT aux_idordena,
                                                   INPUT aux_flgerlog,
                                                   INPUT aux_cdsittit,
+                                                  INPUT aux_flmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 

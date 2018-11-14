@@ -482,7 +482,9 @@
 
                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael)
 
-                08/08/2018 - Adicionado para não permitir geração de segunda via de boletos de Desconto de Título (Luis Fernando - GFT)
+               08/08/2018 - Adicionado para não permitir geração de segunda via de boletos de Desconto de Título (Luis Fernando - GFT)
+
+               15/10/2018 - Carregar o valor do campo INSITCRT na tt-consulta-blt (Douglas - Prj 285)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -911,6 +913,7 @@ PROCEDURE consulta-boleto-2via.
                                    INPUT crapcob.flgcbdda,
                                    INPUT crapdat.dtmvtolt,
                                    INPUT crapcob.dtvctori,
+                   INPUT crapcob.incobran,
 								   OUTPUT aux_dtvencut,           
 								   OUTPUT aux_vltituut,           
 								   OUTPUT aux_vlmormut,           
@@ -1337,6 +1340,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.incobran,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -1577,6 +1581,7 @@ PROCEDURE consulta-bloqueto.
                                                             INPUT crapcob.flgcbdda,
                                                             INPUT crapdat.dtmvtolt,
                                                             INPUT crapcob.dtvctori,
+                                                            INPUT crapcob.incobran,
                                                             OUTPUT aux_dtvencut,           
                                                             OUTPUT aux_vltituut,           
                                                             OUTPUT aux_vlmormut,           
@@ -1816,6 +1821,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.incobran,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -2058,6 +2064,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.incobran,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -2517,6 +2524,7 @@ PROCEDURE consulta-bloqueto.
                                                               INPUT crapcob.flgcbdda,
                                                               INPUT crapdat.dtmvtolt,
                                                               INPUT crapcob.dtvctori,
+                                                              INPUT crapcob.incobran,
                                                               OUTPUT aux_dtvencut,           
                                                               OUTPUT aux_vltituut,           
                                                               OUTPUT aux_vlmormut,           
@@ -4388,7 +4396,8 @@ PROCEDURE cria_tt-consulta-blt.
             tt-consulta-blt.inserasa = STRING(crapcob.inserasa)
             tt-consulta-blt.cdserasa = crapcob.inserasa
             tt-consulta-blt.flgdprot = crapcob.flgdprot
-            tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt.
+            tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt
+            tt-consulta-blt.insitcrt = crapcob.insitcrt.
 
      /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
      IF (tt-consulta-blt.flserasa = FALSE OR 
@@ -5724,7 +5733,8 @@ PROCEDURE proc_nosso_numero.
            ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
                   tt-consulta-blt.qtdianeg = crapcob.qtdianeg
                   tt-consulta-blt.flgdprot = crapcob.flgdprot
-                  tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt.
+                  tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt
+                  tt-consulta-blt.insitcrt = crapcob.insitcrt.
 
            /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
            IF (tt-consulta-blt.flserasa = FALSE OR 
@@ -9329,6 +9339,7 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF INPUT PARAM par_flgcbdda             AS INTE              NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt             AS DATE              NO-UNDO.
     DEF INPUT PARAM par_dtvctori             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_incobran             AS INTE              NO-UNDO.
     DEF OUTPUT PARAM par_dtvencut            AS DATE              NO-UNDO.
     DEF OUTPUT PARAM par_vltituut            AS DECI              NO-UNDO.
     DEF OUTPUT PARAM par_vlmormut            AS DECI              NO-UNDO.
@@ -9349,6 +9360,14 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF VAR aux_dscritic                     AS CHAR              NO-UNDO.
     DEF VAR aux_npc_cip                      AS INTE              NO-UNDO.
    
+    
+    /* Por padrao nao esta vencido */
+    ASSIGN aux_critdata = FALSE.
+    
+    /* Somente será validado o vencimento do boleto para atualizar os dados
+    caso esteja EM ABERTO */
+    IF par_incobran = 0 THEN
+    DO:
     /* rotina para criticar data de vencimento */
     RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
     
@@ -9358,6 +9377,8 @@ PROCEDURE calcula_multa_juros_boleto:
                                                  INPUT par_dtvencto,
                                                 OUTPUT aux_critdata).
     DELETE PROCEDURE h-b2crap14. 
+    END.
+    
     
     ASSIGN aux_vldescto = 0
            aux_vlabatim = par_vlabatim
