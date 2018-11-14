@@ -11,8 +11,6 @@
               09/12/2015 - Inclusão do campo cdcopope (Vanessa)
               
               13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)
-			   
-              01/11/2018 - Replicaçao de propostas (Andrey Formigari - Mouts)
 ---------------------------------------------------------------------------------------------------------------->
 
 <html>
@@ -434,7 +432,6 @@
       <input type="hidden" name="aux_dsurlphp" value="">
       <input type="hidden" name="aux_ctlinati" value="">
       <input type="hidden" name="aux_ctljusti" value="">
-<input type="hidden" name="aux_operador" value="">
 
 <!-- Inicio do modelo com abas -->
 <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
@@ -726,8 +723,7 @@
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="return salvarTela()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
-                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value, document.form.aux_operador.value);"></th>
-					      <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_replicar_respostas.gif" onClick="replicarProposta();"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick=";return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value)"></th>
                         </tr>
                       </table>
                     </div>
@@ -1648,46 +1644,15 @@
       VarURL = document.form.aux_dsendurl.value  + '/wpgd0012e.htm?aux_nrcpfcgc=' + campo + 
        '&aux_idevento=' + document.form.aux_idevento.value;
       window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1100,height=400,top=30,left=30');      
-   
-       
-
-}
-
-setTimeout(function(){
-	if (document.form.aux_operador.value != ""){
-		localStorage['aux_operador'] = document.form.aux_operador.value;
-	}
-}, 1000);
-
-var win2;
-function replicarProposta(){
-	var arrCaminho = document.form.aux_dsurlphp.value.split('-');
-	var cpf = '';
-	var operador = '';
-    cpf = TiraFormato(document.form.aux_nrcpfcgc.value);
-	operador = localStorage.aux_operador;
-	if (cpf){
-		VarURL = arrCaminho[0] + '/telas/wpgd0012/replica_proposta.php?cdcooper=' + document.form.aux_cdcopope.value + '&idevento=' + document.form.aux_idevento.value + '&nmdatela=wpgd0012&tldatela=Replicar&nbsp;Proposta&idcokses=' + arrCaminho[1] + '&cdoperad='+operador+'&cdagenci=' + document.form.aux_cdageban.value + '&aux_nrcpfcgc=' + cpf;
-		win2 = window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300,height=500,top=10,left=10');
-		checkChild();
-	}
-}
-
-function checkChild() {
-	if (win2.closed) {
-		window.location.reload(true);
-	} else {
-		setTimeout("checkChild()", 1000);
-	}
-}
-
-mostraDiv(document.form.pagina.value);
-mostraContatos();
-mostraEixos();
-mostraPropostas();
-mostraFacilitador();
-
-layoutPadrao();
+    }
+    
+    mostraDiv(document.form.pagina.value);
+    mostraContatos();
+    mostraEixos();
+    mostraPropostas();
+    mostraFacilitador();
+    
+    layoutPadrao();
         
   </script>
 </body>
