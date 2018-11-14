@@ -337,6 +337,9 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper  AND
 
 END.  /*  Fim do FOR EACH e da transacao  */
 
+IF VALID-HANDLE(h-b1wgen0200) THEN
+   DELETE PROCEDURE h-b1wgen0200.
+
 RUN fontes/fimprg.p.
 
 /* .......................................................................... */

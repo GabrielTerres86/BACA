@@ -256,6 +256,9 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                          " >> log/proc_batch.log").
                 UNDO TRANS_1, RETURN.
              END.
+             
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200. 
 
             ASSIGN  craplot.vlinfodb = craplot.vlinfodb + aux_vllanmto
                     craplot.vlcompdb = craplot.vlcompdb + aux_vllanmto
