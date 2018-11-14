@@ -1049,6 +1049,19 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_cdcritic OUT INTEGER                --Codigo da Critica
                                   ,pr_dscritic OUT VARCHAR2);             --Descricao da critica
 
+  /* Procedure para Gerar arquivo para cooperado paralelamente */
+  PROCEDURE pc_gera_arq_cooperad_par(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                    ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
+                                    ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
+                                    ,pr_idparale IN NUMBER                  --Indicador de processo paralelo
+                                    ,pr_idprogra IN NUMBER                  --Id da execução unica
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --Data pagamento
+                                    ,pr_idorigem IN INTEGER                 --Identificador Origem
+                                    ,pr_flgproce IN INTEGER                 --Flag Processo
+                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE   --Nome Programa
+                                    ,pr_cdcritic OUT INTEGER                --Codigo da Critica
+                                    ,pr_dscritic OUT VARCHAR2);             --Descricao da critica
+
   /* Procedure para gerar arquivo para Cooperado. Irá apenas chamar a rotina pc_gera_arq_cooperado */
   PROCEDURE pc_gera_arq_cooperado_car(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                      ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
@@ -20946,6 +20959,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               27/08/2018 - Adicionar NVL nos campos cdbcorec e cdagerec. Incluir pc_internal_exception
     --                            e informações da conta na exception when others. (PRB0040285-AJFink)
     --
+    --               29/08/2018 - Revitalização Sistemas - Ajuste para update unico (Andreatta-Mouts)
     -- .........................................................................
 
   BEGIN
@@ -20980,7 +20994,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,crapret.vlrliqui
               ,crapret.vloutdes
               ,crapret.vloutcre
-              ,craprtc.rowid
               ,Count(1) OVER (PARTITION BY craprtc.nrdconta) nrtotcta
               ,Row_Number() OVER (PARTITION BY craprtc.nrdconta
                                   ORDER BY craprtc.nrdconta
@@ -21774,14 +21787,36 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' '||vr_comando;
             RAISE vr_exc_erro;
           END IF;
-	        -- Retornar nome do módulo logado - 15/12/2017 - Chamado 779415
-		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab240');
-          --Se processou nao for nulo
-          IF pr_flgproce IN (0,1) THEN
-            /** Define o registro como "Processado" **/
-            BEGIN
-              UPDATE craprtc SET craprtc.flgproce = 1
-              WHERE craprtc.rowid = rw_craprtc.rowid;
+	      -- Retornar nome do módulo logado - 15/12/2017 - Chamado 779415
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab240');
+        END IF; --LAST-OF
+      END LOOP;
+
+      --Se processou nao for nulo
+      IF pr_flgproce IN (0,1) THEN
+        /** Define o registro como "Processado" **/
+        BEGIN
+          UPDATE craprtc 
+             SET craprtc.flgproce = 1
+           WHERE craprtc.cdcooper = pr_cdcooper
+             AND craprtc.nrcnvcob = pr_nrcnvcob
+             AND craprtc.nrdconta = pr_nrdconta
+             AND craprtc.dtmvtolt = pr_dtmvtoan
+             AND craprtc.nrremret = pr_nrremret
+             AND craprtc.intipmvt = 2
+             AND EXISTS(SELECT 1
+                          FROM crapret
+                         WHERE crapret.cdcooper = craprtc.cdcooper
+                           AND crapret.nrdconta = craprtc.nrdconta
+                           AND crapret.nrcnvcob = craprtc.nrcnvcob
+                           AND crapret.dtocorre = craprtc.dtmvtolt
+                           AND crapret.nrremret = (SELECT MAX(ret.nrremret)                           
+                                                     FROM crapret ret
+                                                    WHERE ret.cdcooper = craprtc.cdcooper
+                                                      AND ret.nrdconta = craprtc.nrdconta
+                                                      AND ret.nrcnvcob = craprtc.nrcnvcob
+                                                      AND ret.dtocorre = craprtc.dtmvtolt
+                                                      AND ret.nrretcoo = craprtc.nrremret)); 
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
@@ -21794,12 +21829,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                              ' com rowid:'  || rw_craprtc.rowid ||
                              '. ' ||sqlerrm;
                 RAISE vr_exc_erro;
-            END;
-          END IF;
-        END IF; --LAST-OF
-      END LOOP;
-	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+        END;
+      END IF;
+	  -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
       -- Disparadores: paga0001.pc_gera_arq_cooperado          - Grava TBGEN
@@ -21886,6 +21919,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               27/08/2018 - Adicionar NVL nos campos cdbcorec e cdagerec. Incluir pc_internal_exception
     --                            e informações da conta na exception when others. (PRB0040285-AJFink)
     --
+    --               29/08/2018 - Revitalização Sistemas - Ajuste para update unico (Andreatta-Mouts)    
     -- .........................................................................
 
   BEGIN
@@ -21920,7 +21954,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,crapret.vlrliqui
               ,crapret.vloutdes
               ,crapret.vloutcre
-              ,craprtc.rowid
               ,Count(1) OVER (PARTITION BY craprtc.nrdconta) nrtotcta
               ,Row_Number() OVER (PARTITION BY craprtc.nrdconta
                                   ORDER BY craprtc.nrdconta
@@ -22828,16 +22861,39 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' '||vr_comando;
             RAISE vr_exc_erro;
           END IF;
-	        -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
-		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab400');
-          --Se processou nao for nulo
-          IF pr_flgproce IN (0,1) THEN
-            /** Define o registro como "Processado" **/
-            BEGIN
-              UPDATE craprtc SET craprtc.flgproce = 1
-              WHERE craprtc.rowid = rw_craprtc.rowid;
-            EXCEPTION
-              WHEN OTHERS THEN
+	      -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab400');
+        END IF; --LAST-OF
+      END LOOP;  
+      
+      -- Se processou nao for nulo
+      IF pr_flgproce IN (0,1) THEN
+        /** Define o registro como "Processado" **/
+        BEGIN
+          UPDATE craprtc 
+             SET craprtc.flgproce = 1
+           WHERE craprtc.cdcooper = pr_cdcooper
+             AND craprtc.nrcnvcob = pr_nrcnvcob
+             AND craprtc.nrdconta = pr_nrdconta
+             AND craprtc.dtmvtolt = pr_dtmvtoan
+             AND craprtc.nrremret = pr_nrremret
+             AND craprtc.intipmvt = 2
+             AND EXISTS(SELECT 1
+                          FROM crapret
+                         WHERE crapret.cdcooper = craprtc.cdcooper
+                           AND crapret.nrdconta = craprtc.nrdconta
+                           AND crapret.nrcnvcob = craprtc.nrcnvcob
+                           AND crapret.dtocorre = craprtc.dtmvtolt
+                           AND crapret.cdocorre <> 27 /* alt de outros dados */
+                           AND crapret.nrremret = (SELECT MAX(ret.nrremret)                           
+                                                     FROM crapret ret
+                                                    WHERE ret.cdcooper = craprtc.cdcooper
+                                                      AND ret.nrdconta = craprtc.nrdconta
+                                                      AND ret.nrcnvcob = craprtc.nrcnvcob
+                                                      AND ret.dtocorre = craprtc.dtmvtolt
+                                                      AND ret.nrretcoo = craprtc.nrremret)); 
+        EXCEPTION
+          WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
                 -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
@@ -22849,12 +22905,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                '. ' ||sqlerrm;
                 --Levantar Excecao
                 RAISE vr_exc_erro;
-            END;
-          END IF;
-        END IF; --LAST-OF
-      END LOOP;
-	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+        END;
+      END IF;
+	  -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
       -- Disparadores: paga0001.pc_gera_arq_cooperado          - TBGEN
@@ -23085,6 +23139,264 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                  );                        
     END;
   END pc_gera_arq_cooperado;
+
+  /* Procedure para Gerar arquivo para cooperado paralelamente */
+  PROCEDURE pc_gera_arq_cooperad_par(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                    ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
+                                    ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
+                                    ,pr_idparale IN NUMBER                  --Indicador de processo paralelo
+                                    ,pr_idprogra IN NUMBER                  --Id da execução unica
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --Data pagamento
+                                    ,pr_idorigem IN INTEGER                 --Identificador Origem
+                                    ,pr_flgproce IN INTEGER                 --Flag Processo
+                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE   --Nome Programa
+                                    ,pr_cdcritic OUT INTEGER                --Codigo da Critica
+                                    ,pr_dscritic OUT VARCHAR2) IS           --Descricao da critica
+    -- .........................................................................
+    --
+    --  Programa : pc_gera_arq_cooperad_par           Antigo: 
+    --  Sistema  : Cred
+    --  Sigla    : PAGA0001
+    --  Autor    : Andreatta - Mouts
+    --  Data     : Agosto/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para gerar arquivo cobranca cooperado paralelamente
+  BEGIN
+    DECLARE
+      --Cursores Locais
+      CURSOR cr_craprtc (pr_cdcooper IN craprtc.cdcooper%type
+                        ,pr_nrcnvcob IN craprtc.nrcnvcob%type
+                        ,pr_nrdconta IN craprtc.nrdconta%type
+                        ,pr_dtmvtolt IN craprtc.dtmvtolt%TYPE
+                        ,pr_intipmvt IN craprtc.intipmvt%TYPE) IS
+        SELECT craprtc.cdcooper
+              ,craprtc.nrcnvcob
+              ,craprtc.nrdconta
+              ,craprtc.dtmvtolt
+              ,craprtc.nrremret
+        FROM craprtc
+        WHERE  craprtc.cdcooper = pr_cdcooper
+        AND    craprtc.nrcnvcob = pr_nrcnvcob
+        AND    craprtc.nrdconta = pr_nrdconta
+        AND    craprtc.dtmvtolt = pr_dtmvtolt
+        AND    craprtc.intipmvt = pr_intipmvt
+        ORDER BY craprtc.nrdconta;
+      -- Contem  parametros do cadastro de cobranca
+      CURSOR cr_crapcco (pr_cdcooper IN crapcco.cdcooper%type
+                        ,pr_nrconven IN crapcco.nrconven%TYPE) IS
+        SELECT ceb.nrdconta
+              ,ceb.inarqcbr
+              ,cco.cdcooper
+              ,cco.nrconven
+          FROM crapcco cco
+              ,crapceb ceb
+         WHERE cco.cdcooper = pr_cdcooper
+           AND cco.nrconven = pr_nrconven
+           AND ceb.cdcooper = cco.cdcooper
+           AND ceb.nrconven = cco.nrconven
+           AND ceb.nrdconta = pr_nrdconta;
+      --Variaveis Locais
+      vr_tab_arq_cobranca PAGA0001.typ_tab_arq_cobranca;
+      --Variaveis de erro
+      vr_des_erro     VARCHAR2(4000);
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+      -- Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+      vr_idcontrole    tbgen_batch_controle.idcontrole%TYPE;  
+      vr_idlog_ini_par tbgen_prglog.idprglog%type;
+    BEGIN
+      
+      --Inicializar variaveis retorno
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+      
+      -- Caso execucao paralela
+      IF pr_idparale <> 0 THEN 
+        -- Grava controle de batch por agência
+        gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper      -- Codigo da Cooperativa
+                                        ,pr_cdprogra    => pr_cdprogra      -- Codigo do Programa
+                                        ,pr_dtmvtolt    => pr_dtmvtolt      -- Data de Movimento
+                                        ,pr_tpagrupador => 3                -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                        ,pr_cdagrupador => lpad(pr_nrcnvcob,10)||lpad(pr_nrdconta,10,0)-- Codigo do agrupador conforme (tpagrupador)
+                                        ,pr_cdrestart   => null             -- Controle do registro de restart em caso de erro na execucao
+                                        ,pr_nrexecucao  => 1                -- Numero de identificacao da execucao do programa
+                                        ,pr_idcontrole  => vr_idcontrole    -- ID de Controle
+                                        ,pr_cdcritic    => pr_cdcritic      -- Codigo da critica
+                                        ,pr_dscritic    => vr_dscritic);    -- Descricao da critica
+        -- Testar saida com erro
+        if vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_erro;
+        end if;    
+      end if;
+        
+      -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'I'  
+                     ,pr_cdprograma => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta        
+                     ,pr_cdcooper   => pr_cdcooper 
+                     ,pr_tpexecucao => 2    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_par); 
+      
+      --Verificar cooperativa
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      --Se nao encontrou
+      IF cr_crapcop%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Registro de cooperativa não encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+
+      -- Cadastro de Emissao de Bloquetos
+      FOR rw_crapcco IN cr_crapcco (pr_cdcooper => pr_cdcooper
+                                   ,pr_nrconven => pr_nrcnvcob) LOOP
+
+       --Se foi passada conta e a mesma for diferente da selecionada ignora
+       IF nvl(pr_nrdconta,0) <> 0 AND nvl(pr_nrdconta,0) <> rw_crapcco.nrdconta THEN
+         CONTINUE;
+       END IF;
+       --Selecionar remessas/retorno titulos dos cooperados
+       FOR rw_craprtc IN cr_craprtc (pr_cdcooper => rw_crapcco.cdcooper
+                                    ,pr_nrcnvcob => rw_crapcco.nrconven
+                                    ,pr_nrdconta => rw_crapcco.nrdconta
+                                    ,pr_dtmvtolt => pr_dtmvtolt
+                                    ,pr_intipmvt => 2) LOOP
+
+         --Se recebe arquivo retorno febraban
+         IF  rw_crapcco.inarqcbr = 2 THEN
+           PAGA0001.pc_gera_arq_coop_cnab240 (pr_cdcooper => rw_craprtc.cdcooper   --Codigo Cooperativa
+                                             ,pr_nrcnvcob => rw_craprtc.nrcnvcob   --Numero Convenio
+                                             ,pr_nrdconta => rw_craprtc.nrdconta   --Numero da Conta
+                                             ,pr_dtmvtoan => rw_craprtc.dtmvtolt   --Data pagamento
+                                             ,pr_idorigem => pr_idorigem   --Identificador Origem
+                                             ,pr_flgproce => pr_flgproce   --Flag Processo
+                                             ,pr_cdprogra => pr_cdprogra   --Nome Programa
+                                             ,pr_nrremret => rw_craprtc.nrremret -- Num Rem/Ret Cobranca
+                                             ,pr_tab_arq_cobranca => vr_tab_arq_cobranca --Tabela Cobranca
+                                             ,pr_cdcritic => vr_cdcritic   --Codigo da Critica
+                                             ,pr_dscritic => vr_dscritic); --Decricao da Critica
+           --Se ocorreu erro
+           IF NVL(vr_cdcritic,0) <> 0 or TRIM(vr_dscritic) IS NOT NULL THEN
+             --Levantar Excecao
+             RAISE vr_exc_erro;
+           END IF;
+         ELSIF  rw_crapcco.inarqcbr = 3 THEN
+           PAGA0001.pc_gera_arq_coop_cnab400 (pr_cdcooper => rw_craprtc.cdcooper   --Codigo Cooperativa
+                                             ,pr_nrcnvcob => rw_craprtc.nrcnvcob   --Numero Convenio
+                                             ,pr_nrdconta => rw_craprtc.nrdconta   --Numero da Conta
+                                             ,pr_dtmvtoan => rw_craprtc.dtmvtolt   --Data pagamento
+                                             ,pr_idorigem => pr_idorigem   --Identificador Origem
+                                             ,pr_flgproce => pr_flgproce   --Flag Processo
+                                             ,pr_cdprogra => pr_cdprogra   --Nome Programa
+                                             ,pr_nrremret => rw_craprtc.nrremret --Num Rem/Ret Cobranca
+                                             ,pr_tab_arq_cobranca => vr_tab_arq_cobranca --Tabela Cobranca
+                                             ,pr_cdcritic => vr_cdcritic   --Codigo da Critica
+                                             ,pr_dscritic => vr_dscritic); --Decricao da Critica
+           --Se ocorreu erro
+           IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             --Levantar Excecao
+             RAISE vr_exc_erro;
+           END IF;
+         END IF;
+       END LOOP;
+      END LOOP;
+      
+      -- Grava data fim para o JOB na tabela de LOG 
+      pc_log_programa(pr_dstiplog   => 'F'  
+                     ,pr_cdprograma => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta                 
+                     ,pr_cdcooper   => pr_cdcooper
+                     ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_par
+                     ,pr_flgsucesso => 1); 
+
+      -- Caso execucao paralela
+      IF pr_idparale <> 0 THEN
+        -- Atualiza finalização do batch na tabela de controle 
+        gene0001.pc_finaliza_batch_controle(vr_idcontrole   --pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                           ,pr_cdcritic     --pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                           ,pr_dscritic);   --pr_dscritic  OUT crapcri.dscritic%TYPE
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => pr_idprogra
+                                    ,pr_des_erro => vr_dscritic);  
+        -- Salvar informacoes no banco de dados
+        COMMIT;
+      END IF;
+      
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+        
+        -- Na execução paralela
+        if nvl(pr_idparale,0) <> 0 then 
+          -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+          pc_log_programa(PR_DSTIPLOG           => 'E',
+                          PR_CDPROGRAMA         => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta,
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 2,
+                          pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                   'pr_dscritic:'||pr_dscritic,
+                          PR_IDPRGLOG           => vr_idlog_ini_par); 
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);  
+          
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => lpad(pr_nrcnvcob,10)||lpad(pr_nrdconta,10,0)
+                                      ,pr_des_erro => vr_dscritic);
+        end if;
+        
+      WHEN OTHERS THEN
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_arq_cooperad_par. '||sqlerrm;
+        
+        -- Na execução paralela
+        if nvl(pr_idparale,0) <> 0 then 
+          -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+          pc_log_programa(PR_DSTIPLOG           => 'E',
+                          PR_CDPROGRAMA         => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta,
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 2,
+                          pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                   'pr_dscritic:'||pr_dscritic,
+                          PR_IDPRGLOG           => vr_idlog_ini_par); 
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_nrcnvcob||'_'||pr_nrdconta,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);  
+          
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => lpad(pr_nrcnvcob,10)||lpad(pr_nrdconta,10,0)
+                                      ,pr_des_erro => vr_dscritic);
+        end if; 
+        
+    END;
+  END pc_gera_arq_cooperad_par;  
+  
   /* Procedure para verificar o tipo de retorno do arquivo do cooperado */
   PROCEDURE pc_verifica_ret_arq_coop(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                     ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio

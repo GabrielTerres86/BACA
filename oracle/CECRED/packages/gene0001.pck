@@ -3726,9 +3726,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Controla Controla log em banco de dados
       pc_controla_log_programa;
   END;
---  
-  FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
-                                 , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+
+  -- Retornar quantidade de threads paralelas disponíveis para o Programa ou JOB
+  FUNCTION fn_retorna_qt_paralelo(pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                 ,pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtparalelo%TYPE IS
  
     -- ..........................................................................
@@ -3737,7 +3738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jonatas Jaqmam(AMcom)
-    --  Data     : Dezembro/2017.                   Ultima atualizacao: 14/12/2017
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 16/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -3746,27 +3747,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Observações : Projeto Ligeirinho
     --                 
     --
-    --   Alteracoes:
+    --   Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Checagem de quantidade de Paralelos
+    --                            quando programa passado for um JOB - Andreatta (MOUTs)
     --
     -- .............................................................................
   
-    vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE;
-                                
-  BEGIN
-    
-    BEGIN
+    -- Busca na tabela de Programas
+    CURSOR cr_prog IS
       SELECT t.qtparalelo
-        INTO vr_qtparalelo
         FROM tbgen_batch_param t
        WHERE t.cdcooper   = pr_cdcooper
          AND t.cdprograma = pr_cdprogra;
-    EXCEPTION
-      WHEN NO_DATA_FOUND THEN
-        vr_qtparalelo := 0;  
-    END;
+
+    -- Validar se o programa é um JOB
+    CURSOR cr_jobs IS
+      SELECT j.nmjob
+        FROM tbgen_batch_jobs j
+       WHERE j.nmjob = pr_cdprogra;
+    v_nmjob tbgen_batch_jobs.nmjob%TYPE;
+
+    --Separacao de valores por hora para vetor
+    vr_txhorarios   gene0002.typ_split;
+
+    -- Variavel padrão
+    vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE := 0;
+
+  BEGIN
+
+    OPEN cr_prog;
+    FETCH cr_prog
+     INTO vr_qtparalelo;
+    IF cr_prog%NOTFOUND THEN
+      CLOSE cr_prog;
+      -- Validar se o programa é um JOB
+      OPEN cr_jobs;
+      FETCH cr_jobs
+       INTO v_nmjob;
+      IF cr_jobs%FOUND THEN
+        CLOSE cr_jobs;
+        -- Buscar nos parâmetros de sistema de acordo com o horário atual
+        -- qual a quantidade de threads liberadas por hora por JOB
+        vr_txhorarios
+               := gene0002.fn_quebra_string
+                           (gene0001.fn_param_sistema('CRED',0,'QT_JB_HORA_BATCH_MASTER'), ';');
+
+        -- Usar a Hora atual e a mesma servira como posicionador no array
+        -- ou seja, 12:00 irá buscar a posição 12 do Array, onde está a quantidde
+        -- de threadas paralelas das 12 as 13.
+        vr_qtparalelo := vr_txhorarios(to_number(to_char(SYSDATE,'hh24'))+1);
+      ELSE
+        CLOSE cr_jobs;
+      END IF;
+    ELSE
+      CLOSE cr_prog;
+    END IF;
 
     RETURN vr_qtparalelo;
-
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN 0;
   END fn_retorna_qt_paralelo;                                 
   --
   FUNCTION fn_retorna_qt_reg_commit( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva

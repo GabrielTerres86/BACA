@@ -37,6 +37,11 @@ BEGIN
                                  3 - Grupo de mensagens para não parar o programa: 
                                      Procedures pc_job_contab_cessao, PC_CRPS710 e pc_gera_dados_cyber não gera critica.    
                           (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+
+              23/07/2018 - Projeto Revitalização Sistemas - Busca de quantidade de paralelos e 
+                           envio para Paralelização por Coop e Agencia - Andreatta (MOUTs)    
+
+
               08/08/2018 - 1 - Estava duplicando log no retorno da crps652 com erro
                            2 - Log do email fora do padrão -> eliminada a variável vr_dstexto, 
                                será utilizada a vr_dscritic para o envio de emails (Alinhado com Carlos)
@@ -56,15 +61,19 @@ BEGIN
     vr_dscritic VARCHAR2(4000);
     vr_dserro   VARCHAR2(4000);
     -- Excluida variavel vr_tab_erro não é utilizada - Chmd REQ0011757 - 13/04/2018  
-    vr_exc_erro EXCEPTION;
-                                      
-    vr_cdprogra    VARCHAR2(40) := 'PC_GERA_DADOS_CYBER';
+    vr_exc_erro EXCEPTION;                                      
+    
+    vr_cdprogra    VARCHAR2(40) := 'CRPS652';
     vr_nomdojob    VARCHAR2(40) := 'JBCYB_GERA_DADOS_CYBER';
     -- Excluida variavel vr_flgerlog não é utilizada - Chmd REQ0011757 - 13/04/2018  
     vr_dthoje      DATE := TRUNC(SYSDATE);
 
-    vr_titulo VARCHAR2(1000);
-    vr_destinatario_email VARCHAR2(500);
+    -- Quantidade de JOBS
+    vr_qtdejobs NUMBER;
+
+    vr_titulo       VARCHAR2(1000);
+    vr_destinatario VARCHAR2(500);
+
     -- Excluida variavel vr_idprglog pois não é utilizada - Chmd REQ0011757 - 13/04/2018  
          
     vr_intipmsg   INTEGER := 1; -- pr_intipmsg tipo de mensagem a ser tratada especificamente - Chmd REQ0011757 - 13/04/2018 
@@ -182,9 +191,16 @@ BEGIN
         -- Retorna nome do módulo logado
         GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);                             
          
+        -- Buscar quantidade parametrizada de Jobs para este horário
+        vr_qtdejobs := gene0001.fn_retorna_qt_paralelo(vr_cdcooper,vr_nomdojob); 
+        
+        -- Chama rotina que gera dados pro Cyber
         pc_crps652(pr_cdcooper => vr_cdcooper
-                  ,pr_nmtelant => ' '
-                  ,pr_flgresta => 0
+                  ,pr_cdcoppar => 0
+                  ,pr_cdagepar => 0
+                  ,pr_idparale => 0
+                  ,pr_cdprogra => vr_cdprogra
+                  ,pr_qtdejobs => vr_qtdejobs
                   ,pr_stprogra => vr_stprogra
                   ,pr_infimsol => vr_infimsol
                   ,pr_cdcritic => vr_cdcritic 

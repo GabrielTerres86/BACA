@@ -731,7 +731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --  Sistema  : Processos Batch
     --  Sigla    : BTCH
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
+    --  Data     : Maio/2016.                   Ultima atualizacao: 19/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -743,6 +743,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --                          - incluido tratamento de excptions nos cursores para melhorar os erros
     --                            (Belli - Envolti - Chamado 667957)
     --               
+    --               19/07/2018 - Envio de email + Log Arquivo (caso parametrizado) - Andreatta - Mouts
+    -- 
     -- .............................................................................
     
     ------------------------------- CURSORES ---------------------------------
@@ -754,12 +756,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
          AND upper(cdprogra) = pr_cdprogra;
     rw_crapprg cr_crapprg%ROWTYPE;    
     
+    -- Dados do job
+    CURSOR cr_job IS
+      SELECT jb.flsaida_email
+            ,jb.dsdestino_email
+            ,jb.flsaida_log
+            ,jb.dsnome_arq_log
+        FROM tbgen_batch_jobs jb
+       WHERE lower(jb.nmjob) = lower(pr_cdprogra);
+    rw_job cr_job%ROWTYPE;
+    
     ------------------------------- VARIAVEIS -------------------------------
     vr_dscdolog VARCHAR2(4000);
     vr_dslogmes VARCHAR2(400);
+    vr_nmarqlog VARCHAR2(4000);
     
     -- Trata Erro - Chamado 667957 - 034/07/2018
-    vr_exc_saida  EXCEPTION;
     vr_dscritic   VARCHAR2(4000);
     vr_flgsucesso tbgen_prglog.flgsucesso%TYPE := 1;
     vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
@@ -767,20 +779,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   BEGIN
   
     -- Buscar nome do programa
-    BEGIN
+    IF pr_cdprogra IS NOT NULL THEN
       OPEN cr_crapprg;
       FETCH cr_crapprg INTO rw_crapprg;
       CLOSE cr_crapprg;
-      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017            
+    END IF;
       
-    EXCEPTION
-      WHEN OTHERS THEN
+    -- Buscar dados do JOB
+    IF pr_nomdojob IS NOT NULL THEN
+      OPEN cr_job;
+      FETCH cr_job INTO rw_job;
+      CLOSE cr_job;
+    END IF;
         
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-        
-        vr_dscritic := 'cursor cr_crapprg - com erro: ' || SQLERRM;
-        RAISE vr_exc_saida;
-    END;        
+    -- Nome Arquivo de LOG recebe o cadastrado na tabela de JOB ou o enviado
+    IF rw_job.flsaida_log = 'S' AND rw_job.dsnome_arq_log IS NOT NULL THEN
+      vr_nmarqlog := rw_job.dsnome_arq_log;      
+    ELSE 
+      vr_nmarqlog := pr_nmarqlog;
+    END IF;
      
     --> Log de inicio de execução
     IF pr_dstiplog = 'I' AND pr_flgerlog = FALSE THEN
@@ -797,9 +814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       END IF;
       
       -- Logs que iriam para o proc_batch ou proc_message irão apenas para tabela
-      IF pr_nmarqlog IS NULL OR
-         INSTR(pr_nmarqlog, 'proc_batch',   1, 1) > 0 OR
-         INSTR(pr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
+      IF vr_nmarqlog IS NULL OR INSTR(vr_nmarqlog, 'proc_batch',   1, 1) > 0 OR INSTR(vr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
          
         cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog, 
                                PR_CDPROGRAMA => nvl(pr_nomdojob,'JOB'), 
@@ -810,11 +825,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || nvl(pr_nomdojob,'JOB') || ' --> ' || 
-                                                    'ALERTA: ' || vr_dscdolog,
+                                   pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || nvl(pr_nomdojob,'JOB') || ' --> ' || 'ALERTA: ' || vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
-                                 pr_nmarqlog     => pr_nmarqlog,
+                                   pr_nmarqlog     => vr_nmarqlog,
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_tpexecucao   => 2);
       END IF;
@@ -826,10 +839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       vr_dscdolog := 'Execucao ok';
 
       -- Logs que iriam para o proc_batch ou proc_message irão apenas para tabela
-      IF pr_nmarqlog IS NULL OR
-         INSTR(pr_nmarqlog, 'proc_batch',   1, 1) > 0 OR
-         INSTR(pr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
-         
+      IF vr_nmarqlog IS NULL OR INSTR(vr_nmarqlog, 'proc_batch',   1, 1) > 0 OR INSTR(vr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
         cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog, 
                                PR_CDPROGRAMA => nvl(pr_nomdojob,'JOB'), 
                                pr_cdcooper   => pr_cdcooper, 
@@ -837,73 +847,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       ELSE
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ALERTA: ' || vr_dscdolog,
+                                   pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || pr_nomdojob || ' --> ' || 'ALERTA: ' || vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
-                                 pr_nmarqlog     => pr_nmarqlog,
+                                   pr_nmarqlog     => vr_nmarqlog,
                                  pr_tpexecucao   => 2);
       END IF;
 
     --> Log Final com erro
     ELSIF pr_dstiplog = 'E' AND pr_flgerlog THEN
       
+      IF pr_dscritic IS NOT NULL THEN
+        vr_flgsucesso := 0;
+      END IF;
+      
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ERRO: ' || pr_dscritic,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||' - ' || pr_nomdojob || ' --> ' || 'ERRO: ' || pr_dscritic,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
-                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_nmarqlog     => vr_nmarqlog,
+                                 pr_flgsucesso   => vr_flgsucesso,
                                  pr_tpexecucao   => 2);
 
+      -- Se ha envio de email
+      IF rw_job.flsaida_email = 'S' AND rw_job.dsdestino_email IS NOT NULL THEN
+        -- Enviar email
+        gene0003.pc_solicita_email(pr_cdprogra    => nvl(trim(pr_cdprogra),pr_nomdojob)
+                                  ,pr_des_destino => rw_job.dsdestino_email
+                                  ,pr_des_assunto => 'ERRO AO FINALIZAR EXECUCAO '|| nvl(trim(pr_cdprogra),pr_nomdojob)
+                                  ,pr_des_corpo   => to_char(SYSDATE,'hh24:mi:ss') ||' - ' || pr_nomdojob || ' --> ' || 'ERRO: ' || pr_dscritic
+                                  ,pr_des_anexo   => NULL
+                                  ,pr_flg_enviar  => 'N'
+                                  ,pr_des_erro    => vr_dscritic);         
+      END IF;
+      
+      
     --> Caso passado critica e nao caiu em nenhuma situalção acima
     ELSIF pr_dscritic IS NOT NULL THEN
       
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
+      vr_flgsucesso := 0;
     
-      vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := 'pr_dstiplog fora do padrão:' || pr_dstiplog || ' - ' ||pr_dscritic;
+      -- Caso job tenha saida para arquivo com log específico
+      IF vr_nmarqlog IS NULL THEN
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      END IF;
+      
+      -- Gerar LOG
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 3, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ERRO: ' || vr_dscdolog,
-                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || pr_nomdojob || ' --> ' ||  'ERRO: ' || 'pr_dstiplog fora do padrão:' || pr_dstiplog || ' - ' ||pr_dscritic,
                                  pr_dstiplog     => 'E',
                                  pr_cdprograma   => pr_nomdojob,
+                                 pr_nmarqlog     => vr_nmarqlog,
+                                 pr_flgsucesso   => vr_flgsucesso,
                                  pr_tpexecucao   => 2);
      
+      -- Se ha envio de email
+      IF rw_job.flsaida_email = 'S' AND rw_job.dsdestino_email IS NOT NULL THEN
+        -- Enviar email
+        gene0003.pc_solicita_email(pr_cdprogra    => nvl(trim(pr_cdprogra),pr_nomdojob)
+                                  ,pr_des_destino => rw_job.dsdestino_email
+                                  ,pr_des_assunto => 'ERRO NA GERACAO LOG DA EXECUCAO '|| nvl(trim(pr_cdprogra),pr_nomdojob)
+                                  ,pr_des_corpo   => to_char(SYSDATE,'hh24:mi:ss') ||' - ' || pr_nomdojob || ' --> ' || 'ERRO: ' || 'pr_dstiplog fora do padrão:' || pr_dstiplog || ' - ' ||pr_dscritic
+                                  ,pr_des_anexo   => NULL
+                                  ,pr_flg_enviar  => 'N'
+                                  ,pr_des_erro    => vr_dscritic);         
+      END IF;
+      
     END IF; 
   
   EXCEPTION
-    WHEN vr_exc_saida THEN 
-      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
-      vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_dscritic || ' - ' || vr_dscritic;
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ERRO: ' || vr_dscdolog,
-                                 pr_nmarqlog     => vr_dslogmes,
-                                 pr_tpexecucao   => 2);
-      
     WHEN OTHERS THEN
-                                 
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-      
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
       vr_dscdolog := pr_dscritic || ' - Log com problema: '||SQLERRM ;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ERRO: ' || vr_dscdolog,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||' - ' || pr_nomdojob || ' --> ' || 'ERRO: ' || vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
                                  pr_tpexecucao   => 2);                          
     

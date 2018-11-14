@@ -1,6 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2                --> flag de avaliar a execução
                                                ,pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                                ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
+                                               ,pr_qtdejobs in number                  --> Quantidade de jobs por vez
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
                                                ,pr_dscritic OUT VARCHAR2               --> Descricao da Critica
                                                ) IS   
@@ -8,11 +9,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
   /* ................................................................................................
 
-   Programa: PC_CRPS538_2                      Antigo: PC_CRPS538.PCK
+   Programa: PC_CRPS538_2                      Antigo: PC_CRPS538.PRC
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 15/03/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 08/10/2018
    
    Projeto:  Chamado 714566.
 
@@ -48,6 +49,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                      - Eliminando mensagens de erro e informação gravadas fixas
                     (Belli - Envolti - Chamado 801483) 
                     
+       23/07/2018 - Projeto Revitalizaçao Sistemas - PAralelização da chamada da geração dos
+                    arquivos de retorno dos cooperados por Conta e Convenio, jah que cada arquivo
+                    e gerado por Conta e Convenio  - (Andreatta - MOUTs)
+
        08/10/2018 - Retorno de versão por sikmples suspeita de problema
                     (Belli - Envolti - Chamado REQ0029352)   
 
@@ -122,9 +127,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        vr_dsmensag          VARCHAR2(4000);
        vr_interminocoopers   NUMBER(1);
        
-       -- Variaveis de controle de DBA SCHEDULER JOB LOG      
-       vr_dsplsql         VARCHAR2(2000);
-       vr_jobname         VARCHAR2(100);  
+       -- ID para o paralelismo
+       vr_idparale      INTEGER := 0;
+       -- Qtde parametrizada de Jobs
+       vr_qtdjobs       NUMBER := pr_qtdejobs;
+       -- Job name dos processos criados
+       vr_jobname       varchar2(30);
+       -- Id da execução paralela
+       vr_idprogra      integer;
+       -- Bloco PLSQL para chamar a execução paralela do pc_crps750
+       vr_dsplsql       varchar2(4000);
+       
+       -- Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+       vr_idlog_ini_ger tbgen_prglog.idprglog%type;
+       vr_qterro        number := 0;      
+
 
     -- Ajuste log - 15/03/2018 - Chamado 801483 
     -- Controla log em banco de dados
@@ -421,7 +438,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                             ,pr_dsxml     => vr_dslobdev              --> Arquivo XML de dados
                                             ,pr_dsarqsaid => vr_dsdircop_arq || '/' || vr_nmarquiv    --> Arquivo final com o path
                                             ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
-                                            ,pr_flg_gerar => 'S'                      --> Apenas submeter
+                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                             ,pr_dspathcop => vr_dsdirmic_arq
                                             ,pr_fldoscop  => 'S'
                                             ,pr_flappend  => 'N'                      --> Indica que a solicitação irá incrementar o arquivo
@@ -564,7 +581,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                  ,pr_flg_impri => 'S'                 --> Chamar a impress?o (Imprim.p)
                                  ,pr_nmformul  => NULL                --> Nome do formul?rio para impress?o
                                  ,pr_nrcopias  => 1                   --> N?mero de c?pias
-                                 ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                 ,pr_flg_gerar => 'N'                 --> gerar PDF
                                  ,pr_dspathcop => vr_caminho_rlnsv    --> Lista sep. por ';' de diretórios a copiar o relatório
                                  ,pr_des_erro  => vr_dscritic);       --> Sa?da com erro
       
@@ -687,6 +704,211 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                        ' pr_cdcooper:' || pr_cdcooper ||
                        ', pc_gera_arq_cooperado - ' || SQLERRM; 			
     END pc_gera_arq_cooperado; 
+
+
+    
+    --Gera Arq pc_trata_arq_cooperado em paralelo
+    PROCEDURE pc_gera_arq_cooperad_par(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                      ,pr_cdcritic OUT INTEGER
+                                      ,pr_dscritic OUT VARCHAR2) IS         
+      --Selecionar informacoes convenios ativos
+      CURSOR cr_crapcco_ativo (pr_cdcooper IN crapcco.cdcooper%type
+                              ,pr_cddbanco IN crapcco.cddbanco%type) IS
+        SELECT crapcco.cdcooper
+              ,crapcco.nrconven
+              ,crapcco.nrdctabb
+              ,crapcco.cddbanco
+              ,crapcco.cdagenci
+              ,crapcco.cdbccxlt
+              ,crapcco.nrdolote
+              ,crapcco.dsorgarq
+              ,crapceb.nrdconta
+          FROM crapcco
+              ,crapceb 
+         WHERE crapcco.cdcooper = pr_cdcooper
+           AND crapcco.cddbanco = pr_cddbanco
+           AND crapceb.cdcooper = crapcco.cdcooper
+           AND crapceb.nrconven = crapcco.nrconven
+           and crapceb.inarqcbr in(2,3)
+           
+           and exists(SELECT 1
+                        FROM craprtc
+                       WHERE craprtc.cdcooper = crapcco.cdcooper
+                         AND craprtc.nrcnvcob = crapcco.nrconven
+                         AND craprtc.nrdconta = crapceb.nrdconta
+                         AND craprtc.dtmvtolt = vr_dtmvtaux
+                         AND craprtc.intipmvt = 2)
+                                 
+           AND (vr_qterro = 0 or
+               (vr_qterro > 0 and exists (select 1
+                                            from tbgen_batch_controle
+                                           where tbgen_batch_controle.cdcooper    = pr_cdcooper -- Controle é gravado com a Coop Central
+                                             and tbgen_batch_controle.cdprogra    = vr_cdprogra
+                                             and tbgen_batch_controle.tpagrupador = 3
+                                             AND tbgen_batch_controle.cdagrupador = (lpad(crapcco.nrconven,10,'0')||lpad(crapceb.nrdconta,10,'0'))
+                                             and tbgen_batch_controle.insituacao  = 1
+                                             and tbgen_batch_controle.dtmvtolt    = vr_dtmvtaux)))
+                                             
+           AND crapcco.flgregis = 1;
+           
+    BEGIN
+
+      -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      vr_idlog_ini_ger := null;
+      pc_log_programa(pr_dstiplog   => 'I'    
+                     ,pr_cdprograma => vr_cdprogra          
+                     ,pr_cdcooper   => pr_cdcooper
+                     ,pr_tpexecucao => 2    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_ger);
+
+      -- Gerar o ID para o paralelismo
+      vr_idparale := gene0001.fn_gera_ID_paralelo;
+       
+      -- Se houver algum erro, o id vira zerado
+      IF vr_idparale = 0 THEN
+        -- Levantar exceção
+        vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
+        RAISE vr_exc_saida;
+      END IF;
+    
+      -- Busca todos os convenios da IF CECRED que foram gerados pela internet
+      -- e trazendo as contas contradas para que façamos execução paralela pelas mesmas
+      FOR rw_crapcco IN cr_crapcco_ativo(pr_cdcooper => rw_crapcop.cdcooper
+                                        ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
+        
+
+        -- Ajuste log - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 340; -- Gerando arq retorno ao cooperado: convenio
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       ' de retorno ao cooperado: convenio:' ||
+                       to_char(rw_crapcco.nrconven);
+        -- Controla log em banco de dados
+        pc_controla_log_programa( pr_dstiplog       => 'O'
+                                 ,pr_tpocorrencia   => 4
+                                 ,pr_cdcritic       => vr_cdcritic
+                                 ,pr_dscritic       => vr_dscritic
+                                 ,pr_cdcriticidade  => 0
+                                 ,pr_cdcooperprog   => rw_crapcop.cdcooper
+                                ); 
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;                                  
+        
+        -- Montar o prefixo do código do programa para o jobname
+        vr_idprogra := cr_crapcco_ativo%rowcount;
+        vr_jobname := vr_cdprogra ||'_'|| vr_idprogra || '$';  
+        
+        -- Cadastra o programa paralelo
+        gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                  ,pr_idprogra => vr_idprogra
+                                  ,pr_des_erro => vr_dscritic);
+                                  
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;     
+        
+        -- Montar o bloco PLSQL que será executado
+        -- Ou seja, executaremos a geração dos dados
+        -- para a agência atual atraves de Job no banco
+        vr_dsplsql := 'DECLARE' || chr(13) 
+                   || '  wpr_cdcritic NUMBER;' || chr(13) 
+                   || '  wpr_dscritic VARCHAR2(1500);' || chr(13) 
+                   || 'BEGIN' || chr(13) 
+                   || '  PAGA0001.pc_gera_arq_cooperad_par '
+                   || '            ('||rw_crapcco.cdcooper
+                   || '            ,'||rw_crapcco.nrconven
+                   || '            ,'||rw_crapcco.nrdconta
+                   || '            ,'||vr_idparale
+                   || '            ,'||vr_idprogra
+                   || '            ,to_date('''||to_char(vr_dtmvtaux,'dd/mm/rrrr')||''',''dd/mm/rrrr'')'
+                   || '            ,1,0'
+                   || '            ,'||''''||vr_cdprogra||''''
+                   || '            ,wpr_cdcritic, wpr_dscritic);' 
+                   || chr(13) 
+                   || 'END;';   
+         
+        -- Faz a chamada ao programa paralelo atraves de JOB
+        gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                              ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                              ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                              ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                              ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                              ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                              ,pr_des_erro => vr_dscritic);    
+                              
+        -- Testar saida com erro
+        if vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;
+
+        -- Chama rotina que irá pausar este processo controlador
+        -- caso tenhamos excedido a quantidade de JOBS em execuçao
+        gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                    ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
+                                    ,pr_des_erro => vr_dscritic);
+
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;
+           
+      END LOOP;
+      
+      -- Chama rotina de aguardo agora passando 0, para esperarmos
+      -- até que todos os Jobs tenha finalizado seu processamento
+      gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                  ,pr_qtdproce => 0
+                                  ,pr_des_erro => vr_dscritic);
+                                  
+      -- Testar saida com erro
+      if vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_saida;
+      end if;    
+
+      -- Verifica se algum job executou com erro
+      vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper
+                                                   ,pr_cdprogra    => vr_cdprogra
+                                                   ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                                   ,pr_tpagrupador => 3
+                                                   ,pr_nrexecucao  => 1);
+      if vr_qterro > 0 then 
+        vr_cdcritic := 0;
+        vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+        raise vr_exc_saida;
+      end if;
+
+
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+        
+      -- Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'F'   
+                     ,pr_cdprograma => vr_cdprogra           
+                     ,pr_cdcooper   => pr_cdcooper 
+                     ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_ger
+                     ,pr_flgsucesso => 1);      
+      
+    EXCEPTION
+      -- apenas repassar as criticas
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ' pr_cdcooper:' || pr_cdcooper ||
+                       ', pc_gera_arq_cooperado';
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+        --Variavel de erro recebe erro ocorrido
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooper:' || pr_cdcooper ||
+                       ', pc_gera_arq_cooperado - ' || SQLERRM;          
+    END pc_gera_arq_cooperad_PAR; 
                                        
     -- pc_verifica_ja_executou
     PROCEDURE pc_verifica_ja_executou(pr_cdcooperexec IN NUMBER
@@ -811,11 +1033,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                        ', pc_posiciona_dat - ' || SQLERRM; 	    
     END pc_posiciona_dat;   
                                     
-    -- pc_detalhe_execucao 
-    PROCEDURE pc_detalhe_execucao(pr_cdcritic OUT INTEGER
-                                 ,pr_dscritic OUT VARCHAR2
-                                 ) 
-    IS
+    -- Rotina que executa efetivamente o processo para a Cooperativa enviada
+    PROCEDURE pc_efetua_execucao(pr_cdcritic OUT INTEGER
+                                ,pr_dscritic OUT VARCHAR2) IS
     BEGIN
       
       -- Verifica se programa anterior já executou
@@ -861,12 +1081,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Buscar o diretorio padrao da cooperativa conectada
       vr_caminho_rl  := vr_caminho_rl||'/rl';		
 
-      -- Gera arq cooperado
+      -- Checar se não existem erros de execuções anteriores
+      vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper
+                                                   ,pr_cdprogra    => vr_cdprogra
+                                                   ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                                   ,pr_tpagrupador => 3
+                                                   ,pr_nrexecucao  => 1);  
+     
+      -- Caso esta execução não tenha recebido jObs para paralelizar, mas houveram execuções anteriores
+      if vr_qtdjobs = 0 and vr_qterro > 0 then
+        -- Iremos alterar para 1 job para que o programa retome a execução corretamente, mesmo não paralelizando o restante pendente
+        vr_qtdjobs := 1;
+      end if;
+
+      /* CAso tenha retornado threads para paralelizar */
+      IF vr_qtdjobs > 0 then  
+       
+        -- Gera arq cooperado sem paralelismo
+        pc_gera_arq_cooperad_par(pr_cdcooper => pr_cdcooper
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);        
+ 
+     else
+
+        -- Gera arq cooperado sem paralelismo
       pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
+     end if;
+     
       --Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_saida;
       END IF;                      
@@ -922,7 +1167,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ', pc_detalhe_execucao - ' || SQLERRM; 	    
-    END pc_detalhe_execucao;      
+    END pc_efetua_execucao;      
                                     
     -- pc_cria_job 
     PROCEDURE pc_cria_job(pr_cdcooperprog IN crapcop.cdcooper%TYPE
@@ -944,8 +1189,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        BEGIN
          CECRED.PC_CRPS538_2
          ( pr_flavaexe  => ''N''
-         , pr_cdcooper  => ' || pr_cdcooperprog ||
-       ' , pr_nmtelant  => ''DIARIA''
+         , pr_cdcooper  => ' || pr_cdcooperprog || '
+         , pr_nmtelant  => ''DIARIA''
+         , pr_qtdejobs  => '||pr_qtdejobs|| '
          , pr_cdcritic  => vr_cdcritic  
          , pr_dscritic  => vr_dscritic
          );
@@ -1096,10 +1342,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       END IF;
       
       IF pr_cdcooper = 3 THEN
+        -- Somente executa quando terminar todas as afiliadas
         pc_ver_termino_coopers(pr_interminocoopers => vr_interminocoopers -- indica termino de todas coopers
                               ,pr_cdcritic         => vr_cdcritic
                               ,pr_dscritic         => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -1109,28 +1356,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         vr_interminocoopers := 1;
       END IF; 
                             
-      IF vr_inproces         = 1 AND -- Verifica se a cadeia da cooperativa especifica terminou
-         vr_interminocoopers = 1     -- Verifica termino de todas coopers
-        THEN
-       
-        pc_detalhe_execucao(pr_cdcritic     => vr_cdcritic
+      -- Verifica se a cadeia da cooperativa especifica terminou e termino de todas coopers
+      IF vr_inproces = 1 AND vr_interminocoopers = 1 THEN
+        -- Chamar execução em si
+        pc_efetua_execucao(pr_cdcritic     => vr_cdcritic
                            ,pr_dscritic     => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;
       ELSE         
-        --Chamado 809421
-        vr_qtminutos := NVL(gene0001.fn_param_sistema('CRED'
-                                                     ,0
-                                                     ,'TEMPO_ESPERA_CRPS538_2'),5);
-
+        -- Buscar tempo para reprogramar - Chamado 809421
+        vr_qtminutos := NVL(gene0001.fn_param_sistema('CRED',0,'TEMPO_ESPERA_CRPS538_2'),5);
+        -- Reprograma este JOB para rodar daqui x minutos novamente
         pc_cria_job(pr_cdcooperprog => pr_cdcooper
                    ,pr_qtminutos    => vr_qtminutos
                    ,pr_cdcritic     => vr_cdcritic
                    ,pr_dscritic     => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -1153,11 +1397,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                        ', pc_controle_coop_especifica - ' || SQLERRM;               
     END pc_controle_coop_especifica;  
                                     
-    -- pc_controle_execucao 
-    PROCEDURE pc_controle_execucao(pr_cdcritic OUT INTEGER
-                                  ,pr_dscritic OUT VARCHAR2
-                                ) 
-    IS
+    -- Avaliação para Execução e então Submissão dos Processos Filhos para Cada Cooperativa
+    PROCEDURE pc_avaliac_execucao(pr_cdcritic OUT INTEGER
+                                 ,pr_dscritic OUT VARCHAR2) IS
      vr_totcoop            NUMBER(4) := 0;
      vr_diaSemana          NUMBER(1) := 0;
     BEGIN
@@ -1235,11 +1477,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
         END IF;
         
+        -- Submete o JOB da Cooperativa
         pc_cria_job(pr_cdcooperprog => rw_crapcop_ativas.cdcooper
                    ,pr_qtminutos    => vr_qtminutos
                    ,pr_cdcritic     => vr_cdcritic
                    ,pr_dscritic     => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -1270,7 +1513,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ', pc_controle_execucao - ' || SQLERRM;   
-    END pc_controle_execucao;              
+    END pc_avaliac_execucao;              
     
     ---------------------------------------
     --                                           Inicio Bloco Principal 
@@ -1292,27 +1535,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Controla log em banco de dados - 15/03/2018 - Chamado 801483
       pc_controla_log_programa( pr_dstiplog => 'I' );
 
+      -- Execução apenas de avalição
       IF pr_flavaexe = 'S' THEN      
-        --pc_controle_execucao
-        pc_controle_execucao(pr_cdcritic => vr_cdcritic
+        -- Avaliação para Execução e então Submissão dos Processos Filhos para Cada Cooperativa
+        pc_avaliac_execucao(pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;       
       ELSE
-
+        -- Chamar execuções da Cooperativa enviada
         pc_controle_coop_especifica(pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
-        --Se ocorreu erro
+        -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;       
       END IF;      
 
-      --Salvar informacoes no banco de dados
+      -- Salvar informacoes no banco de dados
       COMMIT;
 
       -- Controla log em banco de dados - 15/03/2018 - Chamado 801483  
