@@ -48,3 +48,5 @@ values ('CRED', 'CERISC', 'Parâmetros Central de Risco', ' ', ' ', ' ', 50, 108
 
 insert into crapPRG (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
 values ('CRED', 'CERISC', 'Parâmetros Central de Risco', ' ', ' ', ' ', 50, 10830, 1, 0, 0, 0, 0, 0, 1, 5, null);
+
+COMMIT;

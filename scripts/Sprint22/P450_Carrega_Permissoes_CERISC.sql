@@ -3,7 +3,8 @@
 declare 
   cursor cr_crapcop is
   select cdcooper 
-    from crapcop;
+    from crapcop
+   where flgativo = 1;
     rw_crapcop cr_crapcop%ROWTYPE; 
  
   cursor cr_crapope(pr_cdcooper in crapcop.cdcooper%TYPE, pr_cddepart in crapope.cddepart%TYPE) is

@@ -49,3 +49,4 @@ values ('CERISC', 8, 'C,A', 'Parâmetros Central de Risco', 'Parâmetros Central
 insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
 values ('CERISC', 8, 'C,A', 'Parâmetros Central de Risco', 'Parâmetros Central de Risco', 0, 1, ' ', 'CONSULTA,ALTERACAO', 0, 11, 1, 0, 0, 0, ' ', 0);
 
+COMMIT;
