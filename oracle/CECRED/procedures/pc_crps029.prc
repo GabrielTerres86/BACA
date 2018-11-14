@@ -119,9 +119,8 @@ BEGIN
 
                05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
                
-               08/11/2018 - sctask0035073 - Correção de geração de xml do relatório 143b, que estava concatenando
-                            b novamente no mesmo, deixando a tag errada (Carlos)
-
+               08/11/2018 - sctask0035073 - Correção de geração de xml do relatório 143b, que estava concatenando b
+			                novamente no mesmo, deixando a tag errada (Carlos)
   ............................................................................. */
 
   DECLARE
