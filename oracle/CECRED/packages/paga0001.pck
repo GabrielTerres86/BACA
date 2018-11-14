@@ -9324,6 +9324,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_dscedent VARCHAR2(200);
       vr_idorigem INTEGER;
       vr_idanalise_fraude   INTEGER;    
+			vr_cdoperacao INTEGER;
 
       --Tabela de memoria de erros
       vr_tab_erro GENE0001.typ_tab_erro;
@@ -9552,10 +9553,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --> Para Titulos de origens InternetBank e Mobile,
       --> Deve ser gerado o registro de analise de fraude antes de
       --> realizar a operacao
-      IF pr_idorigem = 3 AND nvl(pr_flgagend,0) = 0 AND 
-         --> E não for pagamento pelo DDA
-         vr_flgpgdda = FALSE THEN
+      IF pr_idorigem = 3 AND nvl(pr_flgagend,0) = 0 THEN
         
+			  IF vr_flgpgdda THEN
+					vr_cdoperacao := 8; -- DDA
+				ELSE
+					vr_cdoperacao := 1; -- Título
+				END IF;
+			
         IF pr_flmobile = 1 THEN
           vr_idorigem := 10; --> MOBILE
         ELSE
@@ -9571,7 +9576,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                             ,pr_iptransacao => pr_iptransa
                                             ,pr_dtmvtolt    => rw_crapdat.dtmvtocd
                                             ,pr_cdproduto   => 44
-                                            ,pr_cdoperacao  => 1
+                                            ,pr_cdoperacao  => vr_cdoperacao
                                             ,pr_iddispositivo => pr_iddispos 
                                             ,pr_dstransacao => pr_dstransa
                                             ,pr_tptransacao => 1 --> online 2-Agendamento
@@ -10254,7 +10259,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_vlrtotal   => pr_vlfatura   -- Valor fatura
                                        ,pr_flgagend   => pr_flgagend   -- Flag agendado /* 1-True, 0-False */ 
                                        ,pr_idorigem   => pr_idorigem   -- Indicador de origem
-                                          ,pr_cdoperacao => CASE pr_idtitdda WHEN 0 THEN 1 ELSE 7 END -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                       ,pr_cdoperacao => vr_cdoperacao -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
                                        ,pr_idanalis   => NULL          -- ID Analise Fraude
                                        ,pr_lgprowid   => NULL          -- Rowid craplgp
                                        ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
