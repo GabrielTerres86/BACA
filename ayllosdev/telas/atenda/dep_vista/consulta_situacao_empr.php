@@ -36,11 +36,16 @@
     }else{
         $inprejuz = getByTagName($param->tags,'inprejuz');	        
         if($inprejuz == 1){
+            // Incluido setTimeout pois na formatação da tela escondia o campo, fazendo com que as vezes nao exibia o campo
+            echo " setTimeout(function(){ ";
             echo "$('#vlabono', '#frmEmpCC').show();";  
             echo "$('label[for=\'vlabono\']', '#frmEmpCC').show();";
+            echo "    }, 150)";
         }else{
+            echo " setTimeout(function(){ "; 
             echo "$('#vlabono', '#frmEmpCC').hide();";  
             echo "$('label[for=\'vlabono\']', '#frmEmpCC').hide();";
+            echo "    }, 150)";
         }
     }    
 
