@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 08/06/2018
+    Data    : Fevereiro/2013                Ultima Atualizacao: 14/11/2018
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -9331,7 +9331,11 @@ PROCEDURE lan_tarifa_conta_corrente:
              
             IF  NOT AVAIL craplcm THEN
                 DO:
-                
+               
+			    IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+				   RUN sistema/generico/procedures/b1wgen0200.p
+				     PERSISTENT SET h-b1wgen0200. 
+
                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                       ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
                        ,INPUT par_cdagenci      /* par_cdagenci */
