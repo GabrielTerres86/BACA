@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0003 AS
   --    Alteracoes: 
   --           12/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
   --                        Marcelo Telles Coelho - Mouts
-  --    
+  --           17/10/2018 - Inclusão da função para validar horário de Ted
+  --                        Jose Dill - Mouts (Projeto 475 - Sprint C)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina para gravar as mensagens de TED de forma genérica
@@ -121,6 +122,9 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0003 AS
                                    pr_indcampo  IN VARCHAR2               --> Tipo de dado: S=String, D=Data, N=Numerico
                                    ) RETURN VARCHAR2;
 
+  -- Função para validar horario de abertura da grade de TED
+  FUNCTION fn_valida_horario_ted(pr_cdcooper    IN tbspb_mensagem.cdcooper%TYPE) RETURN BOOLEAN;
+  
 END SSPB0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
@@ -410,7 +414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
         VALUES (NULL                  -- nrseq_consumo
                ,pr_nrseq_mensagem_xml -- nrseq_mensagem
                ,pr_nrdconta           -- nrdconta
-               ,pr_cdcooper           -- cdcooper
+               ,NVL(pr_cdcooper,3)    -- cdcooper
                ,pr_cdproduto          -- cdproduto
                ,'ENVIOSMP'            -- dstipo_envento
                ,'ENVIO'               -- dssubtipo_evendto
@@ -590,7 +594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,pr_nrcontrole_dev_or      -- nrcontrole_str_pag_rec
                  ,SYSDATE                   -- dhmensagem
                  ,pr_nrdconta               -- nrdconta
-                 ,pr_cdcooper               -- cdcooper
+                 ,NVL(pr_cdcooper,3)        -- cdcooper
                  )
           RETURNING nrseq_mensagem INTO rw_busca_msg.nrseq_mensagem;
         EXCEPTION
@@ -786,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,pr_nrcontrole_dev_or                     -- nrcontrole_if_env
                  ,SYSDATE                                  -- dhmensagem
                  ,pr_nrdconta                              -- nrdconta
-                 ,pr_cdcooper                              -- cdcooper
+                 ,NVL(pr_cdcooper,3)                       -- cdcooper
                  )
           RETURNING nrseq_mensagem INTO rw_busca_msg.nrseq_mensagem;
         EXCEPTION
@@ -1236,6 +1240,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
        RETURN vr_retorno;
   END;
 
+  -- Função para validar o horário de abertura da grade para TEDs
+  -- Projeto 475 Sprint C Req14
+  FUNCTION fn_valida_horario_ted (pr_cdcooper    IN tbspb_mensagem.cdcooper%TYPE) RETURN BOOLEAN IS
+   
+    vr_abertura_ted boolean;
+    
+    /* Busca dos dados da grade da cooperativa */
+    CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+      SELECT crapcop.flgoppag
+            ,crapcop.flgopstr
+            ,crapcop.inioppag
+            ,crapcop.iniopstr
+            ,crapcop.hriniatr
+            ,crapcop.hrfimatr
+        FROM crapcop
+       WHERE crapcop.cdcooper = pr_cdcooper;
+    rw_crapcopgrade cr_crapcop%ROWTYPE; 
+
+    vr_hratualgrade INTEGER;
+    vr_hrinipaggrade INTEGER;    
+
+  BEGIN
+    --
+    vr_abertura_ted := false;
+    --
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcopgrade;
+    --Se nao encontrou
+    IF cr_crapcop%NOTFOUND THEN
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+    ELSE
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+      --Determinar a hora atual
+      vr_hratualgrade:= GENE0002.fn_busca_time;          
+      --Operando com mensagens STR
+      IF rw_crapcopgrade.flgopstr = 1 THEN -- TRUE
+         vr_hrinipaggrade := rw_crapcopgrade.iniopstr;
+      ELSE
+         -- Operando com mensagens PAG  
+         IF rw_crapcopgrade.flgoppag = 1 THEN -- TRUE
+            vr_hrinipaggrade := rw_crapcopgrade.inioppag;
+         END IF;
+      END IF;    
+    END IF;
+    -- Verifica se a hora atual é inferior a hora de inicio da grade de ted
+    -- Se for inferior, indica que a grade não foi aberta
+    IF vr_hratualgrade < vr_hrinipaggrade THEN
+       vr_abertura_ted := true;              
+    ELSE
+       vr_abertura_ted := false;
+    END IF;
+    --
+    RETURN vr_abertura_ted;    
+    --
+  EXCEPTION
+    WHEN OTHERS THEN
+       RETURN vr_abertura_ted;
+  END;
 
 END SSPB0003;
 /
