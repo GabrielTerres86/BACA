@@ -4473,7 +4473,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_cdlantar craplat.cdlantar%TYPE;
   
     -- Variável para consulta de limite
-    vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
+    vr_tab_lim_desconto_op dsct0002.typ_tab_dados_dsctit;      
+    vr_tab_lim_desconto_ai dsct0002.typ_tab_cecred_dsctit;      
     
     --Variaveis auxiliares
     vr_vllimite craplim.vllimite%TYPE;
@@ -4846,11 +4847,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END IF;    
     
     -- Consulta o limite de desconto por tipo de pessoa
+    /*
     DSCC0001.pc_busca_tab_limdescont(pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
                                     ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                                     ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                     ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
                                     ,pr_dscritic => vr_dscritic);                --> Descrição da crítica                
+    */
+    
+    -- Busca os Parâmetros para o Cooperado e Cobrança Com Registro
+    dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
+                                        NULL, --Agencia de operação
+                                        NULL, --Número do caixa
+                                        NULL, --Operador
+                                        NULL, -- Data da Movimentação
+                                        NULL, --Identificação de origem
+                                        1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                        rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                        vr_tab_lim_desconto_op,
+                                        vr_tab_lim_desconto_ai,
+                                        vr_cdcritic,
+                                        vr_dscritic);
+    
     
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
@@ -4858,7 +4876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END IF;              
 
     -- Verifica se o novo limite estipula o limite máximo pelo tipo de pessoa
-    IF(pr_vllimite > vr_tab_lim_desconto(rw_crapass.inpessoa).vllimite) THEN
+    IF(pr_vllimite > vr_tab_lim_desconto_op(1).vllimite) THEN
       vr_dscritic := 'Nao e possivel realizar a renovacao de limite, valor excede o limite estipulado.';
       RAISE vr_exc_saida;
     END IF;
