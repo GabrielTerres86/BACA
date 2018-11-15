@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 01/12/2017
+	 Data : Julho/2007                   Última Alteração: 15/11/2018
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -116,6 +116,7 @@
 
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
 
+				 15/11/2018 - Validacao e mudança do link de cobrança caso seja cooperativa piloto (Andre Clemer - Supero).
  * ********************************************************************************** */
 
 	session_start();	
@@ -573,6 +574,9 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			case "COBRANCA": {
 				$nomeRotina = "Cobran&ccedil;a";
                 $urlRotina = "cobranca";
+				if ( isset($cabecalho[30]->cdata) && $cabecalho[30]->cdata == 1 ) {
+					$urlRotina = "reciprocidade";
+				}
                 $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
 				$telaPermitadaAcessoBacen = 0;
 				break;

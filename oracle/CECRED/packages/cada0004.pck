@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
+    Data     : Agosto/2015.                   Ultima atualizacao: 15/11/2018
   
    Dados referentes ao programa:
   
@@ -46,7 +46,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               da conta. PRJ366 (Lombardi).		   
                  
                  05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
-                              pc_carrega_dados_atenda (Claudio CIS Corporate)	 	   
+                              pc_carrega_dados_atenda (Claudio CIS Corporate)
+							  
+				 15/11/2018 - Inclusão do campo reciproc no retorno da
+							  pc_carrega_dados_atenda (Andre Clemer - Supero)
                  
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -231,7 +234,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                dssititg  VARCHAR2(100),
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
-               cdsitdct  crapass.cdsitdct%TYPE);
+               cdsitdct  crapass.cdsitdct%TYPE,
+			   reciproc  INTEGER);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
@@ -6173,6 +6177,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).inpessoa := rw_crapass.inpessoa;
     pr_tab_cabec(vr_idxcab).qttitula := vr_qttitula;
     pr_tab_cabec(vr_idxcab).dssititg := rw_crapass.dsdctitg;
+	-- Reciprocidade como piloto para cooperativa
+    pr_tab_cabec(vr_idxcab).reciproc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                  pr_cdcooper => pr_cdcooper,
+                                                                  pr_cdacesso => 'RECIPROCIDADE_PILOTO');
     
     pr_des_reto := 'OK';
     
@@ -7241,7 +7249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 23/06/2017
+       Data    : Outubro/2015.                         Ultima atualizacao: 15/11/2018
 
        Dados referentes ao programa:
 
@@ -7266,6 +7274,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	               23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				                "Desligamento por determinação do BACEN" 
 							   ( Jonata - RKAM P364).	
+
+				   15/11/2018 - Incluido no retorno da procedure o campo reciproc
+				               (Andre Clemer - Supero)
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -7411,6 +7422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
+						'<reciproc>'|| vr_tab_cabec(i).reciproc      ||'</reciproc>'||                        
                         '</Registro>');
       
       END LOOP;
