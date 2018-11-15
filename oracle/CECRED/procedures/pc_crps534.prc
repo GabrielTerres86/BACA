@@ -144,6 +144,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                25/06/2018 - Substituição pc_gera_log_batch por pc_log_programa
                             (Ana - Envolti - REQ0013970)
+														
+               09/11/2018 - Incluso a validação referente à conta salário para não permitir recebimento
+							             de crédito de CNPJ diferente ao do empregador. (P485 - Augusto SUPERO)
   ............................................................................ */
 
 
@@ -324,7 +327,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_cdcritic     PLS_INTEGER;
   vr_dscritic     VARCHAR2(4000);
   vr_dsobserv     VARCHAR2(100);
-  vr_nrcpfstl     crapttl.nrcpfcgc%TYPE;
+  vr_nrcpfemp     crapttl.nrcpfemp%TYPE;
+	vr_nrcpfstl     crapttl.nrcpfcgc%TYPE;
   vr_nrcpfttl     crapttl.nrcpfcgc%TYPE;
   
   -- variáveis para controle de arquivos
@@ -1940,6 +1944,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                    , crapass.cdagenci
                    , crapass.inpessoa
                    , crapass.cdcooper
+									 , crapass.cdtipcta
                 FROM crapass
                WHERE crapass.cdcooper = pr_cdcooper
                  AND crapass.nrdconta = pr_nrdconta;
@@ -1948,6 +1953,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                              ,pr_nrdconta IN crapttl.nrdconta%TYPE
                        ,pr_idseqttl IN crapttl.idseqttl%TYPE)IS
               SELECT crapttl.nrcpfcgc
+							      ,crapttl.nrcpfemp
                 FROM crapttl
                WHERE crapttl.cdcooper = pr_cdcooper
                  AND crapttl.nrdconta = pr_nrdconta
@@ -1992,6 +1998,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             vr_nrsconta      craptrf.nrsconta%TYPE;
             vr_indebcre      craprej.indebcre%TYPE;
             rw_crapass       cr_crapass%ROWTYPE;
+						vr_val_cdmodalidade_tipo NUMBER;
 
           BEGIN
             
@@ -2364,10 +2371,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               CLOSE cr_craptrf;
             END IF;
 
+            vr_nrcpfemp:= 0;
             vr_nrcpfstl:= 0;
             vr_nrcpfttl:= 0;
 
             IF rw_crapass.inpessoa = 1 THEN
+							OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                             ,pr_nrdconta => rw_crapass.nrdconta
+                             ,pr_idseqttl => 1);
+
+              FETCH cr_crapttl INTO rw_crapttl;
+
+              IF cr_crapttl%FOUND THEN
+                vr_nrcpfemp:= rw_crapttl.nrcpfemp;
+              END IF;
+              CLOSE cr_crapttl;
+
               OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
                              ,pr_nrdconta => rw_crapass.nrdconta
                              ,pr_idseqttl => 2);
@@ -2431,6 +2450,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             IF to_number(SUBSTR(vr_dslinha, 230, 3)) > 0 THEN
                 vr_cdcritic := 513;
             END IF;
+						
+						-- Se não ocorreu critica realizamos a validação do empregador da conta salário
+						IF nvl(vr_cdcritic,0) = 0 THEN
+							-- Verificar conta salario (idseq)
+							cada0006.pc_busca_modalidade_tipo(pr_inpessoa => rw_crapass.inpessoa
+																							 ,pr_cdtipo_conta => rw_crapass.cdtipcta
+																							 ,pr_cdmodalidade_tipo => vr_val_cdmodalidade_tipo
+																							 ,pr_des_erro => vr_des_erro
+																							 ,pr_dscritic => vr_dscritic);
+	            
+							-- Verifica se é conta salário
+							IF vr_val_cdmodalidade_tipo = 2 THEN
+								IF vr_nrcpfemp <> vr_cpfremet THEN
+									/*CNPJ remetente inválido*/
+									vr_cdcritic := 301;
+								END IF;
+							END IF;
+						END IF;
 
 
             -- Verifica se houve crítica

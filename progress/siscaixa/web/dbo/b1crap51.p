@@ -260,6 +260,8 @@ DEF VAR c-desc-erro             AS CHAR                   NO-UNDO.
 
 DEF VAR h_b2crap00              AS HANDLE                 NO-UNDO.
 DEF VAR h-b1crap02              AS HANDLE                 NO-UNDO.
+DEF VAR aux_cdcritic            AS INT                    NO-UNDO.
+DEF VAR aux_dscritic            AS CHAR                   NO-UNDO.
 
 DEF VAR de-valor-bloqueado      AS DEC                    NO-UNDO.
 DEF VAR de-valor-liberado       AS DEC                    NO-UNDO.
@@ -384,6 +386,7 @@ PROCEDURE valida-conta:
     DEF OUTPUT PARAM p-poupanca             AS LOG  NO-UNDO.
        
     DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
+    DEF VAR aux_modalidade  AS INT        NO-UNDO.
     
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
@@ -495,6 +498,63 @@ PROCEDURE valida-conta:
                             INPUT c-desc-erro,
                             INPUT YES).
              RETURN "NOK".
+         END.
+
+         IF crapass.inpessoa = 1 THEN
+         DO:
+          
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+           
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT crapass.inpessoa,
+                                         INPUT crapass.cdtipcta,
+                                         OUTPUT 0,   /* pr_cdmodalidade_tipo */
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+                        
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_modalidade = 0
+                   aux_dscritic = ""
+                   aux_modalidade = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+                                      WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                      WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+                                      
+                                      
+            IF aux_dscritic <> "" THEN
+            DO:
+                ASSIGN i-cod-erro = 0
+                       c-desc-erro = aux_dscritic.
+                
+                RUN cria-erro (INPUT p-cooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+                RETURN "NOK".
+            END.
+            
+            IF aux_modalidade = 2 THEN
+            DO:
+            
+                ASSIGN i-cod-erro  = 0
+                       c-desc-erro = "Conta salario nao permite deposito.".
+                RUN cria-erro (INPUT p-cooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+                RETURN "NOK".            
+            END.
+          
+          
          END.
                       
          RUN sistema/generico/procedures/b1wgen0001.p

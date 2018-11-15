@@ -184,6 +184,7 @@ DEF VAR h_b2crap00           AS HANDLE                              NO-UNDO.
 DEF VAR h-b1crap02           AS HANDLE                              NO-UNDO.
 
 DEF VAR aux-p-registro       AS RECID                               NO-UNDO.
+DEF VAR p-nrcpfemp           AS CHAR                                NO-UNDO.
 
 DEF BUFFER crablcm   FOR craplcm.
 DEF BUFFER crabfdc   FOR crapfdc.
@@ -210,10 +211,14 @@ PROCEDURE verifica-conta:
      DEF INPUT  PARAM p-nro-caixa               AS INTE         NO-UNDO.
      DEF INPUT  PARAM p-coop-erro               AS CHAR         NO-UNDO.
      DEF INPUT  PARAM p-nrdconta                AS INTE         NO-UNDO.
+     DEF INPUT  PARAM p-tp-docto                AS CHAR         NO-UNDO.
+     DEF INPUT  PARAM p-cpfcgcde                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-nometit1                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-cpfcnpj1                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-nometit2                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-cpfcnpj2                AS CHAR         NO-UNDO.
+     
+     DEF VAR aux-modalidade                     AS INT          NO-UNDO.
 
      FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
      
@@ -248,6 +253,91 @@ PROCEDURE verifica-conta:
                     ASSIGN  p-nometit2    = crapttl.nmextttl
                             p-cpfcnpj2 = STRING(crapttl.nrcpfcgc,"99999999999")
                             p-cpfcnpj2 = STRING(p-cpfcnpj2,"xxx.xxx.xxx-xx").
+                            
+                            
+                            
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+           
+                RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT crapass.inpessoa,
+                                             INPUT crapass.cdtipcta,
+                                             OUTPUT 0,   /* pr_cdmodalidade_tipo */
+                                             OUTPUT "",  /* pr_des_erro */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_busca_modalidade_tipo
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux-modalidade = 0
+                       aux_dscritic = ""
+                       aux-modalidade = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+                                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                       aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+                                          
+                                          
+                IF aux_dscritic <> "" THEN
+                DO:
+                    ASSIGN i-cod-erro = 0
+                           c-desc-erro = aux_dscritic.
+                    
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+                    RETURN "NOK".
+                END.
+
+
+                IF p-tp-docto = "Transferencia" AND p-cpfcgcde <> "" AND aux-modalidade = 2 THEN
+                DO:
+                
+                   FIND FIRST crapttl WHERE crapttl.cdcooper = crapcop.cdcooper
+                                        AND crapttl.nrdconta = crapass.nrdconta
+                                        AND crapttl.idseqttl = 1 /* Dados do Primeiro Titular */
+                                        USE-INDEX crapttl1 NO-LOCK NO-ERROR.
+
+                   IF  AVAIL crapttl THEN
+                       ASSIGN p-nrcpfemp = STRING(crapttl.nrcpfemp).
+                       
+                     ASSIGN p-cpfcgcde  = STRING(REPLACE(REPLACE(REPLACE(p-cpfcgcde, ".", ""), "-", ""), "/", "")).
+                     
+                     IF INDEX(p-cpfcgcde, p-nrcpfemp) = 0 THEN
+                     DO:
+                   
+                       ASSIGN i-cod-erro  = 0                            
+                              c-desc-erro = "Lancamento nao permitido para este tipo de conta.".
+                             
+                       RUN cria-erro (INPUT p-coop-erro,
+                                      INPUT p-cod-agencia,
+                                      INPUT p-nro-caixa,
+                                      INPUT i-cod-erro,
+                                      INPUT c-desc-erro,
+                                      INPUT YES).                 
+                           
+                       RETURN "NOK".
+                   END.
+                END.
+
+                IF (p-tp-docto = "Deposito" OR p-tp-docto = "Cheque") AND aux-modalidade = 2 THEN
+                DO:
+                   ASSIGN i-cod-erro  = 0
+                          c-desc-erro = "Conta salario nao permite deposito.".
+                           
+                   RUN cria-erro (INPUT p-coop-erro,
+                                  INPUT p-cod-agencia,
+                                  INPUT p-nro-caixa,
+                                  INPUT i-cod-erro,
+                                  INPUT c-desc-erro,
+                                  INPUT YES).
+                   RETURN "NOK".                        
+               END.
+
              END.
              ELSE DO:
                 FIND FIRST crapjur WHERE crapjur.cdcooper = crapcop.cdcooper

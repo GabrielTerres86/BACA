@@ -1142,15 +1142,15 @@ end;
               CLOSE cr_crapttl;
             END IF;
             
-            cecred.cada0006.pc_busca_modalidade_tipo(pr_inpessoa => rw_crapass.inpessoa,
-                                                     pr_cdtipo_conta => rw_crapass.cdtipcta,
-                                                     pr_cdmodalidade_tipo => vr_val_cdmodalidade_tipo,
-                                                     pr_des_erro => vr_des_erro,
-                                                     pr_dscritic => vr_dscritic);
+            cada0006.pc_busca_modalidade_tipo(pr_inpessoa => rw_crapass.inpessoa
+																						 ,pr_cdtipo_conta => rw_crapass.cdtipcta
+																						 ,pr_cdmodalidade_tipo => vr_val_cdmodalidade_tipo
+																						 ,pr_des_erro => vr_des_erro
+																						 ,pr_dscritic => vr_dscritic);
             
             -- Verifica se é conta salário
             IF vr_val_cdmodalidade_tipo = 2 THEN
-              IF rw_crapttl.nrcpfemp = vr_aux_CNPJ_CPFDeb THEN
+              IF rw_crapttl.nrcpfemp <> vr_aux_CNPJ_CPFDeb THEN
                 /*CNPJ remetente inválido*/
                 pr_cdcritic := 4;
                 pr_dscritic := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
