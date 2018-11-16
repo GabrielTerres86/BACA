@@ -1536,28 +1536,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
            tbprj.vljur60_ctneg +
            tbprj.vljur60_lcred) = 0;
 
-  --Seleciona informações do cadastro de emprestimos
-  CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE,
-                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
-    SELECT count(*) qtde_crapepr 
-      FROM crapepr
-     WHERE crapepr.cdcooper = pr_cdcooper    
-       AND crapepr.nrdconta = pr_nrdconta
-       AND crapepr.inprejuz = 1  
-       AND crapepr.vlsdprej > 0;
-  rw_crapepr cr_crapepr%ROWTYPE;  
-  
-  -- Borderos de Desconto de Titulos
-  CURSOR cr_crapbdt (pr_cdcooper IN crapepr.cdcooper%TYPE,
-                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
-    SELECT count(*) qtde_crapbdt 
-      FROM crapbdt b
-     WHERE b.cdcooper = pr_cdcooper 
-       AND b.nrdconta = pr_nrdconta
-       AND b.inprejuz = 1
-       AND b.dtliqprj is null;
-  rw_crapbdt cr_crapbdt%ROWTYPE;    
-  
   -- Contas não em prejuizo INPREJUZ=0 e com situação em prejuizo CDSITDCT=2
   CURSOR cr_conta_nprej_sitprej IS
    SELECT ass.nrdconta,
