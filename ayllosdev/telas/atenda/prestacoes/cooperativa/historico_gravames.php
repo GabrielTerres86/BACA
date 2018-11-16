@@ -74,8 +74,12 @@
 				   ,$glbvars["idorigem"]
 				   ,$glbvars["cdoperad"]
 				   ,"</Root>");
+				   
+		//echo ( $xmlResult);die;
 
-		$xmlObjeto = getObjectXML($xmlResult);
+		$xmlObjeto = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
+		
+		//var_dump($xmlResult);die;
 
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
