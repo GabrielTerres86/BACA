@@ -99,6 +99,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
 
                19/08/2018 - Incluso tratativa para efetuar apenas leitura de 
                             titulos descontados e liberados (GFT) 
+                            
+               31/10/2018 - Adicionado na impressão do rel 494 tratativa do valor do titulo conforme a versão 
+                            do produto do borderô, e quando for a nova versão somar o valor de apropriação de
+                            juros de mora (Paulo Penteado GFT)
      ............................................................................. */
 
      DECLARE
@@ -249,6 +253,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                ,crapbdt.nrborder
                ,crapbdt.cdagenci
                ,crapbdt.nrctrlim
+               ,crapbdt.flverbor
          FROM crapbdt crapbdt
          WHERE crapbdt.cdcooper = pr_cdcooper
          AND   crapbdt.insitbdt IN (3,4); /* Liberado Ou Liquidado */
@@ -283,6 +288,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                ,craptdb.dtvencto
                ,craptdb.dtlibbdt
                ,craptdb.nrborder
+               ,craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra) vltitmra
                ,crapass.cdagenci
                ,crapass.nmprimtl
                ,crapass.inpessoa
@@ -361,6 +367,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        vr_bor_totvlliq NUMBER;
        vr_bor_totvljur NUMBER;
        vr_bor_vlrmedio NUMBER;
+       vr_vltitulo     craptdb.vltitulo%TYPE;
 
        --Variaveis para saldo
        vr_nmdsacad crapsab.nmdsacad%TYPE;
@@ -1902,6 +1909,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                vr_nrinssac:= NULL;
              END IF;
 
+             IF rw_crapbdt.flverbor = 0 THEN
+               vr_vltitulo := rw_craptdb.vltitulo;
+             ELSE
+               vr_vltitulo := rw_craptdb.vltitmra;
+             END IF;
+
              --Atualizar tabela memória para gerar relatório 495
              vr_index_saldo:= LPad(rw_craptdb.cdagenci,10,'0')||
                               LPad(rw_craptdb.nrdconta,10,'0')||
@@ -1918,7 +1931,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
              vr_tab_saldo(vr_index_saldo).nrborder:= rw_craptdb.nrborder;
              vr_tab_saldo(vr_index_saldo).nrcnvcob:= rw_craptdb.nrcnvcob;
              vr_tab_saldo(vr_index_saldo).vlliquid:= rw_craptdb.vlliquid;
-             vr_tab_saldo(vr_index_saldo).vltitulo:= rw_craptdb.vltitulo;
+             vr_tab_saldo(vr_index_saldo).vltitulo:= vr_vltitulo;
              vr_tab_saldo(vr_index_saldo).vldjuros:= 0;
              vr_tab_saldo(vr_index_saldo).dsdoccop:= rw_crapcob.dsdoccop;
              vr_tab_saldo(vr_index_saldo).nrboleto:= rw_crapcob.nrdocmto;
