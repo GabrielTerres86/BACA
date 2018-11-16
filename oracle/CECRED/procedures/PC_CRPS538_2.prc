@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 08/10/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 06/11/2018
    
    Projeto:  Chamado 714566.
 
@@ -55,6 +55,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
        08/10/2018 - Retorno de versão por sikmples suspeita de problema
                     (Belli - Envolti - Chamado REQ0029352)   
+
+       06/11/2018 - Não passar e-mail indevido de causa de feriados não tratados.
+                    (Belli - Envolti - Chamado REQ0032105)   
 
    ................................................................................................*/
 
@@ -98,6 +101,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 	   
        --Constantes
        vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS538_2';
+       -- Incluida SYSDATE em variavel vr_dtsysdat para manupilar melhor quando teste 06/11/2018 - REQ0032105      
+       vr_dtsysdat     DATE := SYSDATE;
+       vr_dtavalia     DATE; -- Data para avaliar se é feriado
+       vr_dtretorno    DATE; -- Data retorna igual se é dia util
 
        --Variaveis Locais
        
@@ -975,13 +982,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                               ,pr_dscritic     OUT VARCHAR2
                               ) 
     IS
-      vr_dataexecucao       DATE      := (SYSDATE-1);
-      vr_datautil           DATE      := SYSDATE;
+  /* ..........................................................................    
+  Procedure: pc_posiciona_dat
+  Sistema  : Rotina de Cobrança
+  Autor    : Belli/Envolti
+  Data     : Agosto/2017                         Ultima atualizacao: 06/11/2018
+    
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : posiciona feriado
+    
+  Alteracoes:                
+    06/11/2018 - Não passar e-mail indevido de causa de feriados não tratados.
+                (Belli - Envolti - Chamado REQ0032105)  
+    
+  ............................................................................. */
     BEGIN
-      pr_fgferiado := FALSE;
+      IF pr_cdcooperprog = 3 THEN
+          vr_dtavalia := vr_dtsysdat; -- Utiliza vr_dtsysdat data hora posicionada - 06/11/2018 - REQ0032105
+      ELSE
+          vr_dtavalia := (vr_dtsysdat-1); -- Utiliza vr_dtsysdat data hora posicionada - 06/11/2018 - REQ0032105
+      END IF;
+      pr_fgferiado    := TRUE; -- Acerto da inicialização de variavel - 06/11/2018 - REQ0032105
       -- trata feriado
-      vr_datautil := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooperprog --in crapcop.cdcooper%type, --> Cooperativa conectada
-                                                ,pr_dtmvtolt => vr_dataexecucao --in crapdat.dtmvtolt%type, --> Data do movimento
+      vr_dtretorno := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooperprog -- Cooperativa em processo
+                                                 ,pr_dtmvtolt => vr_dtavalia     -- Data do movimento
                                                  --pr_tipo in varchar2 default 'P',      --> Tipo de busca (P = proximo, A = anterior)
                                                  --pr_feriado IN BOOLEAN DEFAULT TRUE,   --> Considerar feriados
                                                  --pr_excultdia IN BOOLEAN DEFAULT FALSE --> Desconsiderar Feriado 31/12
@@ -989,7 +1014,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Retorna nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);                                           
       
-      IF vr_datautil <> vr_dataexecucao THEN
+      IF TRUNC(vr_dtretorno) = TRUNC(vr_dtavalia) THEN
         pr_fgferiado := FALSE;
       END IF;
       
@@ -1199,11 +1224,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            raise_application_error(-20001,vr_dscritic);
          END IF;
        END;';
+      -- Utiliza vr_dtsysdat data hora posicionada - 06/11/2018 - REQ0032105
       -- Faz a chamada ao programa paralelo atraves de JOB
       gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooperprog --> Código da cooperativa
                             ,pr_cdprogra  => vr_cdprogra     --> Código do programa
                             ,pr_dsplsql   => vr_dsplsql      --> Bloco PLSQL a executar
-                            ,pr_dthrexe   => ( SYSDATE + (pr_qtminutos /1440) ) --> Horario da execução
+                            ,pr_dthrexe   => ( vr_dtsysdat + (pr_qtminutos /1440) ) --> Horario da execução
                             ,pr_interva   => NULL            --> apenas uma vez
                             ,pr_jobname   => vr_jobname      --> Nome randomico criado
                             ,pr_des_erro  => vr_dscritic);
@@ -1337,7 +1363,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       IF vr_fgferiado THEN
         --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
         vr_cdcritic := 1198; -- Rotina não executa em feriado
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||  
+                       ' vr_dtsysdat:' || vr_dtsysdat ||        
+                       ' vr_dtavalia:' || vr_dtavalia ||
+                       ' vr_dtretorno:' || vr_dtretorno; -- Completa mensagem - 06/11/2018 - REQ0032105
         RAISE vr_exc_saida;
       END IF;
       
@@ -1412,7 +1441,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         
         -- Verifica sabado para não executar a Cecred
         BEGIN
-          SELECT TO_CHAR(SYSDATE,'D') 
+          SELECT TO_CHAR(vr_dtsysdat,'D') -- Utiliza vr_dtsysdat data hora posicionada - 06/11/2018 - REQ0032105
           INTO   vr_diaSemana 
           FROM   DUAL;
         EXCEPTION
@@ -1452,7 +1481,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
           --Variavel de erro recebe codigo devido
           vr_cdcritic := 1198; -- Feriado então Rotina não será executada
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||  
+                         ' vr_dtsysdat:' || vr_dtsysdat ||        
+                         ' vr_dtavalia:' || vr_dtavalia ||
+                         ' vr_dtretorno:' || vr_dtretorno; -- Completa mensagem - 06/11/2018 - REQ0032105
           -- Controla log em banco de dados
           pc_controla_log_programa( pr_dstiplog       => 'O'
                                    ,pr_tpocorrencia   => 4
