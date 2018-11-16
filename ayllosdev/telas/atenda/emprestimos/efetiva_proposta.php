@@ -168,8 +168,9 @@
 					$nomgrupo = $gravamesb3['NOMGRUPO'];
 					$flgobrig = $gravamesb3['FLGOBRIG'];
 
-						$qtdGravame = 0;
+					$qtdGravame = 0;
 					foreach ($t->tags as $gravame) {
+						
 						$gravameAttr = $gravame->attributes;
 						$iduriservico = $gravameAttr['IDURISERVICO'];
 						$cdoperac = $gravameAttr['CDOPERAC'];
@@ -179,7 +180,7 @@
 						$nrctremp = $gravameAttr['NRCTREMP'];
 						$idseqbem = $gravameAttr['IDSEQBEM'];
 						$flaborta = $gravameAttr['FLABORTA'];
-						$flgobrig = $gravameAttr['FLOBRIGA'];
+						$flgobrig = $gravameAttr['FLGOBRIG'];
 
 						$xmlstr = new SimpleXMLElement($xmlResult);
 						$sistNac = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->sistemaNacionalGravames );
@@ -203,11 +204,15 @@
 									  "propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
-						
+
+						//echo ($data); die;
+
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
 						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
+						
+						//var_dump($xmlStr); die;
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
@@ -220,10 +225,10 @@
 							$errorMessage = retornarMensagemErro($xmlRet);
 							$errorQtd++;
 
-							if ( $flgobrig == "S" && $flgaborta == "S" ) {
+							if ( $flgobrig == "S" && $flaborta == "S" ) {
 								exibirErro('error',$msg['erro_baixa_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
 								exit;
-							} else if ( $flgobrig == "S" && $flgaborta == "N" ) {
+							} else if ( $flgobrig == "S" && $flaborta == "N" ) {
 								$exibeErro = 'grupo';
 							}
 

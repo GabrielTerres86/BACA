@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE            : busca_marcas.php
- * CRIA플O        : Maykon D. Granemann / ENVOLTI
+ * CRIA플O          : Maykon D. Granemann / ENVOLTI
  * DATA CRIA플O     : 14/08/2018
- * OBJETIVO         : 
+ * OBJETIVO         :
  * --------------
- * ALTERA합ES     :
+ * ALTERA합ES   :
  * --------------
  */
 ?> 
@@ -56,7 +56,7 @@
     $arrayCombo = XmlToList($xmlReturn, $nameTagList, $nameTagItem, $nameTagItemValue, $nameTagItemText);
     foreach($arrayCombo as $comboItem)
     {
-        
+
         echo "$('#".$idElementoHtml."').append($('<option>', 
               {
                 value: ".$comboItem->value.",
@@ -66,8 +66,9 @@
 		if (removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) == utf8_decode(strtoupper($dsmarbem))) {
 			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) . "'; }).attr('selected', 'selected');
 						urlPagina= \"telas/manbem/fipe/busca_modelos.php\";
+						cdTipoVeiculo = trataTipoVeiculo($('#'+idElementTpVeiulo).val());
 						cdMarcaFipe = ".$comboItem->value.";
-						data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax', dsbemfin: '$dsbemfin', nrmodbem: '$nrmodbem' });
+						data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax', dsbemfin: '$dsbemfin', nrmodbem: '$nrmodbem' });
 						buscaFipeServico(urlPagina,data);
 			";
 		}

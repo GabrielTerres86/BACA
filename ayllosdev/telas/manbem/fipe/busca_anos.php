@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE            : busca_anos.php
- * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
- * DATA CRIAÇÃO     : 14/08/2018
+ * CRIAÃ‡ÃƒO          : Maykon D. Granemann / ENVOLTI
+ * DATA CRIAÃ‡ÃƒO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
- * ALTERAÇÕES     :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
  */
 ?> 
@@ -22,7 +22,7 @@
 	
 	$aux = "";
 
-    /******************************************************* Chama Serviço Fipe *****************************************************************/
+    /******************************************************* Chama ServiÃ§o Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
     $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
     $cdModeloVeiculo	= (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ;
@@ -45,7 +45,7 @@
     }';
     $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
-    /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
+    /**************************************************** Fim Chamada ServiÃ§o Fipe ****************************************************************/
 
     /*************************************************** Tratamento dados retornados **************************************************************/
     $nameTagList = 'modeloAno';

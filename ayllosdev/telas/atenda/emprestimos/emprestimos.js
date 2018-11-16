@@ -3461,8 +3461,9 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_modelos.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
@@ -3480,9 +3481,10 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_anos.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementAno+"C").val() != "") {
@@ -3498,6 +3500,7 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_valor.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $("#"+idElementModelo).val();
 					var cdAnoFipe;
@@ -3506,7 +3509,7 @@ function controlaLayout(operacao) {
 					} else {
 						cdAnoFipe = modeloBem;
 					}
-					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 			});

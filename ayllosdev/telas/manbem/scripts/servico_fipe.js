@@ -21,8 +21,9 @@ $(function(){
         if(validaValorCombo($(this)))
         {
             var urlPagina= "telas/manbem/fipe/busca_modelos.php";
+			var cdTipoVeiculo = trataTipoVeiculo($('#'+idElementTpVeiulo).val());
             var cdMarcaFipe = $(this).val();
-            var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax'});
+            var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax'});
             buscaFipeServico(urlPagina,data);	
         }		
     });
