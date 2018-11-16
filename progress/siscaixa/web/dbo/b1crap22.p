@@ -112,6 +112,10 @@
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
 
                25/05/2018 - Alteraçao para utilizar o campo dtmvtocd como referencia de data atual - Everton Deserto(AMCom).
+               
+               09/11/2018 - Incluso a validaçao referente a conta salário para nao permitir recebimento
+                            de crédito de CNPJ diferente ao do empregador. (P485 - Augusto SUPERO)
+
 ----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
@@ -217,8 +221,9 @@ PROCEDURE verifica-conta:
      DEF OUTPUT PARAM p-cpfcnpj1                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-nometit2                AS CHAR         NO-UNDO.
      DEF OUTPUT PARAM p-cpfcnpj2                AS CHAR         NO-UNDO.
-     
+
      DEF VAR aux-modalidade                     AS INT          NO-UNDO.
+     DEF VAR aux-dscritic                       AS CHAR         NO-UNDO.
 
      FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
      
@@ -272,17 +277,17 @@ PROCEDURE verifica-conta:
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                 
                 ASSIGN aux-modalidade = 0
-                       aux_dscritic = ""
+                       aux-dscritic = ""
                        aux-modalidade = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
                                           WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-                       aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                       aux-dscritic = pc_busca_modalidade_tipo.pr_dscritic
                                           WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
                                           
                                           
-                IF aux_dscritic <> "" THEN
+                IF aux-dscritic <> "" THEN
                 DO:
                     ASSIGN i-cod-erro = 0
-                           c-desc-erro = aux_dscritic.
+                           c-desc-erro = aux-dscritic.
                     
                     RUN cria-erro (INPUT p-cooper,
                                    INPUT p-cod-agencia,

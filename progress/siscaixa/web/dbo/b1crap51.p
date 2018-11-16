@@ -183,6 +183,10 @@
                
                13/07/2018 - Correcao na procedure autentica_cheques que estava gerando
                             10 autenticoes para cada deposito de cheque (Tiago/Fabricio)
+                            
+               09/11/2018 - Incluso a validaçao referente a conta salário para nao permitir recebimento
+                            de crédito de CNPJ diferente ao do empregador. (P485 - Augusto SUPERO)
+
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -260,8 +264,6 @@ DEF VAR c-desc-erro             AS CHAR                   NO-UNDO.
 
 DEF VAR h_b2crap00              AS HANDLE                 NO-UNDO.
 DEF VAR h-b1crap02              AS HANDLE                 NO-UNDO.
-DEF VAR aux_cdcritic            AS INT                    NO-UNDO.
-DEF VAR aux_dscritic            AS CHAR                   NO-UNDO.
 
 DEF VAR de-valor-bloqueado      AS DEC                    NO-UNDO.
 DEF VAR de-valor-liberado       AS DEC                    NO-UNDO.
@@ -377,16 +379,17 @@ DEF  BUFFER crabass5 FOR crapass.
 {includes/proc_conta_integracao.i}
 
 PROCEDURE valida-conta:
-    DEF INPUT  PARAM p-cooper               AS CHAR NO-UNDO.
-    DEF INPUT  PARAM p-cod-agencia          AS INT  NO-UNDO. /* Cod.Agencia  */
-    DEF INPUT  PARAM p-nro-caixa            AS INT  NO-UNDO. /* Numero Caixa */
-    DEF INPUT  PARAM p-nro-conta            AS INT  NO-UNDO. /* Nro Conta    */
-    DEF OUTPUT PARAM p-nome-titular         AS CHAR NO-UNDO.
-    DEF OUTPUT PARAM p-transferencia-conta  AS CHAR NO-UNDO.
-    DEF OUTPUT PARAM p-poupanca             AS LOG  NO-UNDO.
+    DEF INPUT  PARAM p-cooper               AS CHAR     NO-UNDO.
+    DEF INPUT  PARAM p-cod-agencia          AS INT      NO-UNDO. /* Cod.Agencia  */
+    DEF INPUT  PARAM p-nro-caixa            AS INT      NO-UNDO. /* Numero Caixa */
+    DEF INPUT  PARAM p-nro-conta            AS INT      NO-UNDO. /* Nro Conta    */
+    DEF OUTPUT PARAM p-nome-titular         AS CHAR     NO-UNDO.
+    DEF OUTPUT PARAM p-transferencia-conta  AS CHAR     NO-UNDO.
+    DEF OUTPUT PARAM p-poupanca             AS LOG      NO-UNDO.
        
-    DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
-    DEF VAR aux_modalidade  AS INT        NO-UNDO.
+    DEF VAR h-b1wgen0001                    AS HANDLE   NO-UNDO.
+    DEF VAR aux-modalidade                  AS INT      NO-UNDO.
+    DEF VAR aux-dscritic                    AS CHAR     NO-UNDO.
     
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
@@ -518,18 +521,18 @@ PROCEDURE valida-conta:
 
             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
             
-            ASSIGN aux_modalidade = 0
-                   aux_dscritic = ""
-                   aux_modalidade = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+            ASSIGN aux-modalidade = 0
+                   aux-dscritic = ""
+                   aux-modalidade = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
                                       WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                   aux-dscritic = pc_busca_modalidade_tipo.pr_dscritic
                                       WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
                                       
                                       
-            IF aux_dscritic <> "" THEN
+            IF aux-dscritic <> "" THEN
             DO:
                 ASSIGN i-cod-erro = 0
-                       c-desc-erro = aux_dscritic.
+                       c-desc-erro = aux-dscritic.
                 
                 RUN cria-erro (INPUT p-cooper,
                                INPUT p-cod-agencia,
@@ -540,7 +543,7 @@ PROCEDURE valida-conta:
                 RETURN "NOK".
             END.
             
-            IF aux_modalidade = 2 THEN
+            IF aux-modalidade = 2 THEN
             DO:
             
                 ASSIGN i-cod-erro  = 0

@@ -33,8 +33,11 @@
                 16/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                              PinPad Novo (Lucas Lunelli - [PROJ290])
                           
-                25/05/2018 - Alteraçao para a procedure valida-transacao2 - Everton Deserto(AMCom).            
-                          
+                25/05/2018 - Alteraçao para a procedure valida-transacao2 - Everton Deserto(AMCom).
+                
+                09/11/2018 - Incluso a validaçao referente a conta salário para nao permitir recebimento
+                             de crédito de CNPJ diferente ao do empregador. (P485 - Augusto SUPERO)
+
 -----------------------------------------------------------------------------**/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
