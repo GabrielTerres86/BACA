@@ -28,8 +28,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018
-  --
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018 
+  -- 
   -- Dados referentes ao programa:
   --
   -- Frequencia: N/A

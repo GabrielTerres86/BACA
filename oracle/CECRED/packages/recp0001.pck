@@ -3019,7 +3019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       null;
     WHEN OTHERS THEN 
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na pc_consistir_alt_cdmotcin: '||SQLERRM; 
+      pr_dscritic := 'Erro na pc_consistir_alt_cdmotcin: '||SQLERRM;  
   END pc_consistir_alt_cdmotcin; 
    
 END RECP0001;

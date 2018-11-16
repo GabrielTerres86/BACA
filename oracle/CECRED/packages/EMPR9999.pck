@@ -53,6 +53,34 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                     ,pr_cdcritic OUT PLS_INTEGER            --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2               --> Descricao da critica
                                    );  
+
+  --> Grava migracao de emprestimo
+  PROCEDURE pc_grava_migra_empr (pr_cdcooper  IN tbepr_migracao_empr.cdcooper%type --> Código da cooperativa
+                                ,pr_nrdconta  IN tbepr_migracao_empr.nrdconta%type --> Numero da conta
+                                ,pr_nrctremp  IN tbepr_migracao_empr.nrctremp%type --> Numero do emprestimo
+                                ,pr_dtmvtolt  IN tbepr_migracao_empr.dtmvtolt%type --> Data de migracao
+                                ,pr_nrctrnov  IN tbepr_migracao_empr.nrctrnov%type --> Numero do emprestimo migrado
+                                ,pr_dscritic  OUT VARCHAR2);                       --> Retorno de Erro
+                                
+ PROCEDURE pc_verifica_empr_migrado(pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
+                                    ,pr_nrctrnov IN tbepr_migracao_empr.nrctrnov%TYPE
+                                    ,pr_tpempmgr IN NUMBER DEFAULT 0 -- (0-Migrado, 1-Antigo)
+                                    ,pr_nrctremp OUT tbepr_migracao_empr.nrctremp%TYPE
+                                    ,pr_cdcritic OUT NUMBER
+                                    ,pr_dscritic OUT VARCHAR2);
+ 
+                                
+ PROCEDURE pc_verifica_empr_migrado_web(pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
+                                      ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
+                                      ,pr_nrctrnov IN tbepr_migracao_empr.nrctrnov%TYPE
+                                      ,pr_xmllog        IN VARCHAR2 --> XML com informacoes de LOG
+                                      ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                      ,pr_dscritic     OUT VARCHAR2 --> Descricao da critica
+                                      ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo     OUT VARCHAR2 --> Nome do campo com erro
+                                      ,pr_des_erro     OUT VARCHAR2) ; --> Erros do processo
+
 -- Realizar o calculo e pagamento de Emprestimo TR
   PROCEDURE pc_pagar_emprestimo_tr(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
@@ -2280,6 +2308,200 @@ create or replace package body cecred.EMPR9999 as
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_EMPRESTIMO_POS: '||SQLERRM;
   END pc_pagar_emprestimo_pos;
+
+    --> Grava migracao de emprestimo
+  PROCEDURE pc_grava_migra_empr (pr_cdcooper  IN tbepr_migracao_empr.cdcooper%type --> Código da cooperativa
+                                ,pr_nrdconta  IN tbepr_migracao_empr.nrdconta%type --> Numero da conta
+                                ,pr_nrctremp  IN tbepr_migracao_empr.nrctremp%type --> Numero do emprestimo
+                                ,pr_dtmvtolt  IN tbepr_migracao_empr.dtmvtolt%type --> Data de migracao
+                                ,pr_nrctrnov  IN tbepr_migracao_empr.nrctrnov%type --> Numero do emprestimo migrado
+                                ,pr_dscritic  OUT VARCHAR2)IS                      --> Retorno de Erro
+            
+    -- Tratamento de erros
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_exc_erro EXCEPTION;
+
+  BEGIN
+    -- Insere a tabela de log
+    BEGIN
+      insert into tbepr_migracao_empr
+                 (cdcooper 
+                 ,nrdconta 
+                 ,nrctremp 
+                 ,dtmvtolt 
+                 ,nrctrnov)
+           values(pr_cdcooper 
+                 ,pr_nrdconta 
+                 ,pr_nrctremp 
+                 ,pr_dtmvtolt 
+                 ,pr_nrctrnov);
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir tbepr_migracao_empr '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN          
+      -- Carregar XML padrao para variavel de retorno
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_dscritic := 'Erro na execucao do programa graca migracao emprestimo - '|| SQLERRM;
+  END pc_grava_migra_empr;   
+  
+  --> Rotina responsavel por validar se o emprestimo foi migrado
+  PROCEDURE pc_verifica_empr_migrado(pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
+                                    ,pr_nrctrnov IN tbepr_migracao_empr.nrctrnov%TYPE
+                                    ,pr_tpempmgr IN NUMBER DEFAULT 0 -- (0-Migrado, 1-Antigo)
+                                    ,pr_nrctremp OUT tbepr_migracao_empr.nrctremp%TYPE
+                                    ,pr_cdcritic OUT NUMBER
+                                    ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN                                        
+    /* ..........................................................................
+      Programa : pc_verifica_empr_migrado
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Rafael Faria (Supero)
+      Data     : Outubro/2018.                   Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamada
+      Objetivo  : Verificar se o emprestimo foi migrado
+          
+      Alteração : 
+    ..........................................................................*/
+    DECLARE
+      -- Variáveis para tratamento de erros
+      vr_exc_erro EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+      -- Buscar emprestimos migrados tanto o migrado como original conforme paremetro
+      -- se for pr_tpempmgr=0 ele busca atraves do migrado para retornar o original
+      -- se for pr_tpempmgr=1 ele busca atraves do original para retornar o migrado
+      CURSOR cr_migrado IS
+        SELECT decode(pr_tpempmgr,0,e.nrctremp,e.nrctrnov) nrctremp
+          FROM tbepr_migracao_empr e
+         WHERE e.cdcooper = pr_cdcooper
+           AND e.nrdconta = pr_nrdconta
+           AND ((e.nrctrnov = pr_nrctrnov and pr_tpempmgr=0) OR 
+                (e.nrctremp = pr_nrctrnov and pr_tpempmgr=1));
+      rw_migrado cr_migrado%ROWTYPE;
+
+    BEGIN
+      
+      OPEN cr_migrado;
+      FETCH cr_migrado INTO rw_migrado;
+      CLOSE cr_migrado;  
+      
+      -- retorna o numero do emprestimo conforme parametro antigo/novo
+      pr_nrctremp := nvl(rw_migrado.nrctremp,0);
+      
+    EXCEPTION
+      WHEN OTHERS THEN      
+        -- Erro
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+    END;
+  END pc_verifica_empr_migrado;
+  
+  PROCEDURE pc_verifica_empr_migrado_web(pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
+                                        ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
+                                        ,pr_nrctrnov IN tbepr_migracao_empr.nrctrnov%TYPE
+                                        ,pr_xmllog        IN VARCHAR2 --> XML com informacoes de LOG
+                                        ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                        ,pr_dscritic     OUT VARCHAR2 --> Descricao da critica
+                                        ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo     OUT VARCHAR2 --> Nome do campo com erro
+                                        ,pr_des_erro     OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_verifica_empr_migrado_web
+    Sistema : Ayllos Web
+    Autor   : Rafael Faria (Supero)
+    Data    : Outubro/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para retornar emprestimo migrado
+
+    Alteracoes: 
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis
+      vr_nrctremp NUMBER;
+
+    BEGIN
+
+      -- Carrega os dados
+      pc_verifica_empr_migrado(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctrnov => pr_nrctrnov
+                              ,pr_nrctremp => vr_nrctremp
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se houve retorno de erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        raise vr_exc_erro;
+      END IF;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'nrctremp'
+                            ,pr_tag_cont => vr_nrctremp
+                            ,pr_des_erro => vr_dscritic);
+
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina verifica empr migrado: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_verifica_empr_migrado_web;
 
 END EMPR9999;
 /

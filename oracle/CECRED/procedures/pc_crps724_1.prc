@@ -12,7 +12,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Agosto/2017                     Ultima atualizacao: 29/08/2018
+     Data    : Agosto/2017                     Ultima atualizacao: 28/09/2018 
 
      Dados referentes ao programa:
 
@@ -22,6 +22,7 @@ BEGIN
      Alteracoes: 
      29/08/2018 - permitir executar mais de uma vez e deve paralelizar somente na primeira execucao.
                 - Projeto Debitador Unico - Fabiano B. Dias (AMcom).
+	   28/09/2018 - Incluir validacao de pos-fixado com acordo ativo (Adriano Nagasava - Supero)
 
   ............................................................................ */
 
@@ -129,6 +130,19 @@ BEGIN
          AND craplem.cdhistor IN (2343,2342,2345,2344);
     rw_craplem cr_craplem%ROWTYPE;
         
+   -- Consulta contratos ativos de acordos
+   CURSOR cr_ctr_acordo IS
+		 SELECT tbrecup_acordo_contrato.nracordo
+					 ,tbrecup_acordo.cdcooper
+					 ,tbrecup_acordo.nrdconta
+					 ,tbrecup_acordo_contrato.nrctremp
+			 FROM tbrecup_acordo_contrato
+			 JOIN tbrecup_acordo
+				 ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+			WHERE tbrecup_acordo.cdsituacao = 1
+				AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+		rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
+		
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Definicao do tipo da tabela para linhas de credito
     TYPE typ_reg_craplcr IS
@@ -147,6 +161,10 @@ BEGIN
         INDEX BY VARCHAR2(20); --> O número da conta + nr contrato serão as chaves
     vr_tab_controle_lcto_juros typ_tab_controle_lcto_juros;
 
+    /* Contratos de acordo */
+    TYPE typ_tab_acordo IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+    vr_tab_acordo   typ_tab_acordo;
+		
     ------------------------------- VARIAVEIS -------------------------------
     vr_flgachou          BOOLEAN;
     vr_blnachou          BOOLEAN;
@@ -170,6 +188,8 @@ BEGIN
     vr_mesrefju          crapepr.mesrefju%TYPE;
     vr_anorefju          crapepr.anorefju%TYPE;
     vr_index_controle    VARCHAR2(20);
+
+		vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Grava os dados dos pagamentos e controle do batch
@@ -259,6 +279,13 @@ BEGIN
       vr_tab_craplcr(rw_craplcr.cdlcremp).flgcobmu := rw_craplcr.flgcobmu;
     END LOOP;
 
+		-- Carregar Contratos de Acordos
+    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+      vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                     LPAD(rw_ctr_acordo.nrctremp,10,'0');
+      vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+    END LOOP;
+
     -- Reseta variaveis
     vr_qtdconta := 0;
     vr_ultconta := 0;
@@ -318,6 +345,15 @@ BEGIN
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
+        END IF;
+              
+				-- Valida se o contrato possui acordo ativo
+				vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
+				--
+				IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          --
+					vr_vlsldisp := 0;
+					--
         END IF;
               
         -- Recebe o saldo devedor da parcela
@@ -406,6 +442,15 @@ BEGIN
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
+        END IF;
+				
+				-- Valida se o contrato possui acordo ativo
+				vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
+				--
+				IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          --
+					vr_vlsldisp := 0;
+					--
         END IF;
 
         -- Se NAO possuir saldo, pula o registro

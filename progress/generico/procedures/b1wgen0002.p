@@ -813,6 +813,8 @@
                        que esta sendo feito no Oracle (Marcos-Envolti)
                        
           19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)             
+
+		  23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
           
  ..............................................................................*/
 
@@ -10630,11 +10632,16 @@ PROCEDURE obtem-dados-conta-contrato:
     DEF VAR aux_portabilidade AS CHAR                               NO-UNDO.
     DEF VAR aux_err_efet AS INTE                                    NO-UNDO.
 
+    DEF VAR aux_nrctremp_migrado AS INTE                            NO-UNDO.
+    DEF VAR aux_exibe_migrado    AS LOGI                            NO-UNDO.
+
     DEF VAR aux_liquidia AS INTE                                    NO-UNDO.
 
     DEF VAR h-b1wgen0084a AS HANDLE                                 NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
+
+    DEF BUFFER crapepr_migrado FOR crapepr.
 
     FIND craplcr WHERE craplcr.cdcooper = par_cdcooper    AND
                        craplcr.cdlcremp = crapepr.cdlcremp 
@@ -10673,6 +10680,68 @@ PROCEDURE obtem-dados-conta-contrato:
 
     aux_dslcremp = TRIM(STRING(craplcr.cdlcremp,"zzz9")) + "-" + craplcr.dslcremp.
 
+    /* Somente quando for tela atenda prestacoes, nao deve listar*/
+    ASSIGN aux_exibe_migrado = FALSE
+           aux_nrctremp_migrado = 0.
+    IF par_nmdatela='ATENDA' THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Efetuar a chamada a rotina Oracle  */
+          RUN STORED-PROCEDURE pc_verifica_empr_migrado
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*pr_cdcooper*/
+                                                   INPUT par_nrdconta, /*pr_nrdconta*/
+                                                   INPUT crapepr.nrctremp, /*pr_nrctrnov*/
+                                                   INPUT 1, /*pr_tpempmgr*/
+                                                   OUTPUT 0,    /* pr_nrctremp */
+                                                   OUTPUT 0,    /* pr_cdcritic */
+                                                   OUTPUT "").  /* pr_dscritic */
+
+          /* Fechar o procedimento para buscarmos o resultado */
+          CLOSE STORED-PROC pc_verifica_empr_migrado
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          ASSIGN aux_nrctremp_migrado = pc_verifica_empr_migrado.pr_nrctremp
+                                       WHEN pc_verifica_empr_migrado.pr_nrctremp <> ?
+                 aux_cdcritic        = pc_verifica_empr_migrado.pr_cdcritic
+                                       WHEN pc_verifica_empr_migrado.pr_cdcritic <> ?
+                 aux_dscritic        = pc_verifica_empr_migrado.pr_dscritic
+                                       WHEN pc_verifica_empr_migrado.pr_dscritic <> ?.
+
+          IF  aux_cdcritic <> 0   OR
+              aux_dscritic <> ""  THEN
+              DO:
+                  aux_cdcritic = 0.
+                  aux_dscritic = "".
+              END.
+
+          /* se o emprestimo foi migrado carrrega os dados para validacao do regitro*/
+          IF aux_nrctremp_migrado > 0 THEN
+              DO:
+                  FOR FIRST crapepr_migrado FIELDS(nrctremp)
+                                            WHERE crapepr_migrado.cdcooper = par_cdcooper AND
+                                                  crapepr_migrado.nrdconta = par_nrdconta AND
+                                                  crapepr_migrado.nrctremp = crapepr.nrctremp AND 
+                                                  NOT (CAN-DO(par_lsdtelas,par_nmdatela) OR
+                                                              crapepr_migrado.inliquid = 0 OR
+                                                              crapepr_migrado.inprejuz = 1 OR
+                                                             (crapepr_migrado.inliquid = 1 AND
+                                                              crapepr_migrado.inprejuz = 0 AND
+                                                              crapepr_migrado.dtultpag + craplcr.nrdialiq >= par_dtmvtolt)) 
+                                           NO-LOCK: END.
+
+                  IF NOT AVAIL crapepr_migrado THEN
+                      ASSIGN aux_exibe_migrado = TRUE.
+
+              END.
+          END.    
+
+    /*se nao for migrado ou o contrato migrado nao aparecer 
+      quando um contrato e migrado ele somente some quando o migrado sumir */
+    IF aux_nrctremp_migrado = 0 OR not aux_exibe_migrado THEN
+        DO:
     /*********************************************************************
       Mostrar emprestimos em aberto (nao liquidados), emprestimos que
       estao em prejuizo, e emprestimos liquidados sem prejuizo que ainda
@@ -10689,6 +10758,7 @@ PROCEDURE obtem-dados-conta-contrato:
              crapepr.inprejuz = 0              AND
              crapepr.dtultpag + craplcr.nrdialiq >= par_dtmvtolt))  THEN
         NEXT.
+          END.
     
     IF  tab_inusatab AND crapepr.inliquid = 0  THEN
         ASSIGN aux_txdjuros = craplcr.txdiaria.

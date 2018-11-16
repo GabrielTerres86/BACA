@@ -50,6 +50,14 @@
 		$imp_rating_proposta = "verificaImpressao(10);";
 	}
     
+	function exibeErro($msgErro) {
+		echo '<script type="text/javascript">';
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","");';
+		echo '</script>';
+		exit();
+	}
+    
     // Buscar informacao se deve permitir o envio de email para o comite
     $xml = '';
 	$xml .= '<Root>';
@@ -95,9 +103,27 @@
 
 	$isencaoIOF = $xmlObjDados->roottag->tags[0]->cdata;
 
+	// Validar se houve ou não migração do contrato.
+	// Augusto - Supero
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$_POST['nrdconta']."</nrdconta>";
+	$xml .= "   <nrctrnov>".$_POST['nrctremp']."</nrctrnov>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "EMPR9999", "EMPR9999_VERIFICA_EMPR_MGR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
+		exibeErro($msgErro);
+	}
+	$contratoMigrado = (!empty($xmlObj->roottag->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->cdata : "0");
+
 ?>
 <script>
     flmail_comite = "<?php echo $xmlObjDados->roottag->tags[0]->cdata; ?>";
+	contratoMigrado = "<?=$contratoMigrado?>";
 </script>
 
 <table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">

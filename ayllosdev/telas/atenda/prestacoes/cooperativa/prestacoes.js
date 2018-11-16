@@ -124,6 +124,7 @@ var glb_nriniseq  = 1;
 var glb_nrregist  = 50;
 var idSocio 	  = 0;
 var flmail_comite = 0;
+var contratoMigrado = 0;
 
 var arrayBensAssoc = new Array();
 var arrayDadosPortabilidade = new Array();
@@ -3385,6 +3386,15 @@ function mostraDivImpressao( operacao ) {
 function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
+
+	// Se a opção de impressão for Contrato,Contrato Não Negociável,CET,Proposta,Consultas,Política então
+	//valida se o contrato não foi migrado. Se contratoMigrado for diferente de zero, então
+	//o valor de contratoMigrado é justamente o código do novo contrato
+	// Augusto - Supero
+	if (contratoMigrado != "0" && (idimpres == 2  || idimpres == 8 || idimpres == 6 || idimpres == 3 || idimpres == 7 || idimpres == 11)) {
+		showError("inform",'Consulta dispon&iacute;vel no contrato: '+contratoMigrado,"Alerta - Ayllos","");
+		return false;
+	}
 
 	if ( idimpres >= 1 && idimpres <= 57 ) {
 	
