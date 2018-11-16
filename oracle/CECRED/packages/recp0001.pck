@@ -95,7 +95,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                    --,pr_vlsdeved  IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                    --,pr_vlsdevat  IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
                                    ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
-                                   --,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                   ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                   ,pr_idorigem  IN NUMBER                        -- Indicador da origem
                                   ,pr_nmtelant  IN VARCHAR2                      -- Nome da tela 
                                   ,pr_cdoperad  IN VARCHAR2                      -- Código do operador
@@ -1342,7 +1342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                    --,pr_vlsdeved  IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                    --,pr_vlsdevat  IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
                                    ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
-                                   --,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                   ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                    ,pr_idorigem  IN NUMBER                       -- Indicador da origem
                                    ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
                                    ,pr_cdoperad  IN VARCHAR2                     -- Código do operador
@@ -1505,7 +1505,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 		END IF;
     
     -- Caso o saldo devedor total do empréstimo for menor que o valor pago no boleto 
-    IF vr_vlsdeved < vr_vldpagto THEN
+		-- ou se estiver realizando a quitação do acordo
+    IF vr_vlsdeved < vr_vldpagto OR NVL(pr_inliqaco,'N') = 'S' THEN
       -- Devemos considerar somente o valor para pagar o saldo devedor.
       vr_vldpagto := vr_vlsdeved;
     END IF;
