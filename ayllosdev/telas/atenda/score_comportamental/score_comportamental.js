@@ -63,13 +63,13 @@ function controlaLayout(){
     var arrayLargura = new Array();
     var arrayAlinha = new Array();
     
-    arrayLargura[0] = '172px';   //Modelo
-    arrayLargura[1] = '95px';  //Data
-    arrayLargura[2] = '196px';   //Classe
-    arrayLargura[3] = '80px';   //Pontuação
-    arrayLargura[4] = '145px';   //Exclusão Principal
-    arrayLargura[5] = '78px';   //Situação
-    arrayLargura[6] = '14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
+    arrayLargura[0] = '190px';//'172px';   //Modelo
+    arrayLargura[1] = '100px';//'95px';  //Data
+    arrayLargura[2] = '230px';//'196px';   //Classe
+    arrayLargura[3] = '80px';//'80px';   //Pontuação
+    arrayLargura[4] = '150px';//'145px';   //Exclusão Principal
+    arrayLargura[5] = '';//'78px';   //Situação
+    arrayLargura[6] = '17px';//'14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
     
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'center';
