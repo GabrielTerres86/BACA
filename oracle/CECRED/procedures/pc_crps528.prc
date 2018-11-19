@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Fernando
-     Data    : MAIO/2009                     Ultima atualizacao: 27/08/2014
+     Data    : MAIO/2009                     Ultima atualizacao: 19/11/2018
 
      Dados referentes ao programa:
 
@@ -33,6 +33,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
                  03/06/2015 - Alterado a chave da TT vr_tab_captacao para listar
                               de forma correta os registro do relatorio. (Jean Michel)             
 
+                 19/11/2018 - Ajustar format das Faixas pois0 estavam estourando tamanho
+                              (Lucas Ranghetti PRB0040429)
   ............................................................................ */
 
     DECLARE
@@ -57,22 +59,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
       TYPE typ_reg_aplica IS
         RECORD(tpaplica craprda.tpaplica%TYPE   --                   "Tipo da aplicação"
               ,totaplic craprda.vlslfmes%TYPE   --                   "Saldo Total"
-              ,vlfaxini NUMBER(8,2)             -- "zzz,zz9.99"      "De"
+              ,vlfaxini NUMBER(9,2)             -- "zzz,zz9.99"      "De"
               ,vlfaxfim NUMBER(11,2)            -- "zzz,zzz,zz9.99"  "Ate"
               ,txaplica NUMBER(9,6));           -- "zz9.999999"      "%CDI"
       TYPE typ_tab_aplica IS
         TABLE OF typ_reg_aplica
-          INDEX BY VARCHAR2(18);
+          INDEX BY VARCHAR2(19);
       vr_tab_aplica typ_tab_aplica;
       -- Chave para a tabela de aplicações
       -- Seq Ordenação (1) + Valor Faixa Inicial (8) + TxAplica (9)
-      vr_dschave_aplica VARCHAR2(18);
+      vr_dschave_aplica VARCHAR2(19);
 
       -- Definição de tabela para as aplicações RDC-Pos
       TYPE typ_reg_rdcpos IS
         RECORD(txaplica craplap.txaplica%TYPE   -- "%CDI"
               ,totaplic craplap.vllanmto%TYPE   -- "Saldo Total"
-              ,vlfaxini NUMBER(8,2)             -- "zzz,zz9.99"
+              ,vlfaxini NUMBER(9,2)             -- "zzz,zz9.99"
               ,vlfaxfim NUMBER(11,2)            -- "zzz,zzz,zz9.99"
               ,qtdiacar PLS_INTEGER);           -- "Dias Carencia"
       TYPE typ_tab_rdcpos IS
@@ -85,16 +87,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
 
       -- Definiçao de tabela para armazenar as taxas por aplicaçao
       TYPE typ_reg_taxas IS
-        RECORD(vlfaxini NUMBER(8,2)   -- "zzz,zz9.99"
+        RECORD(vlfaxini NUMBER(9,2)   -- "zzz,zz9.99"
               ,vlfaxfim NUMBER(11,2)  -- "zzz,zzz,zz9.99" --
               ,perapltx NUMBER(9,6)); -- "%Taxa"          --
       TYPE typ_tab_taxas IS
         TABLE OF typ_reg_taxas
-          INDEX BY VARCHAR2(8);
+          INDEX BY VARCHAR2(10);
       -- Vetor para armazenar os dados de rdcpos
       -- Valor Faixa Inicial (8)
       vr_tab_taxas typ_tab_taxas;
-      vr_dschave_taxas VARCHAR2(8);
+      vr_dschave_taxas VARCHAR2(10);
       
       -- Armazenar informações de aplicações de captação
       TYPE typ_reg_captacao IS
@@ -252,7 +254,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
           FOR rw_crapftx IN cr_crapftx_rdcpre LOOP
             -- Montar a chave para o vetor:
             -- Valor Faixa Inicial (8) - Removendo o sinal de decimal
-            vr_dschave_taxas := REPLACE(REPLACE(to_char(rw_crapftx.vlfaixas,'fm000000d00'),'.',''),',','');
+            vr_dschave_taxas := REPLACE(REPLACE(to_char(rw_crapftx.vlfaixas,'fm00000000d00'),'.',''),',','');
             -- Criar o registro no vetor de taxas
             vr_tab_taxas(vr_dschave_taxas).vlfaxini := rw_crapftx.vlfaixas;
             vr_tab_taxas(vr_dschave_taxas).perapltx := rw_crapftx.perapltx;
@@ -306,7 +308,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
         -- Montar a chave para a tabela, que envolve o valor da faixa e a taxa aplicada :
         -- Seq Ordenação (1) + Valor Faixa Inicial (8) + TxAplica (9)
         RETURN pr_sqordem
-            || REPLACE(REPLACE(to_char(pr_vlfaixa,'fm000000d00'),'.',''),',','')
+            || REPLACE(REPLACE(to_char(pr_vlfaixa,'fm0000000d00'),'.',''),',','')
             || REPLACE(REPLACE(to_char(pr_peraplt,'fm000d000000'),'.',''),',','');
       END;
 
