@@ -612,8 +612,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                                     END.
                            END.
                                 
-                      ASSIGN crapdev.indevarq = 2 
-						     craplcm.dsidenti = STRING(crapdev.indevarq,"9").
+                      ASSIGN crapdev.indevarq = 2.
                   
                       FIND FIRST craplcm 
                            WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
