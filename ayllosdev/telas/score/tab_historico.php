@@ -116,7 +116,7 @@
 </div>
 <div id="divBotoes" style="padding-bottom: 15px;">
 	<a href="#" class="botao" id="btVoltar">Voltar</a>
-	<a href="#" class="botao" id="btDeletar" name="btDeletar" onClick="exluirScore('');return false;" style="float:none;">Deletar</a>
+	<a href="#" class="botao" id="btDeletar" name="btDeletar" onClick="exluirScore('');return false;" style="float:none;">Excluir</a>
 </div>
 
 <div id="divMotivo" style="height:50px; display: none;">

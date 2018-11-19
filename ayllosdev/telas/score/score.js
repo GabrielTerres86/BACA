@@ -323,43 +323,49 @@ function formatarMotivo (cdmodelo, dtbase) {
 }
 
 //function deletarScore(operacao) {
-function exluirScore(){
+function exluirScore(operacao){
     showMsgAguardo("Aguarde, processando carga ...");
 	
 //	cdmodelo = $(".corSelecao .cdmodelo input").val();
 //	dtbase = $(".corSelecao .dtbase input").val();
 
-	var linhaSel = $('table', '#divCarga').find('tr.corSelecao');
-	var cdmodelo = $(linhaSel).attr('id');
-	var dsmodelo = $(linhaSel).find('td.dsmodelo').find('span').text();
-	var dtbase = $(linhaSel).find('td.dtbase').find('span').text();
+	if (operacao == "") {
 
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/score/excluir_score.php",
-        data: {
-            cdmodelo: cdmodelo,
-            dtbase: dtbase,
-            //nrdconta: nrdconta,
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
-        },
-        success: function (response) {
+		showConfirmacao('Deseja continuar com a Exclus&atilde;o? Esta opera&ccedil;&atilde;o n&atilde;o poder&aacute ser desfeita!', 'Confirma&ccedil;&atilde;o - Aimaro', 'exluirScore(\'Confirma\')', 'hideMsgAguardo();', 'sim.gif', 'nao.gif');
+	
+	} else {
+		var linhaSel = $('table', '#divCarga').find('tr.corSelecao');
+		var cdmodelo = $(linhaSel).attr('id');
+		var dsmodelo = $(linhaSel).find('td.dsmodelo').find('span').text();
+		var dtbase = $(linhaSel).find('td.dtbase').find('span').text();
 
-           if (response.indexOf('showError("error"') == -1) {
-                hideMsgAguardo();
-                $('#divConteudoOpcao').html(response);
-                //console.log(response);
-            } else {
-                eval(response);
-            }
+		$.ajax({
+			type: "POST",
+			url: UrlSite + "telas/score/excluir_score.php",
+			data: {
+				cdmodelo: cdmodelo,
+				dtbase: dtbase,
+				//nrdconta: nrdconta,
+				redirect: "script_ajax"
+			},
+			error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+				showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "");
+			},
+			success: function (response) {
 
-            return false;
-        }
-    });
+			   if (response.indexOf('showError("error"') == -1) {
+					hideMsgAguardo();
+					$('#divConteudoOpcao').html(response);
+					//console.log(response);
+				} else {
+					eval(response);
+				}
+
+				return false;
+			}
+		});
+	}
 }
 
 function btnBuscaScoreFiltro() {
