@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Abril/2010                         Ultima atualizacao: 03/08/2018
+   Data    : Abril/2010                         Ultima atualizacao: 05/11/2018
 
    Dados referentes ao programa:
 
@@ -44,6 +44,10 @@
 
 			   03/08/2018 - Ajuste para não desativar as agencias dos bancos 91,130
 						   (Adriano - REQ0022269).
+				
+			   05/11/2018 - Ajuste para não desativar as agencias dos bancos 260
+						   (Adriano - SCTASK0034371).
+						   
 
 ..............................................................................*/
 
@@ -73,6 +77,7 @@ DEF VAR par_dsdevice AS CHAR                                           NO-UNDO.
 DEF VAR par_dtconnec AS CHAR                                           NO-UNDO.
 DEF VAR par_numipusr AS CHAR                                           NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                         NO-UNDO.
+DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
 
 DEF VAR aux_nrispbif AS INT                                            NO-UNDO.
 DEF VAR aux_flgativa AS CHAR FORMAT "x(1)"                             NO-UNDO.
@@ -84,6 +89,17 @@ RUN fontes/iniprg.p.
 
 IF  glb_cdcritic > 0  THEN
     RETURN.      
+		 
+FIND craptab WHERE
+	 craptab.cdcooper = 0                 AND       
+	 craptab.nmsistem = "CRED"            AND
+	 craptab.tptabela = "GENERI"          AND
+	 craptab.cdempres = 0                 AND         
+	 craptab.cdacesso = "AGE_ATIVAS_CAF"  AND
+	 craptab.tpregist = 0                 
+	 NO-LOCK NO-ERROR.
+				 
+ASSIGN aux_dstextab	= craptab.dstextab.
 
 /*............................................................................*/
 FOR EACH crapcop
@@ -295,12 +311,11 @@ FOR EACH crapcop
                         VALIDATE crapagb.
                     END.        
                 ELSE
-                    DO:       
-                        IF   crapagb.cdsitagb <> aux_cdsitagb AND
-                             crapagb.cddbanco <> 7            AND  /*Nao faz para o banco 7 - BNDS*/
-							 crapagb.cddbanco <> 128          AND  /*Nao faz para o banco 128 - BCAM MS BANK*/
-							 crapagb.cddbanco <> 91           AND  /* Não faz para o banco 91 - CC Unicred Central RS */
-							 crapagb.cddbanco <> 130          THEN /*Não faz para o banco 130 - CARUANA*/
+                    DO: 
+						/*Alterar a situacao apenas para agencias que
+						  nao estejam parametrizadas.*/
+                        IF   crapagb.cdsitagb <> aux_cdsitagb               AND
+                             NOT CAN-DO(aux_dstextab, STRING(aux_cdbccxlt)) THEN 
                              ASSIGN crapagb.cdsitagb = aux_cdsitagb
                                     crapagb.dtmvtolt = glb_dtmvtolt 
                                     crapagb.cdoperad = glb_cdoperad.
@@ -327,10 +342,9 @@ FOR EACH crapcop
                 
             END. /*** Fim do DO WHILE TRUE ***/
 
-            IF aux_cdbccxlt <> 7   AND  /*Nao faz para o banco 7 - BNDS*/
-			   aux_cdbccxlt <> 128 AND  /*Nao faz para o banco 128 - BCAM MS BANK*/
-			   aux_cdbccxlt <> 91  AND  /* Não faz para o banco 91 - CC Unicred Central RS */
-			   aux_cdbccxlt <> 130 THEN /*Não faz para o banco 130 - CARUANA*/
+			/*Alterar a situacao apenas para agencias que
+			  nao estejam parametrizadas.*/			  
+            IF NOT CAN-DO(aux_dstextab,STRING(aux_cdbccxlt)) THEN
                DO:
 				  /* Se a agencia em questao eh "9999" */  
 				  IF aux_cdageban = 9999 THEN
