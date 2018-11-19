@@ -7128,6 +7128,14 @@ END pc_trata_arquivo_ldl;
         pr_dscritic := 'Erro nao tratado em pc_trata_lancamentos --> '||sqlerrm;
     END pc_trata_lancamentos;
 
+    PROCEDURE pc_alter_session_para_default IS 
+    -- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
+    BEGIN 
+      -- Alteração incluindo num comando setar a forma de data e o decimal
+      EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD-MON-RR''
+                                           NLS_NUMERIC_CHARACTERS = ''.,''';
+    END pc_alter_session_para_default;
+    
   BEGIN -- INICIO PC_CRPS531_1
 
     vr_trace_dsxml_mensagem := xmltype.getClobVal(pr_dsxmltype);
@@ -8900,6 +8908,7 @@ END pc_trata_arquivo_ldl;
 
     -- Efetuar commit das alterações
     COMMIT;
+    pc_alter_session_para_default; -- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
 
   EXCEPTION
     WHEN vr_exc_lock THEN
@@ -8936,6 +8945,7 @@ END pc_trata_arquivo_ldl;
       -- Fim Projeto 475
       -- Efetuar commit das alterações
       COMMIT;
+      pc_alter_session_para_default; -- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -8980,6 +8990,7 @@ END pc_trata_arquivo_ldl;
       -- Fim Projeto 475
       -- Efetuar commit das alterações
       COMMIT;
+      pc_alter_session_para_default;-- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
@@ -9013,6 +9024,7 @@ END pc_trata_arquivo_ldl;
                            );
       -- Fim Projeto 475
       COMMIT;
+      pc_alter_session_para_default;-- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
   END;
 END PC_CRPS531_1;
 /
