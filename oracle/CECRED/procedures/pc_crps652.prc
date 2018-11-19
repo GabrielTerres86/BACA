@@ -557,6 +557,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              ,crapcyb.ROWID
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
+             ,crapcyb.cdorigem||lpad(crapcyb.nrdconta,10,'0')||lpad(crapcyb.nrctremp,9,'0') dsdchave
              ,case
                 when crapcyb.cdorigem in (1,2,3) then -- emprestimos/conta
                   tpep.vlmtapar
@@ -829,6 +830,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                ,epr.nrcpfava
                ,epr.tpparcela
            FROM tbrecup_cobranca epr
+               ,crapass ass
           WHERE epr.tpproduto = 0
             AND epr.cdcooper = pr_cdcooper
             AND EXISTS (SELECT 1 
@@ -3059,6 +3061,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                  ) dados
             WHERE dados.nrdconta = pr_nrdconta
             ORDER BY idgrupo;
+           rw_crapgrp cr_crapgrp%ROWTYPE;
 
            --Selecionar Cadastro Cyber
            CURSOR cr_crapcyc (pr_cdcooper IN crapcyc.cdcooper%type
@@ -5974,6 +5977,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                                           ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento
                                           ,pr_cdhistor => vr_cdtrscyb            -- Codigo Historico
                                           ,pr_dshistor => rw_valor_pago_dsct_tit.dshistor --Descricao Historico
+                                          ,pr_dsdchave => rw_crapcyb.dsdchave    --Chave de ordenacao
                                           ,pr_cdcritic => vr_cdcritic            --Codigo Erro
                                           ,pr_dscritic => vr_dscritic);          --Descricao Erro
                  --Se ocorreu erro
@@ -6018,6 +6022,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 																					,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
 																					,pr_cdhistor => 'PA'                  --Codigo Historico (Genérico)
 																					,pr_dshistor => NULL                   --Descricao Historico
+                                          ,pr_dsdchave => rw_crapcyb.dsdchave    --Chave de ordenacao
 																					,pr_cdcritic => vr_cdcritic            --Codigo Erro
 																					,pr_dscritic => vr_dscritic);          --Descricao Erro
 								 --Se ocorreu erro

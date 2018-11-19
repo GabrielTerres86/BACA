@@ -21831,7 +21831,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                              'CRAPRTC(47):' ||
                              ' flgproce:'   || '1' ||
-                             ' com rowid:'  || rw_craprtc.rowid ||
                              '. ' ||sqlerrm;
                 RAISE vr_exc_erro;
         END;
@@ -22906,7 +22905,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                                'CRAPRTC(48):' ||
                                ' flgproce:'   || '1' ||
-                               ' com rowid:'  || rw_craprtc.rowid ||
                                '. ' ||sqlerrm;
                 --Levantar Excecao
                 RAISE vr_exc_erro;
