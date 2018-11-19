@@ -71,8 +71,8 @@ BEGIN
     -- Quantidade de JOBS
     vr_qtdejobs NUMBER;
 
-    vr_titulo       VARCHAR2(1000);
-    vr_destinatario VARCHAR2(500);
+    vr_titulo             VARCHAR2(1000);
+    vr_destinatario_email VARCHAR2(500);
 
     -- Excluida variavel vr_idprglog pois não é utilizada - Chmd REQ0011757 - 13/04/2018  
          
