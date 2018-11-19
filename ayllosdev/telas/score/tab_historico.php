@@ -10,6 +10,29 @@
  */	
 ?>
 
+
+			<form id="frmOpcao" class="formulario" onSubmit="return false;">
+
+				<fieldset>
+					<legend> <? echo utf8ToHtml('Filtro de Busca:');  ?> </legend>
+
+					<label for="cdmodelo" class="txtNormalBold rotulo" style="width:150px;">Modelo:</label>
+					<input name="cdmodelo" type="text" id="cdmodelo" class="inteiro campo" value="<?php echo $cdmodelo; ?>" />
+
+					<label for="dtbase" class="txtNormalBold rotulo-linha" style="width:150px;">Data Base:</label>
+					<input name="dtbase" type="text" id="dtbase" class="inteiro campo" value="<?php echo $dtbase; ?>" />
+
+					<a href="#" class="botao" onclick="btnBuscaScoreFiltro(); return false;" style="margin-left:30px;" >Buscar</a>
+
+					<br style="clear:both" />
+
+					<input type="hidden" name="nrregist" id="nrregist" value="<?php echo $nrregist; ?>" />
+				</fieldset>
+
+				<br style="clear:both" />
+
+			</form>
+
 <div id="divCarga" style="display:block; margin-top: 20px;">
 	<div class="divRegistros">
 		<table class="">
@@ -37,19 +60,19 @@
 					</td>
 				</tr>
 				<?
-			} else{
+			} else{ 
 				foreach($cargas as $carga){
 					?>
 					<tr id="<? echo getByTagName($carga->tags, 'cdmodelo'); ?>">
-						<td>
+						<td class="cdmodelo">
 							<span><? echo getByTagName($carga->tags,'cdmodelo'); ?></span>
 							<? echo getByTagName($carga->tags,'cdmodelo'); ?>
 						</td>
-						<td id="dsmodelo">
+						<td class="dsmodelo">
 							<span><? echo getByTagName($carga->tags,'dsmodelo'); ?></span>
 							<? echo getByTagName($carga->tags,'dsmodelo'); ?>
 						</td>
-						<td id="dtbase">
+						<td class="dtbase">
 							<span><? echo getByTagName($carga->tags,'dtbase'); ?></span>
 							<? echo getByTagName($carga->tags,'dtbase'); ?>
 						</td>
@@ -92,22 +115,23 @@
 	</div>
 </div>
 <div id="divBotoes" style="padding-bottom: 15px;">
-	<a href="#" class="botao" id="btVoltar">Voltar</a> 
+	<a href="#" class="botao" id="btVoltar">Voltar</a>
+	<a href="#" class="botao" id="btDeletar" name="btDeletar" onClick="exluirScore('');return false;" style="float:none;">Deletar</a>
 </div>
 
 <div id="divMotivo" style="height:50px; display: none;">
-		<table width="100%">
-			<thead>
-				<tr>
-					<th style="text-align: left;"><? echo utf8ToHtml('Motivo Rejeição:'); ?></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>
-						<textarea name="txtdsrejeicao" id="txtdsrejeicao" cols="5" readonly="readonly" disabled="disabled" style="width: 100%;" ></textarea>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+	<table width="100%">
+		<thead>
+			<tr>
+				<th style="text-align: left;"><? echo utf8ToHtml('Motivo Rejeição:'); ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<textarea name="txtdsrejeicao" id="txtdsrejeicao" cols="5" readonly="readonly" disabled="disabled" style="width: 100%;" ></textarea>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>

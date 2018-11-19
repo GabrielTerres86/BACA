@@ -16,19 +16,22 @@
 	isPostMethod();			
 	
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
+	$cdmodelo = (isset($_POST["cdmodelo"])) ? $_POST["cdmodelo"] : '';
+	$dtbase = (isset($_POST["dtbase"])) ? $_POST["dtbase"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],'',$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
-
-	// Monta o xml de requisição		
+	
+	if($cddopcao == "C"){
+		
+		// Monta o xml de requisição		
 		$xml  		= "";
 		$xml 	   .= "<Root>";
 		$xml 	   .= "  <Dados>";
 		$xml 	   .= "  </Dados>";
 		$xml 	   .= "</Root>";
-	
-	if($cddopcao == "C"){
+		
 		// Executa script para envio do XML	
 		$xmlResult = mensageria($xml, "SCORE", "LISTA_CARGAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
@@ -52,9 +55,21 @@
 
 		<?
 	} else if($cddopcao == "H"){
+		
+		// Monta o xml de requisição		
+		$xml  		= "";
+		$xml 	   .= "<Root>";
+		$xml 	   .= "	  <Dados>";
+		$xml 	   .= "  	<cdmodelo>".$cdmodelo."</cdmodelo>";
+		$xml 	   .= "  	<dtbase>".$dtbase."</dtbase>";
+		$xml 	   .= "   </Dados>";
+		$xml 	   .= "</Root>";
+		
 		// Executa script para envio do XML	
 		$xmlResult = mensageria($xml, "SCORE", "LISTA_HIST_CARGAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
+
+		//var_dump($xml); die;
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		
