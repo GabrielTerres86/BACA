@@ -92,7 +92,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
       FROM crapcor cor
      WHERE cor.cdcooper = pr_cdcooper
        AND cor.nrdconta = pr_nrdconta
-       AND cor.nrcheque = nrcheque
+       AND cor.nrcheque = pr_nrcheque
        AND cor.cdlantar > 0
        AND cor.cdhistor NOT IN (816,818,817,825,835);
   
