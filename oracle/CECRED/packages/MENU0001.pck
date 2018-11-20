@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE CECRED.MENU0001 AS
   --
   --    Objetivo  : Configurar os itens de MENU que sao configurados para exibicao 
   --
-  --    Alteracoes: 
+  --    Alteracoes:  
   --    
   ---------------------------------------------------------------------------------------------------------------
 
