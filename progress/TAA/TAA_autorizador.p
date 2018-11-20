@@ -397,6 +397,8 @@ DEFINE VARIABLE aux_tpusucar AS INTE                        NO-UNDO. /* Tipo de 
 DEFINE VARIABLE aux_idtipcar AS INTE                        NO-UNDO. /* Tipo do cartao.*/
 DEFINE VARIABLE aux_nrrecben AS DECI                        NO-UNDO. /* Numero de recebimento do beneficiario do inss */
 DEFINE VARIABLE aux_dtcompet AS CHAR                        NO-UNDO. /* Mes de competencia do demonstrativo do inss */
+DEFINE VARIABLE aux_nrremete AS INT                         NO-UNDO. /* conta/dv remetente. */
+DEFINE VARIABLE aux_cdagerem AS INTE                        NO-UNDO. /* Agencia remetente. */
 
 
 /* para validacao de pendencias de saque */
@@ -1036,6 +1038,12 @@ DO:
         ELSE
         IF   xField:NAME = "LSDATAGD" THEN
              aux_lsdatagd = xText:NODE-VALUE.
+        ELSE
+        IF  xField:NAME = "NRREMETE"   THEN
+            aux_nrremete = xText:NODE-VALUE.
+        ELSE
+        IF  xField:NAME = "CDAGEREM"   THEN
+            aux_cdagerem = xText:NODE-VALUE.
 
     END.
 
@@ -1715,6 +1723,22 @@ DO:
         IF   aux_operacao = 76   THEN
              DO:
                  RUN busca_convenio_nome.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 77   THEN
+             DO:
+                 RUN busca_modalidade.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 78   THEN
+             DO:
+                 RUN valida_modalidade_transferencia.
 
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
@@ -10491,6 +10515,146 @@ PROCEDURE busca_convenio_nome:
     RETURN "OK".
 END PROCEDURE.
 /* Fim 76 */
+
+PROCEDURE busca_modalidade:
+    DEFINE VARIABLE aux_cdmodali AS INTEGER                        NO-UNDO.
+
+
+    IF   aux_cdagetra <> 0   THEN
+         DO:
+             FIND crapcop WHERE crapcop.cdagectl = aux_cdagetra
+                                NO-LOCK NO-ERROR.
+
+             IF   AVAIL crapcop   THEN
+                  ASSIGN aux_cdcooper = crapcop.cdcooper.
+         END.
+         
+    FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper  AND
+                             crapass.nrdconta = aux_nrtransf NO-LOCK NO-ERROR.
+
+    IF   AVAIL crapass   THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_busca_modalidade_tipo aux_handproc = PROC-HANDLE NO-ERROR
+                               (INPUT crapass.inpessoa 
+                               ,INPUT crapass.cdtipcta
+                               ,OUTPUT 0
+                               ,OUTPUT ""
+                               ,OUTPUT "").
+                               
+
+          CLOSE STORED-PROC pc_busca_modalidade_tipo aux_statproc = PROC-STATUS 
+               WHERE PROC-HANDLE = aux_handproc.
+          
+          ASSIGN aux_dscritic = ""
+                 aux_cdmodali = 0
+                 aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic 
+                                WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?
+                 aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          IF  aux_dscritic <> ""  THEN
+              RETURN "NOK".
+        
+        END.
+
+   
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDMODALI","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_cdmodali).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 77 - busca_modalidade */
+
+PROCEDURE valida_modalidade_transferencia:
+    DEFINE VARIABLE aux_cdmodali AS INTEGER                        NO-UNDO.    
+    DEFINE VARIABLE p_nrcpfemp   AS CHAR                           NO-UNDO.
+    DEFINE VARIABLE p_flgdeconta AS INTEGER                        NO-UNDO.
+
+    ASSIGN p_flgdeconta = 0.
+
+    IF   aux_cdagetra <> 0   THEN
+         DO:
+             FIND crapcop WHERE crapcop.cdagectl = aux_cdagetra
+                                NO-LOCK NO-ERROR.
+
+             IF   AVAIL crapcop   THEN
+                  ASSIGN aux_cdcooper = crapcop.cdcooper.
+         END.
+         
+    FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper  AND
+                             crapass.nrdconta = aux_nrtransf NO-LOCK NO-ERROR.
+
+    IF   AVAIL crapass   THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_busca_modalidade_tipo aux_handproc = PROC-HANDLE NO-ERROR
+                               (INPUT crapass.inpessoa 
+                               ,INPUT crapass.cdtipcta
+                               ,OUTPUT 0
+                               ,OUTPUT ""
+                               ,OUTPUT "").
+                               
+
+          CLOSE STORED-PROC pc_busca_modalidade_tipo aux_statproc = PROC-STATUS 
+               WHERE PROC-HANDLE = aux_handproc.
+          
+          ASSIGN aux_dscritic = ""
+                 aux_cdmodali = 0
+                 aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic 
+                                WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?
+                 aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          IF  aux_dscritic <> ""  THEN
+              RETURN "NOK".
+
+          IF aux_cdmodali = 2 THEN
+            DO:
+              FIND FIRST crapttl WHERE crapttl.cdcooper = crapcop.cdcooper
+                                   AND crapttl.nrdconta = crapass.nrdconta
+                                   AND crapttl.idseqttl = 1    /* Dados do Primeiro Titular */
+                                   USE-INDEX crapttl1 NO-LOCK NO-ERROR.
+
+              IF  AVAIL crapttl THEN
+                  ASSIGN p_nrcpfemp = STRING(crapttl.nrcpfemp).
+
+              FIND FIRST crapass WHERE crapass.cdcooper = aux_cdagerem  AND
+                                       crapass.nrdconta = aux_nrremete NO-LOCK NO-ERROR.
+
+              IF   AVAIL crapass   THEN
+                  DO:
+                    IF STRING(crapass.nrcpfcgc) <> p_nrcpfemp THEN
+                      DO:
+                        ASSIGN p_flgdeconta = 1.
+                      END.
+                  END.
+            END.
+        END.
+
+   
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"FLGDECONTA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(p_flgdeconta).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 78 - valida_modalidade_transferencia */
 
 
 /* .......................................................................... */
