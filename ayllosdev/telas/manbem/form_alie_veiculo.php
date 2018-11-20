@@ -1,5 +1,5 @@
 <?
-/*!
+/*
  * FONTE        : form_veiculo.php
  * CRIAÇÃO      : Maykon D. Granemann (Envolti)
  * DATA CRIAÇÃO : 30/07/2018
@@ -40,6 +40,7 @@
 		<? } else { ?>
 			<div class="cabecalho">
 				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+				<input id="idseqbem" name="idseqbem" type="hidden" value="<? echo getByTagName($dados,'idseqbem')?>" />
 				<label id="lsbemfin"></label>
 			</div>
 		<? } ?>
