@@ -54,6 +54,7 @@ function controlaLayout(){
     var divRegistro = $('div.divRegistros');
     $('#divConteudoOpcao').css('height', '100%');
     $('#divRotina').css({ 'width': '930px', 'left': '370px' });
+	divRegistro.css({'height': '250px'});
     
     var tabela      = $('table', divRegistro );
     var linha       = $('table > tbody > tr', divRegistro );
@@ -151,4 +152,10 @@ function controlaLayoutExc(){
     $('#btVoltar').unbind('click').bind('click', function(){
         
     });
+}
+
+function btnVoltarInicio() {
+	
+	acessaRotina('','SCORE','Score','score_comportamental'); return false;
+	
 }
