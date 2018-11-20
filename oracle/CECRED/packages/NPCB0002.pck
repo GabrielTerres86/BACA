@@ -115,7 +115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 14/11/2018
 
       Dados referentes ao programa:
 
@@ -139,6 +139,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       
                   16/10/2018 - Substituir arquivo texto por tabela oracle
                                ( Belli - Envolti - Chd INC0025460 ) 
+
+                  14/11/2018 - Quando crítica 940 (timeout) então retornar mensagem específica.
+                               (PTASK0010184 - AJFink)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -646,6 +649,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         -- sobrescrever a mensagem de critica de boleto nao encontrado da JDNPC        
         IF vr_cdcritic = 950 THEN
           vr_dscritic := 'Boleto nao registrado. Favor entrar em contato com o beneficiario.';
+        ELSIF vr_cdcritic = 940 THEN --PTASK0010184
+          vr_dscritic := 'Tempo de consulta excedido. Informe o titulo novamente.';
         END IF;
         
         -- Retornar erro 
