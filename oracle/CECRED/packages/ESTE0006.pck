@@ -1664,11 +1664,11 @@ END pc_incluir_bordero_esteira;
          vr_obj_titulos.put('idTitulo'       , rw_craptdb.nrtitulo);
          vr_obj_titulos.put('convenio'       , rw_craptdb.nrcnvcob);
          vr_obj_titulos.put('numero'         , rw_craptdb.nrdocmto);
-         vr_obj_titulos.put('nome'           , rw_crapass.nmprimtl); -- do cedente
+         vr_obj_titulos.put('nome'           , rw_craptdb.nmdsacad); -- do cedente
          if  rw_crapass.inpessoa = 1 then
-           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,11,'0')); -- do cedente
+           vr_obj_titulos.put('documento'      , lpad(rw_craptdb.nrinssac,11,'0')); -- do cedente
          ELSE
-           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,14,'0')); -- do cedente
+           vr_obj_titulos.put('documento'      , lpad(rw_craptdb.nrinssac,14,'0')); -- do cedente
          END IF;
          vr_obj_titulos.put('vencimento'     , TO_CHAR(rw_craptdb.dtvencto,'rrrr-mm-dd') );
 	       vr_obj_titulos.put('valor'          , rw_craptdb.vltitulo);
