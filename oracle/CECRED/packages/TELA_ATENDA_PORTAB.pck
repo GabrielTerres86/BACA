@@ -146,6 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           FROM crapcem
          WHERE crapcem.cdcooper = pr_cdcooper
            AND crapcem.nrdconta = pr_nrdconta
+					 AND crapcem.idseqttl = 1
          ORDER BY crapcem.dtmvtolt
                  ,crapcem.hrtransa DESC;
     
@@ -385,7 +386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrispb_banco_folha',
-                             pr_tag_cont => vr_nrispb_bf,
+                             pr_tag_cont => lpad(vr_nrispb_bf, 8, '0'),
                              pr_des_erro => vr_dscritic);
     
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -415,7 +416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrispbif',
-                             pr_tag_cont => vr_nrispbif_cop,
+                             pr_tag_cont => lpad(vr_nrispbif_cop, 8, '0'),
                              pr_des_erro => vr_dscritic);
     
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -810,7 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_contador,
                                pr_tag_nova => 'nrispbif',
-                               pr_tag_cont => rw_crapban.nrispbif,
+                               pr_tag_cont => lpad(rw_crapban.nrispbif, 8, '0'),
                                pr_des_erro => vr_dscritic);
       
         IF NVL(rw_crapban.nrcnpjif, 0) > 0 THEN

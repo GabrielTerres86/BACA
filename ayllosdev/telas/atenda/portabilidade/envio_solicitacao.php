@@ -134,13 +134,13 @@
 
 			foreach ($registros as $registro) {
 				$dsdbanco = getByTagName($registro->tags,'dsdbanco');
-				$nrispbif = getByTagName($registro->tags,'nrispbif');
+				$nrispbif_s = getByTagName($registro->tags,'nrispbif');
 				$nrcnpjif = getByTagName($registro->tags,'nrcnpjif');
 				$cdbccxlt = getByTagName($registro->tags,'cdbccxlt');
 				
 				$selected = ( ( $cdbanco_folha == $cdbccxlt ) ? 'selected' : '' );
 
-				echo '<option '.$selected.' data-nrcnpjif="'.$nrcnpjif.'" data-nrispbif="'.$nrispbif.'" value="'.$cdbccxlt.'">'.$dsdbanco.'</option>';
+				echo '<option '.$selected.' data-nrcnpjif="'.$nrcnpjif.'" data-nrispbif="'.$nrispbif_s.'" value="'.$cdbccxlt.'">'.$dsdbanco.'</option>';
 			}
 			?>
 		</select>

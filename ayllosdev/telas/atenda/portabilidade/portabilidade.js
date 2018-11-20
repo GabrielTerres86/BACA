@@ -223,6 +223,7 @@ function controlaLayout(cddopcao) {
 		$('#dsdbanco').bind('change', function (){
 			var $el = $(this).find(':selected'),
 				nrispbif = $el.data('nrispbif'),
+				nrispbif = lpad(nrispbif, 8),
 				nrcnpjif = $el.data('nrcnpjif');
 
 			$('#nrispbif_banco_folha').val(nrispbif);
@@ -372,4 +373,9 @@ function imprimirTermoAdesao(dsrowid) {
     var callafter = "";
 
     carregaImpressaoAyllos("frmTermo", action, callafter);
+}
+
+function lpad (str, max) {
+  str = str.toString();
+  return str.length < max ? lpad("0" + str, max) : str;
 }

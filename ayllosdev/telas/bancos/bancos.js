@@ -204,6 +204,8 @@ function controlaLayout() {
 		cNrcnpjif.desabilitaCampo();
 		cCdbccxlt.focus();
 
+		controlaPesquisas('divEntrada');
+
 	}
 					
 	return false;
