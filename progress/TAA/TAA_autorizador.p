@@ -1743,6 +1743,16 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
+		ELSE
+        /* Inicio P485 */
+        IF   aux_operacao = 79   THEN
+             DO:
+                 RUN verifica_modalidade_conta.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        /* Fim P485 */
 
         LEAVE.
     END.
@@ -10655,6 +10665,53 @@ PROCEDURE valida_modalidade_transferencia:
     RETURN "OK".
 END PROCEDURE.
 /* Fim 78 - valida_modalidade_transferencia */
+
+/* Inicio 79 - P485 - INICIO */
+PROCEDURE verifica_modalidade_conta:
+
+    DEFINE VARIABLE aux_cdmodali AS INTE NO-UNDO.
+           
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  aux_cdcooper 
+                  ,INPUT  aux_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade.pr_dscritic 
+                          WHEN pc_busca_modalidade.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  aux_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDMODALI","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_cdmodali).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Inicio 79 - P485 - FIM */
+
 
 
 /* .......................................................................... */
