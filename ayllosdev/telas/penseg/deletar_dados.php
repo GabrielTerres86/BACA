@@ -1,13 +1,12 @@
 <?php
 /*!
- * FONTE        : busca_seg_pendente.php
- * CRIAÇÃO      : Guilherme/SUPERO
- * DATA CRIAÇÃO : Junho/2016
- * OBJETIVO     : Rotina para buscar os Seguros Sicredi pendentes de ajuste
+ * FONTE        : deletar_dados.php
+ * CRIAÇÃO      : Christian Grauppe/ENVOLTI
+ * DATA CRIAÇÃO : Novembro/2018
+ * OBJETIVO     : Rotina para "excluir" os dados de contratos segurados.
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 
  * --------------
- * 000: [08/11/2018] Adicionado campos para busca e filtro da lista por CPF/CNPJ e Nr. de Apólice. ( Christian Grauppe/ENVOLTI )
  */
 ?>
 
@@ -18,11 +17,12 @@
     require_once('../../includes/controla_secao.php');
     require_once('../../class/xmlfile.php');
     isPostMethod();
-	
+
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 	$nrapolice = (isset($_POST['nrapolice']) && $_POST['nrapolice'] != "") ? $_POST['nrapolice'] : 0;
 	$nrcpfcnj = (isset($_POST['nrcpfcnj']) && $_POST['nrcpfcnj'] != "") ? $_POST['nrcpfcnj'] : 0;
+	$registros = (isset($_POST['registros'])) ? $_POST['registros'] : 0;
 
     $retornoAposErro = '';
 
@@ -34,15 +34,12 @@
     $xml  = '';
     $xml .= '<Root>';
     $xml .= '   <Dados>';
-	$xml .= '       <nrregist>'.$nrregist.'</nrregist>';
-	$xml .= '       <nriniseq>'.$nriniseq.'</nriniseq>';
-	$xml .= '       <nrapolice>'.$nrapolice.'</nrapolice>';
-	$xml .= '       <nrcpfcnj>'.$nrcpfcnj.'</nrcpfcnj>';
+	$xml .= '       <registros>'.$registros.'</registros>';
     $xml .= '   </Dados>';
     $xml .= '</Root>';
 
     // Executa script para envio do XML e cria objeto para classe de tratamento de XML
-    $xmlResult = mensageria($xml, "PENSEG", "BUSCASEG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "PENSEG", "DELETSEG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
 
     // Se ocorrer um erro, mostra mensagem
@@ -50,8 +47,4 @@
         $msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
         exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro);
     }
-	
-	$qtregist = $xmlObjeto->roottag->attributes['QTREGIST'];
-    $pendencias = $xmlObjeto->roottag->tags;
-    include('tab_pendencias.php');
 ?>

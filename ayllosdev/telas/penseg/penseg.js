@@ -6,6 +6,8 @@
  * --------------
  * ALTERAÇÕES   :
  * -----------------------------------------------------------------------
+ * 000: [07/11/2018] Adicionado campos no formulário para selecionar os itens da lsita para "deleta-los". ( Christian Grauppe/ENVOLTI )
+ * 001: [09/11/2018] Adicionado campos para busca e filtro da lista por CPF/CNPJ e Nr. de Apólice. ( Christian Grauppe/ENVOLTI )
  */
 
 // Variaveis
@@ -317,7 +319,7 @@ function valida_conta_nova() {
 
 
 // Monta Grid Inicial
-function buscaSegurosPendentes(nriniseq, nrregist) {
+function buscaSegurosPendentes(nriniseq, nrregist, nrapolice, nrcpfcnj) {
     
     indrowid   = "";
     idcontrato = "";
@@ -331,6 +333,8 @@ function buscaSegurosPendentes(nriniseq, nrregist) {
         data: {
             nriniseq: nriniseq,
             nrregist: nrregist,
+            nrapolice: nrapolice,
+            nrcpfcnj: nrcpfcnj,
             redirect: "html_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
@@ -368,26 +372,38 @@ function formataTabela() {
     var ordemInicial = new Array();
 
     var arrayLargura = new Array();
-    arrayLargura[0]  = '120px';
-    arrayLargura[1]  = '117px';
+    arrayLargura[0]  = '10px';
+    arrayLargura[1]  = '120px';
     arrayLargura[2]  = '117px';
-    arrayLargura[3]  = '90px';
-    arrayLargura[4]  = '115px';
+    arrayLargura[3]  = '117px';
+    arrayLargura[4]  = '90px';
+    arrayLargura[5]  = '105px';
     //arrayLargura[5]  = '60px';
    // arrayLargura[6]  = '10px';
 
     var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
-        arrayAlinha[1] = 'right';
+        arrayAlinha[1] = 'center';
         arrayAlinha[2] = 'right';
         arrayAlinha[3] = 'right';
         arrayAlinha[4] = 'right';
-        arrayAlinha[5] = 'center';
-    //    arrayAlinha[6] = 'center';
-
+        arrayAlinha[5] = 'right';
+        arrayAlinha[6] = 'center';
 
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
     hideMsgAguardo();
+
+	$("#iptdeltodos").unbind('click').bind('click', function() {
+        if (this.checked) {
+            $(".iptdel").each(function() {
+                this.checked = true;
+            });
+        } else {
+            $(".iptdel").each(function() {
+                this.checked = false;
+            });
+        }
+    });
 
     /* Atribuindo o foco para a linha da tabela, pois ao clicar no cabecalho nao retornava
     para linha da tabela, dessa maneira a tela apresentava erro na hora de alterar ou
@@ -527,7 +543,7 @@ function gravarSeguro(){
             try {
                 if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
                     try {
-                        showError("inform", "Seguro atualizado com sucesso!", "Alerta - Ayllos", "encerraRotina(true);buscaSegurosPendentes(1,qtdRegis);");
+                        showError("inform", "Seguro atualizado com sucesso!", "Alerta - Ayllos", "encerraRotina(true);buscaSegurosPendentes(nriniseq, nrregist, nrapolice, nrcpfcnj);");
                     } catch(error) {
                         showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
                     }
@@ -549,8 +565,6 @@ function gravarSeguro(){
     return false;
 }
 
-
-
 function replaceAll(texto,obj){
 
     /**
@@ -560,7 +574,6 @@ function replaceAll(texto,obj){
 
         Parametros : texto --> Texto que sera analisado
                        obj --> Objeto referenciado para receber o texto ajustado
-
     **/
 
     // Lista todos os caracter especiais que serao substituidos
@@ -584,4 +597,70 @@ function replaceAll(texto,obj){
 
     // Recebe o texto convertido
     obj.value = caracter;
+}
+
+function deletarSeguros(operacao) {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, atualizando dados...");
+	bloqueiaFundo(divRotina);
+
+	if (operacao) {
+		var ids = "";
+
+		$(".iptdel").each(function() {
+			if (this.checked) {
+				ids = ids + $(this).val() + ";";
+			}
+		});
+
+		$.ajax({
+			type    : "POST",
+			dataType: "html",
+			url     : UrlSite + "telas/penseg/deletar_dados.php",
+			data: {
+				registros: ids,
+				redirect: "html_ajax"
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				hideMsgAguardo();
+				try {
+					hideMsgAguardo();
+					showError("inform", "Seguro(s) deletado(s) com sucesso!", "Alerta - Ayllos", "buscaSegurosPendentes(nriniseq, nrregist, nrapolice, nrcpfcnj);");
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}
+		});
+	} else {
+		numberOfChecked = $('input.iptdel:checkbox:checked').length;
+		showConfirmacao('Deseja deletar o(s) '+numberOfChecked+' item(ns) selecionado(s)?', 'Confirma&ccedil;&atilde;o - Aimaro', 'deletarSeguros(\'confirma\');', 'hideMsgAguardo();', 'sim.gif', 'nao.gif');
+	}
+
+}
+
+function btnBuscaSegurosFiltro() {
+
+	nrapolice = $("#nrapolice").val();
+	nrcpfcnj = $("#nrcpfcnj").val();
+	nrregist = $("#nrregist").val();
+
+	buscaSegurosPendentes(1, nrregist, nrapolice, nrcpfcnj);
+
+}
+
+function btnAtualizar(qtdRegis) {
+
+	nrcpfcnj = nrapolice = "";
+
+	$("#nrapolice").val(nrapolice);
+	$("#nrcpfcnj").val(nrcpfcnj);
+
+	buscaSegurosPendentes(1, qtdRegis);
+
 }

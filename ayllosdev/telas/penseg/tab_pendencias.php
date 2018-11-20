@@ -7,13 +7,39 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
+ * 000: [06/11/2018] Adicionado campos no formulário para selecionar os itens da lsita para "deleta-los". ( Christian Grauppe/ENVOLTI )
+ * 001: [08/11/2018] Adicionado campos para busca e filtro da lista por CPF/CNPJ e Nr. de Apólice. ( Christian Grauppe/ENVOLTI )
  */
 ?>
+
+<form id="frmOpcao" class="formulario" onSubmit="return false;">
+
+	<fieldset>
+		<legend> <? echo utf8ToHtml('Filtro de Busca:');  ?> </legend>
+
+		<label for="nrapolice" class="txtNormalBold rotulo" style="width:150px;"><?php echo utf8ToHtml('Apólice'); ?>:</label>
+		<input name="nrapolice" type="text" id="nrapolice" class="inteiro campo" value="" />
+
+		<label for="nrcpfcnj" class="txtNormalBold rotulo-linha" style="width:150px;">CPF/CNPJ:</label>
+		<input name="nrcpfcnj" type="text" id="nrcpfcnj" class="inteiro campo" value="" />
+
+		<a href="#" class="botao" onclick="btnBuscaSegurosFiltro(); return false;" style="margin-left:30px;" >Buscar</a>
+
+		<br style="clear:both" />
+
+		<input type="hidden" name="nrregist" id="nrregist" value="<?php echo $nrregist; ?>" />
+	</fieldset>
+
+	<br style="clear:both" />
+
+</form>
+
 <div id="tabPendencias" style="display:block">
     <div class="divRegistros">
         <table class="tituloRegistros">
             <thead>
                 <tr>
+                    <th> <input type="checkbox" id="iptdeltodos" name="iptdeltodos" value="todos" /> </th>
                     <th><?php echo utf8ToHtml('Data de Importa&ccedil;&atilde;o');  ?></th>
                     <th><?php echo utf8ToHtml('Proposta');  ?></th>
                     <th><?php echo utf8ToHtml('Ap&oacute;lice');  ?></th>
@@ -28,7 +54,7 @@
                     $i = 0;
                     // Monta uma coluna mesclada com a quantidade de colunas que seria exibida
                     ?> <tr>
-                            <td colspan="11" style="width: 80px; text-align: center;">
+                            <td colspan="12" style="width: 80px; text-align: center;">
                                 <input type="hidden" id="conteudo" name="conteudo" value="<?php echo $i; ?>" />
                                 <b>N&atilde;o foram encontrados seguros pendentes de ajuste.</b>
                             </td>
@@ -38,6 +64,7 @@
                     for ($i = 0; $i < count($pendencias); $i++) {
                     ?>
                         <tr>
+							<td><input style="cursor:pointer;" type="checkbox" class="iptdel" name="iptdel[<?php echo $i; ?>]" value="<?php echo getByTagName($pendencias[$i]->tags,'idcontrato'); ?>" /></td>
                             <td><input type="hidden" id="conteudo"            name="conteudo"            value="<?php echo 1; ?>" />
                                 <input type="hidden" id="idcontrato"          name="idcontrato"          value="<?php echo getByTagName($pendencias[$i]->tags,'idcontrato') ?>" />
                                 <input type="hidden" id="dtmvtolt"            name="dtmvtolt"            value="<?php echo getByTagName($pendencias[$i]->tags,'dtmvtolt') ?>" />
@@ -105,7 +132,7 @@
             <td>
                 <?php
                 if (isset($nriniseq)) {
-                    ?> Exibindo <?php echo $nriniseq; ?> at&eacute; <?php
+                    ?> Exibindo <span id="nriniseq" style="font-size:10px;"><?php echo $nriniseq; ?></span> at&eacute; <?php
                     if (($nriniseq + $nrregist) > $qtregist) {
                         echo $qtregist;
                     } else {
@@ -131,6 +158,8 @@
 
 <script type="text/javascript">
 
+	var nrcpfcnj, nrapolice;
+
     $('a.paginacaoAnterior').unbind('click').bind('click', function() {
         buscaSegurosPendentes(<?php echo "'" . ($nriniseq - $nrregist) . "','" . $nrregist . "'"; ?>);
     });
@@ -140,4 +169,42 @@
     });
 
     $('#divPesquisaRodape','#divTela').formataRodapePesquisa();
+
+    $(".iptdel").click(function () {
+        if ($(this).is(":checked")) {
+            var isAllChecked = 0;
+
+            $(".iptdel").each(function() {
+                if (!this.checked)
+                    isAllChecked = 1;
+            });
+
+            if (isAllChecked == 0) {
+                $("#iptdeltodos").prop("checked", true);
+            }
+        } else {
+            $("#iptdeltodos").prop("checked", false);
+        }
+    });
+
+	if (typeof nrapolice !== "undefined") {
+		$("#nrapolice").val(nrapolice);
+	}
+	if (typeof nrcpfcnj !== "undefined") {
+		$("#nrcpfcnj").val(nrcpfcnj);
+	}
+	nriniseq = $("span#nriniseq").text();
+	nrregist = <?php echo "'" . $nrregist . "'"; ?>;
+
+	$("#nrapolice").keyup(function(){
+		valor = $(this).val();
+		valor=valor.replace(/\D/g,"");
+		$(this).val(valor);
+	});
+	$("#nrcpfcnj").keyup(function(){
+		valor = $(this).val();
+		valor=valor.replace(/\D/g,"");
+		$(this).val(valor);
+	});
+
 </script>

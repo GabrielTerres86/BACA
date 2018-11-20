@@ -99,7 +99,8 @@
 
                                                                             <div id="divBotoes" style='text-align:center; margin-bottom: 10px; display:none;' >
                                                                                 <a href="#" class="botao" id="btAlterar"   name="btAlterar"   onClick="btnAlterar();return false;"  style="float:none;">Alterar</a>
-                                                                                <a href="#" class="botao" id="btAtualizar" name="btAtualizar" onClick="buscaSegurosPendentes(1,qtdRegis);return false;"  style="float:none;">Atualizar Lista</a>
+                                                                                <a href="#" class="botao" id="btAtualizar" name="btAtualizar" onClick="btnAtualizar(qtdRegis);return false;" style="float:none;">Atualizar Lista</a>
+                                                                                <a href="#" class="botao" id="btDeletar"   name="btDeletar"   onClick="deletarSeguros('');return false;"	 style="float:none;">Deletar</a>
                                                                             </div>
 
                                                                         </div>

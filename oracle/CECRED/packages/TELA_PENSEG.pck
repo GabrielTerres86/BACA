@@ -4,6 +4,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PENSEG AS
 
   PROCEDURE pc_busca_seguros_pend(pr_nriniseq IN INTEGER               --> Registro inicial da listagem
                                  ,pr_nrregist IN INTEGER               --> Numero de registros p/ paginaca
+                                 ,pr_nrapolice IN INTEGER              --> Nr da apólice do filtro da tela
+                                 ,pr_nrcpfcnj IN INTEGER               --> Nr do CNPJ/CPF do filtro da tela
                  ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
@@ -30,6 +32,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PENSEG AS
                                  ,pr_nmdcampo   OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro   OUT VARCHAR2);           --> Erros do processo
 
+  PROCEDURE pc_deleta_seguros_pend(pr_registros  IN VARCHAR2              --> Lista de registros a eliminar
+                                  ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
+                                  ,pr_cdcritic   OUT PLS_INTEGER          --> Codigo da critica
+                                  ,pr_dscritic   OUT VARCHAR2             --> Descricao da critica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo   OUT VARCHAR2             --> Nome do campo com erro
+                                  ,pr_des_erro   OUT VARCHAR2);           --> Erros do processo                                 
+
 END TELA_PENSEG;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
@@ -44,7 +54,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
   --    Objetivo  : BO ref. a Mensageria da tela PENSEG
   --
   --    Alteracoes:
-  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Cursor genérico de calendário
@@ -52,6 +61,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
 
   PROCEDURE pc_busca_seguros_pend(pr_nriniseq IN INTEGER               --> Registro inicial da listagem
                                  ,pr_nrregist IN INTEGER               --> Numero de registros p/ paginaca
+                                 ,pr_nrapolice IN INTEGER              --> Nr da apólice do filtro da tela
+                                 ,pr_nrcpfcnj IN INTEGER               --> Nr do CNPJ/CPF do filtro da tela
                                  ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
@@ -71,6 +82,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     Objetivo  : Rotina para buscar dados de Seguros Pendentes SICREDI
 
     Alteracoes:
+    - [08/11/2018] Adição de filtros de tela (nr da apólice e CNPJ) e Listar itens não excluídos na busca_seguros_pend. Christian Grauppe/ENVOLTI
+    - [09/11/2018] Alterações para mostrar registros únicos (SELECT DISTINCT) e qtregist corretos. Christian Grauppe/ENVOLTI
     ............................................................................. */
 
     --- CURSORES ---
@@ -80,7 +93,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
             SELECT tmp.* --> Select para filtrar a paginação
                   ,rownum      nrrownum
               FROM (
-                    SELECT seg.rowid dsrowid
+                    SELECT DISTINCT seg.rowid dsrowid
                           ,seg.idcontrato
                           ,seg.nrproposta
                           ,seg.nrapolice
@@ -93,14 +106,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
                           ,seg.nrcpf_cnpj_segurado
                           ,seg.nmsegurado
                           ,seg.dtmvtolt
-                          ,DECODE(seg.indsituacao,'A','ATIVA','V','VENCIDA','R','RENOVADA','C','CANCELADA','ENDOSSADA') indsituacao
+                          ,DECODE(seg.indsituacao,'A','ATIVA','V','VENCIDA','R','RENOVADA','C','CANCELADA','X','EXCLUIDA','ENDOSSADA') indsituacao
                           ,TRIM(UPPER(gene0007.fn_caract_acento(auto.nmmarca))) nmmarca
                           ,TRIM(UPPER(gene0007.fn_caract_acento(auto.dsmodelo))) dsmodelo
                           ,auto.dschassi
                           ,auto.dsplaca
                           ,auto.nrano_fabrica
                           ,auto.nrano_modelo
-                          ,COUNT(1)  OVER (PARTITION BY 1)  qtregist
+                          ,COUNT(DISTINCT seg.idcontrato) OVER (PARTITION BY 1) qtregist
 
                       FROM tbseg_contratos seg
                           ,tbseg_auto_veiculos auto
@@ -110,6 +123,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
                        AND seg.inerro_import = 1   -- Registros com erros de Conta ou Agencia(cooper)
                        AND csg.cdcooper      = 1   -- Esses registros da SEG nao tem cooperativa, fixo baseado na 1
                        AND csg.cdsegura      = seg.cdsegura
+                       AND seg.nrcpf_cnpj_segurado = DECODE(pr_nrcpfcnj,0,seg.nrcpf_cnpj_segurado,pr_nrcpfcnj) -- Nr segurado do Filtro da tela
+                       AND seg.nrapolice     = DECODE(pr_nrapolice,0,seg.nrapolice,pr_nrapolice)               -- Nr apolice do Filtro da tela
+                       AND seg.indsituacao   <> 'X' -- Não mostra os registros com a situação excluído
                      ORDER BY seg.nrcpf_cnpj_segurado, seg.idcontrato
                        ) tmp
            ) tmp2
@@ -926,6 +942,126 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
                                      '<Root><Dados>Rotina com erros</Dados></Root>');
 
   END pc_grava_seguros_pend;
+  
+  
+  PROCEDURE pc_deleta_seguros_pend(pr_registros  IN VARCHAR2              --> Lista de registros a eliminar
+                                  ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
+                                  ,pr_cdcritic   OUT PLS_INTEGER          --> Codigo da critica
+                                  ,pr_dscritic   OUT VARCHAR2             --> Descricao da critica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo   OUT VARCHAR2             --> Nome do campo com erro
+                                  ,pr_des_erro   OUT VARCHAR2) IS         --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_deleta_seguros_pend
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Christian Grauppe/Envolti
+    Data    : Novembro/2018                       Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para eliminar dados Seguros Sicredi que foram ajustados
+
+    Alteracoes:
+    ............................................................................. */
+
+    CURSOR cr_crapcop (p_cdcooper IN crapcop.cdagectl%type) IS
+      SELECT 1
+        FROM crapcop cop
+       WHERE cop.cdcooper = p_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+
+    vr_cdcritic       crapcri.cdcritic%TYPE;
+    vr_dscritic       crapcri.dscritic%TYPE;
+
+    -- Variaveis de log
+    vr_cdcooper       crapcop.cdcooper%TYPE;
+    vr_cdoperad       VARCHAR2(100);
+    vr_nmdatela       VARCHAR2(100);
+    vr_nmeacao        VARCHAR2(100);
+    vr_cdagenci       VARCHAR2(100);
+    vr_nrdcaixa       VARCHAR2(100);
+    vr_idorigem       VARCHAR2(100);
+    vr_dsmsgupd       VARCHAR2(200); -- Mensagem de erro na atualização
+
+    --Controle de erro
+    vr_exc_erro       EXCEPTION;
+    vr_exc_critica    EXCEPTION;
+
+  BEGIN
+
+    pr_des_erro := NULL;
+
+    -- Leitura do calendário da cooperativa
+    OPEN  btch0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+ 
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      pr_cdcritic := 9999;
+      pr_des_erro := 'Erro ao atualizar o registro na SEGURO(pc_extrai_dados)';
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Validar Cooperativa parâmetro
+    OPEN  cr_crapcop (p_cdcooper => vr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;
+
+    -- 
+    BEGIN
+
+      UPDATE CECRED.TBSEG_CONTRATOS t
+         SET t.indsituacao  = 'X',
+             t.dtcancela    = rw_crapdat.dtmvtolt,
+             t.dsobservacao = '[PENSEG] Excluído em '
+                             || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||
+                              ' as ' || to_char(SYSDATE,'hh24:mi:ss')
+       WHERE ';'||pr_registros LIKE ('%;'||t.idcontrato||';%');
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_des_erro := 'Erro ao atualizar registros: '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      ROLLBACK;
+      pr_dscritic := gene0007.fn_convert_db_web(pr_des_erro);
+
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                    '<Root><Dados>Rotina com erros</Dados></Root>');
+
+    WHEN OTHERS THEN
+      ROLLBACK;
+      pr_cdcritic := 9999;
+      pr_nmdcampo := 'cnewCdcooper';
+      pr_des_erro := 'Erro geral na rotina pc_grava_seguros_pend: '||SQLERRM;
+      pr_dscritic := gene0007.fn_convert_db_web(pr_des_erro);
+
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Dados>Rotina com erros</Dados></Root>');
+
+  END pc_deleta_seguros_pend;
 
 END TELA_PENSEG;
 /
