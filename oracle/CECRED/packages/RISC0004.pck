@@ -21,6 +21,16 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
     INDEX BY VARCHAR2(18);
   vr_tab_grupos typ_tab_grupos;
 
+  --Tipo de Registro para PARAMETROS GERAIS DA CENTRAL DE RISCO
+  TYPE typ_reg_ctl_parametros IS 
+    RECORD (cdcooper                    tbrisco_central_parametros.cdcooper%TYPE
+           ,perc_liquid_sem_garantia    tbrisco_central_parametros.perc_liquid_sem_garantia%TYPE
+           ,perc_cobert_aplic_bloqueada tbrisco_central_parametros.perc_cobert_aplic_bloqueada%TYPE
+           ,inrisco_melhora_minimo      tbrisco_central_parametros.inrisco_melhora_minimo%TYPE
+           ,dthr_alteracao              tbrisco_central_parametros.dthr_alteracao%TYPE
+           ,cdoperador_alteracao        tbrisco_central_parametros.cdoperador_alteracao%TYPE);
+  TYPE typ_tab_ctl_parametros IS TABLE OF typ_reg_ctl_parametros INDEX BY PLS_INTEGER;
+
   vr_execucao PLS_INTEGER :=0;
 
 -- Calendário da cooperativa selecionada
@@ -129,6 +139,23 @@ FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
                               , pr_tpctrato   NUMBER)
   RETURN INTEGER;
 
+
+
+  FUNCTION fn_verifica_garantias (pr_cdcooper   NUMBER
+                                , pr_nrdconta   NUMBER
+                                , pr_nrctremp   NUMBER
+                                , pr_tpctrato   NUMBER
+                                , pr_perc_blq   NUMBER)
+    RETURN BOOLEAN ;
+
+  -- Grava saldo refinanciado na crapepr                                
+  PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
+                                 ,pr_nrdconta            NUMBER     --> Conta
+                                 ,pr_nrctremp            NUMBER     --> Contrato
+                                 ,pr_devedor_calculado   NUMBER     --> Valor refinanciado
+                                 ,pr_dscritic OUT VARCHAR2);
+
+
 -- Busca a quantidade de dias em atraso e o risco final para uma conta/contrato na central de riscos (diária)
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
                               , pr_nrdconta    IN NUMBER
@@ -162,12 +189,19 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                   ,pr_dtmvtoan IN DATE             -- Data da central anterior
                                      ,pr_dscritic OUT VARCHAR2);
 
-  -- Grava saldo refinanciado na crapepr                                
-  PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
-                                 ,pr_nrdconta            NUMBER     --> Conta
-                                 ,pr_nrctremp            NUMBER     --> Contrato
-                                 ,pr_devedor_calculado   NUMBER     --> Valor refinanciado
-                                 ,pr_dscritic OUT VARCHAR2);
+  PROCEDURE pc_calcula_risco_melhora(pr_cdcooper         IN NUMBER       --> Cooperativa
+                                    ,pr_rowidepr         IN ROWID        --> ROWID do Emprestimo (EPR)
+                                    ,pr_tpctrato         IN NUMBER       --> Lista de contratos liquidados
+                                    ,pr_qtdiaatr         IN NUMBER       --> Dias em atraso do contrato atual
+                                    ,pr_cdmodali         IN NUMBER       --> Modalidade do Contrato
+                                    ,pr_tab_ctl_param    IN typ_tab_ctl_parametros
+                                    ,pr_inrisco_melhora OUT NUMBER       --> Retornar o Risco Melhora
+                                    ,pr_dscritic        OUT VARCHAR2);   --> Retorno Critica
+
+  PROCEDURE pc_central_parametros(pr_cdcooper            IN NUMBER           --> Cooperativa
+                                 ,pr_tab_ctl_parametros OUT typ_tab_ctl_parametros  --Vetor para o retorno das informações
+                                 ,pr_dscritic           OUT VARCHAR2);
+
 
 END RISC0004;
 /
@@ -188,10 +222,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
   --                          PJ 450 - Diego Simas - AMcom  
   --
-  --             30/10/2018 - Inclusão da function fn_busca_risco_melhora e atribuicao 
+  --            30/10/2018 - P450 - Inclusão da function fn_busca_risco_melhora e atribuicao 
   --						  da variavel vr_inrisco_melhora (Douglas Pagel/AMcom)
-  --
-  --             31/10/2018 - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
+  --                       - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -631,6 +664,7 @@ BEGIN
   RETURN vr_risco_grupo;
 END fn_busca_niv_risco_ge;
 
+
 -- Busca o risco melhora do contrato de emprestimo --
 FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
                               , pr_nrdconta   NUMBER
@@ -663,6 +697,36 @@ BEGIN
 
   RETURN vr_risco_melhora;
 END fn_busca_risco_melhora;
+
+
+  -- VERIFICAR SE O CONTRATO POSSUI GARANTIAS --
+  FUNCTION fn_verifica_garantias (pr_cdcooper   NUMBER
+                                , pr_nrdconta   NUMBER
+                                , pr_nrctremp   NUMBER
+                                , pr_tpctrato   NUMBER
+                                , pr_perc_blq   NUMBER)
+    RETURN BOOLEAN AS vr_tem_garantia BOOLEAN ;
+
+    -- >>> CURSORES <<< ---
+    
+    
+    -- >>> VARIAVEIS <<< ---
+    vr_sld_bloq_garan    NUMBER(15,2):=0;     -- Valor da Aplicacao que está bloqueado
+    
+  BEGIN
+     -- ATENCAO: AS GARANTIAS SO SERAO VALIDADAS NA FASE 2 DO RISCO MELHORA
+     -- FASE 1 TODOS SERÃO TRATADOS COMO "SEM GARANTIA"
+     vr_tem_garantia := FALSE;
+  
+     --pr_perc_blq
+     IF (vr_sld_bloq_garan * (pr_perc_blq/100)) > 1000000 THEN
+       NULL;
+       -- se for verdadeiro, considerar TRUE para vr_tem_garantia
+     END IF;
+
+     RETURN vr_tem_garantia;
+  
+  END fn_verifica_garantias;
 
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
                               , pr_nrdconta    IN NUMBER
@@ -742,6 +806,7 @@ BEGIN
   IF  vr_tab_grupos.exists(vr_indice) THEN
     pr_numero_grupo := vr_tab_grupos(vr_indice).nrdgrupo;
     pr_risco_grupo  := vr_tab_grupos(vr_indice).inrisco_grupo;
+
   ELSE -- Se nao estiver, busca na tabela de Grupos (Tela)
   
     IF vr_execucao = 0 THEN    -- Não é pela OCR
@@ -957,8 +1022,9 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   vr_inrisco_final    tbrisco_central_ocr.inrisco_final%TYPE;
 
   vr_qtdias_atraso_refin crapepr.qtdias_atraso_refin%TYPE;
-  vr_qtddiatr_ces        INTEGER;
-  vr_dtcorte_cessao DATE := NULL;
+  vr_qtddiatr_ces     INTEGER;
+  vr_dtcorte_cessao   DATE := NULL;
+  vr_dscritic         VARCHAR2(500);
   
 BEGIN
   -- Carrega o calendário de datas da cooperativa
@@ -1104,10 +1170,10 @@ BEGIN
       vr_qtdias_atraso_refin := 0;
     END IF;
 
-    -- Calcula o risco Operação
             
-    -- O Risco da Operação é o PIOR risco 
+    -- CALCULA O RISCO OPERAÇÃO  -> O Risco da Operação é o PIOR entre os riscos
     IF vr_inrisco_melhora IS NULL THEN
+      -- Sem MELHORA => PIOR ENTRE => INC/ATR/RAT/AGR/REF
       vr_inrisco_operacao := GREATEST(NVL(vr_inrisco_inclusao,2)
                                      ,NVL(vr_inrisco_atraso,2)
                                      ,NVL(vr_inrisco_rating,2)
@@ -1115,6 +1181,7 @@ BEGIN
                                      ,NVL(vr_inrisco_refin,2) );
     ELSE
       -- Quando há MELHORA, não considera INCLUSAO e REFIN
+      -- Com MELHORA => PIOR ENTRE => ATR/RAT/AGR/MEL
       vr_inrisco_operacao := GREATEST(NVL(vr_inrisco_atraso,2)
                                      ,NVL(vr_inrisco_rating,2)
                                      ,NVL(vr_inrisco_agravado,2)
@@ -1978,6 +2045,640 @@ END pc_carrega_tabela_riscos;
                       ||'. Detalhes: ' || SQLERRM;
           
   END pc_gravar_saldo_refin; 
+
+
+
+
+  PROCEDURE pc_grava_critica_melhora(pr_cdcooper          IN NUMBER
+                                   , pr_nrdconta          IN NUMBER
+                                   , pr_nrctremp          IN NUMBER
+                                   , pr_tpctrato          IN NUMBER
+                                   , pr_cdcritic_melhora  IN NUMBER
+                                   , pr_dscritic         OUT VARCHAR2) IS
+  /* .............................................................................
+
+   Programa: pc_grava_critica_melhora       (Antigo: NAO HA)
+   Sistema : Credito
+   Sigla   : CRED
+   Autor   : Guilherme/AMcom
+   Data    : Novembro/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Gravar a Critica para o não-cálculo do Risco Melhora
+
+   Alteracoes: 
+  ............................................................................. */
+
+
+  vr_des_erro    VARCHAR2(2000);
+  vr_exc_erro    EXCEPTION;
+/*---------------------------------------
+  TABELA DE CRITICAS DE NÃO CALCULO DO MELHORA:
+    0) EMPRESTIMO NAO ENCONTRADO
+    1) CALCULO DO RISCO MELHORA EXECUTADO APENAS NO PRIMEIRO DIA DO MES
+    2) RISCO MELHORA JA CALCULADO NO MES
+    3) EMPRESTIMO DIFERENTE DE PP E POS (EXCLUSIVO PARA ESSES)
+    4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
+    5) COOPERADO COM PREJUIZO ATIVO
+    6) CONTRATO COM MAIS DE 4 DIAS DE ATRASO
+    7) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+    8) ADIMPLENCIA COM GARANTIA NÃO ATENDIDA
+    9) ADIMPLENCIA SEM GARANTIA NÃO ATENDIDA
+   10) RISCO OPERACAO MENOR OU IGUAL AO RISCO MELHORA MINIMO
+   11) RISCO OPERACAO MENOR OU IGUAL AO MAIOR RISCO ENTRE RAT/ATR/AGR
+   12) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
+---------------------------------------*/
+
+  BEGIN
+    pr_dscritic := NULL;
+
+    -- Se a critica vier nula ou 0, não grava nada
+    IF pr_cdcritic_melhora > 0 THEN
+
+      -- Faz o UPDATE do registro
+      BEGIN
+         UPDATE TBRISCO_OPERACOES t
+            SET t.cdcritica_melhora = pr_cdcritic_melhora
+          WHERE t.cdcooper = pr_cdcooper
+            AND t.nrdconta = pr_nrdconta
+            AND t.nrctremp = pr_nrctremp
+            AND t.tpctrato = pr_tpctrato;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := ' Detalhes[2]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_erro;
+      END;
+        
+      -- Se igual a 0, nao encontrou. Fazer INSERT
+      IF SQL%ROWCOUNT = 0 THEN
+        BEGIN
+          INSERT INTO TBRISCO_OPERACOES 
+                     (cdcooper, 
+                      nrdconta, 
+                      nrctremp, 
+                      tpctrato, 
+                      inrisco_inclusao, 
+                      inrisco_calculado, 
+                      inrisco_melhora, 
+                      dtrisco_melhora, 
+                      cdcritica_melhora)
+                VALUES (pr_cdcooper,
+                        pr_nrdconta,
+                        pr_nrctremp,
+                        pr_tpctrato,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        pr_cdcritic_melhora
+                       );
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := ' Detalhes[1]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+            RAISE vr_exc_erro;
+        END;            
+      END IF;
+    END IF;
+
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       pr_dscritic := 'Erro RISC0004_MELHORA.pc_grava_critica_melhora --> ' ||pr_dscritic;
+
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_grava_critica_melhora --> ' || SQLERRM;
+
+  END pc_grava_critica_melhora;
+
+  PROCEDURE pc_grava_risco_melhora(pr_cdcooper          IN NUMBER
+                                 , pr_nrdconta          IN NUMBER
+                                 , pr_nrctremp          IN NUMBER
+                                 , pr_tpctrato          IN NUMBER
+                                 , pr_inrisco_melhora   IN NUMBER
+                                 , pr_dtrisco_melhora   IN DATE
+                                 , pr_dscritic         OUT VARCHAR2) IS
+  /* .............................................................................
+
+   Programa: pc_grava_risco_melhora       (Antigo: NAO HA)
+   Sistema : Credito
+   Sigla   : CRED
+   Autor   : Guilherme/AMcom
+   Data    : Novembro/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Gravar o resultado do cálculo do Risco Melhora
+
+   Alteracoes: 
+  ............................................................................. */
+
+  CURSOR cr_operacao IS
+    SELECT 1
+      FROM tbrisco_operacoes t
+      WHERE t.cdcooper = pr_cdcooper
+        AND t.nrdconta = pr_nrdconta
+        AND t.nrctremp = pr_nrctremp
+        AND t.tpctrato = pr_tpctrato;
+  rw_operacao cr_operacao%ROWTYPE;
+
+
+  vr_des_erro   VARCHAR2(2000);
+  vr_exc_erro   EXCEPTION;
+  BEGIN
+    pr_dscritic := NULL;
+
+    -- Se a critica vier nula ou 0, não grava nada
+    IF pr_inrisco_melhora > 0 THEN
+
+      -- Faz o UPDATE do registro
+      BEGIN
+        UPDATE TBRISCO_OPERACOES t
+           SET t.inrisco_melhora   = pr_inrisco_melhora
+              ,t.dtrisco_melhora   = pr_dtrisco_melhora
+              ,t.cdcritica_melhora = NULL -- Quando atualizar, zera a critica
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.nrctremp = pr_nrctremp
+           AND t.tpctrato = pr_tpctrato;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := ' Detalhes[1]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_erro;
+      END;
+        
+      -- Se igual a 0, nao encontrou. Fazer INSERT
+      IF SQL%ROWCOUNT = 0 THEN
+        BEGIN
+          INSERT INTO TBRISCO_OPERACOES 
+                     (cdcooper, 
+                      nrdconta, 
+                      nrctremp, 
+                      tpctrato, 
+                      inrisco_inclusao, 
+                      inrisco_calculado, 
+                      inrisco_melhora, 
+                      dtrisco_melhora, 
+                      cdcritica_melhora)
+                VALUES (pr_cdcooper,
+                        pr_nrdconta,
+                        pr_nrctremp,
+                        pr_tpctrato,
+                        NULL,
+                        NULL,
+                        pr_inrisco_melhora,
+                        pr_dtrisco_melhora,
+                        NULL
+                       );
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := ' Detalhes[2]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+            RAISE vr_exc_erro;
+        END;            
+      END IF;
+
+    
+      -- MANTER ATUALIZANDO O RISCO DSNIVRIS ENQUANTO NAO FOR REMOVIDO DEFINITIVO
+      BEGIN
+         UPDATE crawepr t
+            SET t.dsnivris = pr_inrisco_melhora
+          WHERE t.cdcooper = pr_cdcooper
+            AND t.nrdconta = pr_nrdconta
+            AND t.nrctremp = pr_nrctremp;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := ' Detalhes[3]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_erro;
+      END;
+
+    END IF;
+
+
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       pr_dscritic := 'Erro RISC0004_MELHORA.pc_grava_risco_melhora --> ' ||pr_dscritic;
+
+
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_grava_risco_melhora --> ' || SQLERRM;
+
+  END pc_grava_risco_melhora;
+
+
+  -- Procedure responsavel por validar se deve calcular risco melhora e retornar qual o risco
+ PROCEDURE pc_calcula_risco_melhora(pr_cdcooper         IN NUMBER       --> Cooperativa
+                                   ,pr_rowidepr         IN ROWID        --> ROWID do Emprestimo (EPR)
+                                   ,pr_tpctrato         IN NUMBER       --> Lista de contratos liquidados
+                                   ,pr_qtdiaatr         IN NUMBER       --> Dias em atraso do contrato atual
+                                   ,pr_cdmodali         IN NUMBER       --> Modalidade do Contrato
+                                   ,pr_tab_ctl_param    IN typ_tab_ctl_parametros
+                                   ,pr_inrisco_melhora OUT NUMBER       --> Retornar o Risco Melhora
+                                   ,pr_dscritic        OUT VARCHAR2) IS --> Critica
+  /* .............................................................................
+
+   Programa: pc_calcula_risco_melhora       (Antigo: NAO HA)
+   Sistema : Credito
+   Sigla   : CRED
+   Autor   : Guilherme/AMcom
+   Data    : Novembro/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Procedure responsável por fazer todas as validações pertinentes ao
+               do Risco Melhora e, quando sucesso, indicar/retornar o nível ao final
+
+   Alteracoes: 
+  ............................................................................. */
+  -- CURSORES
+  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+  CURSOR cr_crapepr(pr_rowidepr IN ROWID) IS
+    SELECT e.cdcooper
+          ,e.nrdconta
+          ,e.nrctremp
+          ,e.cdlcremp
+          ,e.tpemprst
+          ,w.dsnivris
+          ,e.qtprepag -- QTD Parcelas Pagas
+          ,e.qtmesdec -- QTD Meses Decorridos
+          ,w.dsnivori inrisco_inclusao -- Risco Original/Inclusao / Nascimento da Proposta
+          ,e.inrisco_refin
+          ,t.inrisco_melhora
+          ,t.dtrisco_melhora
+          ,e.vlsaldo_refinanciado
+          ,e.vlsdeved
+      FROM crapepr e, crawepr w, cecred.tbrisco_operacoes t
+     WHERE e.rowid       = PR_ROWIDEPR
+       AND W.CDCOOPER    = e.cdcooper
+       AND W.NRDCONTA    = e.nrdconta
+       AND W.Nrctremp    = e.nrctremp
+       AND t.cdcooper(+) = e.cdcooper
+       AND t.nrdconta(+) = e.nrdconta
+       AND t.nrctremp(+) = e.nrctremp
+       AND t.tpctrato(+) = 90
+     ORDER BY e.nrctremp;
+  rw_crapepr   cr_crapepr%ROWTYPE;
+  
+  CURSOR cr_central (pr_cdcooper IN crapris.cdcooper%TYPE
+                    ,pr_nrdconta IN crapris.nrdconta%TYPE
+                    ,pr_nrctremp IN crapris.nrctremp%TYPE
+                    ,pr_dtrefere IN crapris.dtrefere%TYPE) IS
+    SELECT t.inrisco_operacao
+          ,t.inrisco_rating
+          ,t.inrisco_refin
+          ,t.inrisco_melhora
+          ,t.inrisco_atraso
+          ,t.inrisco_agravado
+      FROM tbrisco_central_ocr t
+     WHERE t.cdcooper = pr_cdcooper
+       AND t.dtrefere = pr_dtrefere
+       AND t.nrdconta = pr_nrdconta
+       AND t.nrctremp = pr_nrctremp
+       AND t.cdmodali = pr_cdmodali;
+  rw_central cr_central%ROWTYPE;
+
+  -- Variáveis
+  vr_cdcritic             crapcri.cdcritic%TYPE;
+  vr_dscritic             VARCHAR2(4000);
+  vr_exc_erro             EXCEPTION;
+  vr_grava_log            EXCEPTION;  -- Usado para criticas da validação do Risco Melhora
+
+
+  -- Variáveis de uso comum
+  vr_cdcritica_melhora    NUMBER;
+  vr_dtrefere             DATE;
+  vr_tem_garantias        BOOLEAN:=FALSE;
+  vr_melhora_novo         INTEGER;
+  
+  vr_sucesso              BOOLEAN:=TRUE;
+
+  BEGIN
+
+    pr_inrisco_melhora := NULL;
+
+    -- Busca data de movimento
+    OPEN  btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+
+
+    -- Data para Central Anterior
+    IF to_char(rw_crapdat.dtmvtoan, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN
+      vr_dtrefere := rw_crapdat.dtmvtoan;
+    ELSE
+      vr_dtrefere := rw_crapdat.dtultdma;
+    END IF;
+
+    -- Verificar Emprestimo
+    OPEN cr_crapepr(pr_rowidepr => pr_rowidepr);
+    FETCH cr_crapepr INTO rw_crapepr;
+    IF cr_crapepr%NOTFOUND THEN
+      CLOSE cr_crapepr;
+      vr_cdcritica_melhora := 0;  -- 0) EMPRESTIMO NAO ENCONTRADO
+      RAISE vr_grava_log;
+    END IF;
+    CLOSE cr_crapepr;
+
+/*
+   CECRED.risc0000_tmp.pc_grava_log(pr_cdcooper => rw_crapepr.cdcooper,
+                             pr_dsmensag => 'CADEIA: ' || '   Dentro Risco Melhora: '
+                             || ' Cta: ' || rw_crapepr.nrdconta
+                             || ' Ctr: ' || rw_crapepr.nrctremp
+                             || ' MEL: ' || pr_inrisco_melhora                             
+                            ,pr_des_erro => vr_dscritic);
+*/
+
+    -- 1) CALCULO DO RISCO MELHORA EXECUTADO APENAS NO PRIMEIRO DIA DO MES
+    IF to_char(rw_crapdat.dtmvtoan, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN     
+      vr_cdcritica_melhora := 1;
+      RAISE vr_grava_log;
+    END IF;
+
+    -- 2) RISCO MELHORA JA CALCULADO NO MES
+    IF  rw_crapepr.dtrisco_melhora IS NOT NULL
+    AND to_char(rw_crapepr.dtrisco_melhora, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN     
+      vr_cdcritica_melhora := 2;
+      RAISE vr_grava_log;
+    END IF;
+
+    -- 3) EMPRESTIMO DIFERENTE DE PP E POS (EXCLUSIVO PARA ESSES)
+    IF rw_crapepr.tpemprst NOT IN(1,2) THEN
+      vr_cdcritica_melhora := 3;
+      RAISE vr_grava_log;
+    END IF;
+
+    -- 4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
+    IF rw_crapepr.inrisco_refin IS NULL THEN
+      vr_cdcritica_melhora := 4;
+      RAISE vr_grava_log;
+    END IF;
+
+    -- 5) COOPERADO COM PREJUIZO ATIVO
+    IF PREJ0003_MELHORA.fn_verifica_preju_ativo(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => rw_crapepr.nrdconta
+                                      , pr_tipverif => 1 ) THEN
+      vr_cdcritica_melhora := 5;
+      RAISE vr_grava_log;
+    END IF;
+
+    -- 6) CONTRATO COM MAIS DE 4 DIAS DE ATRASO
+    IF pr_qtdiaatr > 4 THEN
+      vr_cdcritica_melhora := 6;
+      RAISE vr_grava_log;
+    END IF;
+
+
+    -- VERIFICAR GARANTIAS
+    vr_tem_garantias := RISC0004_MELHORA.fn_verifica_garantias(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => rw_crapepr.nrdconta
+                                                      ,pr_nrctremp => rw_crapepr.nrctremp
+                                                      ,pr_tpctrato => pr_tpctrato
+                                                      ,pr_perc_blq => pr_tab_ctl_param(1).perc_cobert_aplic_bloqueada);
+    -- Se for Sem Garantia, deve liquidar % minimo do saldo refinanciado, conforme parametro
+    IF NOT vr_tem_garantias THEN
+      IF rw_crapepr.vlsaldo_refinanciado IS NULL
+      OR rw_crapepr.vlsaldo_refinanciado = 0 THEN
+        -- 12) NAO FOI GRAFADO SALDO REFINANCIADO OU É ZERO
+        vr_cdcritica_melhora := 7;
+        RAISE vr_grava_log;
+      ELSE
+        IF NOT (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
+            ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
+          -- 7) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+          vr_cdcritica_melhora := 7;
+          RAISE vr_grava_log;       
+        END IF;
+      END IF;
+    ELSE
+      -- TEM GARANTIAS
+      NULL;
+    END IF;
+
+    -- VERIFICAR RISCOS DA CENTRAL ANTERIOR
+    OPEN cr_central (pr_cdcooper => rw_crapepr.cdcooper
+                    ,pr_nrdconta => rw_crapepr.nrdconta
+                    ,pr_nrctremp => rw_crapepr.nrctremp
+                    ,pr_dtrefere => vr_dtrefere);
+    FETCH cr_central INTO rw_central;
+     
+    IF cr_central%FOUND THEN
+      CLOSE cr_central;
+      IF rw_central.inrisco_operacao <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+        vr_cdcritica_melhora := 10; -- 10) Risco Operacao Menor ou Igual ao Risco Melhora Minimo
+        RAISE vr_grava_log;
+      ELSE
+        IF rw_central.inrisco_operacao < 
+           greatest(rw_central.inrisco_rating,rw_central.inrisco_atraso,rw_central.inrisco_agravado) THEN
+          vr_cdcritica_melhora := 11; -- 11) Risco Operacao Menor ou Igual ao Maior risco entre RAT/ATR/AGR
+          RAISE vr_grava_log;
+        END IF;        
+      END IF;
+    ELSE
+      CLOSE cr_central;
+    END IF;
+    -- Se nao encontrou, segue normalmente
+
+
+
+    -- VERIFICAR ADIMPLENCIA DO CONTRATO
+    IF vr_tem_garantias THEN -- Com Garantia
+      IF NOT ((rw_crapepr.qtprepag >= rw_crapepr.qtmesdec)  AND 
+               rw_crapepr.qtprepag > 0) THEN
+        vr_cdcritica_melhora := 8; -- 8) Adimplencia COM Garantia não atendida
+        RAISE vr_grava_log;       
+      END IF;
+    ELSE -- Sem Garantia
+      IF NOT ((rw_crapepr.qtprepag >= (rw_crapepr.qtmesdec * 2))  AND 
+               rw_crapepr.qtprepag > 0) THEN
+        vr_cdcritica_melhora := 9; -- 9) Adimplencia SEM Garantia não atendida
+        RAISE vr_grava_log;       
+      END IF;
+    END IF;
+
+
+
+
+    -- SE PASSOU DE TODAS AS VALIDAÇÕES, PODE CALCULAR RISCO MELHORA
+    IF rw_crapepr.inrisco_melhora IS NOT NULL THEN
+      -- Risco Melhora ja calculado
+      pr_inrisco_melhora := rw_crapepr.inrisco_melhora - 1;
+      -- Novo Melhora deve respeitar o minimo parametrizado
+      IF pr_inrisco_melhora < pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+        pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        
+      END IF;
+    ELSE
+      -- Risco Melhora ainda não calculado
+      pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
+      -- Novo Melhora deve respeitar o minimo parametrizado
+      IF pr_inrisco_melhora < pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+        pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        
+      END IF;
+    END IF;
+
+
+
+    -- CONCLUIDO O PROCESSO DO MELHORA, GRAVA O VALOR NA TABELA
+    RISC0004_MELHORA.pc_grava_risco_melhora(pr_cdcooper         => rw_crapepr.cdcooper
+                                  , pr_nrdconta         => rw_crapepr.nrdconta
+                                  , pr_nrctremp         => rw_crapepr.nrctremp
+                                  , pr_tpctrato         => pr_tpctrato
+                                  , pr_inrisco_melhora  => pr_inrisco_melhora
+                                  , pr_dtrisco_melhora  => rw_crapdat.dtmvtolt
+                                  , pr_dscritic         => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+   CECRED.risc0000_tmp.pc_grava_log(pr_cdcooper => rw_crapepr.cdcooper,
+                             pr_dsmensag => 'CADEIA: ' || '   Gravou Risco Melhora: '
+                             || ' Cta: ' || rw_crapepr.nrdconta
+                             || ' Ctr: ' || rw_crapepr.nrctremp
+                             || ' MEL: ' || pr_inrisco_melhora  
+                             || ' MINIMO: '|| pr_tab_ctl_param(1).inrisco_melhora_minimo                           
+                            ,pr_des_erro => vr_dscritic);
+
+
+
+  EXCEPTION
+    WHEN vr_grava_log THEN
+      -- USADO PARA GRAVAR A CRITICA DE NAO CALCULO DO MELHORA
+      -- QUANDO NAO CALCULAR O MELHORA, CHAMAR RAISE COM ESSE vr_grava_log
+
+      -- Se nao encontrou o emprestimo do parametro (vr_cdcritica_melhora = 0)
+      IF vr_cdcritica_melhora = 0 THEN
+        pr_inrisco_melhora := NULL;
+        pr_dscritic        := NULL;    
+      ELSE
+        -- Busca o valor ja gravado para esse contrato
+        pr_inrisco_melhora := RISC0004_MELHORA.fn_busca_risco_melhora(pr_cdcooper => rw_crapepr.cdcooper
+                                                              , pr_nrdconta => rw_crapepr.nrdconta
+                                                              , pr_nrctremp => rw_crapepr.nrctremp
+                                                              , pr_tpctrato => pr_tpctrato);
+        pr_dscritic        := NULL;
+        pc_grava_critica_melhora(pr_cdcooper => rw_crapepr.cdcooper
+                                ,pr_nrdconta => rw_crapepr.nrdconta
+                                ,pr_nrctremp => rw_crapepr.nrctremp
+                                ,pr_tpctrato => 90
+                                ,pr_cdcritic_melhora => vr_cdcritica_melhora
+                                ,pr_dscritic => pr_dscritic );
+        IF pr_dscritic IS NOT NULL THEN
+          pr_dscritic := 'RISC0004_MELHORA.pc_calcula_risco_melhora => ' || pr_dscritic;
+        END IF;
+
+      END IF;
+   
+    WHEN vr_exc_erro THEN
+      ROLLBACK;
+      vr_cdcritica_melhora := NULL;
+      pr_inrisco_melhora   := NULL;
+      -- Variavel de erro recebe erro ocorrido
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      pr_dscritic := vr_dscritic;
+
+
+    WHEN OTHERS THEN
+      ROLLBACK;
+      vr_cdcritica_melhora := NULL;
+      -- Descricao do erro
+      pr_dscritic := 'Erro nao tratado na risc0003.pc_dias_atraso_liquidados --> ' || SQLERRM;
+
+ END pc_calcula_risco_melhora;
+
+
+  PROCEDURE pc_central_parametros(pr_cdcooper            IN NUMBER           --> Cooperativa
+                                 ,pr_tab_ctl_parametros OUT typ_tab_ctl_parametros  --Vetor para o retorno das informações
+                                 ,pr_dscritic           OUT VARCHAR2) IS   --> Critica
+  /* .............................................................................
+
+   Programa: pc_central_parametros       (Antigo: NAO HA)
+   Sistema : Credito
+   Sigla   : CRED
+   Autor   : Guilherme/AMcom
+   Data    : Novembro/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Buscar os parametros da Central de Risco para utilização
+
+   Alteracoes: 
+  ............................................................................. */
+
+   -- CURSORES
+   CURSOR cr_ctl_param IS
+     SELECT cdcooper
+           ,perc_liquid_sem_garantia
+           ,perc_cobert_aplic_bloqueada
+           ,inrisco_melhora_minimo
+           ,dthr_alteracao
+           ,cdoperador_alteracao
+       FROM tbrisco_central_parametros t
+      WHERE t.cdcooper = pr_cdcooper;
+   rw_ctl_param cr_ctl_param%ROWTYPE;
+  
+   -- VARIAVEIS LOCAIS
+    
+      
+   -- VARIAVEIS DE ERRO
+   vr_cdcritic             crapcri.cdcritic%TYPE;
+   vr_dscritic             VARCHAR2(4000);
+   vr_exc_erro             EXCEPTION;
+  
+   BEGIN
+
+     -- Limpar tabela de Parametros
+     pr_tab_ctl_parametros.delete;
+
+     rw_ctl_param := NULL;
+     OPEN cr_ctl_param;
+     FETCH cr_ctl_param INTO rw_ctl_param;
+
+     IF cr_ctl_param%NOTFOUND THEN
+       CLOSE cr_ctl_param;
+       -- Carrega parametros defauls
+       pr_tab_ctl_parametros(1).cdcooper                    := 3;
+       pr_tab_ctl_parametros(1).perc_liquid_sem_garantia    := 30;
+       pr_tab_ctl_parametros(1).perc_cobert_aplic_bloqueada := 70;
+       pr_tab_ctl_parametros(1).inrisco_melhora_minimo      := 2;
+       pr_tab_ctl_parametros(1).dthr_alteracao              := SYSDATE;
+       pr_tab_ctl_parametros(1).cdoperador_alteracao        := '1';
+     ELSE
+       CLOSE cr_ctl_param;
+       -- Carrega dados cadastrados   
+       pr_tab_ctl_parametros(1).cdcooper                    := rw_ctl_param.cdcooper;
+       pr_tab_ctl_parametros(1).perc_liquid_sem_garantia    := rw_ctl_param.perc_liquid_sem_garantia;
+       pr_tab_ctl_parametros(1).perc_cobert_aplic_bloqueada := rw_ctl_param.perc_cobert_aplic_bloqueada;
+       pr_tab_ctl_parametros(1).inrisco_melhora_minimo      := rw_ctl_param.inrisco_melhora_minimo;
+       pr_tab_ctl_parametros(1).dthr_alteracao              := rw_ctl_param.dthr_alteracao;
+       pr_tab_ctl_parametros(1).cdoperador_alteracao        := rw_ctl_param.cdoperador_alteracao;
+     END IF;     
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        ROLLBACK;
+        -- Variavel de erro recebe erro ocorrido
+        IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        ROLLBACK;
+        -- Descricao do erro
+        pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_central_parametros --> ' || SQLERRM;
+
+  END pc_central_parametros;
 
 END RISC0004;
 /

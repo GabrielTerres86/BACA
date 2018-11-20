@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-30
+31
 declare 
   i integer;
 
@@ -29,6 +29,7 @@ BEGIN
             ,'1');           -- cdoperador_alteracao
 
   END LOOP;
-end;
+  COMMIT;
+END;
 0
 0

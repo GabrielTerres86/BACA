@@ -11,4 +11,4 @@ values ('TPCTRATO', '3', 'Limite de Desconto de Título');
 insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('TPCTRATO', '90', 'Empréstimos/Financiamentos');
 
-
+COMMIT;

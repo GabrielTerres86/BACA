@@ -23,8 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 							PJ 450 - Diego Simas (AMcom)
-              07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
-                                  ou de desconto de título em prejuízo (Fabio - AMcom).
+               07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
+                            ou de desconto de título em prejuízo (Fabio - AMcom).
 
 ..............................................................................*/
 

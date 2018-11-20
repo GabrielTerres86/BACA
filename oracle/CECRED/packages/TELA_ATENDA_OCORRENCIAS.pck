@@ -62,13 +62,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --
   -- Alteracoes: 23/01/2018 - Criada procedure pc_busca_dados_risco
   --                          PJ 450 - Reginaldo (AMcom)
+  --
   --             06/09/2018 - Inclusão da coluna quantidade de dias de atraso
   --                          PJ 450 - Diego Simas - AMcom
+  --
   --             10/09/2018 - Inclusão da coluna numero do grupo economico 
   --                          PJ 450 - Diego Simas - AMcom
-  --             31/10/2018 - Ajuste na "pc_consulta_preju_cc" para corrigir a quantidade de dias em atraso
-	--                          retornada pela procedure. (Reginaldo/AMcom/P450)
   --
+  --             31/10/2018 - Ajuste na "pc_consulta_preju_cc" para corrigir a quantidade de dias em atraso
+  --                          retornada pela procedure. (Reginaldo/AMcom/P450)
+  --
+  --             14/11/2018 - P450 - Risco Melhora (Guilherme/AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_monta_reg_conta_xml(pr_retxml     IN OUT NOCOPY XMLType
@@ -165,7 +169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_melhora',
-                             pr_tag_cont => CASE WHEN pr_ris_melhora <> pr_ris_inclusao AND pr_ris_melhora = 'A' THEN pr_ris_melhora ELSE '' END,
+                             pr_tag_cont => pr_ris_melhora,
                              pr_des_erro => pr_dscritic);
 
           gene0007.pc_insere_tag(pr_xml  => pr_retxml,

@@ -26,17 +26,17 @@ comment on column CECRED.TBRISCO_OPERACOES.tpctrato
   is 'Identificador do Tipo de Contrato (tbgen_dominio_campo)';
   
 
-comment on column CECRED.TBRISCO_CENTRAL_OCR.inrisco_calculado
+comment on column CECRED.TBRISCO_OPERACOES.inrisco_calculado
   is 'Nivel de Risco Calculado da Operacao';
-comment on column CECRED.TBRISCO_CENTRAL_OCR.inrisco_inclusao
+comment on column CECRED.TBRISCO_OPERACOES.inrisco_inclusao
   is 'Nivel de Risco da Inclusao (Original)';
 
 
-comment on column CECRED.CRAPEPR.INRISCO_MELHORA
+comment on column CECRED.TBRISCO_OPERACOES.INRISCO_MELHORA
   is 'Nivel do Risco Melhora';
-comment on column CECRED.CRAPEPR.DTRISCO_MELHORA
+comment on column CECRED.TBRISCO_OPERACOES.DTRISCO_MELHORA
   is 'Data do Último Cálculo do Risco Melhora';
-comment on column CECRED.CRAPEPR.CDCRITICA_MELHORA
+comment on column CECRED.TBRISCO_OPERACOES.CDCRITICA_MELHORA
   is 'Codigo da Critica para nao calculo do Risco Melhora';
 
 
