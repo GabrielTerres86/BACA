@@ -2,22 +2,26 @@
 	/*************************************************************************
 	  Fonte: grava_dados.php                                               
 	  Autor: Andre Clemer
-	  Data : Janeiro/2018                       �ltima Altera��o: --/--/----
+	  Data : Janeiro/2018                       Última Alteração: 08/10/2018
 	                                                                   
 	  Objetivo  : Grava os dados.
 	                                                                 
-	  Altera��es: 
+	  Alterações: 
+	                                                                  
+                 08/10/2018 - Inclusao de parametro dsnegufds referente às UFs não autorizadas 
+                 a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
+                 Marcelo R. Kestring - Supero)
 	                                                                  
 	***********************************************************************/
 
 	session_start();
 
-	// Includes para controle da session, vari�veis globais de controle, e biblioteca de fun��es	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo m�todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
 
 	// Classe para leitura do xml de retorno
@@ -33,9 +37,10 @@
 	$hrenvio_arquivo      	= (isset($_POST['hrenvio_arquivo']))      	? $_POST['hrenvio_arquivo']      	: ''  ;
 	$qtdias_cancelamento    = (isset($_POST['qtdias_cancelamento']))    ? $_POST['qtdias_cancelamento']    	: ''  ;
     $flcancelamento   		= (isset($_POST['flcancelamento']))   		? $_POST['flcancelamento']   		: ''  ;
+	$dsnegufds          	= (isset($_POST['dsnegufds']))              ? $_POST['dsnegufds']              	: ''  ;
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	$dsmensag = 'Parametros alterados com sucesso!';
@@ -55,6 +60,9 @@
 	$xmlCarregaDados .= "   <cdsufs>".$dsuf."</cdsufs>";
 	// CNAE
 	$xmlCarregaDados .= "   <cdscnaes>".$dscnae."</cdscnaes>";
+	// UF autorizada a bloquear emissão de boletos DS (Duplicata de Serviço)
+	$xmlCarregaDados .= "   <cdsnegsufs>".$dsnegufds."</cdsnegsufs>";
+
 	// Fecha o xml de Requisicao
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
@@ -65,7 +73,11 @@
 	echo 'hideMsgAguardo();';
 
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+		exibirErro('error',$msgErro,'Alerta - Aimaro',"bloqueiaFundo($('#divRotina'));",false);
 	}
 
     echo "showError('inform','".$dsmensag."','TELA_PARPRT','fechaRotina($(\'#divRotina\'));estadoInicial();');";

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 20/09/2018
+   Data    : Novembro/98                     Ultima atualizacao: 20/11/2018
 
    Dados referentes ao programa:
 
@@ -645,6 +645,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                
                25/10/2018 - Adicionado no cursor crapljt da procedure pc_proc_cbl_mensal a condição flverbor = 0 para contabilizar
                             somente as rendas a apropriar do produto da versão antiga do borderô. (Paulo Penteado GFT)
+
+			   20/11/2018 - Ajuste no cursor cr_lanipetb para utilizar a conta de compensação da cooperativa na central (P352 - Cechet)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2347,7 +2349,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
           ,crapcop cop
 		 WHERE cop.cdcooper = pr_cdcooper
        AND lcm.cdcooper = 3
-       AND lcm.nrdconta = cop.nrctactl
+       AND lcm.nrdconta = cop.nrctacmp
        AND lcm.dtmvtolt = pr_dtmvtolt
 			 AND lcm.vllanmto > 0
 			 AND lcm.cdhistor IN (2635, 2637, 2639)

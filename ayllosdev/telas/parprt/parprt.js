@@ -1,11 +1,15 @@
 //*********************************************************************************************//
 //*** Fonte: parprt.js                                                 						***//
 //*** Autor: Andre Clemer                                           						***//
-//*** Data : Janeiro/2018                  �ltima Altera��o: --/--/----  					***//
+//*** Data : Janeiro/2018                  Última Alteração: 08/10/2018				        ***//
 //***                                                                  						***//
-//*** Objetivo  : Biblioteca de fun��es da tela PARPRT                 						***//
+//*** Objetivo  : Biblioteca de funções da tela PARPRT                 					    ***//
 //***                                                                  						***//	 
-//*** Altera��es:                                                                          ***//
+//*** Alterações:                                                                           ***//
+//***                                                                                       ***//
+//*** *  08/10/2018 - Inclusao de parametro dsnegufds referente às UFs não autorizadas      ***//
+//***            a protestar boletos com DS. (projeto "PRJ352 - Protesto" -                 ***//  
+//***            Marcelo R. Kestring - Supero)                                              ***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -129,6 +133,7 @@ function formataFormulario() {
     var rFlcancelamento       = $('label[for="flcancelamento"]',            '#frmParPrt');
     var rAcao_cnae            = $('label[for="acao_cnae"]',                 '#frmParPrt');
     var rAcao_uf              = $('label[for="acao_uf"]',                   '#frmParPrt');
+    var rAcao_negUFDS         = $('label[for="acao_negUFDS"]',       '#frmParPrt');
 	
 	rLimitemin_tolerancia.addClass('rotulo').css('width','230px');
 	rLimitemax_tolerancia.addClass('rotulo').css('width','230px');
@@ -137,6 +142,7 @@ function formataFormulario() {
     rFlcancelamento.addClass('rotulo').css('width', '230px');
     rAcao_cnae.addClass('rotulo').css('width', '230px');
     rAcao_uf.addClass('rotulo').css('width', '230px');
+    rAcao_negUFDS.addClass('rotulo').css('width', '230px');
 
     var cLimitemin_tolerancia = $('#qtlimitemin_tolerancia', '#frmParPrt');
     var cLimitemax_tolerancia = $('#qtlimitemax_tolerancia', '#frmParPrt');
@@ -144,6 +150,7 @@ function formataFormulario() {
     var cQtdias_cancelamento  = $('#qtdias_cancelamento',  '#frmParPrt');
     var cAcao_cnae            = $('#acao_cnae',            '#frmParPrt');
     var cAcao_uf              = $('#acao_uf',              '#frmParPrt');
+    var cAcao_negUFDS         = $('#acao_negUFDS',  '#frmParPrt');
 
     cLimitemin_tolerancia.css('width', '80px').setMask('INTEGER', 'zz', '', '');
     cLimitemax_tolerancia.css('width', '80px').setMask('INTEGER', 'zz', '', '');
@@ -152,13 +159,16 @@ function formataFormulario() {
     cQtdias_cancelamento.css('width', '80px').setMask('INTEGER', 'zz', '', '');
     cAcao_cnae.css('width', '80px');
     cAcao_uf.css('width', '80px');
+    cAcao_negUFDS.css('width', '80px');
     
     // Oculta botoes excluir e tabela Acao
     $(".clsExcCNAE").hide();
     $(".clsExcUF").hide();
+    $(".clsExcNegUFDS").hide();
     $("#tabAcao").hide();
     $("#tabAcaoUF").hide();
     $("#tabAcaoUFNegDif").hide();
+    $("#tabAcaoNegUFDS").hide();
 
     if (cddopcao == "C") {
 
@@ -176,6 +186,7 @@ function formataFormulario() {
         
         $("#tabAcao").show();
         $("#tabAcaoUF").show();
+        $("#tabAcaoNegUFDS").show();
 		
         $('#divMsgAjuda').css('display', 'block');
         $('#divBotao').css('display', 'block');
@@ -234,7 +245,7 @@ function controlaOperacao(nriniseq,nrregist) {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
 
-    // Carrega conte�do da op��o atrav�s de ajax
+    // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         dataType: 'html',
@@ -246,7 +257,7 @@ function controlaOperacao(nriniseq,nrregist) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCab').focus()");
         },
         success: function(response) {
             if (response.substr(0, 14) == 'hideMsgAguardo') {
@@ -257,6 +268,7 @@ function controlaOperacao(nriniseq,nrregist) {
                 formataFormulario();
                 formataGridCNAE();
                 formataGridUF();
+                formataGridNegUFDS();
                 cTodosCabecalho.desabilitaCampo();
 
                 hideMsgAguardo();
@@ -284,11 +296,21 @@ function alterarDados() {
 }
 
 function confirmaExclusao(acao, dsvalor) {
+    switch (acao) {
+        case 'CNAE':
     var msg = 'o CNAE';
-    if (acao != 'CNAE') {
+            break;
+        case 'UF':
+            msg = 'a UF';
+            break;
+        case 'NEGUFDS':
+            msg = 'a UF';
+            break; 
+        default: // CNAE
         msg = 'a UF';
     }
-    showConfirmacao("Deseja excluir " + msg + " da lista?", 'Confirma&ccedil;&atilde;o - Ayllos', 'grava_dados("' + acao + '","E","' + dsvalor + '")', '', 'sim.gif', 'nao.gif');
+
+    showConfirmacao("Deseja excluir " + msg + " da lista?", 'Confirma&ccedil;&atilde;o - Aimaro', 'grava_dados("' + acao + '","E","' + dsvalor + '")', '', 'sim.gif', 'nao.gif');
 }
 
 function abreTelAlteracao(dsvalor) {
@@ -302,18 +324,27 @@ function confirmaInclusao(acao) {
         var cdcnae = normalizaNumero($('#cdcnae', '#frmCNAE').val());
         var dsvalor = cdcnae + '|' + $('#dscnae', '#frmCNAE').val();
         if (cdcnae == 0) {
-            showError("error", "Informe o c&oacute;digo.", "Alerta - Ayllos", "$('#cdcnae','#frmCNAE').focus();bloqueiaFundo($('#divRotina'));");
+            showError("error", "Informe o c&oacute;digo.", "Alerta - Aimaro", "$('#cdcnae','#frmCNAE').focus();bloqueiaFundo($('#divRotina'));");
         } else {
-            showConfirmacao("Deseja incluir o CNAE na lista?", 'Confirma&ccedil;&atilde;o - Ayllos', 'grava_dados("' + acao + '","I","' + dsvalor + '")', '', 'sim.gif', 'nao.gif');
+            showConfirmacao("Deseja incluir o CNAE na lista?", 'Confirma&ccedil;&atilde;o - Aimaro', 'grava_dados("' + acao + '","I","' + dsvalor + '")', '', 'sim.gif', 'nao.gif');
+        }
+    } else if (acao == "NEGUFDS") {
+        var cddopcao = $('#cddopcao', '#frmUF').val();
+        var dsnegufds = $('#dsuf', '#frmUF').val();
+
+        if (dsnegufds == '') {
+            showError("error", "Informe a UF.", "Alerta - Aimaro", "$('#dsuf','#frmUF').focus();bloqueiaFundo($('#divRotina'));");
+        } else {
+            showConfirmacao("Deseja " + (cddopcao == 'I' ? 'incluir' : 'alterar') + " a UF na lista?", 'Confirma&ccedil;&atilde;o - Aimaro', 'grava_dados("' + acao + '","' + cddopcao + '","' + dsnegufds + '")', '', 'sim.gif', 'nao.gif');
         }
     } else { // UF
         var cddopcao = $('#cddopcao', '#frmUF').val();
         var dsuf = $('#dsuf', '#frmUF').val();
 
         if (dsuf == '') {
-            showError("error", "Informe a UF.", "Alerta - Ayllos", "$('#dsuf','#frmUF').focus();bloqueiaFundo($('#divRotina'));");
+            showError("error", "Informe a UF.", "Alerta - Aimaro", "$('#dsuf','#frmUF').focus();bloqueiaFundo($('#divRotina'));");
         } else {
-            showConfirmacao("Deseja " + (cddopcao == 'I' ? 'incluir' : 'alterar') + " a UF na lista?", 'Confirma&ccedil;&atilde;o - Ayllos', 'grava_dados("' + acao + '","' + cddopcao + '","' + dsuf + '")', '', 'sim.gif', 'nao.gif');
+            showConfirmacao("Deseja " + (cddopcao == 'I' ? 'incluir' : 'alterar') + " a UF na lista?", 'Confirma&ccedil;&atilde;o - Aimaro', 'grava_dados("' + acao + '","' + cddopcao + '","' + dsuf + '")', '', 'sim.gif', 'nao.gif');
         }
     }
 
@@ -332,6 +363,8 @@ function grava_dados(acao, cddopcao, dsvalor) {
     var dscnae = cCnaes.val();
     var cUFs = $('#ufs', '#frmParPrt');
     var dsuf = cUFs.val();
+    var cNegUFs = $('#negufds', '#frmParPrt');
+    var dsnegufds = cNegUFs.val();
 
     // Caso seja cadastro de UF
     if (cddopcao == "E") { // Excluir
@@ -353,6 +386,14 @@ function grava_dados(acao, cddopcao, dsvalor) {
                 dsuf = arrUF.join(',');
             }
         }
+        if (acao == 'NEGUFDS') {
+            var arrNEGUF = dsnegufds.split(',');
+            var indexNEGUF = arrNEGUF.indexOf(dsvalor);
+            if (indexNEGUF > -1) {
+                arrNEGUF.splice(indexNEGUF, 1);
+                dsnegufds = arrNEGUF.join(',');
+            }
+        }
     } else {
         if (acao == 'CNAE') {
             var arrDados = dsvalor.split('|');
@@ -372,12 +413,20 @@ function grava_dados(acao, cddopcao, dsvalor) {
                 dsuf = dsvalor;
             }
         }
+
+        if (acao == 'NEGUFDS') {
+            if (dsnegufds) {
+                dsnegufds += ',' + dsvalor;
+            } else {
+                dsnegufds = dsvalor;
+    }
+        }
     }
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, enviando informa&ccedil;&otilde;es ...");
 
-    // Carrega conte�do da op��o atrav�s de ajax
+    // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/parprt/grava_dados.php",
@@ -392,18 +441,19 @@ function grava_dados(acao, cddopcao, dsvalor) {
             hrenvio_arquivo         : hrenvio_arquivo,
             qtdias_cancelamento     : qtdias_cancelamento,
             flcancelamento          : flcancelamento,
+            dsnegufds               : dsnegufds,
             redirect                : "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCab').focus()");
         },
         success: function(response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCab').focus()");
             }
         }
 
@@ -455,6 +505,27 @@ function formataGridUF() {
     return false;
 }
 
+function formataGridNegUFDS() {
+
+    var divRegistro = $('#divNegUFDS');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    divRegistro.css({ 'height': '70px' });
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '100px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+    return false;
+}
 function formataGridUFNegDif() {
 
     var divRegistro = $('#divUFNegDif');
@@ -492,6 +563,12 @@ function executarAcao(acao_combo) {
             var dsvalor = '2|NA';
             var page = 'form_uf.php';
             break;
+        case 'NEGUFDS':
+            var cddopcao = $('#acao_negUFDS', '#frmParPrt').val();
+            var dsvalor = '3|NA';
+            var page = 'form_uf.php';
+			var acao_combo = 'NegUFDS';
+            break;
         case 'ALT_UFNegDif':
             var cddopcao = 'A';
             var page = 'form_uf.php';
@@ -508,6 +585,7 @@ function executarAcao(acao_combo) {
     $(".clsExcUF").hide();
     $(".clsExcUFNegDif").hide();
     $(".clsAltUFNegDif").hide();
+    $(".clsExcNegUFDS").hide();
 
     if (cddopcao == "E") { // Excluir
 
@@ -521,7 +599,7 @@ function executarAcao(acao_combo) {
 
         showMsgAguardo('Aguarde, carregando...');
 
-        // Executa script atrav�s de ajax
+        // Executa script através de ajax
         $.ajax({		
             type: 'POST',
             dataType: 'html',
@@ -534,7 +612,7 @@ function executarAcao(acao_combo) {
                   }, 
             error: function(objAjax,responseError,objExcept) {
                 hideMsgAguardo();
-                showError('error','N�o foi poss�vel concluir a requisi��o.','Alerta - Ayllos',"unblockBackground()");
+                showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
             },
             success: function(response) {
                 $('#divRotina').html(response);
@@ -554,8 +632,8 @@ function mostraPesquisaCNAE() {
 	procedure	= 'BUSCA_CNAE';
     titulo      = 'CNAE';
     qtReg		= '30';
-    filtros 	= 'C�d. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;1;N;;descricao';
-    colunas 	= 'C�digo;cdcnae;20%;right|Desc CNAE;dscnae;80%;left';
+    filtros 	= 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;1;N;;descricao';
+    colunas 	= 'Código;cdcnae;20%;right|Desc CNAE;dscnae;80%;left';
 
     mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,$('#divRotina'));
 	return false;

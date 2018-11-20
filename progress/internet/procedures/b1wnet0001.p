@@ -294,6 +294,9 @@
                30/08/2018 - Adicionar validacao nos parametros de TIPO de JUROS, TIPO de MULTA,
                            TIPO de EMISSAO e FORMATO do DOCUMENTO (DOuglas - PRJ285 Nova Conta Online)
       
+               17/10/2018 - Impedir criacao de boleto com instrucao de protesto automatico para boletos
+                            do tipo Duplicata de Servico (PRJ352 - Andre Clemer - Supero )
+      
 .............................................................................*/
 
 
@@ -1693,6 +1696,45 @@ PROCEDURE gravar-boleto:
             /* se flgregis = true - cobranca registrada */
             IF par_flgregis THEN
             DO:                                                
+			
+				/** Instrucao Automatica E Duplicata de Servico **/
+				IF  par_flgdprot AND par_cddespec = 2 THEN DO:
+				
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+					RUN STORED-PROCEDURE pc_validar_dsnegufds_parprt
+						aux_handproc = PROC-HANDLE NO-ERROR
+												(INPUT par_cdcooper,
+												 INPUT tt-dados-sacado-blt.cdufsaca,
+												OUTPUT "",  /* pr_des_erro */
+												OUTPUT ""). /* pr_dscritic */
+
+					CLOSE STORED-PROC pc_validar_dsnegufds_parprt
+						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+					ASSIGN aux_dscritic = ""
+						   aux_deserro  = ""
+						   aux_dscritic = pc_validar_dsnegufds_parprt.pr_dscritic
+											  WHEN pc_validar_dsnegufds_parprt.pr_dscritic <> ?
+						   aux_deserro = pc_validar_dsnegufds_parprt.pr_des_erro
+											  WHEN pc_validar_dsnegufds_parprt.pr_des_erro <> ?.
+
+					ASSIGN tt-dados-sacado-blt.dsdemail = aux_dsdemail
+						   tt-dados-sacado-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).
+						   
+					IF aux_dscritic <> "" THEN DO:
+						IF  VALID-HANDLE(h-b1wgen0087) THEN
+							DELETE PROCEDURE h-b1wgen0087.
+
+						UNDO TRANSACAO, LEAVE TRANSACAO.
+					END.
+					
+
+				END.
+			
                 /* Se o codigo da carteira for 5 ou 6, entao o convenio sera
                    escolhido pelo parameto par_nrcnvcob */
                 /* carteira 5 - Quanta */

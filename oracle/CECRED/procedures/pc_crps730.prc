@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 02/10/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 20/11/2018
 
    Dados referentes ao programa:
 
@@ -24,6 +24,8 @@
    
    01/10/2018 - inc0024348 Passagem do nome do programa para a execução da rotina tela_manprt.pc_gera_conciliacao_auto;
                 Validação das conversões das datas dos campos 34 e 37 (Carlos)
+
+   20/11/2018 - Merge CS#27681 - Nao processar arquivos sem conteudo (P352 - Fabio Stein - Supero)
    
   ............................................................................. */
   
@@ -370,6 +372,15 @@
     vr_exc_erro EXCEPTION;
     --
   BEGIN
+    --
+    IF NOT GENE0001.fn_exis_arquivo(pr_dsdireto || '/' || pr_dsarquiv) THEN
+      RETURN;
+    END IF;
+		--
+		IF GENE0001.fn_tamanho_arquivo(pr_dsdireto || '/' || pr_dsarquiv) = 0 THEN
+      RETURN;
+		END IF;	
+
     -- new parser
     p := xmlparser.newParser;
 
