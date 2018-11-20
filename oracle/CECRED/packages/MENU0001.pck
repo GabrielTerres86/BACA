@@ -39,6 +39,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --    Objetivo  : Configurar os itens de MENU que sao configurados para exibicao 
   --
   --  Alteracoes: 09/05/2018 Criação (Douglas Quisinski)
+  --              05/11/2018 - Removido os menus da conta online para portabilidade de
+  --              salários (Lucas Skroch - Supero - P485)
+  --    
   --    
   ---------------------------------------------------------------------------------------------------------------
 
@@ -59,7 +62,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : MENU
     Autor   : Douglas Quisinski
-    Data    : 09/05/2018                        Ultima atualizacao: 
+    Data    : 09/05/2018                        Ultima atualizacao: 01/11/2018
     
     Dados referentes ao programa:
       Se for necessário adicionar mais itens de menu configuráveis para exibir/esconder, deverão ser adicionadas novas tags "item_menu", e os campos:
@@ -74,12 +77,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         4 - Desconto de Titulos
         5 - Plano de Previdencia Privada
         6 - Benefício do INSS para acessar o ECO
+        14 - Conta Corrente > Consultas > Extrato - PJ485 - Inicio
+        15 - Conta Corrente > Consultas > Lançamentos Futuros
+        16 - Conta Corrente > Demais extratos > Extrato de Tarifas
+        17 - Conta Corrente > Salários > Comprovante Salarial
+        18 - Conta Corrente > Provisão de Operações > Agendamento de Saque em Espécie
+        19 - Conta Corrente > Provisão de Operações > Consulta de Agendamentos
+        20 - Pagamentos > Contas > Água, Luz, Telefone e Outras
+        21 - Pagamentos > Contas > Boletos Diversos
+        22 - Pagamentos > Tributos > GPS - Previdência Social
+        23 - Pagamentos > Tributos > DAS - Simples Nacional
+        24 - Pagamentos > Tributos > DARF - Receitas Federais
+        25 - Pagamentos > Tributos > FGTS - Fundo de Garantia
+        26 - Pagamentos > Tributos > DAE - Simples Doméstico/eSocial
+        27 - Pagamentos > Tributos > Veículos (IPVA, DPVAT, Licenciamentos)
+        28 - Pagamentos > DDA - Débito Direto Autorizado > Pagamento de DDA
+        29 - Pagamentos > Débito Automático > Cadastrar
+        30 - Pagamentos > Débito Automático > Contas Cadastradas
+        31 - Pagamentos > Débito Automático > Lançamentos Programados
+        32 - Pagamentos > Débito Automático > Serviço de SMS
+        33 - Pagamentos > Outros > Comprovantes
+        34 - Pagamentos > Outros > Agendamentos
+        35 - Pagamentos > Outros > Convênios Aceitos
+        36 - Transferências > Entre Contas > Contas do Sistema AILOS
+        37 - Transferências > Entre Contas > Outras Instituições - TED
+        38 - Transferências > Favorecidos > Cadastrar
+        39 - Transferências > Favorecidos > Gerenciar Favorecidos
+        40 - Transferências > Outros > Comprovantes
+        41 - Transferências > Outros > Agendamentos
+        42 - Investimentos > Cotas Capital > Consultar
+        43 - Empréstimos
+        44 - Cartões
+        45 - Cobrança Bancária
+        46 - Botão Acessar versão clássica
+        47 - Conveniências > Perfil > Informações Cadastrais
+        48 - Conveniências > Perfil > Alteração de Senha
+        49 - Conveniências > Perfil > Configuração de Favoritos
+        50 - Tela inicial ATM > Saque
+        51 - Tela inicial ATM > Transferências
+        52 - Tela inicial ATM > Meu Cadastro
+        53 - Tela inicial ATM > Botão Pressione para visualizar seu saldo - PJ485 - FIM
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
     
     Alteracoes: 09/05/2018 - Criação (Douglas Quisinski)
     
+                05/11/2018 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
     ............................................................................. */
     DECLARE
       -- Flag Recarga de Celular
@@ -94,10 +138,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       vr_flgprevd INTEGER;
       -- Flag Benefício do INSS
       vr_flgbinss INTEGER;
+      -- Flag Conta Corrente > Consultas > Extrato - PJ485 - Inicio
+      vr_flgconext INTEGER := 0;
+      -- Flag Conta Corrente > Consultas > Lançamentos Futuros
+      vr_flglcmfut INTEGER := 0;
+      -- Flag Conta Corrente > Demais extratos > Extrato de Tarifas
+      vr_flgexttar INTEGER := 0;
+      -- Flag Conta Corrente > Salários > Comprovante Salarial
+      vr_flgcmpsal INTEGER := 0;
+      -- Flag Conta Corrente > Provisão de Operações > Agendamento de Saque em Espécie
+      vr_flgagesaq INTEGER := 0;
+      -- Flag Conta Corrente > Provisão de Operações > Consulta de Agendamentos
+      vr_flgconage INTEGER := 0;
+      -- Flag Pagamentos > Contas > Água, Luz, Telefone e Outras
+      vr_flgaltout INTEGER := 0;
+      -- Flag Pagamentos > Contas > Boletos Diversos
+      vr_flgboldiv INTEGER := 0;
+      -- Flag Pagamentos > Tributos > GPS - Previdência Social
+      vr_flgpaggps INTEGER := 0;
+      -- Flag Pagamentos > Tributos > DAS - Simples Nacional
+      vr_flgpagdas INTEGER := 0;
+      -- Flag Pagamentos > Tributos > DARF - Receitas Federais
+      vr_flgpagdar INTEGER := 0;
+      -- Flag Pagamentos > Tributos > FGTS - Fundo de Garantia
+      vr_flgpagfgt INTEGER := 0;
+      -- Flag Pagamentos > Tributos > DAE - Simples Doméstico/eSocial
+      vr_flgpagdae INTEGER := 0;
+      -- Flag Pagamentos > Tributos > Veículos (IPVA, DPVAT, Licenciamentos)
+      vr_flgveicos INTEGER := 0;
+      -- Flag Pagamentos > DDA - Débito Direto Autorizado > Pagamento de DDA
+      vr_flgpagdda INTEGER := 0;     
+      -- Flag Pagamentos > Débito Automático > Cadastrar
+      vr_flgcaddeb INTEGER := 0;
+      -- Flag Pagamentos > Débito Automático > Contas Cadastradas
+      vr_flgconcad INTEGER := 0;
+      -- Flag Pagamentos > Débito Automático > Lançamentos Programados
+      vr_flglcnprg INTEGER := 0;
+      -- Flag Pagamentos > Débito Automático > Serviço de SMS
+      vr_flgsersms INTEGER := 0;
+      -- Flag Pagamentos > Outros > Comprovantes
+      vr_flgoutcmp INTEGER := 0;
+      -- Flag Pagamentos > Outros > Agendamentos
+      vr_flgoutage INTEGER := 0;
+      -- Flag Pagamentos > Outros > Convênios Aceitos
+      vr_flgconace INTEGER := 0;
+      -- Flag Transferências > Entre Contas > Contas do Sistema AILOS
+      vr_flgconsis INTEGER := 0;
+      -- Flag Transferências > Entre Contas > Outras Instituições - TED
+      vr_flgoutted INTEGER := 0;
+      -- Flag Transferências > Favorecidos > Cadastrar
+      vr_flgfavcad INTEGER := 0;
+      -- Flag Transferências > Favorecidos > Gerenciar Favorecidos
+      vr_flggerfav INTEGER := 0;
+      -- Flag Transferências > Outros > Comprovantes
+      vr_flgtrscmp INTEGER := 0;
+      -- Flag Transferências > Outros > Agendamentos
+      vr_flgtrsage INTEGER := 0;
+      -- Flag Investimentos > Cotas Capital > Consultar
+      vr_flgcotcon INTEGER := 0;
+      -- Flag Empréstimos
+      vr_flgempres INTEGER := 0;
+      -- Flag Cartões
+      vr_flgcartao INTEGER := 0;
+      -- Flag Cobrança Bancária
+      vr_flgcobban INTEGER := 0;      
+      -- Flag Botão Acessar versão clássica
+      vr_flgacevcl INTEGER := 0;
+      -- Flag Conveniências > Perfil > Informações Cadastrais
+      vr_flginfcad INTEGER := 0;
+      -- Flag Conveniências > Perfil > Alteração de Senha
+      vr_flgaltsen INTEGER := 0;
+      -- Flag Conveniências > Perfil > Configuração de Favoritos
+      vr_flgcfgfav INTEGER := 0;
+      -- Flag Tela inicial ATM > Saque
+      vr_flgatmsaq INTEGER := 0;
+      -- Flag Tela inicial ATM > Transferências
+      vr_flgatmtrs INTEGER := 0;
+      -- Flag Tela inicial ATM > Meu Cadastro
+      vr_flgatmcad INTEGER := 0;            
+      -- FlagTela inicial ATM > Botão Pressione para visualizar seu saldo
+      vr_flgatmsld INTEGER := 0; 
+      -- PJ485 - Fim
       
       -- XML
       vr_xml_temp VARCHAR2(32726) := '';
       vr_clob     CLOB;
+      
+      -- Cursor para verificar se existe a pessoa e o tipo de pessoa e conta - PJ485 - Inicio
+      CURSOR cr_modalidade_tipo(pr_cdcooper IN crapass.cdcooper%type
+                               ,pr_nrdconta IN crapass.nrdconta%type) IS
+      
+         SELECT c.cdmodalidade_tipo
+           FROM crapass a,       
+                tbcc_tipo_conta c
+          WHERE c.inpessoa     = a.inpessoa
+            AND c.cdtipo_conta = a.cdtipcta
+            AND a.cdcooper     = pr_cdcooper
+            AND a.nrdconta     = pr_nrdconta;
+      rw_modalidade_tipo cr_modalidade_tipo%ROWTYPE;
+	  -- PJ485 - Fim
       
       -- Função para gerar o XML de cada item que deve ser devolvido e sua respectiva configuração
       FUNCTION fn_adiciona_item_menu(pr_codigo INTEGER
@@ -163,49 +302,391 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><CECRED>');
       
-      -- Adicionar o Item de Menu da Recarga de celular
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 1 -- Lista de Dominio "1 - Recarga de Celular"
-                                                                        ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgsitrc) ); -- Identifica se a recarga de celular está habilitada para o canal
+      /* Caso for conta salário, envia apenas os menus a serem exibidos para conta salário - PJ485 - Inicio
+         Caso contrário, segue a rotina como funciona atualmente */
+      BEGIN
+        
+        OPEN cr_modalidade_tipo(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta);
+                          
+        --Posicionar no proximo registro
+        FETCH cr_modalidade_tipo INTO rw_modalidade_tipo;
+        CLOSE cr_modalidade_tipo;
+        
+        -- Caso encontrar e for de portabilidade de salario = 2, habilita os menus na conta online
+        IF cr_modalidade_tipo%FOUND AND rw_modalidade_tipo.cdmodalidade_tipo = 2 THEN                                                      
+           vr_flgconext := 1; -- item 14
+           vr_flglcmfut := 1; -- item 15
+           vr_flgexttar := 1; -- item 16
+           vr_flgcmpsal := 1; -- item 17
+           vr_flgagesaq := 1; -- item 18
+           vr_flgconage := 1; -- item 19
+           vr_flgaltout := 1; -- item 20
+           vr_flgboldiv := 1; -- item 21
+           vr_flgpaggps := 1; -- item 22
+           vr_flgpagdas := 1; -- item 23
+           vr_flgpagdar := 1; -- item 24
+           vr_flgpagfgt := 1; -- item 25
+           vr_flgpagdae := 1; -- item 26
+           vr_flgveicos := 1; -- item 27
+           vr_flgpagdda := 1; -- item 28     
+           vr_flgcaddeb := 1; -- item 29
+           vr_flgconcad := 1; -- item 30
+           vr_flglcnprg := 1; -- item 31
+           vr_flgsersms := 1; -- item 32
+           vr_flgoutcmp := 1; -- item 33
+           vr_flgoutage := 1; -- item 34
+           vr_flgconace := 1; -- item 35
+           vr_flgconsis := 1; -- item 36
+           vr_flgoutted := 1; -- item 37
+           vr_flgfavcad := 1; -- item 38
+           vr_flggerfav := 1; -- item 39
+           vr_flgtrscmp := 1; -- item 40
+           vr_flgtrsage := 1; -- item 41
+           vr_flgcotcon := 1; -- item 42
+           vr_flgempres := 1; -- item 43
+           vr_flgcartao := 1; -- item 44
+           vr_flgcobban := 1; -- item 45
+           vr_flgacevcl := 1; -- item 46
+           vr_flginfcad := 1; -- item 47
+           vr_flgaltsen := 1; -- item 48
+           vr_flgcfgfav := 1; -- item 49
+           vr_flgatmsaq := 1; -- item 50
+           vr_flgatmtrs := 1; -- item 51
+           vr_flgatmcad := 1; -- item 52
+           vr_flgatmsld := 1; -- item 53
+           
+           -- Adicionar o Item de Menu de Conta Corrente > Consultas > Extrato na Conta Online
+           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 14 -- Lista de Dominio "14 - Conta Corrente > Consultas > Extrato"
+                                                                             ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                             ,pr_habilitado => vr_flgconext) ); 
+                                                                              
+           -- Adicionar o Item de Menu de Conta Corrente > Consultas > Lançamentos Futuros na Conta Online
+           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 15 -- Lista de Dominio "15 - Conta Corrente > Consultas > Lançamentos Futuros"
+                                                                             ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                             ,pr_habilitado => vr_flglcmfut) ); 
+                                                                                                                                                      
+            -- Adicionar o Item de Menu de Conta Corrente > Demais extratos > Extrato de Tarifas na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 16 -- Lista de Dominio "16 - Conta Corrente > Demais extratos > Extrato de Tarifas"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgexttar) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Conta Corrente > Salários > Comprovante Salarial na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 17 -- Lista de Dominio "17 - Conta Corrente > Salários > Comprovante Salarial"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcmpsal) ); 
+
+            -- Adicionar o Item de Menu de CConta Corrente > Provisão de Operações > Agendamento de Saque em Espécie na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 18 -- Lista de Dominio "18 - Conta Corrente > Provisão de Operações > Agendamento de Saque em Espécie"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgagesaq) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Conta Corrente > Provisão de Operações > Consulta de Agendamentos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 19 -- Lista de Dominio "19 - Conta Corrente > Provisão de Operações > Consulta de Agendamentos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgconage) ); 
+
+            -- Adicionar o Item de Menu Pagamentos > Contas > Água, Luz, Telefone e Outras na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 20 -- Lista de Dominio "20 - Pagamentos > Contas > Água, Luz, Telefone e Outras"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgaltout) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Contas > Boletos Diversos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 21 -- Lista de Dominio "21 - Pagamentos > Contas > Boletos Diversos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgboldiv) ); 
+                                                                                                                                                      
+            -- Adicionar o Item de Menu de Pagamentos > Tributos > GPS - Previdência Social na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 22 -- Lista de Dominio "22 - Pagamentos > Tributos > GPS - Previdência Social"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpaggps) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Tributos > DAS - Simples Nacional na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 23 -- Lista de Dominio "23 - Pagamentos > Tributos > DAS - Simples Nacional
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagdas) ); 
+
+            -- Adicionar o Item de Menu de Pagamentos > Tributos > DARF - Receitas Federais na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 24 -- Lista de Dominio "24 - Pagamentos > Tributos > DARF - Receitas Federais"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagdar) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Tributos > FGTS - Fundo de Garantia na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 25 -- Lista de Dominio "25 - Pagamentos > Tributos > FGTS - Fundo de Garantia"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagfgt) ); 
+                                                                              
+            -- Adicionar o Item de Menu de APagamentos > Tributos > DAE - Simples Doméstico/eSocial na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 26 -- Lista de Dominio "26 - Pagamentos > Tributos > DAE - Simples Doméstico/eSocial"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagdae) ); 
+
+            -- Adicionar o Item de Menu de Pagamentos > Tributos > Veículos (IPVA, DPVAT, Licenciamentos) na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 27 -- Lista de Dominio "27 - Pagamentos > Tributos > Veículos (IPVA, DPVAT, Licenciamentos)"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgveicos) ); 
+                                                                                                                                                      
+            -- Adicionar o Item de Menu de Pagamentos > DDA - Débito Direto Autorizado > Pagamento de DDA na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 28 -- Lista de Dominio "28 - Pagamentos > DDA - Débito Direto Autorizado > Pagamento de DDA"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagdda) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Débito Automático > Cadastrar na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 29 -- Lista de Dominio "29 - Pagamentos > Débito Automático > Cadastrar"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcaddeb) ); 
+
+            -- Adicionar o Item de Menu de Pagamentos > Débito Automático > Contas Cadastradas na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 30 -- Lista de Dominio "30 - Pagamentos > Débito Automático > Contas Cadastradas"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgconcad) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Débito Automático > Lançamentos Programados na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 31 -- Lista de Dominio "31 - Pagamentos > Débito Automático > Lançamentos Programados"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flglcnprg) ); 
+
+            -- Adicionar o Item de Menu de Pagamentos > Débito Automático > Serviço de SMS na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 32 -- Lista de Dominio "32 - Pagamentos > Débito Automático > Serviço de SMS"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgsersms) ); 
+
+            -- Adicionar o Item de Menu de Pagamentos > Outros > Comprovantes na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 33 -- Lista de Dominio "33 - Pagamentos > Outros > Comprovantes"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgoutcmp) ); 
+                                                                                                                                                      
+            -- Adicionar o Item de Menu de Pagamentos > Outros > Agendamentos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 34 -- Lista de Dominio "34 - Pagamentos > Outros > Agendamentos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgoutage) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Pagamentos > Outros > Convênios Aceitos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 35 -- Lista de Dominio "35 - Pagamentos > Outros > Convênios Aceitos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgconace) ); 
+
+            -- Adicionar o Item de Menu de Transferências > Entre Contas > Contas do Sistema AILOS na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 36 -- Lista de Dominio "36 - Transferências > Entre Contas > Contas do Sistema AILOS"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgconsis) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Transferências > Entre Contas > Outras Instituições - TED na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 37 -- Lista de Dominio "37 - Transferências > Entre Contas > Outras Instituições - TED"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgoutted) ); 
+
+            -- Adicionar o Item de Menu de Transferências > Favorecidos > Cadastrar na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 38 -- Lista de Dominio "38 - Transferências > Favorecidos > Cadastrar"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgfavcad) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Transferências > Favorecidos > Gerenciar Favorecidos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 39 -- Lista de Dominio "39 - Transferências > Favorecidos > Gerenciar Favorecidos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flggerfav) ); 
+                                                                                                                                                    
+            -- Adicionar o Item de Menu de Transferências > Outros > Comprovantes na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 40 -- Lista de Dominio "40 - Transferências > Outros > Comprovantes"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgtrscmp) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Transferências > Outros > Agendamentos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 41 -- Lista de Dominio "41 - Transferências > Outros > Agendamentos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgtrsage) ); 
+
+            -- Adicionar o Item de Menu de Investimentos > Cotas Capital > Consultar na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 42 -- Lista de Dominio "Investimentos > Cotas Capital > Consultar"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcotcon) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Empréstimos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 43 -- Lista de Dominio "43 - Empréstimos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgempres) ); 
+
+            -- Adicionar o Item de Menu de Cartões na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 44 -- Lista de Dominio "44 - Cartões"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcartao) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Cobrança Bancária na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 45 -- Lista de Dominio "45 - Cobrança Bancária"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcobban) ); 
+                                                                                                                                                      
+            -- Adicionar o Item de Menu de Botão Acessar versão clássica na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 46 -- Lista de Dominio "46 - Botão Acessar versão clássica
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgacevcl) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Conveniências > Perfil > Informações Cadastrais na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 47 -- Lista de Dominio "47 - Conveniências > Perfil > Informações Cadastrais"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flginfcad) ); 
+
+            -- Adicionar o Item de Menu de Conveniências > Perfil > Alteração de Senha na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 48 -- Lista de Dominio "48 - Conveniências > Perfil > Alteração de Senha"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgaltsen) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Conveniências > Perfil > Configuração de Favoritos na Conta Online
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 49 -- Lista de Dominio "49 - Conveniências > Perfil > Configuração de Favoritos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgcfgfav) ); 
+                                                                               
+            -- Adicionar o Item de Menu de Tela inicial ATM > Saque no ATM
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 50 -- Lista de Dominio "50 - Tela inicial ATM > Saque"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmsaq) ); 
+
+            -- Adicionar o Item de Menu de Tela inicial ATM > Transferências no ATM
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 51 -- Lista de Dominio "51 - Tela inicial ATM > Transferências"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmtrs) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Tela inicial ATM > Meu Cadastro no ATM
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 52 -- Lista de Dominio "52 - Tela inicial ATM > Meu Cadastro"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmcad) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Tela inicial ATM > Botão Pressione para visualizar seu saldo no ATM
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 53 -- Lista de Dominio "53 - Tela inicial ATM > Botão Pressione para visualizar seu saldo"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmsld) ); 
+                                                                              
+        ELSE
+            -- Adicionar o Item de Menu da Recarga de celular
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 1 -- Lista de Dominio "1 - Recarga de Celular"
+                                                                              ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgsitrc) ); -- Identifica se a recarga de celular está habilitada para o canal
       
-      -- Adicionar o Item de Menu da Imagem de Cheque
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 2 -- Lista de Dominio "2 - Imagem de Cheque"
-                                                                        ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgsitim) ); -- Identifica se a imagem de cheque está habilitada para o canal
+            -- Adicionar o Item de Menu da Imagem de Cheque
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 2 -- Lista de Dominio "2 - Imagem de Cheque"
+                                                                              ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgsitim) ); -- Identifica se a imagem de cheque está habilitada para o canal
 
-      -- Adicionar o Item de Menu dO Pré-Aprovado
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 3 -- Lista de Dominio "3 - Pré-Aprovado"
-                                                                        ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgpreap) ); -- Identifica se o cooperado possui pré aprovado para contratação e habilita no canal
+            -- Adicionar o Item de Menu dO Pré-Aprovado
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo => 3 -- Lista de Dominio "3 - Pré-Aprovado"
+                                                                              ,pr_canal  => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpreap) ); -- Identifica se o cooperado possui pré aprovado para contratação e habilita no canal
 
-      -- Adicionar o Item de Menu do Desconto de Titulos
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 4 -- Lista de Dominio "4 - Desconto de Titulos"
-                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgdscti) ); -- Identifica se o cooperado possui pré aprovado para contratação e habilita no canal
+            -- Adicionar o Item de Menu do Desconto de Titulos
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 4 -- Lista de Dominio "4 - Desconto de Titulos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgdscti) ); -- Identifica se o cooperado possui pré aprovado para contratação e habilita no canal
 
-      -- Adicionar o Item de Menu do Plano de Previdencia Privada
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 5 -- Lista de Dominio "5 - Plano de Previdencia Privada"
-                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgprevd) ); -- Identifica se o cooperado possui o plano de Previdencia Privada e habilita no canal
+            -- Adicionar o Item de Menu do Plano de Previdencia Privada
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 5 -- Lista de Dominio "5 - Plano de Previdencia Privada"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgprevd) ); -- Identifica se o cooperado possui o plano de Previdencia Privada e habilita no canal
 
-      -- Adicionar o Item de Menu do Emprestimo Consignado Online "ECO"
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 6 -- Lista de Dominio "6 - Empréstimo Consignado Online"
-                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                        ,pr_habilitado => vr_flgbinss) ); -- Identifica se o cooperado possui beneficio do INSS para acessar o ECO e habilita no canal
+            -- Adicionar o Item de Menu do Emprestimo Consignado Online "ECO"
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 6 -- Lista de Dominio "6 - Empréstimo Consignado Online"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgbinss) ); -- Identifica se o cooperado possui beneficio do INSS para acessar o ECO e habilita no canal
 
-
+        END IF;
+                                                  
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                      ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Portabilidade de Salario.');
+      END;  -- PJ485 - FIM
+                                                                                                                                                  
       -- Fecha o XML de retorno
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
