@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 23/08/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 16/11/2018
            
     Dados referentes ao programa:
                 
@@ -567,7 +567,9 @@
                23/08/2018 - Alteraçao na efetua_cancelamento_limite: Registrar o cancelamento na tabela de histórico de alteraçao de contrato de limite (Andrew Albuquerque - GFT)
                
                29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
-               
+
+               16/11/2018 - Alterado para buscar o qtd dias de renovacao da tabela craprli (Paulo Penteao GFT)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -5038,6 +5040,27 @@ PROCEDURE efetua_inclusao_limite:
             
             RETURN "NOK".
         END.    
+         
+    /** Buscar regra para renovaçao **/
+    FIND FIRST craprli 
+         WHERE craprli.cdcooper = par_cdcooper
+           AND craprli.tplimite = 3
+           AND craprli.inpessoa = crapass.inpessoa
+           NO-LOCK NO-ERROR.
+
+    IF NOT AVAILABLE craprli  THEN
+       DO:
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic = "Tabela Regra de limite nao cadastrada.".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,      /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+       END.
     
     /* Validaçao TAB052*/
     /*LIMITE MAXIMO EXCEDIDO*/
@@ -5319,7 +5342,7 @@ PROCEDURE efetua_inclusao_limite:
                crawlim.nrctaav1    = par_nrctaav1
                crawlim.nrctaav2    = par_nrctaav2
 
-               crawlim.qtrenctr    = tt-dados_dsctit.qtrenova
+               crawlim.qtrenctr    = craprli.qtmaxren
 
                crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
