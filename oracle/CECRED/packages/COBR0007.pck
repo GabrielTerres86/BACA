@@ -12542,7 +12542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Supero
-    --  Data     : Fevereiro/2018                     Ultima atualizacao: 20/11/2018          
+    --  Data     : Fevereiro/2018                     Ultima atualizacao: 24/08/201802/02/2018
     --
     --  Dados referentes ao programa:
     --
@@ -12554,9 +12554,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
-    -- 
-    --               20/11/2018 - Merge CS#27797 - Nao permitir protestar boletos DS que
-    --                            estiverem cadastrados na tela PARPRT (SM352 - Anderson Supero)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -12703,21 +12700,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       -- Recusar a instrucao
       vr_dscritic := gene0001.fn_busca_critica(1365); --Titulo ja possui instrucao automatica de protesto - Instrucao nao efetuada!';
       RAISE vr_exc_erro;      
-    END IF;
-
-	IF rw_crapcob.cdbandoc = 085 AND
-       rw_crapcob.cddespec = 2 /*DS*/ THEN
-             
-      tela_parprt.pc_validar_dsnegufds_parprt(pr_cdcooper => pr_cdcooper,
-                                              pr_cdufsaca => rw_crapcob.cdufsaca,
-                                              pr_des_erro => vr_des_erro,	
-                                              pr_dscritic => vr_dscritic);
-        
-      IF (vr_des_erro <> 'OK') THEN
-        --Espécie de título inválida para carteira
-        vr_cdcritic := 05;
-        RAISE vr_exc_erro;
-      END IF;
     END IF;
 
     -----  VALIDACOES PARA RECUSAR  -----

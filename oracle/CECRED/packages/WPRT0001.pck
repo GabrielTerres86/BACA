@@ -691,17 +691,12 @@ CREATE OR REPLACE PACKAGE BODY "CECRED"."WPRT0001" is
   BEGIN
     
     IF pr_dsdireto IS NULL or pr_dsarquiv IS NULL THEN
-      vr_dscritic := 'Diretorio ou arquivo nao informados.';
+      vr_dscritic := 'Diretório ou arquivo não informados.';
       raise vr_exc_erro;
     END IF;
     
     IF NOT GENE0001.fn_exis_arquivo(pr_dsdireto || '/' || pr_dsarquiv) THEN
-      vr_dscritic := 'Nao foi possivel localizar o arquivo ' || pr_dsdireto || '/' || pr_dsarquiv || '.';
-      raise vr_exc_erro;  
-    END IF;
-		
-		IF GENE0001.fn_tamanho_arquivo(pr_dsdireto || '/' || pr_dsarquiv) = 0 THEN
-      vr_dscritic := 'O arquivo ' || pr_dsdireto || '/' || pr_dsarquiv || ' esta vazio.';
+      vr_dscritic := 'Não foi possível localizar o arquivo ' || pr_dsdireto || '/' || pr_dsarquiv || '.';
       raise vr_exc_erro;  
     END IF;
   

@@ -31,8 +31,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --
   --			  20/08/2018 - Foi incluido a validação do segmento Q
   --						   (Felipe - Mouts).
-  --
-  --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)
+
+
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -567,8 +567,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              na crapcob campo dsinform : Alcemir - Mout's (PRB0040060) .      
 							 
 		        06/07/2018 - Incluido validação da UF do arquivo de cobrança : Alcemir - Mout's (SCTASK0014853).
-				     
-            08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)
 				     
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1754,8 +1752,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_cdinstr2  INTEGER;
 	vr_limitemin INTEGER;
     vr_limitemax INTEGER;
-    vr_dsnegufds tbcobran_param_protesto.dsnegufds%TYPE;
-    vr_cdufsaca crapcob.nmdsacad%TYPE;
     
     vr_des_erro  VARCHAR2(255);
     vr_dscritic  VARCHAR2(255);
@@ -1900,23 +1896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         END IF;
 
-        IF pr_rec_header.cdbandoc = 085 AND
-           pr_tab_linhas('QTDIAPRT').numero <> 0 AND
-           pr_tab_linhas('CDDESPEC').numero = 2 /*DS*/ THEN
-             vr_cdufsaca := pr_tab_linhas('CDUFSACA').texto;
-      
-             tela_parprt.pc_validar_dsnegufds_parprt(pr_cdcooper => pr_cdcooper,
-                                                      pr_cdufsaca => vr_cdufsaca,
-                                                      pr_des_erro => vr_des_erro,	
-                                                      pr_dscritic => vr_dscritic);
-              
-             IF (vr_des_erro <> 'OK') THEN
-               --Pedido de Protesto Não Permitido para o Título
-               pr_cdmotivo := '39';
-               RAISE vr_exc_motivo;
-             END IF; 
-        END IF;
-        
       ELSE -- CNAB 400
         -- Definido pelo Rafael que instrucao de protesto deve ser apenas em dias corridos
         vr_cdinstr1 := pr_tab_linhas('INSTCODI').numero;
@@ -1949,24 +1928,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             pr_cdmotivo := '38';
             RAISE vr_exc_motivo;
           END IF; 
-          END IF;
-        
-          IF pr_rec_header.cdbandoc = 085 AND
-             pr_tab_linhas('NRDIAPRT').numero <> 0 AND
-             pr_tab_linhas('ESPTITUL').numero = 12 /*DS*/ THEN
-             
-             vr_cdufsaca := pr_tab_linhas('UFSACADO').texto;
-             
-             tela_parprt.pc_validar_dsnegufds_parprt(pr_cdcooper => pr_cdcooper,
-                                                     pr_cdufsaca => vr_cdufsaca,
-                                                     pr_des_erro => vr_des_erro,	
-                                                     pr_dscritic => vr_dscritic);
-        
-              IF (vr_des_erro <> 'OK') THEN
-                --Espécie de título inválida para carteira
-                pr_cdmotivo := '05';
-                RAISE vr_exc_motivo;
-        END IF;
           END IF;
         
         END IF;
@@ -5810,19 +5771,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     ------------------------------- CURSORES ---------------------------------    
     
-    --> seleciona os uf não permitidor para protestar
-    CURSOR cr_dsnegufds(pr_cdcooper crapsab.cdcooper%TYPE) IS
-      SELECT p.dsnegufds
-        FROM tbcobran_param_protesto p
-       WHERE p.cdcooper = pr_cdcooper;
-    
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     ------------------------------- VARIAVEIS -------------------------------
     vr_stsnrcal  BOOLEAN;
     vr_inpessoa  INTEGER;
     vr_rej_cdmotivo VARCHAR2(2);
-    vr_dsnegufds tbcobran_param_protesto.dsnegufds%TYPE;
     
   BEGIN
 
@@ -5981,19 +5935,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Endereco do Sacado Nao Informado
       vr_rej_cdmotivo := '47';
       RAISE vr_exc_reje;
-    END IF;
-    
-    --Buscando os uf não permitidos para protestar
-    OPEN cr_dsnegufds(pr_cdcooper);
-    FETCH cr_dsnegufds INTO vr_dsnegufds;
-    CLOSE cr_dsnegufds;
-    
-    IF pr_rec_cobranca.qtdiaprt <> 0 AND
-       vr_dsnegufds LIKE '%' || pr_rec_cobranca.cdufsaca || '%' AND 
-       pr_rec_cobranca.cddespec = 02 /*DS*/ THEN
-         --Pedido de Protesto Não Permitido para o Título
-         vr_rej_cdmotivo := '39';
-         RAISE vr_exc_reje;
     END IF;
     
     -- Validar os caracteres do endereco do sacado
@@ -8267,12 +8208,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
          AND ass.nrcpfcgc = pr_nrcpfcgc;
     rw_crapass cr_crapass%ROWTYPE;
     
-    --> seleciona os uf não permitidor para protestar
-    CURSOR cr_dsnegufds(pr_cdcooper crapsab.cdcooper%TYPE) IS
-      SELECT p.dsnegufds
-        FROM tbcobran_param_protesto p
-       WHERE p.cdcooper = pr_cdcooper;
-    
     ------------------------ VARIAVEIS  ----------------------------
     -- Tratamento de erros
     vr_exc_reje   EXCEPTION;
@@ -8283,7 +8218,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	vr_limitemin  INTEGER;
     vr_limitemax  INTEGER;
     vr_rej_cdmotivo VARCHAR2(2);
-    vr_dsnegufds tbcobran_param_protesto.dsnegufds%TYPE;
     
 	vr_des_erro  VARCHAR2(255);
     
@@ -9155,23 +9089,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
          pr_rec_cobranca.instcodi2 = 6 THEN
          
         pr_rec_cobranca.qtdiaprt := pr_tab_linhas('NRDIAPRT').numero;
-        
-        -- Valida dias para protesto
-        IF pr_rec_cobranca.qtdiaprt <> 0 THEN
-        
-          --Buscando os uf não permitidos para protestar
-          OPEN cr_dsnegufds(pr_cdcooper);
-          FETCH cr_dsnegufds INTO vr_dsnegufds;
-          CLOSE cr_dsnegufds;
-          
-          IF vr_dsnegufds LIKE '%' || pr_rec_cobranca.cdufsaca || '%' AND 
-           pr_rec_cobranca.cddespec = 02 /*DS*/ THEN
-             --Espécie de título inválida para carteira
-             vr_rej_cdmotivo := '05'; 
-             RAISE vr_exc_reje;
-          END IF;
-
-        END IF;
         
         tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_rec_cobranca.cdcooper,
                                                pr_qtlimitemin_tolerancia => vr_limitemin,

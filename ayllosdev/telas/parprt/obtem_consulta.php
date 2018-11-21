@@ -2,15 +2,11 @@
 	/*************************************************************************
 	  Fonte: obtem_consulta.php                                               
 	  Autor: Andre Clemer
-	  Data : Janeiro/2018                         Última Alteração: 08/10/2018
+	  Data : Janeiro/2018                         �ltima Altera��o: --/--/----
 	                                                                   
 	  Objetivo  : Carrega os dados da tela PARPRT.
 	                                                                 
-	  Alterações: 
-	  
-	      08/10/2018 - Inclusao de parametro dsnegufds referente às UFs não autorizadas 
-                       a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
-                       Marcelo R. Kestring - Supero)
+	  Altera��es: 
 				  
 	***********************************************************************/
 
@@ -38,7 +34,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-	 	exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Aimaro','',false);
+	 	exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
 	}
 
 	$param = $xmlObj->roottag->tags[0]->tags[0];
@@ -52,8 +48,6 @@
 	$param_uf 				= !empty($ufs) ? explode(',', $ufs) : "";
 	$cnaes 					= getByTagName($param->tags,'dscnae');
 	$cdscnaes 				= !empty($cnaes) ? explode(',', $cnaes) : "";
-	$negufds 				= getByTagName($param->tags,'dsnegufds');
-	$param_negufds 			= !empty($negufds) ? explode(',', $negufds) : "";
 
 	/*
 	// Montar o xml de Requisicao
@@ -73,7 +67,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Aimaro','',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
 	}
 
 	$registros = $xmlObj->roottag->tags[0]->tags;
@@ -92,6 +86,5 @@
 	$('#flcancelamento','#frmParPrt').val('<?php echo $flcancelamento; ?>');
 	$('#cnaes','#frmParPrt').val('<?php echo $cnaes; ?>');
 	$('#ufs','#frmParPrt').val('<?php echo $ufs; ?>');
-	$('#negufds','#frmParPrt').val('<?php echo $negufds; ?>');
 		
 </script>
