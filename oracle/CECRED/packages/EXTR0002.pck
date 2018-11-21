@@ -13847,22 +13847,12 @@ END pc_consulta_ir_pj_trim;
         vr_tab_extrato_epr_novo.DELETE;
         vr_index_extrato:= vr_tab_extrato_epr.FIRST;
         WHILE vr_index_extrato IS NOT NULL LOOP
-          
-          IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NULL THEN
           --Montar novo indice conforme break-by
           vr_index_novo:= TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                           LPAD(NVL(vr_tab_extrato_epr(vr_index_extrato).nrparepr,0),10,'0')||
                           RPAD(vr_tab_extrato_epr(vr_index_extrato).dsextrat,50,'#')||
                           CASE vr_tab_extrato_epr(vr_index_extrato).flglista WHEN TRUE THEN '1' ELSE '0' END||
                           LPAD(vr_index_extrato,10,'0');
-          ELSE 
-           --Montar novo indice conforme break-by
-            vr_index_novo:= TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'yyyymmddHHMISS')|| 
-                            LPAD(NVL(vr_tab_extrato_epr(vr_index_extrato).nrparepr,0),10,'0')||
-                            RPAD(vr_tab_extrato_epr(vr_index_extrato).dsextrat,50,'#')||
-                            CASE vr_tab_extrato_epr(vr_index_extrato).flglista WHEN TRUE THEN '1' ELSE '0' END||
-                            LPAD(vr_index_extrato,10,'0');            
-          END IF;
             
           --Copiar de uma tabela para outra
           vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);

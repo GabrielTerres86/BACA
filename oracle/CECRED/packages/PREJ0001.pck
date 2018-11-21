@@ -1566,13 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
           END IF;          
                       
           IF nvl(vr_vljura60,0) > 0 THEN
-            -- Se o Juros +60 for maior que o saldo devedor, considerar somente o saldo devedor 
-            -- para a transferencia 
-            IF nvl(vr_vljura60,0) >= nvl(vr_vlsdeved,0) THEN
-              vr_vljura60 := 0;
-            ELSE
-              vr_vlsdeved := vr_vlsdeved - vr_vljura60;
-            END IF;
+            vr_vlsdeved := vr_vlsdeved - vr_vljura60;
           END IF;
                       
           BEGIN
@@ -2265,14 +2259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     END IF;
             
     IF nvl(vr_vljura60,0) > 0 THEN
-      -- Se o Juros +60 for maior que o saldo devedor, considerar somente o saldo devedor 
-      -- para a transferencia 
-      IF nvl(vr_vljura60,0) >= nvl(vr_vlsdeved,0) THEN
-        vr_vljura60 := 0;
-      ELSE
-        vr_vlsdeved := vr_vlsdeved - vr_vljura60;
-      END IF;      
-    
+      vr_vlsdeved := nvl(vr_vlsdeved,0) - vr_vljura60;
     END IF;
     /* Com base no registro enviado para gerar para prejuízo, cria lançamentos na CRAPLEM */         
     empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
