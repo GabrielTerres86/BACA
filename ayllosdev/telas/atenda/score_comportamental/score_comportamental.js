@@ -150,7 +150,7 @@ function controlaLayoutExc(){
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
     $('#btVoltar').unbind('click').bind('click', function(){
-        
+        btnVoltarInicio();
     });
 }
 
