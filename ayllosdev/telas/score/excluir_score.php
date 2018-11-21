@@ -46,7 +46,8 @@
 		echo 'hideMsgAguardo();';
 		echo 'showError("error", "'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'", "Alerta - Ayllos", "bloqueiaFundo(divRotina);fechaRotina(divRotina);");';
 	} else {
-		echo 'montaTab("","");';
+		showError('inform',"Carga excluída com sucesso!",'Alerta - Ayllos','montaTab("","");');
+		//echo 'montaTab("","");';
 	}
 
 ?>
