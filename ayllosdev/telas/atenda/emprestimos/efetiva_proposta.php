@@ -205,14 +205,14 @@
 
 						}
 
-						//echo ($data); die;
+						echo ($data); die;
 
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
 						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
 						
-						//var_dump($xmlStr); die;
+						//echo($xmlStr); die;
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
@@ -233,9 +233,9 @@
 							}
 
 						}
-						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac . " - " . $retGravame . " - " . $retContr . " - " . $identificador;
+						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac . " - " . $retGravame . " - " . $retContr . " - " . $identificador; die;
 
-						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $retGravame, $retContr, $identificador);
+						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador);// $retGravame, $retContr, $identificador);
 						//gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador)
 
 						$qtdGravame++;

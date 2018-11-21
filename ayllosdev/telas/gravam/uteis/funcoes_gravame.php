@@ -16,16 +16,16 @@
 	$idorigem = 0;
 	$cdoperad = 0;	
 
-	function parametrosParaAudit($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad){
+	function parametrosParaAudit($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad) {
 		$GLOBALS["cdcooper"] = $cdcooper;
 		$GLOBALS["cdagenci"] = $cdagenci;
 		$GLOBALS["nrdcaixa"] = $nrdcaixa;
 		$GLOBALS["idorigem"] = $idorigem;
 		$GLOBALS["cdoperad"] = $cdoperad;
 	}
-	
+
 	//Função para transformar Timestamp("yyyy-mm-ddThh:mm:ss") em DateTime(dd/mm/yyyy hh:mm:ss)
-	function timestampParaDateTime($timestamp){
+	function timestampParaDateTime($timestamp) {
 		$arTimestamp = explode("T", $timestamp);
 		$arDate = explode("-", $arTimestamp[0]);
 		$dia = $arDate[2];
@@ -35,7 +35,7 @@
 	}
 
 	//Função para transformar string 
-	function getXML($xmlStr){
+	function getXML($xmlStr) {
 		$xmlStr = str_replace(array("\n", "\r", "\t"), '', $xmlStr);
 		$xmlStr = trim(str_replace('"', "'", $xmlStr));
 		$xml = simplexml_load_string($xmlStr);
@@ -43,13 +43,13 @@
 	}	
 
 	//Função para pegar a URL que vem nos atributos do XML
-	function getURL($xml){
+	function getURL($xml) {
 		$att = $xml->attributes();
 		$url = $att['iduriservico'];
 		return $url;
 	}
 
-	function convertXMLtoJSONAliena($xml){
+	function convertXMLtoJSONAliena($xml) {
 		$data = '{"sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
 					"objetoContratoCredito": '.json_encode($xml->objetoContratoCredito).',
 					"propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
@@ -57,9 +57,9 @@
 					"estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
 		return $data;	
 	}
-	
+
 	//Função para converter os nós "sistemaNacionalGravames" e "objetoContratoCredito" do XML em JSON
-	function convertXMLtoJSONConsulta($xml){
+	function convertXMLtoJSONConsulta($xml) {
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
 		$data = '{"sistemaNacionalGravames": '.$sistNac.',
@@ -68,7 +68,7 @@
 	}
 
 	//Função para converter os nós "sistemaNacionalGravames", "objetoContratoCredito" e "propostaContratoCredito" do XML em JSON
-	function convertXMLtoJSONBaixaCancel($xml){
+	function convertXMLtoJSONBaixaCancel($xml) {
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
 		$propostaContratoCredito = json_encode($xml->propostaContratoCredito);
@@ -79,7 +79,7 @@
 	}
 
 	//Função para tratar as variáveis que serão utilizadas no POST e verificar o retorno
-	function postGravame($xml, $data, $url, $authPost){
+	function postGravame($xml, $data, $url, $authPost) {
 		$xmlReturn;
 		if($url == null || $url == ''){
 			echo "showError('inform','N&atilde;o foi encontrada a URL.','Notifica&ccedil;&atilde;o - Ayllos','');";	
@@ -91,9 +91,9 @@
 		}
 		return $xmlReturn;
 	}
-	
+
 	//Função para fazer o POST e trazer o httpcode
-	function ChamaServico($url, $method, $arrayHeader, $data){
+	function ChamaServico($url, $method, $arrayHeader, $data) {
         $ch = curl_init($url);                                                                      
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);                                                                     
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
@@ -104,14 +104,14 @@
         return $resultXml;
     }
 
-    function verificarRetornoAliena($xmlStr){
+    function verificarRetornoAliena($xmlStr) {
     	$xmlRet = getObjectXML($xmlStr);
     	$retContr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
     	$retGravame = $xmlRet->roottag->tags[0]->tags[1]->cdata;
     	$GLOBALS["identificador"] = $xmlRet->roottag->tags[0]->tags[3]->cdata;
     	$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[2]->cdata);
     	$idRegistro = $xmlRet->roottag->tags[0]->tags[3]->cdata;
-    	gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'N', 1, $retGravame, $retContr, $identificador);
+    	gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'N', 1,  $identificador); //$retGravame, $retContr, $identificador);
     	if($GLOBALS["httpcode"] == 200 && ($retGravame == 30 || $retContr == 90)){
     		return true;
     	} else{
@@ -120,7 +120,7 @@
     }
 
 	//Função para verificar o retorno do XML de alienação 
-    function verificarRetornoConsulta($xmlStr){
+    function verificarRetornoConsulta($xmlStr) {
     	$cdoperac = 4;
     	$xmlRet = getObjectXML($xmlStr);
     	if($GLOBALS["httpcode"] == 200){
@@ -129,8 +129,8 @@
     		$interacaoGravame = $xmlRet->roottag->tags[1]->tags[$index]->tags[3]->tags[$index]->tags[0];
     		$dataInteracao = timestampParaDateTime($interacaoGravame->tags[0]->cdata);
     		$idRegistro = $xmlRet->roottag->tags[1]->tags[0]->tags[0]->tags[5]->cdata;
-    		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'N', $cdoperac, '', '', '');
-    		if($qtdOcorr == 0){
+    		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'N', $cdoperac, '');//, '', '');
+    		if ($qtdOcorr == 0) {
 				exibirErro('error','N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG','Alerta - Ayllos','formatarInclusaoManual();',false);		
 			} else {
 				$seqLista = $interacaoGravame->tags[2]->cdata;
@@ -154,16 +154,16 @@
 			}
 		} else {
 			$errorMessage = retornarMensagemErro($xmlRet);
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, '', '', 'N', $cdoperac, '', '', '');
+			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, '', '', 'N', $cdoperac, '');//, '', '');
 		}
     }
 
-    function verificarRetornoBaixaCancel($xmlStr, $cdoperac, $tela){
+    function verificarRetornoBaixaCancel($xmlStr, $cdoperac, $tela) {
     	$xmlRet = getObjectXML($xmlStr);
     	if($GLOBALS["httpcode"] == 200){
     		$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[0]->cdata);
     		$idRegistro = $xmlRet->roottag->tags[0]->tags[1]->cdata;
-    		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'S', $cdoperac, '', '', '');
+    		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'S', $cdoperac, '');//, '', '');
     		if($cdoperac == 2 && $tela != 'ADITIV'){
 				echo "showError('inform','Cancelamento autom&aacute;tico da aliena&ccedil;&atilde;o efetuada com sucesso no SNG.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
     		} else if($cdoperac == 3 && $tela != 'ADITIV') {
@@ -176,7 +176,7 @@
     		}
     	} else{
     		$errorMessage = retornarMensagemErro($xmlRet);
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, '', '', 'S', $cdoperac, '', '', '');
+			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, '', '', 'S', $cdoperac, '');//, '', '');
 			if($cdoperac == 2 && $tela != 'ADITIV'){
 				echo "showError('error','Cancelamento autom&aacute;tico da aliena&ccedil;&atilde;o n&atilde;o confirmada junto ao SNG. Erro encontrado: ".$errorMessage."','Notifica&ccedil;&atilde;o - Ayllos','');";	
 			} else if($cdoperac == 3 && $tela != 'ADITIV'){
@@ -188,7 +188,7 @@
     }
 
 	//Função para gravar os dados na auditoria
-    function gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador){
+    function gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $identificador){ //, $retGravame, $retContr, $identificador) {
     	$dschassi = $cdoperac == 1 ? $GLOBALS["dschassi"] : '';
     	$dscatbem = $cdoperac == 1 ? $GLOBALS["dscatbem"] : '';
     	$dstipbem = $cdoperac == 1 ? $GLOBALS["dstipbem"] : '';
@@ -226,13 +226,18 @@
 		$xml      .= "     <nrrenava>".$nrrenava."</nrrenava>";
 		$xml      .= "     <dtenvgrv>".$postDate."</dtenvgrv>";
   		$xml      .= "     <dtretgrv>".$getDate."</dtretgrv>";
-  		$xml      .= "     <cdretgrv>".$retGravame."</cdretgrv>";
-  		$xml      .= "     <cdretctr>".$retContr."</cdretctr>";
+		$xml      .= "     <chttpsoa>".$GLOBALS["httpcode"]."</chttpsoa>"; 
+		$xml      .= "     <dsmsgsoa>".$errorMessage['msg']."</dsmsgsoa>"; 
+		$xml      .= "     <nrcodsoa>".$errorMessage['code']."</nrcodsoa>"; 
+		$xml      .= "     <cdtypsoa>".$errorMessage['type']."</cdtypsoa>"; 
+		$xml      .= "     <cdlegsoa>".$errorMessage['legacyCode']."</cdlegsoa>"; 
+  		//$xml      .= "     <cdretgrv>".$retGravame."</cdretgrv>";
+  		//$xml      .= "     <cdretctr>".$retContr."</cdretctr>";
   		$xml      .= "     <nrgravam>".$identificador."</nrgravam>"; 
   		$xml      .= "     <idregist>".$idRegistro."</idregist>";
   		$xml      .= "     <dtregist>".$dataInteracao."</dtregist>";
-  		$xml      .= "     <dserrcom>".$errorMessage."</dserrcom>";
-  		$xml      .= "     <flsituac>".$flsituac."</flsituac>";  
+  		//$xml      .= "     <dserrcom>".$errorMessage."</dserrcom>";
+  		$xml      .= "     <flsituac>".$flsituac."</flsituac>";
   		$xml      .= "  </Dados>";
   		$xml      .= "</Root>";
 
@@ -242,14 +247,15 @@
     }
 
     //Função que trata o retorno de erro e monta a mensagem para salvar.
-    function retornarMensagemErro($xmlRet){
-    	$type = $xmlRet->roottag->tags[0]->cdata;
-		$code = $xmlRet->roottag->tags[1]->cdata;
-		$msg = $xmlRet->roottag->tags[2]->cdata;
-		return $type."-".$code.":".$msg;
+    function retornarMensagemErro($xmlRet) {
+    	$errorMesssage['type'] = $xmlRet->roottag->tags[0]->cdata;
+		$errorMesssage['code'] = $xmlRet->roottag->tags[1]->cdata;
+		$errorMesssage['legacyCode'] = $xmlRet->roottag->tags[2]->cdata;
+		$errorMesssage['msg'] = $xmlRet->roottag->tags[3]->cdata;
+		return $errorMesssage; //type."-".$code.":".$msg;
     }
 
-    function processarAlienacao($xmlResult, $UrlSOA, $AuthSOA){
+    function processarAlienacao($xmlResult, $UrlSOA, $AuthSOA) {
     	$xml = getXML($xmlResult);
 		$url = $UrlSOA.getURL($xml->gravameB3[0]->gravame[0]);
 		$data = convertXMLtoJSONAliena($xml->gravameB3[0]->gravame[0]);		
@@ -257,7 +263,7 @@
 		return verificarRetornoAliena($xmlStr);
     }
 
-    function processarBaixaCancel($xmlResult, $cdoperac, $UrlSOA, $AuthSOA){
+    function processarBaixaCancel($xmlResult, $cdoperac, $UrlSOA, $AuthSOA) {
     	$xml = getXML($xmlResult);
     	$url = $UrlSOA.getURL($xml->gravameB3[0]->gravame[1]);
 		$data = convertXMLtoJSONBaixaCancel($xml->gravameB3[0]->gravame[0]);
@@ -265,8 +271,7 @@
 		verificarRetornoBaixaCancel($xmlStr, $cdoperac, '');
     }
 
-    		
-	function processarBaixaAditiv($xmlResult, $cdoperac, $UrlSOA, $AuthSOA){
+	function processarBaixaAditiv($xmlResult, $cdoperac, $UrlSOA, $AuthSOA) {
     	$xml = getXML($xmlResult);
     	$url = $UrlSOA.getURL($xml->gravameB3[0]->gravame[1]);
 		$data = convertXMLtoJSONBaixaCancel($xml->gravameB3[0]->gravame[1]);
