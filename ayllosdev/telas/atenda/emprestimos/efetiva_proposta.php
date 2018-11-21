@@ -205,7 +205,7 @@
 
 						}
 
-						echo ($data); die;
+						//echo ($data); die;
 
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
