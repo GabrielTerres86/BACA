@@ -193,9 +193,6 @@
 	// Verifica tipo de envio
 	if (!validaInteiro($tpenvcrd)) exibirErro('error','Tipo de Envio inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);	
 	
-	// Verifica tipo de envio
-	if (!validaInteiro($nrdoccrd)) exibirErro('error','Identidade inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);	
-	
 
 	// Se for uma alteração validamos se a senha já foi informada
 	if (!empty($nrctrcrd)) {

@@ -1270,6 +1270,7 @@ END pc_incluir_bordero_esteira;
           ,UPPER(bdt.cdopeapr) as cdopeapr
           ,'0,0,0,0,0,0,0,0,0,0' dsliquid
           ,'BT' as tpproduto
+          ,bdt.dsprotoc
       FROM crapbdt bdt
      INNER JOIN craplim lim -- apenas para chegar nas informações de linha de credito com um passo a menos no oracle engine. Menor custo para o banco.
         ON lim.nrdconta = bdt.nrdconta
@@ -1663,11 +1664,11 @@ END pc_incluir_bordero_esteira;
          vr_obj_titulos.put('idTitulo'       , rw_craptdb.nrtitulo);
          vr_obj_titulos.put('convenio'       , rw_craptdb.nrcnvcob);
          vr_obj_titulos.put('numero'         , rw_craptdb.nrdocmto);
-         vr_obj_titulos.put('nome'           , rw_crapass.nmprimtl); -- do cedente
+         vr_obj_titulos.put('nome'           , rw_craptdb.nmdsacad); -- do cedente
          if  rw_crapass.inpessoa = 1 then
-           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,11,'0')); -- do cedente
+           vr_obj_titulos.put('documento'      , lpad(rw_craptdb.nrinssac,11,'0')); -- do cedente
          ELSE
-           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,14,'0')); -- do cedente
+           vr_obj_titulos.put('documento'      , lpad(rw_craptdb.nrinssac,14,'0')); -- do cedente
          END IF;
          vr_obj_titulos.put('vencimento'     , TO_CHAR(rw_craptdb.dtvencto,'rrrr-mm-dd') );
 	       vr_obj_titulos.put('valor'          , rw_craptdb.vltitulo);
@@ -1863,11 +1864,11 @@ END pc_incluir_bordero_esteira;
          vr_obj_bordero.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );
 
          -- Busca PDF gerado pela análise automática do Motor
-         vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
+         /*vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
                                                           ,pr_nrdconta => pr_nrdconta
-                                                          ,pr_nrctremp => rw_crapbdt.nrctrlim);
+                                                          ,pr_nrctremp => rw_crapbdt.nrctrlim);*/
 
-         vr_obj_bordero.put('protocoloPolitica'          ,vr_dsprotoc);
+         vr_obj_bordero.put('protocoloPolitica'          ,trim(rw_crapbdt.dsprotoc));
 
          -- Copiar parâmetro
          vr_nmarquiv := pr_nmarquiv;
@@ -1934,7 +1935,7 @@ END pc_incluir_bordero_esteira;
                  gene0001.pc_oscommand_shell(pr_des_comando => 'rm '||vr_nmarquiv);
              end if;
          end if;
-
+         /*
          --  Se encontrou PDF de análise Motor
          if  vr_dsprotoc is not null then
              -- Diretorio para salvar
@@ -1989,7 +1990,7 @@ END pc_incluir_bordero_esteira;
              -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
              gene0001.pc_oscommand_shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
          end if;
-
+         */
          -- Incluiremos os documentos ao json principal
          vr_obj_bordero.put('documentos',vr_lst_doctos);
 
