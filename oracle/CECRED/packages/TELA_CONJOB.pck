@@ -590,35 +590,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
             null;
         end;
         -- Vamos recriar o mesmo
-        DBMS_SCHEDULER.CREATE_JOB (job_name        => pr_nmjobmaster
-                                  ,job_type        => 'STORED_PROCEDURE'
-                                  ,job_action      => 'tela_conjob.pc_controlador_master'
-                                  ,start_date      => systimestamp
-                                  ,repeat_interval => 'FREQ=MINUTELY;INTERVAL='||pr_numminjob
-                                  ,end_date        => NULL
-                                  ,auto_drop       => FALSE
-                                  ,job_class       => NULL
-                                  ,comments        => 'JOB Master do sistema CONJOB');
+        sys.dbms_scheduler.create_job(job_name            => pr_nmjobmaster
+                                     ,job_type            => 'PLSQL_BLOCK'
+                                     ,job_action          => 'BEGIN                                    
+                                                  CECRED.tela_conjob.pc_controlador_master;
+                                                  END;'
+                                     ,start_date          => systimestamp
+                                     ,repeat_interval     => 'FREQ=MINUTELY;INTERVAL='||pr_numminjob
+                                     ,end_date            => to_date(null)
+                                     ,job_class           => 'DEFAULT_JOB_CLASS'
+                                     ,enabled             => TRUE
+                                     ,auto_drop           => TRUE
+                                     ,comments            => 'JOB Master do sistema CONJOB');
       -- Se alterado intervalo em minutos do Master
       ELSIF vr_qtminprm <> pr_numminjob THEN 
         begin
           DBMS_SCHEDULER.SET_ATTRIBUTE(name      => pr_nmjobmaster
                                       ,attribute => 'repeat_interval'
                                       ,value     => 'FREQ=MINUTELY;INTERVAL='||pr_numminjob);
-          
-          
         exception 
           WHEN vr_exc_job_nao_existe then
             -- Vamos recriar o mesmo
-            DBMS_SCHEDULER.CREATE_JOB (job_name        => pr_nmjobmaster
-                                      ,job_type        => 'STORED_PROCEDURE'
-                                      ,job_action      => 'tela_conjob.pc_controlador_master'
-                                      ,start_date      => systimestamp
-                                      ,repeat_interval => 'FREQ=MINUTELY;INTERVAL='||pr_numminjob
-                                      ,end_date        => NULL
-                                      ,auto_drop       => FALSE
-                                      ,job_class       => NULL
-                                      ,comments        => 'JOB Master do sistema CONJOB');
+            sys.dbms_scheduler.create_job(job_name            => pr_nmjobmaster
+                                         ,job_type            => 'PLSQL_BLOCK'
+                                         ,job_action          => 'BEGIN                                    
+                                                      CECRED.tela_conjob.pc_controlador_master;
+                                                      END;'
+                                         ,start_date          => systimestamp
+                                         ,repeat_interval     => 'FREQ=MINUTELY;INTERVAL='||pr_numminjob
+                                         ,end_date            => to_date(null)
+                                         ,job_class           => 'DEFAULT_JOB_CLASS'
+                                         ,enabled             => TRUE
+                                         ,auto_drop           => TRUE
+                                         ,comments            => 'JOB Master do sistema CONJOB');
         end;
       END IF;
     EXCEPTION
@@ -1434,7 +1438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
       BEGIN
 
         UPDATE tbgen_batch_jobs
-           SET dsdetalhe = pr_dsdetalhe
+           SET dsdetalhe = gene0007.fn_convert_web_db(pr_dsdetalhe)
               ,dsprefixo_jobs = pr_dsprefixo_jobs
               ,idativo = decode(pr_idativo,'S',1,0)
               ,idperiodici_execucao = pr_idperiodici_execucao
@@ -1450,7 +1454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
               ,dsdestino_email = pr_dsdestino_email
               ,flsaida_log = pr_flsaida_log
               ,dsnome_arq_log = pr_dsnome_arq_log
-              ,dscodigo_plsql = pr_dscodigo_plsql
+              ,dscodigo_plsql = REPLACE(REPLACE(REPLACE(pr_dscodigo_plsql,'&lt;','<'),'&gt;','>'),'&apos;','''')
               ,cdoperad_alteracao = vr_cdoperad
               ,dtalteracao = sysdate
          WHERE nmjob = pr_nmjob;
@@ -1489,7 +1493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
                                                    || ' para ' || pr_idativo || '.');        
       END IF;
       
-      IF pr_dsdetalhe <> rw_job.dsdetalhe THEN
+      IF gene0007.fn_convert_web_db(pr_dsdetalhe) <> rw_job.dsdetalhe THEN
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => vr_nmarqlog
@@ -1643,14 +1647,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
                                                    || ' para ' || pr_dsnome_arq_log || '.');
       END IF;
       
-      IF pr_dscodigo_plsql <> rw_job.dscodigo_plsql THEN
+      IF REPLACE(REPLACE(REPLACE(pr_dscodigo_plsql,'&lt;','<'),'&gt;','>'),'&apos;','''') <> rw_job.dscodigo_plsql THEN
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => vr_nmarqlog
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
                                                    || ' -->  Operador '|| vr_cdoperad || ' - ' 
-                                                   || 'Alterou o JOB campo "Codigo PLSQL" de ' || rw_job.dscodigo_plsql
+                                                   || 'Alterou o JOB campo "Codigo PLSQL" de ' || rw_job.dscodigo_plsql || chr(13)
                                                    || ' para ' || pr_dscodigo_plsql || '.');
       END IF;      
       
@@ -1940,7 +1944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
             ,CASE 
               WHEN log.flgsucesso = 0 THEN 'Erro'
               WHEN NOT oco.dsmensagem IS NULL THEN 'Erro'
-              WHEN log.dhfim IS NULL THEN 'Abortado'
+              WHEN log.dhfim IS NULL THEN 'Abortado/Em Exec.'
               ELSE 'Sucesso'
              END dsflgsucesso
             ,oco.dhocorrencia
@@ -2302,6 +2306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONJOB AS
                                    ,job_action      => rw_job.dscodigo_plsql --> Bloco PLSQL para execução
                                    ,start_date      => SYSTIMESTAMP          --> Data/hora para executar
                                    ,repeat_interval => NULL                  --> Função para calculo da próxima execução, ex: 'sysdate+1'
+                                   ,job_class       => 'DEFAULT_JOB_CLASS'   --> Classe do JOB
                                    ,auto_drop       => TRUE                  --> Quando não houver mais agendamentos, "dropar"
                                    ,enabled         => TRUE                  --> Criar o JOB já ativando-o
                                    ,comments        => rw_job.dsdetalhe);    --> Descrição detalhada
