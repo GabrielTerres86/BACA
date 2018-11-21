@@ -161,14 +161,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
            AND crapttl.idseqttl = 1;
     
       -- Seleciona a Instituicao Destinatario
-      CURSOR cr_crapban_crapcop(pr_cdcooper IN crapenc.cdcooper%TYPE) IS
+      CURSOR cr_crapban_crapcop IS
         SELECT b.nrispbif
               ,c.nrdocnpj
               ,c.cdagectl
           FROM crapban b
               ,crapcop c
          WHERE b.cdbccxlt = c.cdbcoctl
-           AND c.cdcooper = pr_cdcooper;
+           AND c.cdcooper = 3;
     
       -- Seleciona Portab Envia
       CURSOR cr_portab_envia(pr_cdcooper IN crapenc.cdcooper%TYPE
@@ -284,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       CLOSE cr_portab_envia;
     
       -- Selecionar a instituicao destinataria
-      OPEN cr_crapban_crapcop(pr_cdcooper => vr_cdcooper);
+      OPEN cr_crapban_crapcop;
       FETCH cr_crapban_crapcop
         INTO vr_nrispbif_cop
             ,vr_nrdocnpj_cop
