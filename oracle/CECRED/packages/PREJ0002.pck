@@ -481,7 +481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                 END IF;
         
                 -- Chamada da rotina centralizadora em substituição ao DELETE
-                LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL 
+                IF cr_craplcm%FOUND THEN
+                  LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL 
                                                , pr_dtmvtolt => NULL 
                                                , pr_cdagenci => NULL
                                                , pr_cdbccxlt => NULL 
@@ -497,11 +498,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                , pr_dscritic => vr_dscritic);
                                                
                                        
-                IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
-                  CLOSE cr_craplcm;
-                  RAISE vr_erro;
-                END IF;
+                  IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+                    CLOSE cr_craplcm;
+                    RAISE vr_erro;
+                  END IF;
+                end if;
                 
+                if (prej0003.fn_verifica_preju_conta(pr_cdcooper => r_craplem.cdcooper, 
+                                                     pr_nrdconta => r_craplem.nrdconta)) 
+                       and r_craplem.cdhistor = 2701 then
+                   prej0003.pc_gera_cred_cta_prj (pr_cdcooper => pr_cdcooper, 
+                                                  pr_nrdconta => pr_nrdconta, 
+                                                  pr_cdoperad => '1', 
+                                                  pr_vlrlanc  => r_craplem.vllanmto, 
+                                                  pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                  pr_nrdocmto => null, 
+                                                  pr_cdcritic => vr_cdcritic, 
+                                                  pr_dscritic => vr_dscritic);
+                   if (vr_cdcritic <> 0 or vr_dscritic is not null) then
+                     RAISE vr_erro;
+                   end if;
+                end if;
+
                 COMMIT;
                 
               CLOSE cr_craplcm;
@@ -575,37 +593,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                           r_craplem.nrdconta,
                                           r_craplem.dtmvtolt,
                                           r_craplem.nrctremp) LOOP
-              
-                empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_cdagenci => r_craplem.cdagenci
-                                              ,pr_cdbccxlt => 100
-                                              ,pr_cdoperad => '1'
-                                              ,pr_cdpactra => r_craplem.cdagenci
-                                              ,pr_nrdolote => vr_nrdolote
-                                              ,pr_nrdconta => pr_nrdconta
-                                              ,pr_cdhistor => 2387 -- EST.RECUP.PREJUIZO
-                                              ,pr_vllanmto => r_craplcm.vllanmto 
-                                              ,pr_nrparepr => 0
-                                              ,pr_nrctremp => pr_nrctremp
-                                              ,pr_nrseqava => 0
-                                              ,pr_idlautom => 0 
-                                              ,pr_des_reto => vr_des_reto
-                                              ,pr_tab_erro => vr_tab_erro );
-                                                               
-                IF vr_des_reto <> 'OK' THEN
-                  IF vr_tab_erro.count() > 0 THEN 
-                    -- Atribui críticas às variaveis
-                    vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-                    vr_dscritic := 'Falha estorno Pagamento '||vr_tab_erro(vr_tab_erro.first).dscritic;
-                    RAISE vr_erro;
-                  ELSE
-                    vr_cdcritic := 0;
-                    vr_dscritic := 'Falha ao Estornar Pagamento '||sqlerrm;
-                    raise vr_erro;
-                  END IF;                      
-                END IF;
 
+                if (prej0003.fn_verifica_preju_conta(pr_cdcooper => r_craplem.cdcooper, 
+                                                     pr_nrdconta => r_craplem.nrdconta)) 
+                       and r_craplem.cdhistor = 2701 then
+                   prej0003.pc_gera_cred_cta_prj (pr_cdcooper => pr_cdcooper, 
+                                                  pr_nrdconta => pr_nrdconta, 
+                                                  pr_cdoperad => '1', 
+                                                  pr_vlrlanc  => r_craplcm.vllanmto, 
+                                                  pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                  pr_nrdocmto => null, 
+                                                  pr_cdcritic => vr_cdcritic, 
+                                                  pr_dscritic => vr_dscritic);
+                   if (vr_cdcritic <> 0 or vr_dscritic is not null) then
+                     RAISE vr_erro;
+                   end if;
+                else
+                  empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                ,pr_cdagenci => r_craplem.cdagenci
+                                                ,pr_cdbccxlt => 100
+                                                ,pr_cdoperad => '1'
+                                                ,pr_cdpactra => r_craplem.cdagenci
+                                                ,pr_nrdolote => vr_nrdolote
+                                                ,pr_nrdconta => pr_nrdconta
+                                                ,pr_cdhistor => 2387 -- EST.RECUP.PREJUIZO
+                                                ,pr_vllanmto => r_craplcm.vllanmto 
+                                                ,pr_nrparepr => 0
+                                                ,pr_nrctremp => pr_nrctremp
+                                                ,pr_nrseqava => 0
+                                                ,pr_idlautom => 0 
+                                                ,pr_des_reto => vr_des_reto
+                                                ,pr_tab_erro => vr_tab_erro );
+
+                  IF vr_des_reto <> 'OK' THEN
+                    IF vr_tab_erro.count() > 0 THEN 
+                      -- Atribui críticas às variaveis
+                      vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                      vr_dscritic := 'Falha estorno Pagamento '||vr_tab_erro(vr_tab_erro.first).dscritic;
+                      RAISE vr_erro;
+                    ELSE
+                      vr_cdcritic := 0;
+                      vr_dscritic := 'Falha ao Estornar Pagamento '||sqlerrm;
+                      raise vr_erro;
+                    END IF;                      
+                  END IF;
+                END IF;
               END LOOP;
             END IF;
             --
