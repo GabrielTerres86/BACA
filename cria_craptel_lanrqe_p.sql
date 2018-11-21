@@ -8,3 +8,6 @@ UPDATE craptel
        lsopptel = lsopptel || ',PEDIDOS'
  WHERE upper(nmdatela) = 'LANRQE';
 
+
+ 
+ /* */
