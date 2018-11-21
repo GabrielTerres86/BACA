@@ -1,4 +1,4 @@
-ï»¿/*..............................................................................
+/*..............................................................................
 
     Programa: Fontes/crps264.p
     Sistema : Conta-Corrente - Cooperativa de Credito
@@ -72,7 +72,7 @@
                 08/02/2011 - Ajuste para incluir no arquivo 085 cheques
                              cancelados, talonario nao retirado,... (Ze).
 
-                18/04/2011 - Alterado layout de relatÃ³rio quando for 
+                18/04/2011 - Alterado layout de relatório quando for 
                              Cheques Cecred (Isara - RKAM).
                              
                 19/04/2011 - Acerto para incluir os cheques rejeitados na
@@ -98,7 +98,7 @@
                         
                 18/06/2012 - Alteracao na leitura da craptco (David Kruger).
                 
-                15/08/2012 - Alterado posiÃ§Ãµes do cdtipchq de 52,2 para 148,3 
+                15/08/2012 - Alterado posições do cdtipchq de 52,2 para 148,3 
                             (Lucas R.).
                             
                 27/08/2012 - Removido parametro p-flghrexe e adicionado os
@@ -123,11 +123,11 @@
                 21/03/2013 - Ajustes referentes ao Projeto tarifas - fase 2
                              Grupo de cheque (Lucas R.)
                              
-                10/06/2013 - AlteraÃ§ao funÃ§ao enviar_email_completo para
+                10/06/2013 - Alteraçao funçao enviar_email_completo para
                             nova versao (Jean Michel).
                             
-                09/09/2013 - Nova forma de chamar as agÃªncias, de PAC agora 
-                            a escrita serÃ¡ PA (AndrÃ© EuzÃ©bio - Supero).            
+                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                            a escrita será PA (André Euzébio - Supero).            
                            
                11/10/2013 - Incluido parametro cdprogra nas procedures da 
                             b1wgen0153 que carregam dados de tarifas (Tiago).
@@ -154,13 +154,13 @@
                19/12/2014 - Efetuado acerto na procedure 'gera_arquivo_cecred'
                             na abertura/fechamento do arquivo (Diego).
                             
-               19/01/2015 - AdiÃ§Ã£o dos parÃ¢metros "arq" e "coop" na chamada do
+               19/01/2015 - Adição dos parâmetros "arq" e "coop" na chamada do
                             fonte mqcecred_envia.pl. (Dionathan)
                             
                11/03/2015 - Incluido tratamento para as contas migradas.(James)
                
-               16/07/2015 - Ajustar os log para informar o que estÃ¡ acontecendo no 
-                            processo ao invÃ©s de imprimir MESSAGE que poluem o 
+               16/07/2015 - Ajustar os log para informar o que está acontecendo no 
+                            processo ao invés de imprimir MESSAGE que poluem o 
                             proc_batch (Douglas - Chamado 307649)
 
                29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
@@ -198,17 +198,17 @@
 
 			        02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
                            
-              05/12/2016 - Ajuste para criar lanÃ§amento com o historico 399 para a Diurna e Noturna.
-                           TambÃ©m validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
+              05/12/2016 - Ajuste para criar lançamento com o historico 399 para a Diurna e Noturna.
+                           Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
                            
-              16/12/2016 - Substituido o histÃ³rico 399 pelo 351 na devoluÃ§ao de 
-                           cheques de custÃ³dia para a conta do beneficiario (Elton).             
+              16/12/2016 - Substituido o histórico 399 pelo 351 na devoluçao de 
+                           cheques de custódia para a conta do beneficiario (Elton).             
                            
               03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
                            (Lucas Ranghetti #600012)
                            
-	            30/03/2017 - Gerar lanÃ§amentos de cheques descontados ou custodiados de 
-			                     operaÃ§Ãµes entre cooperados no arquivo AAMMDD_CRITICAS.txt
+	            30/03/2017 - Gerar lançamentos de cheques descontados ou custodiados de 
+			                     operações entre cooperados no arquivo AAMMDD_CRITICAS.txt
 						               P307 - (Jonatas - Supero)
                            
               04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
@@ -220,11 +220,11 @@
               08/05/2017 - Incluso tratativa crapcst.nrborder = 0 nas duas leituras
 			               FOR LAST crapcst (Daniel - Projeto 300) 
                            
-              13/06/2017 - Ajustes para o novo formato de devoluÃ§ao de Sessao Ãšnica, de 
-                           Fraudes/Impedimentos e remoÃ§ao do processo de devoluÃ§ao VLB.
+              13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
+                           Fraudes/Impedimentos e remoçao do processo de devoluçao VLB.
                            PRJ367 - Compe Sessao Unica (Lombardi)
               
-              13/07/2017 - Alterar a situaÃ§Ã£o do insitchq das tabelas crapcdb e crapcst
+              13/07/2017 - Alterar a situação do insitchq das tabelas crapcdb e crapcst
                            para 3 depois que criar o craplcm (Lucas Ranghetti #659855)
 
               01/09/2017 - SD737676 - Alteracao de comentario fazendo mencao a arquivo 
@@ -238,18 +238,18 @@
 
 			  10/03/2018 - Removida procedure envia_arquivo_xml - Compe Sessao Unica (Diego).
 
-              11/05/2018 - Ajuste para processar cheques com alinea 35, os mesmos nao estavam
-                           sendo processados e nao apareciam no Relatorio 219.
+			  11/05/2018 - Ajuste para processar cheques com alinea 35, os mesmos nao estavam
+			               sendo processados e nao apareciam no Relatorio 219.
                            chamado SCTASK0012893 - Gabriel (Mouts).	  
 
-              26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
-              04/07/2018 - Ajuste referente SCTASK0018345
+        04/07/2018 - Ajuste referente SCTASK0018345
 
-              16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alÃ­nea 37
+              16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
                            conforme tarefa SCTASK0010890. (Reinert)
                            
-              27/07/2018 - Adicionado histÃ³rico 5210 na crÃ­tica da alÃ­nea 37 do arquivo
+              27/07/2018 - Adicionado histórico 5210 na crítica da alínea 37 do arquivo
                            CRITICASDEVOLU.txt (Reinert).
 
               14/08/2018 - Tratamento de devolucoes automaticas, insitdev = 2, setando seus 
@@ -261,9 +261,14 @@
                            devolucoes automaticas, feitas pelo pc_crps533, corretamente.
                            Chamado SCTASK0027900 - Gabriel (Mouts).
 
-              10/06/2018 - PRJ450 - CentralizaÃ§ao do lanÃ§amento em conta corrente 
+              10/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente 
                            Rangel Decker  AMcom.
-
+                           
+              07/11/2018 - Bug 12015:CRPS264 - Credito/debito - Chamada duplicada da LANC0001
+                           Heckmann (AMcom).
+                           
+              20/11/2018 - Task 12164 - Tratamento crps264 para chamada bo200 no lugar do create craplcm
+                           Estava chamando a rotina PodeDebitar que nao é mais utilizada. Heckmann (AMcom).
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -286,7 +291,7 @@ DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
 
 DEF STREAM str_1. /* Relatorios */
 DEF STREAM str_2. /* Arquivos   */
-DEF STREAM str_3. /* Arquivo ContÃ¡bil */
+DEF STREAM str_3. /* Arquivo Contábil */
 
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
@@ -361,7 +366,7 @@ DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO.
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
 
-/*variaveis da arquivo contÃ¡bil AAMMDD_CRITICADEVOLU.txt*/
+/*variaveis da arquivo contábil AAMMDD_CRITICADEVOLU.txt*/
 DEF        VAR aux_nmarqcri AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqcop AS CHAR                                  NO-UNDO.
 DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
@@ -420,8 +425,8 @@ IF   glb_cdcritic > 0 THEN
     RETURN.
 
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
- por outras coops alem da CECRED Ã© necessario que este
- ASSIGN permaneÃ§a para um funcionamento correto*/
+ por outras coops alem da CECRED é necessario que este
+ ASSIGN permaneça para um funcionamento correto*/
 ASSIGN glb_cdcooper = 3.
   
 IF   glb_inrestar > 0   AND   glb_nrctares = 0   THEN
@@ -510,7 +515,7 @@ IF   RETURN-VALUE = "NOK"   THEN
 ELSE     
      DO: 
          
-         /* Gerar log informando o inicio do processo de devoluÃ§Äƒo dos cheques*/
+         /* Gerar log informando o inicio do processo de devoluçao dos cheques*/
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                            glb_cdprogra + "' --> '" +
                            "Inicio do processo - " + 
@@ -553,7 +558,7 @@ ELSE
                                     RUN gera_arquivo_cecred.
                                 END.
                        
-                           /* Gerar log com o fim da execuÃ§Äƒo */ 
+                           /* Gerar log com o fim da execuçao */ 
                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                              glb_cdprogra + "' --> '" +
                                              " Devolucoes processadas. " +
@@ -577,7 +582,7 @@ PROCEDURE gera_lancamento:
     
     IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
         RUN sistema/generico/procedures/b1wgen0200.p
-        PERSISTENT SET h-b1wgen0200.
+            PERSISTENT SET h-b1wgen0200.
 
     /* Identificar orgao expedidor */
     IF  NOT VALID-HANDLE(h-b1wgen0153) THEN
@@ -601,7 +606,7 @@ PROCEDURE gera_lancamento:
 
         IF  NOT AVAILABLE crapass THEN
             DO:
-                /* Tratamento para cheques migrados aonde o formulÃ¡rio do cheque 
+                /* Tratamento para cheques migrados aonde o formulário do cheque 
                    encontra-se na cooperativa antiga. */
                 FIND crabtco WHERE crabtco.cdcopant = crapdev.cdcooper AND
                                    crabtco.nrctaant = crapdev.nrdctabb AND
@@ -840,12 +845,6 @@ PROCEDURE gera_lancamento:
         /* Historicos que indicam cheque devolvido */
         IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
              DO:
-             IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                                  INPUT aux_cdcooper, 
-                                  INPUT aux_nrdconta,
-                                  INPUT  crapdev.cdhistor) THEN
-             DO:
-             
                  glb_nrcalcul = 
                           INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).
 
@@ -1037,7 +1036,7 @@ PROCEDURE gera_lancamento:
                                        ,INPUT crapdev.vllanmto        /* par_vllanmto */
                                        ,INPUT aux_nrctalcm            /* par_nrdctabb */
                                        ,INPUT (IF crapdev.cdalinea <> 0 THEN
-                                                  STRING(crapdev.cdalinea)
+                                                STRING(crapdev.cdalinea)
                                                ELSE "21")             /* par_cdpesqbb */
                                        ,INPUT 0                       /* par_vldoipmf */
                                        ,INPUT 0                       /* par_nrautdoc */
@@ -1146,7 +1145,7 @@ PROCEDURE gera_lancamento:
                                 DO:
                                     crapdev.indevarq = 2.   /* Envia */
                                 END.
-                          ELSE /* 2a devolucao â€“ 19:00 â€“ Sessao de Prevencao a Fraudes e Impedimentos*/
+                          ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
                                /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
                                /* Na segunda Devolucao envia todos com o 
                                   indicador = 1, para saber quem ja foi env. */
@@ -1156,65 +1155,6 @@ PROCEDURE gera_lancamento:
                       END.
                  ELSE
                       craplcm.dsidenti = "2".
-
-                
-                 /* VIACON - cria lancamento na coop atual */
-                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                                      ( INPUT craplot.dtmvtolt         /* par_dtmvtolt */
-                                       ,INPUT craplot.cdagenci         /* par_cdagenci */
-                                       ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
-                                       ,INPUT craplot.nrdolote        /* par_nrdolote */
-                                       ,INPUT aux_nrdconta            /* par_nrdconta */
-                                       ,INPUT crapdev.nrcheque        /* par_nrdocmto */
-                                       ,INPUT crapdev.cdhistor        /* par_cdhistor */
-                                       ,INPUT craplot.nrseqdig + 1   /* par_nrseqdig */
-                                       ,INPUT crapdev.vllanmto       /* par_vllanmto */
-                                       ,INPUT aux_nrctalcm           /* par_nrdctabb */
-                                       ,INPUT IF   crapdev.cdalinea <> 0 THEN
-                                                 STRING(crapdev.cdalinea)
-                                             ELSE "21"           /* par_cdpesqbb */
-                                       ,INPUT 0                  /* par_vldoipmf */
-                                       ,INPUT 0                  /* par_nrautdoc */
-                                       ,INPUT 0                  /* par_nrsequni */
-                                       ,INPUT crapdev.cdbanchq   /* par_cdbanchq */
-                                       ,INPUT 0                  /* par_cdcmpchq */
-                                       ,INPUT crapdev.cdagechq   /* par_cdagechq */
-                                       ,INPUT crapdev.nrctachq   /* par_nrctachq */
-                                       ,INPUT 0                  /* par_nrlotchq */
-                                       ,INPUT 0                  /* par_sqlotchq */
-                                       ,INPUT ""               /* par_dtrefere */
-                                       ,INPUT ""               /* par_hrtransa */
-                                       ,INPUT crapdev.cdoperad   /* par_cdoperad */                               
-                                       ,INPUT aux_dsidenti       /* par_dsidenti */
-                                       ,INPUT aux_cdcooper       /* par_cdcooper */
-                                       ,INPUT aux_nrdctitg       /* par_nrdctitg */
-                                       ,INPUT ""                 /* par_dscedent */
-                                       ,INPUT 0                  /* par_cdcoptfn */
-                                       ,INPUT 0                  /* par_cdagetfn */
-                                       ,INPUT 0                  /* par_nrterfin */
-                                       ,INPUT 0                  /* par_nrparepr */
-                                       ,INPUT 0                  /* par_nrseqava */
-                                       ,INPUT 0                  /* par_nraplica */
-                                       ,INPUT 0                  /*par_cdorigem*/
-                                       ,INPUT 0                  /* par_idlautom */
-                                       ,INPUT 0                  /*par_inprolot*/ 
-                                       ,INPUT 0                  /*par_tplotmov */
-                                       ,OUTPUT TABLE tt-ret-lancto
-                                       ,OUTPUT aux_incrineg
-                                       ,OUTPUT aux_cdcritic
-                                       ,OUTPUT aux_dscritic).
-
-                     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                      DO:  
-                         UNIX SILENT VALUE("echo " + 
-                                       STRING(TIME,"HH:MM:SS") +
-                                       " - " + glb_cdprogra + "' --> '"
-                                       + aux_dscritic +  
-                                       " >> log/proc_message.log").
-						 UNDO, RETURN "NOK".
-                      END.  
-                
-                END. /*end pode debitar*/         
              END.
         ELSE             /*  taxa de devolucao de cheque  */
         IF   crapdev.cdhistor = 46  AND
@@ -1319,19 +1259,12 @@ PROCEDURE gera_lancamento:
                                        TRUE
                                   ELSE FALSE.
                                   
-                /* iremos verificar se registro criado na craplcm anteriormente Ã© historico 47, 
+                /* iremos verificar se registro criado na craplcm anteriormente é historico 47, 
                    caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
                 IF  crapdev.cdhistor = 47 AND 
                    (p-cddevolu = 5 OR p-cddevolu = 6) THEN
                     DO:                     
                        
-                      /* Verificar se pode realizar o debito debitar  */
-                    IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                                         INPUT aux_cdcooper, 
-                                         INPUT aux_nrdconta,
-                                         INPUT crapdev.cdhistor) THEN
-                    DO:
-                      
                        FIND CURRENT craplot NO-LOCK NO-ERROR.                        
                        RELEASE craplot.
                        
@@ -1351,12 +1284,6 @@ PROCEDURE gera_lancamento:
                        
                        IF  AVAILABLE crapcdb THEN          
                            DO:                               
-                            IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                                                 INPUT aux_cdcooper, 
-                                                 INPUT crapcdb.nrdconta,
-                                                 INPUT 399) THEN
-                             DO:
-                      
                                /* criar lancamento com o historico 399 e historico 10119 */
                                DO  WHILE TRUE:
                         
@@ -1438,7 +1365,7 @@ PROCEDURE gera_lancamento:
 
                                         UNDO, RETURN "NOK".
                                END.
- 
+                               
                                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                                       ( INPUT craplot.dtmvtolt          /* par_dtmvtolt */
                                        ,INPUT craplot.cdagenci          /* par_cdagenci */
@@ -1451,7 +1378,7 @@ PROCEDURE gera_lancamento:
                                        ,INPUT crapdev.vllanmto          /* par_vllanmto */
                                        ,INPUT aux_nrctalcm              /* par_nrdctabb */
                                        ,INPUT (IF   crapdev.cdalinea <> 0 THEN
-                                                    STRING(crapdev.cdalinea)
+                                                              STRING(crapdev.cdalinea)
                                                ELSE "21")               /* par_cdpesqbb */
                                        ,INPUT 0                         /* par_vldoipmf */
                                        ,INPUT 0                         /* par_nrautdoc */
@@ -1509,66 +1436,8 @@ PROCEDURE gera_lancamento:
                                       craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
 
                                VALIDATE craplot.
-                              
-                               
-                               
-                                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                                      ( INPUT craplot.dtmvtolt         /* par_dtmvtolt */
-                                       ,INPUT craplot.cdagenci         /* par_cdagenci */
-                                       ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
-                                       ,INPUT craplot.nrdolote        /* par_nrdolote */
-                                       ,INPUT crapcdb.nrdconta        /* par_nrdconta */
-                                       ,INPUT crapcdb.nrcheque        /* par_nrdocmto */
-                                       ,INPUT 399                     /* par_cdhistor */
-                                       ,INPUT craplot.nrseqdig + 1   /* par_nrseqdig */
-                                       ,INPUT crapdev.vllanmto       /* par_vllanmto */
-                                       ,INPUT aux_nrctalcm           /* par_nrdctabb */
-                                       ,INPUT IF   crapdev.cdalinea <> 0 THEN
-                                                    STRING(crapdev.cdalinea)
-                                              ELSE "21"          /* par_cdpesqbb */
-                                       ,INPUT 0                  /* par_vldoipmf */
-                                       ,INPUT 0                  /* par_nrautdoc */
-                                       ,INPUT 0                  /* par_nrsequni */
-                                       ,INPUT crapcdb.cdbanchq   /* par_cdbanchq */
-                                       ,INPUT 0                  /* par_cdcmpchq */
-                                       ,INPUT crapcdb.cdagechq   /* par_cdagechq */
-                                       ,INPUT crapcdb.nrctachq   /* par_nrctachq */
-                                       ,INPUT 0                  /* par_nrlotchq */
-                                       ,INPUT 0                  /* par_sqlotchq */
-                                       ,INPUT ""               /* par_dtrefere */
-                                       ,INPUT TIME               /* par_hrtransa */
-                                       ,INPUT crapdev.cdoperad   /* par_cdoperad */                               
-                                       ,INPUT 0                  /* par_dsidenti */
-                                       ,INPUT crapcdb.cdcooper   /* par_cdcooper */
-                                       ,INPUT 0                  /* par_nrdctitg */
-                                       ,INPUT ""                 /* par_dscedent */
-                                       ,INPUT 0                  /* par_cdcoptfn */
-                                       ,INPUT 0                  /* par_cdagetfn */
-                                       ,INPUT 0                  /* par_nrterfin */
-                                       ,INPUT 0                  /* par_nrparepr */
-                                       ,INPUT 0                  /* par_nrseqava */
-                                       ,INPUT 0                  /* par_nraplica */
-                                       ,INPUT 0                  /*par_cdorigem*/
-                                       ,INPUT 0                  /* par_idlautom */
-                                       ,INPUT 0                  /*par_inprolot*/ 
-                                       ,INPUT 0                  /*par_tplotmov */
-                                       ,OUTPUT TABLE tt-ret-lancto
-                                       ,OUTPUT aux_incrineg
-                                       ,OUTPUT aux_cdcritic
-                                       ,OUTPUT aux_dscritic).
-
-                                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                                  DO:  
-                                    UNIX SILENT VALUE("echo " + 
-                                       STRING(TIME,"HH:MM:SS") +
-                                       " - " + glb_cdprogra + "' --> '"
-                                       + aux_dscritic +  
-                                       " >> log/proc_message.log").
-								    UNDO, RETURN "NOK". 
-                                  END.
                                
                                ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
-                             END. /*Fim pode debitar*/  
                            END.
                        ELSE /* nao encontrou crapcdb */
                            DO:
@@ -1588,14 +1457,6 @@ PROCEDURE gera_lancamento:
                         
                               IF  AVAILABLE crapcst THEN
                                   DO:
-                                  /* Verificar se pode realizar o debito debitar  */
-                                  IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                                                        INPUT crapcst.cdcooper, 
-                                                        INPUT crapcst.nrdconta,
-                                                        INPUT  351) THEN
-                                  DO:
-                                      
-                                  
                                       /* criar lancamento com o historico 351 e lote 10119 */
                                       DO  WHILE TRUE:
                                 
@@ -1770,9 +1631,7 @@ PROCEDURE gera_lancamento:
                                       
                                       ASSIGN crapcst.insitchq = 3.  /* Devolvido */
                                   END.
-                               END. /*pode debitar Historicoo351*/    
                            END.
-                       END. /*end pode debitar Historico 47*/    
                     END. /* crapdev.cdhistor = 47 */
         
         IF   crapdev.cdpesqui = "TCO" THEN
@@ -1791,7 +1650,7 @@ PROCEDURE gera_lancamento:
               /*ELSE Estava impedindo que cheques com alinea 35 
 				     tivessem seus campos atualizados para serem 
 					 processados e constarem no Relatorio 219 */ 
-                  /* Verificar se alinea do cheque devolvido Ã© 35 */
+                  /* Verificar se alinea do cheque devolvido é 35 */
                   IF  crapdev.cdalinea = 35 THEN
                       ASSIGN crapdev.insitdev = 1
                              crapdev.indevarq = 2.
@@ -2189,9 +2048,9 @@ PROCEDURE gera_impressao:
           aux_handproc = PROC-HANDLE NO-ERROR
                                   (INPUT crapass.inpessoa, /* Tipo de pessoa */
                                    INPUT crapass.cdtipcta, /* Tipo de conta */
-                                  OUTPUT "",               /* DescriÃ§ao do Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
                                   OUTPUT "",               /* Flag Erro */
-                                  OUTPUT "").              /* DescriÃ§ao da crÃ­tica */
+                                  OUTPUT "").              /* Descriçao da crítica */
         
         CLOSE STORED-PROC pc_descricao_tipo_conta
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -2908,9 +2767,9 @@ PROCEDURE gera_arquivo_cecred:
         END.
 
 
-       /* Diego - Devolucoes automaticas alinea 37, nÄƒo geram lanÃ§amento de 
-       devoluÃ§Äƒo na conta do cooperado, serÄƒo apenas retornadas no arquivo 
-       de devoluÃ§Äƒo  */
+       /* Diego - Devolucoes automaticas alinea 37, nao geram lançamento de 
+       devoluçao na conta do cooperado, serao apenas retornadas no arquivo 
+       de devoluçao  */
        IF   crapdev.nrdconta = 0 THEN
             DO:
                 CREATE tt-relchdv.
@@ -3070,7 +2929,7 @@ PROCEDURE gera_arquivo_cecred:
                                    crapass.nrdconta = crapdev.nrdconta
                                    NO-LOCK NO-ERROR.
 
-                /* Tratamento para cheques migrados aonde o formulÃ¡rio do cheque 
+                /* Tratamento para cheques migrados aonde o formulário do cheque 
                    encontra-se na cooperativa antiga. */
                 IF   NOT AVAILABLE crapass THEN                     
                      FIND crapass WHERE crapass.cdcooper = p-cdcooper     AND
@@ -3085,9 +2944,9 @@ PROCEDURE gera_arquivo_cecred:
                           aux_handproc = PROC-HANDLE NO-ERROR
                                                   (INPUT crapass.inpessoa, /* Tipo de pessoa */
                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
-                                                  OUTPUT "",               /* DescriÃ§Ã£o do Tipo de conta */
+                                                  OUTPUT "",               /* Descrição do Tipo de conta */
                                                   OUTPUT "",               /* Flag Erro */
-                                                  OUTPUT "").              /* DescriÃ§Ã£o da crÃ­tica */
+                                                  OUTPUT "").              /* Descrição da crítica */
                         
                         CLOSE STORED-PROC pc_descricao_tipo_conta
                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -3174,7 +3033,7 @@ PROCEDURE gera_arquivo_cecred:
                                    
                 IF  NOT AVAILABLE gncpchq THEN                   
                     DO:
-                        /* Tratamento para cheques migrados aonde o formulÃ¡rio do cheque 
+                        /* Tratamento para cheques migrados aonde o formulário do cheque 
                            encontra-se na cooperativa antiga. */
                         FIND craptco WHERE craptco.cdcopant = p-cdcooper
                                        AND craptco.nrctaant = crapdev.nrdctabb
@@ -3364,7 +3223,7 @@ PROCEDURE gera_arquivo_cecred:
                
                                 OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
                                
-           END.           
+                            END.           
        																									  
                           ASSIGN aux_linhaarq = "20" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + 
                                                 STRING(MONTH(glb_dtmvtolt),"99")   +
@@ -3381,6 +3240,7 @@ PROCEDURE gera_arquivo_cecred:
                                                 " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
                                           
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
                        END.
                    
                NEXT.
