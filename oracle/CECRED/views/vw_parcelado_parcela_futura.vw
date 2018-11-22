@@ -324,4 +324,3 @@ group by
      , NrCtr
      , cdproduto
      , PercPclAnt
-;
