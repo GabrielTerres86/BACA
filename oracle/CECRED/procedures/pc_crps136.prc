@@ -93,7 +93,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps136 (pr_cdcooper IN crapcop.cdcooper%T
      WHERE cor.cdcooper = pr_cdcooper
        AND cor.nrdconta = pr_nrdconta
        AND cor.nrcheque = pr_nrcheque
-       AND cor.cdlantar > 0
+       AND (cor.cdlantar > 0 OR cor.dtmvtolt < to_date('22/11/2018','DD/MM/RRRR'))
        AND cor.cdhistor NOT IN (816,818,817,825,835);
   
   -- Cursor Cadastro de Contra-Ordens
