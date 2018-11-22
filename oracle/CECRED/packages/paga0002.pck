@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 31/08/2018
+   Data    : 13/04/2011                        Ultima atualizacao: 14/11/2018
 
    Dados referentes ao programa:
 
@@ -174,6 +174,8 @@ create or replace package cecred.PAGA0002 is
                16/08/2018 - Inclusão do campo dsorigem no retorno da pltable da procedure pc_obtem_agendamentos,
                             Prj. 363 (Jean Michel)
   
+			   14/11/2018 - Incluido tratamento para agendamento de pagamentos DDA no OFSAA.
+							(Reinert)
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -7163,6 +7165,7 @@ create or replace package body cecred.PAGA0002 is
     vr_possuipr VARCHAR2(1);
     vr_cdprodut_afra INTEGER;
     vr_cdoperac_afra INTEGER;
+    vr_flgpddda BOOLEAN := FALSE;
 
   BEGIN
 
@@ -7696,8 +7699,17 @@ create or replace package body cecred.PAGA0002 is
           vr_cdoperac_afra := 12; --> TED Eletronica
         ELSIF pr_cdtiptra = 2 THEN
           IF pr_idtpdpag = 2 THEN
+
+            vr_flgpddda := pr_idtitdda > 0;
+
             vr_cdprodut_afra := 44; --> Pagamento de titulos
+
+  			IF vr_flgpddda THEN
+				vr_cdoperac_afra :=  8; --> Pagamento de titulos DDA
+			ELSE
             vr_cdoperac_afra :=  1; --> Pagamento de titulos
+			END IF;
+
           ELSE
           
             vr_cdprodut_afra := 43; --> Pagamento de Convenios
