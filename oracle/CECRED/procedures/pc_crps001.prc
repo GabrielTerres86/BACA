@@ -1708,6 +1708,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                     --Se nao encontrou registro
                  IF cr_craplot%NOTFOUND THEN
                    --Criar lote
+				   close cr_craplot;
+
                    BEGIN
                      --Inserir a capa do lote retornando informacoes para uso posterior
                         LANC0001.pc_incluir_lote(pr_dtmvtolt => vr_dtmvtolt
