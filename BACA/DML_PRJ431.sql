@@ -594,7 +594,7 @@ INSERT INTO crapaca(nmdeacao
 									 ,'sspc0002'
 									 ,'pc_imprimir_termo_reciproci'
 									 ,'pr_nrdconta, pr_nmdtest1, pr_cpftest1, pr_nmdtest2, pr_cpftest2, pr_idcalculo_reciproci, pr_tpimpres'
-									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'sspc0002'));
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'SSPC0002'));
 
 -- ------------------------------------------
 -- Inclusão dos indicadores da reciprocidade
@@ -643,7 +643,7 @@ INSERT INTO tbrecip_indicador(idindicador
 -- Insert na CRAPPRM
 -- ------------------
 
-INSERT INTO crapprm(nmsistem
+/*INSERT INTO crapprm(nmsistem
                    ,cdcooper
 									 ,cdacesso
 									 ,dstexprm
@@ -655,7 +655,7 @@ INSERT INTO crapprm(nmsistem
 									 ,'Data da nova vigencia para impressao do novo modelo de contrato.'
 									 ,'27/03/2018'
 									 );
-
+									 */
 INSERT INTO crapprm (nmsistem
 	                ,cdcooper
 	                ,cdacesso
@@ -673,6 +673,12 @@ INSERT INTO crapprm (nmsistem
 INSERT INTO craptel (NMDATELA,NRMODULO,CDOPPTEL,TLDATELA,TLRESTEL,FLGTELDF,FLGTELBL,NMROTINA,LSOPPTEL,INACESSO,CDCOOPER,IDSISTEM,IDEVENTO,NRORDROT,NRDNIVEL,NMROTPAI,IDAMBTEL)
 VALUES ('ATENDA','5','@,C,H,X','Cadastro de Cobranca','Reciprocidade','0','1','RECIPROCIDADE','ACESSO,CONSULTA,HABILITACAO,CANCELAMENTO','2','16','1','0','20','1',' ','2');
  
+
+ UPDATE CRAPTEL A SET A. NRDNIVEL = 0
+ WHERE A.NMDATELA = 'ATENDA'
+   AND A.NMROTINA = 'COBRANCA'
+   AND A.CDCOOPER = 16;
+
 -- ----------------
 -- Demais scripts
 -- ----------------
