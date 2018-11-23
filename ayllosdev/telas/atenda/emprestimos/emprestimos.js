@@ -3505,7 +3505,9 @@ function controlaLayout(operacao) {
 					var cdModeloFipe = $("#"+idElementModelo).val();
 					var cdAnoFipe;
 					if(modeloBem == '') {
-						cdAnoFipe = $(this).val();
+						//cdAnoFipe = $(this).val();
+						arrPart = $("option:selected", this).text().split(" ");
+						cdAnoFipe = arrPart[0];
 					} else {
 						cdAnoFipe = modeloBem;
 					}
