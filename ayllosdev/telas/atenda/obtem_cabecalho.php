@@ -294,8 +294,8 @@ if ( isset($cabecalho[18]->cdata) ) {
 //if ( isset($cabecalho[20]->cdata) ) {
 //	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
 //}
-if ( isset($cabecalho[28]->cdata) ) {
-	echo '$("#cdscobeh","#frmCabAtenda").val("' . $cabecalho[28]->cdata . '");';
+if ( isset($cabecalho[29]->cdata) ) {
+	echo '$("#cdscobeh","#frmCabAtenda").val("' . $cabecalho[29]->cdata . '");';
 }
 if ( isset($cabecalho[21]->cdata) ) {
 	echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';

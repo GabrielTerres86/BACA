@@ -7423,7 +7423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
-                        '<cdscobeh>'|| vr_tab_cabec(i).cdscobeh      ||'</cdschbeh>'||
+                        '<cdscobeh>'|| vr_tab_cabec(i).cdscobeh      ||'</cdscobeh>'||
                         '</Registro>');
       
       END LOOP;
