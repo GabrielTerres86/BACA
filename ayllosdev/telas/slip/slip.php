@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : parcba.php
- * CRIAÇÃO      : Alcemir Junior - Mout's
- * DATA CRIAÇÃO : 21/09/2018
- * OBJETIVO     : Mostrar tela PARCBA - Cadastro de parametros transações Bancoob x AILOS
+ * FONTE        : slip.php
+ * CRIAÃ‡ÃƒO      : Alcemir Junior - Mout's
+ * DATA CRIAÃ‡ÃƒO : 10/09/2018
+ * OBJETIVO     : Mostrar tela SLIP - 
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
  */
 	session_start();
@@ -29,7 +29,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="parcba.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="slip.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -54,7 +54,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">PARCBA - Cadastramento De Parametros Bancoob x AILOS</td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">SLIP - Lancamentos Contabeis</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -79,17 +79,13 @@
 																		<div id="divRotina"></div>
 																		<div id="divUsoGenerico"></div>
 																		<div id="divTela">
-																			<!-- Cabeçalho com as opções -->
+																			<!-- CabeÃ§alho com as opÃ§Ãµes -->
 																			<? include('form_cabecalho.php'); ?>
 
 																			<div id="divBotoes" style='border-top:1px solid #777'>
 																				<a href="#" class="botao" id="btVoltar"   onclick="controlaVoltar(); return  false;">Voltar</a>
 
 																				<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>																			
-																				<a href="#" class="botao" id="btExcluir" onclick="controlaExcluir(); return false;">Excluir</a>
-																				
-																				<a href="#" class="botao" id="btGerarConciliacao" onclick="geraConciliacao(); return false;"><? echo utf8ToHtml("Executar concilia&ccedil;&atildeo") ?></a>																			
-
 																			</div>
 																		</div>
 																	</td>

@@ -18,6 +18,9 @@
  *				   18/07/2018 - Alterado para esconder o campo referente ao débito após o estouro de conta  
  * 							    Criado novo campo "indebprj", indicador de débito após transferência da CC para Prejuízo
  * 							    PJ 450 - Diego Simas - AMcom
+ *
+ *                 23/11/2018 - Implantacao Projeto 421, parte 2
+ *                              Heitor (Mouts)
  * -------------- 
  */
 ?> 
@@ -93,9 +96,11 @@
 		exibirErro('error','C&oacute;digo do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('cdhistor','frmHistorico');",false);
 	}
 
+    /*
     if ($cddopcao == "I" && $cdhinovo == 0 ) {
 		exibirErro('error','Novo c&oacute;digo do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('cdhinovo','frmHistorico');",false);
 	}
+	*/
 	
     if ($dshistor == '' ) {
 		exibirErro('error','Nome do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('dshistor','frmHistorico');",false);
@@ -287,6 +292,10 @@
 	} 
 
 	// Se nao ocorreu erro, exibe mensagem de sucesso e volta para o estado inicial da tela
+	if ($cddopcao == "I") {
+		echo "showError('inform','Historico ".$xmlObjeto->roottag->tags[0]->attributes['CDHISNOV']." incluido com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','estadoInicial();');";
+	} else {
 	echo 'showError("inform","Operacao Efetuada com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");';	
+	}
 	
 ?>

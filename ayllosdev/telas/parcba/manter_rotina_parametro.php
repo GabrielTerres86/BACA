@@ -56,6 +56,10 @@
 			$nmdeacao = "CONSULTA_HISTORICO";
 		break;
 
+		case "BHT":
+			$nmdeacao = "CONSULTA_HISTORICO";
+		break;
+
 		// busca transacao bancoob
         case "BT":
 			$nmdeacao = "CONSULTA_TRANSACAO";
@@ -72,10 +76,16 @@
 		case "E":
 			$nmdeacao = "DELETA_TRANSACAO";
 		break;
-        // esclusao de historico ailos
+        // exclusao de historico ailos
 		case "EH":
 			$nmdeacao = "DELETA_HISTORICO";			
 		break;
+		
+		// Executar conciliacao
+		case "G":
+			$nmdeacao = "EXECUTA_CONCILIACAO";			
+		break;
+		
 		//mesagem padrao 
 		default:
 			// Se não for uma opção válida exibe o erro
@@ -89,7 +99,7 @@
 	$xml .= "  <Dados>";
 	
 	if ($cddopcao == "C" || $cddopcao == "CH" || $cddopcao == "BH" || $cddopcao == "BT" ||
-	    $cddopcao == "BLH" || $cddopcao == "BTE" || $cddopcao == "BLHE" ) {
+	    $cddopcao == "BLH" || $cddopcao == "BTE" || $cddopcao == "BLHE" || $cddopcao == "BHT" ) {
 	   $xml .= "<cdtransa>".$cdtransa."</cdtransa>";
 	   $xml .= "<cdhistor>".$cdhistor."</cdhistor>";
 	}
@@ -118,7 +128,6 @@
        
 	}
 
-	
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 	
@@ -179,6 +188,26 @@
 				$command .=  "setarDesHistoricoAilos('".$historico->dshistor."');";
 			}
 
+		break;
+
+		// buscar descrição historico ailos
+		case "BHT" :
+			$flgconsulta = False;
+
+			foreach($xmlObjeto->historico as $historico){
+				$flgconsulta = True;
+
+				$command .=  "setarDesHistoricoAilosTarifa('".$historico->dshistor.
+				                                        "','".$historico->dscontabil.
+														"','".$historico->nrctadeb_pf.
+														"','".$historico->nrctacrd_pf.
+														"','".$historico->nrctadeb_pj.
+														"','".$historico->nrctacrd_pj."');";
+			}
+
+			if (!$flgconsulta){
+         		$command .=  "setarDesHistoricoAilosTarifa('','','','','','');";
+			}
 		break;
 
 		// buscar transacao bancoob		
@@ -246,6 +275,10 @@
 
 		case "E" :				   		   					
 			$command .=  "finalizaExclusao();";			
+		break;
+		
+		case "G" :				   		   					
+			$command .=  "finalizaConciliacao();";			
 		break;
 
 	}

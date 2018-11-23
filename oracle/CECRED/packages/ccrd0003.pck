@@ -98,6 +98,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             10/10/2018 - Feita a inclusao de uma nova variavel que faz a leitura do nome do titular do cartao,
   --                          onde é gerada a critica 999.
+  --
+  --             23/11/2018 - Implantacao projeto 421 - Melhorias nas ferramentas contabeis e fiscais, entrega 2.
+  --                          Heitor (Mouts) - Prj421
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes

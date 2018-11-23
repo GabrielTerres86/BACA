@@ -58,6 +58,7 @@ DEF VAR aux_nmarqpdf AS CHAR                                         NO-UNDO.
 
 DEF VAR aux_qtregist AS INTE                                         NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                         NO-UNDO.
+DEF VAR aux_cdhisnov AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdhstctb AS INTE                                         NO-UNDO.
 DEF VAR aux_dsexthst AS CHAR                                         NO-UNDO.
@@ -216,6 +217,8 @@ PROCEDURE Busca_Dados:
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT TRUE,                                    
+                     INPUT aux_cdprodut,
+                     INPUT aux_cdagrupa,					 
                     OUTPUT aux_qtregist,
                     OUTPUT aux_nmdcampo,
                     OUTPUT TABLE tt-histor,
@@ -409,6 +412,7 @@ PROCEDURE Grava_Dados:
 					 INPUT aux_operauto,
 					 INPUT aux_idmonpld,
                     OUTPUT aux_nmdcampo,
+					OUTPUT aux_cdhisnov,
                     OUTPUT TABLE tt-erro).   
                                              
     IF  RETURN-VALUE = "NOK" THEN                                
@@ -431,6 +435,7 @@ PROCEDURE Grava_Dados:
     ELSE
         DO:
            RUN piXmlNew.
+		   RUN piXmlAtributo (INPUT "cdhisnov",INPUT STRING(aux_cdhisnov)).
            RUN piXmlSave.
         END.
 
@@ -528,3 +533,37 @@ PROCEDURE Gera_ImpressaoO:
 
 END PROCEDURE. /* Gera_ImpressaoO */
 
+PROCEDURE Busca_Indfuncao:
+
+    RUN Busca_Indfuncao IN hBO
+                  (  INPUT aux_cdcooper,       
+                    OUTPUT aux_qtregist,
+                    OUTPUT TABLE tt-indfuncao).
+                    
+    IF  RETURN-VALUE = "NOK" THEN
+        DO:
+           FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+           IF  NOT AVAILABLE tt-erro  THEN
+               DO:
+                   CREATE tt-erro.
+                   ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                             "busca de dados.".
+               END.
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+           RUN piXmlAtributo (INPUT "nmdcampo",INPUT aux_nmdcampo).
+           RUN piXmlSave.
+           
+        END.
+    ELSE
+        DO:
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-indfuncao:HANDLE,
+                            INPUT "Dados").
+           RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
+           RUN piXmlSave.
+        END.
+
+END PROCEDURE.

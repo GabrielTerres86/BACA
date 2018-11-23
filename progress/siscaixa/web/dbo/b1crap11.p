@@ -1595,14 +1595,27 @@ PROCEDURE valida-permissao-historico:
     DEF INPUT  PARAM p-senha            AS CHAR.
     DEF INPUT  PARAM p-cod-histor       AS INTEGER NO-UNDO.
 
+	DEF VAR l-his-senha AS CHAR NO-UNDO.
+
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
+	FIND crapprm WHERE crapprm.cdcooper = crapcop.cdcooper
+				   AND crapprm.cdacesso = 'HIS_SENHA_ROTINA_11'
+				   AND crapprm.nmsistem = 'CRED'
+				   NO-LOCK NO-ERROR.
+
+	IF AVAIL crapprm THEN
+	  ASSIGN l-his-senha = crapprm.dsvlrprm.
+	ELSE
+	  ASSIGN l-his-senha = " ".
+	
     IF  p-cod-histor <> 701     AND 
         p-cod-histor <> 702     AND
         p-cod-histor <> 733     AND 
         p-cod-histor <> 734     AND
         p-cod-histor <> 1152    AND
-        p-cod-histor <> 1153    THEN
+        p-cod-histor <> 1153    AND
+        NOT CAN-DO(l-his-senha,STRING(p-cod-histor)) THEN
         RETURN 'OK'.
 
     IF  p-codigo = "" THEN 
@@ -1934,6 +1947,20 @@ FUNCTION reabilita-caixa-sangria RETURNS LOGICAL (INPUT p-cod-cooper  AS INTE,
         RETURN FALSE.
 
     RETURN TRUE.
+
+END FUNCTION.
+
+FUNCTION consulta-his-senha RETURNS CHAR (INPUT p-cod-cooper  AS INTE):
+
+    FIND crapprm WHERE crapprm.cdcooper = p-cod-cooper 
+	               AND crapprm.cdacesso = "HIS_SENHA_ROTINA_11"
+				   AND crapprm.nmsistem = "CRED"
+				   NO-LOCK NO-ERROR.
+
+    IF AVAIL crapprm THEN
+      RETURN crapprm.dsvlrprm.
+	ELSE
+	  RETURN "".
 
 END FUNCTION.
     

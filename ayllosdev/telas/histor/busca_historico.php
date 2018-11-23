@@ -23,6 +23,9 @@
  *
  *                20/07/2018 - Incluído novo campo "Debita após transferência da conta para prejuízo" (indebprj)
  *                             PJ 450 - Diego Simas - AMcom 
+ *
+ *                23/11/2018 - Implantacao do Projeto 421, parte 2
+ *                             Heitor (Mouts)
  * -------------- 
  */
 ?>
@@ -151,15 +154,24 @@
 	echo "$('#inperdes','#frmHistorico').val('" . getByTagName($historico,'inperdes') . "');";
 	// Fim SM 5 - 364 - RMM  - inperdes
 	
-	
-	
 	if( $cddopcao == "X" ){
 		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
 		echo "$('#btSalvar').focus();";
+	} elseif ($cddopcao == "T"){
+		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
+		echo "$(\"#nrctatrc\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#nrctatrd\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#vltarcxo\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#vltarint\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#vltarcsh\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#vltarayl\",\"#frmHistorico\").habilitaCampo();";
+		echo "$(\"#dshistor\",\"#frmHistorico\").focus();";
 	} else {
 		echo "$('input[type=\"text\"],select','#frmHistorico').habilitaCampo().removeClass('campoErro');";
 		echo "$(\"#cdhistor\",\"#frmHistorico\").desabilitaCampo();";
 		echo "$(\"#cdhinovo\",\"#frmHistorico\").desabilitaCampo();";
+		echo "$(\"#indoipmf\",\"#frmHistorico\").desabilitaCampo();";
+		echo "$(\"#inclasse\",\"#frmHistorico\").desabilitaCampo();";
 		echo "$(\"#dshistor\",\"#frmHistorico\").focus();";
 	}
 ?>

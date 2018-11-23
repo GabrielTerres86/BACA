@@ -7,6 +7,7 @@
 	* --------------
 	* ALTERAÇÕES   : 11/03/2016 - Homologacao e ajustes da conversao da tela HISTOR (Douglas - Chamado 412552)
 	*			   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+	*              : 23/11/2018 - Implantacao do Projeto 421, parte 2 - Heitor (Mouts)
 	* --------------
 	*/
 
@@ -26,6 +27,7 @@
 					<option value="C">C - Consultar</option>
 					<option value="I">I - Incluir</option>
 					<option value="A">A - Alterar</option>
+					<option value="T">T - Alterar parametros tarifa</option>
 					<option value="X">X - Replicar</option>
 					<option value="B">B - Visualizar hist&oacute;ricos rotina 11 (Boletim do caixa)</option>		
 					<option value="O">O - Visualizar hist&oacute;ricos rotina 56 (Inclus&atilde;o outros)</option>
