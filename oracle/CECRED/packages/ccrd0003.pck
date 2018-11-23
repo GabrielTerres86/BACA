@@ -8348,6 +8348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    09/07/2018 - Validar critica 080 apos a criacao da critica no
                                 relatorio (Lucas Ranghetti INC0018668)
 				   23/10/2018 - Adicionado cursor para encontrar cooperado pelo cpf (Bruno Mouts INC0024859 )
+				   13/11/2018 - Criado uma nova regra onde gera lote a cada mil mensagem sms (Douglas Mouts PRB0040381)
     ............................................................................ */
 
     DECLARE
@@ -8411,7 +8412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split(); 
       vr_indice     NUMBER;
-
+      vr_limitsms   NUMBER;
 	  vr_cpf        NUMBER;                                           --> Recebe o CPF do cooperado 
 
       vr_tplimcrd   NUMBER(1) :=  0; -- 0=concessao, 1=alteracao
@@ -9155,10 +9156,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       IF pr_dscritic IS NOT NULL THEN
                         RAISE vr_exc_erro;
                       END IF;
+
+                       vr_limitsms :=  nvl(vr_limitsms,0)*0;
                       
-                      vr_vet_nrdlote(pr_cdcooper) := vr_idlotsms;
+                    END IF;
+
+                    --Se existe e se tiver mais de um registro no lote
+                    IF  vr_vet_nrdlote.EXISTS(pr_cdcooper) AND  vr_limitsms > 1  THEN
                       
+                        --Se no lote ter mais de mil registro, criar outro lote.
+                      	IF mod(nvl(vr_limitsms,0), 1000) = 0 THEN
+                            -- Cria o lote de sms
+                       		esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
+                                               ,pr_idtpreme      => 'SMSCRDBCB'
+                                               ,pr_dsagrupador   => pr_nmrescop
+                                               ,pr_idlote_sms    => vr_idlotsms
+                                               ,pr_dscritic      => pr_dscritic);
+
+                            -- Se retornar erro                       
+                        	IF pr_dscritic IS NOT NULL THEN
+                         	 RAISE vr_exc_erro;
+                        	END IF;
+                      	END IF;  
                     END IF; -- vr_idlotsms IS NULL
+                    
+                    vr_limitsms := nvl(vr_limitsms,0) + 1;
+                    vr_vet_nrdlote(pr_cdcooper) := vr_idlotsms;
                     
                     -- Gerar registro do SMS a ser enviado
                     esms0001.pc_escreve_sms(pr_idlote_sms => vr_vet_nrdlote(pr_cdcooper)
