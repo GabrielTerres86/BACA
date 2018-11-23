@@ -54,6 +54,9 @@
                              
                 14/05/2018 - Adicionar chamada do fonte imprim_unif.p no lugar do imprim.p
                              (Lucas Ranghetti #860204)
+
+                09/11/2018 - Criado um tratamento para apresentar 30 carcatereres no campo dstransa (Descrição da transação).
+                			 SCTASK0032223 (Paulo Kowalsky).             
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -227,6 +230,11 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
         ELSE
             RUN cria-registro-alteracao-tarifa.
 
+        aux_dstransa = string(TRIM(ENTRY(6,  aux_setlinha, "|"),'"')).       
+        RUN fontes/substitui_caracter.p (INPUT-OUTPUT aux_dstransa).                           
+        aux_dstransa = SUBSTRING(aux_dstransa,1,30).
+
+
         ASSIGN crapstn.dsctacro = TRIM(ENTRY(47, aux_setlinha, "|"),'"')                    /* fccrarreco */
                crapstn.dsctccrs = TRIM(ENTRY(34, aux_setlinha, "|"),'"')                    /* fccrbcodes */
                crapstn.dsctccrm = TRIM(ENTRY(32, aux_setlinha, "|"),'"')                    /* fccrbcorem */
@@ -241,7 +249,7 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                crapstn.dsctcdds = TRIM(ENTRY(20, aux_setlinha, "|"),'"')                    /* fcdbctbdes */
                crapstn.dsctcddm = TRIM(ENTRY(10, aux_setlinha, "|"),'"')                    /* fcdbctbrem */
                crapstn.dsctcdbt = TRIM(ENTRY(52, aux_setlinha, "|"),'"')                    /* fcdbtarifa */
-               crapstn.dstransa = TRIM(ENTRY(6,  aux_setlinha, "|"),'"')                    /* fcdescri   */
+               crapstn.dstransa = aux_dstransa                                              /* fcdescri   */
                crapstn.cdhdsbcc = TRIM(ENTRY(17, aux_setlinha, "|"),'"')                    /* fchsdbccor */
                crapstn.tpmeiarr = TRIM(ENTRY(58, aux_setlinha, "|"),'"')                    /* fcperarrec */ 
                crapstn.dspercon = TRIM(ENTRY(42, aux_setlinha, "|"),'"')                    /* fcpermconv */
