@@ -4,10 +4,15 @@
  * CRIAÇÃO      	: Jaison Fernando
  * DATA CRIAÇÃO 	: Novembro/2015
  * OBJETIVO     	: Form para a tela TAB097
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 08/10/2018
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕ•ES   	: 
  * --------------
+ * 
+ *  08/10/2018 - Inclusao de parametro dsnegufds referente às UFs não autorizadas 
+                 a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
+                 Marcelo R. Kestring - Supero)
+ *
  */ 
     session_start();
 
@@ -25,7 +30,7 @@
 	$dsuf       = $arrDados[1];
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',true);
 	}
 
 	// Montar o xml de Requisicao
@@ -42,7 +47,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Aimaro','',false);
 	}
 
 	$param_ufnegdif = $xmlObj->roottag->tags[0]->tags[1]->tags[0];
@@ -104,7 +109,19 @@
                                         </form>
                                         <div id="divBotoes">
                                             <a href="#" class="botao" id="btCNAEVoltar" onClick="fechaRotina($('#divRotina')); return false;">Voltar</a>
+											
+											<?php
+												// Se for excecao da negativacao Serasa
+												if ($indexcecao == 3) {
+													?>
+                                            		<a href="#" class="botao" id="btNegUFDSIncluir" onClick="confirmaInclusao('NEGUFDS');"><?php echo $cddopcao == 'A' ? 'Alterar' : 'Incluir' ?></a>
+													<?php
+												} else {
+													?>
                                             <a href="#" class="botao" id="btCNAEIncluir" onClick="confirmaInclusao('UF');"><?php echo $cddopcao == 'A' ? 'Alterar' : 'Incluir' ?></a>
+													<?php
+												}
+											?>
                                         </div>
 									</div>
 								</td>

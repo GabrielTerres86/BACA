@@ -1,13 +1,17 @@
 <?
 /*!
  * FONTE        	: form_parprt.php
- * CRIA��O      	: Andre Clemer
- * DATA CRIA��O 	: Janeiro/2018
+ * CRIAÇÃO      	: Andre Clemer
+ * DATA CRIAÇÃO 	: Janeiro/2018
  * OBJETIVO     	: Form para a tela PARPRT
- * �LTIMA ALTERA��O : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 08/10/2018
  * --------------
- * ALTERA��ES   	: 
+ * ALTERAÇÕES   	: 
  * --------------
+ * 
+ *  08/10/2018 - Inclusao de parametro dsnegufds referente às UFs não autorizadas 
+                 a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
+                 Marcelo R. Kestring - Supero)
  */
 
  $estados = retornaUFs();
@@ -18,6 +22,7 @@
 	<input name="cdcooper" id="cdcooper" type="hidden" value="<? echo $glbvars["cdcooper"]; ?>" />
 	<input name="cnaes" id="cnaes" type="hidden" value="" />
 	<input name="ufs" id="ufs" type="hidden" value="" />
+	<input name="negufds" id="negufds" type="hidden" value="" />
     <br />
     <table width="100%">
         <tr>
@@ -152,6 +157,60 @@
                         <tr>
                             <td>
                                 <img class="clsExcUF" onclick="confirmaExclusao('UF','<?php echo $r ?>');" src="<?php echo $UrlImagens; ?>geral/panel-error_16x16.gif" style="width:10px; height:10px; margin-top:3px; margin-right:3px;" />
+                                <?php echo $r ?>
+                            </td>
+                            <td><?php echo $nmuf ?></td>
+                        </tr>
+                        <?php
+                    }
+				?>
+				</tbody>
+			</table>
+		</div>
+
+	</fieldset>
+
+    <br />
+
+	<fieldset id="fsetFormulario" name="fsetFormulario" style="padding:0px; margin:0px; padding-bottom:10px;">
+	<legend> <? echo utf8ToHtml('UFs autorizadas para n&atilde;o permitir emiss&atilde;o de boletos com DS - Duplicata de Servi&ccedil;o'); ?> </legend>
+        <?php
+            // Somente CECRED podera utilizar acao
+            // if ($glbvars["cdcooper"] == 3) {
+                ?>
+                <table width="100%" id="tabAcaoNegUFDS">
+                    <tr>
+                        <td>
+                            <label for="acao_negUFDS"><? echo utf8ToHtml('A&ccedil;&atilde;o:') ?></label>					
+                            <select id="acao_negUFDS" name="acao_negUFDS">
+                                <option value="I"> Incluir</option> 
+                                <option value="E"> Excluir</option>
+                            </select>
+                            <a href="#" class="botao" id="btnOKNegUFDS" onClick="executarAcao('NEGUFDS');return false;" style="text-align: right;">OK</a>
+                        </td>
+                    </tr>
+                </table>
+                <?php
+            // }
+        ?>
+        
+        <div id="divNegUFDS" class="divRegistros">
+			<table width="100%">
+				<thead>
+					<tr>
+                        <th><?php echo utf8ToHtml('UF') ?></th>
+						<th><?php echo utf8ToHtml('Descri&ccedil;&atilde;o') ?></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php
+                    foreach( $param_negufds as $r ) {
+						$key  = retornaKeyArrayMultidimensional($estados,'SIGLA',$r);
+                        $nmuf = mb_strtoupper(html_entity_decode($estados[$key]['NOME']));
+                        ?>
+                        <tr>
+                            <td>
+                                <img class="clsExcNegUFDS" onclick="confirmaExclusao('NEGUFDS','<?php echo $r ?>');" src="<?php echo $UrlImagens; ?>geral/panel-error_16x16.gif" style="width:10px; height:10px; margin-top:3px; margin-right:3px;" />
                                 <?php echo $r ?>
                             </td>
                             <td><?php echo $nmuf ?></td>

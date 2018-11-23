@@ -12883,6 +12883,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;      
     END IF;
 
+	IF rw_crapcob.cdbandoc = 085 AND
+       rw_crapcob.cddespec = 2 /*DS*/ THEN
+             
+      tela_parprt.pc_validar_dsnegufds_parprt(pr_cdcooper => pr_cdcooper,
+                                              pr_cdufsaca => rw_crapcob.cdufsaca,
+                                              pr_des_erro => vr_des_erro,	
+                                              pr_dscritic => vr_dscritic);
+        
+      IF (vr_des_erro <> 'OK') THEN
+        --Espécie de título inválida para carteira
+        vr_cdcritic := 05;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+
     -----  VALIDACOES PARA RECUSAR  -----
     IF rw_crapcob.incobran = 0  AND   -- 0 - Em Aberto
        rw_crapcob.insitcrt NOT IN (0, 4) THEN  -- Qualquer situação diferente de zero ou quatro

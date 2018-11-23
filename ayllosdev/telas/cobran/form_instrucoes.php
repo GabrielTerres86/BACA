@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   :  30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  *                 22/09/2017 - Ajustes nas validações para exibir as instruções de Serasa e Protesto (Douglas - Chamado 754911)
+ *			       05/10/2018 - Adicionado validação para não exibir Protesto 9 quando sacado estiver em uma UF não autorizada (Anderson Alan - SM_Projeto_352)
  * --------------
  */
 
@@ -18,12 +19,29 @@
 
 
 <?php 
-$esta_protestado  =  (( $flgdprot == "yes" || $flgdprot == "YES" ) && ( $qtdiaprt > 0 )) ? 1 : 0;
-$esta_negativado  = ((( $flserasa == "yes" || $flserasa == "YES" ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
+//$esta_protestado  =  (( $flgdprot == "yes" || $flgdprot == "YES" ) && ( $qtdiaprt > 0 )) ? 1 : 0;
+$esta_em_cartorio =  ( in_array($insitcrt, array('1','2','3') )) ? 1 : 0;
+$tem_inst_protest = (( strcasecmp($flgdprot, 'yes') == 0 ) && $qtdiaprt > 0 ) ? 1 : 0;
+$esta_protestado  =  ( $insitcrt == '5' ) ? 1 : 0;
+$esta_negativado  = (( strcasecmp($flserasa, 'yes') == 0 || $qtdianeg > 0 ) && $inserasa > 0) ? 1 : 0;
+$tem_inst_serasa  = strcasecmp($flserasa, 'yes') == 0 || $qtdianeg > 0 ? 1 : 0;
+
+$vr_dtvencto = implode('-', array_reverse(explode('/', $dtvencto)));
+$vr_dtmvtolt = implode('-', array_reverse(explode('/', $glbvars['dtmvtolt'])));
+$vr_dtvencto = strtotime($vr_dtvencto . ' + '.$qtlimaxp.' days');
+$vr_dtmvtolt = strtotime($vr_dtmvtolt);
+
+$exec_inst_auto = $vr_dtvencto > $vr_dtmvtolt ? 1 : 0;
+//var_dump($vr_dtvencto,$vr_dtmvtolt,$qtlimaxp,$exec_inst_auto);
 
 foreach( $registro as $r ) {
     // Por padrão vamos criar a opção da instrução em tela
 	$cria_opcao = 1;
+	
+	if (getByTagName($r->tags,'cdocorre') == 94) { // Instrução Excluir Serasa substituida pela 41 - Cancelar Instrução Automática de Protesto/Serasa
+		$cria_opcao = 0;
+	}
+	
 	// Verificar se já esta protestado
 	if ($esta_protestado == 1){
 		// Não exibir as seguintes regras 
@@ -33,6 +51,13 @@ foreach( $registro as $r ) {
 			// Não criar a opção
 			$cria_opcao = 0;
 		} 
+		// Verifica se o UF está cadastrado, caso não estiver, não permite instrução 81
+		if (!$ufCadastrado) {
+			if( getByTagName($r->tags,'cdocorre') == 81) { // Excluir Protesto com Carta de Anuência Eletrônica
+				// Não criar a opção
+				$cria_opcao = 0;
+			}
+		}
 	} else {
 		// Não está protestado
 		if( getByTagName($r->tags,'cdocorre') == 11) { // Sustar Protesto e Manter em Carteira
@@ -46,6 +71,15 @@ foreach( $registro as $r ) {
 				// Não criar a opção
 				$cria_opcao = 0;
 			} 
+		}
+		
+		// Verifica se o UF sacado está em um UF sem autorização para estar em protesto, caso estiver, não permite instrução 9
+		if ($estaEmDsnegufds) {
+			if( getByTagName($r->tags,'cdocorre') == 9 || // Protestar
+				getByTagName($r->tags, 'cdocorre') == 80) { // Incluir Instrução Automática de Protesto
+				// Não criar a opção
+				$cria_opcao = 0;
+	}
 		}
 	}
 
@@ -74,13 +108,27 @@ foreach( $registro as $r ) {
 		} 
 	}
 	
-	if (($esta_protestado == 0) && ($esta_negativado == 0)){
+	if ($esta_protestado == 0){
+		if( getByTagName($r->tags,'cdocorre') == 81) { // Excluir Protesto com Carta de Anuência Eletrônica
+			// Não criar a opção
+			$cria_opcao = 0;
+		} 
+		if ($tem_inst_serasa == 0 && $esta_negativado == 0 && $esta_em_cartorio == 0 && $tem_inst_protest == 0){
 		// Não está Negativado no Serasa
 		if( getByTagName($r->tags,'cdocorre') == 41) { // Cancelar Instrução Automática de Protesto/Serasa
 			// Não criar a opção
 			$cria_opcao = 0;
 		} 
 	}
+	}
+    if ($exec_inst_auto == 0){
+		if( getByTagName($r->tags,'cdocorre') == 80) { // Incluir Instrução Automática de Protesto
+			// Não criar a opção
+			$cria_opcao = 0;
+		} 
+	}
+	
+    //$cria_opcao = 1;	
 	
 	if ($cria_opcao == 1) {?>
         <option value="<? echo getByTagName($r->tags,'cdocorre') ?>"><? echo getByTagName($r->tags,'cdocorre') ?> - <? echo getByTagName($r->tags,'dsocorre') ?></option>
