@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Marco/2005                       Ultima atualizacao: 27/04/2018
+   Data    : Marco/2005                       Ultima atualizacao: 19/11/2018
 
    Dados referentes ao programa:
 
@@ -170,6 +170,8 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                             Cancelamento automático de seguro para debitos não efetuados;
                             Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplência.
                             Marcel Kohls (AMcom)
+                            
+               19/11/2018 - PRB0040434 Tratamento para gerar o arquivo RM somente no batch (Carlos)
 
                ............................................................................. */
   -- Buscar os dados da cooperativa
@@ -1475,8 +1477,8 @@ begin
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,'</vigencia_tipo></seguradora>');
   end if;
   gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,'</crrl416>',true);
-  -- Verifica se gerou informação no arquivo
-  if vr_cdsegura <> 0 then
+  -- Verifica se gerou informação no arquivo e se está no batch
+  if vr_cdsegura <> 0 AND rw_crapdat.inproces <> 1 then
     -- Geração do relatório
     -- Nome base do arquivo é crrl416
     vr_nom_arquivo := 'crrl416';
