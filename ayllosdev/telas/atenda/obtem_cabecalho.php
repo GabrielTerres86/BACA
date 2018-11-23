@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 16/07/2018
+	 Data : Julho/2007                   Última Alteração: 23/11/2018
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -116,7 +116,10 @@
 
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
 
-         16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+                 16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+
+                 23/11/2018 - P442 - Inclusao de campos do Score + Remoção de campos de empresa (Thaise - Envolti)
+                   
 
  * ********************************************************************************** */
 
@@ -275,9 +278,9 @@ if ( isset($cabecalho[12]->cdata) ) {
 if ( isset($cabecalho[13]->cdata) ) {
 	echo '$("#nrcpfcgc","#frmCabAtenda").val("' . $cabecalho[13]->cdata . '");';
 }
-if ( isset($cabecalho[14]->cdata) ) {
-	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
-}
+//if ( isset($cabecalho[14]->cdata) ) {
+//	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
+//}
 if ( isset($cabecalho[15]->cdata) ) {
 	echo '$("#indnivel","#frmCabAtenda").val("' . $cabecalho[15]->cdata . '");';
 }
@@ -290,11 +293,14 @@ if ( isset($cabecalho[17]->cdata) ) {
 if ( isset($cabecalho[18]->cdata) ) {
 	echo '$("#cdempres","#frmCabAtenda").val("' . $cabecalho[18]->cdata . '");';
 }
-if ( isset($cabecalho[19]->cdata) ) {
-	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
-}
-if ( isset($cabecalho[20]->cdata) ) {
-	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//if ( isset($cabecalho[19]->cdata) ) {
+//	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
+//}
+//if ( isset($cabecalho[20]->cdata) ) {
+//	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//}
+if ( isset($cabecalho[29]->cdata) ) {
+	echo '$("#cdscobeh","#frmCabAtenda").val("' . $cabecalho[29]->cdata . '");';
 }
 if ( isset($cabecalho[21]->cdata) ) {
 	echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';

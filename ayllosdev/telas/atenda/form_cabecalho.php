@@ -3,7 +3,7 @@
  /************************************************************************
    Fonte: form_cabecalho.php
    Autor: Rogerius Militão - DB1
-   Data : 29/06/2011                 Última Alteração: 16/07/2018
+   Data : 29/06/2011                 Última Alteração: 23/11/2018
 
    Objetivo  : Cabeçalho da tela inicial da ATENDA
 			   
@@ -14,6 +14,7 @@
 			   22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
 			   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
                16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+               23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 	
   ************************************************************************************/
 ?>
@@ -84,12 +85,14 @@
   <input name="indnivel" type="text" id="indnivel" />
   <label for="cdempres">Empresa:</label>
   <input name="cdempres" type="text" id="cdempres" />
-  <label for="cdsecext">Se&ccedil;&atilde;o:</label>
+  <!--<label for="cdsecext">Se&ccedil;&atilde;o:</label>
   <input name="cdsecext" type="text" id="cdsecext" />
   <label for="cdturnos">Turno:</label>
   <input name="cdturnos" type="text" id="cdturnos" />
   <label for="cdtipsfx">Tipo Sal&aacute;rio:</label>
-  <input name="cdtipsfx" type="text" id="cdtipsfx" />
+  <input name="cdtipsfx" type="text" id="cdtipsfx" />-->
+  <label for="cdscobeh">Score:</label>
+  <input name="cdscobeh" type="text" id="cdscobeh" />
 	<br style="clear:both" />
 	<hr style="background-color:#666; height:1px;" />
   <label for="qtdevolu">Devolu&ccedil;&otilde;es:</label>

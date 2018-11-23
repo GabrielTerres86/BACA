@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 05/12/2017
+ Data : Julho/2007                   Última Alteração: 23/11/2018
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -71,6 +71,9 @@
                           Projeto 404 (Lombardi).
 
              30/05/2018 - Correção de "labelRot32" para "labelRot33". Cláudio (CISCorporate)
+
+			 23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
+
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -427,7 +430,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																						  <div class="bloco_full">
 
 																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
-																						     <a tabindex="39 name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <a tabindex="39" name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
 																						     <p id="valueRot32" class="txtNormal">&nbsp;</p>
 																							</div>
 																							
@@ -436,6 +439,19 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
+
+                                                                                          <div class="bloco_full">
+
+                                                                                            <div class="bloco_line" onMouseOver="focoRotina(34, true);" onMouseOut="focoRotina(34, false);">
+                                                                                             <a tabindex="41" name="41" class="txtNormalBold SetFocus" id="labelRot34">&nbsp;</a>
+                                                                                             <p id="valueRot34" class="txtNormal">&nbsp;</p>
+                                                                                            </div>
+                                                                                            
+                                                                                            <div class="bloco_line" onMouseOver="focoRotina(35, true);" onMouseOut="focoRotina(35, false);">
+                                                                                             <a tabindex="42" name="42" class="txtNormalBold SetFocus" id="labelRot35">&nbsp;</a>
+                                                                                             <p id="valueRot35" class="txtNormal">&nbsp;</p>
+                                                                                            </div>
+                                                                                          </div>
 																						  																
 																						</td>
 																					</tr>																			

@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/05/2018
+    Data     : Agosto/2015.                   Ultima atualizacao: 23/11/2018
 
    Dados referentes ao programa:
 
@@ -61,6 +61,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 
                  11/10/2018 - Incluido opção 6-Pagamento na tabela de log tbcrd_log_operacao.
 						      (Reinert)
+
+                 23/11/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -246,7 +248,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
                cdsitdct  crapass.cdsitdct%TYPE,
-			   nmsocial  crapttl.nmsocial%TYPE);
+			   nmsocial  crapttl.nmsocial%TYPE,
+               cdscobeh  VARCHAR2(100));
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;
 
@@ -6296,7 +6299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 26/10/2018
     --
     --  Dados referentes ao programa:
     --
@@ -6322,7 +6325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           PRJ366 (Lombardi)
     --
     --				16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
-	--
+    --           26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)    
     -- ..........................................................................*/
 
     ---------------> CURSORES <----------------
@@ -6482,6 +6485,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).qttitula := vr_qttitula;
     pr_tab_cabec(vr_idxcab).dssititg := rw_crapass.dsdctitg;
 	pr_tab_cabec(vr_idxcab).nmsocial := rw_crapass.nmsocial;
+    -- P442 - Score Behaviour Cooperado
+    pr_tab_cabec(vr_idxcab).cdscobeh := risc0005.fn_score_behaviour(pr_cdcooper,pr_nrdconta);
+    
 
     pr_des_reto := 'OK';
 
@@ -7550,7 +7556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 23/06/2017
+       Data    : Outubro/2015.                         Ultima atualizacao: 26/10/2018
 
        Dados referentes ao programa:
 
@@ -7577,6 +7583,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 							   ( Jonata - RKAM P364).
 
 				   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+                 26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
+                 
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -7723,6 +7731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||
 						'<nmsocial>'|| vr_tab_cabec(i).nmsocial      ||'</nmsocial>'||
+                        '<cdscobeh>'|| vr_tab_cabec(i).cdscobeh      ||'</cdscobeh>'||
                         '</Registro>');
 
       END LOOP;
