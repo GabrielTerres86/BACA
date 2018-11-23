@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 29/10/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 23/11/2018
     
    Dados referentes ao programa:
    
@@ -246,6 +246,12 @@
               29/10/2018 - Incluir validacao para nao validar o historico 453
                            da Vivo quando for cancelamento de debito 
                            (Lucas Ranghetti SCTASK0024876)						 
+
+              23/11/2018 - Incluir tratamento para o convenio SAMAE ILHOTA aparecer
+                           na oferta de debito automatico na procedure busca_convenios_codbarras,
+                           tratamento para SAMAE ILHOTA na procedure busca_autorizacoes_cadastradas
+                           (Jefferson - MoutS SCTASK0025298)
+
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2567,6 +2573,7 @@ PROCEDURE busca_convenios_codbarras:
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
+                /*Incluido SAMAE ILHOTA        cdconven: 126,  cdempcon: 1570*/
                 FIND FIRST gnconve WHERE 
                            (gnconve.cdhiscxa = crapcon.cdhistor AND
                            gnconve.flgativo = TRUE              AND
@@ -2581,7 +2588,12 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
-                           crapcon.cdempcon = 1085)                           
+                           crapcon.cdempcon = 1085)             OR                           
+                          (gnconve.cdconven = 126               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0                AND 
+                           crapcon.cdempcon = 1570)
                            NO-LOCK NO-ERROR.
                            
 
@@ -2589,9 +2601,10 @@ PROCEDURE busca_convenios_codbarras:
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
-					   gnconve.cdconven <> 108 THEN
-						ASSIGN aux_nmempcon = gnconve.nmempres.
-            END.
+                       gnconve.cdconven <> 108 AND
+                       gnconve.cdconven <> 126 THEN
+					       ASSIGN aux_nmempcon = gnconve.nmempres.
+                END.
             
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.
@@ -2687,6 +2700,8 @@ PROCEDURE busca_autorizacoes_cadastradas:
                     aux_cdhistor = 2143. /* Convenio de Aguas de Schroeder */
                  ELSE IF  gnconve.cdconven = 108 THEN
                     aux_cdhistor = 2283. /* Convenio de arrecadacao do aguas de guaramirim */
+                 ELSE IF  gnconve.cdconven = 126 THEN
+                    aux_cdhistor = 2563. /* CONVENIO SAMAE ILHOTA */
                  ELSE
                     aux_cdhistor = gnconve.cdhiscxa.
                      
