@@ -4417,6 +4417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--                           para proximo registro.
 	--                           Chamado INC0016984 (Gabriel - Mouts).
 	--
+    --              25/20/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
     -- ..........................................................................*/
 
     ---------------> CURSORES <----------------
@@ -4886,6 +4887,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 							AND nrdconta = pr_nrdconta;
 		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
 
+    CURSOR cr_tbepr_migracao_empr (pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
+                                  ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
+                                  ,pr_nrctremp IN tbepr_migracao_empr.nrctremp%TYPE) IS
+      SELECT e.nrctrnov
+        FROM tbepr_migracao_empr e
+       WHERE e.cdcooper = pr_cdcooper
+         AND e.nrdconta = pr_nrdconta
+         AND e.nrctremp = pr_nrctremp;
+    rw_tbepr_migracao_empr cr_tbepr_migracao_empr%rowtype;
+
  --> Consultar se já houve prejuizo nessa conta
     CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
                        pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
@@ -4935,6 +4946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dstextab_digitaliza craptab.dstextab%TYPE;
     vr_dstextab_parempctl  craptab.dstextab%TYPE;
     vr_epr_portabilidade   VARCHAR2(1000);
+    vr_tbepr_migracao_empr VARCHAR2(1000);
     vr_tab_dados_epr       empr0001.typ_tab_dados_epr;
     vr_tab_dados_cpa       empr0002.typ_tab_dados_cpa;
     vr_tab_mensagens       TELA_CONTAS_GRUPO_ECONOMICO.typ_tab_mensagens;
@@ -4954,6 +4966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlblqjud     NUMBER := 0;
     vr_vlresblq     NUMBER := 0;
 		vr_flgpvida     INTEGER;
+    vr_exibe_migrado BOOLEAN := FALSE;
 
     vr_nrdconta_grp tbcc_grupo_economico.nrdconta%TYPE;
     vr_dsvinculo    VARCHAR(2000);
@@ -5418,8 +5431,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       BEGIN
         vr_vltotprv := nvl(vr_vltotprv,0) + vr_tab_dados_epr(vr_idxepr).vlprovis;
 
+        OPEN cr_tbepr_migracao_empr(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrctremp => vr_tab_dados_epr(vr_idxepr).nrctremp);
+        FETCH cr_tbepr_migracao_empr INTO rw_tbepr_migracao_empr;
+        
+        vr_exibe_migrado := FALSE;
+        IF cr_tbepr_migracao_empr%FOUND THEN
+          vr_exibe_migrado := TRUE;
+        END IF;
+        CLOSE cr_tbepr_migracao_empr;
+
         -- se nao possuir saldo devedor, deve pular para o proximo
-        IF vr_tab_dados_epr(vr_idxepr).vlsdeved <= 0  THEN
+        IF vr_tab_dados_epr(vr_idxepr).vlsdeved <= 0  AND NOT vr_exibe_migrado THEN
           RAISE vr_exc_next;
         END IF;
 
@@ -5501,6 +5525,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           vr_epr_portabilidade := vr_epr_portabilidade ||','||rw_portabilidade.nrctremp;
         END IF;
 
+        /* MIGRACAO EMPR - verificar e lista emprestimos migrados*/
+        IF vr_exibe_migrado THEN
+          vr_tbepr_migracao_empr := 'Contrato '|| vr_tab_dados_epr(vr_idxepr).nrctremp || ' foi migrado para o contrato ' || rw_tbepr_migracao_empr.nrctrnov;          
+
+          pc_cria_registro_msg(pr_dsmensag             => vr_tbepr_migracao_empr,
+                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+        END IF;
+        
         -- Se gerou uma mensagem, deve gravar na temptable de retorno e sair do loop de emprestimos
         IF vr_dsmensag IS NOT NULL  THEN
           -- Incluir na temptable
