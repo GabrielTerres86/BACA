@@ -640,6 +640,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            12/06/2018 - Ajuste nos tratamentos e na forma de atualizar os prepostos da rotina 
   --                         pc_atu_trans_pend_prep. (Wagner - Sustentação - #PRB0040080).
   --
+  --            17/10/2018 - Atualizações referente ao projeto 475 - Sprint C
+  --                         Jose Dill - Mouts
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -661,6 +663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
+  rw_crapcopgrade cr_crapcop%ROWTYPE; -- Projeto 475
 
   /* Buscar dados das agencias */
   CURSOR cr_crapage (pr_cdcooper IN crapage.cdcooper%type
@@ -1205,6 +1208,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF vr_hratual < vr_hrinipag OR vr_hratual > vr_hrfimpag THEN
             --Estourou limite
             vr_idesthor:= 1;
+            /* Projeto 475 Sprint C (Req14) - Tratamento para permitir agendar uma TED antes da abertura da sua grade 
+               Permite ou não habilitar o campo data atual no IB (vr_idesthor) */
+            IF vr_iddiauti = 1 THEN
+              -- Faz a validação somente para dias úteis              
+              IF vr_hratual < vr_hrinipag 
+                 and pr_tpoperac = 4 THEN
+                 -- Dentro do limite (antes da abertura da grade)
+                vr_idesthor:= 2;              
+              END IF; 
+            END IF;
           ELSE
             --Dentro do Horario limite
             vr_idesthor:= 2;
@@ -4154,6 +4167,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_tp_transa VARCHAR2(100) := null;     
       --
       tab_limite_conta INET0001.typ_tab_internet; --Tabelas de retorno de horarios limite
+      -- Projeto 475 Sprint C
+      vr_hratualgrade INTEGER;
+      vr_hrinipaggrade INTEGER;
+      
     BEGIN
       --Inicializar varaivel retorno erro
       pr_cdcritic:= NULL;
@@ -5175,10 +5192,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
           ELSIF pr_dtmvtopg = vr_datdodia AND -- Se for agendamento para hoje
                 pr_assin_conjunta <> 1 THEN -- e não for transacao pendente
+            -- Projeto 475 - Sprint C (Req14) - Tratamento para permitir agendar uma TED antes da abertura da sua grade 
+            -- Verificar se estourou o limite de grade para TED
+            IF sspb0003.fn_valida_horario_ted (pr_cdcooper) AND pr_tpoperac = 4 THEN
+               -- Dentro do limite (antes da abertura da grade)
+               NULL;              
+            ELSE
             --Montar mensagem erro
             vr_cdcritic:= 0;
             vr_dscritic:= 'Não é possível agendar para a data de hoje. Utilize a opção "Nesta Data".';
           END IF;
+                        
+          END IF;
+        
         
           END IF;
         

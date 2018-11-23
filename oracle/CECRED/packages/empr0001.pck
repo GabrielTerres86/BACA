@@ -5003,6 +5003,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     07/08/2018 - P410 - Retornar pagamentos IOF Prejuizo (Marcos-Envolti)
 
+                    23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
+
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -5326,6 +5328,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            and t.nrctrrat (+) = pr_nrctremp
            and t.tpctrrat (+) = 90;
 
+      CURSOR cr_crapepr_migrado (pr_cdcooper IN crapepr.cdcooper%type
+                                ,pr_nrdconta IN crapepr.nrdconta%type
+                                ,pr_nrctremp IN crapepr.nrctremp%type
+                                ,pr_nrdialiq IN craplcr.nrdialiq%type
+                                ,pr_dtmvtolt IN crapdat.dtmvtolt%type) IS
+        SELECT p.rowid
+          FROM crapepr p
+         WHERE p.cdcooper = pr_cdcooper
+           AND p.nrdconta = pr_nrdconta
+           AND p.nrctremp = pr_nrctremp
+           AND NOT (UPPER(pr_nmdatela) IN ('EXTEMP', 'IMPRES') OR 
+                    p.inliquid = 0 OR 
+                    p.inprejuz = 1 OR
+                   (p.inliquid = 1 AND
+                    p.inprejuz = 0 AND
+                    p.dtultpag + pr_nrdialiq >= pr_dtmvtolt)) ;
+      rw_crapepr_migrado cr_crapepr_migrado%ROWTYPE;
+
       -- variaveis auxiliares a busca
       vr_nmprimtl crapass.nmprimtl%TYPE; --> Nome do associado
       vr_dsdpagto VARCHAR2(100); --> Descrição auxiliar do débito
@@ -5386,6 +5406,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_portabilidade VARCHAR2(500);
       vr_incdccon INTEGER;
 
+      vr_nrctremp_migrado crawepr.nrctremp%type := 0;
+      vr_exibe_migrado    BOOLEAN := FALSE;
 
     BEGIN
       -- Buscar a configuração de empréstimo cfme a empresa da conta
@@ -5482,15 +5504,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             vr_dstextab := 0;
           END IF;
 
+          
+          IF pr_nmdatela = 'ATENDA' THEN
+            -- verificar se o emprestimo foi migrado
+            empr9999.pc_verifica_empr_migrado(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_nrctrnov => rw_crapepr.nrctremp
+                                             ,pr_tpempmgr => 1 -- verificar através do original
+                                             ,pr_nrctremp => vr_nrctremp_migrado
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+
+            vr_cdcritic := 0;
+            vr_dscritic := NULL;
+
+            -- se o emprestimo foi migrado carrrega os dados para validacao do regitro
+            IF vr_nrctremp_migrado > 0 THEN
+
+              OPEN cr_crapepr_migrado (pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctremp => vr_nrctremp_migrado
+                                      ,pr_nrdialiq => rw_craplcr.nrdialiq
+                                      ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt);
+              FETCH cr_crapepr_migrado INTO rw_crapepr_migrado;
+
+              IF cr_crapepr_migrado%NOTFOUND THEN
+                -- se nao achar registro, é sinal que deve listar o emprestimo
+                vr_exibe_migrado := TRUE;
+              END IF;
+              CLOSE cr_crapepr_migrado;
+
+            END IF;
+          END IF;
+
           -- Montar a descrição da linha de crédito
           vr_dslcremp := TRIM(rw_crapepr.cdlcremp) || '-' ||rw_craplcr.dslcremp;
+          
+          -- se nao for migrado ou o contrato migrado nao aparecer 
+          -- quando um contrato e migrado ele somente some quando o migrado sumir
+          IF vr_nrctremp_migrado = 0 OR not vr_exibe_migrado THEN
           --  Mostrar emprestimos em aberto (nao liquidados), emprestimos que
           --  estao em prejuizo, e emprestimos liquidados sem prejuizo que ainda
           --  podem ser visualizados conforme campo craplcr.nrdialiq cadastrado
           --  na tela LCREDI. A ultima condicao e utilizada conforme o parametro
           --  par_flgcondic for alimentando.
-          IF NOT (UPPER(pr_nmdatela) IN ('EXTEMP', 'IMPRES')
-                 OR
+            IF NOT (UPPER(pr_nmdatela) IN ('EXTEMP', 'IMPRES') OR
               RW_crapepr.inliquid = 0 OR rw_crapepr.inprejuz = 1 OR
               (pr_flgcondc AND rw_crapepr.inliquid = 1 AND
               rw_crapepr.inprejuz = 0 AND
@@ -5498,6 +5556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               pr_rw_crapdat.dtmvtolt)) THEN
             -- Ignorar o restante abaixo e processar o próximo registro
             RAISE vr_exc_next;
+          END IF;
           END IF;
           -- Se houver indicação para utilização da tabela de juros e o empréstimo estiver ativo
           IF pr_inusatab

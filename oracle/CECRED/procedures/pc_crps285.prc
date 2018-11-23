@@ -77,6 +77,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
                25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
                             Tarifas-218(Jean Michel)
+                           
+              10/07/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                           lancamentos na CRAPLCM (Teobaldo J, AMcom)
+
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE
+                           (Renato Cordeiro - AMcom)
+                           
+              03/10/2018 - PJ450 - Elimina tratamento de NÃO PODE DEBITAR. A própria rotina LANC0001
+                           já verifica se pode ou não debitar e executa a exceção quando volta INCRINEG=1
+                           (Renato Cordeiro - AMcom)
+                       
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -239,6 +251,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
   vr_lspredep VARCHAR2(3000);
   vr_lschqadm VARCHAR2(3000);
   vr_lista_historico VARCHAR2(4000);
+  
+  --Variaveis de criticas / retorno
+  vr_incrineg       INTEGER;
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
   
 BEGIN
 
@@ -794,39 +810,50 @@ BEGIN
             CLOSE cr_craplcm;
           END IF;
           
-          
-          BEGIN
-            INSERT INTO craplcm(cdcooper
-                               ,dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,nrseqdig
-                               ,vllanmto)
-                       VALUES  (pr_cdcooper
-                               ,rw_craplot.dtmvtolt
-                               ,rw_craplot.cdagenci
-                               ,rw_craplot.cdbccxlt
-                               ,rw_craplot.nrdolote
-                               ,rw_crablcm.nrdconta
-                               ,rw_crablcm.nrdconta
-                               ,GENE0002.FN_MASK(rw_crablcm.nrdconta, '99999999')
-                               ,vr_nrseqdig
-                               ,89 -- Tarifa de Debito em Conta Corrente manual
-                               ,vr_nrseqdig
-                               ,vr_vldebcta);
+          -- 10/07/2018 - Inserir Lancamento 
+          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt 
+                                            ,pr_cdagenci => rw_craplot.cdagenci
+                                            ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                            ,pr_nrdolote => rw_craplot.nrdolote 
+                                            ,pr_nrdconta => rw_crablcm.nrdconta
+                                            ,pr_nrdctabb => rw_crablcm.nrdconta
+                                            ,pr_nrdctitg => gene0002.fn_mask(rw_crablcm.nrdconta,'99999999')
+                                            ,pr_nrdocmto => vr_nrseqdig
+                                            ,pr_cdhistor => 89          -- Tarifa de Debito em Conta Corrente manual
+                                            ,pr_nrseqdig => vr_nrseqdig 
+                                            ,pr_vllanmto => vr_vldebcta
+                                            ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                            ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                            ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                            ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                            ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                            ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                            );
 
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;
-              --Sair do programa
+          -- Tratamento para critica. Regra se pode debitar tratada acima
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+              vr_dscritic := 'Erro ao inserir lancamento na craplcm: '||vr_dscritic;
               RAISE vr_exc_saida;
-          END;
+            ELSE
+              tela_lautom.pc_cria_lanc_futuro(pr_cdcooper => pr_cdcooper, 
+                                              pr_nrdconta => rw_crablcm.nrdconta, 
+                                              pr_nrdctitg => gene0002.fn_mask(rw_crablcm.nrdconta,'99999999'), 
+                                              pr_cdagenci => rw_craplot.cdagenci, 
+                                              pr_dtmvtolt => rw_craplot.dtmvtolt, 
+                                              pr_cdhistor => 89, 
+                                              pr_vllanaut => vr_vldebcta, 
+                                              pr_nrctremp => 0, 
+                                              pr_dsorigem => 'BLQPREJU', 
+                                              pr_dscritic => vr_dscritic);
+                IF vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+                end if;
+
+            end if;
+            
+          END IF;
             
           --Atualizar capa do Lote
           BEGIN
@@ -911,4 +938,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps285;
 /
-

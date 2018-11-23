@@ -120,6 +120,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                 
                  14/11/2017 - Projeto 364 - Estruturar demissão cooperado
                               (Demetrius Wolff - Mouts)
+                              
+                 10/10/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente 
+                                       (Fabio Adriano - AMcom).
+                 
       ............................................................................. */
 
     DECLARE
@@ -515,6 +519,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       vr_vllanmto     NUMBER;
       vr_qtproces     NUMBER;
 
+      -- Tabela de retorno LANC0001 (PRJ450 10/10/2018).
+      vr_tab_retorno   lanc0001.typ_reg_retorno;
+      vr_incrineg      NUMBER;
+      
+      vr_cdhistor      NUMBER;
 
       --Procedure para limpar os dados das tabelas de memoria
       PROCEDURE pc_limpa_tabela IS
@@ -978,39 +987,69 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           IF nvl(rw_crapsld.vlsddisp,0) > 0 THEN
             -- inserindo na tabela de depósistos a vista craplcm
             BEGIN
-              INSERT INTO craplcm( dtmvtolt
-                                  ,cdagenci
-                                  ,cdbccxlt
-                                  ,nrdolote
-                                  ,nrdctabb
-                                  ,nrdctitg
-                                  ,nrdconta
-                                  ,vllanmto
-                                  ,cdhistor
-                                  ,cdpesqbb
-                                  ,nrseqdig
-                                  ,nrdocmto
-                                  ,cdcooper)
-              VALUES( rw_craplot7200.dtmvtolt
-                     ,rw_craplot7200.cdagenci
-                     ,rw_craplot7200.cdbccxlt
-                     ,rw_craplot7200.nrdolote
-                     ,rw_crapass.nrdconta
-                     ,gene0002.fn_mask(rw_crapass.nrdconta,'99999999')
-                     ,rw_crapass.nrdconta
-                     ,rw_crapsld.vlsddisp
-                     ,decode(rw_crapass.inpessoa,1,2061,2062)
-                     ,' '
-                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
-                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
-                     ,pr_cdcooper)
-              RETURNING vllanmto
-              INTO      vr_vllanmto;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir na tabela craplcm para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                
+              -- PRJ450 - 10/10/2018.
+              IF rw_crapass.inpessoa = 1 THEN 
+                 vr_cdhistor := 2061;
+              ELSE 
+                 vr_cdhistor := 2062;
+              END IF;
+              lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_craplot7200.dtmvtolt
+                                                , pr_cdagenci => rw_craplot7200.cdagenci
+                                                , pr_cdbccxlt => rw_craplot7200.cdbccxlt
+                                                , pr_nrdolote => rw_craplot7200.nrdolote
+                                                , pr_nrdconta => rw_crapass.nrdconta
+                                                , pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
+                                                , pr_cdhistor => vr_cdhistor --decode(rw_crapass.inpessoa,1,2061,2062)
+                                                , pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
+                                                , pr_vllanmto => rw_crapsld.vlsddisp --vr_vldescto
+                                                , pr_nrdctabb => rw_crapass.nrdconta
+                                                , pr_cdpesqbb => ' '
+                                                --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                --, pr_cdbanchq => lt_d_nrbanori
+                                                --, pr_cdcmpchq => lt_d_cdcmpori
+                                                --, pr_cdagechq => lt_d_nrageori
+                                                --, pr_nrctachq => lt_d_nrctarem
+                                                --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                --, pr_sqlotchq => lt_d_nrsequen
+                                                --, pr_dtrefere => rw_craprda.dtmvtolt
+                                                --, pr_hrtransa => vr_hrtransa
+                                                --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                , pr_cdcooper => pr_cdcooper
+                                                , pr_nrdctitg => gene0002.fn_mask(rw_crapass.nrdconta,'99999999')
+                                                --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                                --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                -------------------------------------------------
+                                                -- Dados do lote (Opcional)
+                                                -------------------------------------------------
+                                                --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                --, pr_tplotmov  => 1
+                                                , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+    					
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                 IF vr_incrineg = 0 THEN  
+                   
+                    vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
                 --Sair do programa
                 RAISE vr_exc_undo;
+                 END IF;
+              END IF;  
+                	 
+              vr_vllanmto := rw_crapsld.vlsddisp; 
             END;
 
             -- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
@@ -1109,39 +1148,64 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           IF nvl(rw_crapsld.vlsdchsl,0) > 0 THEN
             -- inserindo na tabela de depósistos a vista craplcm
             BEGIN
-              INSERT INTO craplcm( dtmvtolt
-                                  ,cdagenci
-                                  ,cdbccxlt
-                                  ,nrdolote
-                                  ,nrdctabb
-                                  ,nrdctitg
-                                  ,nrdconta
-                                  ,vllanmto
-                                  ,cdhistor
-                                  ,cdpesqbb
-                                  ,nrseqdig
-                                  ,nrdocmto
-                                  ,cdcooper)
-              VALUES( rw_craplot7200.dtmvtolt
-                     ,rw_craplot7200.cdagenci
-                     ,rw_craplot7200.cdbccxlt
-                     ,rw_craplot7200.nrdolote
-                     ,rw_crapass.nrdconta
-                     ,gene0002.fn_mask(rw_crapass.nrdconta,'99999999')
-                     ,rw_crapass.nrdconta
-                     ,rw_crapsld.vlsdchsl
-                     ,111
-                     ,' '
-                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
-                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
-                     ,pr_cdcooper)
-              RETURNING vllanmto
-              INTO      vr_vllanmto;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir na tabela craplcm para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+              
+              -- PRJ450 - 10/10/2018.
+              lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_craplot7200.dtmvtolt
+                                                , pr_cdagenci => rw_craplot7200.cdagenci
+                                                , pr_cdbccxlt => rw_craplot7200.cdbccxlt
+                                                , pr_nrdolote => rw_craplot7200.nrdolote
+                                                , pr_nrdconta => rw_crapass.nrdconta
+                                                , pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
+                                                , pr_cdhistor => 111
+                                                , pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
+                                                , pr_vllanmto => rw_crapsld.vlsdchsl
+                                                , pr_nrdctabb => rw_crapass.nrdconta
+                                                , pr_cdpesqbb => ' '
+                                                --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                --, pr_cdbanchq => lt_d_nrbanori
+                                                --, pr_cdcmpchq => lt_d_cdcmpori
+                                                --, pr_cdagechq => lt_d_nrageori
+                                                --, pr_nrctachq => lt_d_nrctarem
+                                                --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                --, pr_sqlotchq => lt_d_nrsequen
+                                                --, pr_dtrefere => rw_craprda.dtmvtolt
+                                                --, pr_hrtransa => vr_hrtransa
+                                                --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                , pr_cdcooper => pr_cdcooper
+                                                , pr_nrdctitg => gene0002.fn_mask(rw_crapass.nrdconta,'99999999')
+                                                --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                                --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                -------------------------------------------------
+                                                -- Dados do lote (Opcional)
+                                                -------------------------------------------------
+                                                --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                --, pr_tplotmov  => 1
+                                                , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+    					
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                 IF vr_incrineg = 0 THEN  
+                 
+                    vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
                 --Sair do programa
                 RAISE vr_exc_undo;
+                 END IF;
+              END IF;    
+                
+              vr_vllanmto := rw_crapsld.vlsdchsl;  
             END;
 
             -- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração

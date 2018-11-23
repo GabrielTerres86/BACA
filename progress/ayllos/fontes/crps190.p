@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Abril/97.                       Ultima atualizacao: 25/09/2015
+   Data    : Abril/97.                       Ultima atualizacao: 12/06/2018
                                                                   
    Dados referentes ao programa:
 
@@ -47,13 +47,21 @@
                25/09/2015 - Incluida string “CAIXA” em todas as ocorrências de 
                             loop da LAU Projeto 254 (Lombardi).
                             
+               12/06/2018 - Alteraçao  Tratamento de Históricos de Credito/Debito - Fabiano B. Dias AMcom	
+			   
  ............................................................................ */
 
 DEF  BUFFER crablot FOR craplot.
 
 DEF  VAR aux_nrcheque AS DECIMAL                                      NO-UNDO.
 
+DEF  VAR h-b1wgen0200 AS HANDLE                                       NO-UNDO.
+DEF  VAR aux_incrineg AS INT                                          NO-UNDO.
+DEF  VAR aux_cdcritic AS INT                                          NO-UNDO.
+DEF  VAR aux_dscritic AS CHAR                                         NO-UNDO.
+
 { includes/var_batch.i {1} }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 glb_cdprogra = "crps190".
 
@@ -125,6 +133,11 @@ FOR EACH crablot WHERE crablot.cdcooper  = glb_cdcooper  AND
 
         ASSIGN aux_nrcheque = craplau.nrdocmto.
         
+        /* Identificar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+           RUN sistema/generico/procedures/b1wgen0200.p
+           PERSISTENT SET h-b1wgen0200.
+        
         DO WHILE TRUE:
 
              FIND craplcm WHERE craplcm.cdcooper = glb_cdcooper      AND
@@ -144,29 +157,70 @@ FOR EACH crablot WHERE crablot.cdcooper  = glb_cdcooper  AND
           
         END.  /*  Fim do DO WHILE TRUE  */
 
-        CREATE craplcm.
-        ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-               craplcm.cdagenci = craplot.cdagenci
-               craplcm.cdbccxlt = craplot.cdbccxlt
-               craplcm.nrdolote = craplot.nrdolote
-               craplcm.nrdconta = craplau.nrdconta
-               craplcm.nrdctabb = craplau.nrdconta
-               craplcm.nrdctitg = STRING(craplau.nrdconta,"99999999")
-               craplcm.nrdocmto = aux_nrcheque
-               craplcm.cdhistor = craplau.cdhistor
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.vllanmto = craplau.vllanaut
-               craplcm.cdpesqbb = ""
-               craplcm.cdcooper = glb_cdcooper
+        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+            (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+            ,INPUT craplot.cdagenci               /* par_cdagenci */
+            ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+            ,INPUT craplot.nrdolote               /* par_nrdolote */
+            ,INPUT craplau.nrdconta               /* par_nrdconta */
+            ,INPUT aux_nrcheque                   /* par_nrdocmto */
+            ,INPUT craplau.cdhistor               /* par_cdhistor */
+            ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+            ,INPUT craplau.vllanaut               /* par_vllanmto */
+            ,INPUT craplau.nrdconta               /* par_nrdctabb */
+            ,INPUT ""                             /* par_cdpesqbb */
+            ,INPUT 0                              /* par_vldoipmf */
+            ,INPUT 0                              /* par_nrautdoc */
+            ,INPUT 0                              /* par_nrsequni */
+            ,INPUT 0                              /* par_cdbanchq */
+            ,INPUT 0                              /* par_cdcmpchq */
+            ,INPUT 0                              /* par_cdagechq */
+            ,INPUT 0                              /* par_nrctachq */
+            ,INPUT 0                              /* par_nrlotchq */
+            ,INPUT 0                              /* par_sqlotchq */
+            ,INPUT ""                             /* par_dtrefere */
+            ,INPUT ""                             /* par_hrtransa */
+            ,INPUT 0                              /* par_cdoperad */
+            ,INPUT 0                              /* par_dsidenti */
+            ,INPUT glb_cdcooper                   /* par_cdcooper */
+            ,INPUT STRING(craplau.nrdconta,"99999999")   /* par_nrdctitg */
+            ,INPUT ""                             /* par_dscedent */
+            ,INPUT 0                              /* par_cdcoptfn */
+            ,INPUT 0                              /* par_cdagetfn */
+            ,INPUT 0                              /* par_nrterfin */
+            ,INPUT 0                              /* par_nrparepr */
+            ,INPUT 0                              /* par_nrseqava */
+            ,INPUT 0                              /* par_nraplica */
+            ,INPUT 0                              /* par_cdorigem */
+            ,INPUT 0                              /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */
+            /* CAMPOS DE SAÍDA                                                                     */                                            
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+  
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+            glb_cdcritic = 1390.  // Lançamento de débito na conta */
+            RUN fontes/critic.p.
+            UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                        glb_dscritic + " >> log/proc_batch.log").
+            NEXT.
+        END.
+  
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.
 
-               craplau.dtdebito = glb_dtmvtolt
+        ASSIGN craplau.dtdebito = glb_dtmvtolt
 
-               craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-               craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+            craplot.vlinfodb = craplot.vlinfodb + craplau.vllanaut /* craplcm.vllanmto */
+            craplot.vlcompdb = craplot.vlcompdb + craplau.vllanaut /* craplcm.vllanmto */
                craplot.qtinfoln = craplot.qtinfoln + 1
                craplot.qtcompln = craplot.qtcompln + 1
                craplot.nrseqdig = craplot.nrseqdig + 1.
-        VALIDATE craplcm.
 
         DO WHILE TRUE:
 

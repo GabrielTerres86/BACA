@@ -12,7 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
   --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
-   
+  --              02/10/2018 - Ajustada rotina de envio de email com antecipações não processadas a mais de 1 hora
+   --                          (André - Mouts PRB0040347)               
+  -- 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
@@ -35,6 +37,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   var_dt_ult_envio_email_slc VARCHAR2(15);
   vr_horini_33_cancel        VARCHAR2(15);
   vr_horfim_33_cancel        VARCHAR2(15);
+  var_dthr_ult_env_email_antcp VARCHAR2(20);
   vr_hor_dom5                number(4);
   vr_hor_email_dom5          number(4);
 
@@ -548,6 +551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_para          VARCHAR2(100);
     vr_assunto       VARCHAR2(200);
     vr_mensagem      VARCHAR2(32000);
+    vr_interv_slc33  NUMBER;
+    
 
 
     BEGIN
@@ -623,7 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                                    ,pr_cdacesso => 'HORARIO_SLC_T5_DEB_CRED'),1,5),':','');
     vr_hor_email_dom5 := replace(substr(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                    ,pr_cdacesso => 'HORARIO_SLC_EMAIL_DOM5'),1,5),':','');
-
+    var_dthr_ult_env_email_antcp := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                   ,pr_cdacesso => 'DTHR_ULT_ENV_EMAIL_ANTCP');
     vr_database_name   := GENE0001.fn_database_name;
 
     -- executa o processo CCRD0006.pc_leitura_arquivo_xml
@@ -698,9 +704,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END IF;
     END IF;
 
-    -- Verifica arquivos de antecipação não processados há mais de 1 hora
-    pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
-                              ,pr_dscritic    => vr_dscritic);
+    -- Verifica arquivos de antecipação não processados há mais de 1 hora, ou 5 min se faltar 1 hora
+    -- para o horário limite para envio dos arquivos 
+    vr_interv_slc33 := 1/24*1; -- 1 Hora
+    if sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi')-1/24*1 then
+      vr_interv_slc33 := 1/24/60*5; -- 5 minutos
+    end if;  
+    
+    if (sysdate > to_date(nvl(var_dthr_ult_env_email_antcp,'01/01/0001 00:00'),'dd/mm/yyyy hh24:mi')+vr_interv_slc33) then
+      pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
+                                ,pr_dscritic    => vr_dscritic);
+    end if;                              
 
     IF vr_dscritic is not null then
       RAISE vr_exc_saida;
@@ -10809,7 +10823,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
           AND pdv.idcentraliza = ctz.idcentraliza
           AND lct.insituacao = 0
           AND arq.tparquivo  = 3
-          AND to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12),'YYYY-MM-DDHH24:MI:SS') < SYSDATE-1/24*1
+          --AND to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12),'YYYY-MM-DDHH24:MI:SS') < SYSDATE-1/24*1
           AND to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') = trunc(sysdate)
         ORDER BY 4;
     rw_antecip cr_antecip%ROWTYPE;
@@ -10858,7 +10872,13 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                      ,pr_dstexto    => vr_mensagem
                      ,pr_dscritic   => vr_dscritic);
     END IF;
-
+    
+    UPDATE crapprm
+       SET dsvlrprm = to_char(sysdate,'DD/MM/YYYY HH24:MI')
+     WHERE nmsistem = 'CRED'
+       AND cdcooper = 0
+       AND cdacesso = 'DTHR_ULT_ENV_EMAIL_ANTCP';
+       
   EXCEPTION
      WHEN OTHERS THEN
         pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipação em atraso: '||SQLERRM;

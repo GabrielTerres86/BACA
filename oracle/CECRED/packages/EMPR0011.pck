@@ -4582,20 +4582,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       IF vr_flgcrcta = 1 THEN
         -- Efetua o credito na conta corrente do cooperado
-        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                      ,pr_cdbccxlt => 100           --> Numero do caixa
-                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do Operador
-                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                      ,pr_nrdolote => 8456          --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta   --> Numero da conta
-                                      ,pr_cdhistor => 15            --> Codigo historico
-                                      ,pr_vllanmto => rw_crawepr.vlemprst --> Valor do emprestimo
-                                      ,pr_nrparepr => 0             --> Numero parcelas emprestimo
-                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+        EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                            ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
+                                            ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                            ,pr_cdbccxlt => 100           --> Numero do caixa
+                                            ,pr_cdoperad => pr_cdoperad   --> Codigo do Operador
+                                            ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                            ,pr_nrdolote => 8456         --> Numero do Lote
+                                            ,pr_nrdconta => pr_nrdconta   --> Numero da conta
+                                            ,pr_cdhistor => 15   --> Codigo historico
+                                            ,pr_vllanmto => rw_crawepr.vlemprst   --> Valor de IOF
+                                            ,pr_nrparepr => 0             --> Numero parcelas emprestimo
+                                            ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                            ,pr_nrseqdig => vr_nrseqdig
+                                            ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                            ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros                                         
         -- Se ocorreu erro
         IF vr_des_reto <> 'OK' THEN
           -- Se possui algum erro na tabela de erros
@@ -7148,7 +7149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Julho/2017                         Ultima atualizacao: 
+       Data    : Julho/2017                         Ultima atualizacao: 28/09/2018
 
        Dados referentes ao programa:
 
@@ -7156,7 +7157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar a validacao dos pagamentos.
 
-       Alteracoes: 
+       Alteracoes: 28/09/2018 - Alterado de local a chamada da rotina RECP0001.pc_verifica_acordo_ativo, pois quando o saldo era insuficiente, nao validava o acordo (Adriano Nagasava - Supero)
     ............................................................................. */
 
     DECLARE
@@ -7313,6 +7314,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         RAISE vr_exc_erro;
       END IF;
       
+			-- Verifica se existe contrato de acordo ativo
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_cdorigem => 3
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+			
+			-- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Se acordo estiver ativo
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Contrato em acordo. Pagamento permitido somente por boleto.';
+        RAISE vr_exc_erro;
+      END IF;
+      
       /*
       -- Busca as parcelas para pagamento
       pc_busca_pagto_parc_pos(pr_cdcooper => vr_cdcooper
@@ -7371,25 +7392,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                     || 'Confirma pagamento?';
         RAISE vr_exc_saida;
 
-      END IF;
-
-      -- Verifica se existe contrato de acordo ativo
-      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_cdorigem => 3
-                                       ,pr_flgativo => vr_flgativo
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-      -- Se houve erro
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Se acordo estiver ativo
-      IF vr_flgativo = 1 THEN
-        vr_dscritic := 'Contrato em acordo. Pagamento permitido somente por boleto.';
-        RAISE vr_exc_erro;
       END IF;
 
     EXCEPTION

@@ -461,6 +461,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                11/10/2016 - Incluir valor do lancamento como parametro na verificacao da craplau (Lucas Ranghetti #537385)
                
                18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
+
+               28/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente
+                            PRJ450 - Rangel Decker - AMcom
   --------------------------------------------------------------------------------------------------------------------*/ 
   
    ---------->>> CURSORES <<<--------
@@ -500,6 +503,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     vr_nrautdoc  crapaut.nrsequen%TYPE;
     vr_nrdrecid  ROWID;
     
+    vr_nmtabela     VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+    vr_incrineg     INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno lanc0001.typ_reg_retorno;
+
+    vr_fldebita   BOOLEAN DEFAULT TRUE;
+
+
   BEGIN                           
                
     --Verificar se o lancamento automatico existe
@@ -686,42 +696,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
       END IF;  
       
       BEGIN
-        INSERT INTO craplcm
-            (cdcooper,
-             dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             nrdconta,
-             nrdctabb,
-             nrdocmto,
-             cdhistor,
-             vllanmto,
-             nrseqdig,
-             nrautdoc,
-             cdpesqbb,
-             hrtransa) -- Gravar a hora da transação em segundos
-        VALUES
-          (pr_cdcooper,
-           rw_craplot.dtmvtolt,
-           rw_craplot.cdagenci,  -- cdagenci
-           rw_craplot.cdbccxlt,  -- cdbccxlt
-           rw_craplot.nrdolote,  -- nrdolote           
-           pr_nrdconta,
-           pr_nrdconta, -- nrdctabb
-           pr_nrdocmto,
-           pr_cdhistor,
-           pr_vllanaut,
-           nvl(rw_craplot.nrseqdig,0) + 1,
-           vr_nrautdoc,
-           'Lote ' || TO_CHAR(pr_dtmvtolt, 'dd') || '/' ||
-           TO_CHAR(pr_dtmvtolt, 'mm') || '-' ||
-           to_char(gene0002.fn_mask(pr_cdagenci, '999')) || '-' ||
-           to_char(gene0002.fn_mask(rw_craplot.cdbccxlt, '999')) || '-' ||
-           to_char(gene0002.fn_mask(rw_craplot.nrdolote, '999999')) || '-' ||
-           to_char(gene0002.fn_mask(rw_craplot.nrseqdig, '99999'))  || '-' ||
-           to_char(pr_nrdocmto),
-           to_char(SYSDATE,'sssss'));
+
+         -- verifica se pode efetuar o débito.
+        /* identifica se pode debitar na conta do cooperado */
+          vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                    pr_nrdconta =>pr_nrdconta,
+                                                    pr_cdhistor =>pr_cdhistor);
+          IF   vr_fldebita = TRUE THEN
+                   lanc0001.pc_gerar_lancamento_conta(pr_cdcooper  =>pr_cdcooper
+                                                     ,pr_dtmvtolt  =>rw_craplot.dtmvtolt
+                                                     ,pr_cdagenci  =>rw_craplot.cdagenci
+                                                     ,pr_cdbccxlt  =>rw_craplot.cdbccxlt  -- cdbccxlt
+                                                     ,pr_nrdolote  =>rw_craplot.nrdolote  -- nrdolote
+                                                     ,pr_nrdconta => pr_nrdconta
+                                                     ,pr_nrdctabb => pr_nrdconta -- nrdctabb
+                                                     ,pr_nrdocmto => pr_nrdocmto
+                                                     ,pr_cdhistor => pr_cdhistor
+                                                     ,pr_vllanmto => pr_vllanaut
+                                                     ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                                                     ,pr_nrautdoc => vr_nrautdoc
+                                                     ,pr_cdpesqbb => 'Lote ' || TO_CHAR(pr_dtmvtolt, 'dd') || '/' ||
+                                                                   TO_CHAR(pr_dtmvtolt, 'mm') || '-' ||
+                                                                   to_char(gene0002.fn_mask(pr_cdagenci, '999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.cdbccxlt, '999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.nrdolote, '999999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.nrseqdig, '99999'))  || '-' ||
+                                                                   to_char(pr_nrdocmto)
+                                                     ,pr_hrtransa =>  to_char(SYSDATE,'sssss')
+
+                                                   -------------------------------------------------
+                                                   -- Dados do lote (Opcional)
+                                                   -------------------------------------------------
+                                                   , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                   , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                        IF vr_incrineg = 0 THEN
+                          vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                          RAISE vr_exc_erro;
+                        END IF;
+
+                      END IF;
+
+
+
+      END IF;
+
+
 
       -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
       EXCEPTION

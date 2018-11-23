@@ -4630,6 +4630,20 @@ PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
       --
       --
      END IF;
+     
+     -- #PRB0040416 - Wagner - Sustentação --
+     -- Tratar mudança indevida de situação de conta já encerrada
+     -- Inicio 
+     -- 1 - Liberada, 2 - Em prejuízo, 3 - Encerrada pela Cooperativa, 4 - Encerrada por demissão, 
+     -- 5 - Restrita, 7 - Em processo de demissão, 8 - Em processo de demissão BACEN, 9 - Em análise
+     IF rw_crapass.cdsitdct = 4 THEN
+       -- Não iremos "Gerar crítica" para não levantar um erro no CRM, iremos apenas não acatar o pedido
+       -- vr_dscritic := 'Conta em situação 4 - Encerrada por demissão, alteração não permitida.';       
+       -- Levantar exceção
+       RETURN;
+     END IF;       
+     -- Fim -- #PRB0040416
+     
      --
      -- Atualiza tabela de contas
       BEGIN

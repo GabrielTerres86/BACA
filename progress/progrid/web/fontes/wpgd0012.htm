@@ -1,4 +1,4 @@
-<!--
+<!----------------------------------------------------------------------------------------------------------------
 	Alteracoes: 22/10/2012 - Limitado tamanho dos campos Nome, Endereço, Bairro,
                            Cidade, UF, DDD, Telefone, Fax, Cooperativa, Home page,
                            Considerações, Referências e incluso função para
@@ -8,360 +8,433 @@
               
               08/10/2015 - Inclusao de novos campos Tipo, Origem e Fornecedor Principal PRJ 229 (Vanessa)
 			  
-			  09/12/2015 - Inclusão do campo cdcopope (Vanessa)
+              09/12/2015 - Inclusão do campo cdcopope (Vanessa)
               
               13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)
--->
+			   
+              01/11/2018 - Replicaçao de propostas (Andrey Formigari - Mouts)
+---------------------------------------------------------------------------------------------------------------->
 
 <html>
-<head>
-  <script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
-  <script type="text/javascript" src="/cecred/scripts/jquery.mask.min.js"></script>
-  <title>Cadastro de Fornecedores</title>
-  <base target="mainFrame">
-</head>
-<body style="margin-left: 3px; " onload="mostraTipos(); verificaMaterial();">
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-<script SRC="/cecred/jsbiblio/sorttable.js"></script>
-<script SRC="/cecred/js/funcoes.js"></script>
-<script language="JavaScript">
-function mostraContatos(){
- var row;var cell;
+  <head>
+    <title>Cadastro de Fornecedores</title>
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="/cecred/jsbiblio/biblio.js"></script>
+    <script type="text/javascript" src="/cecred/jsbiblio/frcod.js"></script>    
+    <script type="text/javascript" src="/cecred/js/funcoes.js"></script>
+    <script type="text/javascript" src="/web/scripts/ajax.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/web/scripts/scripts.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/web/scripts/funcoes.js"></script>
+    <script type="text/javascript" src="/web/scripts/mascara.js"></script>
+    <base target="mainFrame">
+  </head>
+  <body style="margin-left: 3px; " onload="mostraTipos(); verificaMaterial();">
+    
+    <script language="JavaScript">
+          
+      function mostraContatos(){
+       var row;var cell;
 
- var cor='#F7F7F7';
+       var cor='#F7F7F7';
 
- for (var i=document.all.tbcontato.rows.length; i>0; i--)
-      document.all.tbcontato.deleteRow(i-1); 
+       for (var i=document.all.tbcontato.rows.length; i>0; i--)
+            document.all.tbcontato.deleteRow(i-1); 
 
- for(i=0;i<mcontato.length;i++){      // insere linhas na tabela de contato
-   row=tbcontato.insertRow(); 
+       for(i=0;i<mcontato.length;i++){      // insere linhas na tabela de contato
+         row=tbcontato.insertRow(); 
 
-   if (cor == '#FFFFFF')
-      cor = '#F7F7F7';
-   else
-      cor = '#FFFFFF';
+         if (cor == '#FFFFFF')
+            cor = '#F7F7F7';
+         else
+            cor = '#FFFFFF';
 
-   row.bgColor = cor;
+         row.bgColor = cor;
 
-   cell=row.insertCell();   // primeira celula da linha (mail)
-   cell.className = 'txtNormal';
-   cell.width= 26;
-   linky='<a href="mailto:' + mcontato[i].dsdemail + '"><img src="/cecred/images/icones/ico_email.gif" border="0"></a>';
-   cell.innerHTML=linky; // fim primeira celula (mail)
+         cell=row.insertCell();   // primeira celula da linha (mail)
+         cell.className = 'txtNormal';
+         cell.width= 26;
+         linky='<a href="mailto:' + mcontato[i].dsdemail + '"><img src="/cecred/images/icones/ico_email.gif" border="0"></a>';
+         cell.innerHTML=linky; // fim primeira celula (mail)
 
-   cell=row.insertCell();   // segunda celula da linha (nome)
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.tbcontato_col1.width;
-   cell.innerText=mcontato[i].nmconfor; // fim segunda celula (nome)
+         cell=row.insertCell();   // segunda celula da linha (nome)
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.tbcontato_col1.width;
+         cell.innerText=mcontato[i].nmconfor; // fim segunda celula (nome)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // terceira celula da linha  (depto)
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.tbcontato_col2.width;
-   cell.innerText=mcontato[i].dsdepart; // fim terceira celula (depto)
+         cell=row.insertCell();   // terceira celula da linha  (depto)
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.tbcontato_col2.width;
+         cell.innerText=mcontato[i].dsdepart; // fim terceira celula (depto)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // quarta celula da linha (email)
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width= document.all.tbcontato_col3.width;
-   cell.title=mcontato[i].dsdemail;
-   cell.innerText=mcontato[i].dsdemail.substring(0, 20); // fim quarta celula (email)
+         cell=row.insertCell();   // quarta celula da linha (email)
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width= document.all.tbcontato_col3.width;
+         cell.title=mcontato[i].dsdemail;
+         cell.innerText=mcontato[i].dsdemail.substring(0, 20); // fim quarta celula (email)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // quinta celula da linha (ddd)
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-	cell.width= document.all.tbcontato_col4.width;
-   cell.innerText=mcontato[i].cddddfor; // fim quinta celula (ddd)
+         cell=row.insertCell();   // quinta celula da linha (ddd)
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+        cell.width= document.all.tbcontato_col4.width;
+         cell.innerText=mcontato[i].cddddfor; // fim quinta celula (ddd)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // sexta celula da linha (fone)
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width= document.all.tbcontato_col5.width;
-   cell.innerText=mcontato[i].nrfonfor; // fim sexta celula (fone)
+         cell=row.insertCell();   // sexta celula da linha (fone)
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width= document.all.tbcontato_col5.width;
+         cell.innerText=mcontato[i].nrfonfor; // fim sexta celula (fone)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // setima celula da linha (edita)
-   cell.className = 'txtNormal';
-   cell.align = 'center';
-   cell.width= document.all.tbcontato_col6.width;
-   linky='<a href="#." onClick=EdContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
-   cell.innerHTML=linky; // fim sexta celula (edita)
+         cell=row.insertCell();   // setima celula da linha (edita)
+         cell.className = 'txtNormal';
+         cell.align = 'center';
+         cell.width= document.all.tbcontato_col6.width;
+         linky='<a href="#." onClick=EdContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+         cell.innerHTML=linky; // fim sexta celula (edita)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // oitava celula da linha (apaga)
-   cell.className = 'txtNormal';
-   cell.align = 'center';
-   cell.width= document.all.tbcontato_col7.width;
-   linky='<a href="#." onClick=ExContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
-   cell.innerHTML=linky; // fim oitava celula (apaga)
-   
- }  
-}
+         cell=row.insertCell();   // oitava celula da linha (apaga)
+         cell.className = 'txtNormal';
+         cell.align = 'center';
+         cell.width= document.all.tbcontato_col7.width;
+         linky='<a href="#." onClick=ExContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+         cell.innerHTML=linky; // fim oitava celula (apaga)
+         
+       }  
+      }
 
-function mostraEixos(){
- var row;
- var cell;
- var cor = '#F7F7F7';
+      function mostraEixos(){
+       var row;
+       var cell;
+       var cor = '#F7F7F7';
 
- for (var i=document.all.tbeixo.rows.length; i>0; i--)
-      document.all.tbeixo.deleteRow(i-1);
+       for (var i=document.all.tbeixo.rows.length; i>0; i--)
+            document.all.tbeixo.deleteRow(i-1);
 
- for(i=0;i<meixo.length;i++){      // insere linhas na tabela de eixo
-   row=tbeixo.insertRow(); 
+       for(i=0;i<meixo.length;i++){      // insere linhas na tabela de eixo
+         row=tbeixo.insertRow(); 
 
-   if (cor == '#FFFFFF')
-      cor = '#F7F7F7';
-   else
-      cor = '#FFFFFF';
+         if (cor == '#FFFFFF')
+            cor = '#F7F7F7';
+         else
+            cor = '#FFFFFF';
 
-   row.bgColor = cor;
-	
-   cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
-   
-   cell=row.insertCell();   // segunda celula da linha (Descrição do Eixo)
-   cell.className = 'txtNormal';
-   cell.width= "95%";
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.tbeixo_col1.width;
-   cell.innerText=meixo[i].dseixtem; // fim segunda celula (Descrição do Eixo)
+         row.bgColor = cor;
+        
+         cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
+         
+         cell=row.insertCell();   // segunda celula da linha (Descrição do Eixo)
+         cell.className = 'txtNormal';
+         cell.width= "95%";
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.tbeixo_col1.width;
+         cell.innerText=meixo[i].dseixtem; // fim segunda celula (Descrição do Eixo)
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   // oitava celula da linha (apaga)
-   cell.className = 'txtNormal';
-   cell.align = 'center';
-   cell.width= document.all.tbeixo_col2.width;
-   linky='<a href="#." onClick=ExEixo("' + meixo[i].ideixfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
-   cell.innerHTML=linky; // fim oitava celula (apaga)
-   } 
-}
+         cell=row.insertCell();   // oitava celula da linha (apaga)
+         cell.className = 'txtNormal';
+         cell.align = 'center';
+         cell.width= document.all.tbeixo_col2.width;
+         linky='<a href="#." onClick=ExEixo("' + meixo[i].ideixfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+         cell.innerHTML=linky; // fim oitava celula (apaga)
+         } 
+      }
 
-function mostraPropostas(){
- var row;var cell;
- var cor = '#F7F7F7';
+      function mostraPropostas(){
+       var row;var cell;
+       var cor = '#F7F7F7';
 
- for (var i=document.all.tbproposta.rows.length; i>0; i--)
-      document.all.tbproposta.deleteRow(i-1);
- 
- for(i=0;i<mproposta.length;i++){      
-   row=tbproposta.insertRow(); 
+       for (var i=document.all.tbproposta.rows.length; i>0; i--)
+            document.all.tbproposta.deleteRow(i-1);
+       
+       for(i=0;i<mproposta.length;i++){      
+         row=tbproposta.insertRow(); 
 
-   if (cor == '#FFFFFF')
-      cor = '#F7F7F7';
-   else
-      cor = '#FFFFFF';
+         if (cor == '#FFFFFF')
+            cor = '#F7F7F7';
+         else
+            cor = '#FFFFFF';
 
-   row.bgColor = cor;
+         row.bgColor = cor;
 
-   cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
-   
-   cell=row.insertCell();   
-   cell.className = 'txtNormal';
-   cell.height = 6;
-   cell.align = 'left';
-   cell.width = document.all.tbproposta_col1.width;
-   cell.innerText=mproposta[i].nrpropos; 
+         cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
+         
+         cell=row.insertCell();   
+         cell.className = 'txtNormal';
+         cell.height = 6;
+         cell.align = 'left';
+         cell.width = document.all.tbproposta_col1.width;
+         cell.innerText=mproposta[i].nrpropos; 
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width = document.all.tbproposta_col2.width;
-   cell.innerText=mproposta[i].dtmvtolt;
+         cell=row.insertCell();   
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width = document.all.tbproposta_col2.width;
+         cell.innerText=mproposta[i].dtmvtolt;
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width = document.all.tbproposta_col3.width;
-   cell.innerText=mproposta[i].dtvalpro;
+         cell=row.insertCell();   
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width = document.all.tbproposta_col3.width;
+         cell.innerText=mproposta[i].dtvalpro;
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.width = document.all.tbproposta_col4.width;
-   cell.innerText=mproposta[i].nmevento;
+         cell=row.insertCell();   
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.width = document.all.tbproposta_col4.width;
+         cell.innerText=mproposta[i].nmevento;
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
-   
-/*   cell=row.insertCell();  
-   cell.className = 'txtNormal';
-   cell.align = 'left';
-   cell.innerText=''; 
-*/
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
+         
+      /*   cell=row.insertCell();  
+         cell.className = 'txtNormal';
+         cell.align = 'left';
+         cell.innerText=''; 
+      */
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();   
-   cell.className = 'txtNormal';
-   cell.align = 'center';
-   cell.width = document.all.tbproposta_col5.width;
-   linky='<a href="#." onClick=EdProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
-   cell.innerHTML=linky; 
+         cell=row.insertCell();   
+         cell.className = 'txtNormal';
+         cell.align = 'center';
+         cell.width = document.all.tbproposta_col5.width;
+         linky='<a href="#." onClick=EdProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+         cell.innerHTML=linky; 
 
-   cell=row.insertCell();   // Separador
-   cell.className = 'txtNormal';
-   cell.height = 26;
-   cell.align = 'left';
-   cell.width= document.all.separador1.width;
-   cell.innerText='';
+         cell=row.insertCell();   // Separador
+         cell.className = 'txtNormal';
+         cell.height = 26;
+         cell.align = 'left';
+         cell.width= document.all.separador1.width;
+         cell.innerText='';
 
-   cell=row.insertCell();  
-   cell.className = 'txtNormal';
-   cell.align = 'center';
-   cell.width = document.all.tbproposta_col6.width;
-   linky='<a href="#." onClick=ExProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
-   cell.innerHTML=linky; 
-   }
-}
+         cell=row.insertCell();  
+         cell.className = 'txtNormal';
+         cell.align = 'center';
+         cell.width = document.all.tbproposta_col6.width;
+         linky='<a href="#." onClick=ExProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+         cell.innerHTML=linky; 
+         }
+      }
 
-function mostraTipos(){
-  if (document.form.idtipfor.value == 2){ 
-		mostraCampos('FornecedorPrincipalInput');
-		mostraCampos('FornecedorPrincipalLabel');
-		if (document.form.idforpri.value == 1) {
-			document.getElementById("aux_idforpri").checked = true;
-		}else{
-			document.getElementById("aux_idforpri").checked = false;			
-		}
-	}else{
-			document.getElementById("aux_idforpri").checked = false;
-			escondeCampos('FornecedorPrincipalInput');
-			escondeCampos('FornecedorPrincipalLabel');
-	}
-}
+      function mostraFacilitador(){
 
-function mostraCampos(id){
-	document.getElementById(id).style.display = 'block';
-}
-function escondeCampos(id){
-	document.getElementById(id).style.display = 'none';
-}
-function marcaFornecedorPrincipal(tipo){ 
-	if(tipo == 2){ 
-		document.getElementById("aux_idforpri").checked = false;
-		 mostraCampos('FornecedorPrincipalLabel');
-		 mostraCampos("FornecedorPrincipalInput");
-		 
-	}else{
-		document.getElementById("aux_idforpri").checked = false;
-		escondeCampos('FornecedorPrincipalLabel');
-		escondeCampos("FornecedorPrincipalInput");		
-	}	
-}
-</script>
-<script language="JavaScript">
-   NomeDoProgramaPrincipal  = '/wpgd0012.w';
-   NomeDoProgramaDeListagem = '/wpgd0012ls.w';
-   NomeDoProgramaDeAjuda    = '/wpgd0012aj.w';
-   NomeDoProgramaDeZoom     = '/zoom/zwpgd0012.w';
+        var row;var cell;
+        var cor = '#F7F7F7';
 
-</script>
-<form action="#." method="POST" name="form">
-<input type="hidden" name="aux_dsendurl" value="">
-<input type="hidden" name="pagina" value="">
-<input type="hidden" name="aux_idevento" value="">
-<input type="hidden" name="aux_cddopcao" value="">
-<input type="hidden" name="aux_nrdrowid" value="">
-<input type="hidden" name="aux_lspermis" value="">
-<input type="hidden" name="aux_dsretorn" value="">
-<input type="hidden" name="aux_stdopcao" value="">
-<input type="hidden" name="aux_idexclui" value="">
-<input type="hidden" name="aux_datahoje" value="">
-<input type="hidden" name="idtipfor" value="1">
-<input type="hidden" name="cdtipcta" value="1">
-<input type="hidden" name="idforpri" value="0">
-<input type="hidden" name="idorifor" value="1">
-<input type="hidden" name="aux_cdcopope" value="">
-<input type="hidden" name="aux_dsurlphp" value="">
-<input type="hidden" name="aux_ctlinati" value="">
-<input type="hidden" name="aux_ctljusti" value="">
+        for (var i=document.all.tbfacilitador.rows.length; i>0; i--){
+          document.all.tbfacilitador.deleteRow(i-1);
+        }
+        
+        for(i=0;i<mfacilitador.length;i++){      
+          row = tbfacilitador.insertRow(); 
+
+          if(cor == '#FFFFFF'){
+            cor = '#F7F7F7';
+          }else{
+            cor = '#FFFFFF';
+          }
+          
+          row.bgColor = cor;
+
+          cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.align = 'left';
+          cell.width= document.all.separador1.width;
+          cell.innerText='';
+
+          cell=row.insertCell();   
+          cell.className = 'txtNormal';
+          cell.height = 6;
+          cell.align = 'left';
+          cell.width = document.all.tbfacilitador_col1.width;
+          cell.innerText = mfacilitador[i].nmfacili; 
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.align = 'left';
+          cell.width= document.all.separador1.width;
+          cell.innerText='';
+
+          cell=row.insertCell();   
+          cell.className = 'txtNormal';
+          cell.align = 'center';
+          cell.width = document.all.tbfacilitador_col2.width;
+          linky = '<a href="#." onClick=EdFacilitador("' + mfacilitador[i].idfacili + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+          cell.innerHTML = linky; 
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.align = 'left';
+          cell.width = document.all.separador1.width;
+          cell.innerText = '';
+
+          cell=row.insertCell();  
+          cell.className = 'txtNormal';
+          cell.align = 'center';
+          cell.width = document.all.tbfacilitador_col3.width;
+          linky = '<a href="#." onClick=ExFacilitador("' + mfacilitador[i].idfacili + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+          cell.innerHTML = linky; 
+        }
+      }
+
+      function mostraTipos(){
+        if (document.form.idtipfor.value == 2){ 
+          mostraCampos('FornecedorPrincipalInput');
+          mostraCampos('FornecedorPrincipalLabel');
+          if (document.form.idforpri.value == 1) {
+            document.getElementById("aux_idforpri").checked = true;
+          }else{
+            document.getElementById("aux_idforpri").checked = false;			
+          }
+        }else{
+            document.getElementById("aux_idforpri").checked = false;
+            escondeCampos('FornecedorPrincipalInput');
+            escondeCampos('FornecedorPrincipalLabel');
+        }
+      }
+
+      function mostraCampos(id){
+        document.getElementById(id).style.display = 'block';
+      }
+      
+      function escondeCampos(id){
+        document.getElementById(id).style.display = 'none';
+      }
+      
+      function marcaFornecedorPrincipal(tipo){ 
+        if(tipo == 2){ 
+          document.getElementById("aux_idforpri").checked = false;
+           mostraCampos('FornecedorPrincipalLabel');
+           mostraCampos("FornecedorPrincipalInput");           
+        }else{
+          document.getElementById("aux_idforpri").checked = false;
+          escondeCampos('FornecedorPrincipalLabel');
+          escondeCampos("FornecedorPrincipalInput");		
+        }	
+      }
+    </script>
+    <script language="JavaScript">
+       NomeDoProgramaPrincipal  = '/wpgd0012.w';
+       NomeDoProgramaDeListagem = '/wpgd0012ls.w';
+       NomeDoProgramaDeAjuda    = '/wpgd0012aj.w';
+       NomeDoProgramaDeZoom     = '/zoom/zwpgd0012.w';
+
+    </script>
+    <form action="#." method="POST" name="form">
+      <input type="hidden" name="aux_dsendurl" value="">
+      <input type="hidden" name="pagina" value="">
+      <input type="hidden" name="aux_idevento" value="">
+      <input type="hidden" name="aux_cddopcao" value="">
+      <input type="hidden" name="aux_nrdrowid" value="">
+      <input type="hidden" name="aux_lspermis" value="">
+      <input type="hidden" name="aux_dsretorn" value="">
+      <input type="hidden" name="aux_stdopcao" value="">
+      <input type="hidden" name="aux_idexclui" value="">
+      <input type="hidden" name="aux_datahoje" value="">
+      <input type="hidden" name="idtipfor" value="1">
+      <input type="hidden" name="cdtipcta" value="1">
+      <input type="hidden" name="idforpri" value="0">
+      <input type="hidden" name="idorifor" value="1">
+      <input type="hidden" name="aux_cdcopope" value="">
+      <input type="hidden" name="aux_dsurlphp" value="">
+      <input type="hidden" name="aux_ctlinati" value="">
+      <input type="hidden" name="aux_ctljusti" value="">
+<input type="hidden" name="aux_operador" value="">
 
 <!-- Inicio do modelo com abas -->
 <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
@@ -418,6 +491,15 @@ function marcaFornecedorPrincipal(tipo){
                           </table>
                         </td>
                         <td width="90" height="15">
+                          <table width="88" id="AbaFacilitador" border="0" cellpadding="0" cellspacing="0">
+                            <tr style="cursor:hand;">
+                              <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                              <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divFacilitador')">Facilitador</td>
+                              <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="90" height="15">
                           <table width="88" id="AbaProposta" border="0" cellpadding="0" cellspacing="0">
                             <tr style="cursor:hand;">
                               <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
@@ -458,9 +540,9 @@ function marcaFornecedorPrincipal(tipo){
                           <td class="NomeCampo" colspan="9">
                             <input name="aux_nrcpfcgc" type="text" class="Campo" size="20" maxlength="20" onKeyDown="validaInteiro(event)" onkeypress="if(document.form.inpessoa[0].checked) FormataCPF(this.name, this.value); else FormataCNPJ(this.name, this.value);">
                             &nbsp; &nbsp; Vigência - Inicio:
-                            <input id="dtinivig" name="dtinivig" type="text" class="Campo" size="10" maxlength="10">
+                            <input id="dtinivig" name="dtinivig" type="text" class="Campo data" size="10" maxlength="10">
                             &nbsp; &nbsp; Fim:
-                            <input id="dtfimvig" name="dtfimvig" type="text" class="Campo" size="10" maxlength="10">
+                            <input id="dtfimvig" name="dtfimvig" type="text" class="Campo data" size="10" maxlength="10">
                             &nbsp; &nbsp; Ativo: 
                             <input id="aux_idsitfor" name="aux_idsitfor" type="checkbox" class="NomeCampo">
                           </td>
@@ -468,25 +550,25 @@ function marcaFornecedorPrincipal(tipo){
                         <tr>
                           <td align="right" class="NomeCampo">Nome:</td>
                           <td colspan="2">
-                            <input name="nmfornec" type="text" class="Campo" size="40" maxlength="40" value="">
+                            <input name="nmfornec" id="nmfornec" type="text" class="Campo alphanum" size="40" maxlength="40" value="" >
                           </td>
                         </tr>
                         <tr>
                           <td align="right" class="NomeCampo">Endereço:</td>
                           <td colspan="2">
-                            <input name="dsendfor" type="text" class="Campo" size="40" maxlength="50" value="">
+                            <input name="dsendfor" type="text" class="Campo alphanum" size="40" maxlength="50" value="">
                           </td>
                           <td><div align="right" class="NomeCampo">Cidade:</div></td>
-                          <td colspan="2"><input name="nmcidfor" type="text" class="Campo" size="15" maxlength="15" value=""></td>
+                          <td colspan="2"><input name="nmcidfor" type="text" class="Campo alphanum" size="15" maxlength="15" value=""></td>
                         </tr>
                         <tr>
                           <td align="right" class="NomeCampo">Bairro:</td>
-                          <td colspan="2"><input name="nmbaifor" type="text" class="Campo" size="40" maxlength="50" value="">
+                          <td colspan="2"><input name="nmbaifor" type="text" class="Campo alphanum" size="40" maxlength="50" value="">
                           </td>
                         </tr>
                         <tr>
                           <td><div align="right" class="NomeCampo">UF:</div></td>
-                          <td width="75" colspan="2"><input name="cdufforn" type="text" class="Campo" size="4" maxlength="2" value=""></td>
+                          <td width="75" colspan="2"><input name="cdufforn" type="text" class="Campo alphanum" size="4" maxlength="2" value=""></td>
                           <td nowrap><div align="right" class="NomeCampo">CEP:</div></td>
                           <td><input name="nrcepfor" type="text" class="Campo" onKeyDown="FormataCep(this.form.nrcepfor,event);" onKeyUp="FormataCep(this.form.nrcepfor,event);" size="9" maxlength="9" ></td>
                         </tr>
@@ -506,7 +588,7 @@ function marcaFornecedorPrincipal(tipo){
                           <td height="19" align="right" class="NomeCampo">Cooperado:</td>
                           <td><input name="flgcoope" type="checkbox" class="Campo" onClick="Cooperado();"></td>
                           <td><div id="NmCoop" align="right" class="NomeCampo">Cooperativa:
-                            <input name="nmcoofor" type="text" size="10" maxlength="20" class="Campo"></div>
+                            <input name="nmcoofor" type="text" size="10" maxlength="20" class="Campo alphanum"></div>
                           </td>
                           <td>&nbsp;</td>
                           <td class="NomeCampo"></td>
@@ -514,29 +596,29 @@ function marcaFornecedorPrincipal(tipo){
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Home Page: </td>
-                          <td colspan="6" ><input name="nmhompag" type="text" class="Campo" size="40" maxlength="40" style="width:396px" ></td>
+                          <td colspan="6" ><input name="nmhompag" type="text" class="Campo alphanum" size="40" maxlength="40" style="width:396px" ></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Referencias:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dsreffor" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsreffor,200)" onKeyDown="ValidaTamanho(this.form.dsreffor,200)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsreffor" cols="75" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsreffor,200)" onKeyDown="ValidaTamanho(this.form.dsreffor,200)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Considerações:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dsobserv" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsobserv,200)" onKeyDown="ValidaTamanho(this.form.dsobserv,200)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsobserv" cols="75" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsobserv,200)" onKeyDown="ValidaTamanho(this.form.dsobserv,200)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Principais Clientes:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dspricli" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dspricli,1000)" onKeyDown="ValidaTamanho(this.form.dspricli,1000)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dspricli" cols="75" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dspricli,1000)" onKeyDown="ValidaTamanho(this.form.dspricli,1000)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Cadastrado: </td>
                           <td width="52">
-                            <input name="dtforati" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" value="">
+                            <input name="dtforati" type="text" class="Campo data" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" value="">
                           </td>
                           
                           <td class="NomeCampo" colspan="3" nowrap><div align="right" class="NomeCampo">Última atualização:</div></td>
                           <td width="110" align="left">
-                            <input name="dtultalt" type="text" disabled="true" class="Campo" size="10" readonly>
+                            <input name="dtultalt" type="text" disabled="true" class="Campo data" size="10" readonly>
                           </td>
                         </tr>
                         <tr>
@@ -545,7 +627,7 @@ function marcaFornecedorPrincipal(tipo){
                             <table border="0" width="100%">
                               <tr>                            
                                 <td>  
-                                    <input name="dtforina" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" onchange="document.form.aux_ctlinati.value = 'A' " value=""> 
+                                    <input name="dtforina" type="text" class="Campo data" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" onchange="document.form.aux_ctlinati.value = 'A' " value=""> 
                                 </td>
                                 <td align="right" class="NomeCampo">    
                                     Justificativa:
@@ -594,7 +676,7 @@ function marcaFornecedorPrincipal(tipo){
                             <tr>
                               <td class="NomeCampo" nowrap><div align="right">Agência (Sem DV):</div></td>
                               <td align="left">
-                                <input name="aux_cdageban" type="text" class="Campo" size="4" maxlength="4" onblur="ValidaAgencia();"> 
+                                <input name="aux_cdageban" type="text" class="Campo" size="4" maxlength="4" onblur="ValidaAgencia();" onkeypress="if(event.keyCode == 13){ValidaAgencia();}"> 
                               </td>	
                               <td colspan="3">
                                 <input name="aux_dsageban" type="text" class="Campo" size="60%" readonly> 
@@ -603,7 +685,7 @@ function marcaFornecedorPrincipal(tipo){
                             <tr>
                               <td class="NomeCampo" nowrap><div align="right" class="NomeCampo">Conta (Com DV):</div></td>
                               <td align="left" colspan="4" class="NomeCampo">
-                                <input name="aux_nrdconta" type="text" class="Campo" size="14" maxlength="12" onBlur="formataContaIF(this,event);" onChange="formataNum(this,event);">
+                                <input name="aux_nrdconta" type="text" class="Campo conta" size="14" maxlength="12" onBlur="formataContaIF(this,event);" onkeypress="if(event.keyCode == 13){formataNum(this,event); document.form.aux_cdtipcta.focus();}" onChange="formataNum(this,event);">
                                 <i>(Mínimo dois digitos)</i>
                                 &nbsp; &nbsp; Tipo de conta:
                                 <select name="aux_cdtipcta"  size="1" class="Campo" ></select>
@@ -626,14 +708,14 @@ function marcaFornecedorPrincipal(tipo){
                               <td class="NomeCampo" nowrap><div align="right">CGC/CPF:</div></td>
                               <td align="left" colspan="4">
                                 <input name="aux_nrdocrcb" type="text" class="Campo" size="30%" maxlength="20" onKeyDown="validaInteiro(event)" onkeypress="if(document.form.inpesrcb[0].checked) FormataCPF(this.name, this.value); else FormataCNPJ(this.name, this.value);">
-                              </td>
+                              </td>                                                                                                               
                             </tr>
                             <tr>
                               <td  id="pispasep" class="NomeCampo" nowrap><div align="right">PIS/PASEP:</div></td>
                               <td  id="pispasep" align="left" colspan="4" class="NomeCampo">
                                 <input name="aux_nrpispas" type="text" class="Campo" size="30%" onKeyDown="validaInteiro(event)" onkeypress="FormataPIS(this.name, this.value);">
                                 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Data Nascimento: 
-                                <input id="dtnasfor" name="dtnasfor" type="text" class="Campo" size="11" maxlength="10">
+                                <input id="dtnasfor" name="dtnasfor" type="text" class="Campo data" size="11" maxlength="10">
                               </td>
                             </tr>
                           </table>                                  
@@ -644,7 +726,8 @@ function marcaFornecedorPrincipal(tipo){
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="return salvarTela()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
-                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick=";return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value)"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value, document.form.aux_operador.value);"></th>
+					      <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_replicar_respostas.gif" onClick="replicarProposta();"></th>
                         </tr>
                       </table>
                     </div>
@@ -714,6 +797,34 @@ function marcaFornecedorPrincipal(tipo){
                       </table>
                     </div>
 					
+                    <div id="divFacilitador" align="left">
+                      <table border="0" width="100%" height="275">
+                        <tr valign="top">
+                          <td>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                <tr>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+                                  <td id="tbfacilitador_col1" width="85%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" align="left">Facilitador</td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbfacilitador_col2" width="7.5%" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">&nbsp;</div></td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbfacilitador_col3" width="7.5%" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">&nbsp;</div></td>
+                                </tr>
+                            </table>      
+                          </td>
+                        </tr>
+                        <tr valign="top">
+                          <td>
+                            <div style="overflow: auto; height:'263';">
+                              <table id="tbfacilitador" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                <!-- INCLUI DADOS -->
+                              </table>      
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                    
                     <div id="divProposta" align="left">
                       <table border="0" width="100%" height="275">
                         <tr valign="top">
@@ -747,6 +858,7 @@ function marcaFornecedorPrincipal(tipo){
                         </tr>
                       </table>
                     </div>
+                    
                   <!-- Fim dos dados do programa - retorno ao modelo -->
                   </td>
                   <td>&nbsp;</td>
@@ -761,744 +873,821 @@ function marcaFornecedorPrincipal(tipo){
 <!-- fim do modelo -->
 </form>
 
-<script language="JavaScript">
+  <script language="JavaScript">
 
 
-$('i').css('font-size','11px');
-$('i').css('color','grey');
-$('#dtinivig').mask('00/00/0000');
-$('#dtfimvig').mask('00/00/0000');
-$('#dtnasfor').mask('00/00/0000');
-$('#aux_nrdconta').mask('99999999-9');
-$('#aux_idsitfor').prop('disabled',true);
-
-for(i = 0;i< document.form.inpesrcb.length; i++)
-   document.form.inpesrcb[i].disabled = false;
-   
-if ($('input[name="inpesrcb"]:checked').val() == 2) {
-  for (i = 0; i < document.all.pispasep.length; i++)
-    document.all.pispasep[i].style.visibility = "hidden";
-  document.form.aux_nrpispas.value = "";
-  document.form.dtnasfor.value = "";
-}
-
-document.getElementById("inpesrcb1").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
-                                                                document.all.pispasep[i].style.visibility = "visible"; }
-document.getElementById("inpesrcb2").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
-                                                                document.all.pispasep[i].style.visibility = "hidden";
-                                                           document.form.aux_nrpispas.value = "";
-                                                           document.form.dtnasfor.value = "";
-                                                         }
-
-NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
-document.form.action = NomeDoProgramaPrincipal;
-document.form.aux_cdcopope.value = document.form.aux_cdcopope.value
-var nomeaba = '';
-Cooperado();
-
-function CarregaPrincipal () {
-   //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Fornecedores - ' + document.form.aux_idevento.value;
-   window.status = "";
-							
-}
-
-function LimparCampos()
-{
-   //document.form.cdcooper.value = '';
-   document.form.cddddfax.value = '';
-   document.form.cddddfor.value = ''; 
-   //document.form.cdoperad.value = ''; 
-   document.form.cdufforn.value = ''; 
-   document.form.dsendfor.value = ''; 
-   document.form.dsobserv.value = ''; 
-   document.form.dsreffor.value = ''; 
-   document.form.dtforati.value = document.form.aux_datahoje.value; 
-   document.form.dtforina.value = ''; 
-   document.form.dtultalt.value = document.form.aux_datahoje.value; 
-   document.form.flgcoope.value = 1; 
-   //document.form.aux_idevento.value = ''; 
-   document.form.inpessoa.value = ''; 
-   document.form.nmbaifor.value = ''; 
-   document.form.nmcidfor.value = ''; 
-   document.form.nmcoofor.value = ''; 
-   document.form.nmfornec.value = ''; 
-   document.form.nmhompag.value = ''; 
-   document.form.nrcepfor.value = ''; 
-   document.form.aux_nrcpfcgc.value = ''; 
-   document.form.nrfaxfor.value = ''; 
-   document.form.nrfonfor.value = '';
-   document.form.aux_idorifor.value = 1;
-   document.form.idorifor.value = document.form.aux_idorifor.value;
-   $('#inpessoa_1').attr('checked',true);
-   document.form.dtinivig.value = '';
-   document.form.dtfimvig.value = '';
-   document.form.aux_idsitfor.checked = false;
-   document.form.aux_idforpri.checked = false;
-   document.form.dtforati.value = '';
-   document.form.aux_idtipfor.value = 1;
-   
-   document.form.aux_cddbanco.value = 0;
-   document.form.aux_cdageban.value = '';
-   document.form.aux_dsageban.value = '';
-   document.form.aux_nrdconta.value = '';
-   document.form.aux_cdtipcta.value = 0;
-   document.form.aux_nmpesrcb.value = '';
-   document.form.aux_nrdocrcb.value = '';
-   document.form.aux_nrpispas.value = '';
-   document.form.dtnasfor.value = '';
-   $('#inpesrcb1').attr('checked',true);
-   
-   for (i = 0; i < document.all.pispasep.length; i++)
-     document.all.pispasep[i].style.visibility = "visible";
-                                                                
-   escondeCampos('FornecedorPrincipalInput');
-   escondeCampos('FornecedorPrincipalLabel');
-
-   for(i = 0;i< document.form.inpessoa.length; i++)
-      document.form.inpessoa[i].disabled = false;
-	  document.form.aux_nrcpfcgc.disabled = false;
-
-   for (var i=document.all.tbcontato.rows.length; i>0; i--)
-      document.all.tbcontato.deleteRow(i-1); 
-
-   for (var i=document.all.tbeixo.rows.length; i>0; i--)
-      document.all.tbeixo.deleteRow(i-1);
-
-   for (var i=document.all.tbproposta.rows.length; i>0; i--)
-      document.all.tbproposta.deleteRow(i-1);
-}
-
-function Habilita()
-{
-
-   // Habilita os campos chave pra poder salvar
-   for(i = 0;i< document.form.inpessoa.length; i++)
-      document.form.inpessoa[i].disabled = false;
-	  document.form.aux_nrcpfcgc.disabled = false;
-
-}
-function HabilitaSalvar(){}
-
-function ValidaDados(form){
-
-  var msg="";
-  
-  // Verifica tipo de fornecedor
-  if(document.form.aux_idtipfor.value == 2 && (meixo.length > 0 || mproposta.length > 0)){
-    if(!confirm("As informações de Eixo e Proposta serão excluídas. Confirma esta ação?")){
-      return false;
+    $('i').css('font-size','11px');
+    $('i').css('color','grey');
+    $('#aux_idsitfor').prop('disabled',true);
+    
+    for(i = 0;i< document.form.inpesrcb.length; i++)
+       document.form.inpesrcb[i].disabled = false;
+       
+    if ($('input[name="inpesrcb"]:checked').val() == 2) {
+      for (i = 0; i < document.all.pispasep.length; i++)
+        document.all.pispasep[i].style.visibility = "hidden";
+      document.form.aux_nrpispas.value = "";
+      document.form.dtnasfor.value = "";
     }
-  }
 
-  document.form.aux_nrcpfcgc.value =  TiraFormato(document.form.aux_nrcpfcgc.value);
-  document.form.nrcepfor.value     =  TiraFormato(document.form.nrcepfor.value);
-  document.form.idorifor.value 	   = document.form.aux_idorifor.value;
-		
-  document.form.aux_nrdocrcb.value =  TiraFormato(document.form.aux_nrdocrcb.value);
-  
-  if (form.aux_idorifor.value == 0){
-    msg ="Selecione campo de Origem do Fornecedor"
-  }
- 
-  msg = msg + top.frcod.VE("ca",form.nmfornec,"O campo de nome do Fornecedor","nao");
-  msg = msg + top.frcod.VE("ca",form.dsendfor,"O campo de endereço do Fornecedor","nao");
-  msg = msg + top.frcod.VE("ca",form.nmcidfor,"O campo de cidade do Fornecedor","nao");
-  msg = msg + top.frcod.VE("ca",form.nmbaifor,"O campo de bairro do Fornecedor","nao");
-  msg = msg + top.frcod.VE("ca",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
-  msg = msg + top.frcod.VE("in",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
-  msg = msg + top.frcod.VE("in",form.nrcepfor,"O campo de CEP do Fornecedor","sim","0","99999999");
-  msg = msg + top.frcod.VE("ca",form.cdufforn,"O campo de UF do Fornecedor","nao");
-  msg = msg + top.frcod.VE("in",form.nrfonfor,"O telefone do Fornecedor","sim", "0", "99999999");
-  msg = msg + top.frcod.VE("in",form.nrfaxfor,"O FAX do Fornecedor","sim", "0", "99999999");
-  msg = msg + top.frcod.VE("in",form.cddddfor,"O DDD do telefone do Fornecedor","sim", "0", "99999999");
-  msg = msg + top.frcod.VE("in",form.cddddfax,"O DDD do FAX do Fornecedor","sim", "0", "99999999");
+    document.getElementById("inpesrcb1").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
+                                                                    document.all.pispasep[i].style.visibility = "visible"; }
+    document.getElementById("inpesrcb2").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
+                                                                    document.all.pispasep[i].style.visibility = "hidden";
+                                                               document.form.aux_nrpispas.value = "";
+                                                               document.form.dtnasfor.value = "";
+                                                             }
+
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+    document.form.action = NomeDoProgramaPrincipal;
+    document.form.aux_cdcopope.value = document.form.aux_cdcopope.value
+    var nomeaba = '';
+    Cooperado();
+
+    function CarregaPrincipal () {
+       //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Fornecedores - ' + document.form.aux_idevento.value;
+       window.status = "";
+                  
+    }
+
+    function LimparCampos()
+    {
+       //document.form.cdcooper.value = '';
+       document.form.cddddfax.value = '';
+       document.form.cddddfor.value = ''; 
+       //document.form.cdoperad.value = ''; 
+       document.form.cdufforn.value = ''; 
+       document.form.dsendfor.value = ''; 
+       document.form.dsobserv.value = ''; 
+       document.form.dsreffor.value = ''; 
+       document.form.dtforati.value = document.form.aux_datahoje.value; 
+       document.form.dtforina.value = ''; 
+       document.form.dtultalt.value = document.form.aux_datahoje.value; 
+       document.form.flgcoope.value = 1; 
+       //document.form.aux_idevento.value = ''; 
+       document.form.inpessoa.value = ''; 
+       document.form.nmbaifor.value = ''; 
+       document.form.nmcidfor.value = ''; 
+       document.form.nmcoofor.value = ''; 
+       document.form.nmfornec.value = ''; 
+       document.form.nmhompag.value = ''; 
+       document.form.nrcepfor.value = ''; 
+       document.form.aux_nrcpfcgc.value = ''; 
+       document.form.nrfaxfor.value = ''; 
+       document.form.nrfonfor.value = '';
+       document.form.aux_idorifor.value = 1;
+       document.form.idorifor.value = document.form.aux_idorifor.value;
+       $('#inpessoa_1').attr('checked',true);
+       document.form.dtinivig.value = '';
+       document.form.dtfimvig.value = '';
+       document.form.aux_idsitfor.checked = false;
+       document.form.aux_idforpri.checked = false;
+       document.form.dtforati.value = '';
+       document.form.aux_idtipfor.value = 1;
+       
+       document.form.aux_cddbanco.value = 0;
+       document.form.aux_cdageban.value = '';
+       document.form.aux_dsageban.value = '';
+       document.form.aux_nrdconta.value = '';
+       document.form.aux_cdtipcta.value = 0;
+       document.form.aux_nmpesrcb.value = '';
+       document.form.aux_nrdocrcb.value = '';
+       document.form.aux_nrpispas.value = '';
+       document.form.dtnasfor.value = '';
+       $('#inpesrcb1').attr('checked',true);
+       
+       for (i = 0; i < document.all.pispasep.length; i++)
+         document.all.pispasep[i].style.visibility = "visible";
+                                                                    
+       escondeCampos('FornecedorPrincipalInput');
+       escondeCampos('FornecedorPrincipalLabel');
+
+       for(i = 0;i< document.form.inpessoa.length; i++)
+          document.form.inpessoa[i].disabled = false;
+        document.form.aux_nrcpfcgc.disabled = false;
+
+       for (var i=document.all.tbcontato.rows.length; i>0; i--)
+          document.all.tbcontato.deleteRow(i-1); 
+
+       for (var i=document.all.tbeixo.rows.length; i>0; i--)
+          document.all.tbeixo.deleteRow(i-1);
+
+       for (var i=document.all.tbproposta.rows.length; i>0; i--)
+          document.all.tbproposta.deleteRow(i-1);
+    }
+
+    function Habilita()
+    {
+
+       // Habilita os campos chave pra poder salvar
+       for(i = 0;i< document.form.inpessoa.length; i++)
+          document.form.inpessoa[i].disabled = false;
+        document.form.aux_nrcpfcgc.disabled = false;
+
+    }
+    function HabilitaSalvar(){}
+
+    function ValidaDados(form){
+
+      var msg="";
+      
+      // Verifica tipo de fornecedor
+      if(document.form.aux_idtipfor.value == 2 && (meixo.length > 0 || mproposta.length > 0)){
+        if(!confirm("As informações de Eixo e Proposta serão excluídas. Confirma esta ação?")){
+          return false;
+        }
+      }
+
+      document.form.aux_nrcpfcgc.value =  TiraFormato(document.form.aux_nrcpfcgc.value);
+      document.form.nrcepfor.value     =  TiraFormato(document.form.nrcepfor.value);
+      document.form.idorifor.value 	   = document.form.aux_idorifor.value;
+        
+      document.form.aux_nrdocrcb.value =  TiraFormato(document.form.aux_nrdocrcb.value);
+      
+      if (form.aux_idorifor.value == 0){
+        msg ="Selecione campo de Origem do Fornecedor"
+      }
+     
+      msg = msg + top.frcod.VE("ca",form.nmfornec,"O campo de nome do Fornecedor","nao");
+      msg = msg + top.frcod.VE("ca",form.dsendfor,"O campo de endereço do Fornecedor","nao");
+      msg = msg + top.frcod.VE("ca",form.nmcidfor,"O campo de cidade do Fornecedor","nao");
+      msg = msg + top.frcod.VE("ca",form.nmbaifor,"O campo de bairro do Fornecedor","nao");
+      msg = msg + top.frcod.VE("ca",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
+      msg = msg + top.frcod.VE("in",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
+      msg = msg + top.frcod.VE("in",form.nrcepfor,"O campo de CEP do Fornecedor","sim","0","99999999");
+      msg = msg + top.frcod.VE("ca",form.cdufforn,"O campo de UF do Fornecedor","nao");
+      msg = msg + top.frcod.VE("in",form.nrfonfor,"O telefone do Fornecedor","sim", "0", "99999999");
+      msg = msg + top.frcod.VE("in",form.nrfaxfor,"O FAX do Fornecedor","sim", "0", "99999999");
+      msg = msg + top.frcod.VE("in",form.cddddfor,"O DDD do telefone do Fornecedor","sim", "0", "99999999");
+      msg = msg + top.frcod.VE("in",form.cddddfax,"O DDD do FAX do Fornecedor","sim", "0", "99999999");
+             
+      if (msg != ""){
+         top.frcod.MostraResultado('1',msg);
+         return false
+      }
+      if ((form.aux_cddbanco.value != 0 ||
+           form.aux_cdageban.value != "" ||
+           form.aux_nrdconta.value != "" ||
+           form.aux_cdtipcta.value != 0  ||
+           form.aux_nmpesrcb.value != "" ||
+           form.aux_nrdocrcb.value != "" ||
+           form.aux_nrpispas.value != "" ||
+           form.dtnasfor.value != "") &&
+          (form.aux_cddbanco.value == 0 ||
+           form.aux_cdageban.value == "" ||
+           form.aux_nrdconta.value == "" ||
+           form.aux_cdtipcta.value == 0  ||
+           form.aux_nmpesrcb.value == "" ||
+           form.aux_nrdocrcb.value == "" ||
+           (form.inpesrcb.value == 1 && (form.aux_nrpispas.value == "" || form.dtnasfor.value == "")))){
+        top.frcod.MostraResultado('1','Preencha todos os dados bancários');
+        return false;    
+      }
+      return true;
+    }
+
+    function Cooperado()
+    {
+       if(document.form.flgcoope.checked == true)
+       {
+          document.all.NmCoop.style.visibility = "visible";
+       }
+       else
+       {
+          document.all.NmCoop.style.visibility = "hidden";
+          document.form.nmcoofor.value = '';
+       }
+    }
+
+
+    function Recarrega()
+    {
+       VarURL = NomeDoProgramaPrincipal + '?LinkRowid=' + document.form.aux_nrdrowid.value + '&pagina='  + document.form.pagina.value +'&aux_cdcopope=' + document.form.aux_cdcopope.value;
+       window.open(VarURL,'mainFrame','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=600,height=300,top=10,left=10');
+    }
+
+    function AdContato()
+    {
+       var campo = '';
+       if(document.form.aux_cddopcao.value == "in")
+       {
+          alert("O fornecedor deve ser gravado antes de inserir Contatos. ");
+       }
+       else
+       {
+          campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?aux_nrcpfcgc=' + campo+'&aux_cdcopope=' + document.form.aux_cdcopope.value;
+          window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=425,height=255,top=10,left=10');
+       }
+    }
+
+    function EdContato(rowid){
+
+       // Verifica se o usuário tem permissão de salvar
+       if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+
+       var campo = '';
+       if(rowid != "")
+       {
+          campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?LinkRowid=' + rowid + 
+             '&aux_nrcpfcgc=' + campo +
+         '&aux_cdcopope=' + document.form.aux_cdcopope.value;
+          window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=425,height=255,top=10,left=10');
+       }
+    }
+
+    function ExContato(rowid){
+
+       // Verifica se o usuário tem permissão de exclusao
+       if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+
+       if(rowid != "")
+       {
+          if (!confirm('Confirma Exclusão do Contato?'))
+          {
+             return false;
+          }
+       
+          document.form.aux_idexclui.value = rowid;
+          document.form.aux_cddopcao.value = "exc";
+          document.form.submit();
+       }
+    }
+
+    function AdEixo()
+    {
+       if(document.form.aux_cddopcao.value == "in")
+       {
+          alert("O fornecedor deve ser gravado antes de relacioná-lo com eixos temáticos. ");
+       }
+       else
+       {
+          campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0012b.htm?aux_nrcpfcgc=' + campo + 
+             '&aux_idevento=' + document.form.aux_idevento.value +
+         '&aux_cdcopope=' + document.form.aux_cdcopope.value; 
+          window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=420,height=400,top=10,left=10');
+       }
+    }
+
+    function ExEixo(rowid)
+    {
+       // Verifica se o usuário tem permissão de exclusao
+       if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+
+       if(rowid != "")
+       {
+          if (!confirm('Confirma Exclusão da Relação Fornecedor/Eixo?'))
+          {
+             return false;
+          }
+       
+          document.form.aux_idexclui.value = rowid;
+          document.form.aux_cddopcao.value = "exe";
+          document.form.submit();
+       }
+    }
+
+    function AdProposta()
+    {
+       var campo = '';   
+
+       if((document.form.dtforina.value != "/  /")&&(document.form.dtforina.value != ""))
+       {   
+       
+          var dtdatual = new Date();
+          var aux_data = document.form.dtforina.value.split("/");   
+          var dtiantiv = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+          
+          if (dtiantiv < dtdatual){
+              alert("Fornecedor está inativo.");
+              return false;
+          }
+       }
+       
+       
+       if((document.form.dtfimvig.value != "/  /")&&(document.form.dtfimvig.value != ""))
+       {   
+       
+          var dtdatual = new Date();
+          var aux_data = document.form.dtfimvig.value.split("/");   
+          var dtfimvig = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+          
+          if (dtfimvig < dtdatual){
+              alert("Fornecedor está inativo.");
+              return false;
+          }
+       }   
+       if(document.form.aux_cddopcao.value == "in")
+       {
+          alert("O fornecedor deve ser gravado antes de inserir propostas. ");
+       }
+       else
+       {
+        campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?aux_nrcpfcgc=' + campo + 
+             '&aux_idevento=' + document.form.aux_idevento.value + 
+         '&aux_cdcopope=' + document.form.aux_cdcopope.value +
+         '&aux_operacao=' + "incluir";
+          window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
+       }
+    }
+
+    function EdProposta(rowid){
+
+       // Verifica se o usuário tem permissão de salvar
+       if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+      
+       var campo = '';
+       if(rowid != "")
+       {
+          campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?LinkRowid=' + rowid + 
+             '&aux_nrcpfcgc=' + campo + 
+         '&aux_cdcopope=' + document.form.aux_cdcopope.value +
+             '&aux_idevento=' + document.form.aux_idevento.value; 
+          window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
+       }
+    }
+
+    function ExProposta(rowid){
+       // Verifica se o usuário tem permissão de exclusao
+       if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+
+       if(rowid != ""){
+          if (!confirm('Confirma Exclusão da Proposta?'))          {
+             return false;
+          }else{
+       
+            document.form.aux_idexclui.value = rowid;
+            document.form.aux_cddopcao.value = "exp";
+            document.form.aux_nrcpfcgc.disabled = false;
+            document.form.submit();
+          }
+       }
+    }
+    
+    function EdFacilitador(rowid){
+
+      // Verifica se o usuário tem permissão de salvar
+      if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+        alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+        return false;
+      }
+      
+      if(rowid != ""){
+        VarURL = document.form.aux_dsendurl.value  + '/wpgd0016.htm?LinkRowid=' + rowid;
+        window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=545,height=695,top=10,left=10');
+      }
+    }
+
+    function ExFacilitador(rowid){
+      
+       // Verifica se o usuário tem permissão de exclusao
+       if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+       }
+
+       if(rowid != "" || cdfacili != ""){
+          if (!confirm('Confirma Exclusão do Facilitador?')){
+             return false;
+          }
+       
+          document.form.aux_idexclui.value = rowid;
+          document.form.aux_cddopcao.value = "excFacilitador";
+          document.form.submit();
+       }
+       
+    }
+
+    function AdFacilitador(){
+      var campo = '';
+      if(document.form.aux_cddopcao.value == "in"){
+        alert("O fornecedor deve ser gravado antes de inserir Facilitador. ");
+      }else{
+        campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+        VarURL = document.form.aux_dsendurl.value + '/wpgd0016.htm?aux_idevento=' + document.form.aux_idevento.value 
+                                                  + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value;      
+        window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=545,height=620,top=10,left=10');
+      }
+    }
+    
+    function MudaPagina(sentido, indice, max)
+    {
+       if((indice != max) && (indice != "?"))
+       {
+          document.form.aux_cddopcao.value = sentido;
+          document.form.submit();
+       }
+
+    }
+    function mostraDiv(nomediv)
+    {  
+       if (nomediv=='') {nomediv='divFornecedor';}
+
+       if (nomediv=='divFornecedor') {nomeaba='AbaFornecedor';}
+       if (nomediv=='divContato')    {nomeaba='AbaContato';}
+       if (nomediv=='divEixo')       {nomeaba='AbaEixo';}
+       if (nomediv=='divProposta')   {nomeaba='AbaProposta';}
+       if (nomediv=='divFacilitador')   {nomeaba='AbaFacilitador';}
+
+       document.form.pagina.value=nomediv;
+       document.all.divFornecedor.style.display = 'none';
+       document.all.divContato.style.display = 'none';
+       document.all.divEixo.style.display = 'none';
+       document.all.divProposta.style.display = 'none';
+       document.all.divFacilitador.style.display = 'none';
+
+       document.all.adicionar.style.visibility = 'hidden';
+
+       document.all.AbaFornecedor.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+       document.all.AbaFornecedor.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+       document.all.AbaFornecedor.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+       document.all.AbaFornecedor.rows[0].cells[1].className="txtTituloHid";
+       
+       document.all.AbaContato.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+       document.all.AbaContato.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+       document.all.AbaContato.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+       document.all.AbaContato.rows[0].cells[1].className="txtTituloHid";
+
+       document.all.AbaEixo.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+       document.all.AbaEixo.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+       document.all.AbaEixo.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+       document.all.AbaEixo.rows[0].cells[1].className="txtTituloHid";
+
+       document.all.AbaProposta.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+       document.all.AbaProposta.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+       document.all.AbaProposta.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+       document.all.AbaProposta.rows[0].cells[1].className="txtTituloHid";
+
+       document.all.AbaFacilitador.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+       document.all.AbaFacilitador.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+       document.all.AbaFacilitador.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+       document.all.AbaFacilitador.rows[0].cells[1].className="txtTituloHid";
+       
+       document.all[nomeaba].rows[0].cells[0].background="/cecred/images/menu/mnu_sle.gif";
+       document.all[nomeaba].rows[0].cells[1].background="/cecred/images/menu/mnu_slc.gif";
+       document.all[nomeaba].rows[0].cells[2].background="/cecred/images/menu/mnu_sld.gif";
+       document.all[nomeaba].rows[0].cells[1].className="txtTituloVis";
+
+       if(nomeaba != 'AbaFornecedor')
+          document.all.adicionar.style.visibility = 'visible';
+
+       document.all[nomediv].style.display = 'block';
+       
+       verificaMaterial();
+    }
+
+    // Altera o link da função de adicionar
+    function mudaAdicionar(){
+      if (document.form.aux_lspermis.value.substring(0,1) != 'I'){ 
+        alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      }else{
+        if(document.all.divContato.style.display == 'block'){
+          AdContato();
+        }        
+        if(document.all.divEixo.style.display == 'block'){
+          AdEixo();
+        }        
+        if(document.all.divProposta.style.display == 'block'){
+          AdProposta();
+        }         
+        if(document.all.divFacilitador.style.display == 'block'){
+          AdFacilitador();
+        }
+      }
+    }
+
+    function FormataCPF(campo,teclapress)  {
+       
+       var tecla = teclapress.keycode;
+       vr = teclapress;
+      
+       vr = vr.replace(".",""); 
+       vr = vr.replace(".","");
+       vr = vr.replace(".","");
+       vr = vr.replace("/","");
+       vr = vr.replace("-","");
+       tam = vr.length ;
+               
+       //if ( tecla != 9 && tecla != 8 )   {
+          if ( tam > 2 && tam < 5 )   
+           document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3 );
+          if ( tam > 5 && tam < 8 )  
+           document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3);
+          if ( tam > 8 )  
+           document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3) + '-' + vr.substr(9,2);
+       //}	  
+    }
+
+    function FormataCNPJ(campo,teclapress)  {
+       
+      var tecla = teclapress.keycode;
+      vr = teclapress;
+
+      vr = vr.replace(".",""); 
+      vr = vr.replace(".","");
+      vr = vr.replace(".","");
+      vr = vr.replace("/","");
+      vr = vr.replace("-","");
+      tam = vr.length ;
+             
+      if(tecla != 9 && tecla != 8){
+        if ( tam > 1 && tam < 4 )   
+         document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3 );
+        if ( tam > 4 && tam < 7 )  
+         document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3);
+        if ( tam > 7 && tam < 11 )  
+         document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4);
+        if ( tam > 11 )  
+         document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4) + '-' + vr.substr( 12, 2);
+      }	  
+    }
+
+    function FormataPIS(campo,teclapress)  {
+       
+     var tecla = teclapress.keycode;
+     vr = teclapress;
+     
+     vr = vr.replace(".",""); 
+     vr = vr.replace(".","");
+     vr = vr.replace(".","");
+     vr = vr.replace("/","");
+     vr = vr.replace("-","");
+     tam = vr.length ;
+             
+     //if ( tecla != 9 && tecla != 8 )   {
+        if ( tam > 2 && tam < 5 )   
+          document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5 );
+        if ( tam > 7 && tam < 11 )  
+          document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2);
+        if ( tam > 8 )  
+          document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2) + '-' + vr.substr(10,0);
+     //}	  
+    }
+
+    if(document.form.inpessoa[0].checked){
+       FormataCPF(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
+    }else{
+       FormataCNPJ(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
+    }
+    if (document.form.aux_nrdocrcb.value != ""){
+      if(document.form.inpesrcb[0].checked){
+         FormataCPF(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
+      }else{
+         FormataCNPJ(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
+      }
+    }
+    // Desabilita os campos chaves, se estiver posicionado em algum registro
+    if(document.form.aux_nrdrowid.value != "?"){
+       for(i = 0;i< document.form.inpessoa.length; i++)
+          document.form.inpessoa[i].disabled = true;
+        document.form.aux_nrcpfcgc.disabled = true;
+    }
+
+    // Tirar os formatos de CPF e CNPJ, deixando somente os numeros
+    function TiraFormato(campo){
+       //Retirar a formatação de CPF e CNPJ
+       campo = campo.replace(".",""); 
+       campo = campo.replace(".","");
+       campo = campo.replace(".","");
+       campo = campo.replace("/","");
+       campo = campo.replace("-","");
+
+       return campo;
+    }
+
+    setTimeout("verificaMaterial()",100);
+
+    function verificaMaterial(){
          
-  if (msg != ""){
-     top.frcod.MostraResultado('1',msg);
-     return false
-  }
-  if ((form.aux_cddbanco.value != 0 ||
-       form.aux_cdageban.value != "" ||
-       form.aux_nrdconta.value != "" ||
-       form.aux_cdtipcta.value != 0  ||
-       form.aux_nmpesrcb.value != "" ||
-       form.aux_nrdocrcb.value != "" ||
-       form.aux_nrpispas.value != "" ||
-       form.dtnasfor.value != "") &&
-      (form.aux_cddbanco.value == 0 ||
-       form.aux_cdageban.value == "" ||
-       form.aux_nrdconta.value == "" ||
-       form.aux_cdtipcta.value == 0  ||
-       form.aux_nmpesrcb.value == "" ||
-       form.aux_nrdocrcb.value == "" ||
-       (form.inpesrcb.value == 1 && (form.aux_nrpispas.value == "" || form.dtnasfor.value == "")))){
-    top.frcod.MostraResultado('1','Preencha todos os dados bancários');
-    return false;    
-  }
-  return true;
-}
-
-function Cooperado()
-{
-   if(document.form.flgcoope.checked == true)
-   {
-      document.all.NmCoop.style.visibility = "visible";
-   }
-   else
-   {
-      document.all.NmCoop.style.visibility = "hidden";
-      document.form.nmcoofor.value = '';
-   }
-}
-
-
-function Recarrega()
-{
-   VarURL = NomeDoProgramaPrincipal + '?LinkRowid=' + document.form.aux_nrdrowid.value + '&pagina='  + document.form.pagina.value +'&aux_cdcopope=' + document.form.aux_cdcopope.value;
-   window.open(VarURL,'mainFrame','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=600,height=300,top=10,left=10');
-}
-
-function AdContato()
-{
-   var campo = '';
-   if(document.form.aux_cddopcao.value == "in")
-   {
-      alert("O fornecedor deve ser gravado antes de inserir Contatos. ");
-   }
-   else
-   {
-      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?aux_nrcpfcgc=' + campo+'&aux_cdcopope=' + document.form.aux_cdcopope.value;
-      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=425,height=255,top=10,left=10');
-   }
-}
-
-function EdContato(rowid){
-
-   // Verifica se o usuário tem permissão de salvar
-   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-
-   var campo = '';
-   if(rowid != "")
-   {
-      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?LinkRowid=' + rowid + 
-         '&aux_nrcpfcgc=' + campo +
-		 '&aux_cdcopope=' + document.form.aux_cdcopope.value;
-      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=425,height=255,top=10,left=10');
-   }
-}
-
-function ExContato(rowid){
-
-   // Verifica se o usuário tem permissão de exclusao
-   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-
-   if(rowid != "")
-   {
-      if (!confirm('Confirma Exclusão do Contato?'))
-      {
-         return false;
+      if(document.form.aux_idtipfor.value == 2){
+        document.getElementById("AbaEixo").style.display = 'none';
+        document.getElementById("AbaProposta").style.display = 'none';
+      }else{
+        document.getElementById("AbaEixo").style.display = 'block';
+        document.getElementById("AbaProposta").style.display = 'block';
       }
-   
-      document.form.aux_idexclui.value = rowid;
-      document.form.aux_cddopcao.value = "exc";
-      document.form.submit();
-   }
-}
-
-function AdEixo()
-{
-   if(document.form.aux_cddopcao.value == "in")
-   {
-      alert("O fornecedor deve ser gravado antes de relacioná-lo com eixos temáticos. ");
-   }
-   else
-   {
-      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012b.htm?aux_nrcpfcgc=' + campo + 
-         '&aux_idevento=' + document.form.aux_idevento.value +
-		 '&aux_cdcopope=' + document.form.aux_cdcopope.value; 
-      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=420,height=400,top=10,left=10');
-   }
-}
-
-function ExEixo(rowid)
-{
-   // Verifica se o usuário tem permissão de exclusao
-   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-
-   if(rowid != "")
-   {
-      if (!confirm('Confirma Exclusão da Relação Fornecedor/Eixo?'))
-      {
-         return false;
-      }
-   
-      document.form.aux_idexclui.value = rowid;
-      document.form.aux_cddopcao.value = "exe";
-      document.form.submit();
-   }
-}
-
-function AdProposta()
-{
-   var campo = '';   
-
-   if((document.form.dtforina.value != "/  /")&&(document.form.dtforina.value != ""))
-   {   
-   
-      var dtdatual = new Date();
-      var aux_data = document.form.dtforina.value.split("/");   
-      var dtiantiv = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
       
-      if (dtiantiv < dtdatual){
-          alert("Fornecedor está inativo.");
-          return false;
-      }
-   }
-   
-   
-   if((document.form.dtfimvig.value != "/  /")&&(document.form.dtfimvig.value != ""))
-   {   
-   
-      var dtdatual = new Date();
-      var aux_data = document.form.dtfimvig.value.split("/");   
-      var dtfimvig = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+    }
+
+    function PreencheCamposBanco() {
+
+      document.form.aux_cdageban.value = "";
+      document.form.aux_dsageban.value = "";
       
-      if (dtfimvig < dtdatual){
-          alert("Fornecedor está inativo.");
-          return false;
-      }
-   }   
-   if(document.form.aux_cddopcao.value == "in")
-   {
-      alert("O fornecedor deve ser gravado antes de inserir propostas. ");
-   }
-   else
-   {
-	  campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?aux_nrcpfcgc=' + campo + 
-         '&aux_idevento=' + document.form.aux_idevento.value + 
-		 '&aux_cdcopope=' + document.form.aux_cdcopope.value +
-		 '&aux_operacao=' + "incluir";
-      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
-   }
-}
+      if(document.form.inpessoa[0].checked)
+        document.form.inpesrcb[0].checked = true;
+      else
+        document.form.inpesrcb[1].checked = true;
+      
+      document.form.aux_nmpesrcb.value = document.form.nmfornec.value;
+      document.form.aux_nrdocrcb.value = document.form.aux_nrcpfcgc.value;
+      
+    }
 
-function EdProposta(rowid){
-
-   // Verifica se o usuário tem permissão de salvar
-   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-  
-   var campo = '';
-   if(rowid != "")
-   {
-      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?LinkRowid=' + rowid + 
-         '&aux_nrcpfcgc=' + campo + 
-		 '&aux_cdcopope=' + document.form.aux_cdcopope.value +
-         '&aux_idevento=' + document.form.aux_idevento.value; 
-      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
-   }
-}
-
-function ExProposta(rowid)
-{
-   // Verifica se o usuário tem permissão de exclusao
-   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-
-   if(rowid != "")
-   {
-      if (!confirm('Confirma Exclusão da Proposta?'))
-      {
-         return false;
-      }
-   
-      document.form.aux_idexclui.value = rowid;
-      document.form.aux_cddopcao.value = "exp";
+    function ValidaAgencia() {
+      
+      document.form.aux_nrcpfcgc.disabled = false;
+      document.form.aux_idsitfor.disabled = false;
+      document.form.inpessoa[0].disabled = false;
+      document.form.inpessoa[1].disabled = false;
+      document.form.dtultalt.disabled = false;
+      for(i = 0;i< document.form.inpesrcb.length; i++)
+        document.form.inpesrcb[i].disabled = false;
+      
+      document.form.aux_cddopcao.value = "vag";
       document.form.submit();
-   }
-}
+    }
 
-function MudaPagina(sentido, indice, max)
-{
-   if((indice != max) && (indice != "?"))
-   {
-      document.form.aux_cddopcao.value = sentido;
-      document.form.submit();
-   }
+    function formataContaIF(objEdit,e) {
+      if (objEdit.value == "") {
+        return true;
+      }
+      if (objEdit.value.replace(" ","").length < 2) {
+        alert("A conta deve conter no mínimo 2 dígitos.");
+        return false;
+      }
+      if (objEdit.value.length > 13) {
+        alert("A conta deve conter no máximo 13 dígitos.");
+        return false;
+      }
+      if (!validaContaIF(objEdit,e)) {
+        objEdit.value = "";
+        alert("Conta Inválida.");
+        return false;
+      }
 
-}
-function mostraDiv(nomediv)
-{  
-   if (nomediv=='') {nomediv='divFornecedor';}
+      var dataValue = objEdit.value;
+      var dataCta = dataValue.substr(0,dataValue.length - 1);
+      var dataDig = dataValue.substr(dataValue.length - 1);
 
-   if (nomediv=='divFornecedor') {nomeaba='AbaFornecedor';}
-   if (nomediv=='divContato')    {nomeaba='AbaContato';}
-   if (nomediv=='divEixo')       {nomeaba='AbaEixo';}
-   if (nomediv=='divProposta')   {nomeaba='AbaProposta';}
+      if (dataDig.toUpperCase() == "X") {
+        dataDig = "0";
+      }
 
-   document.form.pagina.value=nomediv;
-   document.all.divFornecedor.style.display = 'none';
-   document.all.divContato.style.display = 'none';
-   document.all.divEixo.style.display = 'none';
-   document.all.divProposta.style.display = 'none';
+      dataValue = dataCta + "-" + dataDig;
 
-   document.all.adicionar.style.visibility = 'hidden';
+      objEdit.value = dataValue;
+    }
 
-   document.all.AbaFornecedor.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaFornecedor.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaFornecedor.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaFornecedor.rows[0].cells[1].className="txtTituloHid";
-   
-   document.all.AbaContato.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaContato.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaContato.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaContato.rows[0].cells[1].className="txtTituloHid";
+    function validaContaIF(obj,e) {
+      var keyValue = retornaTecla(e);
 
-   document.all.AbaEixo.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaEixo.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaEixo.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaEixo.rows[0].cells[1].className="txtTituloHid";
+      if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
+        return true;
+      } else {
+        var text   = new String(obj.value);
+        var textok = '';
+        var temp   = '';
+        var valid  = '0123456789Xx';
+        var cont   = 0;
+        var posX   = -1;
 
-   document.all.AbaProposta.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaProposta.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaProposta.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaProposta.rows[0].cells[1].className="txtTituloHid";
+        for (var i = 0; i < text.length; i++) {
+          temp = text.substr(i,1);
 
-   document.all[nomeaba].rows[0].cells[0].background="/cecred/images/menu/mnu_sle.gif";
-   document.all[nomeaba].rows[0].cells[1].background="/cecred/images/menu/mnu_slc.gif";
-   document.all[nomeaba].rows[0].cells[2].background="/cecred/images/menu/mnu_sld.gif";
-   document.all[nomeaba].rows[0].cells[1].className="txtTituloVis";
+          if (valid.indexOf(temp) == '-1') {
+            continue;
+          } else {
+            if (temp.toUpperCase() == 'X') {
+              if (posX < 0) {
+                posX = i;
+              } else {
+                continue;
+              }
+            }
 
-   if(nomeaba != 'AbaFornecedor')
-      document.all.adicionar.style.visibility = 'visible';
+            textok += temp.toUpperCase();
+            cont++;
+          }
+        }
+      }
 
-   document.all[nomediv].style.display = 'block';
-   
-   verificaMaterial();
-}
+      if (textok.length > 12) {
+        obj.value = textok.substr(0,12);
+        return false;
+      }
 
+      if (posX >= 0 && textok.substr(textok.length - 1).toUpperCase() != 'X') {
+        obj.value = textok.substr(0,posX + 1);
+        return false;
+      }
 
-// Altera o link da função de adicionar
-function mudaAdicionar()
-{
-	if (document.form.aux_lspermis.value.substring(0,1) != 'I')
-         { 
-            alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      obj.value = textok;
+      return true;
+    }
 
+    function formataNum(obj,e) {
+      var keyValue = retornaTecla(e);
+      
+      if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
+        return true;
+      } else {
+        var data   = new String(obj.value);
+        var dataok = '';
+        var temp   = '';
+        var valid  = '0123456789';
+        var cont   = 0;
+        
+        for (var i = 0; i < data.length; i++) {
+          temp = data.substr(i,1);
+          
+          if (valid.indexOf(temp) == '-1') {
+            continue;				
+          } else {
+            dataok += temp;
+            cont++;
+          }
+        }
+      }
+      
+      obj.value = dataok;
+      return true; 
+    }
+
+    function validar(){
+      if (document.form.aux_ctlinati.value == "A" &&
+          (document.form.aux_ctljusti.value != "A" || document.form.dsjusain.value == "" )) {
+            alert("O campo de justificativa é obrigatório.");
+            document.form.dsjusain.value = "";
+            document.form.dsjusain.focus();
+
+            return false;
          }
-	else
-     	{
-	   if(document.all.divContato.style.display == 'block')
-		  AdContato();
-	
-	   if(document.all.divEixo.style.display == 'block')
-		  AdEixo();
-	
-	   if(document.all.divProposta.style.display == 'block')
-		  AdProposta();
-		 }
+      return true;  
+    }
+    
+    function salvarTela() {
+      
+      if ( validar() ) {
+         top.frcod.Salvar();
+      }
+    }
+
+    function AbrirHist(){
+      var campo = '';       
+      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012e.htm?aux_nrcpfcgc=' + campo + 
+       '&aux_idevento=' + document.form.aux_idevento.value;
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1100,height=400,top=30,left=30');      
+   
+       
+
+}
+
+setTimeout(function(){
+	if (document.form.aux_operador.value != ""){
+		localStorage['aux_operador'] = document.form.aux_operador.value;
+	}
+}, 1000);
+
+var win2;
+function replicarProposta(){
+	var arrCaminho = document.form.aux_dsurlphp.value.split('-');
+	var cpf = '';
+	var operador = '';
+    cpf = TiraFormato(document.form.aux_nrcpfcgc.value);
+	operador = localStorage.aux_operador;
+	if (cpf){
+		VarURL = arrCaminho[0] + '/telas/wpgd0012/replica_proposta.php?cdcooper=' + document.form.aux_cdcopope.value + '&idevento=' + document.form.aux_idevento.value + '&nmdatela=wpgd0012&tldatela=Replicar&nbsp;Proposta&idcokses=' + arrCaminho[1] + '&cdoperad='+operador+'&cdagenci=' + document.form.aux_cdageban.value + '&aux_nrcpfcgc=' + cpf;
+		win2 = window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300,height=500,top=10,left=10');
+		checkChild();
+	}
+}
+
+function checkChild() {
+	if (win2.closed) {
+		window.location.reload(true);
+	} else {
+		setTimeout("checkChild()", 1000);
+	}
 }
 
 mostraDiv(document.form.pagina.value);
 mostraContatos();
 mostraEixos();
 mostraPropostas();
+mostraFacilitador();
 
-function FormataCPF(campo,teclapress)  {
-   
-   var tecla = teclapress.keycode;
-   vr = teclapress;
-  
-   vr = vr.replace(".",""); 
-   vr = vr.replace(".","");
-   vr = vr.replace(".","");
-   vr = vr.replace("/","");
-   vr = vr.replace("-","");
-   tam = vr.length ;
-           
-   //if ( tecla != 9 && tecla != 8 )   {
-      if ( tam > 2 && tam < 5 )   
-	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3 );
-      if ( tam > 5 && tam < 8 )  
-	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3);
-      if ( tam > 8 )  
-	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3) + '-' + vr.substr(9,2);
-   //}	  
-}
-
-function FormataCNPJ(campo,teclapress)  {
-   
-  var tecla = teclapress.keycode;
-  vr = teclapress;
-
-  vr = vr.replace(".",""); 
-  vr = vr.replace(".","");
-  vr = vr.replace(".","");
-  vr = vr.replace("/","");
-  vr = vr.replace("-","");
-  tam = vr.length ;
-         
-  if(tecla != 9 && tecla != 8){
-    if ( tam > 1 && tam < 4 )   
-     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3 );
-    if ( tam > 4 && tam < 7 )  
-     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3);
-    if ( tam > 7 && tam < 11 )  
-     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4);
-    if ( tam > 11 )  
-     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4) + '-' + vr.substr( 12, 2);
-  }	  
-}
-
-function FormataPIS(campo,teclapress)  {
-   
- var tecla = teclapress.keycode;
- vr = teclapress;
- 
- vr = vr.replace(".",""); 
- vr = vr.replace(".","");
- vr = vr.replace(".","");
- vr = vr.replace("/","");
- vr = vr.replace("-","");
- tam = vr.length ;
-         
- //if ( tecla != 9 && tecla != 8 )   {
-    if ( tam > 2 && tam < 5 )   
-      document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5 );
-    if ( tam > 7 && tam < 11 )  
-      document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2);
-    if ( tam > 8 )  
-	    document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2) + '-' + vr.substr(10,0);
- //}	  
-}
-
-if(document.form.inpessoa[0].checked){
-   FormataCPF(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
-}else{
-   FormataCNPJ(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
-}
-if (document.form.aux_nrdocrcb.value != ""){
-  if(document.form.inpesrcb[0].checked){
-     FormataCPF(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
-  }else{
-     FormataCNPJ(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
-  }
-}
-// Desabilita os campos chaves, se estiver posicionado em algum registro
-if(document.form.aux_nrdrowid.value != "?"){
-   for(i = 0;i< document.form.inpessoa.length; i++)
-      document.form.inpessoa[i].disabled = true;
-	  document.form.aux_nrcpfcgc.disabled = true;
-}
-
-// Tirar os formatos de CPF e CNPJ, deixando somente os numeros
-function TiraFormato(campo){
-   //Retirar a formatação de CPF e CNPJ
-   campo = campo.replace(".",""); 
-   campo = campo.replace(".","");
-   campo = campo.replace(".","");
-   campo = campo.replace("/","");
-   campo = campo.replace("-","");
-
-   return campo;
-}
-
-setTimeout("verificaMaterial()",100);
-
-function verificaMaterial(){
-     
-  if(document.form.aux_idtipfor.value == 2){
-    document.getElementById("AbaEixo").style.display = 'none';
-    document.getElementById("AbaProposta").style.display = 'none';
-  }else{
-    document.getElementById("AbaEixo").style.display = 'block';
-    document.getElementById("AbaProposta").style.display = 'block';
-  }
-  
-}
-
-function PreencheCamposBanco() {
-
-  document.form.aux_cdageban.value = "";
-  document.form.aux_dsageban.value = "";
-  
-  if(document.form.inpessoa[0].checked)
-    document.form.inpesrcb[0].checked = true;
-  else
-    document.form.inpesrcb[1].checked = true;
-  
-  document.form.aux_nmpesrcb.value = document.form.nmfornec.value;
-  document.form.aux_nrdocrcb.value = document.form.aux_nrcpfcgc.value;
-  
-}
-
-function ValidaAgencia() {
-  
-  document.form.aux_nrcpfcgc.disabled = false;
-  document.form.aux_idsitfor.disabled = false;
-  document.form.inpessoa[0].disabled = false;
-  document.form.inpessoa[1].disabled = false;
-  document.form.dtultalt.disabled = false;
-  for(i = 0;i< document.form.inpesrcb.length; i++)
-    document.form.inpesrcb[i].disabled = false;
-  
-  document.form.aux_cddopcao.value = "vag";
-  document.form.submit();
-}
-
-function formataContaIF(objEdit,e) {
-	if (objEdit.value == "") {
-		return true;
-	}
-	if (objEdit.value.replace(" ","").length < 2) {
-		alert("A conta deve conter no mínimo 2 dígitos.");
-		return false;
-	}
-	if (objEdit.value.length > 13) {
-		alert("A conta deve conter no máximo 13 dígitos.");
-		return false;
-	}
-	if (!validaContaIF(objEdit,e)) {
-		objEdit.value = "";
-		alert("Conta Inválida.");
-		return false;
-	}
-
-	var dataValue = objEdit.value;
-	var dataCta = dataValue.substr(0,dataValue.length - 1);
-	var dataDig = dataValue.substr(dataValue.length - 1);
-
-	if (dataDig.toUpperCase() == "X") {
-		dataDig = "0";
-	}
-
-	dataValue = dataCta + "-" + dataDig;
-
-	objEdit.value = dataValue;
-}
-
-function validaContaIF(obj,e) {
-	var keyValue = retornaTecla(e);
-
-	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
-		return true;
-	} else {
-		var text   = new String(obj.value);
-		var textok = '';
-		var temp   = '';
-		var valid  = '0123456789Xx';
-		var cont   = 0;
-		var posX   = -1;
-
-		for (var i = 0; i < text.length; i++) {
-			temp = text.substr(i,1);
-
-			if (valid.indexOf(temp) == '-1') {
-				continue;
-			} else {
-				if (temp.toUpperCase() == 'X') {
-					if (posX < 0) {
-						posX = i;
-					} else {
-						continue;
-					}
-				}
-
-				textok += temp.toUpperCase();
-				cont++;
-			}
-		}
-	}
-
-	if (textok.length > 12) {
-		obj.value = textok.substr(0,12);
-		return false;
-	}
-
-	if (posX >= 0 && textok.substr(textok.length - 1).toUpperCase() != 'X') {
-		obj.value = textok.substr(0,posX + 1);
-		return false;
-	}
-
-	obj.value = textok;
-	return true;
-}
-
-function formataNum(obj,e) {
-	var keyValue = retornaTecla(e);
-	
-	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
-		return true;
-	} else {
-		var data   = new String(obj.value);
-		var dataok = '';
-		var temp   = '';
-		var valid  = '0123456789';
-		var cont   = 0;
-		
-		for (var i = 0; i < data.length; i++) {
-			temp = data.substr(i,1);
-			
-			if (valid.indexOf(temp) == '-1') {
-				continue;				
-			} else {
-				dataok += temp;
-				cont++;
-			}
-		}
-	}
-	
-	obj.value = dataok;
-	return true; 
-}
-
-function validar(){
-  if (document.form.aux_ctlinati.value == "A" &&
-      (document.form.aux_ctljusti.value != "A" || document.form.dsjusain.value == "" )) {
-        alert("O campo de justificativa é obrigatório.");
-        document.form.dsjusain.value = "";
-        document.form.dsjusain.focus();
-
-        return false;
-     }
-  return true;  
-}
-function salvarTela() {
-  
-  if ( validar() ) {
-     top.frcod.Salvar();
-  }
-}
-
-function AbrirHist() {
-
-    var campo = '';       
-    campo = TiraFormato(document.form.aux_nrcpfcgc.value);
-    VarURL = document.form.aux_dsendurl.value  + '/wpgd0012e.htm?aux_nrcpfcgc=' + campo + 
-     '&aux_idevento=' + document.form.aux_idevento.value;
-    window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1100,height=400,top=30,left=30');
-   
-       
-
-}
-
-</script>
+layoutPadrao();
+        
+  </script>
 </body>

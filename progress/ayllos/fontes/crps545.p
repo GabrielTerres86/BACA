@@ -97,656 +97,80 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                                              
-............................................................................. */
+               18/10/2018 - Marcelo Telles Coelho - Projeto 475 - Sprint C
+                          - Passar a chamar a procedure Oracle PC_CRPS545
 
+............................................................................ */
 { includes/var_batch.i } 
+{ sistema/generico/includes/var_oracle.i }
 
-{ sistema/generico/includes/b1wgen0046tt.i }
-{ sistema/generico/includes/var_internet.i }
-
-DEF STREAM str_1.
-
-DEF TEMP-TABLE crawarq NO-UNDO
-    FIELD nmarquiv AS CHAR.
-    
-DEF TEMP-TABLE devolucoes_matera NO-UNDO
-    FIELD ispb  AS CHAR
-    FIELD data  AS DATE
-    FIELD valor AS DECI.
-    
-DEF TEMP-TABLE crawint NO-UNDO
-    FIELD nrseqreg AS INTE
-
-    FIELD cdcooper AS INTE
-    FIELD cdagenci AS INTE
-    FIELD dtmvtolt AS DATE
-    FIELD dsdgrupo AS CHAR
-    FIELD dsorigem AS CHAR
-    FIELD dsdebcre AS CHAR
-    FIELD dsareneg AS CHAR
-    FIELD dsmensag AS CHAR
-    FIELD dtmensag AS DATE
-    FIELD vllanmto AS DECI
-
-    FIELD dsinstcr AS CHAR
-    FIELD nrcnpjcr AS DECI
-    FIELD nmcliecr AS CHAR
-    FIELD dstpctcr AS CHAR
-    FIELD cdagencr AS INTE
-    FIELD dscntacr AS CHAR
-
-    FIELD dsinstdb AS CHAR
-    FIELD nrcnpjdb AS DECI
-    FIELD nmcliedb AS CHAR
-    FIELD dstpctdb AS CHAR
-    FIELD cdagendb AS INTE
-    FIELD dscntadb AS CHAR
-    FIELD dsfinmsg AS CHAR.
-
-DEF BUFFER b-crapcop FOR crapcop.
-    
-DEF VAR aux_nmarqfind AS CHAR  NO-UNDO. 
-DEF VAR aux_nmarquiv AS CHAR   NO-UNDO.
-DEF VAR aux_nmarqimp AS CHAR   NO-UNDO.
-DEF VAR aux_setlinha AS CHAR   NO-UNDO.
-DEF VAR aux_nrseqreg AS INTE   NO-UNDO.
-DEF VAR aux_flgcabec AS LOGI   NO-UNDO.
-
-DEF VAR aux_codiispb AS CHAR   NO-UNDO.
-DEF VAR aux_cdagectl AS INTE   NO-UNDO.
-DEF VAR aux_cddbanco AS INTE   NO-UNDO.
-DEF VAR aux_cdcooper AS INTE   NO-UNDO.
-DEF VAR aux_nrdconta AS INTE   NO-UNDO.
-DEF VAR aux_cdagenci AS INTE   NO-UNDO.
-DEF VAR aux_cdagencr AS INTE   NO-UNDO.
-DEF VAR aux_nrctacre AS DEC    NO-UNDO.
-DEF VAR aux_nrcpfcre AS DEC    NO-UNDO.
-
-DEF VAR h-b1wgen0046 AS HANDLE NO-UNDO.
-
-ASSIGN glb_cdprogra = "crps545".
+ASSIGN glb_cdprogra = "crps545"
+       glb_cdcritic = 0
+       glb_dscritic = "".
 
 RUN fontes/iniprg.p.
 
-IF  glb_cdcritic > 0  THEN
+IF  glb_cdcritic > 0 THEN DO:
+    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                      " - " + glb_cdprogra + "' --> '"  +
+                      "Erro ao rodar: " + STRING(glb_cdcritic) + " " +
+                      "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
     RETURN.
+END.
 
-/*
-  Conforme informado pela Juliana e pela Karoline do Financeiro (SPB)
-  o nome do arquivo é composto da seguinte forma:
-      - ISPB da Instituicao Financeira
-      - Data inicial do estado de crise
-      - Data final do estado de crise
-      
-  Dessa forma a mascara do arquivo que vamo procurar é:
-  ISPB + QUALQUER DATA + DATA FINAL
-  
-  Assim o arquivo sempre vai conter a data atual do sistema no campo de DATA FINAL
-*/
+ETIME(TRUE).
 
-ASSIGN aux_codiispb  = "05463212"
-       aux_nmarqfind = aux_codiispb + "_*_" + 
-                       STRING(YEAR(glb_dtmvtolt),"9999") + 
-                      STRING(MONTH(glb_dtmvtolt),"99") +
-                      STRING(DAY(glb_dtmvtolt),"99").
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-INPUT STREAM str_1 THROUGH VALUE("ls /micros/cecred/spb/" + aux_nmarqfind 
-                                 + ".txt 2> /dev/null") NO-ECHO.
+RUN STORED-PROCEDURE pc_crps545 aux_handproc = PROC-HANDLE NO-ERROR
+   (INPUT INT(STRING(glb_flgresta,"1/0")),
+    OUTPUT 0,
+    OUTPUT 0,
+    OUTPUT 0,
+    OUTPUT "").
 
-DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
+IF  ERROR-STATUS:ERROR  THEN DO:
+    DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        ASSIGN aux_msgerora = aux_msgerora +
+                              ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+END.
 
-    IMPORT STREAM str_1 UNFORMATTED aux_nmarquiv.
-                                          
-    CREATE crawarq.
-    ASSIGN crawarq.nmarquiv = aux_nmarquiv.
-                      
-END. /*** Fim do DO WHILE TRUE ***/
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                          " - " + glb_cdprogra + "' --> '"  +
+                      "Erro ao executar Stored Procedure: '" +
+                      aux_msgerora + "' >> log/proc_batch.log").
+    RETURN.
+    END.
 
-INPUT STREAM str_1 CLOSE.
+CLOSE STORED-PROCEDURE pc_crps545 WHERE PROC-HANDLE = aux_handproc.
 
-IF  NOT AVAILABLE crawarq  THEN
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN glb_cdcritic = 0
+       glb_dscritic = ""
+       glb_cdcritic = pc_crps545.pr_cdcritic WHEN pc_crps545.pr_cdcritic <> ?
+       glb_dscritic = pc_crps545.pr_dscritic WHEN pc_crps545.pr_dscritic <> ?
+       glb_stprogra = IF pc_crps545.pr_stprogra = 1 THEN TRUE ELSE FALSE
+       glb_infimsol = IF pc_crps545.pr_infimsol = 1 THEN TRUE ELSE FALSE.
+
+
+IF  glb_cdcritic <> 0   OR
+    glb_dscritic <> ""  THEN
     DO:
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")  
-                          + " - " + glb_cdprogra + "' --> '"
-                          + "Arquivo nao encontrado." +
-                          " >> log/proc_batch.log").
-        RUN fontes/fimprg.p.
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                          " - " + glb_cdprogra + "' --> '"  +
+                          "Erro ao rodar: " + STRING(glb_cdcritic) + " " +
+                          "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
+
         RETURN.
     END.
 
-ASSIGN aux_flgcabec = FALSE.
-
-/* Instanciar BO e processar o registro */
-RUN sistema/generico/procedures/b1wgen0046.p
-    PERSISTENT SET h-b1wgen0046.
-
-IF  NOT VALID-HANDLE(h-b1wgen0046)  THEN
-    DO:
-        glb_dscritic = "Handle invalido para h-b1wgen0046.".
-        
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")
-                      + " - " + glb_cdprogra + "' --> '"
-                      + glb_dscritic +
+UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
+                  " - "   + glb_cdprogra + "' --> '"   +
+                  "Stored Procedure rodou em "         +
+                  STRING(INT(ETIME / 1000),"HH:MM:SS") +
                       " >> log/proc_batch.log").
         
-        LEAVE.
-    END.
-
-/* Processar cada arquivo */
-FOR EACH crawarq NO-LOCK:
-
-    INPUT STREAM str_1 FROM VALUE(crawarq.nmarquiv) NO-ECHO.
-
-    IMPORT STREAM str_1 UNFORMATTED aux_setlinha.
-    
-    /*** HEADER -> 0005463212AAAAMMMDD */
-    /* Criticar o tipo de arquivo */
-    IF  SUBSTR(aux_setlinha,1,2) <> "00"  THEN
-        DO:
-            glb_cdcritic = 468.
-
-            RUN fontes/critic.p.
-            
-            RUN proc_critica_header. 
-
-            NEXT.
-        END.
-    
-    /* Criticar o codigo ISPB */
-    IF  SUBSTR(aux_setlinha,3,8) <> SUBSTR(aux_codiispb,1,8)  THEN
-        DO:
-            glb_dscritic = "Codigo ISPB invalido.".
-            
-            RUN proc_critica_header.
-
-            NEXT.
-        END.
-
-    ASSIGN aux_nrseqreg = 0.
-    
-    EMPTY TEMP-TABLE crawint.
-    
-    DO WHILE TRUE ON ERROR UNDO, RETURN ON ENDKEY UNDO, LEAVE:
-
-        ASSIGN aux_setlinha = ""
-               aux_cdcooper = 0
-               aux_cdagenci = 0
-               aux_cdagencr = 0
-               aux_nrctacre = 0
-               aux_nrdconta = 0.
-        
-        IMPORT STREAM str_1 UNFORMATTED aux_setlinha.
-        
-        IF  SUBSTR(aux_setlinha,1,2) = "01"  THEN 
-            DO:
-                ASSIGN aux_nrseqreg = aux_nrseqreg + 1.
-
-                INTEGER(SUBSTR(aux_setlinha,186,4)) NO-ERROR.
-
-                IF  ERROR-STATUS:ERROR  THEN
-                    DO:
-                        glb_dscritic = SUBSTR(aux_setlinha,186,4) + 
-                                       " Nao e uma agencia credito valida.".
-
-                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                          " - " + glb_cdprogra + "' --> '"  +
-                                          glb_dscritic + " Arquivo: " + 
-                                          crawarq.nmarquiv + " Registro: " +
-                                          STRING(aux_nrseqreg) +
-                                          " >> log/proc_batch.log").
-                        NEXT.
-                    END.
-
-                INTEGER(SUBSTR(aux_setlinha,307,4)) NO-ERROR.
-
-                IF  ERROR-STATUS:ERROR  THEN
-                    DO:
-                        glb_dscritic = SUBSTR(aux_setlinha,307,4) + 
-                                       " Nao e uma agencia debito valida.".
-
-                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                          " - " + glb_cdprogra + "' --> '"  +
-                                          glb_dscritic + " Arquivo: " + 
-                                          crawarq.nmarquiv + " Registro: " +
-                                          STRING(aux_nrseqreg) +
-                                          " >> log/proc_batch.log").
-                        
-                        NEXT.
-                    END.
-
-                IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010R2" OR
-                    TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111R2" OR
-                    TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010"   OR
-                    TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111"   THEN
-                    DO:
-                    
-                      /* Se veio do MATERA */
-                      IF SUBSTRING(aux_setlinha,21,6) = "MATERA"  THEN
-                      DO:
-                        CREATE devolucoes_matera.
-                        ASSIGN devolucoes_matera.data = DATE(INTE(SUBSTR(aux_setlinha,16,2)),
-                                                             INTE(SUBSTR(aux_setlinha,18,2)),
-                                                             INTE(SUBSTR(aux_setlinha,12,4)))
-                               devolucoes_matera.valor = DECI(REPLACE(SUBSTR(aux_setlinha, 324,22),".",","))
-                               devolucoes_matera.ispb  = SUBSTR(aux_setlinha,203,8).
-                        NEXT.
-                      END.
-                      
-                      /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
-                      ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
-                    
-                    END.
-                ELSE
-                IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0026R2" THEN
-                    DO:
-                        /* Setar aux_cdagectl em função do código de barras que deverá vir no arquivo(370/6). 
-                        Pelo código de barras, descobrir a cooperativa pelo código do convenio */
-
-                        FIND crapcco WHERE crapcco.nrconven = INT(SUBSTR(aux_setlinha,370,6))
-                                       AND NOT CAN-DO("INCORPORACAO,MIGRACAO",crapcco.dsorgarq)
-                                   NO-LOCK NO-ERROR.
-
-                        IF NOT AVAIL crapcco THEN
-                            DO:
-                                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " + glb_cdprogra + "' --> '"  +
-                                                  "Convenio nao encontrado: " + SUBSTR(aux_setlinha,370,6) + " Arquivo: " + 
-                                                  crawarq.nmarquiv + " Registro: " + STRING(aux_nrseqreg) + " >> log/proc_batch.log").
-                                NEXT.
-                            END.
-                        
-                        /* encontrar agencia da cooperativa */
-                        FIND crapcop WHERE crapcop.cdcooper = crapcco.cdcooper NO-LOCK NO-ERROR.
-                        ASSIGN aux_cdagectl = crapcop.cdagectl.
-
-                     END.
-                ELSE
-                IF  SUBSTR(aux_setlinha,20,1) = "D"  THEN
-                    DO:
-                        ASSIGN aux_cddbanco = INT(SUBSTR(aux_setlinha,203,8))
-                               aux_cdagectl = INT(SUBSTR(aux_setlinha,307,4)).
-
-                        /* Numero de conta invalido */
-                        IF  LENGTH(
-                            STRING(DEC(SUBSTR(aux_setlinha,311,13)))) > 9 THEN
-                            aux_nrdconta = 0.
-                        ELSE
-                            aux_nrdconta = INT(SUBSTR(aux_setlinha,311,13)).
-                    END.
-                ELSE
-                IF  SUBSTR(aux_setlinha,20,1) = "C"  THEN 
-                    DO:
-                        ASSIGN aux_cddbanco = INT(SUBSTR(aux_setlinha,82,8))
-                               aux_cdagectl = INT(SUBSTR(aux_setlinha,186,4))
-                               /* utilizadas na validacao conta transferida */
-                               aux_cdagencr = INT(SUBSTR(aux_setlinha,186,4))
-                               aux_nrctacre = DECI(SUBSTR(aux_setlinha,190,13))
-                               aux_nrcpfcre = IF TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0037R2" OR
-                                                 TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0137R2" THEN
-                                                 DECI(SUBSTR(aux_setlinha,211,14))
-                                              ELSE DECI(SUBSTR(aux_setlinha,90,14)).
-
-                        /* Numero de conta invalido */
-                        IF  LENGTH(
-                            STRING(DEC(SUBSTR(aux_setlinha,190,13)))) > 9 THEN
-                            ASSIGN aux_nrdconta = 0.
-                        ELSE
-                            aux_nrdconta = INT(SUBSTR(aux_setlinha,190,13)).
-                    END.
-                ELSE
-                    ASSIGN aux_cddbanco = 0
-                           aux_nrdconta = 0.
-
-                FIND crapcop WHERE 
-                     crapcop.cdagectl = aux_cdagectl NO-LOCK NO-ERROR.
-
-                IF  AVAIL crapcop  THEN
-                    DO:
-                        ASSIGN aux_cdcooper = crapcop.cdcooper.
-                        FIND crapass WHERE 
-                             crapass.cdcooper = crapcop.cdcooper AND
-                             crapass.nrdconta = aux_nrdconta NO-LOCK NO-ERROR.
-
-                        IF  AVAIL crapass  THEN
-                            DO:
-                                ASSIGN aux_cdagenci = crapass.cdagenci.
-                            END.
-                        ELSE
-                            ASSIGN aux_cdagenci = 0.
-
-                        IF  SUBSTR(aux_setlinha,20,1) = "C"  THEN
-						    RUN verifica_conta_transferida.
-                    END.
-
-                           
-                CREATE crawint.
-                ASSIGN crawint.nrseqreg = aux_nrseqreg
-                       crawint.dtmvtolt = glb_dtmvtolt
-                       crawint.cdcooper = aux_cdcooper
-                       crawint.cdagenci = aux_cdagenci
-                       crawint.dsdgrupo = SUBSTR(aux_setlinha,3,3)
-                       crawint.dsorigem = SUBSTR(aux_setlinha,6,6)
-                       crawint.dtmensag = DATE(INTE(SUBSTR(aux_setlinha,16,2)),
-                                               INTE(SUBSTR(aux_setlinha,18,2)),
-                                               INTE(SUBSTR(aux_setlinha,12,4)))
-                       crawint.dsdebcre = SUBSTR(aux_setlinha,20,1) 
-                       crawint.dsareneg = SUBSTR(aux_setlinha,21,50)
-                       crawint.dsmensag = TRIM(SUBSTR(aux_setlinha,71,11))
-                       
-                       crawint.dsinstcr = SUBSTR(aux_setlinha,82,8)
-                       /* No XML da TEC salario vem somente dados da conta
-                         debito */ 
-                       crawint.nrcnpjcr = IF crawint.dsmensag = "STR0037R2" OR
-                                             crawint.dsmensag = "PAG0137R2" THEN
-                                             DECI(SUBSTR(aux_setlinha,211,14))
-                                          ELSE DECI(SUBSTR(aux_setlinha,90,14))
-                       crawint.nmcliecr = IF crawint.dsmensag = "STR0037R2" OR
-                                             crawint.dsmensag = "PAG0137R2" THEN
-                                             SUBSTR(aux_setlinha,225,80)
-                                          ELSE SUBSTR(aux_setlinha,104,80)
-                       crawint.dstpctcr = SUBSTR(aux_setlinha,184,2)
-                       crawint.cdagencr = IF crawint.dsmensag = "STR0010R2" OR
-                                             crawint.dsmensag = "PAG0111R2" THEN
-                                             INT(SUBSTR(aux_setlinha,21,4))
-                                          ELSE aux_cdagencr
-                       crawint.dscntacr = STRING(aux_nrctacre)
-                       crawint.dsinstdb = SUBSTR(aux_setlinha,203,8)
-                       crawint.nrcnpjdb = DECI(SUBSTR(aux_setlinha,211,14))
-                       crawint.nmcliedb = SUBSTR(aux_setlinha,225,80)
-                       crawint.dstpctdb = SUBSTR(aux_setlinha,305,2)
-                       crawint.cdagendb = IF crawint.dsmensag = "STR0010" OR
-                                             crawint.dsmensag = "PAG0111" THEN
-                                             INT(SUBSTR(aux_setlinha,21,4))
-                                          ELSE INT(SUBSTR(aux_setlinha,307,4))
-                       crawint.dscntadb = SUBSTR(aux_setlinha,311,13)
-                       crawint.vllanmto = DECI(REPLACE(SUBSTR(aux_setlinha,
-                                                       324,22),".",","))
-                       crawint.dsfinmsg = TRIM(SUBSTR(aux_setlinha,346,5)).
-            END. 
-          
-    END. /*** Fim do DO WHILE TRUE ***/
-    
-    INPUT STREAM str_1 CLOSE.
-
-
-    IF  glb_dsrestar <> "" AND crawarq.nmarquiv = SUBSTR(glb_dsrestar,8)  THEN
-        ASSIGN aux_nrseqreg = INTE(SUBSTR(glb_dsrestar,1,6)).
-    ELSE
-        ASSIGN aux_nrseqreg = 0.
-    
-    TRANS_1:
-    FOR EACH crawint WHERE crawint.nrseqreg > aux_nrseqreg 
-                           NO-LOCK BY crawint.nrseqreg 
-                           TRANSACTION ON ERROR UNDO, LEAVE:
-
-        RUN cria_gnmvspb IN h-b1wgen0046 (INPUT glb_cdcooper,
-                                          INPUT 0, /* cdagenci */
-                                          INPUT 0, /* nrdcaixa */
-                                          
-                                          INPUT crawint.cdcooper,
-                                          INPUT crawint.cdagenci,
-                                          INPUT crawint.dtmvtolt,
-                                          INPUT crawint.dsdgrupo,
-                                          INPUT crawint.dsorigem,
-                                          INPUT crawint.dsdebcre,
-                                          INPUT crawint.dsareneg,
-                                          INPUT crawint.dsmensag,
-                                          INPUT crawint.dtmensag,
-                                          INPUT crawint.vllanmto,
-                                          
-                                          INPUT crawint.dsinstcr,
-                                          INPUT crawint.nrcnpjcr,
-                                          INPUT crawint.nmcliecr,
-                                          INPUT crawint.dstpctcr,
-                                          INPUT crawint.cdagencr,
-                                          INPUT crawint.dscntacr,
-
-                                          INPUT crawint.dsinstdb,
-                                          INPUT crawint.nrcnpjdb,
-                                          INPUT crawint.nmcliedb,
-                                          INPUT crawint.dstpctdb,
-                                          INPUT crawint.cdagendb,
-                                          INPUT crawint.dscntadb,
-                                          INPUT crawint.dsfinmsg,
-                                          OUTPUT TABLE tt-erro).
-
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND tt-erro NO-LOCK NO-ERROR.
-
-                IF  AVAIL tt-erro  THEN
-                    glb_dscritic = tt-erro.dscritic + " Arquivo: " + 
-                                   crawarq.nmarquiv + " Registro: " + 
-                                   STRING(crawint.nrseqreg).
-                ELSE
-                    glb_dscritic = "Nao foi possivel criar o registro na " +
-                                   "gnmvspb. Arquivo: " + crawarq.nmarquiv +
-                                   " Registro: " + STRING(crawint.nrseqreg).
-    
-                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")
-                              + " - " + glb_cdprogra + "' --> '"
-                              + glb_dscritic +
-                              " >> log/proc_batch.log").
-    
-                UNDO TRANS_1, LEAVE.
-            END.
-
-        DO WHILE TRUE:
-
-            FIND crapres WHERE crapres.cdcooper = glb_cdcooper AND
-                               crapres.cdprogra = glb_cdprogra
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-            IF  NOT AVAILABLE crapres  THEN
-                DO:
-                    IF  LOCKED crapres  THEN
-                        DO:
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                    ELSE
-                        DO:
-                            glb_cdcritic = 151.
-                            RUN fontes/critic.p.
-                        
-                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")
-                                              + " - " + glb_cdprogra + "' --> '"
-                                              + glb_dscritic +
-                                              " >> log/proc_batch.log").
-                        
-                            UNDO TRANS_1, LEAVE.
-                        END.
-                END.
-            
-            LEAVE.
-    
-        END. /*** Fim do DO WHILE TRUE ***/
-
-        ASSIGN crapres.dsrestar = STRING(crawint.nrseqreg,"999999") + " " +
-                                  crawarq.nmarquiv
-               glb_dscritic     = "".
-
-    END. /*** Fim do FOR EACH crawint ***/
-
-    
-    /* Enviar e-mail Matera */
-    
-    IF AVAILABLE devolucoes_matera THEN
-      RUN enviar_email_devolucoes_matera.
-    
-    UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " salvar").
-    
-END. /*** Fim do FOR EACH crawarq ***/
-
-
-IF  VALID-HANDLE(h-b1wgen0046) THEN
-    DELETE OBJECT h-b1wgen0046.
-
 RUN fontes/fimprg.p.
 
-/*................................ PROCEDURES ................................*/
-
-PROCEDURE enviar_email_devolucoes_matera:
-
-  DEF VAR corpo        AS CHAR NO-UNDO.
-  DEF VAR h-b1wgen0011 AS HANDLE NO-UNDO.
-                          
-  ASSIGN corpo = "Foram identificadas <b>devoluções</b> de TED do legado <b>Matera:</b> \n\n".
-  
-  ASSIGN corpo = corpo + "<table>".
-  
-  FOR EACH devolucoes_matera NO-LOCK:
-  
-    ASSIGN corpo = corpo + "<tr>" +
-                           "<td>Valor:</td>" +
-                           "<td width='130px'>" + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + "</td>" +
-                           "<td>ISPB:</td>" +
-                           "<td width='130px'>" + STRING(devolucoes_matera.ispb) + "</td>" +
-                           "<td>Data:</td>" +
-                           "<td width='130px'>" + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
-                                                  STRING(MONTH(devolucoes_matera.data),"99") +  "/" +
-                                                  STRING(YEAR(devolucoes_matera.data),"9999") + "</td>".
-      ASSIGN corpo = corpo + "</tr>".                                             
-                                             
-  END.
-  
-  ASSIGN corpo = corpo + "</table>".
-  
-  ASSIGN corpo = corpo + "\n Deverá ser efetuado crédito de devolução na conta da Cooperativa Filiada (histórico 2218)".
-  
-  RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
-
-  RUN enviar_email_completo IN h-b1wgen0011
-                (INPUT glb_cdcooper,
-                 INPUT glb_cdprogra,
-                 INPUT "ailos@ailos.coop.br",                   
-                 INPUT "contasapagar@ailos.coop.br,spb@ailos.coop.br",
-                 INPUT "Devoluções de TED - MATERA",
-                 INPUT "",
-                 INPUT "",
-                 INPUT corpo,
-                 INPUT FALSE). 
-
-
-  DELETE PROCEDURE h-b1wgen0011.
-
-  RETURN "OK".
-
-END PROCEDURE.
-
-PROCEDURE proc_critica_header:
-
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                      " - " + glb_cdprogra + "' --> '"  +
-                      glb_dscritic + " Arquivo: " + crawarq.nmarquiv +
-                      " >> log/proc_batch.log").
-    
-    UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " salvar").
-
-END PROCEDURE.
-
-
-PROCEDURE verifica_conta_transferida.
-
-   DEF VAR aux_ctavalid AS LOGICAL NO-UNDO.
-
-   ASSIGN aux_ctavalid = TRUE.
-
-   /* Necessario verificar se conta e cpf/cnpj sao validos, pois se nao forem
-      eh porque a mensagem foi devolvida na cooperativa que recebeu a mesma, 
-      e nao processou na conta transferida */ 
-
-   FIND crapass WHERE crapass.cdcooper = aux_cdcooper   AND
-                      crapass.nrdconta = aux_nrdconta   AND
-                      crapass.nrcpfcgc = aux_nrcpfcre NO-LOCK NO-ERROR.
-   
-   IF   NOT AVAIL crapass  THEN
-        DO:
-            /* Verifica se eh um dos titulares */ 
-            FIND FIRST crapttl WHERE crapttl.cdcooper = aux_cdcooper   AND
-                                     crapttl.nrdconta = aux_nrdconta   AND
-                                     crapttl.nrcpfcgc = aux_nrcpfcre
-                                     NO-LOCK NO-ERROR.
-         
-            IF   NOT AVAIL crapttl  THEN
-                 ASSIGN aux_ctavalid = FALSE.
-        END.
-
-   IF   aux_ctavalid = TRUE /*** OR Tratamento incorporadas
-        aux_cdcooper = 4 OR aux_cdcooper = 15 ***/  OR
-		aux_cdcooper = 9 OR aux_cdcooper = 17 THEN
-        DO:
-            /* De-Para das incorporadas foi desativado em 25/08/2015.
-               Os registros continuarao sendo criados na gnmvspb para
-               coop. antiga, mas nao serao tratados na centralizacao */
-            IF  aux_cdcooper = 4 OR aux_cdcooper = 15  THEN 
-                .
-            ELSE
-                DO:
-				   /* - Verifica se eh conta transferida */ 
-				   
-				   /* - Mensagem recebida para Agencia Antiga e conta Antiga.
-					  - Neste caso ocorre DE-PARA do credito para coop NOVA, e a 
-					    centralizacao deve ocorrer na conta da coop. NOVA  */  
-                   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
-                                      craptco.nrctaant = aux_nrdconta AND
-                                      craptco.flgativo = TRUE         AND
-                                      craptco.tpctatrf = 1
-                                      NO-LOCK NO-ERROR.
-             
-                   IF  NOT AVAIL craptco  THEN DO:
-				       /* - Mensagem recebida para Agencia Antiga e conta Nova.
-						  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
-							centralizacao deve ocorrer na conta da coop. NOVA */ 
-                   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
-                                          craptco.nrdconta = aux_nrdconta AND
-                                          craptco.flgativo = TRUE         AND
-                                          craptco.tpctatrf = 1
-                                          NO-LOCK NO-ERROR. 
-
-		               IF  NOT AVAIL craptco  THEN
-					       /* - Mensagem recebida para Agencia Nova e conta Antiga.
-							  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
-							    centralizacao deve ocorrer na conta da coop. NOVA */ 
-					       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
-                                      craptco.nrctaant = aux_nrdconta AND
-                                      craptco.flgativo = TRUE         AND
-                                      craptco.tpctatrf = 1
-                                      NO-LOCK NO-ERROR.
-                   END.
-             
-				   IF  AVAIL craptco THEN
-                       DO:
-                           /* Verificar se a conta migrada ACREDI >> VIACREDI */
-                           IF  craptco.cdcooper = 1 AND craptco.cdcopant = 2 THEN 
-                               .
-                           /* Verificar se a conta migrada VIACREDI >> ALTO VALE*/
-                           ELSE IF craptco.cdcooper = 16 AND craptco.cdcopant = 1 THEN 
-                               .
-                           ELSE IF craptco.cdcopant = 17 AND glb_dtmvtolt > 03/20/2017  THEN
-						       .
-						   ELSE
-                               DO:
-                                   FIND b-crapcop WHERE 
-                                        b-crapcop.cdcooper = craptco.cdcooper
-                                   NO-LOCK NO-ERROR.
-                                   
-                                   ASSIGN aux_cdcooper = craptco.cdcooper
-                                          aux_cdagenci = craptco.cdagenci
-                                          aux_nrctacre = DEC(craptco.nrdconta)
-                                          aux_cdagencr = b-crapcop.cdagectl.
-                               END.
-                       END.
-				   ELSE
-				       DO:  /* Quando vier mensagem para a agencia antiga e conta de destino invalida,
-					           a mesma sera devolvida pela coop. singular nova. Para que ocorra a centralizacao
-							   corretamente devera gravar registro na gnmvspb com o codigo da coop. nova. Nesta
-							   situacao nao encontrara o registro na craptco. */
-					        IF   aux_cdcooper = 17  THEN
-							     IF  glb_dtmvtolt > 03/20/2017  THEN
-							         .
-								 ELSE ASSIGN aux_cdcooper = 9.
-                       END.
-                END.        
-        END.
-
-END PROCEDURE.
+/* .......................................................................... */

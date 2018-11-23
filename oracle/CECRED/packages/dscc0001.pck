@@ -145,6 +145,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
        INDEX BY PLS_INTEGER;
 			 
+  -- P450 - Regulatório de crédito
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_incrineg  INTEGER;
+  		 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
                                      ,pr_inpessoa IN NUMBER                --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                                      ,pr_tab_lim_desconto OUT typ_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
@@ -429,7 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/04/2018
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/06/2018
   --
   --  Dados referentes ao programa:
   --
@@ -450,6 +454,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
 				  
 	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
+
+      27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
+                   da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				              
+										  
 
 	  05/09/2018 - Alterado posição do ROLLBACK no exception - INC0023398
 
@@ -6721,61 +6729,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     ELSE
       -- Fechar cursor
 			CLOSE cr_craplot;
-		END IF;
-			
+		END IF;		
+
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
                               rw_craplot.cdagenci||';'||
                               rw_craplot.cdbccxlt||';'||
                               rw_craplot.nrdolote);
 			
-		BEGIN
-			-- Criar lançamento de desconto de bordero
-			INSERT INTO craplcm
-							(dtmvtolt
-							,cdagenci
-							,cdbccxlt
-							,nrdolote
-							,nrdconta
-							,nrdocmto
-							,vllanmto
-							,cdhistor
-							,nrseqdig
-							,nrdctabb
-							,nrdctitg
-							,nrautdoc
-							,cdcooper
-							,cdpesqbb
-							,cdbanchq
-							,cdagechq
-							,nrctachq)
-				VALUES(rw_craplot.dtmvtolt
-							,rw_craplot.cdagenci
-							,rw_craplot.cdbccxlt
-							,rw_craplot.nrdolote
-							,pr_nrdconta
-							,vr_nrseqdig
-							,pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori)
-							,271
-							,vr_nrseqdig
-							,pr_nrdconta
-							,to_char(pr_nrdconta, 'fm00000000')
-							,0
-							,pr_cdcooper
-							,'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
+    --Gravar lancamento
+    -- P450 - Regulatório de crédito
+    lanc0001.pc_gerar_lancamento_conta(
+                  pr_dtmvtolt => rw_craplot.dtmvtolt
+                 ,pr_cdagenci => rw_craplot.cdagenci
+                 ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                 ,pr_nrdolote => rw_craplot.nrdolote 
+                 ,pr_nrdconta => pr_nrdconta
+                 ,pr_nrdctabb => pr_nrdconta
+                 ,pr_cdpesqbb => 'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
 								|| ' Bordero ' || to_char(pr_nrborder, 'fm999g999g990')
-							,pr_tab_cheques.cdbanchq
-							,pr_tab_cheques.cdagechq
-							,pr_tab_cheques.nrctachq)
-			RETURNING vllanmto INTO vr_vllanmto;
-		EXCEPTION
-			WHEN OTHERS THEN      
+                 ,pr_cdcooper => pr_cdcooper
+                 ,pr_nrdocmto => vr_nrseqdig
+                 ,pr_cdhistor => 271
+                 ,pr_nrseqdig => vr_nrseqdig
+                 ,pr_vllanmto => pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori)
+                 ,pr_nrdctitg => to_char(pr_nrdconta, 'fm00000000')
+                 ,pr_nrautdoc => 0
+                 ,pr_cdbanchq => pr_tab_cheques.cdbanchq
+                 ,pr_cdagechq => pr_tab_cheques.cdagechq
+                 ,pr_nrctachq => pr_tab_cheques.nrctachq
+                 -- retorno
+                 ,pr_tab_retorno => vr_tab_retorno
+                 ,pr_incrineg => vr_incrineg
+                 ,pr_cdcritic => pr_cdcritic
+                 ,pr_dscritic => pr_dscritic);
+
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+       IF vr_incrineg = 0 THEN -- Erro de sistema/BD
 				-- Gerar crítica
 				vr_cdcritic := 0;
 				vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
 				-- Levantar exceção
 				RAISE vr_exc_erro;				
-		END;
+        ELSE -- vr_incrineg = 1 erro de negócio
+          RAISE vr_exc_erro;       
+       END IF;
+    END IF; 
+    vr_nrseqdig:= rw_craplot.nrseqdig + 1;
+    vr_vllanmto:= pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori);
 				
 		BEGIN 
 			-- Atualizar valores do lote				
@@ -7110,61 +7111,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     ELSE
       -- Fechar cursor
 			CLOSE cr_craplot;
-		END IF;
-			
+		END IF;	  
+
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
                               rw_craplot.cdagenci||';'||
                               rw_craplot.cdbccxlt||';'||
                               rw_craplot.nrdolote);
 			
-		BEGIN
-			-- Criar lançamento de desconto de bordero
-			INSERT INTO craplcm
-							(dtmvtolt
-							,cdagenci
-							,cdbccxlt
-							,nrdolote
-							,nrdconta
-							,nrdocmto
-							,vllanmto
-							,cdhistor
-							,nrseqdig
-							,nrdctabb
-							,nrdctitg
-							,nrautdoc
-							,cdcooper
-							,cdpesqbb
-							,cdbanchq
-							,cdagechq
-							,nrctachq)
-				VALUES(rw_craplot.dtmvtolt
-							,rw_craplot.cdagenci
-							,rw_craplot.cdbccxlt
-							,rw_craplot.nrdolote
-							,pr_nrdconta
-							,vr_nrseqdig
-							,vr_vlliquid
-							,271
-							,vr_nrseqdig
-							,pr_nrdconta
-							,to_char(pr_nrdconta, 'fm00000000')
-							,0
-							,pr_cdcooper
-							,'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
+    --Gravar lancamento
+    -- P450 - Regulatório de crédito
+    lanc0001.pc_gerar_lancamento_conta(
+                  pr_dtmvtolt => rw_craplot.dtmvtolt
+                 ,pr_cdagenci => rw_craplot.cdagenci
+                 ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                 ,pr_nrdolote => rw_craplot.nrdolote 
+                 ,pr_nrdconta => pr_nrdconta
+                 ,pr_nrdctabb => pr_nrdconta
+                 ,pr_cdpesqbb => 'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
 								|| ' Bordero ' || to_char(pr_nrborder, 'fm999g999g990')
-							,pr_tab_cheques.cdbanchq
-							,pr_tab_cheques.cdagechq
-							,pr_tab_cheques.nrctachq)
-			RETURNING  vllanmto INTO  vr_vllanmto;
-		EXCEPTION
-			WHEN OTHERS THEN      
+                 ,pr_cdcooper => pr_cdcooper
+                 ,pr_nrdocmto => vr_nrseqdig
+                 ,pr_cdhistor => 271
+                 ,pr_nrseqdig => vr_nrseqdig
+                 ,pr_vllanmto => vr_vlliquid
+                 ,pr_nrdctitg => to_char(pr_nrdconta, 'fm00000000')
+                 ,pr_nrautdoc => 0
+                 ,pr_cdbanchq => pr_tab_cheques.cdbanchq
+                 ,pr_cdagechq => pr_tab_cheques.cdagechq
+                 ,pr_nrctachq => pr_tab_cheques.nrctachq
+                 -- retorno
+                 ,pr_tab_retorno => vr_tab_retorno
+                 ,pr_incrineg => vr_incrineg
+                 ,pr_cdcritic => pr_cdcritic
+                 ,pr_dscritic => pr_dscritic);
+
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+       IF vr_incrineg = 0 THEN -- Erro de sistema/BD
 				-- Gerar crítica
 				vr_cdcritic := 0;
 				vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
 				-- Levantar exceção
 				RAISE vr_exc_erro;				
-		END;
+        ELSE -- vr_incrineg = 1 erro de negócio
+           RAISE vr_exc_erro;
+       END IF;
+    END IF; 
+    vr_nrseqdig:= rw_craplot.nrseqdig + 1;
+    vr_vllanmto:= vr_vlliquid;
 				
 		BEGIN 
 			-- Atualizar valores do lote				
@@ -8269,45 +8263,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		FETCH cr_craplcm INTO rw_craplcm;
 		-- Se não encontrou
 		IF cr_craplcm%NOTFOUND THEN
-			BEGIN
-				-- Criar lançamento de desconto de bordero
-				INSERT INTO craplcm
-				        (dtmvtolt
-								,cdagenci
-								,cdbccxlt
-								,nrdolote
-								,nrdconta
-								,nrdocmto
-								,vllanmto
-								,cdhistor
-								,nrseqdig
-								,nrdctabb
-								,nrdctitg
-								,nrautdoc
-								,cdcooper
-								,cdpesqbb)
-				  VALUES(rw_craplot.dtmvtolt
-					      ,rw_craplot.cdagenci
-								,rw_craplot.cdbccxlt
-								,rw_craplot.nrdolote
-								,pr_nrdconta
-								,pr_nrborder
-								,vr_vlborder
-								,270
-								,vr_nrseqdig
-								,pr_nrdconta
-								,to_char(pr_nrdconta, 'fm00000000')
-								,0
-								,pr_cdcooper
-								,'Desconto do bordero ' || to_char(pr_nrborder, 'fm999g999g990'));
-			EXCEPTION
-				WHEN OTHERS THEN      
+		   --Gravar lancamento
+       -- P450 - Regulatório de crédito
+       lanc0001.pc_gerar_lancamento_conta(
+                  pr_dtmvtolt => rw_craplot.dtmvtolt
+                 ,pr_cdagenci => rw_craplot.cdagenci
+                 ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                 ,pr_nrdolote => rw_craplot.nrdolote 
+                 ,pr_nrdconta => pr_nrdconta
+                 ,pr_nrdctabb => pr_nrdconta
+                 ,pr_cdpesqbb => 'Desconto do bordero ' || to_char(pr_nrborder, 'fm999g999g990')
+                 ,pr_cdcooper => pr_cdcooper
+                 ,pr_nrdocmto => pr_nrborder
+                 ,pr_cdhistor => 270
+                 ,pr_nrseqdig => vr_nrseqdig
+                 ,pr_vllanmto => vr_vlborder
+                 ,pr_nrdctitg => to_char(pr_nrdconta, 'fm00000000')
+                 ,pr_nrautdoc => 0
+                 -- retorno
+                 ,pr_tab_retorno => vr_tab_retorno
+                 ,pr_incrineg => vr_incrineg
+                 ,pr_cdcritic => pr_cdcritic
+                 ,pr_dscritic => pr_dscritic);
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+         IF vr_incrineg = 0 THEN -- Erro de sistema/BD
 					-- Gerar crítica
 					vr_cdcritic := 0;
 					vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
 					-- Levantar exceção
 					RAISE vr_exc_erro;				
-			END;
+         ELSE -- vr_incrineg = 1 - Erro de negócio
+           RAISE vr_exc_erro;       
+         END IF;
+      END IF; 
+    
 			
 			BEGIN 
 			  -- Atualizar valores do lote				
@@ -8421,44 +8411,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                      (19000 + vr_cdpactra)); --nrdolote
           */
                                   
-          -- Cria lançamento na craplcm refente ao IOF
-          BEGIN
-            INSERT INTO craplcm(dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,nrseqdig
-                               ,cdpesqbb
-                               ,vllanmto
-                               ,cdcooper)
-                         VALUES(rw_crapdat.dtmvtolt
-                               ,1
-                               ,100
-                               ,(19000 + vr_cdpactra)
-                               ,pr_nrdconta
-                               ,pr_nrdconta
-                               ,to_char(pr_nrdconta, 'fm00000000')
-                               ,pr_nrborder
-                               ,2318 --324 Novo histórico - Projeto 410
-                               ,(vr_nrseqdig + 1)
-                               ,to_char(vr_vlborder, 'fm000g000g000d00')
-                               --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
-                               ,ROUND(vr_vltotiof, 2)
-                               ,pr_cdcooper)
-              RETURNING vllanmto INTO vr_vllanmto;
-            EXCEPTION
-              WHEN OTHERS THEN      
+
+         --Gravar lancamento
+         -- P450 - Regulatório de crédito
+         lanc0001.pc_gerar_lancamento_conta(
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => 1
+                   ,pr_cdbccxlt => 100
+                   ,pr_nrdolote => (19000 + vr_cdpactra) 
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrdctabb => pr_nrdconta
+                   ,pr_cdpesqbb => to_char(vr_vlborder, 'fm000g000g000d00')
+                   ,pr_cdcooper => pr_cdcooper
+                   ,pr_nrdocmto => pr_nrborder
+                   ,pr_cdhistor => 2318
+                   ,pr_nrseqdig => (vr_nrseqdig + 1)
+                   ,pr_vllanmto => ROUND(vr_vltotiof, 2)
+                   ,pr_nrdctitg => to_char(pr_nrdconta, 'fm00000000')
+                   -- retorno
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => pr_cdcritic
+                   ,pr_dscritic => pr_dscritic);
+
+         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                 -- Gerar crítica
                 vr_cdcritic := 0;
                 vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
                 -- Levantar exceção
                 RAISE vr_exc_erro;
-          END;			
+             ELSE -- vr_incrineg = 1 erro de negócio
+               RAISE vr_exc_erro;
+            END IF;
+         END IF; 
+         vr_vllanmto:= ROUND(vr_vltotiof, 2);
+         
+         	
           BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
                               ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente

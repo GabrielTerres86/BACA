@@ -54,6 +54,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps188(pr_cdcooper IN crapcop.cdcooper%TY
                             pois a tabela tem a data em formato DD/MM/AAAA e o programa
                             estava lendo como MM/DD/AAAA.  (Renato - Supero)
                             
+               29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -178,6 +180,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps188(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vlanuida NUMBER := 0;
   vr_qtparcan NUMBER := 0;
   vr_qtanuida NUMBER := 0;
+   
+  vr_rowid     ROWID;
+  vr_nmtabela  VARCHAR2(100);
+  vr_incrineg  INTEGER;
+
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+
    
 BEGIN
 
@@ -400,31 +410,29 @@ BEGIN
 
       -- Cria Registro na CRAPLCM
       BEGIN
-        INSERT INTO craplcm(cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,nrdconta
-                           ,nrdctabb
-                           ,nrdctitg
-                           ,nrdocmto
-                           ,cdhistor
-                           ,nrseqdig
-                           ,vllanmto)
-                   VALUES  (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,rw_crapass.nrdconta
-                           ,rw_crapass.nrdconta
-                           ,GENE0002.FN_MASK(rw_crapass.nrdconta, '99999999')
-                           ,to_number(SUBSTR(to_char(rw_crawcrd.nrcrcard),9,8))
-                           ,vr_cdhistor
-                           ,rw_craplot.nrseqdig + 1
-                           ,vr_vlanuida);
 
+        lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapass.nrdconta
+                   ,pr_nrdctabb => rw_crapass.nrdconta
+                   ,pr_nrdctitg => GENE0002.FN_MASK(rw_crapass.nrdconta, '99999999')
+                   ,pr_nrdocmto => to_number(SUBSTR(to_char(rw_crawcrd.nrcrcard),9,8))
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_vllanmto => vr_vlanuida
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => pr_cdcritic
+                   ,pr_dscritic => pr_dscritic
+                   );
+
+           if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+              RAISE vr_exc_saida;
+           end if;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;

@@ -1131,6 +1131,18 @@ function formataTabela() {
     $('li:eq(1)', linha5).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha5).addClass('txtNormal');
+	
+	// complemento linha 6
+    var linha6 = $('ul.complemento', '#linha6').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha6).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(1)', linha6).addClass('txtNormal').css({ 'width': '82%' });
+	
+	// complemento linha 7
+    var linha7 = $('ul.complemento', '#linha7').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha7).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(1)', linha7).addClass('txtNormal').css({ 'width': '82%' });
 
 
     /********************
@@ -1234,6 +1246,28 @@ function selecionaTabela(tr) {
     dssmsant = $('#dssmsant', tr).val(); 
     dssmsvct = $('#dssmsvct', tr).val(); 
     dssmspos = $('#dssmspos', tr).val();
+	
+	// PRJ431
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/cobran/obtem_cod_barras.php',
+		data: {
+			dtvencto:dtvencto
+		   ,cdbandoc:cdbandoc
+		   ,vltitulo:vltitulo
+		   ,nrcnvcob:nrcnvcob
+		   ,nrdconta:nrdcoaux
+		   ,nrdocmto:nrdocmto
+		   ,redirect: 'ajax_html'
+		},
+        error: function (objAjax, responseError, objExcept) {
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+        success: function (response) {
+            eval(response);
+		}
+	});
 
     return false;
 }

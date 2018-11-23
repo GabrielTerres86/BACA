@@ -39,9 +39,14 @@ BEGIN
               06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
                            empréstimos TR (Renato - Supero). 
 
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
+                           
+              08/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                          (LANC0001.pc_gerar_lancamento_conta) e a criacao do lote (craplot). 
+                          (PRJ450 - Teobaldo J - AMcom)	
+
               23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
 
-              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
     ............................................................................. */
 
   DECLARE
@@ -1044,6 +1049,10 @@ BEGIN
       vr_indoipmf PLS_INTEGER;
       vr_txdoipmf NUMBER;        
       
+      -- LANC0001 
+      vr_incrineg     INTEGER;
+      vr_tab_retorno  LANC0001.typ_reg_retorno;
+      
       ----------------- SUBROTINAS INTERNAS --------------------
 
       -- Subrotina para checar a existência de lote cfme tipo passado
@@ -1388,39 +1397,7 @@ BEGIN
             END IF;
 
             -- Efetuar lancamento na conta-corrente
-            BEGIN
-              INSERT INTO craplcm(cdcooper--
-                                 ,dtmvtolt--
-                                 ,cdagenci--
-                                 ,cdbccxlt--
-                                 ,nrdolote--
-                                 ,cdpesqbb
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig--
-                                 ,vllanmto
-                                 ,nrparepr)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,rw_craplot_8457.cdagenci
-                                 ,rw_craplot_8457.cdbccxlt
-                                 ,rw_craplot_8457.nrdolote
-                                 ,gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9')  
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_craplot_8457.nrseqdig + 1     
-                                 ,108 --> Prest Empr.
-                                 ,rw_craplot_8457.nrseqdig + 1
-                                 ,vr_vldescto
-                                 ,pr_nrparepr);
-            EXCEPTION
-              WHEN DUP_VAL_ON_INDEX THEN
-                BEGIN
-                  SELECT MAX(NVL(nrseqdig,0))+1
+            SELECT MAX(NVL(nrseqdig,0))
                     INTO vr_seqdig
                     FROM craplcm
                    WHERE cdcooper = pr_cdcooper
@@ -1428,60 +1405,33 @@ BEGIN
                      AND cdagenci = rw_craplot_8457.cdagenci
                      AND cdbccxlt = rw_craplot_8457.cdbccxlt
                      AND nrdolote = rw_craplot_8457.nrdolote;
-                 EXCEPTION
-                   WHEN OTHERS THEN   
-                       vr_dscritic := 'Erro ao criar sequencia da (CRAPLCM) '
-                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
-                            || '. Detalhes: '||sqlerrm;
+            
+            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
+                                              ,pr_cdagenci => vr_cdagenci
+                                              ,pr_cdbccxlt => vr_cdbccxlt
+                                              ,pr_nrdolote => 8457 
+                                              ,pr_cdpesqbb => gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9') 
+                                              ,pr_nrdconta => rw_crapepr.nrdconta
+                                              ,pr_nrdctabb => rw_crapepr.nrdconta
+                                              ,pr_nrdctitg => to_char(rw_crapepr.nrdconta,'fm00000000')
+                                              ,pr_nrdocmto => Nvl(vr_seqdig,0) + 1 -- Nvl(rw_craplot_8457.nrseqdig,0) + 1
+                                              ,pr_cdhistor => 108
+                                              ,pr_nrseqdig => Nvl(vr_seqdig,0) + 1 -- rw_craplot_8457.nrseqdig + 1
+                                              ,pr_vllanmto => vr_vldescto          -- Valor de lancamento
+                                              ,pr_nrparepr => pr_nrparepr
+                                              ,pr_cdoperad => pr_cdoperad
+                                              ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                              ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                              ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                              ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                              ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                              ,pr_tab_retorno => vr_tab_retorno ); -- Registro com dados do retorno
+
+            -- Conforme tipo de erro realiza acao diferenciada
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                    RAISE vr_exc_erro;                      
-                 END;
-                 --
-                 BEGIN 
-                     INSERT INTO craplcm(cdcooper--
-                                 ,dtmvtolt--
-                                 ,cdagenci--
-                                 ,cdbccxlt--
-                                 ,nrdolote--
-                                 ,cdpesqbb
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig--
-                                 ,vllanmto
-                                 ,nrparepr)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,rw_craplot_8457.cdagenci
-                                 ,rw_craplot_8457.cdbccxlt
-                                 ,rw_craplot_8457.nrdolote
-                                 ,gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9')  
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_craplot_8457.nrseqdig + 1     
-                                 ,108 --> Prest Empr.
-                                 ,vr_seqdig
-                                 ,vr_vldescto
-                                 ,pr_nrparepr);
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao criar lancamento2 para a conta corrente (CRAPLCM) '
-                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
-                            || '. Detalhes: '||sqlerrm;
-                RAISE vr_exc_erro;
-                 END;
-                 --                                 
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao criar lancamento para a conta corrente (CRAPLCM) '
-                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
-                            || '. Detalhes: '||sqlerrm;
-                RAISE vr_exc_erro;
-            END;
+            END IF;
 
             -- Subtrai o valor pago do saldo disponivel
             vr_vlsldtot := vr_vlsldtot - vr_vldescto;
@@ -1517,7 +1467,7 @@ BEGIN
                                  ,0
                                  ,rw_crapepr.nrdconta
                                  ,to_number(to_char(systimestamp,'hh24missFF4')||to_char(pr_nrparepr))
-                                 ,rw_craplot_8457.nrseqdig + 1
+                                 ,vr_seqdig
                                  ,2
                                  ,0
                                  ,0

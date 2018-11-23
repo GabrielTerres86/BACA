@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0021.p
    Autor   : Murilo/David
-   Data    : Setembro/2007                     Ultima atualizacao: 27/09/2016
+   Data    : Setembro/2007                     Ultima atualizacao: 13/11/2018
 
    Dados referentes ao programa:
 
@@ -21,6 +21,8 @@
                27/09/2016 - Ajustado rotina de Estorno para que utilize
                             a rotina de cancelamento de integralização.
                             M169 (Ricardo Linhares).
+							
+			   13/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
 
 ............................................................................ */
 
@@ -32,6 +34,7 @@ DEF VAR aux_qtpremax AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdconta AS INTE                                           NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                           NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                           NO-UNDO.
+DEF VAR aux_tpautori AS INTE                                           NO-UNDO.
         
 DEF VAR aux_vlprepla AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldant AS DECI                                           NO-UNDO.
@@ -91,6 +94,7 @@ PROCEDURE valores_entrada:
             WHEN "flgsaldo" THEN aux_flgsaldo = LOGICAL(tt-param.valorCampo).
             WHEN "cdtipcor" THEN aux_cdtipcor = INTE(tt-param.valorCampo).
             WHEN "vlcorfix" THEN aux_vlcorfix = DECI(tt-param.valorCampo).
+            WHEN "tpautori" THEN aux_tpautori = INTE(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -402,6 +406,7 @@ PROCEDURE cria-plano:
                            INPUT aux_flgpagto,
                            INPUT aux_qtpremax,
                            INPUT aux_dtdpagto,
+                           INPUT aux_tpautori,
                           OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -446,6 +451,7 @@ PROCEDURE altera-plano:
                              INPUT aux_flgpagto,
                              INPUT aux_qtpremax,
                              INPUT aux_dtdpagto,
+                             INPUT aux_tpautori,
                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -483,6 +489,7 @@ PROCEDURE cancelar-plano-atual:
                                      INPUT aux_idorigem,
                                      INPUT aux_nrdconta,
                                      INPUT aux_idseqttl,
+                                     INPUT aux_tpautori,
                                     OUTPUT TABLE tt-erro,
                                     OUTPUT TABLE tt-cancelamento).
     

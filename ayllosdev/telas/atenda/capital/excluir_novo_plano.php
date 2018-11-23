@@ -10,7 +10,9 @@
 	                                                                  
 	 Alterações: 22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
                             para coleta da assinatura 
-                           (Jonata - RKAM / M294).                             
+                           (Jonata - RKAM / M294).
+						   
+				 13/11/2018 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts)
                            
                            
                            
@@ -40,6 +42,7 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
+	$tpautori = $_POST["tpautori"];
 
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -62,6 +65,7 @@
 	$xmlExcluirPlano .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
 	$xmlExcluirPlano .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlExcluirPlano .= "		<idseqttl>1</idseqttl>";
+	$xmlExcluirPlano .= "		<tpautori>".$tpautori."</tpautori>";
 	$xmlExcluirPlano .= "	</Dados>";
 	$xmlExcluirPlano .= "</Root>";
 		

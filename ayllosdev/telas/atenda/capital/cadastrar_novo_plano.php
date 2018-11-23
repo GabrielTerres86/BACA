@@ -2,19 +2,24 @@
 	/**************************************************************************
 	      Fonte: cadastrar_novo_plano.php                                  
 	      Autor: David                                                     
-	      Data : Outubro/2007                 Ultima Alteracao: 22/03/2017
+	      Data : Outubro/2007                 Ultima Alteracao: 13/11/2018
 	                                                                  
 		  Objetivo  : Cadastrar Novo Plano de Capital - rotina de Capital da tela ATENDA                                       
 	                                                                  	 
 	      Alteracoes: 05/06/2012 - Adicionado confirmacao de impressao (Jorge)
-							   26/02/2014 - Adicionado atributos $cdtipcor e $vlcorfix, alem da procedure valida-dados-alteracao-plano. (Fabricio)         
+					  
+					  26/02/2014 - Adicionado atributos $cdtipcor e $vlcorfix, alem da procedure valida-dados-alteracao-plano. (Fabricio)         
+					  
 					  04/10/2015 - Reformulacao cadastral (Gabriel-RKAM).						
-							   17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM) 
-							   18/07/2016 - Correcao no retorno das informacoes do XML. SD 479874. (Carlos R)
+					  
+					  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM) 
+					  
+					  18/07/2016 - Correcao no retorno das informacoes do XML. SD 479874. (Carlos R)
 
-							   22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
-                                            para coleta da assinatura 
-                                           (Jonata - RKAM / M294). 
+					  22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
+                                   para coleta da assinatura (Jonata - RKAM / M294).
+										   
+					  13/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
 	**************************************************************************/
 	
 	session_start();
@@ -112,6 +117,7 @@
 	$xmlSetPlano .= "		<flgpagto>".$flgpagto."</flgpagto>";
 	$xmlSetPlano .= "		<qtpremax>".$qtpremax."</qtpremax>";
 	$xmlSetPlano .= "		<dtdpagto>".$dtdpagto."</dtdpagto>";
+	$xmlSetPlano .= "		<tpautori>".$tpautori."</tpautori>";
 	$xmlSetPlano .= "	</Dados>";
 	$xmlSetPlano .= "</Root>";
 		

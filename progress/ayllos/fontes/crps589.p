@@ -33,11 +33,15 @@
                24/04/2017 - Nao considerar valores bloqueados na composicao do saldo disponivel
                             Heitor (Mouts) - Melhoria 440
 
+               11/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                            [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+
 ............................................................................ */
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF STREAM str_1.
 
@@ -310,6 +314,18 @@ PROCEDURE cria-lancamento-debito:
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI NO-UNDO.
 
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+
+    
+    /* 11/06/20108 - TJ - Incluida condicao que verifica se pode realizar o debito */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p 
+        PERSISTENT SET h-b1wgen0200.
+
     DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
        
         /* Responsavel por alimentar registro de lote do lancamento */
@@ -363,24 +379,73 @@ PROCEDURE cria-lancamento-debito:
                     END.
                 ELSE
                     DO:
-                        CREATE craplcm.
-                        ASSIGN craplcm.cdcooper = par_cdcooper
-                               craplcm.dtmvtolt = craplot.dtmvtolt
-                               craplcm.cdagenci = par_cdagenci
-                               craplcm.cdbccxlt = par_cdbccxlt
-                               craplcm.nrdolote = par_nrdolote
-                               craplcm.dtrefere = craplot.dtmvtolt
-                               craplcm.hrtransa = TIME
-                               craplcm.cdoperad = par_cdoperad
-                               craplcm.nrdconta = par_nrdconta
-                               craplcm.nrdctabb = par_nrdconta
-                               craplcm.nrseqdig = craplot.nrseqdig
-                               craplcm.nrsequni = craplot.nrseqdig
-                               craplcm.nrdocmto = craplot.nrseqdig
-                               craplcm.cdhistor = par_cdhistor
-                               craplcm.vllanmto = par_vllanmto.
+                            
+                        /* 11/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                            (INPUT craplot.dtmvtolt                     /* par_dtmvtolt */
+                            ,INPUT par_cdagenci                         /* par_cdagenci */
+                            ,INPUT par_cdbccxlt                         /* par_cdbccxlt */
+                            ,INPUT par_nrdolote                         /* par_nrdolote */
+                            ,INPUT par_nrdconta                         /* par_nrdconta */
+                            ,INPUT craplot.nrseqdig                     /* par_nrdocmto */
+                            ,INPUT par_cdhistor                         /* par_cdhistor */
+                            ,INPUT craplot.nrseqdig                     /* par_nrseqdig */
+                            ,INPUT par_vllanmto                         /* par_vllanmto */
+                            ,INPUT par_nrdconta                         /* par_nrdctabb */
+                            ,INPUT ""                                   /* par_cdpesqbb */
+                            ,INPUT 0                                    /* par_vldoipmf */
+                            ,INPUT 0                                    /* par_nrautdoc */
+                            ,INPUT craplot.nrseqdig                     /* par_nrsequni */
+                            ,INPUT 0                                    /* par_cdbanchq */
+                            ,INPUT 0                                    /* par_cdcmpchq */
+                            ,INPUT 0                                    /* par_cdagechq */
+                            ,INPUT 0                                    /* par_nrctachq */
+                            ,INPUT 0                                    /* par_nrlotchq */
+                            ,INPUT 0                                    /* par_sqlotchq */
+                            ,INPUT craplot.dtmvtolt                     /* par_dtrefere */
+                            ,INPUT TIME                                 /* par_hrtransa */
+                            ,INPUT par_cdoperad                         /* par_cdoperad */
+                            ,INPUT 0                                    /* par_dsidenti */
+                            ,INPUT par_cdcooper                         /* par_cdcooper */
+                            ,INPUT ""                                   /* par_nrdctitg */
+                            ,INPUT ""                                   /* par_dscedent */
+                            ,INPUT 0                                    /* par_cdcoptfn */
+                            ,INPUT 0                                    /* par_cdagetfn */
+                            ,INPUT 0                                    /* par_nrterfin */
+                            ,INPUT 0                                    /* par_nrparepr */
+                            ,INPUT 0                                    /* par_nrseqava */
+                            ,INPUT 0                                    /* par_nraplica */
+                            ,INPUT 0                                    /* par_cdorigem */
+                            ,INPUT 0                                    /* par_idlautom */
+                            /* CAMPOS OPCIONAIS DO LOTE                                                                  */ 
+                            ,INPUT 0                                    /* Processa lote                                 */
+                            ,INPUT 0                                    /* Tipo de lote a movimentar                     */
+                            /* CAMPOS DE SAIDA                                                                           */                                            
+                            ,OUTPUT TABLE tt-ret-lancto                 /* Collection que contém o retorno do lançamento */
+                            ,OUTPUT aux_incrineg                        /* Indicador de crítica de negócio               */
+                            ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
+                            ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
+                            
+                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+                            DO:   
+                                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                                        " - " + glb_cdprogra + "' --> '"  +
+                                                aux_dscritic + "' - Conta/dv: '"          +
+                                                STRING(par_nrdconta, "zzzz,zzz,9")        + 
+                                                " >> log/proc_batch.log").
 
-                    END.
+                                    /* 11/06/2018 - TJ -Apagar handle associado */
+                                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                                        DELETE PROCEDURE h-b1wgen0200.
+
+                                    RETURN "NOK".
+                            END.
+                        ELSE 
+                            /* 11/06/2018 - TJ - Apagar handle associado se nao houve erro */
+                            IF VALID-HANDLE(h-b1wgen0200) THEN
+                                DELETE PROCEDURE h-b1wgen0200.
+                                      
+                    END.   /* fim nao LOCKED */
             END.
         ELSE
             DO:
@@ -393,12 +458,20 @@ PROCEDURE cria-lancamento-debito:
                           STRING(par_nrdconta, "zzzz,zzz,9")        + 
                           " >> log/proc_batch.log").
 
+                /* 11/06/2018 - TJ - Apagar handle associado antes do While */
+                IF  VALID-HANDLE(h-b1wgen0200) THEN
+                    DELETE PROCEDURE h-b1wgen0200.
+
                 RETURN "NOK".
             END.
 
         LEAVE.
 
     END. /* fim do while true */
+
+    /* 11/06/2018 - TJ - Apagar handle associado antes do While */
+    IF  VALID-HANDLE(h-b1wgen0200) THEN
+        DELETE PROCEDURE h-b1wgen0200.
 
     RETURN "OK".
 

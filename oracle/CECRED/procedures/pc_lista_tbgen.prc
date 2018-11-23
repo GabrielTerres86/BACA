@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 09/10/2018  
+  Data    : Maio/2018                   Ultima atualizacao: 01/11/2018  
     
   Dados referentes ao programa:
   
@@ -43,6 +43,10 @@ BEGIN
                          - Tratar programa exclusivo retirado da cadeia
                          - Criticas 1066/1067 - Inicio e Termino execução. Não é erro
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              01/11/2018 - Tratar programa exclusivo retirado da cadeia e não reexecutado
+                         - Atualizar lay-out de decimal para minutos.
+                         - (Envolti - Belli - Chamado - REQ0032025)
               
   ....................................................................................... */
     
@@ -257,7 +261,12 @@ DECLARE
   vr_nmresult           VARCHAR2(200); 
   vr_nrsolult           VARCHAR2(200);
   --
-  vr_qtminmed           NUMBER(15,5); 
+  vr_qtminmed           NUMBER(15,5);                            
+  -- Atualizar lay-out de decimal para minutos - 01/11/2018 - REQ0032025
+  vr_hrminmed           VARCHAR2(10);
+  vr_hrmindif           VARCHAR2(10);
+  vr_hrexeatu           VARCHAR2(10);
+  vr_dssinal            VARCHAR2 (1);
   --
   vr_qtminatu           NUMBER(15,5);
   vr_qtperaux           NUMBER(15,5);
@@ -994,13 +1003,13 @@ DECLARE
       pc_grava_linha(pr_utlfileh => vr_dsarqpro
                     ,pr_des_text => '' );
       
-      vr_dscb2pro := 'Cadeia Tipo    Ordem Programa Inicio    Fim      Exec Atual Erros  Parada '||
-                     ' Media       Diferença       Acima   Acima';               
+      vr_dscb2pro := 'Cadeia Tipo    Ordem Programa Inicio    Fim      Exec Atual  Erros Parada '||
+                     ' Media       Diferença       Acima    Acima';               
       pc_grava_linha(pr_utlfileh => vr_dsarqpro
                     ,pr_des_text => vr_dscb2pro ); 
       
-      vr_dscb3pro := '                                 (progress)       Minutos          Cadeia ' ||
-                     'Minutos  Minutos - Percent  ' || vr_qtlimver || ' Mins ' || vr_qtlimama || '  Mins';      
+      vr_dscb3pro := '                                   (progress)       Minutos        Cadeia ' ||
+                     'Minutos  Minutos - Percent   ' || vr_qtlimver || ' Mins  ' || vr_qtlimama || '  Mins';      
       pc_grava_linha(pr_utlfileh => vr_dsarqpro
                     ,pr_des_text => vr_dscb3pro ); 
       pc_grava_linha(pr_utlfileh => vr_dsarqpro
@@ -1558,18 +1567,55 @@ DECLARE
             END IF;
           END LOOP;             
         END IF;
-        --        
+        -- Atualizar lay-out de decimal para minutos - 01/11/2018 - REQ0032025
+        IF NVL(vr_qtminmed,0) = 0 THEN
+          vr_hrminmed := '00:00:00';
+        ELSE
+          vr_hrminmed := 
+            TO_CHAR(TRUNC((vr_qtminmed * 60) / 3600), 'FM9900') || ':' ||
+            TO_CHAR(TRUNC(MOD((vr_qtminmed * 60), 3600) / 60), 'FM00') || ':' ||
+            TO_CHAR(MOD((vr_qtminmed * 60), 60), 'FM00');
+        END IF;
+        --
+        vr_dssinal := ' ';
+        IF NVL(vr_qtmindif,0) = 0 THEN
+          vr_hrmindif := '00:00:00';
+          
+        ELSIF vr_qtmindif < 0 THEN 
+          --TO_NUMBER(TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00') ) THEN
+          vr_dssinal  := '-';
+          vr_qtmindif := vr_qtmindif * -1;
+          vr_hrmindif := 
+            TO_CHAR(TRUNC((vr_qtmindif * 60) / 3600), 'FM9900') || ':' ||
+            TO_CHAR(TRUNC(MOD((vr_qtmindif * 60), 3600) / 60), 'FM00') || ':' ||
+            TO_CHAR(MOD((vr_qtmindif * 60), 60), 'FM00');
+        ELSE
+          vr_hrmindif := 
+            TO_CHAR(TRUNC((vr_qtmindif * 60) / 3600), 'FM9900') || ':' ||
+            TO_CHAR(TRUNC(MOD((vr_qtmindif * 60), 3600) / 60), 'FM00') || ':' ||
+            TO_CHAR(MOD((vr_qtmindif * 60), 60), 'FM00');
+        END IF;
+        --
+        IF NVL(TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00'),'0') = '0' THEN
+          vr_hrexeatu := '00:00:00';
+        ELSE
+          vr_hrexeatu := 
+            TO_CHAR(TRUNC((TO_NUMBER(TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00') ) * 60) / 3600), 'FM9900') || ':' ||
+            TO_CHAR(TRUNC(MOD((TO_NUMBER(TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00') ) * 60), 3600) / 60), 'FM00') || ':' ||
+            TO_CHAR(MOD((TO_NUMBER(TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00') ) * 60), 60), 'FM00');
+        END IF;
+        -- Atualizar lay-out de decimal para minutos - 01/11/2018 - REQ0032025   
         vr_dslinpro := LPAD(vr_nrsolici,5) || '  ' ||
                        vr_dsexclus         || ' '  || 
                        LPAD(vr_nrordsol,3) || ' '  ||
                        rw_crapprg.cdprogra || '  ' || 
                        TO_CHAR(vr_dhinipro,'HH24:MI:SS') || '  '  || 
                        TO_CHAR(vr_dhfimpro,'HH24:MI:SS') || '   ' ||
-                       TO_CHAR(REPLACE(TRUNC((((vr_dhfimpro) - (vr_dhinipro)) * 24 * 60 ),2),',''.'),'990d00') || '   '  ||
+                       vr_hrexeatu || '   '  ||
                        TO_CHAR(vr_qterros,'990') || '  '  || 
-                       vr_dsparcad || ' '   ||
-                       TO_CHAR(vr_qtminmed,'9990d00') || '  '     ||
-                       TO_CHAR(vr_qtmindif,'9990d00') || '  '     ||
+                       vr_dsparcad || '  '   ||
+                       vr_hrminmed || '  '     ||
+                       vr_dssinal ||  vr_hrmindif || ' '     ||
                        TO_CHAR(vr_qtperdif,'9990d00') || '%' || '     ' ||
                        vr_dsalert1 || '     ' ||
                        vr_dsalert2
@@ -1788,6 +1834,9 @@ DECLARE
   --
   --      
     vr_dsparaux       VARCHAR2(4000);
+    -- Tratar programa exclusivo retirado da cadeia e não reexecutado - 01/11/2018 - REQ0032025
+    vr_dtreinicio2    DATE;
+    vr_hrparada       VARCHAR2  (20);
   BEGIN
     -- Posiciona procedure
     vr_cdproint := vr_cdproexe || '.pc_tipo_cadeia';
@@ -1879,13 +1928,62 @@ DECLARE
           vr_dslispl1 := 'Os programas ' || vr_dslispl2 || ' ' ||
                          'referentes a cadeia paralela ' ||
                          'tiveram suas execuções interrompidas ';
-        END IF;      
+        END IF; 
+        
+        -- Tratar programa exclusivo retirado da cadeia e não reexecutado - 01/11/2018 - REQ0032025             
+        IF rw_erro_tipo_cad_paralela.dtreinicio IS NOT NULL THEN
+          vr_hrinicio := TO_CHAR(rw_erro_tipo_cad_paralela.dtreinicio,'HH24MISS');
+          vr_hrparada := rw_erro_tipo_cad_paralela.hrparada;
+        ELSE
+          BEGIN
+            SELECT MIN(t3.dhocorrencia) 
+            INTO   vr_dtreinicio2
+            FROM   tbgen_prglog_ocorrencia  t3
+            WHERE  t3.dhocorrencia      > rw_erro_tipo_cad_paralela.dtparada
+            AND    NVL(t3.cdmensagem,0) = 1231; 
+          EXCEPTION 
+            WHEN NO_DATA_FOUND THEN  
+              vr_dtreinicio2 := NULL;  
+            WHEN vr_exc_montada THEN  
+              RAISE vr_exc_montada;  
+            WHEN vr_exc_erro_tratado THEN 
+              RAISE vr_exc_erro_tratado; 
+            WHEN vr_exc_others THEN 
+              RAISE vr_exc_others; 
+            WHEN OTHERS THEN   
+              -- No caso de erro de programa gravar tabela especifica de log
+              cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper); 
+              -- Trata erro
+              pr_cdcritic := 1036;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
+                             ' tbgen_prglog_ocorrencia(3): ' ||
+                             vr_dsparame           ||
+                             ', vr_dslispl3:' || vr_dslispl3 ||
+                             ', vr_dslispl2:' || vr_dslispl2 ||
+                             ', rw_erro_tipo_cad_paralela.dtparada:' || rw_erro_tipo_cad_paralela.dtparada ||
+                             '. ' || SQLERRM; 
+              RAISE vr_exc_montada;    
+          END;  
+          IF vr_dtreinicio2 IS NOT NULL THEN
+            vr_hrinicio := TO_CHAR(vr_dtreinicio2,'HH24MISS');
+            vr_hrparada :=         
+            TO_CHAR(TRUNC(TO_NUMBER(REPLACE(TRUNC((((vr_dtreinicio2) - (rw_erro_tipo_cad_paralela.dtparada)) * 24 * 60 ),2),',''.'))), 'FM900') ||
+            ':' ||
+            TO_CHAR(MOD((TO_NUMBER(REPLACE(TRUNC((((vr_dtreinicio2) -  (rw_erro_tipo_cad_paralela.dtparada)) * 24 * 60 ),2),',''.')) * 60), 60), 'FM00');                
+        
+          ELSE
+            vr_hrinicio := NULL;   
+          END IF;  
+        END IF;     
+        
+        
         vr_ctsequec := vr_ctsequec + 1;
+        -- Tratar programa exclusivo retirado da cadeia e não reexecutado - 01/11/2018 - REQ0032025    
         vr_dslispla := TO_CHAR(vr_ctsequec,'9900') || 
                        '&nbsp;-&nbsp;' || 
                        vr_dslispl1 ||
                        'devido a erros (o que gerou um atraso de ' || 
-                       rw_erro_tipo_cad_paralela.hrparada || 
+                       vr_hrparada || 
                        ' minutos).'; 
               
         IF vr_dslisexe IS NULL THEN
@@ -1894,7 +1992,7 @@ DECLARE
           vr_dslisexe := vr_dslisexe || '<br>' || vr_dslispla;  
         END IF;
         
-        vr_hrinicio := TO_CHAR(rw_erro_tipo_cad_paralela.dtreinicio,'HH24MISS');
+        -- atributo vr_hrinicio foi movido daqui e incluido pouco mais acima - 01/11/2018 - REQ0032025
         
       END LOOP;   
             
@@ -3529,7 +3627,6 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
   nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
   -- Incluida SYSDATE em variavel vr_dtsysdat para manupilar melhor quando teste - 09/10/2018 - Chd REQ0029484
   vr_dtsysdat := SYSDATE;
-    
   pc_controle_execucao;
    
   -- Retorno nome do módulo logado

@@ -96,6 +96,7 @@ DEF STREAM str_4.   /*  Para arquivo                */
 DEF STREAM str_5.   /*  Para arquivo                */
 
 { includes/var_batch.i }   
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
@@ -175,6 +176,10 @@ DEF        VAR aux_cdagechq AS INT                                   NO-UNDO.
 DEF        VAR aux_nrctachq AS DEC                                   NO-UNDO.
 DEF        VAR aux_nrdocheq AS INT                                   NO-UNDO.
 
+DEF        VAR h-b1wgen0200 AS HANDLE                                NO-UNDO.
+DEF        VAR aux_incrineg AS INT                                   NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 FORM aux_setlinha  FORMAT "x(161)"
      WITH FRAME AA WIDTH 161 NO-BOX NO-LABELS.
@@ -197,7 +202,7 @@ FORM SKIP(1)
      WITH NO-BOX DOWN SIDE-LABELS WIDTH 80 FRAME f_cabec_277.
 
 FORM crawrel.cdbanchq   AT 01  FORMAT "zz9"          
-     crawrel.nrcheque   AT 15  FORMAT "zzz,zz9"     
+     crawrel.nrcheque   AT 15  FORMAT "zzz,zzz,zzz,zz9"
      crawrel.nralinea   AT 33  FORMAT "z9"
      " - "              AT 35
      aux_dsalinea       AT 38  FORMAT "x(25)"
@@ -266,7 +271,7 @@ FORM SKIP(1)
      WITH NO-BOX DOWN SIDE-LABELS WIDTH 80 FRAME f_cabec_rel277.
 
 FORM rel277.cdbanchq    AT 01  FORMAT "zz9"          
-     rel277.nrcheque    AT 15  FORMAT "zzz,zz9"     
+     rel277.nrcheque    AT 15  FORMAT "zzz,zzz,zzz,zz9"
      rel277.nralinea    AT 33  FORMAT "z9"
      " - "              AT 35
      rel277.auxaline    AT 38  FORMAT "x(25)"
@@ -330,7 +335,7 @@ FORM crawrel.nmprimtl   AT 01  FORMAT "x(40)"       LABEL "DESCRICAO DO ERRO"
      crawrel.vlcheque   AT 57  FORMAT "zz,zzz,zzz,zz9.99"  LABEL "VALOR"
      SKIP
      crawrel.nralinea   AT 01  FORMAT "z9"          LABEL "ALINEA"
-     crawrel.nrcheque   AT 21  FORMAT "zzz,zz9"     LABEL "CHEQUE"
+     crawrel.nrcheque   AT 21  FORMAT "zzz,zzz,zzz,zz9"     LABEL "CHEQUE"
      SKIP(2)
      WITH NO-BOX DOWN SIDE-LABEL WIDTH 80 FRAME f_lanc_erro_276.
 
@@ -352,7 +357,7 @@ FORM SKIP(3)
 FORM crawrel.nrdconta   AT 01  FORMAT "zzzz,zz9,9"
      crawrel.nmprimtl   AT 13  FORMAT "x(33)"
      crawrel.cdbanchq   AT 49  FORMAT "zz9"          
-     crawrel.nrcheque   AT 53  FORMAT "zzz,zz9"     
+     crawrel.nrcheque   AT 53  FORMAT "zzz,zzz,zzz,zz9"
      crawrel.nralinea   AT 64  FORMAT "z9"
      crawrel.vlcheque   AT 68  FORMAT "zz,zzz,zz9.99"
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_lanc_276.
@@ -758,43 +763,94 @@ DO  i = 1 TO aux_contador:
           
           END.  /*  Fim do DO WHILE TRUE  */
 
-          
-          CREATE craplcm.
-          ASSIGN craplcm.dtmvtolt = glb_dtmvtolt
-                 craplcm.cdagenci = 1
-                 craplcm.cdbccxlt = 100
-                 craplcm.nrdolote = 4650
-                 craplcm.nrdconta = crapchd.nrdconta 
-                 craplcm.nrdocmto = aux_nrcheque
-                 craplcm.cdhistor = aux_cdhistor
-                 craplcm.nrseqdig = craplot.nrseqdig + 1
-                 craplcm.vllanmto = (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)
-                 craplcm.nrdctabb = crapchd.nrdconta
-                 craplcm.nrdctitg = STRING(crapchd.nrdconta,"99999999")
-                 craplcm.cdpesqbb = SUBSTR(aux_setlinha,54,02)
-                 craplcm.vldoipmf = 0
-                 craplcm.nrautdoc = 0
-                 craplcm.nrsequni = 0
-                 craplcm.cdbanchq = crapchd.cdbanchq
-                 craplcm.cdcmpchq = crapchd.cdcmpchq
-                 craplcm.cdagechq = crapchd.cdagechq
-                 craplcm.nrctachq = crapchd.nrctachq
-                 craplcm.nrlotchq = 0
-                 craplcm.sqlotchq = 0
-                 craplcm.cdcooper = glb_cdcooper
-                 craplcm.dsidenti = "BCB"
-                 
-                 craplot.nrseqdig = craplot.nrseqdig + 1
+          IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p
+              PERSISTENT SET h-b1wgen0200.
+
+          RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+            (INPUT glb_dtmvtolt                                 /* par_dtmvtolt */
+            ,INPUT 1                                            /* par_cdagenci */
+            ,INPUT 100                                          /* par_cdbccxlt */
+            ,INPUT 4650                                         /* par_nrdolote */
+            ,INPUT crapchd.nrdconta                             /* par_nrdconta */
+            ,INPUT aux_nrcheque                                 /* par_nrdocmto */
+            ,INPUT aux_cdhistor                                 /* par_cdhistor */
+            ,INPUT craplot.nrseqdig + 1                         /* par_nrseqdig */
+            ,INPUT (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)  /* par_vllanmto */
+            ,INPUT crapchd.nrdconta                             /* par_nrdctabb */
+            ,INPUT SUBSTR(aux_setlinha,54,02)                   /* par_cdpesqbb */
+            ,INPUT 0                                            /* par_vldoipmf */
+            ,INPUT 0                                            /* par_nrautdoc */
+            ,INPUT 0                                            /* par_nrsequni */
+            ,INPUT crapchd.cdbanchq                             /* par_cdbanchq */
+            ,INPUT crapchd.cdcmpchq                             /* par_cdcmpchq */
+            ,INPUT crapchd.cdagechq                             /* par_cdagechq */
+            ,INPUT crapchd.nrctachq                             /* par_nrctachq */
+            ,INPUT 0                                            /* par_nrlotchq */
+            ,INPUT 0                                            /* par_sqlotchq */
+            ,INPUT ""                                           /* par_dtrefere */
+            ,INPUT ""                                           /* par_hrtransa */
+            ,INPUT 0                                            /* par_cdoperad */
+            ,INPUT "BCB"                                        /* par_dsidenti */
+            ,INPUT glb_cdcooper                                 /* par_cdcooper */
+            ,INPUT STRING(crapchd.nrdconta,"99999999")          /* par_nrdctitg */
+            ,INPUT ""                                           /* par_dscedent */
+            ,INPUT 0                                            /* par_cdcoptfn */
+            ,INPUT 0                                            /* par_cdagetfn */
+            ,INPUT 0                                            /* par_nrterfin */
+            ,INPUT 0                                            /* par_nrparepr */
+            ,INPUT 0                                            /* par_nrseqava */
+            ,INPUT 0                                            /* par_nraplica */
+            ,INPUT 0                                            /* par_cdorigem */
+            ,INPUT 0                                            /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */
+            /* CAMPOS DE SAÍDA                                                                     */
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+
+          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                              " - " + glb_cdprogra + "' --> " +
+                              aux_dscritic + "'" +
+                              " nrdconta" + STRING(crapchd.nrdconta,"99999999") +
+                              " nrcheque" + STRING(aux_nrcheque,"99999999") +
+                              " >> log/proc_batch.log").
+            ASSIGN glb_cdcritic = 0
+                   aux_flgrejei = TRUE.
+
+            CREATE crawrel.
+            ASSIGN crawrel.cdagenci = 1
+                   crawrel.nrdconta = crapchd.nrdconta
+                   crawrel.nmprimtl = aux_dscritic
+                   crawrel.nrfonres = ""
+                   crawrel.cdcmpchq = crapchd.cdcmpchq
+                   crawrel.cdagechq = crapchd.cdagechq
+                   crawrel.cdbanchq = crapchd.cdbanchq
+                   crawrel.nrctachq = crapchd.nrctachq
+                   crawrel.nrcheque = aux_nrcheque
+                   crawrel.nralinea = INTEGER(SUBSTR(aux_setlinha,54,02))
+                   crawrel.vlcheque = (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100).
+
+            NEXT.
+          END.
+
+          IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.
+
+          ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                  craplot.qtcompln = craplot.qtcompln + 1
                  craplot.qtinfoln = craplot.qtinfoln + 1
                  craplot.vlcompdb = craplot.vlcompdb +
-                                    craplcm.vllanmto
+                                     (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)
                  craplot.vlcompcr = 0
                  craplot.vlinfodb = craplot.vlcompdb
                  craplot.vlinfocr = 0. 
           
           VALIDATE craplot.
-          VALIDATE craplcm.
 
           /*   Tratamento de Cheques Bloqueados  */
           IF   craplcm.cdhistor = 24    OR

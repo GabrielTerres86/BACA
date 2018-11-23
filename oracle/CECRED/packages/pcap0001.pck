@@ -232,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 19/10/2018
+    Data    : Setembro/12                            Ultima alteracao: 09/11/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -268,6 +268,11 @@ create or replace package body cecred.PCAP0001 is
 
                 19/10/2018 - sctask0031953 Na rotina pc_gerar_arq_enc_brde, linha tipo 4, usar apenas
                              espaços em branco quando a caixa postal for zero (Carlos)
+                             
+                09/11/2018 - sctask0032999 Na rotina pc_gerar_arq_enc_brde, linha tipo 1, desativado
+                             o campo CEP do Proponente; inclusão de indicador de optante pelo simples;
+                             de > para das Naturezas jurídicas; na linha tipo 5, fixada na posição 295
+                             o Tipo de licença ambiental com o valor 3 (Carlos)
   ............................................................................ */
 
   -- Cursor de associados
@@ -978,16 +983,16 @@ create or replace package body cecred.PCAP0001 is
     
     CASE 
       WHEN pr_cdcooper IN (1,2,3,4) THEN /* cooperativas de Blumenau SC */
-        pr_cdcidbac := 12311;	
+        pr_cdcidbac := 12311;  
         pr_cdcidbnd := 4202404;
       WHEN pr_cdcooper IN (5) THEN /* cooperativa de Criciuma SC */
-        pr_cdcidbac := 9379;	
+        pr_cdcidbac := 9379;  
         pr_cdcidbnd := 4204608;
       WHEN pr_cdcooper IN (6,7,8,9) THEN  /* cooperativas de Florianopolis SC */
         pr_cdcidbac := 21216;
         pr_cdcidbnd := 4205407;
       WHEN pr_cdcooper IN (10) THEN /* cooperativa de Lages SC */
-        pr_cdcidbac := 38003;	
+        pr_cdcidbac := 38003;  
         pr_cdcidbnd := 4209300;
       WHEN pr_cdcooper IN (11) THEN /* cooperativa de Itajai SC */
         pr_cdcidbac := 4556;
@@ -996,16 +1001,16 @@ create or replace package body cecred.PCAP0001 is
         pr_cdcidbac := 23025;
         pr_cdcidbnd := 4206504;
       WHEN pr_cdcooper IN (13) THEN /* cooperativa de Sao Bento do Sul SC */
-        pr_cdcidbac := 14632;	
+        pr_cdcidbac := 14632;  
         pr_cdcidbnd := 4215802;
       WHEN pr_cdcooper IN (14) THEN /* cooperativa de Francisco Beltrao PR */
-        pr_cdcidbac := 17938;	
+        pr_cdcidbac := 17938;  
         pr_cdcidbnd := 4108403;
       WHEN pr_cdcooper IN (15) THEN /* cooperativa de Porto Uniao SC */
-        pr_cdcidbac := 3595;	
+        pr_cdcidbac := 3595;  
         pr_cdcidbnd := 4213609;
       WHEN pr_cdcooper IN (16) THEN /* cooperativa de Ibirama SC */
-        pr_cdcidbac := 15765;	
+        pr_cdcidbac := 15765;  
         pr_cdcidbnd := 4206900;
     END CASE;
     
@@ -1090,6 +1095,8 @@ create or replace package body cecred.PCAP0001 is
     vr_inpessoa INTEGER;
     vr_ctrcapit VARCHAR2(50);
     vr_dtnascim crapttl.dtnasttl%type;
+    vr_tpregtrb VARCHAR2(1);
+    vr_natjurid VARCHAR2(5);
     vr_nrcpfcgc crapttl.nrcpfcgc%type;
     vr_vlrendim NUMBER;
     vr_nmdavali crapavt.nmdavali%type;
@@ -1295,7 +1302,7 @@ create or replace package body cecred.PCAP0001 is
     /* buscar dados pessoa juridica */
     CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE,
                       pr_nrdconta IN crapjur.nrdconta%TYPE) IS
-      SELECT crapjur.dtiniatv
+      SELECT crapjur.dtiniatv, decode(crapjur.tpregtrb,0,'N','S') tpregtrb, natjurid
         FROM crapjur
        WHERE crapjur.cdcooper = pr_cdcooper
          AND crapjur.nrdconta = pr_nrdconta;
@@ -1484,6 +1491,9 @@ create or replace package body cecred.PCAP0001 is
           CLOSE cr_crapttl;
           
           vr_dtnascim := rw_crapttl.dtnasttl;
+          vr_tpregtrb := 'N';
+          vr_natjurid := '     ';
+          
           vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
           vr_vlrendim := rw_crapttl.vlsalari  +
                          (rw_crapttl.vldrendi##1 +
@@ -1732,7 +1742,25 @@ create or replace package body cecred.PCAP0001 is
           CLOSE cr_crapjur;
           
           vr_dtnascim := rw_crapjur.dtiniatv;
-          
+
+          -- Indicador de tipo de regime tributário (optante pelo Simples)
+          vr_tpregtrb := rw_crapjur.tpregtrb;
+
+          -- Natureza jurídica
+          -- 2046 Sociedade Anonima Aberta      -> 11033
+          -- 2054 Sociedade Anonima Fechada     -> 11034
+          -- 2062 Sociedade Empresaria Limitada -> 11031
+          -- 2135  Empresario (Individual)       -> 11012
+          -- 2143  Cooperativa                   -> 11037
+          vr_natjurid := CASE rw_crapjur.natjurid
+            WHEN 2046 THEN '11033'
+            WHEN 2054 THEN '11034'
+            WHEN 2062 THEN '11031'
+            WHEN 2135 THEN '11012'
+            WHEN 2143 THEN '11037'
+            ELSE '     '
+          END;
+
           rw_crapjfn  := NULL;
           -- Buscar dados financeiros de pessoa juridica
           OPEN cr_crapjfn(pr_cdcooper => pr_cdcooper,
@@ -1781,10 +1809,10 @@ create or replace package body cecred.PCAP0001 is
           --quando encontrar
           IF cr_craptfc%FOUND THEN
             CLOSE cr_craptfc;
-			IF(LENGTH(rw_craptfc.nrtelefo) < 9) THEN
+      IF(LENGTH(rw_craptfc.nrtelefo) < 9) THEN
             vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
             vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
-			END IF;
+      END IF;
           ELSE
             CLOSE cr_craptfc;
           END IF; 
@@ -1993,10 +2021,10 @@ create or replace package body cecred.PCAP0001 is
       vr_dsdlinha := vr_dsdlinha ||
                       to_char(vr_cdestcvl, 'fm00')                          || --2 estado civil (conforme tabela BRDE)
                       TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --14 CPF/CNPJ do beneficiário
-                      vr_regime                                             || --2 regime de bens                      
+                      vr_regime                                             || --2 regime de bens
                       LPAD(' ',58,' ')                                      || --58 Filler
                       RPAD(vr_tab_brde(vr_idxbrde).dsendere,'35',' ')       || --35 Endereço do beneficiário
-                      to_char(vr_tab_brde(vr_idxbrde).nrcepend,'fm00000000')|| --8 CEP
+                      LPAD(' ',8,' ')                                       || --8 CEP
                       TO_CHAR(rw_crapipc.cdmunben,'fm0000000')              || --7 Código do município do cliente
                       LPAD(' ',25,' ')                                      || --25 Filler
                       NVL(TO_CHAR(vr_tab_brde(vr_idxbrde).nrdddtfc,'fm00'),'  ')               || --2 DDD beneficiário
@@ -2021,9 +2049,18 @@ create or replace package body cecred.PCAP0001 is
                       vr_cdetnia                                            || --Cor/Etnia do beneficiário
                       RPAD(NVL(TRIM(rw_crapipc.dsdemail),'teste@cecred.coop.br'),50,' ') || --email beneficiario
                       RPAD(TO_CHAR(vr_tab_brde(vr_idxbrde).nrcxapst),6,' ') || -- Endereço do Proponente: Caixa Postal
-                      LPAD(' ',73,' ')                                      || --Filler
-                      TO_CHAR(vr_cdseqlin,'fm00000');                          --Número sequencial
-                      
+                      vr_natjurid;                                             -- 5 Natureza Jurídica da Empresa (BRDE, conforme tabela) Ex.: 11012 - EMPRESARIO INDIVIDUAL
+      
+      IF vr_inpessoa = 2 THEN
+        vr_dsdlinha := vr_dsdlinha || vr_tpregtrb; -- 1 Indicador de Opção pelo SIMPLES Nacional
+      ELSE
+        vr_dsdlinha := vr_dsdlinha || 'N';         -- 1 Indicador de Opção pelo SIMPLES
+      END IF;
+
+      vr_dsdlinha := vr_dsdlinha ||
+                     LPAD(' ',67,' ')                                      || --Filler
+                     TO_CHAR(vr_cdseqlin,'fm00000');                          --Número sequencial
+
       -- incluir linha do arquivo
       vr_tab_arq_brde(vr_cdseqlin).cdseqlin := vr_cdseqlin;
       vr_tab_arq_brde(vr_cdseqlin).dsdlinha := vr_dsdlinha;
@@ -2102,11 +2139,11 @@ create or replace package body cecred.PCAP0001 is
 
         -- Regime de Bens (BRDE, conforme tabela)
         /*
-        CÓDIGO	DESCRIÇÃO
-        10	Comunhão Universal de Bens
-        11	Comunhão Parcial de Bens
-        12	Separação de Bens
-        13	Participação final nos aquestos
+        CÓDIGO  DESCRIÇÃO
+        10  Comunhão Universal de Bens
+        11  Comunhão Parcial de Bens
+        12  Separação de Bens
+        13  Participação final nos aquestos
         estado civil
         2,8        = 10
         3,9,11,12  = 11
@@ -2209,7 +2246,7 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ', 2,' ')                                     || --Filler
                       LPAD('0', 5,'0')                                     || --Principal cultura geradora de renda associada à operação
                       LPAD('0', 5,'0')                                     || --Percentual da principal cultura geradora de renda associada à operação
-                      LPAD(' ', 1,' ')                                     || --Tipo de licença ambiental
+                      '3'                                                  || --Tipo de licença ambiental
                       LPAD(' ',15,' ')                                     || --Número da licença ou da dispensa de licença
                       LPAD(' ', 2,' ')                                     || --Tipo de licença concedido
                       LPAD(' ', 8,' ')                                     || --Data de emissão da licença ou dispensa da licença
@@ -2471,7 +2508,7 @@ create or replace package body cecred.PCAP0001 is
                                       ,pr_des_reto OUT VARCHAR2                  --> Indicador de saida com erro (OK/NOK)
                                       ,pr_xml_erro OUT CLOB) IS              --> Tabela com erros
   /*---------------------------------------------------------------------------------------------------------------
-  --  Programa : pc_gerar_arq_enc_brde_web	       
+  --  Programa : pc_gerar_arq_enc_brde_web         
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : PCAP
   --  Autor    : Jorge I. Hamaguchi
@@ -2492,7 +2529,7 @@ create or replace package body cecred.PCAP0001 is
   BEGIN
     
     -- chamar rotina original
-    pc_gerar_arq_enc_brde	
+    pc_gerar_arq_enc_brde  
                           (pr_cdcooper => pr_cdcooper  --> código da cooperativa
                           ,pr_cdagenci => pr_cdagenci  --> codigo da agencia
                           ,pr_nrdcaixa => pr_nrdcaixa  --> numero do caixa

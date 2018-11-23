@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 19/10/2018
+       Data    : Julho/2018                       Ultima atualizacao: 09/11/2018
 
        Dados referentes ao programa:
 
@@ -46,10 +46,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                      18/09/2018 - P450 - Correção Juros60
                                   P450 - Correção no valor do contrato para a modalidade 0101(Reginaldo/AMcom)
 
+                     25/09/2018 - P450 - Ajustes 3040
+                                - Alterado as regras das faixas de classificação do porte para PF e PJ - Heckmann (AMcom)
+                                - Alterado para adicionar a Tag '<Inf Tp="1998" />' quando:
+                                  Utilizacao de aplicacao propria para cobertura da garantia da operacao (1-Sim)
+                                  Ou
+                                  Utilizacao de poupanca programada propria para cobertura (1-Sim) - Heckmann (AMcom)
+                                - Busca taxa mensal do contrato do empréstimo (Tag taxeft) Renato Cordeiro - AMcom
+                                - FINAME - Usar indexador da tabela e não fixo "11" (Guilherme/AMcom)
+                                - Inclusão de Exception na inserção da tabela tbhist_ativo_probl (Fernando Ornelas AMcom)
+                                - Criacao de regra de data de corte para considerar a Tag '<Inf Tp="1998" />' do
+                                  Colateral Financeiro - Heckmann (AMcom)
+
                      10/10/2018 - P450 - Ajustes Gerais Juros60/ADP/Empr. (Guilherme/AMcom)
                      
                      19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável e 
                                   onde há Caminhao apenas, utilizar também Outros Veiculos (Marcos-Envolti)
+                     
+					 09/11/2018 - P450 - Correção na geração dos vencimentos para a modalidade 101 nas tags <Agreg>
+							      (Reginaldo/AMcom)
                      
     .............................................................................................................................*/
 
@@ -155,6 +170,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                NVL(wpr.nrliquid,0)     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
+              ,epr.txmensal
           from crapepr epr
               ,crawepr wpr
               ,crapass ass
@@ -351,6 +367,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                ebn.dtvctpro,
                ebn.vlparepr,
                ebn.qtparctr
+              ,NVL(ebn.cdindxdr,11) cdindxdr -- Se, por acaso nao atualizou o indexador, assume 11, conforme antes
           FROM crapebn ebn
               ,crapass ass
          WHERE ebn.cdcooper = pr_cdcooper
@@ -865,7 +882,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               nrdconta crapebn.nrdconta%TYPE,
               dtvctpro crapebn.dtvctpro%TYPE,
               vlparepr crapebn.vlparepr%TYPE,
-              qtparctr crapebn.qtparctr%TYPE);
+              qtparctr crapebn.qtparctr%TYPE,
+              cdindxdr crapebn.cdindxdr%TYPE);
       TYPE typ_tab_crapebn IS
         TABLE OF typ_reg_crapebn
           INDEX BY VARCHAR2(33);
@@ -891,7 +909,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
              ,tpemprst crapepr.tpemprst%TYPE
              ,cddindex crawepr.cddindex%TYPE
              ,idquapro NUMBER
-             ,idquaprc NUMBER);
+             ,idquaprc NUMBER
+             ,txmensal crapepr.txmensal%TYPE);
       TYPE typ_tab_crapepr IS
         TABLE OF typ_reg_crapepr
           INDEX BY VARCHAR2(33);
@@ -1010,6 +1029,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       vr_coddindx PLS_INTEGER;
       vr_tpemprst crapepr.tpemprst%TYPE;
       vr_cddindex crawepr.cddindex%TYPE;
+      vr_dtcorte  Date;
       -- Taxas anuais
       vr_txeanual     NUMBER(10,4);
       --
@@ -2796,7 +2816,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
             -- Buscaremos a taxa de juros da linha de crédito
             IF vr_tab_craplcr.exists(vr_idx_lcr) THEN
               -- Usar taxa da linha
-              vr_txeanual := ROUND((POWER(1 + (vr_tab_craplcr(vr_idx_lcr).txjurfix /100),12) - 1) * 100,2);
+              vr_txeanual := ROUND((POWER(1 + (vr_tab_crapepr(vr_ind_epr).txmensal /100),12) - 1) * 100,2);
             ELSE
               -- Não há taxa
               vr_txeanual := 0;
@@ -3295,6 +3315,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         vr_inpessoa      NUMBER := 0;
         vr_stsnrcal      BOOLEAN := FALSE;
         vr_idcobertura   NUMBER := 0;
+        vr_inaplicacao_propria  NUMBER := 0;
+        vr_inpoupanca_propria   NUMBER := 0;
         vr_dscritic      crapcri.dscritic%TYPE;
         vr_exc_saida     EXCEPTION;
 
@@ -3302,7 +3324,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                             ,pr_nrdconta   IN tbgar_cobertura_operacao.nrdconta%TYPE
                             ,pr_tpcontrato IN tbgar_cobertura_operacao.tpcontrato%TYPE
                             ,pr_nrcontrato IN tbgar_cobertura_operacao.nrcontrato%TYPE) IS
-          SELECT nvl(idcobertura, 0) idcobertura
+          SELECT nvl(idcobertura, 0) idcobertura,
+                 nvl(inaplicacao_propria, 0) inaplicacao_propria,
+                 nvl(inpoupanca_propria, 0) inpoupanca_propria
             FROM tbgar_cobertura_operacao
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
@@ -3327,7 +3351,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                           ,pr_nrdconta   => vr_tab_individ(vr_idx_individ).nrdconta
                           ,pr_tpcontrato => vr_tpcontrato
                           ,pr_nrcontrato => vr_tab_individ(vr_idx_individ).nrctremp);
-         FETCH cr_cobertura INTO vr_idcobertura;
+         FETCH cr_cobertura
+          INTO vr_idcobertura,
+               vr_inaplicacao_propria,
+               vr_inpoupanca_propria;
          
          IF nvl(vr_idcobertura,0) > 0 THEN
            bloq0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobertura
@@ -3424,6 +3451,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
                                       ,pr_texto_novo     => ' />');
+
+               IF pr_dtmvtolt >= vr_dtcorte THEN
+                 IF vr_inaplicacao_propria = 1
+                 OR vr_inpoupanca_propria  = 1 THEN
+                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                          ,pr_texto_completo => vr_xml_3040_temp
+                                          ,pr_texto_novo     => '<Inf Tp="1998" />');
+             END IF;
+               END IF;
              END IF;
            END IF;
          END IF;
@@ -4252,6 +4288,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       
       -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
       PROCEDURE pc_busca_coddindx(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                 ,pr_nrdconta IN crapris.nrdconta%TYPE
+                                 ,pr_nrctremp IN crapris.nrctremp%TYPE
                                  ,pr_cdmodali IN crapris.cdmodali%TYPE
                                  ,pr_inddocto IN crapris.inddocto%TYPE
                                  ,pr_dsinfaux IN crapris.dsinfaux%TYPE
@@ -4285,7 +4323,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               END IF;
               pr_stperidx := ' PercIndx="100"';
             ELSE
+              -- Validar se está no BNDES/FINAME
+              vr_ind_ebn := lpad(pr_cdcooper,3,'0')||lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
+              IF vr_tab_crapebn.EXISTS(vr_ind_ebn) THEN
+                pr_coddindx := vr_tab_crapebn(vr_ind_ebn).cdindxdr;
+              ELSE
             pr_coddindx := 11;
+              END IF;
             pr_stperidx := ' PercIndx="0"';
           END IF;
 
@@ -4411,6 +4455,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
 
         -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
         pc_busca_coddindx(pr_cdcooper => vr_tab_saida(pr_idxsaida).cdcooper
+                         ,pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
+                         ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctremp
                          ,pr_cdmodali => vr_tab_saida(pr_idxsaida).cdmodali
                          ,pr_inddocto => vr_tab_saida(pr_idxsaida).inddocto
                          ,pr_dsinfaux => vr_tab_saida(pr_idxsaida).dsinfaux
@@ -4837,7 +4883,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       BEGIN  
         
         --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
+        --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0, 1 e 2 - Product Backlog Item 9028:3040 - Porte Indisponível
       
+      IF pr_dtmvtolt >= vr_dtcorte THEN
+        -- Nova forma a partir de 01/11/2018
+        IF pr_vlrrendi >= 0.01 AND pr_vlrrendi <= 1 THEN
+          RETURN 0;
+        ELSIF pr_vlrrendi = 0 THEN
+          RETURN 1;
+        ELSIF pr_vlrrendi > 1 AND pr_vlrrendi <= pr_vlsalmin THEN
+          RETURN 2;
+        ELSIF pr_vlrrendi > pr_vlsalmin AND pr_vlrrendi <= (pr_vlsalmin * 2) THEN
+          RETURN 3;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 2 AND pr_vlrrendi <= pr_vlsalmin * 3 THEN
+          RETURN 4;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 3 AND pr_vlrrendi <= pr_vlsalmin * 5 THEN
+          RETURN 5;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 5 AND pr_vlrrendi <= pr_vlsalmin * 10 THEN
+          RETURN 6;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 10 AND pr_vlrrendi <= pr_vlsalmin * 20 THEN
+          RETURN 7;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 20 THEN
+          RETURN 8;
+        ELSE
+          RETURN 0;
+        END IF;
+      ELSE
+        -- Forma Atual até 01/11/2018
         IF pr_vlrrendi <= 0.01 THEN
           RETURN 1;
         ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= pr_vlsalmin THEN
@@ -4857,11 +4929,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         ELSE
           RETURN 0;
         END IF;
+      END IF;
+
       END;
       
       -- Classifica o porte do PJ
       FUNCTION fn_classifi_porte_pj(pr_fatanual IN NUMBER) RETURN pls_integer IS
       BEGIN  
+    --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0 e 1 - Product Backlog Item 9028:3040 - Porte Indisponível
+       
+        IF pr_dtmvtolt >= vr_dtcorte THEN
+          -- Nova forma a partir de 01/11/2018
+        IF pr_fatanual >= 0 AND pr_fatanual <= 1 then
+          RETURN 0;
+        ELSIF pr_fatanual > 1 AND pr_fatanual <= 360000 THEN
+          RETURN 1;
+        ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
+          RETURN 2;
+        ELSIF pr_fatanual > 4800000 AND pr_fatanual <= 300000000 THEN
+          RETURN 3;
+        ELSIF pr_fatanual > 300000000 THEN
+          RETURN 4;
+        END IF;
+        ELSE
+          -- Forma Atual até 01/11/2018
         IF pr_fatanual <= 360000 THEN
           RETURN 1;
         ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
@@ -4870,6 +4961,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           RETURN 3;
         ELSIF pr_fatanual > 300000000 THEN
           RETURN 4;
+        END IF;
         END IF;
       END;
       
@@ -5112,6 +5204,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       dbms_lob.createtemporary(vr_xml_3040, TRUE);
       dbms_lob.open(vr_xml_3040, dbms_lob.lob_readwrite);
       
+
+      -- data de corte para Colateral Financeiro e Porte Cliente
+      vr_dtcorte := to_date(GENE0001.fn_param_sistema(pr_cdcooper => 0
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'DT_CORTE_COLFIN') ,'DD/MM/RRRR');
+      
       -- Carrega as tabelas temporarias de vencimentos de risco
       IF pr_flbbndes = 'N' THEN
         FOR rw_crapvri IN cr_crapvri(pr_cdcooper,pr_dtrefere) LOOP
@@ -5160,6 +5258,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           vr_tab_crapebn(vr_ind_ebn).dtvctpro := rw_crapebn.dtvctpro;
           vr_tab_crapebn(vr_ind_ebn).vlparepr := rw_crapebn.vlparepr;
           vr_tab_crapebn(vr_ind_ebn).qtparctr := rw_crapebn.qtparctr;
+          vr_tab_crapebn(vr_ind_ebn).cdindxdr := rw_crapebn.cdindxdr;
         END LOOP;
       ELSE       
         FOR rw_crapebn IN cr_crapebn_bndes LOOP
@@ -5210,6 +5309,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
             vr_tab_crapepr(vr_ind_epr).nrctaav1 := rw_crapepr.nrctaav1;
             vr_tab_crapepr(vr_ind_epr).nrctaav2 := rw_crapepr.nrctaav2;
             vr_tab_crapepr(vr_ind_epr).qtpreemp := rw_crapepr.qtpreemp;
+            vr_tab_crapepr(vr_ind_epr).txmensal := rw_crapepr.txmensal;
             vr_tab_crapepr(vr_ind_epr).dtdpagto := rw_crapepr.dtdpagto; -- epr.dtdpagto
             vr_tab_crapepr(vr_ind_epr).dtdpripg := rw_crapepr.dtdpripg; -- wpr.dtdpagto
             vr_tab_crapepr(vr_ind_epr).qtctrliq := rw_crapepr.qtctrliq; -- Testes de existência de liquidação
@@ -5684,6 +5784,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
     
                -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
                pc_busca_coddindx(pr_cdcooper => vr_tab_individ(vr_idx_individ).cdcooper
+                                ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
+                                ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
                                 ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
                                 ,pr_inddocto => vr_tab_individ(vr_idx_individ).inddocto
                                 ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux
@@ -7030,12 +7132,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                   vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
                   continue;
                 END IF;
-                -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
-                vr_vlacumul := fn_normaliza_juros(vr_ttldivid
-                                                 ,vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida
-                                                 ,vr_tab_agreg(vr_indice_agreg).vljura60
-                                                 ,false);
-                vr_vljurfai := vr_vljurfai + vr_vlacumul;
+			    -- Reginaldo/AMcom/P450 (13/11/2018) - Correção da inconsistência nos valores dos vencimentos para a modalidade 101
+			    IF vr_tab_agreg(vr_indice_agreg).cdorigem <> 1 THEN
+                    -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
+                    vr_vlacumul := fn_normaliza_juros(vr_ttldivid
+                                                     ,vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida
+                                                     ,vr_tab_agreg(vr_indice_agreg).vljura60
+                                                     ,false);
+                    vr_vljurfai := vr_vljurfai + vr_vlacumul;
+			    ELSE
+				    -- Reginaldo/AMcom/P450 (13/11/2018) - Correção da inconsistência nos valores dos vencimentos para a modalidade 101
+				    vr_vljurfai := vr_vljurfai + vr_tab_venc_agreg(vr_indice_venc_agreg).vldivida; 
+			    END IF;
               END IF;
               vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
             END LOOP;

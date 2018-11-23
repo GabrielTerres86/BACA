@@ -28,8 +28,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018
-  --
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018 
+  -- 
   -- Dados referentes ao programa:
   --
   -- Frequencia: N/A
@@ -709,6 +709,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,epr.txjuremp
               ,epr.dtultpag
               ,epr.vliofcpl
+							,epr.dtmvtolt
+							,epr.vlemprst
+							,epr.txmensal
+							,epr.dtdpagto
+							,epr.vlsprojt
+							,epr.qttolatr
          FROM crapepr epr
         WHERE epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
@@ -1245,6 +1251,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         END IF;
                        
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
+											-- Emprestimo Pos-Fixado
+											ELSIF rw_crapepr.tpemprst = 2 THEN
+												-- Pagar emprestimo Pos-Fixado
+												recp0001.pc_pagar_emprestimo_pos(pr_cdcooper => rw_crapepr.cdcooper
+												                                ,pr_nrdconta => rw_crapepr.nrdconta
+																												,pr_cdagenci => rw_crapass.cdagenci
+																												,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
+																												,pr_nrctremp => rw_crapcyb.nrctremp
+																												,pr_dtefetiv => rw_crapepr.dtmvtolt
+																												,pr_cdlcremp => rw_crapepr.cdlcremp
+																												,pr_vlemprst => rw_crapepr.vlemprst
+																												,pr_txmensal => rw_crapepr.txmensal
+																												,pr_dtdpagto => rw_crapepr.dtdpagto
+																												,pr_vlsprojt => rw_crapepr.vlsprojt
+																												,pr_qttolatr => rw_crapepr.qttolatr
+																												,pr_nrparcel => 0
+																												,pr_vlparcel => 0
+																												,pr_inliqaco => 'S'
+																												,pr_idorigem => 7
+																												,pr_nmtelant => vr_nmdatela
+																												,pr_cdoperad => vr_cdoperad
+																												--
+																												,pr_idvlrmin => vr_idvlrmin
+																												,pr_vltotpag => vr_vltotpag
+																												,pr_cdcritic => vr_cdcritic
+																												,pr_dscritic => vr_dscritic
+																												);      
+                        
+                        -- Se retornar erro da rotina
+                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+                          IF NVL(vr_cdcritic,0) > 0 THEN
+                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                          END IF;
+
+                          -- Log de erro de execucao
+                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                               ,pr_dstiplog => 'E'
+                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
+                          pr_flgemail := TRUE;
+                          ROLLBACK; -- Desfaz acoes
+                          EXIT LEITURA_TXT;
+                        END IF;
+                       
+                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
+												--
                       END IF;
                       
                     END IF;

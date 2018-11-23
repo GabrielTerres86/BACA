@@ -4534,8 +4534,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                      ,INPUT 0                      /*par_nrctachq*/
                                      ,INPUT 0                      /*par_nrlotchq*/
                                      ,INPUT 0                      /*par_sqlotchq*/
-                                     ,INPUT tel_dtmvtolt           /*par_dtrefere*/
-                                     ,INPUT TIME                   /*par_hrtransa*/
+                                     ,INPUT ""                     /*par_dtrefere*/
+                                     ,INPUT ""                     /*par_hrtransa*/
                                      ,INPUT glb_cdoperad          /*par_cdoperad*/
                                      ,INPUT ""                    /*par_dsidenti*/
                                      ,INPUT glb_cdcooper          /*par_cdcooper*/

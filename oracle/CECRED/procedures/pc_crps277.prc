@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair 
-   Data    : Outubro/1999                    Ultima atualizacao: 06/08/2018
+   Data    : Outubro/1999                    Ultima atualizacao: 05/10/2018
 
    Dados referentes ao programa:
 
@@ -70,11 +70,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
                02/03/2017 - Incluido nas consultas da craplau 
                             craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
+              23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
+              Renato Cordeiro (AMcom)         
+
               06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
                            após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
                            Alteração específica neste programa acrescentando o tratamento para a origem
                            BLQPREJU
                            (Renato Cordeiro - AMcom)
+                          
+              03/10/2018 - PJ450 - Tratamento erro no raise da chamada rotina LANC0001
+                           (Renato Cordeiro - AMcom)
+                           
+              05/10/2018  - PJ450 - Tratamento de crítica de negócio retornado pela rotina LANC0001
+                           (Diego Simas - AMcom)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -233,6 +243,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
   vr_inrestar  INTEGER:= 0;
   vr_dsrestar  crapres.dsrestar%TYPE;
   
+  vr_rowid     ROWID;
+  vr_nmtabela  VARCHAR2(100);
+  vr_incrineg  INTEGER;
+
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  
   vr_busca BOOLEAN := TRUE;
 BEGIN
 
@@ -356,6 +373,8 @@ BEGIN
       
         BEGIN
           --Inserir a capa do lote retornando informacoes para uso posterior
+
+
           INSERT INTO craplot(cdcooper
                              ,dtmvtolt
                              ,cdagenci
@@ -432,30 +451,42 @@ BEGIN
 
       -- Cria Registro na CRAPLCM
       BEGIN
-        INSERT INTO craplcm(cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,nrdconta
-                           ,nrdctabb
-                           ,nrdctitg
-                           ,nrdocmto
-                           ,cdhistor
-                           ,nrseqdig
-                           ,vllanmto)
-                   VALUES  (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,rw_craplau.nrdconta
-                           ,rw_craplau.nrdconta
-                           ,GENE0002.FN_MASK(rw_craplau.nrdconta, '99999999')
-                           ,vr_nrdocmto
-                           ,rw_craplau.cdhistor
-                           ,rw_craplot.nrseqdig + 1
-                           ,rw_craplau.vllanaut);
+        
+        lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_craplau.nrdconta
+                   ,pr_nrdctabb => rw_craplau.nrdconta
+                   ,pr_nrdctitg => GENE0002.FN_MASK(rw_craplau.nrdconta, '99999999')
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => rw_craplau.cdhistor
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_vllanmto => rw_craplau.vllanaut
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => pr_cdcritic
+                   ,pr_dscritic => pr_dscritic
+                   );
+
+           if ((nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) and vr_incrineg = 0) then
+              vr_dscritic := pr_dscritic;
+              vr_cdcritic := pr_cdcritic;
+              RAISE vr_exc_saida;
+           end if;
+           
+           if (vr_incrineg = 1) then
+              vr_dscritic := 0;
+              vr_cdcritic := '';
+              -- Envio Centralizado de Log de que não pôde debitar
+              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_ind_tipo_log => 2, -- ERRO TRATATO
+                                         pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                         ' -' || vr_cdprogra || ' --> ' ||
+                                         pr_dscritic);
+           end if;
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -495,7 +526,6 @@ BEGIN
                      ,pr_nrcrcard => rw_craplau.nrcrcard
                      ,pr_dtdebito => rw_crapdat.dtmvtopr );
       FETCH cr_crapdcd INTO rw_crapdcd;               
-                     
                         
       IF cr_crapdcd%NOTFOUND THEN
         -- Fecha Cursor  

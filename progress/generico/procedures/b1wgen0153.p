@@ -162,10 +162,10 @@
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                 08/06/2018  PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
-				
+
 				14/11/2018  Correcao da implementacao anterior do projeto PRJ450.
                             Wagner. Sustentacao. INC0027169.
-							
+
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -9334,12 +9334,12 @@ PROCEDURE lan_tarifa_conta_corrente:
              
             IF  NOT AVAIL craplcm THEN
                 DO:
-                
-				IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+               
+			    IF NOT VALID-HANDLE(h-b1wgen0200) THEN
 				   RUN sistema/generico/procedures/b1wgen0200.p
-				     PERSISTENT SET h-b1wgen0200.
-                
-				RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+				     PERSISTENT SET h-b1wgen0200. 
+
+                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                       ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
                        ,INPUT par_cdagenci      /* par_cdagenci */
                        ,INPUT par_cdbccxlt      /* par_cdbccxlt */
@@ -9387,10 +9387,10 @@ PROCEDURE lan_tarifa_conta_corrente:
                        ,OUTPUT aux_incrineg
                        ,OUTPUT aux_cdcritic
                        ,OUTPUT aux_dscritic).
-					
+
 				   IF VALID-HANDLE(h-b1wgen0200) THEN
-				      DELETE PROCEDURE h-b1wgen0200.
-					  
+				      DELETE PROCEDURE h-b1wgen0200. 
+
                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                          DO:  
 							  RUN gera_erro (INPUT par_cdcooper,        

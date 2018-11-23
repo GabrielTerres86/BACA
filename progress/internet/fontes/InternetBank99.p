@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
+   Data    : Agosto/2014.                       Ultima atualizacao: 08/10/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -19,6 +19,11 @@
                
                09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
+               08/10/2018 - Adicionar os parametros do codigo de barras para serem utilizados no
+                            cadastro da fatura em debito automatico. Esses parametros sao necessarios
+                            para que o caadastro tenha o mesmo comportamento que o TAA
+                            (Douglas - Prj 363 - Novo Caixa Eletrônico)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -51,6 +56,14 @@ DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_cdcoptfn AS INT                                   NO-UNDO.
 DEF  INPUT PARAM par_cdagetfn AS INT                                   NO-UNDO.
 DEF  INPUT PARAM par_nrterfin AS INT                                   NO-UNDO.
+
+/* Linha digitavel e codigo de barras para permitir a  inclusao de fatura em debito automativo no TAA */
+DEF  INPUT PARAM par_lindigi1 AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_lindigi2 AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_lindigi3 AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_lindigi4 AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdbarras AS CHAR                                  NO-UNDO.
+
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -450,11 +463,11 @@ DO:
                                              INPUT par_cdempcon,
                                              INPUT par_cdsegmto,
                                              INPUT "",
-                                             INPUT "",
-                                             INPUT "",
-                                             INPUT "",
-                                             INPUT "",
-                                             INPUT "",
+                                             INPUT par_lindigi1,
+                                             INPUT par_lindigi2,
+                                             INPUT par_lindigi3,
+                                             INPUT par_lindigi4,
+                                             INPUT par_cdbarras,
                                             OUTPUT aux_nmfatret,
                                             OUTPUT TABLE tt-erro).
         END.

@@ -26,7 +26,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             09/11/2016 - inclusao de LOG. (Jean Michel)
 
-			28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
+            28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
+
+            01/11/2018 - Replicação de Propostas (Andrey Formigari - Mouts)
 ...............................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -67,6 +69,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
        FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctlinati AS CHARACTER FORMAT "X(256)":U
+	   FIELD aux_operador AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctljusti AS CHARACTER FORMAT "X(256)":U.
   
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -131,10 +134,6 @@ DEFINE TEMP-TABLE gnatcfp             LIKE gnapcfp.
 DEFINE TEMP-TABLE gnatefp             LIKE gnapefp.
 DEFINE TEMP-TABLE gnatpdp             LIKE gnappdp.
 
-DEFINE VARIABLE vetorcontato          AS CHARACTER FORMAT "X(2000)" NO-UNDO.
-DEFINE VARIABLE vetoreixo             AS CHARACTER FORMAT "X(2000)" NO-UNDO.
-DEFINE VARIABLE vetorproposta         AS CHARACTER FORMAT "X(2000)" NO-UNDO.
-
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -172,7 +171,8 @@ ab_unmap.aux_idtipfor ab_unmap.aux_idforpri ab_unmap.aux_idorifor ~
 ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ab_unmap.aux_cdageban ~
 ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ab_unmap.aux_cdtipcta ~
 ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ab_unmap.aux_nrpispas ~
-ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati
+ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati ~
+ab_unmap.aux_operador
 &Scoped-Define DISPLAYED-FIELDS gnapfdp.cddddfax gnapfdp.cddddfor ~
 gnapfdp.cdufforn gnapfdp.dsendfor gnapfdp.dsobserv gnapfdp.dsreffor ~
 gnapfdp.dtforati gnapfdp.dtforina gnapfdp.dtultalt gnapfdp.flgcoope ~
@@ -193,7 +193,8 @@ ab_unmap.pagina ab_unmap.aux_idtipfor ab_unmap.aux_idforpri ~
 ab_unmap.aux_idorifor ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ~
 ab_unmap.aux_cdageban ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ~
 ab_unmap.aux_cdtipcta ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ~
-ab_unmap.aux_nrpispas ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati
+ab_unmap.aux_nrpispas ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ~
+ab_unmap.aux_ctlinati ab_unmap.aux_operador
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -277,6 +278,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.aux_datahoje AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_operador AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -394,7 +399,6 @@ DEFINE FRAME Web-Frame
      gnapfdp.idtipfor  AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-          
      gnapfdp.cdtipcta  AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -626,36 +630,20 @@ DEFINE FRAME Web-Frame
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaContatos w-html 
 PROCEDURE CriaListaContatos :
 
-  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
-
   RUN RodaJavaScript("var mcontato = new Array();"). 
 
   FOR EACH gnapcfp WHERE gnapcfp.cdcooper = 0            
                      AND gnapcfp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
                        BY gnapcfp.nmconfor:
                        
-    IF TRIM(vetorcontato) <> "" AND TRIM(vetorcontato) <> ? THEN
-      ASSIGN vetorcontato = vetorcontato + ",".
-      
-    ASSIGN vetorcontato = vetorcontato + "~{nmconfor:'" + REPLACE(TRIM(STRING(gnapcfp.nmconfor)),"'","`")
-                                       + "',dsdepart:'" + REPLACE(STRING(gnapcfp.dsdepart),"'","`") 
-                                       + "',dsdemail:'" + REPLACE(STRING(gnapcfp.dsdemail),"'","`")
-                                       + "',cddddfor:'" + STRING(gnapcfp.cddddfor) 
-                                       + "',nrfonfor:'" + STRING(gnapcfp.nrfonfor)
-                                       + "',idconfor:'" + STRING(ROWID(gnapcfp)) + "'~}"
-            aux_contador = aux_contador + 1.
-            
-    IF aux_contador = 30 Then
-      DO:
-        RUN RodaJavaScript("mcontato.push(" + STRING(vetorcontato) + ");").
-
-        ASSIGN vetorcontato = ""
-               aux_contador = 0.
-      END.
+    RUN RodaJavaScript("mcontato.push(~{nmconfor:'" + REPLACE(TRIM(STRING(gnapcfp.nmconfor)),"'","`")
+                                   + "',dsdepart:'" + REPLACE(STRING(gnapcfp.dsdepart),"'","`") 
+                                   + "',dsdemail:'" + REPLACE(STRING(gnapcfp.dsdemail),"'","`")
+                                   + "',cddddfor:'" + STRING(gnapcfp.cddddfor) 
+                                   + "',nrfonfor:'" + STRING(gnapcfp.nrfonfor)
+                                   + "',idconfor:'" + STRING(ROWID(gnapcfp)) + "'~});").
     
   END. /* for each */   
-
-  RUN RodaJavaScript("mcontato.push(" + STRING(vetorcontato) + ");").
   
 END PROCEDURE.
 
@@ -665,8 +653,6 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
 PROCEDURE CriaListaEixos :
 
-  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
-  
   RUN RodaJavaScript("var meixo = new Array();").  
 
   FOR EACH gnapefp WHERE gnapefp.cdcooper = 0                
@@ -675,26 +661,12 @@ PROCEDURE CriaListaEixos :
                     AND gnapetp.cdeixtem = gnapefp.cdeixtem NO-LOCK 
                       BY gnapetp.dseixtem:
                       
-      IF TRIM(vetoreixo) <> ""  AND TRIM(vetoreixo) <> ? THEN
-        ASSIGN vetoreixo = vetoreixo + ",".
-        
-      ASSIGN vetoreixo = vetoreixo + "~{dseixtem:'" + REPLACE(TRIM(STRING(gnapetp.dseixtem)),"'","`")
-                                   + "',ideixfor:'" + STRING(ROWID(gnapefp)) 
-                                   + "',cdeixtem:'" + STRING(gnapetp.cdeixtem) + "'~}"
-             aux_contador = aux_contador + 1.
-      
-      IF aux_contador = 30 Then
-        DO:
-          RUN RodaJavaScript("meixo.push(" + STRING(vetoreixo) + ");").
-
-          ASSIGN vetoreixo = ""
-                 aux_contador = 0.
-        END.
+      RUN RodaJavaScript("meixo.push(~{dseixtem:'" + REPLACE(TRIM(STRING(gnapetp.dseixtem)),"'","`")
+                                  + "',ideixfor:'" + STRING(ROWID(gnapefp)) 
+                                  + "',cdeixtem:'" + STRING(gnapetp.cdeixtem) + "'~});").
         
   END. /* for each */
   
-  RUN RodaJavaScript("meixo.push(" + STRING(vetoreixo) + ");").
-
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -722,15 +694,8 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPropostas w-html 
 PROCEDURE CriaListaPropostas :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
-DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
-
-  DEF VAR aux_contador AS INTEGER NO-UNDO INIT 0.
+	DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
   
   RUN RodaJavaScript("var mproposta = new Array();").
   
@@ -747,31 +712,16 @@ DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
         aux_nmevento = crapedp.nmevento.
     ELSE
         aux_nmevento = "Sem vínculo.".
-
-    ASSIGN aux_contador = aux_contador + 1.
     
-    IF TRIM(vetorproposta) <> "" AND TRIM(vetorproposta) <> ? THEN
-      ASSIGN vetorproposta = vetorproposta + ",".
-        
-    ASSIGN vetorproposta = vetorproposta + "~{nrpropos:'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
-										 + "',dtmvtolt:'" + string(gnappdp.dtmvtolt,"99/99/9999")
-										 + "',dtvalpro:'" + string(gnappdp.dtvalpro,"99/99/9999") 
-										 + "',nmevento:'" + REPLACE(string(aux_nmevento),"'","`")
-										 + "',idprofor:'" + string(rowid(gnappdp))   + "'~}"
-		   aux_contador = aux_contador + 1.
-                           
-    IF aux_contador = 30 THEN
-      DO:
-        RUN RodaJavaScript("mproposta.push(" + vetorproposta + ");").
-		ASSIGN aux_contador = 0
-			   vetorproposta = "".
-        
-      END.
+		RUN RodaJavaScript("mproposta.push(~{nrpropos:'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
+									 + "',dtmvtolt:'" + string(gnappdp.dtmvtolt,"99/99/9999")
+									 + "',dtvalpro:'" + string(gnappdp.dtvalpro,"99/99/9999") 
+									 + "',nmevento:'" + REPLACE(string(aux_nmevento),"'","`")
+									 + "',idprofor:'" + string(rowid(gnappdp))   + "'~});").
+		
 
   END. /* for each */
   
-  RUN RodaJavaScript("mproposta.push(" + vetorproposta + ");").
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -779,11 +729,6 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaBancos w-html 
 PROCEDURE CriaListaBancos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
   DEF VAR aux_bancos AS CHARACTER NO-UNDO.
   
@@ -802,11 +747,6 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListasGerais w-html 
 PROCEDURE CriaListasGerais :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
   
   DEF VAR aux_idtipfor AS CHARACTER NO-UNDO.
   DEF VAR aux_cdtipcta AS CHARACTER NO-UNDO.
@@ -825,13 +765,30 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaFacili w-html 
+PROCEDURE CriaListaFacilitador:
+
+  DEFINE VARIABLE vetorfacili AS CHAR NO-UNDO.
+  
+  RUN RodaJavaScript("var mfacilitador = new Array();").
+  
+  FOR EACH gnapfep WHERE gnapfep.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND gnapfep.cdcooper = 0                               
+                     AND gnapfep.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc) NO-LOCK
+                      BY gnapfep.nmfacili:
+
+			RUN RodaJavaScript("mfacilitador.push(~{cdfacili:'" + STRING(gnapfep.cdfacili) + 
+																					 "',idfacili:'" + STRING(ROWID(gnapfep)) + 
+																					 "',nmfacili:'" + TRIM(UPPER(STRING(gnapfep.nmfacili))) + 
+																					 "',nrcpfcgc:'" + TRIM(STRING(ab_unmap.aux_nrcpfcgc)) + "'~});").
+		    
+  END. /* for each */
+
+END PROCEDURE.
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ExcluiContato w-html 
 PROCEDURE ExcluiContato :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     DEFINE VARIABLE h-b1wpgd0012a AS HANDLE NO-UNDO.
 
     /* Instancia a BO para executar as procedures */
@@ -867,11 +824,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ExcluiEixo w-html 
 PROCEDURE ExcluiEixo :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     DEFINE VARIABLE h-b1wpgd0012b AS HANDLE NO-UNDO.
 
     /* Instancia a BO para executar as procedures */
@@ -901,39 +854,83 @@ PROCEDURE ExcluiEixo :
 
 END PROCEDURE.
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ExcluiEixo w-html 
+PROCEDURE ExcluirFacilitador:
+  
+  FIND FIRST gnapfep WHERE ROWID(gnapfep) = TO-ROWID(ab_unmap.aux_idexclui) EXCLUSIVE-LOCK NO-ERROR.
+
+  IF AVAILABLE gnapfep THEN
+    DO:
+      FIND gnfacep WHERE gnfacep.nrcpfcgc = gnapfep.nrcpfcgc                           /*Fornecedor da tela*/
+                     AND gnfacep.cdfacili = gnapfep.cdfacili NO-LOCK NO-ERROR NO-WAIT. /* Facilitador da tela.*/
+  
+      IF AVAILABLE gnfacep THEN
+        ASSIGN msg-erro = msg-erro + "Exclusao nao permitida: Registro de Facilitador associado a uma proposta. ".
+      ELSE
+        DO:
+          DELETE gnapfep.
+          ASSIGN  msg-erro-aux = 10.
+        end.
+    END.
+  ELSE
+    DO:
+      ASSIGN msg-erro = msg-erro + "Registro de Facilitador não encontrado. ".
+    END.
+
+END PROCEDURE.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ExcluiProposta w-html 
 PROCEDURE ExcluiProposta :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-    DEFINE VARIABLE h-b1wpgd0012c AS HANDLE NO-UNDO.
 
-    /* Instancia a BO para executar as procedures */
-    RUN dbo/b1wpgd0012c.p PERSISTENT SET h-b1wpgd0012c.
+  DEFINE VARIABLE h-b1wpgd0012c AS HANDLE NO-UNDO.
+  DEFINE VARIABLE nrcpfcgc AS DECIMAL NO-UNDO.
 
-    FIND FIRST gnappdp WHERE
-        ROWID(gnappdp) = TO-ROWID(ab_unmap.aux_idexclui) NO-LOCK NO-ERROR.
+  ASSIGN nrcpfcgc = DEC(REPLACE(REPLACE(REPLACE(GET-VALUE("aux_nrcpfcgc"),".",""),"/",""),"-","")).
+  
+  /* Instancia a BO para executar as procedures */
+  RUN dbo/b1wpgd0012c.p PERSISTENT SET h-b1wpgd0012c.
 
-    IF AVAIL gnappdp THEN
-    DO:
-        /* Se BO foi instanciada */
-        IF VALID-HANDLE(h-b1wpgd0012c) THEN
+  FIND FIRST gnappdp WHERE ROWID(gnappdp) = TO-ROWID(ab_unmap.aux_idexclui) NO-LOCK NO-ERROR.
+
+  IF AVAILABLE gnappdp THEN
+    DO:   
+      
+      FIND FIRST crapcdp WHERE crapcdp.nrcpfcgc = nrcpfcgc
+                           AND crapcdp.nrpropos = gnappdp.nrpropos NO-LOCK NO-ERROR NO-WAIT.
+            
+      IF NOT AVAILABLE crapcdp THEN    
         DO:
-            CREATE gnatpdp.
-            BUFFER-COPY gnappdp TO gnatpdp.
-          
-            RUN exclui-registro IN h-b1wpgd0012c(INPUT TABLE gnatpdp, OUTPUT msg-erro).
+          FIND FIRST crapadp WHERE crapadp.nrcpfcgc = nrcpfcgc
+                               AND crapadp.nrpropos = gnappdp.nrpropos NO-LOCK NO-ERROR NO-WAIT.
+                               
+          IF NOT AVAILABLE crapadp THEN    
+            DO:
+              /* Se BO foi instanciada */
+              IF VALID-HANDLE(h-b1wpgd0012c) THEN
+                DO:
+                    CREATE gnatpdp.
+                    BUFFER-COPY gnappdp TO gnatpdp.
+                  
+                    RUN exclui-registro IN h-b1wpgd0012c(INPUT TABLE gnatpdp, OUTPUT msg-erro).
 
-            /* "mata" a instância da BO */
-            DELETE PROCEDURE h-b1wpgd0012c NO-ERROR.
+                    /* "mata" a instância da BO */
+                    DELETE PROCEDURE h-b1wpgd0012c NO-ERROR.
+                END.
+            END.
+          ELSE
+            DO:
+              ASSIGN msg-erro = msg-erro + "Registro de Proposta já elacionado a informacoes da Agenda do Progrid por PA. ".
+            END. 
+        END. /* AVAIL crapcdp */
+      ELSE 
+        DO:
+          ASSIGN msg-erro = msg-erro + "Registro de Proposta relacionado a um custo já cálculado. ".
         END.
-    END.
-    ELSE
+    END. /* AVAIL gnappdp */
+  ELSE
     DO:
         ASSIGN msg-erro = msg-erro + "Registro de Proposta relacionado ao Fornecedor não encontrado. ".
     END.
@@ -945,11 +942,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ExcluiProposta w-html 
 PROCEDURE ValidaAgencia :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     ASSIGN ab_unmap.aux_dsageban = "".
     
     FOR FIRST crapagb FIELDS(crapagb.nmageban)
@@ -965,12 +958,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
 PROCEDURE htmOffsets :
-/*------------------------------------------------------------------------------
-  Purpose:     Runs procedure to associate each HTML field with its
-               corresponding widget name and handle.
-  Parameters:  
-  Notes:       
-------------------------------------------------------------------------------*/
+
   RUN readOffsets ("{&WEB-FILE}":U).
   RUN htmAssociate
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
@@ -1083,7 +1071,9 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("idorifor":U,"gnapfdp.idorifor":U,gnapfdp.idorifor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
-    ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).  
+    ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_operador":U,"ab_unmap.aux_operador":U,ab_unmap.aux_operador:HANDLE IN FRAME {&FRAME-NAME}). 	
 END PROCEDURE.
 
 
@@ -1475,11 +1465,14 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_cdcopope = GET-VALUE("aux_cdcopope")
        ab_unmap.aux_idorifor = GET-VALUE("aux_idorifor")
        ab_unmap.aux_dsurlphp = aux_srvprogrid + "-" + v-identificacao.
-       
+              
        IF GET-VALUE("aux_idforpri") = "on" THEN
           ASSIGN ab_unmap.aux_idforpri = TRUE.
        ELSE
           ASSIGN ab_unmap.aux_idforpri = FALSE.
+          
+	  IF GET-VALUE("aux_cdoperad") <> "" THEN
+	     ASSIGN ab_unmap.aux_operador = GET-VALUE("aux_cdoperad").
           
        IF GET-VALUE("aux_idsitfor") = "on" THEN
           ASSIGN ab_unmap.aux_idsitfor = TRUE.
@@ -1500,7 +1493,6 @@ RUN insere_log_progrid("WPGD0012.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_id
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
-
       RUN inputFields.
       
       CASE opcao:
@@ -1772,10 +1764,15 @@ IF REQUEST_METHOD = "POST":U THEN
                ELSE
                DO:
                   RUN ExcluiProposta.  
-                  IF msg-erro = "" THEN
+                                    
+                  IF TRIM(msg-erro) = "" THEN
+                    DO:
                      ASSIGN msg-erro-aux = 10. /* Solicitação realizada com sucesso */ 
+                    END.
                   ELSE
-                     ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
+                    DO:
+                      ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
+                    END.
 
                   IF AVAIL gnapfdp THEN
                       IF gnapfdp.inpessoa = 1 THEN
@@ -1793,6 +1790,38 @@ IF REQUEST_METHOD = "POST":U THEN
                  ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
                  
            END.
+           WHEN "excFacilitador" THEN
+              DO:
+               FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+
+               IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
+                  IF LOCKED {&SECOND-ENABLED-TABLE} THEN
+                  DO:
+                      ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */  
+                      FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
+                  END.
+                  ELSE
+                  DO: 
+                      ASSIGN msg-erro-aux = 2. /* registro não existe */
+                      RUN PosicionaNoSeguinte.
+                  END.
+               ELSE
+               DO:
+                  RUN ExcluirFacilitador.
+                  IF msg-erro = "" THEN
+                     ASSIGN msg-erro-aux = 10. /* Solicitação realizada com sucesso */ 
+                  ELSE
+                     ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
+
+                  IF AVAIL gnapfdp THEN
+                      IF gnapfdp.inpessoa = 1 THEN
+                          ab_unmap.aux_nrcpfcgc = STRING(gnapfdp.nrcpfcgc, "99999999999").
+                      ELSE
+                          ab_unmap.aux_nrcpfcgc = STRING(gnapfdp.nrcpfcgc, "99999999999999"). 
+               END.     
+            END.
+            
+            
       END CASE.
       
       RUN CriaListasGerais.
@@ -1800,7 +1829,8 @@ IF REQUEST_METHOD = "POST":U THEN
       RUN CriaListaContatos.
       RUN CriaListaEixos.
       RUN CriaListaPropostas.
-
+      RUN CriaListaFacilitador.
+            
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
          RUN displayFields.
 
@@ -1956,6 +1986,7 @@ ELSE /* Método GET */
                     RUN CriaListaContatos.
                     RUN CriaListaEixos.
                     RUN CriaListaPropostas.
+                    RUN CriaListaFacilitador.
                     RUN LimpaRecursos.  
                     RUN displayFields.
                     RUN enableFields.
@@ -1973,16 +2004,11 @@ ELSE /* Método GET */
       END CASE. 
 END. /* fim do método GET */
 
-/* Show error messages. */
-IF AnyMessage() THEN 
-DO:
-   /* ShowDataMessage may return a Progress column name. This means you
-    * can use the function as a parameter to HTMLSetFocus instead of 
-    * calling it directly.  The first parameter is the form name.   
-    *
-    * HTMLSetFocus("document.DetailForm",ShowDataMessages()). */
-   ShowDataMessages().
-END.
+  /* Show error messages. */
+  IF AnyMessage() THEN 
+    DO:
+      ShowDataMessages().
+    END.
 
 END PROCEDURE.
 
@@ -1991,10 +2017,8 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE RodaJavaScript w-html 
 PROCEDURE RodaJavaScript :
-{includes/rodajava.i}
-
+  {includes/rodajava.i}
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-

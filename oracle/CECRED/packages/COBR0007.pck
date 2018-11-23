@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de inetrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 06/06/2018
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 07/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -299,7 +299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/2018
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 07/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -331,6 +331,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                habilitar SMS e não retornar como um erro, seguir o fluxo normal. (Carlos)
 
   02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+
+  07/11/2018 - Ajuste de mensagem para usuario final
+               (Envolti - Belli - INC0026760).
 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
@@ -8096,7 +8099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201819/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 07/11/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8110,6 +8113,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               07/11/2018 - Ajuste de mensagem para usuario final
+    --                            (Belli - Envolti - Ch. INC0026760)
+    --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -8732,15 +8739,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic||vr_dsparame;
+      pr_dscritic := vr_dscritic; -- Ajuste msg usuario final - 07/11/2018 - INC0026760
       
       --Grava tabela de log - Ch REQ0011728
       pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
+                  pr_dscritic      => vr_dscritic||vr_dsparame,-- Ajuste msg usuario final - 07/11/2018 - INC0026760
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
+      -- Ajuste msg usuario final - 07/11/2018 - INC0026760
+      -- Se chegar erro não tratado de outras chamadas desta procedure joga para 1124
+      IF pr_cdcritic = 9999 THEN
+        pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;            
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
@@ -8755,6 +8768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+      pr_cdcritic := 1224; -- Ajuste msg usuario final - 07/11/2018 - INC0026760
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic); -- Ajuste msg usuario final - 07/11/2018 - INC0026760
+
   END pc_inst_alt_vencto;
   
   -- Procedure para Conceder Desconto

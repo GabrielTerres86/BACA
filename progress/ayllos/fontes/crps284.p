@@ -24,10 +24,17 @@
                16/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.  
                
                20/01/2014 - Incluir VALIDATE craplcm, craplot (Lucas R.)
+               
+               29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
+
 ............................................................................. */
  
 { includes/var_batch.i  } 
+{ sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
 
+DEF VAR h-b1wgen0200 AS HANDLE        NO-UNDO.
+{ sistema/generico/includes/var_oracle.i }
 DEF BUFFER crablcm FOR craplcm.
 
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
@@ -36,6 +43,10 @@ DEF        VAR tab_cdhistor AS INT                                   NO-UNDO.
 
 DEF        VAR aux_vllanmto AS DECI                                  NO-UNDO.
 DEF        VAR aux_lscontas AS CHAR                                  NO-UNDO.
+
+DEF        VAR aux_cdcritic AS INT  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR NO-UNDO.
+DEF        VAR aux_incrineg AS INT  NO-UNDO.
 
 glb_cdprogra = "crps284".
 
@@ -132,29 +143,131 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
 
              END.  /*  Fim do DO WHILE TRUE  */
 
-             CREATE craplcm.
-             ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                    craplcm.cdagenci = craplot.cdagenci
-                    craplcm.cdbccxlt = craplot.cdbccxlt
-                    craplcm.nrdolote = craplot.nrdolote
-                    craplcm.nrdconta = crablcm.nrdconta
-                    craplcm.nrdctabb = crablcm.nrdconta
-                    craplcm.nrdctitg = STRING(crablcm.nrdconta,"99999999")
-                    craplcm.nrdocmto = craplot.nrseqdig + 1
-                    craplcm.cdhistor = 352
-                    craplcm.nrseqdig = craplot.nrseqdig + 1
-                    craplcm.vllanmto = aux_vllanmto
-                    craplcm.cdcooper = glb_cdcooper
- 
-                    craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                    craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+             /* renato PJ450*/
+
+             /* Identificar orgao expedidor */
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+             aux_cdcritic = 0.
+             aux_dscritic = "".
+             aux_incrineg = 0.
+
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                         (INPUT craplot.dtmvtolt                      /*par_dtmvtolt*/
+                         ,INPUT craplot.cdagenci                      /*par_cdagenci*/
+                         ,INPUT craplot.cdbccxlt                      /*par_cdbccxlt*/
+                         ,INPUT craplot.nrdolote                      /*par_nrdolote*/
+                         ,INPUT crablcm.nrdconta                      /*par_nrdconta*/
+                         ,INPUT craplot.nrseqdig + 1                  /*par_nrdocmto*/
+                         ,INPUT 352                                   /*par_cdhistor*/
+                         ,INPUT craplot.nrseqdig + 1                  /*par_nrseqdig*/
+                         ,INPUT aux_vllanmto                          /*par_vllanmto*/
+                         ,INPUT crablcm.nrdconta                      /*par_nrdctabb*/
+                         ,INPUT ""                                    /*par_cdpesqbb*/
+                         ,INPUT 0                                     /*par_vldoipmf*/
+                         ,INPUT 0                                     /*par_nrautdoc*/
+                         ,INPUT 0                                     /*par_nrsequni*/
+                         ,INPUT 0                                     /*par_cdbanchq*/
+                         ,INPUT 0                                     /*par_cdcmpchq*/
+                         ,INPUT 0                                     /*par_cdagechq*/
+                         ,INPUT 0                                     /*par_nrctachq*/
+                         ,INPUT 0                                     /*par_nrlotchq*/
+                         ,INPUT 0                                     /*par_sqlotchq*/
+                         ,INPUT craplot.dtmvtolt                      /*par_dtrefere*/
+                         ,INPUT TIME                                  /*par_hrtransa*/
+                         ,INPUT ""                                    /*par_cdoperad*/
+                         ,INPUT ""                                    /*par_dsidenti*/
+                         ,INPUT glb_cdcooper                          /*par_cdcooper*/
+                         ,INPUT STRING(crablcm.nrdconta,"99999999")   /*par_nrdctitg*/
+                         ,INPUT ""                                    /*par_dscedent*/
+                         ,INPUT 0                                     /*par_cdcoptfn*/
+                         ,INPUT 0                                     /*par_cdagetfn*/
+                         ,INPUT 0                                     /*par_nrterfin*/
+                         ,INPUT 0                                     /*par_nrparepr*/
+                         ,INPUT 0                                     /*par_nrseqava*/
+                         ,INPUT 0                                     /*par_nraplica*/
+                         ,INPUT 0                                     /*par_cdorigem*/
+                         ,INPUT 0                                     /*par_idlautom*/
+                         ,INPUT 0                                     /*par_inprolot */
+                         ,INPUT 0                                     /*par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:   
+
+                /* Posicionando no registro da craplcm criado acima */
+                FIND FIRST tt-ret-lancto NO-ERROR.
+                FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
+                IF aux_incrineg = 1 THEN
+                DO:
+                    
+                    aux_cdcritic = 0.
+                    aux_dscritic = "".
+
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - INICIO*/
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_cria_lanc_futuro aux_handproc = PROC-HANDLE NO-ERROR
+                    
+                                         (INPUT glb_cdcooper,
+                                          INPUT crablcm.nrdconta,
+                                          INPUT STRING(crablcm.nrdconta,"99999999"),
+                                          INPUT craplot.cdagenci,
+                                          INPUT craplot.dtmvtolt,
+                                          INPUT 352,
+                                          INPUT aux_vllanmto,
+                                          INPUT 0,    /*pr_nrctremp*/
+                                          "BLQPREJU", /*pr_dsorigem*/
+                                          OUTPUT "").
+                    
+                    CLOSE STORED-PROC pc_cria_lanc_futuro aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                    
+                    ASSIGN aux_dscritic = pc_cria_lanc_futuro.pr_dscritic
+                                          WHEN pc_cria_lanc_futuro.pr_dscritic <> ?.
+                           
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_dscritic <> "" THEN
+                    DO:
+                       ASSIGN glb_cdcritic = aux_cdcritic.
+                       RUN fontes/critic.p.
+                       UNIX SILENT VALUE ("echo " + 
+                            STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                            aux_dscritic + " Conta " +
+                            STRING(crablcm.nrdconta) + " >> log/proc_batch.log").
+                       UNDO TRANS_1, RETURN.
+                    END.
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - FIM*/
+                   END.
+             
+             ELSE
+             /* historico marcado para debitar incondicionalmente */
+                glb_cdcritic = aux_cdcritic.
+                RUN fontes/critic.p.
+                UNIX SILENT VALUE ("echo " + 
+                  STRING(TIME,"HH:MM:SS") +
+                       " - " + aux_dscritic + "' --> '" + 
+                         " >> log/proc_batch.log").
+                UNDO TRANS_1, RETURN.
+             END.
+
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200. 
+
+            ASSIGN  craplot.vlinfodb = craplot.vlinfodb + aux_vllanmto
+                    craplot.vlcompdb = craplot.vlcompdb + aux_vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
                     craplot.qtcompln = craplot.qtcompln + 1
                     craplot.nrseqdig = craplot.nrseqdig + 1
 
                     aux_vllanmto = 0.
             
-             VALIDATE craplcm.
              VALIDATE craplot.
         
             /* Cria registro de restart  */

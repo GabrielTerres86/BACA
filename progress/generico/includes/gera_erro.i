@@ -14,7 +14,7 @@
    
 			   14/11/2018 - Tratamento para sobreescrever registro quando
 							receber um nrsequen ja existente, evitando 
-							crashes na apliccao (Pabl√£o).
+							crashes na apliccao (Pabl„o).
 
 ..............................................................................*/
 

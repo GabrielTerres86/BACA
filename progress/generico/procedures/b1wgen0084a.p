@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 10/05/2018
+    Data    : Setembro/2011               ultima Atualizacao: 08/07/2018
      
     Dados referentes ao programa:
    
@@ -172,6 +172,9 @@
 
                 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
 
+                12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                             [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+
                 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
 
                 07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)                
@@ -184,6 +187,7 @@
 { sistema/generico/includes/b1wgen0084tt.i }
 { sistema/generico/includes/b1wgen0084att.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 
 DEF STREAM str_1.
@@ -4049,6 +4053,23 @@ PROCEDURE cria_lancamento_cc_chave:
 
     DEF VAR h-b1craplot          AS HANDLE                              NO-UNDO.
 
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200        AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg        AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic        AS INT     NO-UNDO.
+    DEF VAR aux_dscritic        AS CHAR    NO-UNDO.
+
+    /* 12/06/20108 - Incluida condicao que verifica se pode realizar o debito */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p 
+        PERSISTENT SET h-b1wgen0200.
+
+    IF  DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                         INPUT par_cdcooper, 
+                         INPUT par_nrdconta,
+                         INPUT par_cdhistor) THEN
+        DO:
+
     IF ROUND(par_vllanmto,2) > 0 THEN
        DO:
            /* Atualizar o lote da C/C */
@@ -4072,30 +4093,82 @@ PROCEDURE cria_lancamento_cc_chave:
         
            DELETE PROCEDURE h-b1craplot.
            
-           CREATE craplcm.
-           ASSIGN craplcm.dtmvtolt = par_dtmvtolt
-                  craplcm.cdagenci = par_cdpactra
-                  craplcm.cdbccxlt = par_cdbccxlt
-                  craplcm.nrdolote = par_nrdolote
-                  craplcm.nrdconta = par_nrdconta
-                  craplcm.nrdctabb = par_nrdconta
-                  craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                  craplcm.nrdocmto = par_nrseqdig
-                  craplcm.cdhistor = par_cdhistor 
-                  craplcm.nrseqdig = par_nrseqdig 
-                  craplcm.vllanmto = par_vllanmto
-                  craplcm.cdcooper = par_cdcooper
-                  craplcm.nrparepr = par_nrparepr
-                  craplcm.cdpesqbb = STRING(par_nrctremp,"zz,zzz,zz9")
-                  craplcm.nrseqava = par_nrseqava
-                  craplcm.cdoperad = par_cdoperad
-                  craplcm.hrtransa = TIME.
-           VALIDATE craplcm.
+                   /* 12/06/2018 - BLOCO DA INSERÇAO DA CRAPLCM */
+                   RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                     (INPUT par_dtmvtolt                         /* par_dtmvtolt */
+                     ,INPUT par_cdpactra                         /* par_cdagenci */
+                     ,INPUT par_cdbccxlt                         /* par_cdbccxlt */
+                     ,INPUT par_nrdolote                         /* par_nrdolote */
+                     ,INPUT par_nrdconta                         /* par_nrdconta */
+                     ,INPUT par_nrseqdig                         /* par_nrdocmto */
+                     ,INPUT par_cdhistor                         /* par_cdhistor */
+                     ,INPUT par_nrseqdig                         /* par_nrseqdig */
+                     ,INPUT par_vllanmto                         /* par_vllanmto */
+                     ,INPUT par_nrdconta                         /* par_nrdctabb */
+                     ,INPUT STRING(par_nrctremp,"zz,zzz,zz9")    /* par_cdpesqbb */
+                     ,INPUT 0                                    /* par_vldoipmf */
+                     ,INPUT 0                                    /* par_nrautdoc */
+                     ,INPUT 0                                    /* par_nrsequni */
+                     ,INPUT 0                                    /* par_cdbanchq */
+                     ,INPUT 0                                    /* par_cdcmpchq */
+                     ,INPUT 0                                    /* par_cdagechq */
+                     ,INPUT 0                                    /* par_nrctachq */
+                     ,INPUT 0                                    /* par_nrlotchq */
+                     ,INPUT 0                                    /* par_sqlotchq */
+                     ,INPUT ""                                   /* par_dtrefere */
+                     ,INPUT TIME                                 /* par_hrtransa */
+                     ,INPUT par_cdoperad                         /* par_cdoperad */
+                     ,INPUT 0                                    /* par_dsidenti */
+                     ,INPUT par_cdcooper                         /* par_cdcooper */
+                     ,INPUT STRING(par_nrdconta,"99999999")      /* par_nrdctitg */
+                     ,INPUT ""                                   /* par_dscedent */
+                     ,INPUT 0                                    /* par_cdcoptfn */
+                     ,INPUT 0                                    /* par_cdagetfn */
+                     ,INPUT 0                                    /* par_nrterfin */
+                     ,INPUT par_nrparepr                         /* par_nrparepr */
+                     ,INPUT par_nrseqava                         /* par_nrseqava */
+                     ,INPUT 0                                    /* par_nraplica */
+                     ,INPUT 0                                    /* par_cdorigem */
+                     ,INPUT 0                                    /* par_idlautom */
+                     /* CAMPOS OPCIONAIS DO LOTE                                                                  */ 
+                     ,INPUT 0                                    /* Processa lote                                 */
+                     ,INPUT 0                                    /* Tipo de lote a movimentar                     */
+                     /* CAMPOS DE SAIDA                                                                           */                                            
+                     ,OUTPUT TABLE tt-ret-lancto                 /* Collection que contém o retorno do lançamento */
+                     ,OUTPUT aux_incrineg                        /* Indicador de crítica de negócio               */
+                     ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
+                     ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
 
+                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+                      RUN gera_erro (INPUT par_cdcooper,        
+                                     INPUT par_cdpactra,
+                                     INPUT 1, /* nrdcaixa  */
+                                     INPUT 1, /* sequencia */
+                                     INPUT aux_cdcritic,        
+                                     INPUT-OUTPUT aux_dscritic).
+                                     UNDO, RETURN "NOK". 
        END.
+                   ELSE 
+                      DO:
+                        FIND FIRST tt-ret-lancto.
+                        FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                      END.
+               END.
+
+            /* 12/06/2018 - TJ - Apagar handle associado */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
 
     RETURN "OK".
+        END.  /* fim pode debitar */
+    ELSE 
+        DO:
+            /* 12/06/2018 - Apagar handle associado (SE NAO PODE DEBITAR) */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
 
+            RETURN "NOK".
+        END.
 END PROCEDURE. /* cria lancamento cc */ 
 
 

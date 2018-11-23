@@ -4778,10 +4778,10 @@ PROCEDURE verifica_prova_vida_inss:
     RUN STORED-PROCEDURE pc_verifica_renovacao_vida
         aux_handproc = PROC-HANDLE NO-ERROR
                                 (INPUT par_cdcooper,     /* Código da Cooperativa */
-								 INPUT aux_dtmvtolt      /* Data de movimento */
+								 INPUT aux_dtmvtolt,     /* Data de movimento */
                                  INPUT par_nrdconta,     /* Numero da Conta */ 
                                  INPUT 0, 				 /* Nr. Rec. Ben */
-                                OUTPUT "").              /* Flag se renova */
+                                OUTPUT 0).               /* Flag se renova */
 
     /* Código da crítica */    
     CLOSE STORED-PROC pc_verifica_renovacao_vida

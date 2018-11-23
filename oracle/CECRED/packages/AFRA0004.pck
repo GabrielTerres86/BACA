@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is 
+CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : AFRA0004
@@ -11,7 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a monitoracao de Analise de Fraude e mensagens.
-                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom) 
+                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
 
       Alteracoes:  
       
@@ -457,7 +457,7 @@ create or replace package body CECRED.AFRA0004 is
       
     --> chama rotina conforme codigo Operacao (tbcc_dominio_campo, dominio: CDOPERAC_ANALISE_FRAUDE)
     CASE 
-      WHEN pr_cdoperacao IN (1, 7)  THEN  /* TITULOS, DDA */
+      WHEN pr_cdoperacao IN (1, 8)  THEN  /* TITULOS, DDA */
         IF pr_idanalis > 0 THEN
           OPEN cr_craptit (pr_idanalis => pr_idanalis);
           FETCH cr_craptit INTO rw_craptit;
@@ -472,10 +472,10 @@ create or replace package body CECRED.AFRA0004 is
                                ,pr_cdagenci => vr_cdagenci           -- Codigo da agencia
                                ,pr_dtmvtocd => rw_crapdat.dtmvtocd   -- Data do movimento
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt   -- Data de pagamento 
-                               ,pr_flgpgdda => CASE pr_cdoperacao WHEN 7 THEN 1 ELSE 0 END --Tipo titulo
+                               ,pr_flgpgdda => CASE pr_cdoperacao WHEN 8 THEN 1 ELSE 0 END --Tipo titulo
                                ,pr_cdcritic => pr_cdcritic           -- retorno codigo critica 
                                ,pr_dscritic => pr_dscritic);         -- retorno descricao critica
-                    
+                                      
       WHEN pr_cdoperacao in (2, 6)  THEN  /* CONVENIOS */
         IF pr_idanalis > 0 THEN
           OPEN cr_craplft (pr_idanalis => pr_idanalis);

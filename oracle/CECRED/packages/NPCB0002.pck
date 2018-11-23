@@ -115,7 +115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 14/11/2018
 
       Dados referentes ao programa:
 
@@ -139,6 +139,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       
                   16/10/2018 - Substituir arquivo texto por tabela oracle
                                ( Belli - Envolti - Chd INC0025460 ) 
+
+                  14/11/2018 - Quando crítica 940 (timeout) então retornar mensagem específica.
+                               (PTASK0010184 - AJFink)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -646,6 +649,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         -- sobrescrever a mensagem de critica de boleto nao encontrado da JDNPC        
         IF vr_cdcritic = 950 THEN
           vr_dscritic := 'Boleto nao registrado. Favor entrar em contato com o beneficiario.';
+        ELSIF vr_cdcritic = 940 THEN --PTASK0010184
+          vr_dscritic := 'Tempo de consulta excedido. Informe o titulo novamente.';
         END IF;
         
         -- Retornar erro 
@@ -822,6 +827,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                    Isso porque no CAF é "LUIS ALVES" e no correio "LUIZ ALVES".
                    Situação repassada para a ABBC analisar.
                    (INC0023777 - AJFink)
+
+      21/10/2018 - O campo vr_titulo5 é numérico e no caso das faturas de cartão de crédito
+                   o conteúdo contém apenas zeros. Dessa forma o programa não consegue
+                   processar o substr como deveria e retorna nulo. As faturas de cartão de crédito
+                   que não estavam registrados na CIP deixaram de ser aceitas no dia 03/11/2018.
+                   (INC0026591 - AJFink)                   
 
     ..........................................................................*/
     
@@ -1072,13 +1083,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        ELSE
          vr_cdcritic_req := vr_cdcritic;
          vr_dscritic_req := vr_dscritic;
-       
-       
          --> Se retornou critica, extrais dados do codigo de barras
          pr_tbTituloCIP.NumCodBarras := vr_codbarras;
          --Retornar valor fatura
-         pr_tbTituloCIP.VlrTit := TO_NUMBER(SUBSTR(vr_titulo5,05,10));
-         pr_tbTituloCIP.VlrTit := pr_tbTituloCIP.VlrTit / 100;
+--         pr_tbTituloCIP.VlrTit := TO_NUMBER(SUBSTR(vr_titulo5,05,10));
+--         pr_tbTituloCIP.VlrTit := pr_tbTituloCIP.VlrTit / 100;
+         pr_tbTituloCIP.VlrTit := vr_vlboleto; --INC0026591
          --> Verificar se esta em contigencia
          IF nvl(vr_cdcritic_req,0) = 945 THEN
            pr_flcontig := 1;
@@ -1089,9 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                               ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
                                               ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
            pr_tbTituloCIP.DtVencTit  := vr_dtvencto;
-           
          END IF;
-         
        END IF;
 
        --realizar o insert somente quanto a consulta não veio de reaproveitamento
@@ -1123,7 +1131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
              ,vr_tpconcip                 -- tpconsulta
              ,SYSDATE                     -- dhconsulta
              ,pr_tbTituloCIP.NumCodBarras -- dscodbar
-             ,pr_tbTituloCIP.VlrTit       -- vltitulo
+             ,nvl(pr_tbTituloCIP.VlrTit,0)-- vltitulo --INC0026591
              ,nvl(pr_tbTituloCIP.ISPBPartDestinatario,0) -- nrispbds
              ,nvl(vr_xmltit,' ')          -- dsxml
              ,NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0)  -- cdcanal 
@@ -1134,6 +1142,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            WHEN OTHERS THEN
              --> Gerar log para facilitar identificação de erros
              vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
+             begin
+               cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                           ,pr_compleme => 'pc_consultar_titulo_cip->cdctrlcs:'||vr_cdctrlcs);
+             exception
+               when others then
+                 null;
+             end;
              begin
                npcb0001.pc_gera_log_npc( pr_cdcooper => pr_cdcooper,
                                          pr_nmrotina => 'pc_consultar_titulo_cip', 

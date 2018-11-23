@@ -25,7 +25,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 21/02/2018
+   Data    : Julho/2013                       Ultima atualizacao: 06/07/2018
 
    Dados referentes ao programa:
 
@@ -68,7 +68,10 @@
                             tenha alguma (Lucas Ranghetti #852207)
 							
                11/05/2018 - Migracao Progress --> Oracle 
-                            (Teobaldo J., AMcom - Projeto Debito Unico)
+                            (Teobaldo J., AMcom - Projeto Debito Unico)	  
+
+               06/07/2018 - PJ450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                            da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
 							
 .............................................................................*/
 
@@ -76,7 +79,13 @@
 /******* faz a busca de consorcios nao debitados no processo noturno ********/
 /****************************************************************************/
 
+{ sistema/generico/includes/b1wgen0200tt.i }
+
 DEF VAR aux_nrcrcard AS DECIMAL                                       NO-UNDO.
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200 AS HANDLE                                          NO-UNDO.
+DEF VAR aux_incrineg AS INT                                             NO-UNDO.
 
 PROCEDURE obtem-consorcio:
          
@@ -441,21 +450,24 @@ PROCEDURE efetua-debito-consorcio:
     
                     END.  /*  Fim do DO WHILE TRUE  */
                 
-                    CREATE craplcm.
-                    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                           craplcm.cdagenci = craplot.cdagenci
-                           craplcm.cdbccxlt = craplot.cdbccxlt
-                           craplcm.nrdolote = craplot.nrdolote
-                           craplcm.nrdconta = aux_nrdconta
-                           craplcm.nrdctabb = craplau.nrdctabb
-                           craplcm.nrdctitg = STRING(craplau.nrdctabb,"99999999")
-                           craplcm.nrdocmto = aux_nrdocmto
-                           craplcm.cdhistor = craplau.cdhistor
-                           craplcm.vllanmto = craplau.vllanaut
-                           craplcm.nrseqdig = craplot.nrseqdig + 1
-                           craplcm.cdcooper = craplau.cdcooper 
-                           craplcm.hrtransa = TIME
-                           craplcm.cdpesqbb = "Lote " + 
+                    /* PJ450 - Regulatorio de crédito */
+                    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                        PERSISTENT SET h-b1wgen0200.
+                                    
+                    /*  Cria lancamento da conta do associado ................................ */ 
+                    RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                          (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+                          ,INPUT craplot.cdagenci               /* par_cdagenci */
+                          ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+                          ,INPUT craplot.nrdolote               /* par_nrdolote */
+                          ,INPUT aux_nrdconta                   /* par_nrdconta */
+                          ,INPUT aux_nrdocmto                   /* par_nrdocmto */
+                          ,INPUT craplau.cdhistor               /* par_cdhistor */
+                          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                          ,INPUT craplau.vllanaut               /* par_vllanmto */
+                          ,INPUT craplau.nrdctabb               /* par_nrdctabb */
+                          ,INPUT "Lote " + 
                                               STRING(DAY(craplau.dtmvtolt),"99")      +
                                               "/"                                     +
                                               STRING(MONTH(craplau.dtmvtolt),"99")    +
@@ -464,9 +476,61 @@ PROCEDURE efetua-debito-consorcio:
                                               STRING(craplau.cdbccxlt,"999") + "-"    +
                                               STRING(craplau.nrdolote,"999999") + "-" +
                                               STRING(craplau.nrseqdig,"99999") + "-"  +
-                                              STRING(aux_nrcrcard)
-                                                
-                           craplot.qtcompln = craplot.qtcompln + 1
+                                        STRING(aux_nrcrcard)    /* par_cdpesqbb */
+                          ,INPUT 0                              /* par_vldoipmf */
+                          ,INPUT 0                              /* par_nrautdoc */
+                          ,INPUT 0                              /* par_nrsequni */
+                          ,INPUT 0                              /* par_cdbanchq */
+                          ,INPUT 0                              /* par_cdcmpchq */
+                          ,INPUT 0                              /* par_cdagechq */
+                          ,INPUT 0                              /* par_nrctachq */
+                          ,INPUT 0                              /* par_nrlotchq */
+                          ,INPUT 0                              /* par_sqlotchq */
+                          ,INPUT ""                             /* par_dtrefere */
+                          ,INPUT TIME                           /* par_hrtransa */
+                          ,INPUT ""                             /* par_cdoperad */
+                          ,INPUT ""                             /* par_dsidenti */
+                          ,INPUT craplau.cdcooper               /* par_cdcooper */
+                          ,INPUT STRING(craplau.nrdctabb,"99999999") /* par_nrdctitg */
+                          ,INPUT ""                             /* par_dscedent */
+                          ,INPUT 0                              /* par_cdcoptfn */
+                          ,INPUT 0                              /* par_cdagetfn */
+                          ,INPUT 0                              /* par_nrterfin */
+                          ,INPUT 0                              /* par_nrparepr */
+                          ,INPUT 0                              /* par_nrseqava */
+                          ,INPUT 0                              /* par_nraplica */
+                          ,INPUT 0                              /* par_cdorigem */
+                          ,INPUT 0                              /* par_idlautom */
+                          /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                          ,INPUT 0                              /* Processa lote                                 */
+                          ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                          /* CAMPOS DE SAÍDA                                                                     */                                            
+                          ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                          ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                          ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                          ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+                          
+                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                       DO: 
+                         ASSIGN glb_cdcritic = aux_cdcritic
+                                glb_dscritic = aux_dscritic.
+                         IF  par_nrseqexe = 3 THEN /* Ultima execucao dia */
+                             RUN cria-crapndb.
+                         ELSE
+                             ASSIGN tt-obtem-consorcio.fldebito = FALSE
+                                    tt-obtem-consorcio.dscritic = glb_dscritic.
+                       END.
+                    ELSE 
+                       DO:
+                          /* 27/06/2018- Posicionando no registro da craplcm criado acima */
+                          FIND FIRST tt-ret-lancto.
+                          FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                       END.
+
+                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.                
+                  
+                    ASSIGN craplot.qtcompln = craplot.qtcompln + 1
                            craplot.vlcompdb = craplot.vlcompdb + craplau.vllanaut
                            craplot.qtinfoln = craplot.qtinfoln + 1
                            craplot.vlinfodb = craplot.vlinfodb + craplau.vllanaut
@@ -476,7 +540,6 @@ PROCEDURE efetua-debito-consorcio:
                            craplau.nrseqlan = craplcm.nrseqdig
                            craplau.dtdebito = aux_dtrefere
                            craplau.dsorigem = "DEBCNS".
-                    VALIDATE craplcm.
 
                   /* inicio NOTIF */
                    aux_dscampos = "#valordebito=" + STRING(craplau.vllanaut,"zzz,zz9.99") + ";#datadebito=" + STRING(aux_dtrefere,"99/99/9999") +

@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps029 (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
-                                       ,pr_cdagenci IN crapass.cdagenci%TYPE  --> Codigo Agencia
-                                       --FM paralelismo
-                                       ,pr_idparale  IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
-                                       ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
-                                       ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
-                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                       ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
+                                              ,pr_cdagenci IN crapass.cdagenci%TYPE  --> Codigo Agencia
+                                              --FM paralelismo
+                                              ,pr_idparale  IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
+                                              ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
 BEGIN
 
   /* ............................................................................
@@ -14,7 +14,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 05/09/2018
+   Data    : Fevereiro/93.                       Ultima atualizacao: 08/11/2018
 
    Dados referentes ao programa:
 
@@ -117,8 +117,10 @@ BEGIN
 
                11/08/2018 - Inclusão de aplicações programadas - cursor cr_craplpp - (Proj. 411.2 CIS Corporate)                                     
 
-               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).                              
-
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
+               
+               08/11/2018 - sctask0035073 - Correção de geração de xml do relatório 143b, que estava concatenando b
+			                novamente no mesmo, deixando a tag errada (Carlos)
   ............................................................................. */
 
   DECLARE
@@ -699,8 +701,8 @@ BEGIN
     pr_clobxml8 := replace(pr_clobxml8,'<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(8)||'><contas>','');
     pr_clobxml8 := '<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(8)||'><contas>'||pr_clobxml8;
     
-    pr_clobxml9 := replace(pr_clobxml9,'<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(9)||'b'||'><contas>','');
-    pr_clobxml9 := '<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(9)||'b'||'><contas>'||pr_clobxml9;
+    pr_clobxml9 := replace(pr_clobxml9,'<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(9)||'><contas>','');
+    pr_clobxml9 := '<?xml version="1.0" encoding="UTF-8"?><'||vr_tab_nmarqimp(9)||'><contas>'||pr_clobxml9;
                 
     DELETE tbgen_batch_relatorio_wrk a
      WHERE a.cdcooper = pr_cdcooper

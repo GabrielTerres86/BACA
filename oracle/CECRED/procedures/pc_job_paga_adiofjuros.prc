@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_job_paga_adiofjuros IS
    JOB: PC_JOB_PAGA_ADIOFJUROS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Tiago Machado Flor - CECRED
-   Data    : Março/2017.                     Ultima atualizacao: 02/03/2017
+   Data    : Março/2017.                     Ultima atualizacao: 11/07/2018
 
    Dados referentes ao programa:
 
@@ -25,6 +25,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_job_paga_adiofjuros IS
                01/06/2017 - Alterado numero do documento de 999999 para 777777
                             pq o crps008 lançava com o mesmo numero de documento
                             (Tiago/Thiago).
+
+               11/07/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+
   ..........................................................................*/
 
 BEGIN
@@ -119,6 +122,12 @@ BEGIN
     vr_dscritic  crapcri.dscritic%TYPE;
     vr_exc_erro  EXCEPTION;
     vr_exc_email EXCEPTION;
+       
+    -- Tabela de retorno LANC0001 (PRJ450 11/07/2018).
+    vr_tab_retorno   lanc0001.typ_reg_retorno;
+    vr_incrineg      NUMBER;
+    vr_cdpesqbb      VARCHAR2(200);	
+    vr_fldebita      BOOLEAN;
        
     -- Procedimento para inserir o lote e não deixar tabela lockada
     PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -306,42 +315,33 @@ BEGIN
       END IF;
 
       /* Cria o lancamento do DEBITO */
-      BEGIN
-        INSERT INTO craplcm (cdcooper
-                            ,dtmvtolt
-                            ,cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,nrdconta
-                            ,nrdctabb
-                            ,nrdctitg
-                            ,nrdocmto
-                            ,cdhistor
-                            ,nrseqdig
-                            ,vllanmto                          
-                            ,cdcoptfn
-                            ,idlautom)
-               VALUES  (pr_cdcooper  
-                       ,rw_craplot.dtmvtolt
-                       ,rw_craplot.cdagenci
-                       ,rw_craplot.cdbccxlt
-                       ,rw_craplot.nrdolote
-                       ,pr_nrdconta
-                       ,pr_nrdconta
-                       ,GENE0002.FN_MASK(pr_nrdconta, '99999999')
-                       ,vr_qtdlan
-                       ,pr_cdhistor
-                       ,rw_craplot.nrseqdig
-                       ,pr_vllanmto                     
-                       ,0
-                       ,pr_idlautom);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
-          --Levantar Excecao
+      LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
+                                       , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                       , pr_cdhistor => pr_cdhistor
+                                       , pr_dtmvtolt => rw_craplot.dtmvtolt
+                                       , pr_nrdconta => pr_nrdconta
+                                       , pr_nrdctabb => pr_nrdconta
+                                       , pr_nrdctitg => GENE0002.FN_MASK(pr_nrdconta, '99999999')
+                                       , pr_nrdocmto => vr_qtdlan
+                                       , pr_nrdolote => rw_craplot.nrdolote
+                                       , pr_nrseqdig => rw_craplot.nrseqdig
+                                       , pr_cdcooper => pr_cdcooper
+                                       , pr_vllanmto => pr_vllanmto
+                                       , pr_idlautom => pr_idlautom
+                                       , pr_cdcoptfn => 0
+                                       -------------------------------------------------
+                                       -- Dados do lote (Opcional)
+                                       -------------------------------------------------
+                                       --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                       --, pr_tplotmov  => 1
+                                       , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                       , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                       , pr_cdcritic  => vr_cdcritic      -- OUT
+                                       , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-      END;
+      END IF;
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -531,8 +531,13 @@ BEGIN
            --Levantar Excecao
            RAISE vr_exc_erro;
         ELSE
+          -- valida se historico pode debitar
+          vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => rw_lautom_ctrl.cdcooper,
+                                                  pr_nrdconta => rw_lautom_ctrl.nrdconta,
+                                                  pr_cdhistor => rw_lautom_ctrl.cdhistor);
+            
           --Se tiver saldo suficiente, pago a divida
-          IF (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
+          IF vr_fldebita OR (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
               nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) >= rw_lautom_ctrl.vllanaut THEN
 
              pc_paga_adiofjuros(pr_cdcooper => rw_lautom_ctrl.cdcooper

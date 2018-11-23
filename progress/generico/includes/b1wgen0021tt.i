@@ -41,6 +41,9 @@
                             M169 (Ricardo Linhares)                            
                             
                09/10/2017 - Incluir campo dsprotoc na temp-table tt-novo-plano (David)
+			   
+			   14/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
+
                             
 ..............................................................................*/
 
@@ -93,7 +96,8 @@ DEF TEMP-TABLE tt-novo-plano NO-UNDO
     FIELD dtprocor AS DATE
     FIELD vlcorfix AS DECI
     FIELD dsprotoc LIKE crappro.dsprotoc
-    FIELD idlstdom AS INTE.
+    FIELD idlstdom AS INTE
+	FIELD flgtpaut AS INTE.
     
 DEF TEMP-TABLE tt-subscricao NO-UNDO
     FIELD dtdebito AS CHAR

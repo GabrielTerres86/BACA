@@ -1094,7 +1094,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 21/09/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 14/11/2018
 
       Dados referentes ao programa:
 
@@ -1102,9 +1102,13 @@ END;
       Objetivo  : Rotina para consultar via webservice o titulo na CIP, retornando
                   o XML com os dados recebidos
 
-      Alteração : 21/09/2018 - se o horário do sistema é menor que o horário do parâmetro
+      Alteração : 21/09/2018 - Se o horário do sistema é menor que o horário do parâmetro
                                então deve consultar a data de movimento do sqlserver (jdnpc)
                                senão deve utilizar a regra que já existe (sysdate) (PRB0040329 - AJFink)
+
+                  14/11/2018 - Retirar controle da crítica 940 (timeout).
+                               Quando retornar timeout deve gerar o erro e encerrar a rotina.
+                               (PTASK0010184 - AJFink)
     ..........................................................................*/
 
     -----------> CURSORES <-----------
@@ -1219,6 +1223,11 @@ END;
     
     -- Verifica se ocorreu erro
     IF vr_dscritic IS NOT NULL THEN
+      --essa mensagem indica timeout do oracle, nesse caso incluímos o código
+      --940 que é código do timeout da JDNPC
+      if upper(trim(vr_dscritic)) like '%EXCEDEU TEMPO LIMITE%' then  --PTASK0010184
+        vr_cdcritic := 940;
+      end if;
       RAISE vr_exc_erro;
     END IF;
 
@@ -1232,66 +1241,9 @@ END;
     --dbms_output.put_line('******************************************');
     --dbms_output.put_line('======>>> '||vr_cdcritic);
     --dbms_output.put_line('******************************************');
-    -- Se ocorreu crítica, mas a mesma é diferente da critica 940 - Tempo Excedido
-    -- deve gerar o erro e encerrar a rotina
-    IF (vr_cdcritic > 0 OR vr_dscritic IS NOT NULL) AND vr_cdcritic <> 940 THEN
+    -- Se ocorreu crítica, deve gerar o erro e encerrar a rotina
+    IF nvl(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN --PTASK0010184
       RAISE vr_exc_erro;
-    
-    -- Se ocorreu o erro 940 - Tempo excedido, deve chamar o método de consulta de 
-    -- títulos diretamente na base do NPC
-    ELSIF vr_cdcritic = 940 THEN
-      
-      -- Limpar o CLOB anterior e as variáveis de crítica
-      vr_xmlsoap  := NULL;
-      vr_cdcritic := NULL;
-      vr_dscritic := NULL;
-      vr_dsxmltit := NULL;
-      
-      -- Montar o XML/SOAP para a requisição da consulta
-      pc_xmlsoap_monta_requisicao(4  -- Recebimento Pagamento de Titulo
-                                 ,3  -- Consultar Requisicao Titulo
-                                 ,vr_tbcampos
-                                 ,vr_xmlsoap     
-                                 ,pr_des_erro
-                                 ,vr_dscritic);   
-      --dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
-      --dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
-      --dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
-      -- Se houver algum problema na execução da rotina
-      IF pr_des_erro = 'NOK' THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Indicar o tipo de consulta como NPC
-      pr_tpconcip := 2; 
-      
-      -- Enviar requisição para webservice
-      SOAP0001.pc_cliente_webservice(pr_endpoint    => vr_dssrdom
-                                    ,pr_acao        => NULL
-                                    ,pr_wallet_path => NULL
-                                    ,pr_wallet_pass => NULL
-                                    ,pr_xml_req     => vr_xmlsoap
-                                    ,pr_xml_res     => vr_dsxmltit
-                                    ,pr_erro        => pr_dscritic);
-    
-      -- Verifica se ocorreu erro
-      IF pr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-    	-- Verificar se o XML retornado pelo WebService contem o Fault Packet
-      pc_xmlsoap_fault_packet(pr_cdcooper => pr_cdcooper
-                             ,pr_cdctrlcs => pr_cdctrlcs
-                             ,pr_dsxmlreq => vr_xmlsoap.getClobVal()
-                             ,pr_dsxmlerr => vr_dsxmltit.getClobVal()
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
-    
-      -- Se ocorreu crítica, deve gerar o erro e encerrar a rotina
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;      
-      END IF;
-      
     END IF;
     
     -- Se passou pela validação de erros sem encontrar retorno do Fault Packet, deve retornar o XML
@@ -1304,6 +1256,18 @@ END;
     
   EXCEPTION
     WHEN vr_exc_erro THEN
+      if nvl(vr_cdcritic,0) not in (945/*contingencia*/,950/*não encontrado*/) then --PTASK0010184
+        begin
+          npcb0001.pc_gera_log_npc(pr_cdcooper => pr_cdcooper
+                                  ,pr_nmrotina => 'pc_wscip_requisitar_titulo'
+                                  ,pr_dsdolog  => 'cdctrlcs:'||pr_cdctrlcs||
+                                                 ',cdcritic:'||nvl(vr_cdcritic,0)||
+                                                 ',dscritic:'||vr_dscritic );
+        exception
+          when others then
+            null;
+        end;
+      end if;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       pr_des_erro := 'NOK';
@@ -1312,6 +1276,13 @@ END;
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
       pr_des_erro := 'NOK';
+      begin
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => 'pc_wscip_requisitar_titulo->cdctrlcs:'||pr_cdctrlcs);
+      exception
+        when others then
+          null;
+      end;
   END pc_wscip_requisitar_titulo;
 
 

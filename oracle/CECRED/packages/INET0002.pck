@@ -31,6 +31,8 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                              em custódia(Márcio Mouts)
 
                 27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
+				
+				12/11/2018 - Ajustes no retorno dos dados de transações pendentes, correção para retornar '0,00' quando o valor for ' '. (Guilherme Kuhnen - INC0023927)
                 
 ..............................................................................*/
 
@@ -8355,7 +8357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_texto_novo     => '<dados_resumo>'
                                                    || '   <codigo_transacao>'   ||vr_cdtranpe||'</codigo_transacao>'
                                                    || '   <data_efetivacao>'    ||vr_dsdtefet||'</data_efetivacao>'
-                                                   || '   <valor_transacao>'    ||vr_dsvltran||'</valor_transacao>'
+                                                   || '   <valor_transacao>'    ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor_transacao>'
                                                    || '   <descricao_transacao>'||vr_dsdescri||'</descricao_transacao>'
                                                    || '   <id_tipo_transacao>'  ||vr_tptranpe||'</id_tipo_transacao>'
                                                    || '   <tipo_transacao>'     ||vr_dstptran||'</tipo_transacao>'
@@ -8392,7 +8394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Cooperativa Destino</label><valor>'     ||vr_cdcopdes||'</valor></dados_campo>'
             || '<dados_campo><label>Conta Destino</label><valor>'           ||vr_nrcondes||'</valor></dados_campo>'
-            || '<dados_campo><label>Valor da Transferência</label><valor>'  ||vr_dsvltran||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor da Transferência</label><valor>'  ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdebito||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';
          ELSIF vr_tptranpe = 2 THEN --Pagamento
@@ -8402,7 +8404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Linha Digitável</label><valor>'         ||vr_dslindig||'</valor></dados_campo>'
             || '<dados_campo><label>Data do Vencimento</label><valor>'      ||vr_dtvencto||'</valor></dados_campo>'
             || '<dados_campo><label>Valor do Documento</label><valor>'      ||vr_vldocmto||'</valor></dados_campo>'
-            || '<dados_campo><label>Valor do Pagamento</label><valor>'      ||vr_dsvltran||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor do Pagamento</label><valor>'      ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdebito||'</valor></dados_campo>'
             || '<dados_campo><label>Identificação DDA</label><valor>'       ||vr_identdda||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';
@@ -8417,12 +8419,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Finalidade</label><valor>'              ||vr_dsfindad||'</valor></dados_campo>'
             || '<dados_campo><label>Histórico Complementar</label><valor>'  ||vr_dshistco||'</valor></dados_campo>'
             || '<dados_campo><label>Código Identificador</label><valor>'    ||vr_cdidenti||'</valor></dados_campo>'
-            || '<dados_campo><label>Valor da TED</label><valor>'            ||vr_dsvltran||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor da TED</label><valor>'            ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdodebi||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';            
          ELSIF vr_tptranpe = 6 THEN --Credito Pre-Aprovado
             vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Valor do Crédito</label><valor>'      ||vr_dsvltran||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor do Crédito</label><valor>'      ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Quantidade de Parcelas</label><valor>'||vr_qtdparce||'</valor></dados_campo>'
             || '<dados_campo><label>Valor da Parcela</label><valor>'      ||vr_vldparce||'</valor></dados_campo>'
             || '<dados_campo><label>Primeiro Vencimento</label><valor>'   ||vr_dtpriven||'</valor></dados_campo>'
@@ -8435,7 +8437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             IF vr_tpopeapl = 1 THEN --Cancelamento Aplicacao
                vr_xml_auxi := vr_xml_auxi
                || '<dados_campo><label>Número da Aplicação</label><valor>'||vr_nraplica||'</valor></dados_campo>'
-               || '<dados_campo><label>Valor da Aplicação</label><valor>' ||vr_dsvltran||'</valor></dados_campo>'
+               || '<dados_campo><label>Valor da Aplicação</label><valor>' ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                || '<dados_campo><label>Data da Aplicação</label><valor>'  ||vl_dtaplica||'</valor></dados_campo>'
                || '<dados_campo><label>Nome do Produto</label><valor>'    ||vr_nmdprodu||'</valor></dados_campo>'
                || '<dados_campo><label>Carência</label><valor>'           ||vr_carencia||'</valor></dados_campo>'
@@ -8453,11 +8455,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ELSIF vr_tpopeapl = 3 THEN --Agendamento Resgate
                IF vr_flageuni = 0 THEN -- Agendamento Único
                   vr_xml_auxi := vr_xml_auxi
-                  || '<dados_campo><label>Valor do Resgate</label><valor>'||vr_dsvltran||'</valor></dados_campo>'
+                  || '<dados_campo><label>Valor do Resgate</label><valor>'||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                   || '<dados_campo><label>Data do Resgate</label><valor>' ||vr_dsdtefet||'</valor></dados_campo>';
                ELSIF vr_flageuni = 1 THEN --Agendamento Mensal
                   vr_xml_auxi := vr_xml_auxi
-                  || '<dados_campo><label>Valor do Resgate</label><valor>'||vr_dsvltran||'</valor></dados_campo>'
+                  || '<dados_campo><label>Valor do Resgate</label><valor>'||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                   || '<dados_campo><label>Creditar no Dia</label><valor>' ||vr_nrdiacre||'</valor></dados_campo>'
                   || '<dados_campo><label>Durante</label><valor>'         ||vr_qtdmeses||'</valor></dados_campo>'
                   || '<dados_campo><label>Iniciando Em</label><valor>'    ||vr_dsdtefet||'</valor></dados_campo>';
@@ -8466,13 +8468,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                IF vr_flageuni = 0 THEN --Unico
                   IF vr_tpagenda = 1 THEN --Resgate
                      vr_xml_auxi := vr_xml_auxi
-                     || '<dados_campo><label>Valor do Resgate</label><valor>'     ||vr_dsvltran||'</valor></dados_campo>'
+                     || '<dados_campo><label>Valor do Resgate</label><valor>'     ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                      || '<dados_campo><label>Data do Resgate</label><valor>'      ||vr_dsdtefet||'</valor></dados_campo>'
                      || '<dados_campo><label>Tipo do Agendamento</label><valor>'  ||(CASE WHEN vr_tpagenda = 0 THEN 'Aplicação' ELSE 'Resgate' END)||'</valor></dados_campo>'
                      || '<dados_campo><label>Documento Agendamento</label><valor>'||vr_docagend||'</valor></dados_campo>';
                   ELSE --Aplicacao
                      vr_xml_auxi := vr_xml_auxi
-                     || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||vr_dsvltran||'</valor></dados_campo>'
+                     || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                      || '<dados_campo><label>Debitar no Dia</label><valor>'       ||vr_dsdtefet||'</valor></dados_campo>'
                      || '<dados_campo><label>Tipo do Agendamento</label><valor>'  ||(CASE WHEN vr_tpagenda = 0 THEN 'Aplicação' ELSE 'Resgate' END)||'</valor></dados_campo>'
                      || '<dados_campo><label>Documento Agendamento</label><valor>'||vr_docagend||'</valor></dados_campo>';
@@ -8480,7 +8482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                ELSIF vr_flageuni = 1 THEN --Mensal
                   IF vr_tpagenda = 1 THEN --Resgate
                      vr_xml_auxi := vr_xml_auxi
-                     || '<dados_campo><label>Valor do Resgate</label><valor>'     ||vr_dsvltran||'</valor></dados_campo>'
+                     || '<dados_campo><label>Valor do Resgate</label><valor>'     ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                      || '<dados_campo><label>Creditar no Dia</label><valor>'      ||vr_nrdiacre||'</valor></dados_campo>'
                      || '<dados_campo><label>Durante</label><valor>'              ||vr_qtdmeses||'</valor></dados_campo>'
                      || '<dados_campo><label>Iniciando Em</label><valor>'         ||vr_dsdtefet||'</valor></dados_campo>'
@@ -8488,7 +8490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                      || '<dados_campo><label>Documento Agendamento</label><valor>'||vr_docagend||'</valor></dados_campo>';
                   ELSE --Aplicacao
                      vr_xml_auxi := vr_xml_auxi
-                     || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||vr_dsvltran||'</valor></dados_campo>'
+                     || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                      || '<dados_campo><label>Debitar no Dia</label><valor>'       ||vr_nrdiacre||'</valor></dados_campo>'
                      || '<dados_campo><label>Durante</label><valor>'              ||vr_qtdmeses||'</valor></dados_campo>'
                      || '<dados_campo><label>Iniciando Em</label><valor>'         ||vr_dsdtefet||'</valor></dados_campo>'
@@ -8499,13 +8501,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ELSIF vr_tpopeapl = 5 THEN --Cancelamento Item Agendamento
                IF vr_tpagenda = 0 THEN --Aplicacao
                   vr_xml_auxi := vr_xml_auxi
-                  || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||vr_dsvltran||'</valor></dados_campo>'
+                  || '<dados_campo><label>Valor da Aplicação</label><valor>'   ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                   || '<dados_campo><label>Debitar no Dia</label><valor>'       ||vr_dsdtefet||'</valor></dados_campo>'
                   || '<dados_campo><label>Tipo do Agendamento</label><valor>'  ||(CASE WHEN vr_tpagenda = 0 THEN 'Aplicação' ELSE 'Resgate' END)||'</valor></dados_campo>'
                   || '<dados_campo><label>Documento Agendamento</label><valor>'||vr_docagend||'</valor></dados_campo>';   
                ELSE --Resgate
                   vr_xml_auxi := vr_xml_auxi
-                  || '<dados_campo><label>Valor do Resgate</label><valor>'     ||vr_dsvltran||'</valor></dados_campo>'
+                  || '<dados_campo><label>Valor do Resgate</label><valor>'     ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
                   || '<dados_campo><label>Data do Resgate</label><valor>'      ||vr_dsdtefet||'</valor></dados_campo>'
                   || '<dados_campo><label>Tipo do Agendamento</label><valor>'  ||(CASE WHEN vr_tpagenda = 0 THEN 'Aplicação' ELSE 'Resgate' END)||'</valor></dados_campo>'
                   || '<dados_campo><label>Documento Agendamento</label><valor>'||vr_docagend||'</valor></dados_campo>';   
@@ -8528,7 +8530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             END IF;
          ELSIF vr_tptranpe = 9 THEN --Folha de Pagamento
             vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Valor do Pagamento</label><valor>'       ||vr_dsvltran||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor do Pagamento</label><valor>'       ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Quantidade de Lançamentos</label><valor>'||vr_nrqtlnac||'</valor></dados_campo>'
             || '<dados_campo><label>Solicitado Estouro</label><valor>'       ||vr_solestou||'</valor></dados_campo>'
             || '<dados_campo><label>Data de Débito</label><valor>'           ||vr_dsdtefet||'</valor></dados_campo>'

@@ -27,7 +27,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 07/06/2018
+   Data    : Outubro/2011                      Ultima atualizacao: 14/11/2018
 
    Dados referentes ao programa:
 
@@ -112,7 +112,10 @@
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
 
                07/06/2018 - Alterado a inclusao na CRAPLCM para a Centralizadora de 
-                            Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom                      
+                            Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom      
+							
+			   14/11/2018 - Remoção de comandos MESSAGE deixados no código após testes
+			                Reginaldo/AMcom/P450                
                            
 -----------------------------------------------------------------------------*/
 
@@ -565,16 +568,10 @@ PROCEDURE realiza-deposito:
          ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
          ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
 
-		MESSAGE "1 - BO0022 - VOLTOU 0200:" 
-        "aux_cdcritic: " aux_cdcritic
-        "aux_dscritic: " aux_dscritic
-        "aux_incrineg: " aux_incrineg.
        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-          /*IF aux_incrineg = 0 THEN DO:*/
              ASSIGN i-cod-erro  = aux_cdcritic
                     c-desc-erro = aux_dscritic.
              UNDO Deposito, LEAVE Deposito.
-          /*END.                                */
        END.
           
        IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -1523,16 +1520,10 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                 
-				MESSAGE "2 - BO0022 - VOLTOU 0200:" 
-					"aux_cdcritic: " aux_cdcritic
-					"aux_dscritic: " aux_dscritic
-					"aux_incrineg: " aux_incrineg.
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.                        
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  /*END.                                */
                END.
                 
                IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -1666,18 +1657,11 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-				  
-			   MESSAGE "3 - BO0022 - VOLTOU 0200:" 
-					"aux_cdcritic: " aux_cdcritic
-					"aux_dscritic: " aux_dscritic
-					"aux_incrineg: " aux_incrineg.
+		
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  /*IF aux_incrineg = 0 THEN DO:*/
-                     /* Nao houve critica de negocio */  
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.               
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  /*END.                                */
                END.
                   
                IF VALID-HANDLE(h-b1wgen0200) THEN
@@ -1909,18 +1893,11 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-				  
-			   MESSAGE "4 - BO0022 - VOLTOU 0200:" 
-					"aux_cdcritic: " aux_cdcritic
-					"aux_dscritic: " aux_dscritic
-					"aux_incrineg: " aux_incrineg.
-                  
+				     
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  /*END.                              */
                END.
                   
                IF VALID-HANDLE(h-b1wgen0200) THEN
@@ -2161,18 +2138,11 @@ PROCEDURE realiza-transferencia:
                  ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                  ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                  ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-				 
-			   MESSAGE "5 - BO0022 - VOLTOU 0200:" 
-					"aux_cdcritic: " aux_cdcritic
-					"aux_dscritic: " aux_dscritic
-					"aux_incrineg: " aux_incrineg.
                 
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro = aux_cdcritic
                            c-desc-erro = aux_dscritic.
                      UNDO REAL_TRANS, LEAVE REAL_TRANS. 
-                  /*END.                                */
                END.
                 
                IF VALID-HANDLE(h-b1wgen0200) THEN
@@ -2735,17 +2705,10 @@ PROCEDURE estorna-transferencia-intercooperativa:
            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-		   
-		MESSAGE "6 - BO0022 - VOLTOU 0200:" 
-					"aux_cdcritic: " aux_cdcritic
-					"aux_dscritic: " aux_dscritic
-					"aux_incrineg: " aux_incrineg.
                 
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
-           /*IF aux_incrineg = 0 THEN DO:*/
               ASSIGN par_dscritic = aux_dscritic.
               UNDO, RETURN "NOK".
-           /*END.                                */
         END.
                  
         IF VALID-HANDLE(h-b1wgen0200) THEN
@@ -2957,17 +2920,10 @@ PROCEDURE estorna-transferencia-intercooperativa:
            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-		   
-		MESSAGE "7 - BO0022 - VOLTOU 0200:" 
-			"aux_cdcritic: " aux_cdcritic
-			"aux_dscritic: " aux_dscritic
-			"aux_incrineg: " aux_incrineg.
-  
+
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-           /*IF aux_incrineg = 0 THEN DO:*/
               ASSIGN par_dscritic = aux_dscritic.
               UNDO, RETURN "NOK".
-           /*END.                                */
         END.
   
         IF VALID-HANDLE(h-b1wgen0200) THEN

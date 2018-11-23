@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 28/08/2018
+   Data    : Marco/2001                      Ultima atualizacao: 09/11/2018
 
    Dados referentes ao programa:
 
@@ -79,7 +79,9 @@
 
                28/08/2018 - Alteraçoes para Prj. Acelera, tratamento do histórico 2553
                             (Jean Michel / Kledir Dalçóquio).
-                            
+                            									
+               09/11/2018 - Alterado para nao atualizar operacao diaria nas operacoes de
+							pagamento. (Reinert)
 ............................................................................ **/
 
 /*----------------------------------------------------------------------*/
@@ -1250,6 +1252,8 @@ PROCEDURE atualiza-cheque-avulso:
          RETURN "NOK".            
       END. 
       
+    IF aux_indopera = 1 THEN /* Se for operacao de saque */
+      DO:
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_atualiza_operacao_especie
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
@@ -1305,6 +1309,7 @@ PROCEDURE atualiza-cheque-avulso:
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
         
         /* fim NOTIF */
+      END.
 
     RETURN "OK".
 END PROCEDURE.

@@ -2177,7 +2177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_consultar_bens');
       
-    -- Verificar se já foi efetivado
+    -- Checar flag possui ctr  
     OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
                    ,pr_nrctremp => pr_nrctrpro);
@@ -2193,7 +2193,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       vr_crapepr := 'possuictr="0"'; 
           
     END IF;
-      
     --Fechar Cursor
     CLOSE cr_crapepr;
     
@@ -2585,9 +2584,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                                       pr_cdagenci in crapass.cdagenci%type, -- Agência
                                       pr_nrdconta in crapgrv.nrdconta%type, -- Conta
                                       pr_nrctrpro in crapgrv.nrctrpro%type, -- Contrato
-                                      pr_flcritic in varchar2,
+                                      pr_flcritic in varchar2,              -- Somente criticas
                                       pr_tipsaida in varchar2,              -- Tipo da saída
-                                      pr_dschassi in varchar2,
+                                      pr_dschassi in varchar2,              -- Lista de Chassis
                                       pr_nrregist IN INTEGER,               -- Quantidade de registros
                                       pr_nriniseq IN INTEGER,               -- Qunatidade inicial
                                       pr_xmllog   in varchar2,              -- XML com informações de LOG
@@ -2658,36 +2657,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
           ,ass.inpessoa
           ,grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr) desflgsuc
           ,row_number() over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
-                                          ,grv.dtenvgrv 
-                                          ,grv.cdcooper 
-                                          ,grv.cdoperac 
-                                          ,grv.nrseqlot
-                                          ,grv.nrdconta
-                                          ,grv.nrctrpro
-                                          ,grv.idseqbem
                                   order by decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
                                           ,grv.dtenvgrv DESC
                                           ,grv.cdcooper 
                                           ,grv.cdoperac 
-                                          ,grv.nrseqlot
+                                          ,grv.nrseqlot DESC
                                           ,grv.nrdconta
                                           ,grv.nrctrpro
                                           ,grv.idseqbem) nrseqreg          
-          ,count(1) over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))
-                                      ,grv.dtenvgrv 
-                                      ,grv.cdcooper 
-                                      ,grv.cdoperac 
-                                      ,grv.nrseqlot
-                                      ,grv.nrdconta
-                                      ,grv.nrctrpro
-                                      ,grv.idseqbem) nrtotreg                        
+          ,count(1) over (partition By decode(pr_tipsaida,'TELA',' ',grvm0001.fn_flag_sucesso_gravame(grv.dtretgrv,grv.cdretlot,grv.cdretgrv,grv.cdretctr))) nrtotreg                         
+                    
       FROM crapgrv grv
           ,crapass ass
      WHERE (pr_cdcooper = 0 OR grv.cdcooper = pr_cdcooper)
        AND (pr_cdoperac = 0 OR grv.cdoperac = pr_cdoperac)
        AND (pr_nrseqlot = 0 OR grv.nrseqlot = pr_nrseqlot)
-       AND trunc(grv.dtenvgrv) between nvl(pr_dtenvgrv,grv.dtenvgrv) 
-                            and nvl(pr_dtenvate,grv.dtenvgrv)
+       AND (trunc(grv.dtenvgrv) between nvl(pr_dtenvgrv,trunc(grv.dtenvgrv)) 
+                                    and nvl(pr_dtenvate,trunc(grv.dtretgrv))
+            OR                         
+            trunc(grv.dtretgrv) between nvl(pr_dtenvgrv,trunc(grv.dtretgrv)) 
+                                    and nvl(pr_dtenvate,trunc(grv.dtretgrv)))
        and (pr_nrdconta = 0 OR grv.nrdconta = pr_nrdconta)
        and (pr_nrctrpro = 0 OR grv.nrctrpro = pr_nrctrpro)
        and (pr_dschassi is NULL OR grv.dschassi = pr_dschassi)
@@ -2789,6 +2778,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     
     -- Navegação
     vr_contador INTEGER := 0; -- Contador p/ posicao no XML
+  
+    -- Quebra de linha
+    vr_dsdlinha VARCHAR2(10);
+    
   
   BEGIN
     --Incluir nome do módulo logado - Chamado 660394
@@ -2893,6 +2886,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
         vr_cdoperac := 0;
     END CASE;
        
+    --Montar quebra conforme tipo de emissão
+    IF pr_tipsaida = 'PDF' THEN
+      vr_dsdlinha := chr(10);
+    ELSE
+      vr_dsdlinha := ' ';
+    END IF;
+    
     --Buscar Diretorio Padrao da Cooperativa
     vr_nmdireto:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
                                         ,pr_cdcooper => vr_cdcooper
@@ -3044,7 +3044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             FETCH cr_craprto INTO rw_craprto;
             
             IF trim(vr_desretor) IS NOT null THEN
-              vr_desretor := vr_desretor || chr(10) ;  
+              vr_desretor := vr_desretor || vr_dsdlinha ;  
             END IF;
                     
             IF cr_craprto%NOTFOUND THEN
@@ -3069,7 +3069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                            ,pr_cdretorn => rw_crapgrv.cdretctr);            
             FETCH cr_craprto INTO rw_craprto;            
             IF trim(vr_desretor) IS NOT null THEN
-              vr_desretor := vr_desretor || chr(10) ;  
+              vr_desretor := vr_desretor || vr_dsdlinha ;  
             END IF;                    
             IF cr_craprto%NOTFOUND THEN
               vr_desretor := vr_desretor || 'CTR: ' || trim(to_char(rw_crapgrv.cdretctr,'999')) || ' - SITUACAO NAO CADASTRADA';
@@ -3121,7 +3121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     if pr_tipsaida = 'PDF' then
       -- Gera relatório crrl657
       gene0002.pc_solicita_relato(pr_cdcooper    => vr_cdcooper    --> Cooperativa conectada
-                                   ,pr_cdprogra  => 'GRAVAM'--vr_nmdatela         --> Programa chamador
+                                   ,pr_cdprogra  => 'GRAVAM'            --> Programa chamador
                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento atual
                                    ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
                                    ,pr_dsxmlnode => '/crrl670/gravames/situacao/registro' --> Nó base do XML para leitura dos dados                                  

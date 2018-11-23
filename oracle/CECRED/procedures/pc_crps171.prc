@@ -214,6 +214,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
 								Heitor (Mouts) - Melhoria 440
 
                    23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+							   
+                   07/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                                (LANC0001.pc_gerar_lancamento_conta) e a criacao do lote (craplot). 
+                                (PRJ450 - Teobaldo J - AMcom)
 
     ............................................................................ */
 
@@ -678,6 +682,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dsctajud    crapprm.dsvlrprm%TYPE;
       -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
       vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
+
+      -- LANC0001 
+      vr_incrineg       INTEGER;
+      vr_tab_retorno    LANC0001.typ_reg_retorno;
 
       ----------------- SUBROTINAS INTERNAS --------------------
 
@@ -1430,40 +1438,38 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;
 
             -- Efetuar lancamento na conta-corrente
-            BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,cdpesqbb
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,vllanmto)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,rw_craplot_8457.cdagenci
-                                 ,rw_craplot_8457.cdbccxlt
-                                 ,rw_craplot_8457.nrdolote
-                                 ,' '
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_crapepr.nrctremp
-                                 ,108 --> Prest Empr.
-                                 ,rw_craplot_8457.nrseqdig + 1
-                                 ,vr_vldescto);
-            EXCEPTION
-              WHEN OTHERS THEN
+            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                              ,pr_dtmvtolt => rw_craplot_8457.dtmvtolt
+                                              ,pr_cdagenci => rw_craplot_8457.cdagenci
+                                              ,pr_cdbccxlt => rw_craplot_8457.cdbccxlt
+                                              ,pr_nrdolote => rw_craplot_8457.nrdolote 
+                                              ,pr_cdpesqbb => ' ' 
+                                              ,pr_nrdconta => rw_crapepr.nrdconta
+                                              ,pr_nrdctabb => rw_crapepr.nrdconta
+                                              ,pr_nrdctitg => to_char(rw_crapepr.nrdconta,'fm00000000')
+                                              ,pr_nrdocmto => rw_crapepr.nrctremp
+                                              ,pr_cdhistor => 108
+                                              ,pr_nrseqdig => rw_craplot_8457.nrseqdig + 1
+                                              ,pr_vllanmto => vr_vldescto          -- Valor de lancamento
+                                              ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                              ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                              ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                              ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                              ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                              ,pr_tab_retorno => vr_tab_retorno ); -- Registro com dados do retorno
+
+            -- Conforme tipo de erro realiza acao diferenciada
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                 vr_dscritic := 'Erro ao criar lancamento de sobras para a conta corrente (CRAPLCM) '
                             || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
                             || '. Detalhes: '||sqlerrm;
                 RAISE vr_exc_undo;
-            END;
+              ELSE -- Nao foi possivel debitar (critica de negocio)
+                -- Avanca para o proximo registro, conforme demais tratamentos acima
+                CONTINUE;
+              END IF;
+           END IF;
 
             -- Atualizar Pl table de conta corrente
             IF vr_tab_craplcm.exists(rw_crapepr.nrdconta) THEN

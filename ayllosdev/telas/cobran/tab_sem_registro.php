@@ -167,6 +167,20 @@
 	</ul>
 	</div>	
 	
+	<div id="linha6">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Cód. Barras:'); ?></li>
+	<li id="cdbarras"></li>
+	</ul>
+	</div>
+	
+	<div id="linha7">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Linha Digitável:'); ?></li>
+	<li id="lindigit"></li>
+	</ul>
+	</div>
+	
 	</fieldset>
 </form>
 
