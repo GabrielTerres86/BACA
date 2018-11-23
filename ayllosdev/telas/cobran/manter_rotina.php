@@ -65,8 +65,7 @@
 	$vlabatim 		 = (isset($_POST['vlabatim'])) ? $_POST['vlabatim'] : 0;
 	$vldescto 		 = (isset($_POST['vldescto'])) ? $_POST['vldescto'] : 0;
 	$qtdiaprt		 = (isset($_POST['qtdiaprt'])) ? $_POST['qtdiaprt'] : 0;
-	
-	$ls_nrdocmto     = (isset($_POST['ls_nrdocmto'])) ? $_POST['ls_nrdocmto'] : '';
+	$inestcri		 = (isset($_POST['inestcri'])) ? $_POST['inestcri'] : 0;
 		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
@@ -102,7 +101,12 @@
 		$xml .= "<Root>";
 		$xml .= "  <Dados>";
 		$xml .= "	 <nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "	 <ls_nrdocmto>".$ls_nrdocmto."</ls_nrdocmto>";	
+		$xml .= "	 <flgregis>".$flgregis."</flgregis>";
+		$xml .= "	 <tipo_consulta>".$tpconsul."</tipo_consulta>";
+		$xml .= "	 <consulta>".$consulta."</consulta>";
+		$xml .= "	 <inestcri>".$inestcri."</inestcri>";
+		$xml .= "	 <ini_documento>".$ininrdoc."</ini_documento>";
+		$xml .= "	 <fim_documento>".$fimnrdoc."</fim_documento>";
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";
 
