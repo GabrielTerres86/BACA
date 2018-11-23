@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2000.                         Ultima atualizacao: 26/08/2015
+   Data    : Abril/2000.                         Ultima atualizacao: 24/10/2018
 
    Dados referentes ao programa:
 
@@ -50,6 +50,10 @@
                
                26/08/2015 - Alterado parametro cdpesqbb para o Prj. Tarifas
                             - 218 (Jean Michel).
+                            
+               31/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
+                            estorno de lançamentos na conta corrente              
+                            pc_estorna_lancto_prog (Fabio Adriano - AMcom).             
 ............................................................................. */
 
 { includes/var_online.i }
@@ -59,6 +63,15 @@
 { includes/proc_conta_integracao.i }
 
 { sistema/generico/includes/var_oracle.i }
+ 
+{ sistema/generico/includes/b1wgen0200tt.i }
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
+
+DEF VAR aux_cdcritic        AS INTE                                NO-UNDO.
+DEF VAR aux_dscritic        AS CHAR                                NO-UNDO.
  
 ASSIGN tel_nmcustod = ""
        tel_dtlibera = ?
@@ -772,7 +785,38 @@ PROCEDURE proc_liberado:
                       ASSIGN craplot.qtinfoln = craplot.qtinfoln - 1
                              craplot.qtcompln = craplot.qtcompln - 1.
 
-                      DELETE craplcm.
+                      
+                      
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                          RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                        
+                      RUN estorna_lancamento_conta IN h-b1wgen0200 
+                          (INPUT craplcm.cdcooper               /* par_cdcooper */
+                          ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+                          ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+                          ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+                          ,INPUT craplcm.nrdolote               /* par_nrdolote */
+                          ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+                          ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+                          ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+                          ,INPUT craplcm.nrctachq               /* par_nrctachq */
+                          ,INPUT craplcm.nrdconta               /* par_nrdconta */
+                          ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+                          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                          
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+                          glb_cdcritic = aux_cdcritic.
+                          glb_dscritic = aux_dscritic.
+                          RUN fontes/critic.p.
+                          BELL.
+                          MESSAGE glb_dscritic.
+                          ASSIGN glb_cdcritic = 0.
+                          RETURN.
+                      END.
+                      
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                          DELETE PROCEDURE h-b1wgen0200.
              
                       IF   AVAILABLE crapdpb   THEN
                            DELETE crapdpb.
@@ -825,7 +869,39 @@ PROCEDURE proc_liberado:
                              craplot.vlcompdb = craplot.vlcompdb -
                                                         crapcst.vlcheque.
  
-                      DELETE craplcm.
+                      
+                      
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                          RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                                        
+                      RUN estorna_lancamento_conta IN h-b1wgen0200 
+                          (INPUT craplcm.cdcooper               /* par_cdcooper */
+                          ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+                          ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+                          ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+                          ,INPUT craplcm.nrdolote               /* par_nrdolote */
+                          ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+                          ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+                          ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+                          ,INPUT craplcm.nrctachq               /* par_nrctachq */
+                          ,INPUT craplcm.nrdconta               /* par_nrdconta */
+                          ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+                          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                      
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+                          glb_cdcritic = aux_cdcritic.
+                          glb_dscritic = aux_dscritic.
+                          RUN fontes/critic.p.
+                          BELL.
+                          MESSAGE glb_dscritic.
+                          ASSIGN glb_cdcritic = 0.
+                          RETURN.
+                      END.
+                      
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                          DELETE PROCEDURE h-b1wgen0200.
+                      
                   END.
          END.
 

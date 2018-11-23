@@ -45,6 +45,21 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
 					              							 	 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 										              		 	 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
    
+  -- Procedure Reponsavel por efetuar o estorno da parcela pago no mesmo dia
+	PROCEDURE pc_efetua_estor_pgto_no_dia(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                       ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
+                                       ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                       ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Código do Operador
+                                       ,pr_nmdatela IN VARCHAR2 --> Nome da tela
+                                       ,pr_idorigem IN INTEGER --> Id do módulo de sistema
+                                       ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Número da conta
+                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Seq titula
+                                       ,pr_dtmvtolt IN craplem.dtmvtolt%TYPE --> Data de Movimento
+                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
+                                       ,pr_nrparepr IN crappep.nrparepr%TYPE --> Numero da Parcela
+                                       ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
+                                       ,pr_tab_erro OUT gene0001.typ_tab_erro);
+   
    -- Procedure da Tela: ESTORN, Acao: Valida Estorno
    PROCEDURE pc_tela_valida_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
@@ -144,7 +159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 31/01/2018
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 16/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -162,6 +177,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   16/08/2018 - 9140:Estorno do Pagamento de Empréstimos Rangel Decker (AMcom) 
                     - pc_tela_estornar_pagamentos
                     - pc_efetua_estor_pgto_no_dia            
+                    
+  16/10/2018 - 11017:Avaliação necessidade tratamento no DELETE LCM programa empr0008.pck (Heckmann - AMcom)
+               - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta
   */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
@@ -653,11 +671,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
          AND craplem.cdhistor IN (1038,1039,1037,1044,1540,1619,1050,1045,1047,
                                   1077,1048,1049,1618,1620,1051,1057,1076,1078);
 			rw_craplem cr_craplem%ROWTYPE;
-    BEGIN
-      IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN
-      -- Exclui os lancamentos da Conta Corrente
-      BEGIN
-        DELETE FROM craplcm
+      
+      -- Cursor para buscar o ROWID da CRAPLCM para exclusão do registro pela centralizadora
+      CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
+												 pr_nrdconta IN craplcm.nrdconta%TYPE,
+                         pr_nrctremp IN craplem.nrctremp%TYPE,
+                         pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+      SELECT craplcm.rowid
+        FROM craplcm
          WHERE craplcm.cdcooper = pr_cdcooper
            AND craplcm.nrdconta = pr_nrdconta
            AND craplcm.dtmvtolt = pr_dtmvtolt
@@ -666,6 +687,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
            AND craplcm.cdbccxlt = 100
            AND craplcm.cdhistor IN (108,1539,1541,1543,1060,1071,1542,1544,1070,1072)
            AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp;
+      rw_craplcm cr_craplcm%ROWTYPE;
+      
+    BEGIN
+      IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN
+      -- Exclui os lancamentos da Conta Corrente
+      BEGIN
+        OPEN cr_craplcm( pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_nrctremp => pr_nrctremp,
+                         pr_dtmvtolt => pr_dtmvtolt);
+        FETCH cr_craplcm INTO rw_craplcm;
+        
+        IF cr_craplcm%NOTFOUND THEN
+          CLOSE cr_craplcm;
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel recuperar os dados do lancamento para estornar.';
+          RAISE vr_exc_saida;
+        END IF;
+        
+        -- Chamada da rotina centralizadora em substituição ao DELETE
+        LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
+                                       , pr_dtmvtolt => NULL
+                                       , pr_cdagenci => NULL
+                                       , pr_cdbccxlt => NULL
+                                       , pr_nrdolote => NULL
+                                       , pr_nrdctabb => NULL
+                                       , pr_nrdocmto => NULL
+                                       , pr_cdhistor => NULL
+                                       , pr_nrctachq => NULL
+                                       , pr_nrdconta => NULL
+                                       , pr_cdpesqbb => NULL
+                                       , pr_rowid    => rw_craplcm.rowid
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic);
+                                       
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;

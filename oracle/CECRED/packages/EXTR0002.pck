@@ -535,7 +535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 17/08/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 14/11/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -802,6 +802,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
         17/08/2018 - sctask0012764 Inclusão de module e action nas subrotinas da rotina
                      pc_gera_impressao_car para fracionar as execuções no log do BD (Carlos)
+        
+				14/11/2018 - Alteração na procedure "pc_consulta_lancamento" para incluir o valor provisionado
+				             de juros remuneratórios do prejuízo de conta corrente na tela LAUTOM.
+										 (Reginaldo/AMcom/P450)
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -4529,7 +4533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 17/11/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 14/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -4631,6 +4635,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
   --                           Fatura de cartão de crédito : (Alcemir - Mout's / PRB0040071).  
   -- 
+  --
+  --              14/11/2018 - Inclusão do juros remuneratórios de prejuízo provisionados na tela LAUTOM
+  --                           (Reginaldo/AMcom/P450)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -6281,6 +6288,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           end if;		  
         END IF;
         END IF;
+				
+		-- Se a conta está em prejuízo e se possui juros remuneratórios provisionado
+		-- Reginaldo/AMcom/P450 - 14/11/2018
+		IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper 
+                                   ,pr_nrdconta => pr_nrdconta) AND
+			 PREJ0003.fn_juros_remun_prov(pr_cdcooper => pr_cdcooper 
+                                   ,pr_nrdconta => pr_nrdconta) > 0 THEN
+
+				--Incrementar Contador conta
+				vr_contadct:= vr_contadct + 1;
+				--Incrementar contador lancamentos na tabela
+				vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+				--Criar Lancamento Futuro na tabela
+				pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+				pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+				pr_tab_lancamento_futuro(vr_index).dshistor:= 'JUROS REMUNER';
+				pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+				pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+				pr_tab_lancamento_futuro(vr_index).vllanmto:= PREJ0003.fn_juros_remun_prov(pr_cdcooper => pr_cdcooper 
+                                                                              ,pr_nrdconta => pr_nrdconta);
+				pr_tab_lancamento_futuro(vr_index).cdhistor:= 2718;
+			pr_tab_lancamento_futuro(vr_index).fldebito := 0;  
+        END IF;
+				
         --Saldo
         IF rw_crapsld.vlsmnesp <> 0 OR
            (TO_CHAR(rw_crapdat.dtmvtolt,'mm') <> TO_CHAR(rw_crapdat.dtmvtoan,'mm') AND 

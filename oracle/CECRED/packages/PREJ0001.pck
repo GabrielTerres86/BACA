@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 24/07/2018
+     Data    : Maio/2017                      Ultima atualizacao: 09/11/2018
 
    Dados referentes ao programa:
 
@@ -222,6 +222,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                 pc_transfere_epr_prejuizo_PP, pc_transfere_epr_prejuizo_TR,
                 pc_estorno_trf_prejuizo_PP e pc_estorno_trf_prejuizo_TR (Carlos)
 
+     09/11/2018 - Alteração no cálculo dos dias de atraso na pc_transfere_epr_prejuizo_PP
+                  (Reginaldo/AMcom/P450)
+  
 ..............................................................................*/
 
   vr_cdcritic  NUMBER(3);
@@ -1175,7 +1178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     Sistema : AyllosWeb / Rotina PC_CRPS780
     Sigla   : PREJ
     Autor   : Jean Calão - Mout´S
-    Data    : Maio/2017.                  Ultima atualizacao: 05/07/2018
+    Data    : Maio/2017.                  Ultima atualizacao: 09/11/2018
 
     Dados referentes ao programa:
 
@@ -1189,26 +1192,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                              
                 05/07/2018 - Pagamento de IOF no Atraso (Marcos-Envolti)
 
+                09/11/2018 - Alteração no cálculo dos dias em atraso do contrato
+                             (Reginaldo/AMcom/P450)
+    
     ..............................................................................*/                                        
     
     -- Busca das parcelas
-    CURSOR c_crappep IS
-      SELECT crappep.cdcooper
-            ,crappep.nrdconta
-            ,crappep.nrctremp
-            ,crawepr.dtlibera
-            ,crawepr.tpemprst
-        FROM crappep,
-             crawepr
-       WHERE crawepr.cdcooper (+) = crappep.cdcooper
-         AND crawepr.nrdconta (+) = crappep.nrdconta
-         AND crawepr.nrctremp (+) = crappep.nrctremp
-         AND crappep.cdcooper = pr_cdcooper
-         AND crappep.nrdconta = pr_nrdconta
-         AND crappep.nrctremp = pr_nrctremp
-         AND crappep.inliquid = 0
-         AND crappep.inprejuz = 0;           
-    rw_crappep c_crappep%ROWTYPE;
+    CURSOR C_CRAPPEP IS
+      SELECT CRAPPEP.CDCOOPER,
+             CRAPPEP.NRDCONTA,
+             CRAPPEP.NRCTREMP,
+             CRAWEPR.DTLIBERA,
+             CRAWEPR.TPEMPRST
+        FROM CRAPPEP, CRAWEPR
+       WHERE CRAWEPR.CDCOOPER(+) = CRAPPEP.CDCOOPER
+         AND CRAWEPR.NRDCONTA(+) = CRAPPEP.NRDCONTA
+         AND CRAWEPR.NRCTREMP(+) = CRAPPEP.NRCTREMP
+         AND CRAPPEP.CDCOOPER = PR_CDCOOPER
+         AND CRAPPEP.NRDCONTA = PR_NRDCONTA
+         AND CRAPPEP.NRCTREMP = PR_NRCTREMP
+         AND CRAPPEP.INLIQUID = 0
+         AND CRAPPEP.INPREJUZ = 0;
+    RW_CRAPPEP C_CRAPPEP%ROWTYPE;
+  
+    -- Calcula a quantidade de dias de atraso de um contrato
+    -- (Reginaldo/AMcom/P450) - 09/11/2018
+    CURSOR C_ATRASO(PR_CDCOOPER CRAPPEP.CDCOOPER%TYPE,
+                    PR_NRDCONTA CRAPPEP.NRDCONTA%TYPE,
+                    PR_NRCTREMP CRAPPEP.NRCTREMP%TYPE) IS
+      SELECT RW_CRAPDAT.DTMVTOLT - MIN(PEP.DTVENCTO) QTDIAATR
+        FROM CRAPPEP PEP, CRAPASS ASS
+       WHERE PEP.CDCOOPER = PR_CDCOOPER
+         AND PEP.NRDCONTA = PR_NRDCONTA
+         AND PEP.NRCTREMP = PR_NRCTREMP
+         AND (PEP.INLIQUID = 0 OR PEP.INPREJUZ = 1)
+         AND PEP.DTVENCTO <= RW_CRAPDAT.DTMVTOAN
+         AND ASS.CDCOOPER = PEP.CDCOOPER
+         AND ASS.NRDCONTA = PEP.NRDCONTA
+         AND ASS.CDAGENCI = DECODE(0, 0, ASS.CDAGENCI, 0);
     
     --    
     CURSOR c_crapris (pr_cdcooper craplem.cdcooper%TYPE 
@@ -1468,9 +1489,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
           pr_des_reto := 'NOK';
           RAISE vr_exc_erro;
         ELSE
-          OPEN  c_crapris(pr_cdcooper, pr_nrdconta, pr_nrctremp);
-          FETCH c_crapris into vr_qtdiaatr;
-          CLOSE c_crapris;
+          -- Alteração no cursor para cálculo da quantidade de dias de atraso do contrato
+          -- (Reginaldo/AMcom/P450) - 09/11/2018
+          OPEN C_ATRASO(PR_CDCOOPER, PR_NRDCONTA, PR_NRCTREMP);
+          FETCH C_ATRASO
+            INTO VR_QTDIAATR;
+          CLOSE C_ATRASO;
                        
           IF  nvl(vr_qtdiaatr,0) >= 60  THEN  -- Calcular o valor dos juros a mais de 60 dias
             -- Obter valor de juros a mais de 60 dias

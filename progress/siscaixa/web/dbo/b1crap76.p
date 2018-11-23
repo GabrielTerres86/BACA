@@ -24,9 +24,14 @@
                             
                19/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd como 
                             data de referencia - Everton Deserto(AMCOM).
-**/
+
+               15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
+                            de dentro da b1wgen0200 
+                            (Renato AMcom)
+*/
                             
 {dbo/bo-erro1.i}
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEFINE VARIABLE i-cod-erro   AS INTEGER    NO-UNDO.
 DEFINE VARIABLE c-desc-erro  AS CHARACTER  NO-UNDO.
@@ -34,6 +39,11 @@ DEFINE VARIABLE c-desc-erro  AS CHARACTER  NO-UNDO.
 DEF VAR i-nro-lote           AS INTE           NO-UNDO.
 DEF VAR h_b2crap00           AS HANDLE         NO-UNDO.
 DEF VAR i_conta              AS DEC            NO-UNDO.
+
+DEF VAR h-b1wgen0200         AS HANDLE         NO-UNDO.
+
+DEF VAR aux_cdcritic         AS INTE           NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR           NO-UNDO.
 
 DEF VAR i_nro-docto          AS INTE           NO-UNDO.
 
@@ -921,7 +931,41 @@ PROCEDURE estorna-outros.
    IF  p-cdhistor <> 561 THEN
        DO:
          ASSIGN p-autestorno = craplcm.nrautdoc.
-         DELETE craplcm.
+         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                  
+         RUN estorna_lancamento_conta IN h-b1wgen0200 
+           (INPUT craplcm.cdcooper               /* par_cdcooper */
+           ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+           ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+           ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+           ,INPUT craplcm.nrdolote               /* par_nrdolote */
+           ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+           ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+           ,INPUT craplcm.cdhistor               /* par_cdhistor */
+           ,INPUT craplcm.nrctachq               /* PAR_nrctachq */
+           ,INPUT craplcm.nrdconta               /* PAR_nrdconta */
+           ,INPUT craplcm.cdpesqbb               /* PAR_cdpesqbb */
+           ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+           ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                
+         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+            DO: 
+                /* Tratamento de erros conforme anteriores */
+                ASSIGN i-cod-erro  = aux_cdcritic
+                       c-desc-erro = aux_dscritic.
+                      
+                RUN cria-erro (INPUT p-cooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+                RETURN "NOK".
+            END.   
+                
+         IF  VALID-HANDLE(h-b1wgen0200) THEN
+           DELETE PROCEDURE h-b1wgen0200.
        END.
    ELSE
        DO:

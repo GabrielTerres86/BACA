@@ -1114,6 +1114,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
      08/10/2018 - Ajuste no loop cr_crapris_60, para desprezar os valores que contas que ja estao em prejuizo.
                   PRJ450 - Regulatorio(Odirlei-AMcom)
                   
+     22/11/2018 - Alterado contas contabies do renda a apropriar conforme solicitação da area contabil.
+                  PRJ450 - Regulatorio(Odirlei-AMcom) 
+             
   ............................................................................. */
 
 
@@ -2891,7 +2894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpf <> 0   THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,5341,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,5510,' ||
                       TRIM(to_char(vr_juros38da.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
@@ -2956,7 +2959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,5342,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,5511,' ||
                       TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
@@ -2987,7 +2990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5342,7015,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7015,' ||
                        TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
