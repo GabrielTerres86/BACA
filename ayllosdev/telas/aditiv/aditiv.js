@@ -2550,7 +2550,8 @@ function trocaBotao( acao ) {
 
 	if ( acao == 'gravar' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>');
-		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="manterRotina(\'VD\'); return false;">Continuar</a>');
+		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="manterRotina(\'VD\'); return false;" style="margin:0 3px;">Continuar</a>');
+		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btConsultar" onClick="mostraTabelaHistoricoGravames(1,1000); return false;">Hist&oacute;rico Gravame</a>');
 	} else if ( acao == 'imprimir' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Cancelar</a>');
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="Gera_Impressao(); return false;">Imprimir</a>');
@@ -2736,7 +2737,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
 	limpaDivGenerica();
-	$('#divUsoGenerico').css('width','750px');
+	//$('#divUsoGenerico').css('width','750px');
 	exibeRotina($('#divUsoGenerico'));
 
 	var dschassi = $("#dschassi","#frmTipo").val();
@@ -2771,7 +2772,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1095px', 'left': '325px' });
+	$('#divUsoGenerico').css({ 'width': '1095px'});
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
@@ -2780,6 +2781,7 @@ function controlaLayoutHistoricoGravames() {
 	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
 	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
 	$('div.divRegistros .dtretgrv').css({'width':'25px'});
+	$('#divUsoGenerico').centralizaRotinaH();
 
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];

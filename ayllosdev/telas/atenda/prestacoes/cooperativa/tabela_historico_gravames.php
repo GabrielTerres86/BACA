@@ -79,7 +79,7 @@
 		</table>
 	</div>
 </div>
-<? if ($qtregist > 0) { ?>
+<? if ($qtregist > 0) { /*
 	<div style="height:50px;">
 		<table width="100%">
 			<tbody>
@@ -93,7 +93,24 @@
 				</tr>
 			</tbody>
 		</table>
+	</div> */
+	?>
+	<div id="divObservacao" style="height:50px;">
+		<table style="border-collapse: collapse; width: 100%; margin-top: 3%;">
+			<thead>
+				<tr style="border-bottom: 1px dotted #999;">
+					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #f7d3ce; text-align: center;" ><? echo utf8ToHtml('Retorno');  ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="linObs" id="dsretorLinha" style="height: 16px; background-color: #ffbaad;">
+					<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333; text-align: left;" >
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
+
     <div id="divPesquisaRodape" class="divPesquisaRodape">
       <table>
         <tr>
@@ -131,7 +148,7 @@
 
 		$('table > tbody > tr', divRegistro).click( function() {
             num = $(this).attr('id').replace('linObsClick_','');
-			$('#dsretorLinha').val( $('#dsretorLinha' + num).val() );
+			$('#dsretorLinha td').html( $('#dsretorLinha' + num).val() );
 		});
 
 		//formataFormularioBens();

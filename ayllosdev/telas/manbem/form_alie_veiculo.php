@@ -66,7 +66,7 @@
 					<input name="dsbemfin" id="dsbemfinC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'dsbemfin') ?>" />
 				</div>
 				<div>
-                    <label for="nrmodbem" >Ano Modelo:</label>
+                    <label for="nrmodbem" >Ano Modelo :</label>
 					<select name="nrmodbem" id="nrmodbem"></select>
 					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
 					<label for="nranobem" id="lsanobem">Fab:</label>
