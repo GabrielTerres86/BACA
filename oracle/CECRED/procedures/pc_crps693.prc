@@ -11,7 +11,7 @@ BEGIN
     Sistema : Cobrança - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Daniel Zimmermann
-    Data    : Maio/2015                      Ultima atualizacao: 24/06/2017
+    Data    : Maio/2015                      Ultima atualizacao: 14/11/2018
 
     Dados referentes ao programa:
 
@@ -37,7 +37,8 @@ BEGIN
                24/06/2017 - Retirado rotina de geracao de retorno ao cooperado pois agora
                             está centralizado na rotina de geraçao de boletos na
                             package COBR0006 e b1wnet0001.p (P340 - Rafael).
-                            
+               
+               14/11/2018 - Complementado as informações dos emails de erro (Tiago - INC0026209)             
 
   .......................................................................... */
 
@@ -998,7 +999,7 @@ BEGIN
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);  
         
         
-          -- Grava data/hora da Geração do Arquivo.
+          -- Grava data/hora da Geração do Arquivo.          
           BEGIN
             UPDATE crapcee
               SET crapcee.dttransa = trunc(SYSDATE)
@@ -1011,7 +1012,7 @@ BEGIN
              --Sair do programa
              RAISE vr_exc_saida;
           END;
-               
+
           -- Chamar o script que irá acessar WebService da PG e transmitir o arquivo;
           COBR0004.pc_upload_webservice_pg(vr_nmarquiv
                                           ,vr_erro_envio);
@@ -1046,7 +1047,7 @@ BEGIN
                                       ,pr_cdprogra        => vr_cdprogra
                                       ,pr_des_destino     => vr_des_destino
                                       ,pr_des_assunto     => 'Erro ao transmitir Arquivo PG '
-                                      ,pr_des_corpo       => 'Erro ao transmitir Arquivo PG - ' || rw_crapcop.nmrescop || chr(13) || vr_erro_envio
+                                      ,pr_des_corpo       => 'Erro ao transmitir Arquivo PG - ' || rw_crapcop.nmrescop || ' - ' || TO_CHAR(rw_crabdat.dtmvtolt,'DD/MM/RRRR') || ' - ' || vr_nmarquiv || chr(13) || vr_erro_envio
                                       ,pr_des_anexo       => NULL
                                       ,pr_des_erro        => vr_dscritic);
 
@@ -1240,7 +1241,7 @@ BEGIN
                                     ,pr_cdprogra        => vr_cdprogra
                                     ,pr_des_destino     => vr_des_destino
                                     ,pr_des_assunto     => 'Erro na Geracao Arquivo PG '
-                                    ,pr_des_corpo       => 'Erro na Geracao Arquivo de Impressao PG - ' || rw_crapcop.nmrescop
+                                    ,pr_des_corpo       => 'Erro na Geracao Arquivo de Impressao PG - ' || rw_crapcop.nmrescop || ' - ' || TO_CHAR(rw_crabdat.dtmvtolt,'DD/MM/RRRR') || ' - ' || vr_nmarquiv
                                     ,pr_des_anexo       => NULL
                                     ,pr_des_erro        => vr_dscritic);
 
