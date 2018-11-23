@@ -3495,7 +3495,7 @@ PROCEDURE parecer_credito:
   DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
   DEF  INPUT PARAM par_nrctremp AS INTE                             NO-UNDO.                          
  
-  DEF VAR xml_req      AS CHAR                                      NO-UNDO.
+  DEF VAR xml_req      AS LONGCHAR                                  NO-UNDO.
   DEF VAR xDoc         AS HANDLE                                    NO-UNDO.  
   DEF VAR xRoot        AS HANDLE                                    NO-UNDO. 
   DEF VAR xRoot2       AS HANDLE                                    NO-UNDO. 
