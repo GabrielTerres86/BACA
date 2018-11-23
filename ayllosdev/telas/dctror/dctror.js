@@ -12,6 +12,7 @@
  * 004: [15/12/2017] Jonata           (RKAM)  : Correção controle de acesso a tela quando vinda da tela CONTAS > IMPEDIMETNOS (P364)
  * 005: [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 006: [16/01/2018] Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
+ * 007: [13/11/2018] Correcao dos parametros recebidos via CRM. Chamado - INC0026700 - Gabriel (Mouts).
  * --------------
  */
 
@@ -781,9 +782,15 @@ function formataCabecalho() {
 	});		
 
     // Seta os valores caso tenha vindo do CRM
+   
     if ($("#crm_inacesso","#frmCRM").val() == 1) {
-        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
-    }	
+
+		if (normalizaNumero($("#crm_nrdconta","#frmCRM").val()) > 0){
+		$("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val()); 
+			nrdconta = normalizaNumero($("#crm_nrdconta","#frmCRM").val()); 
+		}
+
+	}
 	
 	if (executandoImpedimentos){
 		
