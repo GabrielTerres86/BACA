@@ -302,6 +302,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             
                17/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
   	                        pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+
+               20/11/2018 - PJ450 - Troca insert craplcm pela chamada da rotina centralizadora lanc0001
+                            (Renato Cordeiro - AMcom).
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -6856,7 +6859,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   crapljt.nrcnvcob = pr_nrcnvcob
       AND   crapljt.nrdocmto = pr_nrdocmto;
     rw_crapljt cr_crapljt%ROWTYPE;
-     
+
+    -- variável para histórico de débito/crédito
+    vr_incrineg       INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
+
   BEGIN
     OPEN  cr_crapbdt;
     FETCH cr_crapbdt INTO rw_crapbdt;
@@ -7222,39 +7229,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 			
       --Gravar lancamento
       BEGIN 
-        INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdocmto
-            ,craplcm.vllanmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.nrdctabb
-            ,craplcm.nrautdoc
-            ,craplcm.cdcooper
-            ,craplcm.cdpesqbb)
-        VALUES
-            (rw_craplot.dtmvtolt
-            ,rw_craplot.cdagenci
-            ,rw_craplot.cdbccxlt
-            ,rw_craplot.nrdolote
-            ,rw_craptdb.nrdconta
-            ,nvl(vr_nrdocmtolt, Nvl(rw_craplot.nrseqdig,0))
-            ,vr_vltotjur
-            ,vr_cdhistor
-            ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
-            ,rw_craptdb.nrdconta
-            ,0
-            ,pr_cdcooper
-            ,rw_craptdb.nrdocmto)
-        RETURNING craplcm.nrseqdig
-                 ,craplcm.vllanmto
-        INTO rw_craplcm.nrseqdig
+        lanc0001.pc_gerar_lancamento_conta(
+           pr_dtmvtolt => rw_craplot.dtmvtolt, 
+           pr_cdagenci => rw_craplot.cdagenci, 
+           pr_cdbccxlt => rw_craplot.cdbccxlt, 
+           pr_nrdolote => rw_craplot.nrdolote, 
+           pr_nrdconta => rw_craptdb.nrdconta, 
+           pr_nrdocmto => nvl(vr_nrdocmtolt, Nvl(rw_craplot.nrseqdig,0)), 
+           pr_cdhistor => vr_cdhistor, 
+           pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0),
+           pr_vllanmto => vr_vltotjur, 
+           pr_nrdctabb => rw_craptdb.nrdconta, 
+           pr_cdpesqbb => rw_craptdb.nrdocmto, 
+           pr_nrautdoc => 0, 
+           pr_cdcooper => pr_cdcooper, 
+           pr_tab_retorno => vr_tab_retorno, 
+           pr_incrineg => vr_incrineg, 
+           pr_cdcritic => vr_cdcritic, 
+           pr_dscritic => vr_dscritic);
 
-            ,rw_craplcm.vllanmto;
+        if vr_cdcritic <> 0 or vr_dscritic is not null then
+           RAISE vr_exc_erro;
+        end if;
+
+        rw_craplcm.nrseqdig := Nvl(rw_craplot.nrseqdig,0);
+        rw_craplcm.vllanmto := vr_vltotjur;
       EXCEPTION
         WHEN OTHERS THEN
           -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
