@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Maio/2000.                      Ultima atualizacao: 31/01/2016
+   Data    : Maio/2000.                      Ultima atualizacao: 07/11/2018
 
    Dados referentes ao programa:
 
@@ -105,6 +105,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
               03/10/2018 - PJ450 - Tratamento erro no raise da chamada rotina LANC0001
                            (Renato Cordeiro - AMcom)
+                           
+               07/11/2018 - Caso o cheque for da cooperativa, efetua a devolução de cheque automática, na conta do
+                            depositante, conforme alineas - Projeto Correcao Desconto do Cheque
+                            (Andre - Mouts)                              
     ............................................................................. */
 
    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -141,6 +145,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
     CURSOR cr_crapcop IS
       SELECT cop.nmrescop
             ,cop.nmextcop
+            ,cop.cdbcoctl
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -438,6 +443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                        ,pr_nrcheque crapcst.nrcheque%type) is
 
         SELECT ROWID
+              ,cdcooper
               ,nrdconta
               ,cdbanchq
               ,cdagechq
@@ -485,6 +491,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
              ,cdbanchq
              ,cdagechq
              ,nrctachq 
+             ,nrcheque
+             ,cdcmpchq
          from crapfdc
         WHERE cdcooper = pr_cdcooper       
           AND cdbanchq = pr_cdbanchq       
@@ -538,6 +546,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
        
       -- Variaveis genéricas 
       vr_flgentra boolean;
+      vr_cdalinea pls_integer;
        
        
     BEGIN 
@@ -699,30 +708,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         -- Se encontrou critica 
         IF vr_cdcritic > 0 THEN
           -- Criar rejeitados 
-          pc_proc_rejeitados(pr_cdcooper => pr_cdcooper
-                            ,pr_dtmvtolt => pr_craplot.dtmvtolt
-                            ,pr_cdagenci => pr_craplot.cdagenci
-                            ,pr_cdbccxlt => pr_craplot.cdbccxlt
-                            ,pr_nrdolote => pr_craplot.nrdolote
-                            ,pr_tplotmov => pr_craplot.tplotmov
-                            ,pr_cdhistor => pr_craplau.cdhistor
-                            ,pr_nraplica => rw_crapcst.nrdconta
-                            ,pr_nrdconta => pr_craplau.nrdconta
-                            ,pr_nrdctabb => pr_craplau.nrdctabb
-                            ,pr_nrdctitg => pr_craplau.nrdctitg
-                            ,pr_nrseqdig => pr_craplau.nrseqdig
-                            ,pr_nrdocmto => pr_craplau.nrdocmto
-                            ,pr_vllanmto => pr_craplau.vllanaut
-                            ,pr_cdpesqbb => pr_craplau.cdseqtel
-                            ,pr_tpintegr => pr_tpintegr
-                            ,pr_cdcritic => vr_cdcritic
-                            ,pr_dscritic => vr_dscritic);
-          -- Se houve critica
-          IF vr_dscritic IS NOT NULL THEN 
-             RAISE vr_exc_saida;
-          END IF;   
+          IF vr_cdcritic <> 96 THEN
+            pc_proc_rejeitados(pr_cdcooper => pr_cdcooper
+                              ,pr_dtmvtolt => pr_craplot.dtmvtolt
+                              ,pr_cdagenci => pr_craplot.cdagenci
+                              ,pr_cdbccxlt => pr_craplot.cdbccxlt
+                              ,pr_nrdolote => pr_craplot.nrdolote
+                              ,pr_tplotmov => pr_craplot.tplotmov
+                              ,pr_cdhistor => pr_craplau.cdhistor
+                              ,pr_nraplica => rw_crapcst.nrdconta
+                              ,pr_nrdconta => pr_craplau.nrdconta
+                              ,pr_nrdctabb => pr_craplau.nrdctabb
+                              ,pr_nrdctitg => pr_craplau.nrdctitg
+                              ,pr_nrseqdig => pr_craplau.nrseqdig
+                              ,pr_nrdocmto => pr_craplau.nrdocmto
+                              ,pr_vllanmto => pr_craplau.vllanaut
+                              ,pr_cdpesqbb => pr_craplau.cdseqtel
+                              ,pr_tpintegr => pr_tpintegr
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+            -- Se houve critica
+            IF vr_dscritic IS NOT NULL THEN 
+               RAISE vr_exc_saida;
+            END IF;   
+          END IF;
           -- Criticas 257 e 287 poderemos continuar 
-          IF vr_cdcritic in (257,287) THEN
+          IF vr_cdcritic in (257,287,96) THEN
             vr_flgentra := TRUE;
           ELSE
             vr_flgentra := FALSE;
@@ -894,17 +905,91 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
             end;    
             -- Somente para os históricos 21 e 26            
             IF pr_craplau.cdhistor IN(21,26) THEN
+              vr_cdalinea := 0;
               begin
                update crapfdc
-                  set incheque = rw_crapfdc.incheque + 5
-                     ,dtliqchq = pr_craplot.dtmvtolt 
-                     ,vlcheque = pr_craplau.vllanaut
+                  set vlcheque = pr_craplau.vllanaut
                   where crapfdc.rowid = rw_crapfdc.rowid;
                exception
                  when others then
                    vr_dscritic := 'Problema ao alterar dados crapfdc -->'||sqlerrm;       
                    RAISE vr_exc_saida;
-              end;
+               end;          
+                      
+              -- Caso cheque de cooperativa, e conta do emitente do cheque está sem fundo efetua a devolução
+              IF nvl(rw_crapfdc.cdbanchq,0) = nvl(rw_crapcop.cdbcoctl,1) THEN
+                CHEQ0003.pc_trata_devolucao_cheque(pr_cdcoopch => pr_cdcooper,
+                                                   pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                                   pr_cdagechq => rw_crapfdc.cdagechq, 
+                                                   pr_nrctachq => rw_crapfdc.nrctachq, 
+                                                   pr_nrcheque => rw_crapfdc.nrcheque, 
+                                                   pr_cdcmpchq => rw_crapfdc.cdcmpchq, 
+                                                   pr_cdcoopdp => 0,
+                                                   pr_nrdconta => 0, 
+                                                   pr_cdagenci => pr_craplot.cdagenci, 
+                                                   pr_cdbccxlt => pr_craplot.cdbccxlt, 
+                                                   pr_nrdolote => pr_craplot.nrdolote, 
+                                                   pr_tpopechq => 1, 
+                                                   pr_rw_crapdat => rw_crapdat, 
+                                                   pr_cdalinea => vr_cdalinea,
+                                                   pr_cdcritic => vr_cdcritic, 
+                                                   pr_dscritic => vr_dscritic);
+                IF nvl(vr_cdcritic,0) > 0 THEN
+                  raise vr_exc_saida;
+                END IF;                                         
+                
+                -- Se cheque foi devolvido                                        
+                IF nvl(vr_cdalinea,0) > 0 THEN
+                  begin
+                    update crapcst
+                       set crapcst.insitchq = 3,
+                           crapcst.dtdevolu = pr_craplot.dtmvtolt
+                     where crapcst.rowid = rw_crapcst.rowid;
+                  exception
+                    when others then
+                      vr_dscritic := 'Problema ao alterar dados crapcst '||sqlerrm;
+                      RAISE vr_exc_saida;
+                  end;   
+                  
+                  -- Somente para apresentar no relatório
+                  vr_cdcritic := 733;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  pc_proc_rejeitados(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => pr_craplot.dtmvtolt
+                                    ,pr_cdagenci => pr_craplot.cdagenci
+                                    ,pr_cdbccxlt => pr_craplot.cdbccxlt
+                                    ,pr_nrdolote => pr_craplot.nrdolote
+                                    ,pr_tplotmov => pr_craplot.tplotmov
+                                    ,pr_cdhistor => pr_craplau.cdhistor
+                                    ,pr_nraplica => rw_crapcst.nrdconta
+                                    ,pr_nrdconta => pr_craplau.nrdconta
+                                    ,pr_nrdctabb => pr_craplau.nrdctabb
+                                    ,pr_nrdctitg => pr_craplau.nrdctitg
+                                    ,pr_nrseqdig => pr_craplau.nrseqdig
+                                    ,pr_nrdocmto => pr_craplau.nrdocmto
+                                    ,pr_vllanmto => pr_craplau.vllanaut
+                                    ,pr_cdpesqbb => pr_craplau.cdseqtel || ' [ALINEA '||  to_char(vr_cdalinea,'fm00') || ']' 
+                                    ,pr_tpintegr => pr_tpintegr
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := null;                  
+                END IF;
+              END IF;
+              
+              -- Se não foi devolvido, atualiza a situação do cheque para compensado
+              IF nvl(vr_cdalinea,0) = 0 THEN
+                begin
+                 update crapfdc
+                    set incheque = rw_crapfdc.incheque + 5
+                       ,dtliqchq = pr_craplot.dtmvtolt
+                    where crapfdc.rowid = rw_crapfdc.rowid;
+                 exception
+                   when others then
+                     vr_dscritic := 'Problema ao alterar dados crapfdc -->'||sqlerrm;       
+                     RAISE vr_exc_saida;
+                 end;   
+              END IF;             
             END IF; -- Fim testes históricos 21 e 26
           END IF; -- Fim testes cfme migração ou não 
         ELSE

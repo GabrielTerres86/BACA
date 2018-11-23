@@ -11,7 +11,7 @@ BEGIN
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Edson
-    Data    : Abril/2003                      Ultima atualizacao: 06/08/2018
+    Data    : Abril/2003                      Ultima atualizacao: 07/11/2018
 
     Dados referentes ao programa:
 
@@ -119,12 +119,17 @@ BEGIN
                              BLQPREJU. Tratamento crítica 695 para também verificar conta em prejuízo
                              (Renato Cordeiro - AMcom)
 
+               07/11/2018 - Caso o cheque for da cooperativa, efetua a devolução de cheque automática, na conta do
+                            depositante, conforme alineas - Projeto Correcao Desconto do Cheque
+                            (Andre - Mouts)   
+			    
   ............................................................................. */
   DECLARE
     --Busca os dados da cooperativa
     CURSOR cr_crapcop IS
       SELECT cop.nmrescop,
-             cop.nmextcop
+             cop.nmextcop,
+             cop.cdbcoctl
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -680,7 +685,8 @@ BEGIN
                cdb.cdbanchq,
                cdb.cdagechq,
                cdb.nrctachq,
-               cdb.nrcheque
+               cdb.nrcheque,
+               cdb.cdcooper
           FROM crapcdb cdb
          WHERE cdb.cdcooper = pr_cdcooper
            AND cdb.dtmvtolt = pr_dtmvtolt
@@ -729,7 +735,9 @@ BEGIN
                fdc.cdbanchq,
                fdc.cdagechq,
                fdc.nrctachq,
-               fdc.dtliqchq
+               fdc.dtliqchq,
+               fdc.nrcheque,
+               fdc.cdcmpchq
           FROM crapfdc fdc
          WHERE fdc.cdcooper = pr_cdcooper
            AND fdc.cdbanchq = pr_cdbanchq
@@ -791,6 +799,7 @@ BEGIN
       vr_exc_erro EXCEPTION;
       -- Cooperativa anterior
       vr_cdcopant             craptco.cdcopant%type;
+      vr_cdalinea             pls_integer := 0;
     BEGIN
       -- Limpar a tabela de erro
       pr_tab_erro.DELETE;
@@ -1078,21 +1087,23 @@ BEGIN
       END IF;
       --
       IF vr_cdcritic > 0 THEN
-        pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
-                           pr_cdagenci => pr_cdagenci,
-                           pr_nrdcaixa => pr_nrdcaixa,
-                           pr_nrdconta => pr_nrdconta,
-                           pr_dtmvtopr => pr_dtmvtopr,
-                           pr_nrcustod => vr_nrcustod,
-                           pr_cdseqtel => pr_cdseqtel,
-                           pr_vllanaut => pr_vllanaut,
-                           pr_cdhistor => pr_cdhistor,
-                           pr_nrdctabb => pr_nrdctabb,
-                           pr_nrdocmto => pr_nrdocmto,
-                           pr_nrseqdig => pr_nrseqdig,
-                           pr_cdcritic => vr_cdcritic,
-                           pr_des_reto => pr_des_reto,
-                           pr_tab_erro => pr_tab_erro);
+        IF vr_cdcritic <> 96 THEN
+          pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
+                             pr_cdagenci => pr_cdagenci,
+                             pr_nrdcaixa => pr_nrdcaixa,
+                             pr_nrdconta => pr_nrdconta,
+                             pr_dtmvtopr => pr_dtmvtopr,
+                             pr_nrcustod => vr_nrcustod,
+                             pr_cdseqtel => pr_cdseqtel,
+                             pr_vllanaut => pr_vllanaut,
+                             pr_cdhistor => pr_cdhistor,
+                             pr_nrdctabb => pr_nrdctabb,
+                             pr_nrdocmto => pr_nrdocmto,
+                             pr_nrseqdig => pr_nrseqdig,
+                             pr_cdcritic => vr_cdcritic,
+                             pr_des_reto => pr_des_reto,
+                             pr_tab_erro => pr_tab_erro);
+        END IF;                   
         -- Se retornar erro
         IF pr_des_reto <> 'OK' THEN
           IF pr_tab_erro.COUNT > 0 THEN
@@ -1106,7 +1117,7 @@ BEGIN
           --Gera excecao
           RAISE vr_exc_erro;
         END IF;
-        IF vr_cdcritic IN ('257', '287') THEN
+        IF vr_cdcritic IN ('257', '287', 96) THEN
           vr_cdcritic := 0;
           vr_flgentra := TRUE;
         ELSE
@@ -1373,11 +1384,78 @@ BEGIN
           END;
           IF pr_cdhistor = 526 THEN
             BEGIN
+              vr_cdalinea := 0;
+              
               UPDATE crapfdc fdc
-                 SET fdc.incheque = fdc.incheque + 5,
-                     fdc.dtliqchq = pr_dtmvtolt,
-                     fdc.vlcheque = pr_vllanaut
-               WHERE ROWID = rw_crapfdc.rowid;
+                 SET fdc.vlcheque = pr_vllanaut
+               WHERE ROWID = rw_crapfdc.rowid;   
+                          
+               -- Caso cheque de cooperativa, e conta do emitente do cheque está sem fundo efetua a devolução
+               IF nvl(rw_crapfdc.cdbanchq,0) = nvl(rw_crapcop.cdbcoctl,1) THEN
+                CHEQ0003.pc_trata_devolucao_cheque(pr_cdcoopch => pr_cdcooper,
+                                                   pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                                   pr_cdagechq => rw_crapfdc.cdagechq, 
+                                                   pr_nrctachq => rw_crapfdc.nrctachq, 
+                                                   pr_nrcheque => rw_crapfdc.nrcheque, 
+                                                   pr_cdcmpchq => rw_crapfdc.cdcmpchq, 
+                                                   pr_cdcoopdp => rw_crapcdb.cdcooper,
+                                                   pr_nrdconta => rw_crapcdb.nrdconta, 
+                                                   pr_cdagenci => rw_craplot.cdagenci, 
+                                                   pr_cdbccxlt => rw_craplot.cdbccxlt, 
+                                                   pr_nrdolote => rw_craplot.nrdolote, 
+                                                   pr_tpopechq => 2, 
+                                                   pr_rw_crapdat => rw_crapdat, 
+                                                   pr_cdalinea => vr_cdalinea,
+                                                   pr_cdcritic => vr_cdcritic, 
+                                                   pr_dscritic => vr_dscritic);
+                IF nvl(vr_cdcritic,0) > 0 THEN
+                  raise vr_exc_saida;
+                END IF;                                         
+                
+                -- Se cheque foi devolvido                                        
+                IF nvl(vr_cdalinea,0) > 0 THEN
+                  
+                  BEGIN
+                    UPDATE crapcdb cdb
+                       SET cdb.insitchq = 3
+                     WHERE ROWID = rw_crapcdb.rowid;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar dados na tabela crapcdb na rotina pc_proc_trata_descontos. ' || SQLERRM;
+                      RAISE vr_exc_erro;
+                  END;
+                                   
+                  -- Somente para aparecer no relatório
+                  vr_cdcritic := 733;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
+                           pr_cdagenci => pr_cdagenci,
+                           pr_nrdcaixa => pr_nrdcaixa,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_dtmvtopr => pr_dtmvtopr,
+                           pr_nrcustod => vr_nrcustod,
+                           pr_cdseqtel => pr_cdseqtel || ' [ALINEA '||  to_char(vr_cdalinea,'fm00') || ']',
+                           pr_vllanaut => pr_vllanaut,
+                           pr_cdhistor => pr_cdhistor,
+                           pr_nrdctabb => pr_nrdctabb,
+                           pr_nrdocmto => pr_nrdocmto,
+                           pr_nrseqdig => pr_nrseqdig,
+                           pr_cdcritic => vr_cdcritic,
+                           pr_des_reto => vr_dscritic,
+                           pr_tab_erro => pr_tab_erro);
+                 vr_cdcritic := 0;   
+                 vr_dscritic := null;       
+                           
+                END IF;                                        
+              END IF;
+              
+              -- Se não foi devolvido, atualiza a situação do cheque para compensado
+              IF nvl(vr_cdalinea,0) = 0 THEN
+                UPDATE crapfdc fdc
+                   SET fdc.incheque = fdc.incheque + 5,
+                       fdc.dtliqchq = pr_dtmvtolt
+                 WHERE ROWID = rw_crapfdc.rowid;
+              END IF; 
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
@@ -1385,17 +1463,89 @@ BEGIN
             END;
           ELSE
             IF pr_cdhistor = 521 THEN
+              vr_cdalinea := 0;
+              
               BEGIN
                 UPDATE crapfdc fdc
-                   SET fdc.incheque = fdc.incheque + 5,
-                       fdc.dtliqchq = pr_dtmvtopr,
-                       fdc.vlcheque = pr_vllanaut
+                   SET fdc.vlcheque = pr_vllanaut
                  WHERE ROWID = rw_crapfdc.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
                   RAISE vr_exc_erro;
               END;
+              -- Caso cheque de cooperativa, e conta do emitente do cheque está sem fundo efetua a devolução
+               IF nvl(rw_crapfdc.cdbanchq,0) = nvl(rw_crapcop.cdbcoctl,1) THEN
+                CHEQ0003.pc_trata_devolucao_cheque(pr_cdcoopch => pr_cdcooper,
+                                                   pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                                   pr_cdagechq => rw_crapfdc.cdagechq, 
+                                                   pr_nrctachq => rw_crapfdc.nrctachq, 
+                                                   pr_nrcheque => rw_crapfdc.nrcheque, 
+                                                    pr_cdcmpchq => rw_crapfdc.cdcmpchq, 
+                                                   pr_cdcoopdp => rw_crapcdb.cdcooper,
+                                                   pr_nrdconta => rw_crapcdb.nrdconta, 
+                                                   pr_cdagenci => rw_craplot.cdagenci, 
+                                                   pr_cdbccxlt => rw_craplot.cdbccxlt, 
+                                                   pr_nrdolote => rw_craplot.nrdolote, 
+                                                   pr_tpopechq => 2, 
+                                                   pr_rw_crapdat => rw_crapdat, 
+                                                   pr_cdalinea => vr_cdalinea,
+                                                   pr_cdcritic => vr_cdcritic, 
+                                                   pr_dscritic => vr_dscritic);
+                IF nvl(vr_cdcritic,0) > 0 THEN
+                  raise vr_exc_saida;
+                END IF;                                         
+                
+                -- Se cheque foi devolvido                                        
+                IF nvl(vr_cdalinea,0) > 0 THEN
+                  
+                  BEGIN
+                    UPDATE crapcdb cdb
+                       SET cdb.insitchq = 3
+                     WHERE ROWID = rw_crapcdb.rowid;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar dados na tabela crapcdb na rotina pc_proc_trata_descontos. ' || SQLERRM;
+                      RAISE vr_exc_erro;
+                  END;
+                  
+                   -- Somente para aparecer no relatório
+                  vr_cdcritic := 733;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
+                           pr_cdagenci => pr_cdagenci,
+                           pr_nrdcaixa => pr_nrdcaixa,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_dtmvtopr => pr_dtmvtopr,
+                           pr_nrcustod => vr_nrcustod,
+                           pr_cdseqtel => pr_cdseqtel || ' [ALINEA '||  to_char(vr_cdalinea,'fm00') || ']',
+                           pr_vllanaut => pr_vllanaut,
+                           pr_cdhistor => pr_cdhistor,
+                           pr_nrdctabb => pr_nrdctabb,
+                           pr_nrdocmto => pr_nrdocmto,
+                           pr_nrseqdig => pr_nrseqdig,
+                           pr_cdcritic => vr_cdcritic,
+                           pr_des_reto => vr_dscritic,
+                           pr_tab_erro => pr_tab_erro);
+                           
+                  vr_cdcritic := 0;   
+                  vr_dscritic := null;            
+                END IF;                                        
+              END IF;  
+              
+              -- Se não foi devolvido, atualiza a situação do cheque para compensado
+              IF nvl(vr_cdalinea,0) = 0 THEN
+                BEGIN
+                  UPDATE crapfdc fdc
+                     SET fdc.incheque = fdc.incheque + 5,
+                         fdc.dtliqchq = pr_dtmvtopr
+                   WHERE ROWID = rw_crapfdc.rowid;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
+                    RAISE vr_exc_erro;
+                END;    
+              END IF;      
             END IF;
           END IF;
         END IF;
