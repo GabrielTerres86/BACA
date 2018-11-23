@@ -20,6 +20,7 @@
   |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
   |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
   |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
+  |   busca_tarifa_desconto_titulo  | DSCT0003.pc_busca_tarifa_desc_titulo    |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -555,9 +556,19 @@
                           - Inlusao das procedures valida_inclusao_bordero,
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
                             Projeto 366 (Lombardi).
+               09/05/2018 - Adicionado na busca_dados_limite_altera validação para não permitir a alteração de uma proposta criada antes da nova implantação do
+                            Limite de Desconto de Título (Paulo Penteado GFT)
+			   
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
                             [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+
+               21/08/2018 - Adicionado na efetua_cancelamento_limite validação para não permitir a exclusao de contrato com propostas pendentes na IBRATAN (Andrew Albuquerque - GFT)
+               
+               23/08/2018 - Alteraçao na efetua_cancelamento_limite: Registrar o cancelamento na tabela de histórico de alteraçao de contrato de limite (Andrew Albuquerque - GFT)
+               
+               29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
                             
                18/10/2018 - PJ450 Regulatório de Credito - Substituído o delete na craplcm pela chamada 
                             da rotina h-b1wgen0200.estorna_lancamento_conta. (Heckmann - AMcom)
@@ -2320,7 +2331,72 @@ PROCEDURE efetua_liber_anali_bordero:
 
             IF aux_vltarifa /* tt-tarifas_dsctit.vltarbdt */ > 0  THEN
                DO:
-                   /* Gera a tarifa de bordero */ 
+                   /* Gera a tarifa de bordero */ /*
+                   DO aux_contador = 1 TO 10:
+
+                      FIND crablot WHERE
+                           crablot.cdcooper = par_cdcooper  AND 
+                           crablot.dtmvtolt = par_dtmvtolt  AND
+                           crablot.cdagenci = 1             AND
+                           crablot.cdbccxlt = 100           AND
+                           /* crablot.nrdolote = 8452 */
+                           crablot.nrdolote = 19000 + aux_cdpactra
+                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                      IF NOT AVAILABLE crablot   THEN
+                         IF LOCKED crablot   THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 341.
+                                PAUSE 1 NO-MESSAGE.
+                                NEXT.
+
+                            END.
+                         ELSE
+                            DO:                           
+                                CREATE crablot.
+
+                                ASSIGN crablot.dtmvtolt = par_dtmvtolt
+                                       crablot.cdagenci = 1
+                                       crablot.cdbccxlt = 100
+                                       /* crablot.nrdolote = 8452 */
+                                       crablot.nrdolote = 19000 + aux_cdpactra
+                                       crablot.tplotmov = 1
+                                       crablot.cdoperad = par_cdoperad
+                                       crablot.cdhistor = 594
+                                       crablot.cdcooper = par_cdcooper.
+                            END.
+                      ELSE
+                         ASSIGN aux_cdcritic = 0.
+                    
+                      LEAVE.
+
+                   END.   /*  Fim do DO .. TO  */
+         
+                   IF aux_cdcritic > 0   THEN
+                      UNDO LIBERACAO, LEAVE.
+
+                   CREATE craplcm.
+                   ASSIGN craplcm.dtmvtolt = crablot.dtmvtolt
+                          craplcm.cdagenci = crablot.cdagenci
+                          craplcm.cdbccxlt = crablot.cdbccxlt
+                          craplcm.nrdolote = crablot.nrdolote
+                          craplcm.nrdconta = crapbdt.nrdconta
+                          craplcm.nrdctabb = crapbdt.nrdconta
+                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
+                                                    "99999999")
+                          craplcm.nrdocmto = crablot.nrseqdig + 1
+                          craplcm.cdhistor = 594
+                          craplcm.nrseqdig = crablot.nrseqdig + 1
+                          craplcm.vllanmto = tt-tarifas_dsctit.vltarbdt
+                          craplcm.cdcooper = par_cdcooper
+                
+                          crablot.vlinfodb = crablot.vlinfodb + 
+                                                 craplcm.vllanmto
+                          crablot.vlcompdb = crablot.vlcompdb + 
+                                                 craplcm.vllanmto
+                          crablot.qtinfoln = crablot.qtinfoln + 1
+                          crablot.qtcompln = crablot.qtcompln + 1
+                          crablot.nrseqdig = crablot.nrseqdig + 1.  */
 
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
 
@@ -3011,6 +3087,12 @@ PROCEDURE busca_limites:
                             crawlim.tpctrlim = craplim.tpctrlim   AND
                             crawlim.nrctrmnt = craplim.nrctrlim   AND
                             crawlim.insitlim = 8 /*438 - Expirada decurso de prazo*/ )                            
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 9 /*438 - Anulada - Paulo Martins (Mouts)*/ )                                
                            NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crawlim  THEN
@@ -4096,10 +4178,11 @@ PROCEDURE busca_dados_proposta:
     ELSE
     IF  par_cddopcao = "A"  THEN
         DO:
-            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3))   THEN
+            /* PRJ 438 - Adicionado controle para situaçao ANULADA */
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 4) or (crawlim.insitlim = 9))  THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA ou CANCELADA".
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA, CANCELADA, ANULADA ou VIGENTE".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
@@ -6597,6 +6680,23 @@ PROCEDURE efetua_cancelamento_limite:
 
         END. /* Final do DO .. TO */    
     
+        /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+        IF aux_dscritic = "" THEN
+          DO:
+            IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+              DO:
+                aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+              END.
+            ELSE
+              /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+              IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                DO:
+                  aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+                END.
+          END.
+          
         IF  aux_dscritic <> ""  THEN
             UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
@@ -6630,8 +6730,26 @@ PROCEDURE efetua_cancelamento_limite:
                    ELSE
                        ASSIGN aux_dscritic = "Registro de contrato nao " +
                                              "encontrado.".
+                                             
                LEAVE. 
 
+            END.   
+    
+            /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+            IF aux_dscritic = "" THEN
+              DO:
+                IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+                  DO:
+                    aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                   "um processo de análise deste contrato em andamento".
+                  END.
+                ELSE
+                  /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+                  IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                    DO:
+                      aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                     "um processo de análise deste contrato em andamento".
+                    END.
             END.   
     
             IF  aux_dscritic <> ""  THEN
@@ -6647,6 +6765,27 @@ PROCEDURE efetua_cancelamento_limite:
         FIND CURRENT craplim NO-LOCK NO-ERROR.
 
         RELEASE craplim.
+
+        /*AWAE: Registrar o cancelamento na tabela de histórico. */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+        RUN STORED-PROCEDURE pc_gravar_hist_alt_limite                  
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper  /* Codigo da Cooperativa */ 
+                                            ,INPUT par_nrdconta  /* Numero da Conta Corrente */
+                                            ,INPUT par_nrctrlim  /* Número do contrato de Limite */
+                                            ,INPUT 3             /* Tipo de Contrato */
+                                            ,"CANCELAMENTO"      /* Descriçao do Motivo */
+                                            ,OUTPUT 0            /* Código da Crítica */
+                                            ,OUTPUT "").         /* Descriçao da Crítica */
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_gravar_hist_alt_limite
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        /* Se retornou erro */
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_gravar_hist_alt_limite.pr_dscritic WHEN pc_gravar_hist_alt_limite.pr_dscritic <> ?.
+        IF  aux_dscritic <> "" THEN          
+          UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
         ASSIGN aux_flgtrans = TRUE.
         
@@ -6981,6 +7120,11 @@ PROCEDURE busca_borderos:
                 crapbdt.insitbdt = 4                  THEN  
                 NEXT.
 
+		 IF crapbdt.dtmvtolt <> ?  THEN
+            IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
+               (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
+                NEXT.
+
         ASSIGN aux_qttottit = 0
                aux_vltottit = 0.
                
@@ -7232,6 +7376,7 @@ PROCEDURE busca_dados_bordero:
     DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_bordero.
     
     DEF VAR aux_cdtipdoc AS INTEGER                         NO-UNDO.
+    DEF VAR aux_nrctrlim AS INTE                            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dsctit_dados_bordero.
@@ -7376,6 +7521,20 @@ PROCEDURE busca_dados_bordero:
                 END.
         END.
 
+    FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                       crawlim.nrdconta = par_nrdconta AND
+                       crawlim.tpctrlim = 3            AND
+                       crawlim.nrctrlim = crapbdt.nrctrlim
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        IF  crawlim.nrctrmnt > 0  THEN
+            ASSIGN aux_nrctrlim = crawlim.nrctrmnt.
+        ELSE
+            ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+    ELSE
+        ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+
     CREATE tt-dsctit_dados_bordero.
     /* Operadores ............................................... */
     FIND crapope WHERE crapope.cdcooper = par_cdcooper      AND
@@ -7427,7 +7586,7 @@ PROCEDURE busca_dados_bordero:
     ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
     
     ASSIGN tt-dsctit_dados_bordero.nrborder = crapbdt.nrborder
-           tt-dsctit_dados_bordero.nrctrlim = crapbdt.nrctrlim
+           tt-dsctit_dados_bordero.nrctrlim = aux_nrctrlim
            tt-dsctit_dados_bordero.insitbdt = crapbdt.insitbdt
            tt-dsctit_dados_bordero.txmensal = crapbdt.txmensal
            tt-dsctit_dados_bordero.dtlibbdt = crapbdt.dtlibbdt
@@ -10748,7 +10907,82 @@ PROCEDURE efetua_resgate_tit_bordero:
                 ASSIGN aux_vltarres = tt-tarifas_dsctit.vltressr.
                */                    
             IF  aux_vltarres > 0  THEN
+                DO: /*
+                    DO  aux_contador = 1 TO 10:
+
+                        FIND cra2lot WHERE cra2lot.cdcooper = par_cdcooper AND 
+                                           cra2lot.dtmvtolt = par_dtresgat AND
+                                           cra2lot.cdagenci = 1            AND
+                                           cra2lot.cdbccxlt = 100          AND
+                                           cra2lot.nrdolote = 8452
+                                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                        IF  NOT AVAILABLE cra2lot   THEN
+                            IF  LOCKED cra2lot   THEN
                 DO: 
+                                    aux_cdcritic = 341.
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT.
+                                END.
+                            ELSE
+                                DO:
+                                    CREATE cra2lot.
+                                    ASSIGN cra2lot.dtmvtolt = par_dtresgat
+                                           cra2lot.cdagenci = 1 
+                                           cra2lot.cdbccxlt = 100 
+                                           cra2lot.nrdolote = 8452 
+                                           cra2lot.tplotmov = 1
+                                           cra2lot.cdoperad = par_cdoperad
+                                           cra2lot.cdhistor = 598
+                                           cra2lot.cdcooper = par_cdcooper.
+                                END.
+ 
+                        aux_cdcritic = 0.
+                        LEAVE.
+            
+                    END.   /*  Fim do DO .. TO  */
+
+                    IF  aux_cdcritic > 0   THEN
+                        DO:
+                            ASSIGN aux_dscritic = "".
+            
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                    
+                            UNDO RESGATE, RETURN "NOK".
+                        END.
+
+                    CREATE craplcm.
+                    ASSIGN craplcm.dtmvtolt = par_dtresgat
+                           craplcm.cdagenci = 1
+                           craplcm.cdbccxlt = 100 
+                           craplcm.nrdolote = 8452
+                           craplcm.nrdconta = craptdb.nrdconta
+                           craplcm.nrdctabb = craptdb.nrdctabb
+                           craplcm.nrdocmto = cra2lot.nrseqdig + 1
+                           craplcm.cdhistor = 598 
+                           craplcm.nrseqdig = cra2lot.nrseqdig + 1
+                           craplcm.vllanmto = aux_vltarres
+                           craplcm.cdpesqbb = "Docto " + 
+                                              STRING(craptdb.nrdocmto) +
+                                              "Trf de resg " +
+                                              STRING(aux_vltarres,
+                                                     "999.99")
+                           craplcm.vldoipmf = 0
+                           craplcm.cdcooper = par_cdcooper
+                           cra2lot.nrseqdig = craplcm.nrseqdig
+                           cra2lot.vlinfodb = cra2lot.vlinfodb + 
+                                                            craplcm.vllanmto
+                           cra2lot.vlcompdb = cra2lot.vlcompdb + 
+                                                            craplcm.vllanmto
+                           cra2lot.qtinfoln = cra2lot.qtinfoln + 1
+                           cra2lot.qtcompln = cra2lot.qtcompln + 1
+                           cra2lot.nrseqdig = cra2lot.nrseqdig + 1.
+                    */
                     IF NOT VALID-HANDLE(h-b1wgen0153) THEN
                         RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
 
@@ -15814,6 +16048,37 @@ PROCEDURE efetua_baixa_titulo:
                     IF (aux_vlttitcr /* tt-tarifas_dsctit.vlttitcr */ * aux_tottitul_cr) > 0 OR
                        (aux_vlttitsr /* tt-tarifas_dsctit.vlttitsr */ * aux_tottitul_sr) > 0 THEN
                         DO:
+                            /* Gera Tarifa de titulos descontados */ /*
+                            CREATE craplcm.
+                            ASSIGN craplcm.dtmvtolt = crablot.dtmvtolt 
+                                   craplcm.cdagenci = crablot.cdagenci
+                                   craplcm.cdbccxlt = crablot.cdbccxlt 
+                                   craplcm.nrdolote = crablot.nrdolote
+                                   craplcm.nrdconta = craptdb.nrdconta
+                                   craplcm.nrdocmto = crablot.nrseqdig + 1 
+                                   craplcm.vllanmto = (tt-tarifas_dsctit.vlttitcr * aux_tottitul_cr +
+                                                       tt-tarifas_dsctit.vlttitsr * aux_tottitul_sr   )
+                                   craplcm.cdhistor = 595
+                                   craplcm.nrseqdig = crablot.nrseqdig + 1 
+                                   craplcm.nrdctabb = craptdb.nrdconta
+
+                                   craplcm.nrautdoc = 0
+                                   craplcm.cdpesqbb = IF aux_tottitul_cr > 1 OR
+                                                         aux_tottitul_sr > 1 THEN
+                                                         "Tarifa de titulos " +
+                                                         "descontados"
+                                                      ELSE
+                                                        STRING(craptdb.nrdocmto)
+                                   craplcm.cdcooper = par_cdcooper
+                
+                                   crablot.nrseqdig = craplcm.nrseqdig
+                                   crablot.vlinfodb = crablot.vlinfodb + 
+                                                        aux_vllanmto
+                                   crablot.vlcompdb = crablot.vlcompdb + 
+                                                        aux_vllanmto
+                                   crablot.qtinfoln = crablot.qtinfoln + 1
+                                   crablot.qtcompln = crablot.qtcompln + 1 */
+
                             /* Gera Tarifa de titulos descontados */
                             RUN cria_lan_auto_tarifa IN h-b1wgen0153
                                (INPUT par_cdcooper,
@@ -19090,6 +19355,18 @@ PROCEDURE busca_dados_limite_manutencao:
                         crawlim.tpctrlim = 3              AND
                         crawlim.nrctrmnt = par_nrctrlim   AND
                         crawlim.insitlim = 6 /*não aprovada*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 8 /*expirada por decurso de prazo*/)
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 9 /*Anulado - PRJ438 - Paulo Martins - (Mouts)*/)                        
                        NO-LOCK NO-ERROR.
 
     IF  AVAILABLE crawlim  THEN
@@ -19107,6 +19384,12 @@ PROCEDURE busca_dados_limite_manutencao:
             IF  crawlim.insitlim = 6  THEN
                 ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
                                       " com a situação NÃO APROVADA".
+            IF  crawlim.insitlim = 8  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EXPIRADA DECURSO DE PRAZO".
+            IF  crawlim.insitlim = 9  THEN /*PRJ438 - Paulo Martins (Mouts)*/
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação ANULADA".                                      
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
