@@ -2764,6 +2764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,cat.flcatcee
               ,cat.flcatcoo
               ,DECODE(ctc.perdesconto, NULL, 0, ctc.perdesconto) perdesconto
+			  ,sgr.cdsubgru
           FROM crapcat cat
               ,crapsgr sgr
               ,tbcobran_categ_tarifa_conven ctc
@@ -2840,6 +2841,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                    ,pr_tag   => 'subgrupo'
                                    ,pr_atrib => 'dssubgru'
                                    ,pr_atval => rw_cat_sgr.dssubgru
+                                   ,pr_numva => vr_cont_sub
+                                   ,pr_des_erro => vr_dscritic);
+
+          GENE0007.pc_gera_atributo(pr_xml   => pr_retxml
+                                   ,pr_tag   => 'subgrupo'
+                                   ,pr_atrib => 'cdsubgru'
+                                   ,pr_atval => rw_cat_sgr.cdsubgru
                                    ,pr_numva => vr_cont_sub
                                    ,pr_des_erro => vr_dscritic);
 
