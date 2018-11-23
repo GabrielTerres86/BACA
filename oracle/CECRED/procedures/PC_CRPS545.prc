@@ -202,6 +202,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   vr_exc_fimprg    EXCEPTION;
   vr_dscritic VARCHAR2(4000);
   --
+  vr_exc_erro EXCEPTION;  
+  --
   
   PROCEDURE PC_EMAIL_DEVOLUCAO_MATERA IS
 
@@ -406,9 +408,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
             IF cr_crapcop%FOUND THEN
               vr_cdcooper := rw_craptco.cdcooper;
               vr_cdagenci := rw_craptco.cdagenci;
-              vr_dstpctcr := rw_craptco.nrdconta; --Função DEC????
+              vr_dscntacr := rw_craptco.nrdconta; 
               vr_cdagencr := rw_crapcop.cdagectl;
-              dbms_output.put_line(vr_cdcooper||' Ag '||vr_cdagenci||' Cnt '||vr_dstpctcr||' Agcr '||vr_cdagencr);
             END IF;
           END IF;
         ELSE
@@ -433,6 +434,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     WHEN others THEN
       -- Erro nao tratado
       pr_dscritic := 'Erro nao tratado na rotina verifica_conta_transferida --> '||sqlerrm;    
+      RAISE vr_exc_erro;     
       --  
   END verifica_conta_transferida;
 
@@ -875,10 +877,17 @@ BEGIN
   COMMIT; 
   --
 EXCEPTION
+  WHEN vr_exc_erro THEN
+    btch0001.pc_log_internal_exception(3);
+    pr_cdcritic := 0;
+    BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
+                              ,pr_ind_tipo_log  => 2
+                              ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra ||' --> '
+                                                || pr_dscritic
+                              ,pr_nmarqlog      => 'proc_batch.log');
+    ROLLBACK;
   WHEN OTHERS THEN
-    dbms_output.put_line(sqlerrm);
-    cecred.pc_internal_exception(pr_cdcooper => 3);
-    
+    btch0001.pc_log_internal_exception(3);
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
