@@ -2384,10 +2384,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => vr_new_rowid,
                                       pr_cdoperad => pr_cdoperad,
                                       pr_dtmvtolt => pr_dtmvtolt,
-                                      pr_dsmensag => 'Titulo integrado por arquivo - ' ||
+                                      pr_dsmensag => 'Boleto integrado por arquivo com sequencial ' ||
                                                      to_char(pr_rec_header.nrremass) ||
                                                      ' - Emissao ' ||
-                                                     to_char(pr_tab_crapcob(vr_idx_cob).dtdocmto,'dd/mm/RR'),
+                                                     to_char(pr_tab_crapcob(vr_idx_cob).dtdocmto,'dd/mm/RRRR'),
                                       pr_des_erro => vr_des_erro,
                                       pr_dscritic => vr_dscritic);
         -- Verifica se ocorreu erro
@@ -2621,6 +2621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrdocmto   crapcob.nrdocmto%TYPE;
     -- Quantidades   
     vr_qtd_proc   INTEGER;
+		
+		vr_dsocorre crapoco.dsocorre%TYPE;
 
   BEGIN
   
@@ -2779,6 +2781,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         --Cria log cobranca
         IF nvl(vr_instrucao.nrremass,0) > 0 THEN
+					-- Busca descrição da instrução
+					BEGIN
+						--
+						SELECT crapoco.dsocorre
+						  INTO vr_dsocorre
+							FROM crapoco
+						 WHERE crapoco.cdcooper = pr_cdcooper
+							 AND crapoco.cddbanco = vr_instrucao.cdbandoc
+							 AND crapoco.cdocorre = vr_instrucao.cdocorre
+							 AND crapoco.tpocorre = 1; -- 1 - Remessa
+						--
+					EXCEPTION
+						WHEN no_data_found THEN
+							vr_dscritic := 'Codigo de ocorrencia ' || vr_instrucao.cdocorre || ' nao encontrado!';
+							RAISE vr_processa_erro;
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao buscar a descricao da ocorrencia: ' || SQLERRM;
+							RAISE vr_processa_erro;
+					END;
+					--
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --> ROWID da Cobranca
                                        ,pr_cdoperad => pr_cdoperad      --> Operador
                                        ,pr_dtmvtolt => pr_dtmvtolt      --> Data movimento

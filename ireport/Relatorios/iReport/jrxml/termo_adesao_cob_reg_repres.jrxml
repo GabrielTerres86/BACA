@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-09-12T17:25:56 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_cob_registrada_representantes" language="groovy" pageWidth="460" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="460" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="5.0"/>
 	<property name="ireport.x" value="0"/>
@@ -14,7 +16,7 @@
 	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
 	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
 	<queryString language="xPath">
-		<![CDATA[/adesao/representantes/representante		]]>
+		<![CDATA[/adesao/representantes/representante]]>
 	</queryString>
 	<field name="nmrepres" class="java.lang.String">
 		<fieldDescription><![CDATA[nmrepres]]></fieldDescription>
@@ -29,7 +31,10 @@
 		<band height="18">
 			<printWhenExpression><![CDATA[!$F{nmrepres}.isEmpty()]]></printWhenExpression>
 			<frame>
-				<reportElement uuid="5344e291-c178-4c82-8257-653612a01006" x="235" y="0" width="215" height="18"/>
+				<reportElement x="230" y="0" width="220" height="18" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -39,7 +44,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement uuid="5344e291-c178-4c82-8257-653612a01006" mode="Transparent" x="10" y="0" width="440" height="18" isRemoveLineWhenBlank="true"/>
+				<reportElement mode="Transparent" x="10" y="0" width="440" height="18" isRemoveLineWhenBlank="true" uuid="5344e291-c178-4c82-8257-653612a01006"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0" lineColor="#000000"/>
@@ -49,14 +54,14 @@
 				</box>
 			</frame>
 			<staticText>
-				<reportElement uuid="466f794e-1f08-459f-9942-c8476ab7ada4" x="239" y="4" width="66" height="11"/>
+				<reportElement x="232" y="4" width="66" height="11" uuid="466f794e-1f08-459f-9942-c8476ab7ada4"/>
 				<textElement markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
 				</textElement>
 				<text><![CDATA[Cargo:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="466f794e-1f08-459f-9942-c8476ab7ada4" x="13" y="4" width="121" height="11"/>
+				<reportElement x="13" y="4" width="121" height="11" uuid="466f794e-1f08-459f-9942-c8476ab7ada4"/>
 				<textElement markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
 				</textElement>
@@ -68,7 +73,10 @@
 		<band height="14" splitType="Stretch">
 			<printWhenExpression><![CDATA[!$F{nmrepres}.isEmpty()]]></printWhenExpression>
 			<frame>
-				<reportElement uuid="5344e291-c178-4c82-8257-653612a01006" x="235" y="0" width="215" height="14"/>
+				<reportElement x="230" y="0" width="220" height="14" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0" lineColor="#FFFFFF"/>
@@ -78,7 +86,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement uuid="5344e291-c178-4c82-8257-653612a01006" x="10" y="0" width="440" height="14"/>
+				<reportElement x="10" y="0" width="440" height="14" uuid="5344e291-c178-4c82-8257-653612a01006"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0" lineColor="#FFFFFF"/>
@@ -88,14 +96,14 @@
 				</box>
 			</frame>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="b60c384a-79b2-48f1-bdb8-cb0bc8a0eca0" x="13" y="1" width="183" height="11"/>
+				<reportElement x="13" y="1" width="183" height="11" uuid="b60c384a-79b2-48f1-bdb8-cb0bc8a0eca0"/>
 				<textElement>
 					<font fontName="Courier New" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nmrepres}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="1f9710b5-9f06-4ecc-937f-c6d3f3359069" x="239" y="1" width="196" height="11"/>
+				<reportElement x="232" y="1" width="196" height="11" uuid="1f9710b5-9f06-4ecc-937f-c6d3f3359069"/>
 				<textElement>
 					<font fontName="Courier New" size="9"/>
 				</textElement>

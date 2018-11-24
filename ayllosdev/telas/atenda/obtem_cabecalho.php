@@ -118,9 +118,10 @@
 
                  16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
+				 15/11/2018 - Validacao e mudança do link de cobrança caso seja cooperativa piloto (Andre Clemer - Supero).
+
                  23/11/2018 - P442 - Inclusao de campos do Score + Remoção de campos de empresa (Thaise - Envolti)
                    
-
  * ********************************************************************************** */
 
 	session_start();	
@@ -317,7 +318,7 @@ if ( isset($cabecalho[25]->cdata) ) {
 	}
 if ( isset($cabecalho[28]->cdata) ) {
 	echo '$("#nmsocial","#frmCabAtenda").val("' . $cabecalho[28]->cdata . '");';
-	
+
 	// se for pessoa física
 	if ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata > 1) {
 		echo '$("#nmsocial","#frmCabAtenda").hide();';
@@ -329,7 +330,7 @@ if ( isset($cabecalho[28]->cdata) ) {
 		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
 	}
 }
-
+	
 	
 	// Dados complementares da conta/dv	
 if ( isset($compCabecalho[0]->cdata) ) {
@@ -595,6 +596,16 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			case "COBRANCA": {
 				$nomeRotina = "Cobran&ccedil;a";
                 $urlRotina = "cobranca";
+				if ( isset($cabecalho[30]->cdata) && $cabecalho[30]->cdata == 1 ) {
+					$urlRotina = "reciprocidade";
+				}
+                $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "RECIPROCIDADE": {
+				$nomeRotina = "Reciprocidade";
+                $urlRotina = "reciprocidade";
                 $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
 				$telaPermitadaAcessoBacen = 0;
 				break;

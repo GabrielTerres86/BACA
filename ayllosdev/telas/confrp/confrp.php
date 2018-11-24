@@ -1,11 +1,11 @@
 <? 
 /***************************************************************************************
- * FONTE        : CONFRP.php				Última alteração: --/--/----
- * CRIAÇÃO      : Lombardi
- * DATA CRIAÇÃO : Março/2016
+ * FONTE        : CONFRP.php				ï¿½ltima alteraï¿½ï¿½o: --/--/----
+ * CRIAï¿½ï¿½O      : Lombardi
+ * DATA CRIAï¿½ï¿½O : Marï¿½o/2016
  * OBJETIVO     : 
  
-	 Alterações   : 
+	 Alteraï¿½ï¿½es   : 
   
  
  **************************************************************************************/
@@ -20,7 +20,7 @@
 	
 	isPostMethod();
 	
-	// Guardo os parâmetos do POST em variáveis	
+	// Guardo os parï¿½metos do POST em variï¿½veis	
 	$idparame_reciproci    = (isset($_POST['idparame_reciproci']))    ? $_POST['idparame_reciproci']    : 0;
 $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslogcfg'] : 0;
 	$inpessoa              = (isset($_POST['inpessoa']))              ? $_POST['inpessoa']              : 0;
@@ -50,8 +50,13 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 	$xmlObjBuscaConf = getObjectXML($xmlResult);
 	
   $registros = $xmlObjBuscaConf->roottag->tags[0]->tags;
-  $perdesmax = $xmlObjBuscaConf->roottag->tags[1]->cdata;
-  $qtdregist = $xmlObjBuscaConf->roottag->tags[2]->cdata;
+
+  $qtdregist = $xmlObjBuscaConf->roottag->tags[1]->cdata;
+  
+	$vinculacoes = $xmlObjBuscaConf->roottag->tags[2]->tags;
+	$qtdvinculacoes = count($vinculacoes);
+	$vldescontomax_cee = $xmlObjBuscaConf->roottag->tags[3]->cdata;
+  $vldescontomax_coo = $xmlObjBuscaConf->roottag->tags[4]->cdata;		
   
 ?>
 <script type="text/javascript" src="../../telas/confrp/confrp.js"></script>
@@ -62,6 +67,7 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 <input type="hidden" id="hd_cp_desmensagem" value="<?echo $cp_desmensagem;?>">
 <input type="hidden" id="hd_executafuncao" value="<?echo $executafuncao;?>">
 <input type="hidden" id="hd_divanterior" value="<?echo $divanterior;?>">
+<input type="hidden" id="hd_qtdvinculacoes" value="<?echo $qtdvinculacoes;?>">
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
@@ -87,7 +93,7 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 									<table border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba(4,0,'@')" class="txtNormalBold"><?if($tela_anterior != 'pacote_tarifas') {?>Configuração do cálculo da Reciprocidade vinculada ao convênio:<?}else{?>Configuração do cálculo da Reciprocidade vinculada aos Servi&ccedil;os Cooperativos:<?}?></a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba(4,0,'@')" class="txtNormalBold"><?if($tela_anterior != 'pacote_tarifas') {?>Configura&ccedil;&otilde;es do c&aacute;lculo da Reciprocidade vinculada ao conv&ecirc;nio:<?}else{?>Configura&ccedil;&otilde;es do c&aacute;lculo da Reciprocidade vinculada aos Servi&ccedil;os Cooperativos:<?}?></a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
 										</tr>
@@ -95,58 +101,68 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 								</td>
 							</tr>
 							<tr>
-								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-									<div id="divCabecalho" style="width: 834px; align: center; left: 10px;">
-									<table>
+								<td style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+									<table style="table-layout: fixed;" width="100%">
 									  <thead>
 										<tr>
-										  <th align="center" width="43px">Ativo?</th>
-										  <th width="43px">Indicador</th>
-										  <th width="<?if($tela_anterior != 'pacote_tarifas') {?>288px<?}else{?>330px<?}?>"></th>
-										  <th width="88px">Tipo</th>
-										  <th width="98px">Valor Mínimo</th>
-										  <th width="98px">Valor Máximo</th>
-										  <th width="<?if($tela_anterior != 'pacote_tarifas') {?>53px<?}else{?>100px<?}?>"><?if($tela_anterior == 'pacote_tarifas') {echo "% Desc. Máx.";} else { echo "%Score";}?></th>
-										  <?if($tela_anterior != 'pacote_tarifas') {?><th width="83px">%Tolerância</th><?}?>
+										  <th width="20"></th>
+											<th width="310">Indicador</th>
+										  <th width="100">Tipo</th>
+										  <th width="100">Valor M&iacute;nimo</th>
+										  <th width="100">Valor M&aacute;ximo</th>
+											<th width="100">Desconto</th>
+											<th width="100">Peso</th>
 										<tr>
 									  </thead>
-									</table>
-								  </div>
-								  <div id="divConfrp" style="width: 100%; height: 158px; align: center; overflow: scroll; overflow-x: hidden;">
-									<table style="width: 834px">
 									  <tbody>
-									  <?
-										$i = 0;
+									  <? $i = 0;
 										foreach($registros as $registro) {
 										  $tpindicador = getByTagName($registro->tags,'tpindicador');
 										  ?> 
 										  <tr>
-											<td><table><tr><td align="center" width="50px"><input id="ativo<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativo') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13"></td></tr></table></td>
-											<td class="campo" ><input type="text" id="idindicador<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idindicador')?>"></td>
+											<td>
+												<input id="ativo<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativo') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13">
+												<input type="hidden" id="idindicador<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idindicador')?>">
+											</td>
 											<td class="campo" ><input type="text" id="nmindicador<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmindicador')?>"></td>
 											<td class="campo" ><input type="text" id="tpindicador<?echo $i?>" readonly size="10" value="<? echo $tpindicador?>"></td>
-											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlminimo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == 'Adesão' || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlminimo')?>"></td>
-											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlmaximo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == 'Adesão' || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlmaximo')?>"></td>
-											<td class="campo" ><input type="text" class="per" id="perscore<?echo $i?>" style="text-align:right" size="<?if($tela_anterior != 'pacote_tarifas') {?>3<?}else{?>9<?}?>" <?if ($consulta == 'S' || $consulta == 's'){?>readonly<?}?> value="<? echo getByTagName($registro->tags,'perscore')?>"></td>
-											<td <?if($tela_anterior != 'pacote_tarifas') { echo "class=\"campo\"";}?> ><input type="<?if($tela_anterior != 'pacote_tarifas') { echo "text";}else{ echo "hidden";} ?>" <?if (getByTagName($registro->tags,'tpindicador') != 'Adesão'){?>class="per"<?}?> id="pertolera<?echo $i?>" style="text-align:right" size="6" <?if (getByTagName($registro->tags,'tpindicador') == 'Adesão' || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<?if ($tela_anterior == 'pacote_tarifas'){echo '0,00';} else { echo getByTagName($registro->tags,'pertolera');}?>"></td>
+											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlminimo<?echo $i?>" style="text-align:right" size="11" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlminimo')?>"></td>
+											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlmaximo<?echo $i?>" style="text-align:right" size="11" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlmaximo')?>"></td>
+											<td class="campo" ><input type="text" id="desconto<?echo $i?>" class="per" style="text-align:right" size="8" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'desconto')?>">%</td>
+											<td class="campo" ><input type="text" id="peso<?echo $i?>" class="per" style="text-align:right" size="8" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'peso')?>">%</td>
+										  </tr>
+									   <? $i++;
+										}?>
+										<tr><td colspan="6">&nbsp;</td></tr>
+									  <? $i = 0;
+										foreach($vinculacoes as $registro) {
+										  ?> 
+										  <tr>
+											<td>
+												<input type="hidden" id="idvinculacao<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idvinculacao')?>">
+											</td>
+											<td class="campo" ><input type="text" id="nmvinculacao<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmvinculacao')?>"></td>
+											<td>&nbsp;</td>
+											<td>&nbsp;</td>
+											<td>&nbsp;</td>
+											<td class="campo" ><input type="text" class="per" id="descontovinculacao<?echo $i?>" style="text-align:right" size="8" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_desconto')?>">%</td>
+											<td class="campo" ><input type="text" class="per" id="pesovinculacao<?echo $i?>" style="text-align:right" size="8" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_peso')?>">%</td>
 										  </tr>
 									   <? $i++;
 										}?>
 									  </tbody>
 									</table>
-													</div>
-								  <br>
-								  <div>
-									<table>
+									<table style="margin: 10px 0px 0px 10px;">
 									  <tr>
-										<td><?if ($tela_anterior != 'pacote_tarifas'){?>% Máximo de Desconto Permitido ao Cálculo:<?}?></td>
-										<td <?if ($tela_anterior != 'pacote_tarifas'){?>class="campo"<?}?>><input class="per" id="perdesmax" type="<?if ($tela_anterior == 'pacote_tarifas'){?>hidden<?}else{?>text<?}?>" size="5" <?if (strtoupper($consulta) == 'S'){?>readonly<?}?> value="<?if ($tela_anterior == 'pacote_tarifas'){echo '100,00';} else { echo $perdesmax;}?>"></td>
-									  </tr>
+											<td>Desconto m&aacute;ximo permitido para CEE:</td>
+											<td class="campo"><input class="per" id="vldescontomax_cee" type="text" size="5" value="<? echo $vldescontomax_cee; ?>">%</td>
+										</tr>
+										<tr>
+											<td>Desconto m&aacute;ximo permitido para COO:</td>
+											<td class="campo"><input class="per" id="vldescontomax_coo" type="text" size="5" value="<? echo $vldescontomax_coo; ?>">%</td>
+										</tr>
 									</table>
-								  </div>
-								  <br>
-								  <div>
-									<table>
+									<table style="margin: 0 auto;">
 									  <tr>
 										<td width="70px" align="center"> <a href="#" class="botao" id="btVoltar" onClick="$('#<?echo $cp_desmensagem?>').val('NOK');fechaRotina($('#divUsoGenerico')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>); return false;">Voltar</a></td>
 										<?if ($consulta != "S" && $consulta != "s") {
@@ -158,8 +174,6 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 										<?}?>
 									  </tr>
 									</table>
-								  </div>
-								  <br>
 								</td>
 							</tr>
 						</table>			    

@@ -21,6 +21,18 @@
  */	
 ?>
 
+<form action="<?php echo $UrlSite;?>telas/cobran/manter_rotina.php" method="post" id="frmExportarREM" name="frmExportarREM">
+	<input type="hidden" id="operacao" name="operacao" value="ER">
+	<input type="hidden" id="nrdconta" name="nrdconta" value="">
+	<input type="hidden" id="ininrdoc" name="ininrdoc" value="">
+	<input type="hidden" id="fimnrdoc" name="fimnrdoc" value="">
+	<input type="hidden" id="consulta" name="consulta" value="2">
+	<input type="hidden" id="tpconsul" name="tpconsul" value="">
+	<input type="hidden" id="flgregis" name="flgregis" value="1">
+	<input type="hidden" id="inestcri" name="inestcri" value="">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+</form>
+
 <form id="frmTabela" class="formulario" >
 	<fieldset>
 	<legend>Boleto</legend>
@@ -204,7 +216,7 @@
 	<li><? echo utf8ToHtml('Conta Base:'); ?></li>
 	<li id="nrdctabb"></li>
 	</ul>
-	</div>
+	</div>	
 	
 	<div id="linha6">
 	<ul class="complemento">
@@ -222,7 +234,11 @@
 	
 	</fieldset>
 </form>
-
+<style>
+	#divBotoes a.botao {
+		margin-top: 3px;
+	}
+</style>
 <div id="divBotoes" style="padding-bottom:7px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<?php
@@ -230,7 +246,10 @@
 	?>
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
-		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="buscaExportar('C'); return false;">Exportar Consulta</a>
+		<?php if ($consulta == 2) { ?>
+		<a href="#" class="botao" onclick="geraRemessa(false); return false;">Gerar Arquivo Remessa</a>
+		<?php } ?>
 		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;"><? echo utf8ToHtml('Imprimir carta anuência');  ?></a>
 	<?php
 	}

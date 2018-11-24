@@ -18,9 +18,6 @@
  *                26/12/2017 - Ajustar o controle de critica para exibir corretamente as mensagens de erro devolvidas pelo Oracle (Douglas - Chamado 820998)
  * -------------- 
  */
-?> 
-
-<?	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -68,6 +65,7 @@
 	$vlabatim 		 = (isset($_POST['vlabatim'])) ? $_POST['vlabatim'] : 0;
 	$vldescto 		 = (isset($_POST['vldescto'])) ? $_POST['vldescto'] : 0;
 	$qtdiaprt		 = (isset($_POST['qtdiaprt'])) ? $_POST['qtdiaprt'] : 0;
+	$inestcri		 = (isset($_POST['inestcri'])) ? $_POST['inestcri'] : 0;
 		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
@@ -77,6 +75,7 @@
 	switch( $operacao ) {
 		case 'BA': $procedure = 'busca_associado'; 																						 	break;
 		case 'EA': $procedure = 'exporta_boleto'; 		$dsiduser = $nmarqint;															 	break;
+		case 'ER': $procedure = 'exporta_remessa'; 		$dsiduser = $nmarqint;															 	break;
 		case 'VI': $procedure = 'valida_instrucoes'; 	$retornoAposErro = 'bloqueiaFundo($(\'#divRotina\'));';							 	break;
 		case 'GI': $procedure = 'grava_instrucoes'; 	$retornoAposErro = 'bloqueiaFundo($(\'#divRotina\'));';	 $nrdconta = $nrdcoaux;  	break;
 		case 'IA': $procedure = 'integra_arquivo'; 		$dsnmarqv = $nmarqint;	$dsiduser = session_id();	arrayArquivos($arquivos); 		break;							 break;
@@ -97,8 +96,44 @@
 	}
 	
 	// Monta o xml dinâmico de acordo com a operação 
+	if ($operacao == 'ER') {
 	$xml  = "";
 	$xml .= "<Root>";
+		$xml .= "  <Dados>";
+		$xml .= "	 <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "	 <flgregis>".$flgregis."</flgregis>";
+		$xml .= "	 <tipo_consulta>".$tpconsul."</tipo_consulta>";
+		$xml .= "	 <consulta>".$consulta."</consulta>";
+		$xml .= "	 <inestcri>".$inestcri."</inestcri>";
+		$xml .= "	 <ini_documento>".$ininrdoc."</ini_documento>";
+		$xml .= "	 <fim_documento>".$fimnrdoc."</fim_documento>";
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "COBRAN", "GERA_REMESSA_CNAB240", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		//print_r($xmlObjeto);exit;
+
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if ($msgErro == "") {
+				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+			}
+			if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
+			
+			echo 'hideMsgAguardo();';
+			echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+			exit;
+		}
+		
+		$nmarqrem = $xmlObjeto->roottag->tags[0]->cdata;
+		visualizaCSV($nmarqrem);
+		exit;
+
+	} else {
+		$xml  = "";
+		$xml .= "<Root>";
 	$xml .= "  <Cabecalho>";
 	$xml .= "	    <Bo>b1wgen0010.p</Bo>";
 	$xml .= "        <Proc>".$procedure."</Proc>";
@@ -174,6 +209,8 @@
 		exit();
 	}
 	
+	}
+	
 	// Associado
 	if ( $operacao == 'BA' ) {
 		$associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado
@@ -214,7 +251,7 @@
 			exit();
 		}		
 		
-	} else if ( $operacao == 'EA' ) {
+	} else if ( $operacao == 'EA' || $operacao == 'ER' ) {
 		exibirErro('inform','Arquivo gerado com sucesso!','Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 	
 	} else if ( $operacao == 'VI' ) {

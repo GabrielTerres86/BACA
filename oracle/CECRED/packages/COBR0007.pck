@@ -289,6 +289,18 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
                               ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
                               ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
+  -- Procedure para exportar boletos emitidos
+  PROCEDURE pc_exporta_boletos_emitidos(pr_cdcooper crapcob.cdcooper%TYPE --> Codigo da cooperativa
+                                       ,pr_nrdconta crapcob.nrdconta%TYPE --> Nro da conta cooperado
+                                       ,pr_dtmvtini crapcob.dtmvtolt%TYPE --> Data de inicio da emissao
+                                       ,pr_dtmvtfim crapcob.dtmvtolt%TYPE --> Data de fim da emissao
+                                       ,pr_incobran crapcob.incobran%TYPE --> Situacao da cobranca
+                                       ,pr_nmdsacad VARCHAR2 --> Nome do sacado/pagador
+                                       ,pr_nmarqexp OUT VARCHAR2 --> Caminho e nome do arquivo a ser exportado
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                       );
+
 END COBR0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
@@ -4310,7 +4322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
                                        ,pr_cdoperad => pr_cdoperad   --Operador
                                        ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                       ,pr_dsmensag => 'Instrucao de Cancelamento de Protesto' --Descricao Mensagem
+                                       ,pr_dsmensag => 'Pedido de cancelamento de Protesto' --Descricao Mensagem
                                        ,pr_des_erro => vr_des_erro   --Indicador erro
                                        ,pr_dscritic => vr_dscritic); --Descricao erro                    
 
@@ -4502,7 +4514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
                                        ,pr_cdoperad => pr_cdoperad   --Operador
                                        ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                       ,pr_dsmensag => 'Instrucao de Cancelamento de Protesto' --Descricao Mensagem
+                                       ,pr_dsmensag => 'Pedido de cancelamento de Protesto' --Descricao Mensagem
                                        ,pr_des_erro => vr_des_erro   --Indicador erro
                                        ,pr_dscritic => vr_dscritic); --Descricao erro
 
@@ -6637,7 +6649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         --Montar Motivo
-        vr_dsmotivo:= 'Instrucao de Baixa - Decurso Prazo';
+        vr_dsmotivo:= 'Boleto baixado automaticamente por decurso de prazo - ' || (pr_dtmvtolt - rw_crapcob.dtvencto) || ' dias apos o vencimento';
         --Cria log cobranca
         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
                                      ,pr_cdoperad => pr_cdoperad   --Operador
@@ -7493,7 +7505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad   --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                 ,pr_dsmensag => 'Concessao de Abatimento Vlr: R$ ' || 
+                                 ,pr_dsmensag => 'Concessao de Abatimento no valor de R$ ' || 
                                                  TRIM(to_char(pr_vlabatim,'9g999g990d00')) --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro   --Indicador erro
                                  ,pr_dscritic => vr_dscritic); --Descricao erro
@@ -7886,7 +7898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           CLOSE cr_crapcco;
           --Protesta titulo Migrado
           COBR0007.pc_inst_titulo_migrado (pr_idregcob => rw_crapcob --Rowtype da Cobranca
-                                          ,pr_dsdinstr => 'Cancelamento de Abatimento' --Descricao da Instrucao
+                                          ,pr_dsdinstr => 'Cancelamento de abatimento' --Descricao da Instrucao
                                           ,pr_dtaltvct => NULL       --Data Alteracao Vencimento
                                           ,pr_vlaltabt => 0          --Valor Alterado Abatimento
                                           ,pr_nrdctabb => rw_crapcco.nrdctabb --Numero da Conta BB
@@ -8128,7 +8140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                    ,pr_cdoperad => pr_cdoperad   --Operador
                                    ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                   ,pr_dsmensag => 'Cancelamento de Abatimento'   --Descricao Mensagem
+                                   ,pr_dsmensag => 'Cancelamento de abatimento'   --Descricao Mensagem
                                    ,pr_des_erro => vr_des_erro   --Indicador erro
                                    ,pr_dscritic => vr_dscritic); --Descricao erro
       --Se ocorreu erro
@@ -8220,6 +8232,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Em um momento não estava logando o retorno da cobr0006.pc_prep_retorno_cooper_90
     --                            Agora vai logar, mas sem parar a execução do programa
     --                            (Ana - Envolti - Ch. REQ0011728 / REQ0031757)
+	--
+	--               01/10/2018 - Removida validacao quando data de vencto for menor que vencto atual
+    --                            Andre Clemer (Supero)
+	--
     --               07/11/2018 - Ajuste de mensagem para usuario final
     --                            (Belli - Envolti - Ch. INC0026760)
     --
@@ -8403,7 +8419,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       CLOSE cr_crapcre;
     END IF;
 
-    -- Validar parametro de tela
+    /*
+     * REMOVIDA VALIDAÇÃO PJ341 - Reciprocidade (Quickwins)
+     *
+    **/
+    /*
     IF pr_dtvencto <= rw_crapcob.dtvencto THEN
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
@@ -8431,6 +8451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                      ||pr_dtvencto||' <= '||rw_crapcob.dtvencto;  --Data Vencimento inferior ao atual - Alteracao Vencto nao efetuada
       RAISE vr_exc_erro;
     END IF;
+    */
 
     --  AQUI - Rever que valor sera esse "120" 
     IF (pr_dtvencto - rw_crapcob.dtvencto) > 120 THEN
@@ -8843,10 +8864,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Alter. Vencto. De ' || 
-                                                 to_char(vr_dtvencto_old,'dd/mm/yy') ||
+                                 ,pr_dsmensag => 'Alteracao de vencimento de ' || 
+                                                 to_char(vr_dtvencto_old,'dd/mm/yyyy') ||
                                                  ' para ' ||
-                                                 to_char(pr_dtvencto,'dd/mm/yy')  --Descricao Mensagem
+                                                 to_char(pr_dtvencto,'dd/mm/yyyy')  --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
     --Se ocorreu erro
@@ -9552,7 +9573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Concessao de Desconto Vlr: R$ ' ||
+                                 ,pr_dsmensag => 'Concessao de desconto no valor de R$ ' ||
                                                  TRIM(to_char(pr_vldescto,'9g999g990d00')) -- Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
@@ -9950,7 +9971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         CLOSE cr_crapcco;
         --Protesta titulo Migrado
         COBR0007.pc_inst_titulo_migrado (pr_idregcob => rw_crapcob --Rowtype da Cobranca
-                                        ,pr_dsdinstr => 'Cancelamento de Desconto' --Descricao da Instrucao
+                                        ,pr_dsdinstr => 'Cancelamento de desconto' --Descricao da Instrucao
                                         ,pr_dtaltvct => NULL       --Data Alteracao Vencimento
                                         ,pr_vlaltabt => 0          --Valor Alterado Abatimento
                                         ,pr_nrdctabb => rw_crapcco.nrdctabb --Numero da Conta BB
@@ -10180,7 +10201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Cancelamento de Desconto'               --Descricao Mensagem
+                                 ,pr_dsmensag => 'Cancelamento de desconto'               --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
     --Se ocorreu erro
@@ -15464,6 +15485,246 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic); --complemento para INC0026760
 
   END pc_inst_envio_sms;
+
+  PROCEDURE pc_exporta_boletos_emitidos(pr_cdcooper crapcob.cdcooper%TYPE --> Codigo da cooperativa
+                                         ,pr_nrdconta crapcob.nrdconta%TYPE --> Nro da conta cooperado
+                                         ,pr_dtmvtini crapcob.dtmvtolt%TYPE --> Data de inicio da emissao
+                                         ,pr_dtmvtfim crapcob.dtmvtolt%TYPE --> Data de fim da emissao
+                                         ,pr_incobran crapcob.incobran%TYPE --> Situacao da cobranca
+                                         ,pr_nmdsacad VARCHAR2 --> Nome do sacado/pagador
+                                         ,pr_nmarqexp OUT VARCHAR2 --> Caminho e nome do arquivo a ser exportado
+                                         ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                          ) IS
+    BEGIN
+    
+        /* .............................................................................
+        
+        Programa: pc_exporta_boletos_emitidos
+        Sistema : Ayllos Web
+        Autor   : Andre Clemer - Supero
+        Data    : Outubro/2018                 Ultima atualizacao:
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para buscar parametrizacao de Negativacao Serasa.
+        
+        Alteracoes:
+        
+        ..............................................................................*/
+        DECLARE
+        
+            -- Variavel de criticas
+            vr_cdcritic crapcri.cdcritic%TYPE;
+            vr_dscritic VARCHAR2(10000);
+        
+            -- Tratamento de erros
+            vr_exc_saida EXCEPTION;
+        
+            -- Cria o registro de data
+            rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+        
+            -- Variaveis internas
+            vr_dsarquiv       CLOB := NULL;
+            vr_texto_completo CLOB := NULL;
+            vr_caminho_arq    VARCHAR2(300);
+            vr_nmarqind       VARCHAR2(100);
+        
+            ---------------------------- CURSORES -----------------------------------
+            -- Buscar registros crapcob
+            CURSOR cr_crapcob(pr_cdcooper crapcob.cdcooper%TYPE
+                             ,pr_nrdconta crapcob.nrdconta%TYPE
+                             ,pr_dtmvtini crapcob.dtmvtolt%TYPE
+                             ,pr_dtmvtfim crapcob.dtmvtolt%TYPE
+                             ,pr_incobran crapcob.incobran%TYPE
+                             ,pr_nmdsacad VARCHAR2) IS
+                SELECT crapcob.nrdconta
+                      ,crapcob.nrcnvcob
+                      ,crapcco.dsorgarq -- 01. Convênio (Internet ou Software)
+                      ,crapsab.nmdsacad -- 02. Pagador - Nome
+                      ,crapass.nrcpfcgc -- 03. Pagador - CPF/CNPJ
+                      ,crapsab.nmcidsac -- 02. Pagador - Cidade
+                      ,crapsab.cdufsaca -- 02. Pagador - UF
+                      ,crapsab.dsendsac -- 02. Pagador - Endereço
+                      ,crapsab.nmbaisac -- 02. Pagador - Bairro
+                      ,crapsab.nrinssac -- 02. Pagador - Nro Inscricao
+                      ,crapcob.dtmvtolt -- 04. Data emissão 
+                      ,crapcob.dtvencto -- 05. Data vencimento
+                      ,crapcob.nrdocmto -- 06. Número do documento
+                      ,crapcob.nrnosnum -- 07. Número do boleto
+                      ,crapcob.vltitulo -- 08. Valor do boleto
+                      ,crapcob.vldpagto -- 09. Valor Pago
+                      ,crapcob.incobran
+                      ,crapcob.flgdprot -- 10. Protesto ou Negativação
+                      ,crapcob.qtdiaprt -- Quantidade de dias para protesto
+                      ,crapcob.flserasa -- 10. Protesto ou Negativação
+                      ,crapcob.qtdianeg -- Quantidade de dias para negativacao
+                      ,crapcob.insmsant -- Indicador SMS dia anterior ao vencto
+                      ,crapcob.insmsvct -- Indicador SMS no vencto
+                      ,crapcob.insmspos -- Indicador SMS apos vencto
+                      ,crapcob.insitcrt -- 16. Situação do boleto
+                -- ,crapcob.dtmvtolt -- 17. Data do movimento
+                  FROM crapcob
+                      ,crapceb
+                      ,crapass
+                      ,crapsab
+                      ,crapcco
+                      ,tbcobran_retorno_ieptb ret
+                 WHERE crapceb.cdcooper = crapcob.cdcooper
+                   AND crapceb.nrdconta = crapcob.nrdconta
+                   AND crapceb.nrconven = crapcob.nrcnvcob
+                      
+                   AND crapsab.cdcooper = crapcob.cdcooper
+                   AND crapsab.nrdconta = crapcob.nrdconta
+                   AND crapsab.nrinssac = crapcob.nrinssac
+                      
+                   AND crapass.cdcooper = crapcob.cdcooper
+                   AND crapass.nrdconta = crapcob.nrdconta
+                      
+                   AND crapcco.cdcooper = crapcob.cdcooper
+                   AND crapcco.nrconven = crapcob.nrcnvcob
+                   AND crapcco.cddbanco = crapcob.cdbandoc
+                      
+                   AND ret.cdcooper(+) = crapcob.cdcooper
+                   AND ret.nrdconta(+) = crapcob.nrdconta
+                   AND ret.nrcnvcob(+) = crapcob.nrcnvcob
+                   AND ret.nrdocmto(+) = crapcob.nrdocmto
+                      
+                      -- filtro por cooperativa
+                   AND (crapcob.cdcooper = pr_cdcooper OR pr_cdcooper IS NULL)
+                      -- filtro por numero da conta
+                   AND (crapcob.nrdconta = pr_nrdconta OR pr_nrdconta IS NULL)
+                      -- filtro por data de emissao
+                   AND (crapcob.dtmvtolt BETWEEN nvl(to_date(pr_dtmvtini, 'DD/MM/RRRR'), '01/01/1900') AND
+                       nvl(to_date(pr_dtmvtfim, 'DD/MM/RRRR'), trunc(SYSDATE)))
+                      -- filtro por situacao
+                   AND (crapcob.incobran = pr_incobran OR pr_incobran IS NULL)
+                      -- filtro por nome do sacado/pagador
+                   AND (upper(crapsab.nmdsacad) LIKE '%' || upper(pr_nmdsacad) || '%' OR pr_nmdsacad IS NULL)
+                      
+                   AND rownum < 2;
+            rw_crapcob cr_crapcob%ROWTYPE;
+        
+            --------------------------- SUBROTINAS INTERNAS --------------------------
+            -- Subrotina para escrever texto na variável CLOB do XML
+            PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
+                                    ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+            BEGIN
+                gene0002.pc_escreve_xml(vr_dsarquiv, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+            END;
+        
+        BEGIN
+        
+            -- Abre o cursor de data
+            OPEN btch0001.cr_crapdat(pr_cdcooper);
+            FETCH btch0001.cr_crapdat
+                INTO rw_crapdat;
+            CLOSE btch0001.cr_crapdat;
+        
+            -- Inicializar o CLOB
+            dbms_lob.createtemporary(vr_dsarquiv, TRUE);
+            dbms_lob.open(vr_dsarquiv, dbms_lob.lob_readwrite);
+        
+            -- Cabecalho
+            pc_escreve_xml('Conta;Nro.Convenio;Origem;Nome Sacado;CPF/CNPJ;Cidade;UF;Endereco;Bairro;' ||
+                           'Nro Inscricao;Data Emissao;Data Vencto;Nro Documento;Nosso Nro;Vlr Titulo;' ||
+                           'Vlr Pago;Ind. Cobran.;Prot. Aut.;Qtd. Prot.;Neg. Serasa;Qtd. Neg.;' ||
+                           'SMS Ant. Vencto;SMS Vencto;SMS Pos Vencto;Situacao');
+        
+            -- Montar linhas
+            FOR rw_crapcob IN cr_crapcob(pr_cdcooper
+                                        ,pr_nrdconta
+                                        ,pr_dtmvtini
+                                        ,pr_dtmvtfim
+                                        ,pr_incobran
+                                        ,pr_nmdsacad) LOOP
+                pc_escreve_xml(chr(10));
+                pc_escreve_xml(rw_crapcob.nrdconta || ';');
+                pc_escreve_xml(rw_crapcob.nrcnvcob || ';');
+                pc_escreve_xml(rw_crapcob.dsorgarq || ';');
+                pc_escreve_xml(rw_crapcob.nmdsacad || ';');
+                pc_escreve_xml(rw_crapcob.nrcpfcgc || ';');
+                pc_escreve_xml(rw_crapcob.nmcidsac || ';');
+                pc_escreve_xml(rw_crapcob.cdufsaca || ';');
+                pc_escreve_xml(rw_crapcob.dsendsac || ';');
+                pc_escreve_xml(rw_crapcob.nmbaisac || ';');
+                pc_escreve_xml(rw_crapcob.nrinssac || ';');
+                pc_escreve_xml(rw_crapcob.dtmvtolt || ';');
+                pc_escreve_xml(rw_crapcob.dtvencto || ';');
+                pc_escreve_xml(rw_crapcob.nrdocmto || ';');
+                pc_escreve_xml(rw_crapcob.nrnosnum || ';');
+                pc_escreve_xml(rw_crapcob.vltitulo || ';');
+                pc_escreve_xml(rw_crapcob.vldpagto || ';');
+                pc_escreve_xml(rw_crapcob.incobran || ';');
+                pc_escreve_xml(rw_crapcob.flgdprot || ';');
+                pc_escreve_xml(rw_crapcob.qtdiaprt || ';');
+                pc_escreve_xml(rw_crapcob.flserasa || ';');
+                pc_escreve_xml(rw_crapcob.qtdianeg || ';');
+                pc_escreve_xml(rw_crapcob.insmsant || ';');
+                pc_escreve_xml(rw_crapcob.insmsvct || ';');
+                pc_escreve_xml(rw_crapcob.insmspos || ';');
+                pc_escreve_xml(rw_crapcob.insitcrt || chr(10));
+            END LOOP;
+        
+            IF cr_crapcob%ISOPEN THEN
+                CLOSE cr_crapcob;
+            END IF;
+        
+            -- Finaliza documento
+            pc_escreve_xml('', TRUE);
+        
+            -- Busca o diretorio da cooperativa conectada
+            vr_caminho_arq := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                                   ,pr_cdcooper => pr_cdcooper
+                                                   ,pr_nmsubdir => 'arq');
+        
+            vr_nmarqind := 'exporta_boletos.csv';
+        
+            -- Escreve o clob no arquivo físico
+            gene0002.pc_clob_para_arquivo(pr_clob     => vr_dsarquiv
+                                         ,pr_caminho  => vr_caminho_arq
+                                         ,pr_arquivo  => vr_nmarqind
+                                         ,pr_des_erro => vr_dscritic);
+        
+            -- Liberando a memória alocada pro CLOB
+            dbms_lob.close(vr_dsarquiv);
+            dbms_lob.freetemporary(vr_dsarquiv);
+        
+            pr_nmarqexp := vr_caminho_arq || '/' || vr_nmarqind;
+        
+            --> Garantir que o arquivo foi gerado
+            IF gene0001.fn_exis_arquivo(pr_caminho => pr_nmarqexp) = FALSE THEN
+                vr_dscritic := 'Não foi possivel gerar arquivo, tente novamente.';
+            END IF;
+        
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_saida;
+            END IF;
+        
+        EXCEPTION
+            WHEN vr_exc_saida THEN
+                IF vr_cdcritic <> 0 THEN
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                ELSE
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic;
+                END IF;
+            
+                ROLLBACK;
+            
+            WHEN OTHERS THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := 'Erro geral na rotina da tela PARPRT: ' || SQLERRM;
+            
+                ROLLBACK;
+        END;
+    
+    END pc_exporta_boletos_emitidos;
 
 END COBR0007;
 /

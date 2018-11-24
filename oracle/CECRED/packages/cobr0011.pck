@@ -2548,7 +2548,7 @@ create or replace package body cecred.cobr0011 IS
     END IF;
 
 		-- Criar Log Cobranca
-		vr_dsmotivo:= 'Confirmada entrada em cartório';
+		vr_dsmotivo:= 'Boleto em cartorio';
 		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
 																 ,pr_cdoperad => pr_cdoperad        --Operador
 																 ,pr_dtmvtolt => pr_crapdat.dtmvtolt--Data movimento

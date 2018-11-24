@@ -3,26 +3,26 @@
 	/*******************************************************************
 	Fonte: tab096.php                                                		
 	Autor: Lucas Reinert                                             		
-	Data : Fevereiro/2016                 Última Alteração: --/--/----   		
+	Data : Fevereiro/2016                 ï¿½ltima Alteraï¿½ï¿½o: --/--/----   		
 	                                                                 		
 	Objetivo  : Mostrar tela CADIDR
 	                                                                    
-	Alterações: 															
+	Alteraï¿½ï¿½es: 															
 	*******************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variï¿½veis globais de controle, e biblioteca de funï¿½ï¿½es	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
 	require_once("../../includes/controla_secao.php");
 	require_once('../../class/xmlfile.php');
 	
 	
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mï¿½todo POST
 	isPostMethod();
 	
-	// Carrega permissões do operador
+	// Carrega permissï¿½es do operador
 	include("../../includes/carrega_permissoes.php");	
 			
 ?>
@@ -76,22 +76,36 @@
 								</tr>				
 								<tr>
 									<td id="tdConteudoTela" class="tdConteudoTela" align="center"> 
-										<table width="100%"  border= "0" cellpadding="3" cellspacing="0">
+										<table width="550"  border= "0" cellpadding="3" cellspacing="0">
+											<tr>													
+												<td>								
+													<table border="0" cellspacing="0" cellpadding="0">
+													<tr>
+														<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
+														<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="trocaVisao('');acessaOpcaoAba(0);return false;">Indicadores</a></td>
+														<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
+														<td width="1"></td>
+
+														<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
+														<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="trocaVisao('');acessaOpcaoAba(1);return false;">Vincula&ccedil;&otilde;es</a></td>
+														<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
+														<td width="1"></td>
+													</tr>
+													</table>																		
+												</td>
+											</tr>
 											<tr>
-												<td style="border: 1px solid #F4F3F0;">
-													<table width="100%"  border= "0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
-														<tr>
-															<td align="center">
-																<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
-																	<tr>
-																		<td>																			
-																			<fieldset>
-																				<legend>Indicadores</legend>
+												<td style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+													<div id="divAba0" class="clsAbas">
+														<table width="100%"  border= "0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
+															<tr>
+																<td align="center">
+																	<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+																		<tr>
+																			<td>																			
 																				<div id="divTela">																																												
 																					<div id="divTabela">
-																						<div id="divConsulta">
-																							
-																						</div>
+																						<div id="divConsulta"></div>
 																						<?php /*include('obtem_consulta.php');*/ ?>
 																					</div>
 																					
@@ -101,20 +115,53 @@
 																						<span></span>
 																						<a href="#" class="botao" id="btAlterar" onClick="verificaAcesso('A');" style="text-align: right;">Alterar</a>
 																						<a href="#" class="botao" id="btIncluir" onClick="verificaAcesso('I');" style="text-align: right;">Incluir</a>
-																						<a href="#" class="botao" id="btExcluir" onClick="selecionaIndicador('E');" style="text-align: right;">Excluir</a>
+																						<a href="#" class="botao" id="btExcluir" onClick="selecionaLinha('E');" style="text-align: right;">Excluir</a>
 																						<a href="#" class="botao" id="btVoltar"  onClick="trocaVisao('');" style="display: none; text-align: right;">Voltar</a>
 																						<a href="#" class="botao" id="btProsseguir" style="display: none; text-align: right;">Prosseguir</a>
 																					</div>																				
 																					
 																				</div>
-																			</fieldset>
-																		</td>
-																	</tr>
-																</table>
-																
-															</td>		
-														</tr>
-													</table>		
+																			</td>
+																		</tr>
+																	</table>
+																	
+																</td>		
+															</tr>
+														</table>
+													</div> <!-- Fim aba "Indicadores" -->
+
+													<div id="divAba1" class="clsAbas">
+														<table width="100%"  border= "0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
+															<tr>
+																<td align="center">
+																	<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+																		<tr>
+																			<td>																			
+																				<div id="divTela">																																												
+																					<div id="divTabela">
+																						<div id="divConsulta"></div>
+																					</div>
+																					
+																					<?php include('form_vinculacoes.php'); ?>
+																					
+																					<div id="divBotoes"  style="margin-top:5px; margin-bottom :10px; text-align: center;" >
+																						<span></span>
+																						<a href="#" class="botao" id="btAlterar" onClick="verificaAcesso('A');" style="text-align: right;">Alterar</a>
+																						<a href="#" class="botao" id="btIncluir" onClick="verificaAcesso('I');" style="text-align: right;">Incluir</a>
+																						<a href="#" class="botao" id="btExcluir" onClick="selecionaLinha('E');" style="text-align: right;">Excluir</a>
+																						<a href="#" class="botao" id="btVoltar"  onClick="trocaVisao('');" style="display: none; text-align: right;">Voltar</a>
+																						<a href="#" class="botao" id="btProsseguir" style="display: none; text-align: right;">Prosseguir</a>
+																					</div>																				
+																					
+																				</div>
+																			</td>
+																		</tr>
+																	</table>
+																	
+																</td>		
+															</tr>
+														</table>
+													</div> <!-- Fim aba "Vinculacoes" -->
 												</td>
 											</tr>
 										</table>		

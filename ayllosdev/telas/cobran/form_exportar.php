@@ -8,20 +8,16 @@
  * ALTERAÇÕES   :
  * 001: [30/11/2012] David (CECRED) : Validar session
  */	 
+session_start();
+
+// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+require_once("../../includes/config.php");
+require_once("../../includes/funcoes.php");
+require_once("../../includes/controla_secao.php");
+isPostMethod();	
+
+$tipoArq = ((!empty($_POST['tipoArq'])) ? $_POST['tipoArq'] : 'C');
 ?>
-
-<?
-
-	session_start();
-	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
-	require_once("../../includes/config.php");
-	require_once("../../includes/funcoes.php");
-	require_once("../../includes/controla_secao.php");
-	isPostMethod();	
-	
-?>
-
 <table cellpadding="0" cellspacing="0" border="0" >
 	<tr>
 		<td align="center">		
@@ -60,9 +56,9 @@
 										<form id="frmExportar" name="frmExportar" class="formulario" onsubmit="return false;">
 
 											<fieldset>
-												<legend>Exportar Consulta</legend>
+												<legend>Exportar <?php echo $tipoArq == 'C' ? 'Consulta' : 'Remessa' ?></legend>
 												<label for="nmarqint">Arquivo:</label>
-												<input name="nmarqint" id="nmarqint" type="text" value="consulta.csv" />
+												<input name="nmarqint" id="nmarqint" type="text" value="<?php echo $tipoArq == 'C' ? 'consulta.csv' : 'remessa.rem' ?>" />
 												
 											</fieldset>	
 

@@ -155,7 +155,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
          rw_crapcob.inserasa IN (1,2) THEN -- E o tipo da solicitacao for pendente de envio ou enviada
         vr_inserasa := 2; -- Continua como enviada
         vr_dtretser := pr_dtmvtolt; -- Coloca como recebida com sucesso
-        vr_dslog := 'Serasa - Recebido confirmacao da solicitacao de inclusao';
+        vr_dslog := 'Negativacao em andamento';
       ELSIF pr_intipret = 1 AND -- Se for Inclusao
          vr_inreterr = 1 AND -- E houver erro de recebimento
          rw_crapcob.inserasa IN (1,2) THEN -- E o tipo da solicitacao for pendente de envio ou enviada
@@ -166,7 +166,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           vr_inserasa := rw_crapcob.inserasa; -- Nao muda a situacao. Deixa a anterior
           vr_dtretser := rw_crapcob.dtretser; -- Manter a mesma data
         END IF;
-        vr_dslog := 'Serasa - Erro no recebimento da solicitacao da negativacao';
+				
+				OPEN cr_erro(vr_erros_temp);
+				FETCH cr_erro INTO rw_erro;
+					--
+          vr_dslog := 'Falha no processo de negativacao - Motivo: Retorno Serasa: ' || rw_erro.dserro_serasa;
+					--
+				CLOSE cr_erro;
         
       ELSIF pr_intipret = 1 AND -- Se for Inclusao
          vr_inreterr = 0 AND -- E foi recebida com sucesso
@@ -204,7 +210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                                  -- E se estiver para cancelar nao pode existir outro historico (o sistema bloqueia novas solicitacoes)
         vr_inserasa := 0; -- Coloca como nao negativada
         vr_dtretser := NULL; -- Coloca como nao recebida no Serasa
-        vr_dslog := 'Serasa - Confirmado solicitacao de cancelamento da negativacao';
+        vr_dslog := 'Envio do cancelamento de negativacao do boleto - Serasa';
       END IF;
 
       -- Se a UF necessitar de AR e for o retorno de uma inclusao, nao deve-se atualizar o boleto

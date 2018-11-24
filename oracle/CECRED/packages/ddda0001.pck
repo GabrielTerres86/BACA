@@ -1942,9 +1942,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       IF pr_tpoperad = 'I' THEN    
       
         CASE nvl(rw_crapcob.inpagdiv,0)
-          WHEN 0 THEN vr_dsmsglog := 'Nao autoriza pagto divergente';
-          WHEN 1 THEN vr_dsmsglog := 'Autoriza pagto divergente - Minimo R$ ' || trim(to_char(rw_crapcob.vlminimo,'fm999g999g999d90'));
-          WHEN 2 THEN vr_dsmsglog := 'Autoriza pagto divergente - Qualquer valor';
+          WHEN 0 THEN vr_dsmsglog := 'Nao autoriza pagamento divergente para este boleto';
+          WHEN 1 THEN vr_dsmsglog := 'Autoriza pagamento minimo no valor de R$ ' || trim(to_char(rw_crapcob.vlminimo,'fm999g999g999d90')) || ' para este boleto';
+          WHEN 2 THEN vr_dsmsglog := 'Autoriza pagamento de qualquer valor para este boleto';
         END CASE;
          
         -- Registro autorizacao de pagto divergente no log do boleto
@@ -3434,13 +3434,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_inenvcip := 3; -- confirmado
       vr_flgcbdda := 1;
       vr_dhenvcip := SYSDATE;
-      vr_dsmensag := 'Titulo Registrado - CIP';
+      vr_dsmensag := 'Boleto registrado no Sistema Financeiro Nacional';
     ELSE
       vr_insitpro := 0; --> Sacado comun
       vr_inenvcip := 4; -- Rejeitadp
       vr_flgcbdda := 0;
       vr_dhenvcip := NULL;
-      vr_dsmensag := 'Titulo Rejeitado na CIP';
+      vr_dsmensag := 'Falha ao registrar boleto no Sistema Financeiro Nacional';
       vr_inregcip := 0; -- sem registro na CIP;
     END IF;
     
@@ -3584,7 +3584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     IF pr_cdstiope = 'PJ' THEN
       NULL;
     ELSIF pr_cdstiope = 'RC' THEN --Registrado com sucesso      
-      vr_dsmensag := 'Alteração de Titulo Registrado - CIP';
+      vr_dsmensag := 'Alteracao de vencimento registrada no Sistema Financeiro Nacional';
       
       --> Atualizar informações do boleto
       BEGIN
@@ -3735,7 +3735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           RAISE vr_exc_erro;
       END;            
          
-      vr_dsmensag := 'Baixa de Titulo Registrado - CIP';                   
+      vr_dsmensag := 'Boleto Baixado no Sistema Financeiro Nacional';                   
     ELSIF pr_cdstiope IN ('EJ','EC') THEN
       vr_dsmensag := 'Baixa de Titulo Rejeitado na CIP';      
     END IF;       

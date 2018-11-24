@@ -11,30 +11,20 @@
 var cCdcooper;
 var cTodos;
 var cddopcao = 'C';
+var abaAtual = 0;
 var cTodosCabecalho;
-var divRotina, frmCab, frmIndicador, divFormulario, divBotoes;
-// Variaveis do form de indicadores
-var cIdindica, cNmindica, cTpindica, cCdprodut, cDsprodut, cInpessoa, cVlminimo, cVlmaximo, cPerscore, cPertoler;
+var divRotina, frmCab, frmIndicador, frmVinculacao, divFormulario, divBotoes;
 
 $(document).ready(function() {
 
 	// Inicializando os seletores principais
 	frmIndicador	= $('#frmIndicador');
-	divRotina 		= $('#divTela');				
+	frmVinculacao	= $('#frmVinculacao');
+	divRotina 		= $('#divTela', '#divAba0');				
 	frmCab			= $('#frmCab');
 	divFormulario	= $('#divFormulario');
-	divBotoes		= $('#divBotoes');
+	divBotoes		= $('#divBotoes', '#divAba0');
 	
-	cIdindica = $('#idindicador','#frmIndicador');
-	cNmindica = $('#nmindicador','#frmIndicador');
-	cTpindica = $('#tpindicador','#frmIndicador');
-	cCdprodut = $('#cdproduto','#frmIndicador');
-	cDsprodut = $('#dsproduto','#frmIndicador');
-	cInpessoa = $('#inpessoa','#frmIndicador');
-	cVlminimo = $('#vlminimo','#frmIndicador');
-	cVlmaximo = $('#vlmaximo','#frmIndicador');
-	cPerscore = $('#perscore','#frmIndicador');
-	cPertoler = $('#pertolera','#frmIndicador');
     estadoInicial();
 
     highlightObjFocus();
@@ -42,20 +32,37 @@ $(document).ready(function() {
     return false;
 });
 
+function getAbaAtual() {
+	return $('#divAba'+abaAtual);
+}
+
+function getForm() {
+	return abaAtual === 0 ? frmIndicador : frmVinculacao;
+}
+
+function getDivFormulario() {
+	return $('#divFormulario', getAbaAtual());
+}
+
+function getDivBotoes() {
+	return $('#divBotoes', getAbaAtual());
+}
+
 function estadoInicial() {
 
     frmCab.css({'display': 'block'});
 	frmIndicador.css({'display':'none'}).limpaFormulario();
-	$("#btVoltar", "#divBotoes").attr('onClick', "voltarCab();");				
+	frmVinculacao.css({'display':'none'}).limpaFormulario();
+	$("#btVoltar", getDivBotoes()).attr('onClick', "voltarCab();");				
 	
     formataCabecalho();	
-	formataFormulario();
+	//formataFormulario();
     cTodosCabecalho.habilitaCampo();
 	
     removeOpacidade('divTela');
     unblockBackground();
     hideMsgAguardo();
-	
+
     return false;
 }
 
@@ -73,13 +80,13 @@ function formataCabecalho() {
 
     cCdcooper.unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 13) {
-            buscaIndicadores();
+            obtemConsulta();
             return false;
         }
     });
 
     cCdcooper.unbind('changed').bind('changed', function(e) {
-        buscaIndicadores();
+        obtemConsulta();
         return false;
     });
 		
@@ -92,17 +99,18 @@ function formataCabecalho() {
 
 }
 
-function formataFormulario() {
-
-	var cTodos      = $('input','#frmIndicador');		
-	var rIdindica	= $('label[for="idindicador"]','#frmIndicador');
-	var rTpindica	= $('label[for="tpindicador"]','#frmIndicador');
-	var rCdprodut	= $('label[for="cdproduto"]','#frmIndicador');
-	var rInpessoa	= $('label[for="inpessoa"]','#frmIndicador');
-	var rVlminimo	= $('label[for="vlminimo"]','#frmIndicador');	
-	var rVlmaximo	= $('label[for="vlmaximo"]','#frmIndicador');	
-	var rPerscore	= $('label[for="perscore"]','#frmIndicador');	
-	var rPertoler	= $('label[for="pertolera"]','#frmIndicador');	
+function formataFormularioIndicadores() {
+	var cTodos      = $('input',frmIndicador);		
+	var rIdindica	= $('label[for="idindicador"]',frmIndicador);
+	var rTpindica	= $('label[for="tpindicador"]',frmIndicador);
+	var rCdprodut	= $('label[for="cdproduto"]',frmIndicador);
+	var rInpessoa	= $('label[for="inpessoa"]',frmIndicador);
+	var rVlminimo	= $('label[for="vlminimo"]',frmIndicador);	
+	var rVlmaximo	= $('label[for="vlmaximo"]',frmIndicador);	
+	var rPerscore	= $('label[for="perscore"]',frmIndicador);	
+	var rPertoler	= $('label[for="pertolera"]',frmIndicador);	
+	var rPerpeso	= $('label[for="perpeso"]',frmIndicador);	
+	var rPerdesc	= $('label[for="perdesc"]',frmIndicador);	
 		
 	rIdindica.css('width', '100px').addClass('rotulo');
 	rTpindica.css('width', '100px').addClass('rotulo-linha');
@@ -112,116 +120,192 @@ function formataFormulario() {
 	rVlmaximo.css('width', '144px').addClass('rotulo-linha');		
 	rPerscore.css('width', '100px').addClass('rotulo');		
 	rPertoler.css('width', '144px').addClass('rotulo-linha');		
+	rPerpeso.css('width', '100px').addClass('rotulo-linha');
+	rPerdesc.css('width', '100px').addClass('rotulo-linha');
 		
 	// cTodos.desabilitaCampo();
-	cIdindica.addClass('codigo pesquisa').css({'width': '40px'});
-	cNmindica.css({'width': '290px'});
-	cTpindica.css({'width': '100px'});
-	cCdprodut.addClass('codigo pesquisa').css({'width': '40px'});
-	cDsprodut.css({'width': '290px'});	
-	cInpessoa.css({'width': '100px'});	
-	cVlminimo.css({'width': '100px'});
-	cVlmaximo.css({'width': '100px'});
+	$('#idindicador', frmIndicador).addClass('codigo pesquisa').css({'width': '40px'});
+	$('#nmindicador', frmIndicador).css({'width': '290px'});
+	$('#idindicador', frmIndicador).css({'width': '100px'});
+	$('#cdproduto', frmIndicador).addClass('codigo pesquisa').css({'width': '40px'});
+	$('#dsproduto', frmIndicador).css({'width': '290px'});	
+	$('#inpessoa', frmIndicador).css({'width': '100px'});	
+	$('#vlminimo', frmIndicador).css({'width': '100px'});
+	$('#vlmaximo', frmIndicador).css({'width': '100px'});
+	$('#perpeso', frmIndicador).css({'width': '100px'});
+	$('#perdesc', frmIndicador).css({'width': '100px'});
 	
-	if (cTpindica.val() == 'Q' ) {
-		cVlminimo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-		cVlmaximo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-	}else if (cTpindica.val() == 'M' ){
-		cVlminimo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVlmaximo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+	if ($('#tpindicador', frmIndicador).val() == 'Q' ) {
+		$('#vlminimo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+		$('#vlmaximo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+	}else if ($('#tpindicador', frmIndicador).val() == 'M' ){
+		$('#vlminimo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+		$('#vlmaximo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 	}
-	cPerscore.css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
-	cPertoler.css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
+	$('#perscore', frmIndicador).css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
+	$('#pertolera', frmIndicador).css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
+	$('#perpeso', frmIndicador).setMask('DECIMAL','zz9,99','.','');
+	$('#perdesc', frmIndicador).setMask('DECIMAL','zz9,99','.','');
 		
-	cIdindica.unbind('keydown').bind('keydown', function(e) {
+	$('#idindicador', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 || e.keyCode == 9 )  {
 			controlaPesquisa('I');
 			return false;
 		}
 	});
 	
-	cCdprodut.unbind('keydown').bind('keydown', function(e) {
+	$('#cdproduto', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 || e.keyCode == 9)  {
 			controlaPesquisa('P');
 			return false;
 		}
 	});
 		
-	cInpessoa.unbind('keydown').bind('keydown', function(e) {
+	$('#inpessoa', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 || e.keyCode == 9)  {
-			if (cTpindica.val() != 'A'){
-				cVlminimo.focus();
+			if ($('#tpindicador').val() != 'A'){
+				$('#vlminimo', frmIndicador).focus();
 			}else{
-				cPerscore.focus();
+				$('#perscore', frmIndicador).focus();
 			}
 			return false;
 		}
 	});
 	
-	cVlminimo.unbind('keydown').bind('keydown', function(e) {
+	$('#vlminimo', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 )  {			
-			cVlmaximo.focus();
+			$('#vlmaximo', frmIndicador).focus();
 			return false;
 		}
 	});
 	
-	cVlmaximo.unbind('keydown').bind('keydown', function(e) {
+	$('#vlmaximo', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 )  {			
-			cPerscore.focus();
+			$('#perscore', frmIndicador).focus();
 			return false;
 		}
 	});
 	
-	cPerscore.unbind('keydown').bind('keydown', function(e) {
+	$('#perscore', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 )  {
-			if (cPertoler.prop('disabled')){
-				$("#btProsseguir", "#divBotoes").click();
+			if ($('#pertolera', frmIndicador).prop('disabled')){
+				$("#btProsseguir", getDivBotoes()).click();
 				return false;
 			}else{
-				cPertoler.focus();
+				$('#pertolera', frmIndicador).focus();
 				return false;
 			}
 		}
 	});
 	
-	cPertoler.unbind('keydown').bind('keydown', function(e) {
+	$('#pertolera', frmIndicador).unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 )  {					
-			$("#btProsseguir", "#divBotoes").click();
+			$("#btProsseguir", getDivBotoes()).click();
 			return false;
 		}
 	});
 	
 	layoutPadrao();
+}
+
+function formataFormularioVinculacao() {
+	var cTodos        = $('input','#frmVinculacao');		
+	var rIdVinculacao = $('label[for="idvinculacao"]','#frmVinculacao');
+	var rCdprodut	  = $('label[for="cdproduto"]','#frmVinculacao');
+	var rInpessoa	  = $('label[for="inpessoa"]','#frmVinculacao');
+	var rPerpeso	  = $('label[for="perpeso"]','#frmVinculacao');
+	var rPerdesc	  = $('label[for="perdesc"]','#frmVinculacao');
+		
+	rIdVinculacao.css('width', '100px').addClass('rotulo');
+	rCdprodut.css('width', '100px').addClass('rotulo');
+	rInpessoa.css('width', '100px').addClass('rotulo-linha');
+	rPerpeso.css('width', '100px').addClass('rotulo');
+	rPerdesc.css('width', '100px').addClass('rotulo-linha');
+		
+	// cTodos.desabilitaCampo();
+	$('#idvinculacao', frmVinculacao).addClass('codigo pesquisa').css({'width': '40px'});
+	$('#nmvinculacao', frmVinculacao).css({'width': '290px'});
+	$('#cdproduto', frmVinculacao).addClass('codigo pesquisa').css({'width': '40px'});
+	$('#dsproduto', frmVinculacao).css({'width': '290px'});	
+	$('#inpessoa', frmVinculacao).css({'width': '100px'});	
+	$('#perpeso', frmVinculacao).css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
+	$('#perdesc', frmVinculacao).css({'width': '100px'}).setMask('DECIMAL','zz9,99','.','');
+		
+	$('#idvinculacao', frmVinculacao).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 || e.keyCode == 9 )  {
+			controlaPesquisa('V');
+			return false;
+		}
+	});
+	
+	$('#cdproduto', frmVinculacao).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 || e.keyCode == 9)  {
+			controlaPesquisa('P');
+			return false;
+		}
+	});
+		
+	$('#inpessoa', frmVinculacao).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 || e.keyCode == 9)  {
+			$('#perpeso', frmVinculacao).focus();
+			return false;
+		}
+	});
+
+	$('#perpeso', frmVinculacao).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 || e.keyCode == 9)  {
+			$('#perdesc', frmVinculacao).focus();
+			return false;
+		}
+	});
+	
+	$('#perdesc', frmVinculacao).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 )  {					
+			$("#btProsseguir", getDivBotoes()).click();
+			return false;
+		}
+	});
+	
+	layoutPadrao();
+}
+
+function formataFormulario() {
+
+	if (abaAtual === 0) {
+		formataFormularioIndicadores();
+	} else if (abaAtual === 1) {
+		formataFormularioVinculacao();
+	}
 
 }
 
 // Botao Voltar
 function voltarCab() {
 	if (cdcooper == 3){
-		divFormulario.hide();
-		divBotoes.hide();
+		getForm().hide();
+		getDivBotoes().hide();
 		cTodosCabecalho.habilitaCampo();
 	}
     return false;
 }
 
 function voltarTabela(){
-	$('#btAlterar','#divBotoes').toggle();
-	$('#btIncluir','#divBotoes').toggle();
-	$('#btExcluir','#divBotoes').toggle();
-	$('#btProsseguir','#divBotoes').toggle();
-	frmIndicador.toggle();
-	frmIndicador.limpaFormulario();
-	divFormulario.toggle();
-	$("#btVoltar", "#divBotoes").attr('onClick', "voltarCab();");				
+	$('#btAlterar',getDivBotoes()).show();
+	$('#btIncluir',getDivBotoes()).show();
+	$('#btExcluir',getDivBotoes()).show();
+	$('#btProsseguir',getDivBotoes()).hide();
+	getForm().hide();
+	getForm().limpaFormulario();
+	getDivFormulario().show();
+	$("#btVoltar", getDivBotoes()).attr('onClick', "voltarCab();");				
 	return false;
 }
 
-function buscaIndicadores() {
+function obtemConsulta() {
 	
-	if ($('#cdcooper', '#frmCab').hasClass('campoTelaSemBorda')) {
-        return false;
-    }
+	// if ($('#cdcooper', '#frmCab').hasClass('campoTelaSemBorda')) {
+    //     return false;
+    // }
 	
     var cdcooper = $('#cdcooper', '#frmCab').val();
 
@@ -234,6 +318,7 @@ function buscaIndicadores() {
         dataType: 'html',
         url: UrlSite + "telas/paridr/obtem_consulta.php",
         data: {
+			indaba: abaAtual,
             cdcooper: cdcooper,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
@@ -242,9 +327,9 @@ function buscaIndicadores() {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
         },
         success: function(response) {
-            $('#divFormulario').html(response).show();
+            getDivFormulario().html(response).show();
 			formataTabela();
-			divBotoes.show();			
+			getDivBotoes().show();			
 			hideMsgAguardo();
 			cTodosCabecalho.desabilitaCampo();
 		
@@ -257,6 +342,7 @@ function buscaIndicadores() {
 }
 
 function formataTabela() {
+	var divRotina   = $('#divTela', getAbaAtual());
 	var divRegistro = $('div.divRegistros', divRotina );	
 	var tabela      = $('table', divRegistro );
 
@@ -264,71 +350,79 @@ function formataTabela() {
 	
 	$('tr.sublinhado > td',divRegistro).css({'text-decoration':'underline'});	
 	
-	var ordemInicial = new Array();
+	var ordemInicial = [],
+		arrayLargura = [],
+		arrayAlinha  = [];
 
-	var arrayLargura = new Array();
-	arrayLargura[0] =   '60px';
-	arrayLargura[1] =   '241px';
-	arrayLargura[2] =   '65px';
-	arrayLargura[3] =   '135px';
-	arrayLargura[4] =   '54px';
-	arrayLargura[5] =   '60px';
-	arrayLargura[6] =   '60px';
-	arrayLargura[7] =   '50px';
-
-	var arrayAlinha = new Array();
-	arrayAlinha[0] = 'right';
-	arrayAlinha[1] = 'left';
-	arrayAlinha[2] = 'left';
-	arrayAlinha[3] = 'left';
-	arrayAlinha[4] = 'center';
-	arrayAlinha[5] = 'right';
-	arrayAlinha[6] = 'right';
-	arrayAlinha[7] = 'right';
-	arrayAlinha[8] = 'right';
+	if (abaAtual === 0) {
+		arrayLargura = ['60px','241px','65px','135px','54px','60px','60px','50px'];
+		arrayAlinha = ['right','left','left','left','center','right','right','right','right'];
+	} else if (abaAtual === 1) {
+		arrayLargura = ['90px','165px','235px','145px','90px'];
+		arrayAlinha = ['right','left','left','left','right','right'];
+	}
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	
 	// Seleciona primeiro indicador
-	selecionaIndicador('');
+	selecionaLinha('');
 	
 	$('table > tbody > tr', divRegistro).click( function() {
-		selecionaIndicador('');
+		selecionaLinha('');
 	});	
 	
 	return false;
 }
 
-function selecionaIndicador(opcao) {
-
+function selecionaLinha(opcao) {
     var flgSelected = false;
 
-	$('table > tbody > tr', 'div.divRegistros').each( function() {
+	var divRegistros = $('div.divRegistros', getAbaAtual());
+
+	$('table > tbody > tr', divRegistros).each( function() {
 		if ( $(this).hasClass('corSelecao') ) {
             flgSelected = true;
 			
 			if (opcao == 'A'){
-				cIdindica.val($('#idindicador', $(this)).val()); 
-				cNmindica.val($('#nmindicador', $(this)).val()); 
-				cTpindica.val($('#tpindicador', $(this)).val().substring(0, 1)); 
-				cCdprodut.val($('#cdproduto', $(this)).val()); 
-				cDsprodut.val($('#dsproduto', $(this)).val()); 
-				cInpessoa.val($('#inpessoa2', $(this)).val()); 
-				cVlminimo.val($('#vlminimo', $(this)).val()); 
-				cVlmaximo.val($('#vlmaximo', $(this)).val()); 
-				cPerscore.val($('#perscore', $(this)).val()); 
-				cPertoler.val($('#pertolera', $(this)).val()); 
-				$("#btProsseguir", "#divBotoes").attr('onClick', "validaIndicador('A');");				
+				if (abaAtual === 0) {
+					$('#idindicador', frmIndicador).val($('#idindicador', $(this)).val()); 
+					$('#nmindicador', frmIndicador).val($('#nmindicador', $(this)).val()); 
+					$('#tpindicador', frmIndicador).val($('#tpindicador', $(this)).val().substring(0, 1)); 
+					$('#cdproduto', frmIndicador).val($('#cdproduto', $(this)).val()); 
+					$('#dsproduto', frmIndicador).val($('#dsproduto', $(this)).val()); 
+					$('#inpessoa', frmIndicador).val($('#inpessoa2', $(this)).val()); 
+					$('#vlminimo', frmIndicador).val($('#vlminimo', $(this)).val()); 
+					$('#vlmaximo', frmIndicador).val($('#vlmaximo', $(this)).val()); 
+					$('#perscore', frmIndicador).val($('#perscore', $(this)).val()); 
+					$('#pertolera', frmIndicador).val($('#pertolera', $(this)).val()); 
+					$('#perpeso', frmIndicador).val($('#perpeso', $(this)).val());
+					$('#perdesc', frmIndicador).val($('#perdesc', $(this)).val());
+					$("#btProsseguir", getDivBotoes()).attr('onClick', "validaIndicador('A');");				
+				} else if (abaAtual === 1) {
+					$('#idvinculacao', frmVinculacao).val($('#idvinculacao', $(this)).val()); 
+					$('#nmvinculacao', frmVinculacao).val($('#nmvinculacao', $(this)).val()); 
+					$('#cdproduto', frmVinculacao).val($('#cdproduto', $(this)).val()); 
+					$('#dsproduto', frmVinculacao).val($('#dsproduto', $(this)).val()); 
+					$('#inpessoa', frmVinculacao).val($('#inpessoa2', $(this)).val()); 
+					$('#perpeso', frmVinculacao).val($('#perpeso', $(this)).val());
+					$('#perdesc', frmVinculacao).val($('#perdesc', $(this)).val());
+					$("#btProsseguir", getDivBotoes()).attr('onClick', "validaVinculacao('A');");				
+				}
+				
 							
 			}else if(opcao == 'E'){
-				showConfirmacao('Você tem certeza que deseja excluir esta parametrização? A operação não poderá ser desfeita!', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirParametro(' + cCdcooper.val()+ ',' + $("#idindicador", $(this)).val() + ',' + $('#cdproduto', $(this)).val() + ',' + $('#inpessoa2', $(this)).val() + ');', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+				if (abaAtual === 0) {
+			    	showConfirmacao('Voc&ecirc; tem certeza que deseja excluir esta parametriza&ccedil;&atilde;o? A opera&ccedil;&atilde;o n&atilde;o poder&aacute; ser desfeita!', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirParametro(' + cCdcooper.val() + ',' + $("#idindicador", $(this)).val() + ',' + $('#cdproduto', $(this)).val() + ',' + $('#inpessoa2', $(this)).val() + ');', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+				} else if (abaAtual === 1) {
+					showConfirmacao('Voc&ecirc; tem certeza que deseja excluir esta parametriza&ccedil;&atilde;o? A opera&ccedil;&atilde;o n&atilde;o poder&aacute; ser desfeita!', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirParametro(' + cCdcooper.val() + ',' + $("#idvinculacao", $(this)).val() + ',' + $('#cdproduto', $(this)).val() + ',' + $('#inpessoa2', $(this)).val() + ');', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+				}
 			}
 		}
 		
 	});
 
     if (! flgSelected && opcao == 'E') {
-        showError("error", "Favor selecionar a parametrização que deseja excluir!", "Alerta - Ayllos", "");
+        showError("error", "Favor selecionar a parametriza&ccedil;&atilde;o que deseja excluir!", "Alerta - Ayllos", "");
     }
 	
 	// layoutPadrao();
@@ -337,63 +431,74 @@ function selecionaIndicador(opcao) {
 
 function trocaVisao(opcao) {
 
-	$("#btVoltar", "#divBotoes").attr('onClick', "voltarTabela();");				
+	$("#btVoltar", getDivBotoes()).attr('onClick', "voltarTabela();");				
 	if (opcao == 'A'){
 		if ( $('table > tbody > tr', 'div.divRegistros').hasClass('corSelecao') ) {
-			// Se a visão está na Tabela, então joga os valores para o formulário
-			if ( divFormulario.css('display') == 'block' ) selecionaIndicador(opcao);
+	        // Se a visão está na Tabela, então joga os valores para o formulário
+			if ( getDivFormulario().css('display') == 'block' ) selecionaLinha(opcao);
 			
-			$('#btAlterar','#divBotoes').toggle();
-			$('#btIncluir','#divBotoes').toggle();
-			$('#btExcluir','#divBotoes').toggle();
-			$('#btProsseguir','#divBotoes').toggle();
-			frmIndicador.toggle();
-			divFormulario.toggle();
+			$('#btAlterar',getDivBotoes()).toggle();
+			$('#btIncluir',getDivBotoes()).toggle();
+			$('#btExcluir',getDivBotoes()).toggle();
+			$('#btProsseguir',getDivBotoes()).toggle();
+			getForm().toggle();
+			getDivFormulario().toggle();
 
-			cIdindica.prop('disabled', true);
-			cCdprodut.prop('disabled', true);
-			cInpessoa.prop('disabled', true);				
-			if (cTpindica.val() == 'A'){
-				cVlminimo.val(0);
-				cVlmaximo.val(0);
-				cPertoler.val(0);
-				cVlminimo.prop('disabled', true);
-				cVlmaximo.prop('disabled', true);
-				cPertoler.prop('disabled', true);
-				cPerscore.focus();
-			}else if (cTpindica.val() == 'Q' ) {
-				cVlminimo.prop('disabled', false);
-				cVlmaximo.prop('disabled', false);
-				cPertoler.prop('disabled', false);				
-				cVlminimo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-				cVlmaximo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-				cVlminimo.focus();
+			$('#tpindicador', frmIndicador).prop('disabled', true);
+			$('#cdproduto', getForm()).prop('disabled', true);
+			$('#idvinculacao', frmVinculacao).prop('disabled', true);
+			$('#inpessoa', frmIndicador).prop('disabled', true);				
+			if ($('#tpindicador', frmIndicador).val() == 'A'){
+				$('#vlminimo', frmIndicador).val(0);
+				$('#vlmaximo', frmIndicador).val(0);
+				$('#pertolera', frmIndicador).val(0);
+				$('#perpeso', frmIndicador).val(0);
+				$('#perdesc', frmIndicador).val(0);
+				$('#vlminimo', frmIndicador).prop('disabled', true);
+				$('#vlmaximo', frmIndicador).prop('disabled', true);
+				$('#pertolera', frmIndicador).prop('disabled', true);
+				$('#perpeso', frmIndicador).prop('disabled', true);
+				$('#perdesc', frmIndicador).prop('disabled', true);
+				$('#perscore', frmIndicador).focus();
+			}else if ($('#tpindicador', frmIndicador).val() == 'Q' ) {
+				$('#vlminimo', frmIndicador).prop('disabled', false);
+				$('#vlmaximo', frmIndicador).prop('disabled', false);
+				$('#pertolera', frmIndicador).prop('disabled', false);				
+				$('#perpeso', frmIndicador).prop('disabled', false);				
+				$('#perdesc', frmIndicador).prop('disabled', false);				
+				$('#vlminimo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+				$('#vlmaximo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+				$('#vlminimo', frmIndicador).focus();
 			}else{
-				cVlminimo.prop('disabled', false);
-				cVlmaximo.prop('disabled', false);
-				cPertoler.prop('disabled', false);				
-				cVlminimo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-				cVlmaximo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-				cVlminimo.focus();
+				$('#vlminimo', frmIndicador).prop('disabled', false);
+				$('#vlmaximo', frmIndicador).prop('disabled', false);
+				$('#pertolera', frmIndicador).prop('disabled', false);				
+				$('#perpeso', frmIndicador).prop('disabled', false);				
+				$('#perdesc', frmIndicador).prop('disabled', false);				
+				$('#vlminimo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+				$('#vlmaximo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+				$('#vlminimo', frmIndicador).focus();
 			}			
 			
 		}
 	}else{
-		$('#btAlterar','#divBotoes').toggle();
-		$('#btIncluir','#divBotoes').toggle();
-		$('#btExcluir','#divBotoes').toggle();
-		$('#btProsseguir','#divBotoes').toggle();
-		frmIndicador.toggle();
-		divFormulario.toggle();
+		$('#btAlterar',getDivBotoes()).toggle();
+		$('#btIncluir',getDivBotoes()).toggle();
+		$('#btExcluir',getDivBotoes()).toggle();
+		$('#btProsseguir',getDivBotoes()).toggle();
+		getForm().toggle();
+		getDivFormulario().toggle();
 		
-		cIdindica.focus();
-		cIdindica.prop('disabled', false);
-		cCdprodut.prop('disabled', false);
-		cInpessoa.prop('disabled', false);
-		cVlminimo.prop('disabled', false);
-		cVlmaximo.prop('disabled', false);
-		cPertoler.prop('disabled', false);
-		$("#btProsseguir", "#divBotoes").attr('onClick', "validaIndicador('I');");	
+		$('#tpindicador', frmIndicador).focus();
+		$('#tpindicador', frmIndicador).prop('disabled', false);
+		$('#cdproduto', frmIndicador).prop('disabled', false);
+		$('#inpessoa', frmIndicador).prop('disabled', false);
+		$('#vlminimo', frmIndicador).prop('disabled', false);
+		$('#vlmaximo', frmIndicador).prop('disabled', false);
+		$('#pertolera', frmIndicador).prop('disabled', false);
+		$('#perpeso', frmIndicador).prop('disabled', false);
+		$('#perdesc', frmIndicador).prop('disabled', false);
+		$("#btProsseguir", getDivBotoes()).attr('onClick', (abaAtual === 0) ? "validaIndicador('I');" : "validaVinculacao('I');");	
 	}
 	
 	return false;
@@ -410,7 +515,7 @@ function verificaAcesso(cddopcao){
     });
     
     if (! flgSelected && cddopcao == 'A') {
-        showError("error", "Favor selecionar um registro para a devida alteração!", "Alerta - Ayllos", "");
+        showError("error", "Favor selecionar um registro para a devida altera&ccedil;&atilde;o!", "Alerta - Ayllos", "");
     } else {
         
         showMsgAguardo('Aguarde, validando acesso ...');	
@@ -427,7 +532,7 @@ function verificaAcesso(cddopcao){
                     },
             error   : function(objAjax,responseError,objExcept) {
                         hideMsgAguardo();
-                        showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+                        showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
                     },
             success : function(response) {
                         hideMsgAguardo();
@@ -442,30 +547,44 @@ function verificaAcesso(cddopcao){
 }
 
 // Função para abrir a pesquisa de indicadores
-function mostrarPesquisaIndicadores(){
-	if( $('#idindicador','#frmIndicador').prop("disabled") ) {
+function mostrarPesquisaIndicadores() {
+	if ($('#idindicador', '#frmIndicador').prop("disabled")) {
 		return false;
-	}
-	//Definição dos filtros
-	var filtros	= "ID;idindicador;50px;N;;N;|Indicador;nmindicador;200px;S;;S;descricao|Tipo;tpindica;50px;N;;N;|Tipo2;tpindicador;50px;N;;N;";
-	//Campos que serão exibidos na tela
+}
+    //Definição dos filtros
+	var filtros = "ID;idindicador;50px;N;;N;|Indicador;nmindicador;200px;S;;S;descricao|Tipo;tpindica;50px;N;;N;|Tipo2;tpindicador;50px;N;;N;";
+    //Campos que serão exibidos na tela
 	var colunas = 'ID;idindicador;10%;right|Indicador;nmindicador;65%;left|Tipo;tpindica;25%;left|Tipo2;tpindicador;0%;;;N';
-	//Exibir a pesquisa
-	mostraPesquisa("TELA_PARIDR", "PESQUISA_INDICADORES", "Indicadores","50",filtros,colunas,divRotina,'controlaPesquisa("I");');
+    //Exibir a pesquisa
+	mostraPesquisa("TELA_PARIDR", "PESQUISA_INDICADORES", "Indicadores", "50", filtros, colunas, divRotina, 'controlaPesquisa("I");');
+	$("#divCabecalhoPesquisa > table > thead > tr").append("<td style='width: 18px'>");
+}
+
+// Função para abrir a pesquisa de vinculacoes
+function mostrarPesquisaVinculacoes() {
+	if ($('#idvinculacao', '#frmVinculacao').prop("disabled")) {
+		return false;
+}
+    //Definição dos filtros
+	var filtros = "ID;idvinculacao;50px;N;;N;|Vinculacao;nmvinculacao;200px;S;;S;descricao";
+    //Campos que serão exibidos na tela
+	var colunas = 'ID;idvinculacao;10%;right|Vinculacao;nmvinculacao;65%;left';
+    //Exibir a pesquisa
+	mostraPesquisa("TELA_PARIDR", "PESQUISA_VINCULACOES", "Vinculacoes", "50", filtros, colunas, divRotina, 'controlaPesquisa("V");');
 	$("#divCabecalhoPesquisa > table > thead > tr").append("<td style='width: 18px'>");
 }
 
 // Função para abrir a pesquisa de produtos
-function mostrarPesquisaProdutos(){
-	if( $('#cdproduto','#frmIndicador').prop("disabled") ) {
+function mostrarPesquisaProdutos() {
+	if ($('#cdproduto', getForm()).prop("disabled")) {
 		return false;
 	}
-	//Definição dos filtros
-	var filtros	= "Código;cdproduto;50px;N;;N;|Produto;dsproduto;200px;S;;S;descricao";
-	//Campos que serão exibidos na tela
+    //Definição dos filtros
+	var filtros = "Código;cdproduto;50px;N;;N;|Produto;dsproduto;200px;S;;S;descricao";
+    //Campos que serão exibidos na tela
 	var colunas = 'Código;cdproduto;20%;right|Produto;dsproduto;80%;left';
-	//Exibir a pesquisa
-	mostraPesquisa("TELA_PARIDR", "PESQUISA_PRODUTOS", "Produtos","50",filtros,colunas,divRotina,'controlaPesquisa("P")');
+    //Exibir a pesquisa
+	mostraPesquisa("TELA_PARIDR", "PESQUISA_PRODUTOS", "Produtos", "50", filtros, colunas, divRotina, 'controlaPesquisa("P")',abaAtual === 0 ? 'frmIndicador' : 'frmVinculacao');
 	$("#divCabecalhoPesquisa > table > thead > tr").append("<td style='width: 18px'>");
 }
 
@@ -473,24 +592,40 @@ function controlaPesquisa(tipo){
 	if (tipo == 'I'){
 		consultaIndicador();
 		
-		cVlminimo.val('0');
-		cVlmaximo.val('0');
-		cPertoler.val('0');
+		$('#vlminimo', frmIndicador).val('0');
+		$('#vlmaximo', frmIndicador).val('0');
+		$('#pertolera', frmIndicador).val('0');
+		$('#perpeso', frmIndicador).val('0');
+		$('#perdesc', frmIndicador).val('0');
 		
-		cCdprodut.focus();
+		$('#cdproduto', frmIndicador).focus();
+		
+		return false;
+	}else if (tipo == 'V'){
+		consultaVinculacao();
+		
+		$('#perpeso', frmVinculacao).val('0');
+		$('#perdesc', frmVinculacao).val('0');
+		
+		$('#cdproduto', frmVinculacao).focus();
 		
 		return false;
 	}else if (tipo == 'P'){
 		consultaProduto();
-		if (cInpessoa.prop('disabled')){
-			if (cTpindica != 'A'){
-				cVlminimo.focus();
+		if (abaAtual === 0) {
+			if ($('#inpessoa', frmIndicador).prop('disabled')){
+				if ($('#tpindicador', frmIndicador) != 'A'){
+					$('#vlminimo', frmIndicador).focus();
+				}else{
+					$('#perscore', frmIndicador).focus();
+				}
 			}else{
-				cPerscore.focus();
-			}
-		}else{
-			cInpessoa.focus();			
-		}		
+				$('#inpessoa', frmIndicador).focus();			
+			}		
+		} else if (abaAtual === 1) {
+			$('#inpessoa', frmVinculacao).focus();			
+		}
+		
 		return false;
 	}
 	
@@ -498,46 +633,52 @@ function controlaPesquisa(tipo){
 
 function consultaIndicador(){
 
-	var idindica = cIdindica.val();
+	var idindica = $('#idindicador', frmIndicador).val();
 
     if (idindica != '') {
 
         showMsgAguardo('Aguarde, consultando indicador ...');
 
-        // Gera requisição ajax para validar o indicador
-        $.ajax({		
-            type	: 'POST',
-            dataType: 'html',
-            url		: UrlSite + 'telas/paridr/valida_indicador.php', 
-            data    : 
-                    { 
-                        cddopcao    : cddopcao,
-                        idindica	: idindica,
-                        redirect	: 'script_ajax' 
-                    },
-            error   : function(objAjax,responseError,objExcept) {
-                        hideMsgAguardo();
-                        showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-                    },
+	    // Gera requisição ajax para validar o indicador
+        $.ajax({
+            type: 'POST',
+	        dataType: 'html',
+	        url: UrlSite + 'telas/paridr/valida_indicador.php',
+	        data:
+	            {
+	            cddopcao: cddopcao,
+	            idindica: idindica,
+	            redirect: 'script_ajax'
+                },
+            error : function(objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            },
             success : function(response) {
                         hideMsgAguardo();
                         eval(response);
-                        if (cTpindica.val() == 'Q' ) {
-                            cVlminimo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-                            cVlmaximo.setMask('INTEGER','zzz.zzz.zzz.zz9');
-                            cVlminimo.prop('disabled', false);
-                            cVlmaximo.prop('disabled', false);
-                            cPertoler.prop('disabled', false);								
-                        }else if (cTpindica.val() == 'M' ){
-                            cVlminimo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-                            cVlmaximo.setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-                            cVlminimo.prop('disabled', false);
-                            cVlmaximo.prop('disabled', false);
-                            cPertoler.prop('disabled', false);				
+                        if ($('#tpindicador', frmIndicador).val() == 'Q' ) {
+                            $('#vlminimo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+                            $('#vlmaximo', frmIndicador).setMask('INTEGER','zzz.zzz.zzz.zz9');
+                            $('#vlminimo', frmIndicador).prop('disabled', false);
+                            $('#vlmaximo', frmIndicador).prop('disabled', false);
+                            $('#pertolera', frmIndicador).prop('disabled', false);								
+                            $('#perpeso', frmIndicador).prop('disabled', false);								
+                            $('#perdesc', frmIndicador).prop('disabled', false);								
+                        }else if ($('#tpindicador', frmIndicador).val() == 'M' ){
+                            $('#vlminimo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+                            $('#vlmaximo', frmIndicador).setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+                            $('#vlminimo', frmIndicador).prop('disabled', false);
+                            $('#vlmaximo', frmIndicador).prop('disabled', false);
+                            $('#pertolera', frmIndicador).prop('disabled', false);				
+                            $('#perpeso', frmIndicador).prop('disabled', false);				
+                            $('#perdesc', frmIndicador).prop('disabled', false);				
                         }else{
-                            cVlminimo.prop('disabled', true);
-                            cVlmaximo.prop('disabled', true);
-                            cPertoler.prop('disabled', true);				
+                            $('#vlminimo', frmIndicador).prop('disabled', true);
+                            $('#vlmaximo', frmIndicador).prop('disabled', true);
+                            $('#pertolera', frmIndicador).prop('disabled', true);				
+                            $('#perpeso', frmIndicador).prop('disabled', true);				
+                            $('#perdesc', frmIndicador).prop('disabled', true);				
 
                         }					
 
@@ -549,53 +690,93 @@ function consultaIndicador(){
 
 }
 
-function consultaProduto(){
+function consultaProduto() {
 
-	var cdproduto = cCdprodut.val();
-    
+	var cdproduto = $('#cdproduto.pesquisa',getAbaAtual()).val();
+
     if (cdproduto != '') {
-	
+
         showMsgAguardo('Aguarde, consultando produto ...');
-	
+
         // Gera requisição ajax para validar o indicador
-        $.ajax({		
-            type	: 'POST',
+        $.ajax({
+            type: 'POST',
             dataType: 'html',
-            url		: UrlSite + 'telas/paridr/valida_produto.php', 
-            data    : 
-                    { 
-                        cddopcao    : cddopcao,
-                        cdproduto	: cdproduto,
-                        redirect	: 'script_ajax' 
-                    },
-            error   : function(objAjax,responseError,objExcept) {
-                        hideMsgAguardo();
-                        showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-                    },
-            success : function(response) {
-                        hideMsgAguardo();
-                        eval(response);
-                    }
+            url: UrlSite + 'telas/paridr/valida_produto.php',
+            data: {
+				cddopcao: cddopcao,
+				cdproduto: cdproduto,
+				redirect: 'script_ajax'
+			},
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                eval(response);
+            }
         });
     }
-	
-	return false;
+
+    return false;
+
+}
+
+function consultaVinculacao() {
+
+	var idvinculacao = $('#idvinculacao.pesquisa',frmVinculacao).val();
+
+    if (idvinculacao != '') {
+
+        showMsgAguardo('Aguarde, consultando vinculacao ...');
+
+        // Gera requisição ajax para validar o indicador
+        $.ajax({
+            type: 'POST',
+            dataType: 'html',
+            url: UrlSite + 'telas/paridr/valida_vinculacao.php',
+            data: {
+				cddopcao: cddopcao,
+				idvinculacao: idvinculacao,
+				redirect: 'script_ajax'
+			},
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                eval(response);
+            }
+        });
+    }
+
+    return false;
 
 }
 
 function limpaIndicador(){
 	
-	cIdindica.focus(); 
-	cIdindica.val("");
-	cNmindica.val("");
+	$('#idindicador', getAbaAtual()).focus(); 
+	$('#idindicador', getAbaAtual()).val("");
+	$('#nmindicador', getAbaAtual()).val("");
 	
 }
 
 function limpaProduto(){
 	
-	cCdprodut.focus(); 
-	cCdprodut.val("");
-	cDsprodut.val("");
+	$('#cdproduto', getAbaAtual()).focus(); 
+	$('#cdproduto', getAbaAtual()).val("");
+	$('#dsproduto', getAbaAtual()).val("");
+	
+}
+
+function limpaVinculacao(){
+	
+	$('#idvinculacao', frmVinculacao).focus(); 
+	$('#idvinculacao', frmVinculacao).val("");
+	$('#nmvinculacao', frmVinculacao).val("");
 	
 }
 
@@ -603,102 +784,261 @@ function validaIndicador(opcao){
 	
 	var vlminimo, vlmaximo, perscore, pertolera;
 	
-	vlminimo = cVlminimo.val().replace(/\./g,"");	
+	vlminimo = $('#vlminimo', frmIndicador).val().replace(/\./g,"");	
 	vlminimo = new Number(vlminimo.replace(",","."));		
-	vlmaximo = cVlmaximo.val().replace(/\./g,"");		
+	vlmaximo = $('#vlmaximo', frmIndicador).val().replace(/\./g,"");		
 	vlmaximo = new Number(vlmaximo.replace(",","."));			
-	perscore = new Number(cPerscore.val().replace(",","."));		
-	pertolera = new Number(cPertoler.val().replace(",","."));
+	perscore = new Number($('#perscore', frmIndicador).val().replace(",","."));		
+	pertolera = new Number($('#pertolera', frmIndicador).val().replace(",","."));
+	perpeso = new Number($('#perpeso', frmIndicador).val().replace(",","."));
+	perdesc = new Number($('#perdesc', frmIndicador).val().replace(",","."));
 	
 	if (opcao == 'I'){
-		if (!cIdindica.val()){		
-			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','cIdindica.focus();');
+		if (!$('#tpindicador', frmIndicador).val()){		
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#tpindicador", frmIndicador).focus();');
 			return false;
 		}
-		if (!cCdprodut.val()){		
-			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','cCdprodut.focus();');
+		if (!$('#cdproduto', frmIndicador).val()){		
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#cdproduto", frmIndicador).focus();');
 			return false;
 		}
-		if (!cInpessoa.val()){		
-			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','cInpessoa.focus();');
+		if (!$('#inpessoa', frmIndicador).val()){		
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#inpessoa", frmIndicador).focus();');
 			return false;
 		}
 	}
-	if (cTpindica.val() != 'A'){
-		if (!cVlminimo.val()){
-			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','cVlminimo.focus();');
+	if ($('#tpindicador', frmIndicador).val() != 'A'){
+		if (!$('#vlminimo', frmIndicador).val()){
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#vlminimo", frmIndicador).focus();');
 			return false;
 		}else{
 			if (vlminimo <= 0 || vlminimo > vlmaximo){
-				showError('error','Valor M&iacute;nimo inv&aacute;lido! Favor informar um valor superior a 0(zero) e inferior ao Valor M&aacute;ximo!','Alerta - Ayllos','cVlminimo.focus();');
+				showError('error','Valor M&iacute;nimo inv&aacute;lido! Favor informar um valor superior a 0(zero) e inferior ao Valor M&aacute;ximo!','Alerta - Ayllos','$("#vlminimo", frmIndicador).focus();');
 				return false;			
 			}
 		}
-		if (!cVlmaximo.val()){
-			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','cVlmaximo.focus();');
+		if (!$('#vlmaximo', frmIndicador).val()){
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#vlmaximo", frmIndicador).focus();');
 			return false;
 		}else{
 			if (vlmaximo <= 0 || vlmaximo < vlminimo){
-				showError('error','Valor M&iacute;nimo inv&aacute;lido! Favor informar um valor superior a 0(zero) e inferior ao Valor M&aacute;ximo!','Alerta - Ayllos','cVlminimo.focus();');
+				showError('error','Valor M&iacute;nimo inv&aacute;lido! Favor informar um valor superior a 0(zero) e inferior ao Valor M&aacute;ximo!','Alerta - Ayllos','$("#vlminimo", frmIndicador).focus();');
 				return false;			
 			}
 		}
 		if (pertolera > 100 || pertolera < 0){
-			showError('error','Percentuais informados devem estar na faixa de 0,00% a 100,00%!','Alerta - Ayllos','cPertoler.focus();');
+			showError('error','Percentuais informados devem estar na faixa de 0,00% a 100,00%!','Alerta - Ayllos','$("#pertolera", frmIndicador).focus();');
 			return false;					
 		}
 	}
-	if (perscore > 100 || perscore < 0){
-		showError('error','Percentuais informados devem estar na faixa de 0,00% a 100,00%!','Alerta - Ayllos','cPerscore.focus();');
+	if (perscore > 100 || perscore < 0 || perpeso > 100 || perpeso < 0){
+		showError('error','Percentuais informados devem estar na faixa de 0,00% a 100,00%!','Alerta - Ayllos','$("#perscore", frmIndicador).focus();');
 		return false;					
 	}
 	
 	if (opcao == 'I'){
-		showConfirmacao('Você tem certeza de que deseja gravar esta parametrização?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inserirParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
-	}else if (opcao == 'A'){
-		showConfirmacao('Você tem certeza de que deseja gravar esta parametrização?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+		showConfirmacao('Voc&ecirc; tem certeza de que deseja gravar esta parametriza&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inserirParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+	} else if (opcao == 'A') {
+		showConfirmacao('Voc&ecirc; tem certeza de que deseja gravar esta parametriza&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 	}
 	
 }
 
-function inserirParametro(){
+function validaVinculacao(opcao){
 	
+	var perpeso = new Number($('#perpeso', frmVinculacao).val().replace(",","."));
+	var perdesc = new Number($('#perdesc', frmVinculacao).val().replace(",","."));
+	
+	if (opcao == 'I'){
+		if (!$('#cdproduto', frmVinculacao).val()){		
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#cdproduto", frmVinculacao).focus();');
+			return false;
+		}
+		if (!$('#inpessoa', frmVinculacao).val()){		
+			showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#inpessoa", frmVinculacao).focus();');
+			return false;
+		}
+	}
+
+	if (perpeso > 100 || perpeso < 0){
+		showError('error','Percentuais informados devem estar na faixa de 0,00% a 100,00%!','Alerta - Ayllos','$("#perpeso", frmVinculacao).focus();');
+		return false;					
+	}
+	
+	if (opcao == 'I'){
+		showConfirmacao('Voc&ecirc; tem certeza de que deseja gravar esta parametriza&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inserirParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+	} else if (opcao == 'A') {
+		showConfirmacao('Voc&ecirc; tem certeza de que deseja gravar esta parametriza&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarParametro();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+	}
+	
+}
+
+function inserirIndicador() {
 	showMsgAguardo('Aguarde, inserindo parametro...');	
 	
 	var cdcooper = cCdcooper.val();
-	var idindica = cIdindica.val();
-	var cdprodut = cCdprodut.val();
-	var inpessoa = cInpessoa.val();
-	var vlminimo = cVlminimo.val().replace(/\./g,"");	
+	var idindica = $('#idindicador', frmIndicador).val();
+	var cdprodut = $('#cdproduto', frmIndicador).val();
+	var inpessoa = $('#inpessoa', frmIndicador).val();
+	var vlminimo = $('#vlminimo', frmIndicador).val().replace(/\./g,"");	
 		vlminimo = vlminimo.replace(",",".");		
-	var vlmaximo = cVlmaximo.val().replace(/\./g,"");		
+	var vlmaximo = $('#vlmaximo', frmIndicador).val().replace(/\./g,"");		
 		vlmaximo = vlmaximo.replace(",",".");		
-	var perscore = cPerscore.val().replace(",",".");
-	var pertoler = cPertoler.val().replace(",",".");
+	var perscore = $('#perscore', frmIndicador).val().replace(",",".");
+	var pertoler = $('#pertolera', frmIndicador).val().replace(",",".");
+	var perpeso = $('#perpeso', frmIndicador).val().replace(",",".");
+	var perdesc = $('#perdesc', frmIndicador).val().replace(",",".");
 	
 	$.ajax({		
-		type	: 'POST',
+		type: 'POST',
 		dataType: 'script',
-		url		: UrlSite + 'telas/paridr/insere_param_indicador.php', 
-		data    :
-				{ 
-				cdcooper: cdcooper,
-				idindica: idindica,
-				cdprodut: cdprodut,
-				inpessoa: inpessoa,
-				vlminimo: vlminimo,
-				vlmaximo: vlmaximo,
-				perscore: perscore,
-				pertoler: pertoler,
-				redirect: 'script_ajax'
-				},
+		url: UrlSite + 'telas/paridr/insere_param_indicador.php', 
+		data: { 
+			cdcooper: cdcooper,
+			idindica: idindica,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			vlminimo: vlminimo,
+			vlmaximo: vlmaximo,
+			perscore: perscore,
+			pertoler: pertoler,
+			perpeso: perpeso,
+			perdesc: perdesc,
+			redirect: 'script_ajax'
+		},
 		error   : function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
-				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
-				},
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
 		success: function(response) {
-				hideMsgAguardo();
-				eval(response);
+			hideMsgAguardo();
+			eval(response);
+		} 
+	}); 
+}
+
+function inserirVinculacao() {
+	showMsgAguardo('Aguarde, inserindo parametro...');	
+	
+	var cdcooper = cCdcooper.val();
+	var idvinculacao = $('#idvinculacao', frmVinculacao).val();
+	var cdprodut = $('#cdproduto', frmVinculacao).val();
+	var inpessoa = $('#inpessoa', frmVinculacao).val();
+	var perpeso = $('#perpeso', frmVinculacao).val().replace(",",".");
+	var perdesc = $('#perdesc', frmVinculacao).val().replace(",",".");
+	
+	$.ajax({		
+		type: 'POST',
+		dataType: 'script',
+		url: UrlSite + 'telas/paridr/insere_param_vinculacao.php', 
+		data: { 
+			cdcooper: cdcooper,
+			idvinculacao: idvinculacao,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			perpeso: perpeso,
+			perdesc: perdesc,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
+		} 
+	}); 
+}
+
+function inserirParametro(){
+
+	if (abaAtual === 0) {
+		inserirIndicador();
+	} else if (abaAtual === 1) {
+		inserirVinculacao();
+	}
+	
+	return false;
+}
+
+function alterarIndicador() {
+	
+	showMsgAguardo('Aguarde, alterando parametro...');	
+	
+	var cdcooper = cCdcooper.val();
+	var idindica = $('#idindicador', frmIndicador).val();
+	var cdprodut = $('#cdproduto', frmIndicador).val();
+	var inpessoa = $('#inpessoa', frmIndicador).val();
+	var vlminimo = $('#vlminimo', frmIndicador).val().replace(/\./g,"");
+		vlminimo = vlminimo.replace(",",".");		
+	var vlmaximo = $('#vlmaximo', frmIndicador).val().replace(/\./g,"");
+		vlmaximo = vlmaximo.replace(",",".");		
+	var perscore = $('#perscore', frmIndicador).val().replace(",",".");
+	var pertoler = $('#pertolera', frmIndicador).val().replace(",",".");
+	var perpeso = $('#perpeso', frmIndicador).val().replace(",",".");
+	var perdesc = $('#perdesc', frmIndicador).val().replace(",",".");
+	
+	$.ajax({		
+		type: 'POST',
+		dataType: 'script',
+		url: UrlSite + 'telas/paridr/altera_param_indicador.php', 
+		data: { 
+			cdcooper: cdcooper,
+			idindica: idindica,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			vlminimo: vlminimo,
+			vlmaximo: vlmaximo,
+			perscore: perscore,
+			pertoler: pertoler,
+			perpeso: perpeso,
+			perdesc: perdesc,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
+		} 
+	}); 
+	
+	return false;
+}
+
+function alterarVinculacao() {
+	showMsgAguardo('Aguarde, alterando parametro...');	
+	
+	var cdcooper = cCdcooper.val();
+	var idvinculacao = $('#idvinculacao', frmVinculacao).val();
+	var cdprodut = $('#cdproduto', frmVinculacao).val();
+	var inpessoa = $('#inpessoa', frmVinculacao).val();
+	var perpeso = $('#perpeso', frmVinculacao).val().replace(",",".");
+	var perdesc = $('#perdesc', frmVinculacao).val().replace(",",".");
+	
+	$.ajax({		
+		type: 'POST',
+		dataType: 'script',
+		url: UrlSite + 'telas/paridr/altera_param_vinculacao.php', 
+		data: { 
+			cdcooper: cdcooper,
+			idvinculacao: idvinculacao,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			perpeso: perpeso,
+			perdesc: perdesc,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
 		} 
 	}); 
 	
@@ -706,74 +1046,106 @@ function inserirParametro(){
 }
 
 function alterarParametro(){
+
+	if (abaAtual === 0) {
+		alterarIndicador();
+	} else if (abaAtual === 1) {
+		alterarVinculacao();
+	}
 	
-	showMsgAguardo('Aguarde, alterando parametro...');	
-	
-	var cdcooper = cCdcooper.val();
-	var idindica = cIdindica.val();
-	var cdprodut = cCdprodut.val();
-	var inpessoa = cInpessoa.val();
-	var vlminimo = cVlminimo.val().replace(/\./g,"");
-		vlminimo = vlminimo.replace(",",".");		
-	var vlmaximo = cVlmaximo.val().replace(/\./g,"");
-		vlmaximo = vlmaximo.replace(",",".");		
-	var perscore = cPerscore.val().replace(",",".");
-	var pertoler = cPertoler.val().replace(",",".");
-	
+	return false;
+}
+
+function excluirIndicador(cdcooper,id,cdprodut,inpessoa) {
+	showMsgAguardo('Aguarde, excluindo parametro...');	
+		
 	$.ajax({		
-		type	: 'POST',
+		type: 'POST',
 		dataType: 'script',
-		url		: UrlSite + 'telas/paridr/altera_param_indicador.php', 
-		data    :
-				{ 
-				cdcooper: cdcooper,
-				idindica: idindica,
-				cdprodut: cdprodut,
-				inpessoa: inpessoa,
-				vlminimo: vlminimo,
-				vlmaximo: vlmaximo,
-				perscore: perscore,
-				pertoler: pertoler,
-				redirect: 'script_ajax'
-				},
-		error   : function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
-				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
-				},
+		url: UrlSite + 'telas/paridr/exclui_param_indicador.php', 
+		data: { 
+			cdcooper: cdcooper,
+			idindica: id,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
 		success: function(response) {
-				hideMsgAguardo();
-				eval(response);
+			hideMsgAguardo();
+			eval(response);
 		} 
 	}); 
 	
 	return false;
 }
 
-function excluirParametro(cdcooper,idindica,cdprodut,inpessoa){
-	
+function excluirVinculacao(cdcooper,id,cdprodut,inpessoa) {
 	showMsgAguardo('Aguarde, excluindo parametro...');	
 		
-	$.ajax({		
-		type	: 'POST',
+	$.ajax({
+		type: 'POST',
 		dataType: 'script',
-		url		: UrlSite + 'telas/paridr/exclui_param_indicador.php', 
-		data    :
-				{ 
-				cdcooper: cdcooper,
-				idindica: idindica,
-				cdprodut: cdprodut,
-				inpessoa: inpessoa,
-				redirect: 'script_ajax'
-				},
-		error   : function(objAjax,responseError,objExcept) {
-					hideMsgAguardo();
-					showError('error','Não foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
-				},
+		url: UrlSite + 'telas/paridr/exclui_param_vinculacao.php',
+		data: { 
+			cdcooper: cdcooper,
+			idvinculacao: id,
+			cdprodut: cdprodut,
+			inpessoa: inpessoa,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+		},
 		success: function(response) {
-					hideMsgAguardo();
-					eval(response);
+			hideMsgAguardo();
+			eval(response);
 		} 
 	}); 
 	
 	return false;
+}
+
+function excluirParametro(cdcooper,id,cdprodut,inpessoa){
+
+	if (abaAtual === 0) {
+		excluirIndicador(cdcooper, id, cdprodut, inpessoa);
+	} else if (abaAtual === 1) {
+		excluirVinculacao(cdcooper, id, cdprodut, inpessoa);
+	}
+	
+	return false;
+}
+
+// Funcao para acessar opcoes da rotina
+function acessaOpcaoAba(id) {
+
+	abaAtual = parseInt(id);
+    
+    // Esconde as abas
+    $('.clsAbas','#tdTela').hide();
+
+	// Atribui cor de destaque para aba da opcao
+	for (var i = 0; i < 4; i++) {
+		if (abaAtual == i) { // Atribui estilos para foco da opcao
+			$("#linkAba" + abaAtual).attr("class","txtBrancoBold");
+			$("#imgAbaEsq" + abaAtual).attr("src",UrlImagens + "background/mnu_sle.gif");				
+			$("#imgAbaDir" + abaAtual).attr("src",UrlImagens + "background/mnu_sld.gif");
+			$("#imgAbaCen" + abaAtual).css("background-color","#969FA9");
+            $("#divAba" + abaAtual).show();
+			continue;			
+		}
+		$("#linkAba" + i).attr("class","txtNormalBold");
+		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
+		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
+		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+	}
+
+	obtemConsulta();
+
+	formataFormulario();
 }

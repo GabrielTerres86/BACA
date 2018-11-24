@@ -929,7 +929,8 @@ PROCEDURE consulta-boleto-2via.
 		DO: 
 			/* se concede ate o vencimento */
 			IF  crapcob.cdmensag = 1 OR
-				crapcob.cdmensag = 0 THEN
+				crapcob.cdmensag = 0 OR
+				crapcob.cdmensag = 3 THEN /* desconto em @percentual */
 				ASSIGN tt-consulta-blt.vldescto = aux_vldescut
 					   tt-consulta-blt.cdmensag = aux_cdmensut.
 		END.
@@ -1233,10 +1234,10 @@ PROCEDURE consulta-bloqueto.
                         END.
 
                     /* Restringir busca */
-                    IF  ( p-fim-documento - p-ini-documento ) > 10 THEN
+                    IF  ( p-fim-documento - p-ini-documento ) > 1000 THEN
                         DO:
                             ASSIGN i-cod-erro = 0 
-                                   c-dsc-erro = "Faixa de boletos solicitadas superior a 10 (dez)"
+                                   c-dsc-erro = "Faixa de boletos solicitadas superior a 1000 (mil)"
                                    par_nmdcampo = "fimnrdoc".
            
                             {sistema/generico/includes/b1wgen0001.i}
@@ -4383,7 +4384,8 @@ PROCEDURE cria_tt-consulta-blt.
                                            crapcob.dtdocmto)
             tt-consulta-blt.cddespec = crapcob.cddespec
             tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
-                                            crapcob.cdmensag = 2) THEN /* Desconto apos o vencimento */ 
+                                            crapcob.cdmensag = 2  OR   /* Desconto apos o vencimento */ 
+                                            crapcob.cdmensag = 3) THEN /* Desconto ate o vencimento em @percentual */ 
                                             crapcob.vldescto
                                         ELSE
                                             0)
@@ -4725,6 +4727,9 @@ PROCEDURE cria_tt-consulta-blt.
                                            "R$ " + 
                                    TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
                                             " apos vencto"
+                                       ELSE IF crapcob.cdmensag = 3 THEN /* desconto em @percentual */
+                                   TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
+                                            "% ate vencto"
                                        ELSE "".
 
             IF  tt-consulta-blt.cdtpinsc = 1                  AND
@@ -4792,6 +4797,8 @@ PROCEDURE cria_tt-consulta-blt.
         ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
      ELSE IF crapcob.cdmensag = 2 THEN
         ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
+     ELSE IF crapcob.cdmensag = 3 THEN /* desconto em @percentual */
+        ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
      ELSE
         ASSIGN tt-consulta-blt.dsdinst1 = ' '.
      
@@ -5678,7 +5685,8 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.vltitulo = crapcob.vltitulo
                tt-consulta-blt.vldpagto = crapcob.vldpagto
                tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
-                                               crapcob.cdmensag = 2) THEN /* Desconto apos o vencimento */ 
+                                               crapcob.cdmensag = 2  OR   /* Desconto apos o vencimento */
+                                               crapcob.cdmensag = 3) THEN /* Desconto ate o vencimento em @percentual */ 
                                                crapcob.vldescto
                                            ELSE
                                                0)
@@ -9414,6 +9422,7 @@ PROCEDURE calcula_multa_juros_boleto:
     
         /* se concede ate o vencimento */
         IF  par_cdmensag = 1 OR
+            par_cdmensag = 3 OR /* desconto em @percentual */
             par_cdmensag = 0 THEN
             ASSIGN par_vldescut = 0
                    par_cdmensut = 0
@@ -9423,9 +9432,14 @@ PROCEDURE calcula_multa_juros_boleto:
     ELSE
     DO:       
         /* se concede ate o vencto, ja calculou */
-        IF  par_cdmensag <> 2  THEN
+        IF  par_cdmensag <> 2 AND par_cdmensag <> 3 THEN
             ASSIGN aux_vldescto = par_vldescto
                    aux_vlfatura = aux_vlfatura - aux_vldescto.
+
+        /* se concede ate o vencto em @percentual, ja calculou */
+        IF  par_cdmensag = 3 THEN
+            ASSIGN aux_vldescto = par_vldescto
+                   aux_vlfatura = aux_vlfatura - (aux_vlfatura * (aux_vldescto/100)).
     END.
 
     /* se concede apos o vencimento */
@@ -9483,7 +9497,8 @@ PROCEDURE calcula_multa_juros_boleto:
           WHEN  7 THEN tt-consulta-blt.dsdespec = "OUTR".
         END CASE.    
 
-        IF  tt-consulta-blt.cdmensag = 1 AND par_vldescut > 0 THEN
+        /* 3 = desconto em @percentual*/
+        IF  (tt-consulta-blt.cdmensag = 1 OR tt-consulta-blt.cdmensag = 3) AND par_vldescut > 0 THEN
             ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
         ELSE IF tt-consulta-blt.cdmensag = 2 THEN
             ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.

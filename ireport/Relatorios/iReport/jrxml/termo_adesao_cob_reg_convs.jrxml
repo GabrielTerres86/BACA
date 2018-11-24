@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-09-12T17:35:45 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_cob_registrada_convenios" language="groovy" pageWidth="460" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="460" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" isIgnorePagination="true" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="5.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="XML Adapter "/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/adesao/convenios/convenio]]>
+	</queryString>
+	<field name="nrconven" class="java.lang.String">
+		<fieldDescription><![CDATA[nrconven]]></fieldDescription>
+	</field>
+	<field name="qtdecprz" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdecprz]]></fieldDescription>
+	</field>
+	<field name="qtdfloat" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdfloat]]></fieldDescription>
+	</field>
+	<field name="modalidade" class="java.lang.String">
+		<fieldDescription><![CDATA[modalidade]]></fieldDescription>
+	</field>
+	<field name="flserasa" class="java.lang.String">
+		<fieldDescription><![CDATA[flserasa]]></fieldDescription>
+	</field>
+	<field name="flprotes" class="java.lang.String">
+		<fieldDescription><![CDATA[flprotes]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="48" splitType="Stretch">
+			<frame>
+				<reportElement mode="Transparent" x="10" y="0" width="220" height="22" isRemoveLineWhenBlank="true" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<staticText>
+					<reportElement x="2" y="2" width="115" height="11" uuid="eceb9869-0a94-418a-b613-fbb04323cfc4">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Convênio de Cobrança: ]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="98" y="2" width="101" height="11" uuid="de01eedb-644b-4ece-98ee-e9cf2a47c02c">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrconven}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="229" y="0" width="221" height="22" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<textField>
+					<reportElement x="3" y="2" width="218" height="22" uuid="aa3f776e-44d4-4cf7-8bfb-012b6367ff69">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{modalidade}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="10" y="22" width="220" height="15" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<staticText>
+					<reportElement x="2" y="2" width="95" height="11" uuid="80fb3e91-6c28-46a1-a63d-291872e3df0b">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Decurso de Prazo:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="79" y="2" width="120" height="11" uuid="c52721b5-ce25-44f5-bfef-e10b43b07a88">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{qtdecprz}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="229" y="22" width="221" height="15" uuid="5344e291-c178-4c82-8257-653612a01006">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<staticText>
+					<reportElement x="3" y="2" width="44" height="11" uuid="3a429a6b-0883-4108-b3ca-664945586209">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Serasa:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="36" y="2" width="173" height="11" uuid="c9f85377-7402-4008-8c38-5c4f8a49b4ee">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{flserasa}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="10" y="33" width="220" height="15" uuid="e349d082-d889-413b-8839-2618047c5431">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<staticText>
+					<reportElement x="2" y="2" width="55" height="11" uuid="f470298c-ea7f-453e-8d41-7686f7d4b268">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Float: D +]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="44" y="2" width="160" height="11" uuid="bf406da2-9e1c-4d28-8c13-0b82e6857e11">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{qtdfloat}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="229" y="33" width="221" height="15" uuid="93b27b6e-7783-4e29-b646-db0e1ad34d27">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<textField>
+					<reportElement x="41" y="2" width="163" height="11" uuid="c01f355b-ac82-4474-ad86-6b63fedcb867">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{flprotes}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="3" y="2" width="54" height="11" uuid="07bebf08-553c-444f-ae52-e1af8dc118a6">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Protesto:]]></text>
+				</staticText>
+			</frame>
+		</band>
+	</detail>
+</jasperReport>

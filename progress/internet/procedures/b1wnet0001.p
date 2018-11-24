@@ -1861,7 +1861,8 @@ PROCEDURE gravar-boleto:
             FIND crapceb WHERE 
                  crapceb.cdcooper = par_cdcooper AND
                  crapceb.nrdconta = par_nrdconta AND
-                 crapceb.nrconven = par_nrcnvcob NO-LOCK NO-ERROR.
+                 crapceb.nrconven = par_nrcnvcob
+				 crapceb.insitceb = 1 NO-LOCK NO-ERROR.
 
             FIND crapcco WHERE
                  crapcco.cdcooper = par_cdcooper AND

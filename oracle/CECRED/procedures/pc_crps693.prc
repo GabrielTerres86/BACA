@@ -1062,7 +1062,7 @@ BEGIN
             END IF;                                      
             
           ELSE
-            vr_dsmensag := 'Titulo enviado p/ impressao';
+            vr_dsmensag := 'Boleto enviado para impressao e postagem nos correios';
             
             -- Mover o arquivo gerado para a pasta /usr/coop/<cooperativa>/salvar
             gene0001.pc_OScommand_Shell('mv ' || vr_nmdireto || '/' || vr_nmarquiv || ' ' || 

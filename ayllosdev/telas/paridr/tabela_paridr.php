@@ -1,12 +1,12 @@
 <?
 /*!
  * FONTE        	: tabela_cadidr.php
- * CRIAÇÃO      	: Lucas Reinert
- * DATA CRIAÇÃO 	: Fevereiro/2016
+ * CRIAï¿½ï¿½O      	: Lucas Reinert
+ * DATA CRIAï¿½ï¿½O 	: Fevereiro/2016
  * OBJETIVO     	: Form da tela CADIDR
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ï¿½LTIMA ALTERAï¿½ï¿½O : --/--/----
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAï¿½ï¿½ES   	: 
  * --------------
  */ 
 ?>
@@ -28,7 +28,7 @@
 		<tbody>
 			<?php
 			foreach($registros as $indicador) {
-				// Recebo todos valores em variáveis
+				// Recebo todos valores em variï¿½veis
 				$idindicador = getByTagName($indicador->tags,'idindicador');
 				$nmindicador = getByTagName($indicador->tags,'nmindicador');
 				$tpindicador = getByTagName($indicador->tags,'tpindicador');				
@@ -40,6 +40,8 @@
 				$vlmaximo = getByTagName($indicador->tags,'vlmaximo');
 				$perscore = getByTagName($indicador->tags,'perscore');
 				$pertolera = getByTagName($indicador->tags,'pertolera');
+				$perpeso = getByTagName($indicador->tags,'vlpercentual_peso');
+				$perdesc = getByTagName($indicador->tags,'vlpercentual_desconto');
 				
 			?>
 			<tr>			
@@ -62,7 +64,9 @@
 					<input type="hidden" id="vlminimo" value="<? echo $vlminimo; ?>" />
 					<input type="hidden" id="vlmaximo" value="<? echo $vlmaximo; ?>" />
 					<input type="hidden" id="perscore" value="<? echo $perscore; ?>" />
-					<input type="hidden" id="pertolera" value="<? echo $pertolera; ?>" /></td>
+					<input type="hidden" id="pertolera" value="<? echo $pertolera; ?>" />
+					<input type="hidden" id="perpeso" value="<? echo $perpeso; ?>" />
+					<input type="hidden" id="perdesc" value="<? echo $perdesc; ?>" /></td>
 			</tr>
 			<?php 
 			}

@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) 
-IS
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 /* .............................................................................
 
    Programa: pc_crps730
@@ -203,7 +202,7 @@ IS
 	BEGIN
 		--
 		RETURN translate(pr_texto,'ÑÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÄËÏÖÜÇñáéíóúàèìòùâêîôûãõäëïöüç.-!"''`#$%().:[/]{}¨+?;ºª°§&´*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
-		--                                                      
+		--
   EXCEPTION
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
@@ -279,7 +278,7 @@ IS
                             ,pr_cdprograma    => vr_cdprogra
                             ,pr_idprglog      => vr_idprglog
                             );     
-    END IF;                                                       
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
@@ -287,8 +286,8 @@ IS
                                    ,pr_compleme => 'LENGTH(pr_dscritic):' || LENGTH(pr_dscritic) ||
                                                    'pr_cdcritic:'         || pr_cdcritic
                                    );      
-  END pc_controla_log_batch;   
-  
+  END pc_controla_log_batch;
+   
   -- Rotina que insere um valor numa linha da tabela em memória
   PROCEDURE pc_insere_valor(pr_nrattrib  IN      NUMBER
                            ,pr_dsvalue   IN      CLOB
@@ -509,7 +508,7 @@ IS
     -- set some characteristics
     xmlparser.setValidationMode(p, FALSE);
     xmlparser.setBaseDir(p, pr_dsdireto);
-    
+
     -- Trata problema de arquivo - 09/11/2018 - SCTASK0034650
     IF pr_dsdireto IS NULL OR pr_dsarquiv IS NULL THEN
       vr_cdcritic := 1048;
@@ -518,8 +517,8 @@ IS
     END IF;
     
     BEGIN
-      -- parse input file
-      xmlparser.parse(p, pr_dsdireto || '/' || pr_dsarquiv);
+    -- parse input file
+    xmlparser.parse(p, pr_dsdireto || '/' || pr_dsarquiv);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log
@@ -538,7 +537,7 @@ IS
         --
         RAISE vr_exc_erro;      
     END;
-    
+
     -- get document
     doc := xmlparser.getDocument(p);
 
@@ -635,7 +634,7 @@ IS
 						--
 						dbms_lob.close(texto);
             dbms_lob.freetemporary(texto);
-            --
+						--
             IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
@@ -717,7 +716,7 @@ IS
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                      vr_cdproint ||
                      '. ' || SQLERRM;                  
-      --
+    --
   END pc_insere_registro;
    
   -- Rotina que carrega os arquivos de confirmação
@@ -788,24 +787,24 @@ IS
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
         ELSE
-          -- Processar o arquivo
-          pc_insere_registro(pr_dsdireto => vr_dsdireto             -- IN
-                            ,pr_dsarquiv => vr_tab_confirmacao(idx) -- IN
+        -- Processar o arquivo
+        pc_insere_registro(pr_dsdireto => vr_dsdireto             -- IN
+                          ,pr_dsarquiv => vr_tab_confirmacao(idx) -- IN
                             ,pr_cdcritic => vr_cdcritic             -- OUT
                             ,pr_dscritic => vr_dscritic             -- OUT
-                            );
+                          );
           -- Se retornou erro - tratado para o processo não parar - 09/11/2018 - SCTASK0034650
           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             IF vr_cdcritic = 1038 THEN
               vr_cdcritic := NULL;
               vr_dscritic := NULL;
             ELSE
-              RAISE vr_exc_erro;
-            END IF;
+          RAISE vr_exc_erro;
+        END IF;
           END IF;
           -- Retorna módulo e ação logado
           GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-          --        
+        --
         END IF;
       END LOOP;
       --
@@ -826,7 +825,7 @@ IS
     --
   EXCEPTION
     -- Tratado erro para não parar o processo - WHEN vr_exc_erro THEN - 09/11/2018 - SCTASK0034650 
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN     
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic);   
     WHEN OTHERS THEN
@@ -837,7 +836,7 @@ IS
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                      vr_cdproint ||
                      '. ' || SQLERRM;    
-      --
+    --
   END pc_carrega_arquivo_confirmacao;
 	
 	-- Atualiza a confirmação
@@ -949,7 +948,7 @@ IS
     vr_dscritic        VARCHAR2(4000)        := NULL;
     vr_exc_erro        EXCEPTION;
     --
-  BEGIN
+	BEGIN
     -- Posiciona procedure - 09/11/2018 - SCTASK0034650
     vr_cdproint := vr_cdprogra || '.pc_atualiza_retorno';
     -- Inclusão do módulo e ação logado
@@ -960,23 +959,23 @@ IS
 		--
 		IF pr_idretorno IS NULL THEN
 			--
-			BEGIN    
+			BEGIN
 				--
-    		UPDATE tbcobran_retorno_ieptb
+		UPDATE tbcobran_retorno_ieptb
 					 SET tbcobran_retorno_ieptb.dtcustas_proc = nvl(pr_dtcustas_proc, tbcobran_retorno_ieptb.dtcustas_proc)
 							,tbcobran_retorno_ieptb.flcustas_proc = decode(pr_dtcustas_proc
 							                                              ,NULL
 																														,tbcobran_retorno_ieptb.flcustas_proc
 																														,1
 																														) -- Fixo
-  		  WHERE tbcobran_retorno_ieptb.cdcooper = pr_cdcooper
-	      AND tbcobran_retorno_ieptb.dtmvtolt = pr_dtmvtolt
-			  AND tbcobran_retorno_ieptb.cdcomarc = pr_cdcomarc
-			  AND tbcobran_retorno_ieptb.nrseqrem = pr_nrseqrem
-			  AND tbcobran_retorno_ieptb.nrseqarq = pr_nrseqarq;
-		  --
-  	  EXCEPTION
-	  	  WHEN OTHERS THEN
+		 WHERE tbcobran_retorno_ieptb.cdcooper = pr_cdcooper
+		   AND tbcobran_retorno_ieptb.dtmvtolt = pr_dtmvtolt
+			 AND tbcobran_retorno_ieptb.cdcomarc = pr_cdcomarc
+			 AND tbcobran_retorno_ieptb.nrseqrem = pr_nrseqrem
+			 AND tbcobran_retorno_ieptb.nrseqarq = pr_nrseqarq;
+		--
+	EXCEPTION
+		WHEN OTHERS THEN
           -- No caso de erro de programa gravar tabela especifica de log
           cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
           -- Trata erro
@@ -1127,20 +1126,20 @@ IS
           vr_dscritic := NULL;
         ELSE
           --
-          vr_nmarquiv := vr_dsdireto || vr_tab_retorno(idx);
-          -- Processar o arquivo
-          pc_insere_registro(pr_dsdireto => vr_dsdireto             -- IN
+        vr_nmarquiv := vr_dsdireto || vr_tab_retorno(idx);
+        -- Processar o arquivo
+        pc_insere_registro(pr_dsdireto => vr_dsdireto             -- IN
                             ,pr_dsarquiv => vr_tab_retorno(idx)     -- IN
                             ,pr_cdcritic => vr_cdcritic             -- OUT
                             ,pr_dscritic => vr_dscritic             -- OUT
-                            );
-          -- Se retornou erro
+                          );
+        -- Se retornou erro
           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             IF vr_cdcritic = 1038 THEN
               vr_cdcritic := NULL;
               vr_dscritic := NULL;
             ELSE
-              RAISE vr_exc_erro;
+          RAISE vr_exc_erro;
             END IF;
           END IF;
           -- Retorna módulo e ação logado
@@ -1167,7 +1166,7 @@ IS
     --
   EXCEPTION
     -- Tratado erro para não parar o processo - WHEN vr_exc_erro THEN - 09/11/2018 - SCTASK0034650 
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN     
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic);   
     WHEN OTHERS THEN
@@ -1210,7 +1209,7 @@ IS
                                      ,pr_dscritic          	 OUT VARCHAR2
                                      ) IS
   /* ..........................................................................
-    
+
   Procedure: pc_gera_confirmacao_ieptb
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Autor    : xxx
@@ -1392,7 +1391,7 @@ IS
 															 );
                                
 		BEGIN
-      INSERT INTO tbcobran_retorno_ieptb(cdcooper
+    INSERT INTO tbcobran_retorno_ieptb(cdcooper
                                       ,dtmvtolt
                                       ,cdcomarc
                                       ,nrseqrem
@@ -1693,7 +1692,7 @@ IS
 						END IF;
 						--
 						IF pr_origem = 'CON' THEN
-              --
+							--
 							pc_atualiza_confirmacao(pr_cdcooper        => vr_tab_lancto(vr_index_lancto).vr_cdcooper -- IN
 																		 ,pr_dtmvtolt        => vr_tab_lancto(vr_index_lancto).vr_dtmvtolt -- IN
 																		 ,pr_cdcomarc        => vr_tab_lancto(vr_index_lancto).vr_cdcomarc -- IN
@@ -1834,12 +1833,12 @@ IS
         -- Retorna módulo e ação logado
         GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
         
-        -- Atualiza os títulos
+				-- Atualiza os títulos
 				pc_atualiza_titulos(pr_idretorno => vr_idlancto                          -- IN
 													 ,pr_tpregist  => vr_tab_ted(vr_index_ted).vr_tpregist -- IN
 													 ,pr_origem    => vr_tab_ted(vr_index_ted).vr_tporigem -- IN
 													 ,pr_cdcritic  => vr_cdcritic                          -- OUT
-                           ,pr_dscritic  => vr_dscritic                          -- OUT
+													 ,pr_dscritic  => vr_dscritic                          -- OUT
 													 );
         IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
            RAISE vr_exc_erro;
@@ -1915,6 +1914,7 @@ IS
 						,crapcco.cdagenci
 						,crapcco.cdbccxlt
 						,crapcco.nrdolote
+						,crapcob.nrinssac
         FROM crapcob
             ,crapcop
             ,crapdat
@@ -1985,7 +1985,7 @@ IS
     vr_dsmotivo  VARCHAR2(2);
     --
     vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
-    --vr_tab_descontar       PAGA0001.typ_tab_titulos;    
+    --vr_tab_descontar       PAGA0001.typ_tab_titulos;
 		--
 		rw_craplot cobr0011.cr_craplot%ROWTYPE;
 		--
@@ -2003,6 +2003,8 @@ IS
 		-- Varivel vr_nrdocmto NUMBER; não utilizada - 09/11/2018 - SCTASK0034650		
 		--
 		vr_idretorno      NUMBER;
+		--
+		vr_dsmuncar       VARCHAR2(4000);
 		--
   BEGIN
     -- Posiciona procedure - 09/11/2018 - SCTASK0034650
@@ -2083,12 +2085,12 @@ IS
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
-							--							             
+							--
               -- Validar formatação das datas
               BEGIN
                 IF vr_tab_arquivo(vr_index_reg).campot34 IS NOT NULL THEN
                   vr_dtauxili := to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy');
-                END IF;
+							END IF;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_cdcritic := 789;
@@ -2101,7 +2103,7 @@ IS
                                  ', campot34:' || vr_tab_arquivo(vr_index_reg).campot34;
                   RAISE vr_exc_erro;
               END;
-
+							
               BEGIN
                 IF vr_tab_arquivo(vr_index_reg).campot37 IS NOT NULL THEN
                   vr_dtauxili := to_date(vr_tab_arquivo(vr_index_reg).campot37,'ddmmyyyy');
@@ -2116,7 +2118,7 @@ IS
                                  ', nrdconta:' || rw_crapcob.nrdconta ||
                                  ', nrcnvcob:' || rw_crapcob.nrcnvcob ||
                                  ', campot37:' || vr_tab_arquivo(vr_index_reg).campot34;
-                  RAISE vr_exc_erro; 
+								RAISE vr_exc_erro;
               END;
 
 							pc_gera_retorno_ieptb(pr_cdcooper            => rw_crapcob.cdcooper                   -- IN
@@ -2559,11 +2561,11 @@ IS
 																			 );
               IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 -- Trata erro
-                RAISE vr_exc_erro;      
-              END IF;
+								RAISE vr_exc_erro;
+							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-              --
+							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
@@ -2672,8 +2674,8 @@ IS
 																			 );
               IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 -- Trata erro
-                RAISE vr_exc_erro;      
-              END IF;
+								RAISE vr_exc_erro;
+							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);              
 							--
@@ -3406,7 +3408,7 @@ IS
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-							--
+								--
 					ELSE
 						--
 						IF vr_tab_arquivo(vr_index_reg).campot32 IS NOT NULL THEN
@@ -3444,15 +3446,32 @@ IS
 																			 );
               IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 -- Trata erro
-                RAISE vr_exc_erro;   
-              END IF;
+								RAISE vr_exc_erro;
+							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);              
+							--
+							BEGIN
+								--
+								SELECT crapsab.nmcidsac || ' - ' || crapsab.cdufsaca
+								  INTO vr_dsmuncar
+									FROM crapsab
+								 WHERE crapsab.cdcooper = rw_crapcob.cdcooper
+									 AND crapsab.nrdconta = rw_crapcob.nrdconta
+									 AND crapsab.nrinssac = rw_crapcob.nrinssac;
+								--
+							EXCEPTION
+								WHEN no_data_found THEN
+									vr_dsmuncar := NULL;
+								WHEN OTHERS THEN
+									pr_dscritic := 'Erro ao buscar os dados do cartorio: ' || SQLERRM;
+									RAISE vr_exc_erro;
+							END;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Título registrado em cartório nr: ' || vr_tab_arquivo(vr_index_reg).campot31
+																					 ,pr_dsmensag => 'Boleto em processo de protesto no cartorio nr de ' || vr_tab_arquivo(vr_index_reg).campot31 || vr_dsmuncar
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => vr_dscritic
 																					 );
@@ -3498,7 +3517,7 @@ IS
 																							 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada                                     -- Temptable dos lanamentos
 																							 ,pr_cdcritic            => vr_cdcritic                                                -- Codigo da critica
 																							 ,pr_dscritic            => vr_dscritic                                                -- Descricao critica
-																							 );							
+																							 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 								-- Este log fica registrado por essa rorina cobr0011.pc_gera_log - 09/11/2018 - SCTASK0034650
 							  RAISE vr_exc_erro;
@@ -3728,11 +3747,11 @@ IS
 																	 );
             IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               -- Trata erro
-							RAISE vr_exc_erro;    
-            END IF;
+							RAISE vr_exc_erro;
+						END IF;
             -- Retorna módulo e ação logado
             GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-					  --
+						--
 					ELSIF vr_idtiparq = 'RET' THEN
 						--
 						pc_atualiza_retorno(pr_cdcooper      => rw_crapcob.cdcooper                   -- IN
@@ -3746,15 +3765,15 @@ IS
 															 );
             IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               -- Trata erro  
-							RAISE vr_exc_erro;  
+							RAISE vr_exc_erro;
             END IF;
             -- Retorna módulo e ação logado
             GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
+							--
+						END IF;
+					
 						--
 					END IF;
-					
-          --
-				END IF;
 				--
 				IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele) > 0 THEN
 					-- Totaliza por cooperativa
@@ -4139,7 +4158,7 @@ IS
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo
                               ,pr_path          => vr_dsdireto
                               ,pr_pesq          => vr_pesq
-                              );    
+                              );
     IF vr_tab_arquivo.COUNT() > 0 THEN
       --
       FOR idx IN 1..vr_tab_arquivo.COUNT() LOOP
@@ -4158,20 +4177,20 @@ IS
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
         ELSE
-          -- Move o arquivo
-          wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
-		  																,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
+        -- Move o arquivo
+        wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
+																		,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
 			  															,pr_dscritic  => vr_dscritic
-				  														);
-          -- Se retornou erro
+																		);
+        -- Se retornou erro
           IF TRIM(vr_dscritic) IS NOT NULL THEN
             vr_cdcritic := 0;
-            RAISE vr_exc_erro;
-            --
-          END IF;
+          RAISE vr_exc_erro;
+          --
+        END IF;
           -- Retorna módulo e ação logado
           GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-          --
+        --
         END IF;
       END LOOP;
       --
@@ -4216,15 +4235,15 @@ IS
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
         ELSE
-          -- Move o arquivo
-          wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
-		  															  ,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
+        -- Move o arquivo
+        wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
+																	  ,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
 			  														  ,pr_dscritic  => vr_dscritic
-				  													  );
-          -- Se retornou erro
+																	  );
+        -- Se retornou erro
           IF TRIM(vr_dscritic) IS NOT NULL THEN
             vr_cdcritic := 0;
-            RAISE vr_exc_erro;
+          RAISE vr_exc_erro;
           END IF;
           -- Retorna módulo e ação logado
           GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -4275,7 +4294,7 @@ BEGIN                          -- Inicio Bloco Principal
 		SELECT crapdat.dtmvtolt
 		  INTO vr_dtmvtolt
 		  FROM crapdat
-		 WHERE crapdat.cdcooper = 3;		
+		 WHERE crapdat.cdcooper = 3;
 	EXCEPTION
 		WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log
@@ -4297,7 +4316,7 @@ BEGIN                          -- Inicio Bloco Principal
   IF vr_dscritic IS NOT NULL THEN
     -- Trata erro
     vr_cdcritic := 0;
-	  RAISE vr_exc_erro;   
+    RAISE vr_exc_erro;
   END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
@@ -4308,8 +4327,8 @@ BEGIN                          -- Inicio Bloco Principal
                                 );
   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     -- Trata erro 
-	  RAISE vr_exc_erro;    
-  END IF;  
+    RAISE vr_exc_erro;
+  END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
 	
@@ -4319,7 +4338,7 @@ BEGIN                          -- Inicio Bloco Principal
                       );
   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     -- Trata erro 
-	  RAISE vr_exc_erro;  
+    RAISE vr_exc_erro;
   END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
@@ -4327,10 +4346,10 @@ BEGIN                          -- Inicio Bloco Principal
   pc_carrega_arquivo_retorno(pr_cdcooper => 3           -- IN
 	                          ,pr_cdcritic => vr_cdcritic -- OUT
 	                          ,pr_dscritic => vr_dscritic -- OUT
-                            );  
+                            );
   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     -- Trata erro 
-	  RAISE vr_exc_erro;  
+    RAISE vr_exc_erro;
   END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
@@ -4341,7 +4360,7 @@ BEGIN                          -- Inicio Bloco Principal
                       );
   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     -- Trata erro 
-	  RAISE vr_exc_erro;  
+    RAISE vr_exc_erro;
   END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
@@ -4352,17 +4371,17 @@ BEGIN                          -- Inicio Bloco Principal
   IF vr_dscritic IS NOT NULL THEN
     -- Trata erro
     vr_cdcritic := 0;
-	  RAISE vr_exc_erro;  
-  END IF;	
+    RAISE vr_exc_erro;
+  END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-  
+	
 	-- Gera as movimentações
 	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN
     -- Trata erro
     vr_cdcritic := 0;
-	  RAISE vr_exc_erro;  
+    RAISE vr_exc_erro;
   END IF;
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
@@ -4426,6 +4445,6 @@ EXCEPTION
                          ,pr_dscritic => pr_dscritic);
                          
 		ROLLBACK;
-    --
+  --
 end pc_crps730;
 /

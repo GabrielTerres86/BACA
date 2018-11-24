@@ -1,11 +1,11 @@
 <?php 
 /***************************************************************************************
- * FONTE        : Confirma_config.php				Última alteração: --/--/----
- * CRIAÇÃO      : Lombardi
- * DATA CRIAÇÃO : Março/2016
+ * FONTE        : Confirma_config.php				ï¿½ltima alteraï¿½ï¿½o: --/--/----
+ * CRIAï¿½ï¿½O      : Lombardi
+ * DATA CRIAï¿½ï¿½O : Marï¿½o/2016
  * OBJETIVO     : 
  
-	 Alterações   : 
+	 Alteraï¿½ï¿½es   : 
   
  
  **************************************************************************************/
@@ -18,9 +18,11 @@
 	
 	isPostMethod();		
 	  
-	// Guardo os parâmetos do POST em variáveis	
+	// Guardo os parï¿½metos do POST em variï¿½veis	
 	$ls_configrp           = (isset($_POST['ls_configrp']))           ? $_POST['ls_configrp'] : '';
-	$perdesmax             = (isset($_POST['perdesmax']))             ? $_POST['perdesmax'] : '';
+	$ls_vinculacoesrp      = (isset($_POST['ls_vinculacoesrp']))      ? $_POST['ls_vinculacoesrp'] : '';
+	$vldescontomax_coo     = (isset($_POST['vldescontomax_coo']))     ? $_POST['vldescontomax_coo'] : '';
+	$vldescontomax_cee     = (isset($_POST['vldescontomax_cee']))     ? $_POST['vldescontomax_cee'] : '';
 	$idparame_reciproci    = (isset($_POST['idparame_reciproci']))    ? $_POST['idparame_reciproci'] : 0;
 	$dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslogcfg'] : 0;
 	$cp_idparame_reciproci = (isset($_POST['cp_idparame_reciproci'])) ? $_POST['cp_idparame_reciproci'] : '';
@@ -34,7 +36,9 @@
 	$xmlConfirmaConf .= "   <Dados>";
 	$xmlConfirmaConf .= "	   <idparame_reciproci>".$idparame_reciproci."</idparame_reciproci>";
 	$xmlConfirmaConf .= "	   <configrp>".$ls_configrp."</configrp>";
-	$xmlConfirmaConf .= "	   <perdesmax>".$perdesmax."</perdesmax>";
+	$xmlConfirmaConf .= "	   <vinculacoesrp>".$ls_vinculacoesrp."</vinculacoesrp>";
+	$xmlConfirmaConf .= "	   <vldescontomax_coo>".$vldescontomax_coo."</vldescontomax_coo>";
+	$xmlConfirmaConf .= "	   <vldescontomax_cee>".$vldescontomax_cee."</vldescontomax_cee>";
 	$xmlConfirmaConf .= "	   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlConfirmaConf .= "   </Dados>";
 	$xmlConfirmaConf .= "</Root>";
@@ -44,7 +48,7 @@
 	
 	$xmlObjConfirmaConf = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crï¿½tica
 	if (strtoupper($xmlObjConfirmaConf->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro  = $xmlObjConfirmaConf->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -61,7 +65,7 @@
   $idparame_reciproci = $xmlObjConfirmaConf->roottag->tags[0]->cdata;
   $desmensagem        = $xmlObjConfirmaConf->roottag->tags[1]->cdata;
   
-  // Incrementar o LOG com o já existente
+  // Incrementar o LOG com o jï¿½ existente
   $deslogconfrp       = $dslogcfg.$xmlObjConfirmaConf->roottag->tags[2]->cdata;
     
   $str_populadados  = '$(\'#'.$cp_idparame_reciproci.'\').val(\''.$idparame_reciproci.'\');';
