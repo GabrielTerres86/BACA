@@ -4601,6 +4601,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dsretorn   VARCHAR2(6000);
       vr_typ_saida  VARCHAR2(4000);
 
+      /* Variaveis Prj421 */
+      -- Data do movimento no formato yymmdd
+      vr_dtmvtolt_yymmdd     varchar2(6);
+      
+      -- Nome do diretório
+      vr_nom_diretorio       varchar2(200);
+      vr_dsdircop_contab     varchar2(200);
+
+      -- Nome do arquivo que será gerado
+      vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
+      vr_nmarqdat            varchar2(50);
+
+      -- Arquivo texto
+      vr_arquivo_txt         utl_file.file_type;
+      vr_linhadet            varchar2(200);
+
+      -- Tratamento de erros
+      vr_typ_said            VARCHAR2(4);
+
       --index da temp-table do relatorio
       vr_idxcop     VARCHAR2(46);  
       
@@ -4719,6 +4738,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt;
       rw_exec_ant cr_exec_ant%rowtype;
               
+      CURSOR cr_bancoob_tarifa IS
+        SELECT b.cdcooper
+             , e.nrctabcb
+             , b.cdagenci
+             , b.cdhistor
+             , c.dscontabil
+             , d.inpessoa
+             , DECODE(d.inpessoa,1,c.nrctadeb_pf,c.nrctadeb_pj) nrctadeb
+             , DECODE(d.inpessoa,1,c.nrctacrd_pf,c.nrctacrd_pj) nrctacrd
+             , sum(b.vldtrans) vldtrans
+             , Row_Number() OVER (PARTITION BY b.cdcooper, b.cdhistor, d.inpessoa ORDER BY b.cdcooper, b.cdhistor, d.inpessoa) nrseqreghis
+             , Count(1) OVER (PARTITION BY b.cdcooper) qtdreg
+             , Row_Number() OVER (PARTITION BY b.cdcooper ORDER BY b.cdcooper) nrseqreg
+             , SUM(SUM(b.vldtrans)) OVER (PARTITION BY b.cdcooper, b.cdhistor, d.inpessoa) AS vltotal
+          FROM crapcop e
+             , crapass d
+             , tbcontab_prm_his_tarifa c
+             , (select x.dschave
+                     , x.nrdconta cdcooper
+                     , x.cdagenci
+                     , gene0002.fn_busca_entrada(01,dscritic,';') nmrescop
+                     , gene0002.fn_busca_entrada(02,dscritic,';') nmresage
+                     , gene0002.fn_busca_entrada(03,dscritic,';') nrdconta
+                     , to_number(gene0002.fn_busca_entrada(04,dscritic,';')) cdtrnbcb
+                     , gene0002.fn_busca_entrada(05,dscritic,';') dstrnbcb
+                     , to_number(gene0002.fn_busca_entrada(06,dscritic,';')) cdhistor
+                     , gene0002.fn_busca_entrada(07,dscritic,';') dshistor
+                     , to_number(gene0002.fn_busca_entrada(08,dscritic,';')) inpessoa
+                     , to_number(gene0002.fn_busca_entrada(09,dscritic,';')) cdorigem
+                     , to_date(gene0002.fn_busca_entrada(10,dscritic,';'),'fmddmmrrrr') dtdtrans
+                     , to_date(gene0002.fn_busca_entrada(11,dscritic,';'),'fmddmmrrrr') dtmvtolt
+                     , to_number(gene0002.fn_busca_entrada(12,dscritic,';')) flgdebcc
+                     , to_number(gene0002.fn_busca_entrada(13,dscritic,';'),'fm999g999g999g999g990d00') vldtrans
+                  from tbgen_batch_relatorio_wrk x
+                     , crapdat y
+                 where x.cdcooper    = pr_cdcooper
+                   and x.cdprograma  = 'CRPS670'
+                   and x.dsrelatorio = 'DADOS_RELAT'
+                   and x.dtmvtolt    = y.dtmvtolt
+                   AND y.cdcooper    = pr_cdcooper) b
+         WHERE e.cdcooper = b.cdcooper
+           AND d.cdcooper = b.cdcooper
+           AND d.nrdconta = b.nrdconta
+           AND c.cdhistor = b.cdhistor
+         GROUP
+            BY b.cdcooper
+             , e.nrctabcb
+             , b.cdhistor
+             , c.dscontabil
+             , b.cdagenci
+             , d.inpessoa
+             , DECODE(d.inpessoa,1,c.nrctadeb_pf,c.nrctadeb_pj)
+             , DECODE(d.inpessoa,1,c.nrctacrd_pf,c.nrctacrd_pj)
+         ORDER
+            BY b.cdcooper
+             , b.cdhistor
+             , d.inpessoa
+             , b.cdagenci;
+
       -- Subrotina para escrever críticas no LOG do processo
       PROCEDURE pc_log_batch(pr_flgerro BOOLEAN) IS
       BEGIN
@@ -5861,6 +5939,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- gerar relatorio contendo informações sobre os registros processados
         pc_relatorio_crrl685(pr_dscritic => vr_dscritic);
         
+        -- Busca o diretório final para copiar arquivos
+        vr_dsdircop_contab := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => 0
+                                                       ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+
+        vr_dtmvtolt_yymmdd := to_char(rw_crapdat.dtmvtoan, 'yymmdd');
+        vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_TARIFAS_CARTOES.txt';
+
+        /* Prj421 - Melhorias nas ferramentas contabeis e fiscais */
+        FOR rw_bancoob_tarifa IN cr_bancoob_tarifa LOOP
+          --Primeiro registro da cooperativa deve abrir o arquivo
+          IF rw_bancoob_tarifa.nrseqreg = 1 THEN
+            vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                      pr_cdcooper => rw_bancoob_tarifa.cdcooper,
+                                                      pr_nmsubdir => 'contab');
+
+            -- Abre o arquivo para escrita
+            gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                                     pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                                     pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                                     pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                                     pr_des_erro => vr_dscritic);
+
+            if vr_dscritic is not null then
+              vr_cdcritic := 0;
+              RAISE vr_exc_saida;
+            end if;
+          END IF;
+          
+          --Primeiro registro do historico deve gerar a linha contabil
+          IF rw_bancoob_tarifa.nrseqreghis = 1 THEN
+            /* Escrita arquivo */
+            vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                           trim(to_char(rw_crapdat.dtmvtoan,'ddmmyy'))||','||
+                           rw_bancoob_tarifa.nrctadeb||','||
+                           rw_bancoob_tarifa.nrctacrd||','||
+                           trim(to_char(rw_bancoob_tarifa.vltotal, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','||
+                           '5210,'||
+                           '"VALOR REF. DEBITO C/C '||gene0002.fn_mask(rw_bancoob_tarifa.nrctabcb,'zzz.zzz.zzz-z')||
+                           ' BANCOOB REF. '||rw_bancoob_tarifa.dscontabil||CASE WHEN rw_bancoob_tarifa.inpessoa = 1 THEN ' - PF' ELSE ' - PJ' END||'"';
+
+            gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+          END IF;
+
+          --Todas as linhas geram rateio
+          vr_linhadet := lpad(rw_bancoob_tarifa.cdagenci,3,'0')||','||trim(to_char(rw_bancoob_tarifa.vldtrans, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+          gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+          --Ultimo registro de cada cooperativa deve fechar o arquivo contabil e transferilo
+          IF rw_bancoob_tarifa.nrseqreg = rw_bancoob_tarifa.qtdreg THEN
+            gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+
+            vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_bancoob_tarifa.cdcooper),2,0)||'_TARIFAS_CARTOES.txt';                        
+
+            -- Copia o arquivo gerado para o diretório final convertendo para DOS
+            gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop_contab||'/'||vr_nmarqnov||' 2>/dev/null',
+                                        pr_typ_saida   => vr_typ_said,
+                                        pr_des_saida   => vr_dscritic);
+            -- Testar erro
+            IF vr_typ_said = 'ERR' THEN
+               vr_cdcritic := 1040;
+               gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
+            END IF;
+          END IF;
+        END LOOP;
+        /* Fim Prj421 */
+
         -- Eliminar informações temporárias do relatório
         begin    
           delete from tbgen_batch_relatorio_wrk
