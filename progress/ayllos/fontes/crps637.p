@@ -89,6 +89,7 @@ DEF  VAR aux_setlinha AS    CHAR                                      NO-UNDO.
 DEF  VAR aux_qtregist AS    INTE                                      NO-UNDO.
 DEF  VAR aux_flgarqui AS    LOGI                                      NO-UNDO.
 DEF  VAR aux_flginter AS    LOGI                                      NO-UNDO.
+DEF  VAR aux_dstransa AS    CHAR                                      NO-UNDO.
                                                                       
 /* Temp-table para crrl640 */
 DEF TEMP-TABLE tt-crrl640
