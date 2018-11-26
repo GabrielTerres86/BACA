@@ -118,6 +118,8 @@ BEGIN
                              Alteração específica neste programa acrescentando o tratamento para a origem
                              BLQPREJU. Tratamento crítica 695 para também verificar conta em prejuízo
                              (Renato Cordeiro - AMcom)
+			
+                26/11/2018 - P450 - Removido tratamento de nao pode debitar.( Odirlei-AMcom )
 
   ............................................................................. */
   DECLARE
@@ -471,14 +473,6 @@ BEGIN
           IF cr_craplot%NOTFOUND THEN
             --Fecha o cursor
             CLOSE cr_craplot;
-            /* Identifica se pode ou não efetuar o lançamento na conta do cooperado */ --**
-            vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_tab_cheques_altovale(vr_indice).cdcooper,
-                                                    pr_nrdconta => pr_tab_cheques_altovale(vr_indice).nrdconta,
-                                                    pr_cdhistor => pr_tab_cheques_altovale(vr_indice).cdhistor);
-            /* se não puder efetuar o lançamento, vai para o proximo registro */
-            IF vr_fldebita = FALSE THEN
-               CONTINUE;
-            END IF;
                         
             --Cria o lote
             BEGIN
@@ -579,13 +573,8 @@ BEGIN
                                            ,pr_dscritic => vr_dscritic);   
                                            
         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-          IF vr_incrineg = 0 THEN
             RAISE vr_exc_erro;
-          ELSE
-           CONTINUE;
           END IF;    
-        END IF;   
-        
 
         --Atualiza os dados do lote
         BEGIN
@@ -1213,54 +1202,6 @@ BEGIN
             END IF;
           END IF;
         ELSE
-          --cria craplcm
-          BEGIN
-            INSERT INTO craplcm
-              (craplcm.dtmvtolt,
-               craplcm.dtrefere,
-               craplcm.cdagenci,
-               craplcm.cdbccxlt,
-               craplcm.nrdolote,
-               craplcm.nrdconta,
-               craplcm.nrdctabb,
-               craplcm.nrdctitg,
-               craplcm.nrdocmto,
-               craplcm.cdhistor,
-               craplcm.vllanmto,
-               craplcm.nrseqdig,
-               craplcm.cdcooper,
-               craplcm.cdbanchq,
-               craplcm.cdagechq,
-               craplcm.nrctachq,
-               craplcm.cdpesqbb)
-            VALUES
-              (rw_craplot.dtmvtolt,
-               rw_craplot.dtmvtolt,
-               rw_craplot.cdagenci,
-               rw_craplot.cdbccxlt,
-               rw_craplot.nrdolote,
-               pr_nrdconta,
-               pr_nrdctabb,
-               pr_nrdctitg,
-               pr_nrdocmto,
-               pr_cdhistor,
-               pr_vllanaut,
-               (rw_craplot.nrseqdig + 1),
-               pr_cdcooper,
-               rw_crapfdc.cdbanchq,
-               rw_crapfdc.cdagechq,
-               rw_crapfdc.nrctachq,
-               to_char(pr_dtmvtolt, 'dd/mm/yyyy') ||'-'||
-               gene0002.fn_mask(pr_cdagenci, '999') || '-'||
-               gene0002.fn_mask(pr_cdbccxlt, '999') ||'-'||
-               gene0002.fn_mask(pr_nrdolote, '999999') || '-'||
-               gene0002.fn_mask(pr_nrseqdig, '99999'))
-            RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
-              RAISE vr_exc_erro;
-          END;
 
           -- PJ450 - Insere o lançamento
           LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
@@ -1293,50 +1234,7 @@ BEGIN
           rw_craplcm.nrseqdig:=  rw_craplot.nrseqdig + 1;
                                           
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-		     	    	RAISE vr_exc_erro;
-             ELSE
-                --Atualiza registro de lancamento automatico
-          BEGIN
-                  UPDATE craplau lau
-                     SET lau.insitlau = 3
-                   WHERE lau.rowid = pr_craplau_rowid;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    --Monta mensagem de erro
-                    vr_dscritic := 'Erro ao atualizar a tabela de Lancamentos automaticos (CRAPLAU) - Conta: ' || pr_nrdconta || '. Detalhes: ' || sqlerrm;
-                    --Gera excecao
-                    RAISE vr_exc_erro;
-                END;
-                pc_proc_rejeitados(pr_cdcooper => pr_cdcooper,
-                                   pr_cdagenci => pr_cdagenci,
-                                   pr_nrdcaixa => pr_nrdcaixa,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_dtmvtopr => pr_dtmvtopr,
-                                   pr_nrcustod => vr_nrcustod,
-                                   pr_cdseqtel => pr_cdseqtel,
-                                   pr_vllanaut => pr_vllanaut,
-                                   pr_cdhistor => pr_cdhistor,
-                                   pr_nrdctabb => pr_nrdctabb,
-                                   pr_nrdocmto => pr_nrdocmto,
-                                   pr_nrseqdig => pr_nrseqdig,
-                                   pr_cdcritic => vr_cdcritic,
-                                   pr_des_reto => pr_des_reto,
-                                   pr_tab_erro => pr_tab_erro);
-                -- Se retornar erro
-                IF pr_des_reto <> 'OK' THEN
-                  IF pr_tab_erro.COUNT > 0 THEN
-                    -- Montar mensagem de erro
-                    vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-                    vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-                  ELSE
-                    -- Por algum motivo retornou erro mais a tabela veio vazia
-                    vr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada pc_proc_rejeitados';
-                  END IF;
-                  --Gera excecao
-                  RAISE vr_exc_erro;
-                END IF;
-                --
-                RETURN;
+            RAISE vr_exc_erro;
       	  END IF;  
 
           BEGIN
