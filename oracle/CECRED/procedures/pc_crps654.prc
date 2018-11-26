@@ -431,6 +431,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
           END;
 
+		  vr_horaminseg := TO_NUMBER(TO_CHAR(SYSDATE, 'hh24mmss')); -- 27/04/2018-deb.unico.
+
           -- PJ450 - Insere Lancamento 
           LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
@@ -440,7 +442,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,pr_nrdconta => rw_crappla.nrdconta
                                             ,pr_nrdctabb => rw_crappla.nrdconta
                                             ,pr_nrdctitg => to_char(rw_crappla.nrdconta,'00000000')
-                                            ,pr_nrdocmto => rw_crappla.nrctrpla
+                                            ,pr_nrdocmto => rw_crappla.nrctrpla || vr_horaminseg
                                             ,pr_cdpesqbb => vr_cdprogra
                                             ,pr_hrtransa => vr_hrtransa
                                             ,pr_cdhistor => 127 -- DB. COTAS 
