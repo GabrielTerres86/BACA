@@ -1024,6 +1024,7 @@ create or replace package body cecred.TELA_APRDES is
      - 21/07/2018 - Vitor Shimada Assanuma: Close do cursor de data e alteração do cursor de verificação de crítica
      - 08/08/2018 - Vitor Shimada Assanuma: Alteração da verificação de críticas e envio de bordero para a esteira mesmo quando um titulo 
                                             é reprovado.
+     - 23/11/2018 - Luis Fernando (GFT) : Adicionado para enviar o cooperado que analistou o bordero para a esteira, não o da mesa de checagem                                       
   ---------------------------------------------------------------------------------------------------------------------*/
                              
     /* tratamento de erro */
@@ -1080,7 +1081,8 @@ create or replace package body cecred.TELA_APRDES is
           crapbdt.nrborder,
           crapbdt.nrdconta,
           crapbdt.insitbdt,
-          crapbdt.insitapr
+          crapbdt.insitapr,
+          crapbdt.cdoperad
      FROM
           crapbdt
      WHERE
@@ -1158,6 +1160,7 @@ create or replace package body cecred.TELA_APRDES is
             AND craptdb.cdbandoc = vr_tab_chaves(1) -- Codigo do Banco
             AND craptdb.nrdconta = pr_nrdconta
             AND craptdb.cdcooper = vr_cdcooper
+            AND craptdb.flgenvmc = 1 -- apenas os enviados para mesa de checagem
            ;
          END IF;
          vr_index := vr_tab_cobs.next(vr_index);
@@ -1201,13 +1204,16 @@ create or replace package body cecred.TELA_APRDES is
             IF vr_tab_criticas.count > 0 THEN 
                fl_critica := 1; 
             END IF;
+            IF (DSCT0003.fn_spc_serasa(pr_cdcooper=>vr_cdcooper,pr_nrdconta=>pr_nrdconta,pr_nrcpfcgc =>rw_craptdb.nrinssac) = 'S') THEN
+              fl_critica := 1;
+            END IF;
        END LOOP;
        CLOSE cr_craptdb;
        
        OPEN cr_craptdb_restri;
        FETCH cr_craptdb_restri INTO rw_craptdb_restri;
        /*Nao possui criticas diferentes do CNAE, aprova!*/
-       IF (cr_craptdb_restri%NOTFOUND OR rw_craptdb_restri.totcrit=0 OR vr_tab_criticas.count=0) THEN
+       IF (rw_craptdb_restri.totcrit=0 AND vr_tab_criticas.count=0 AND fl_critica = 0) THEN
          vr_insitbdt := 2;
          vr_insitapr := 4;
        /*Criticas diferentes do CNAE, envia para a esteira*/
@@ -1223,7 +1229,7 @@ create or replace package body cecred.TELA_APRDES is
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_nrborder => pr_nrborder
                                ,pr_cdagenci => vr_cdagenci
-                               ,pr_cdoperad => vr_cdoperad
+                               ,pr_cdoperad => rw_crapbdt.cdoperad
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                --------- OUT ---------
                                ,pr_cdcritic => vr_cdcritic
