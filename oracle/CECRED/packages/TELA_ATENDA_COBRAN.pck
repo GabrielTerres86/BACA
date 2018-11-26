@@ -6058,7 +6058,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
              WHERE tpw.cdalcada_aprovacao = tdc.cddominio
                AND tdc.nmdominio = 'IDALCADA_RECIPR'
                AND tpw.flregra_aprovacao = 1 -- Ativo
-               AND tpw.cdcooper = 1;
+               AND tpw.cdcooper = pr_cdcooper;
         
             -- Se tiver alcadas ativas para aprovacao, vai para pendente (pendente de aprovacao)
             IF vr_qtalcadas_ativas > 0 THEN
