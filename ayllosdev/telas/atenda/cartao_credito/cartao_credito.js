@@ -188,7 +188,7 @@ function controlaFoco() {
 }
 
 function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira) {
-    
+
 	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"'); }, 600);";
     if (id != idAnt) {
         // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
@@ -289,7 +289,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 			$("#btnimpr").prop("disabled", false);            
 			$("#btnimpr").css('cursor', 'pointer');
         }
-
+			
 
         //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
         //informando que o cartão deve ser cancelado através do SIPAGNET.
@@ -1497,7 +1497,6 @@ function buscaDados(cdtipcta, nrcpfstl, inpessoa, dtnasstl, nrdocstl, nmconjug, 
 
 
 console.log('cdtipcta: '+cdtipcta+ ' nrcpfstl: '+nrcpfstl+ ' inpessoa: '+inpessoa+ ' dtnasstl: '+dtnasstl+ ' nrdocstl: '+nrdocstl+ ' nmconjug: '+nmconjug+ ' dtnasccj: '+dtnasccj+ ' nmtitcrd: '+nmtitcrd+ ' nrcpfcgc: '+nrcpfcgc+ ' dtnasccr: '+dtnasccr+ ' nrdoccrd: '+nrdoccrd+ ' vlsalari: '+vlsalari+ ' nmsegntl: '+nmsegntl);
-	showMsgAguardo("Aguarde...");
     if (nrcpfcgc == "000.000.000-00") {
         $(".campoTelaSemBorda").each(function (k, v) {
             if ($(v).attr("id") == "nrcpfcgc") {
@@ -1573,7 +1572,7 @@ console.log('cdtipcta: '+cdtipcta+ ' nrcpfstl: '+nrcpfstl+ ' inpessoa: '+inpesso
         if (nrctrcrd > 0) {
             carregarRepresentante("A", 0, nrcpfcgc);
         } else {
-        carregarRepresentante("N", 0, nrcpfcgc);
+            carregarRepresentante("N", 0, nrcpfcgc);
         }
     } else if (escolha == 7 || escolha == 8) { // Terceiro Titular e Quarto Titular
         buscaTitulares(nrdconta, escolha);
@@ -1743,7 +1742,7 @@ function validarNovoCartao() {
     try {
 // Mostra mensagem de aguardo
         if (nrctrcrd == null || nrctrcrd == 0) {
-        showMsgAguardo("Aguarde, validando novo cart&atilde;o de cr&eacute;dito ...");
+            showMsgAguardo("Aguarde, validando novo cart&atilde;o de cr&eacute;dito ...");
         } else {
             showMsgAguardo("Aguarde, validando altera&ccedil;&atilde;o de cart&atilde;o de cr&eacute;dito ...");
         }
@@ -1788,16 +1787,16 @@ function validarNovoCartao() {
                 var admAdicional = ($("#dsadmcrd", "#frmNovoCartao").val() || "").split(";");
                 dsadmcrd = ($("#dsadmcrd option:selected", "#frmNovoCartao").text() || "").trim(); // Texto no option
                 cdadmcrd = (admAdicional[0] || 0); // Value na coordenada zero do option
-			} else {
+            } else {
                 dsadmcrd = $("#dsadmcrd", "#frmNovoCartao").val();
                 cdadmcrd = $("#cdadmcrd", "#frmNovoCartao").val();
             }
 
-				} else {
+        } else {
             dsadmcrd = (adm[0] || "");
             cdadmcrd = (adm[1] || 0);
-		}
-		
+        }
+	
         var tpdpagto = $("#tpdpagto option:selected", "#frmNovoCartao").val();
         var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val()).replace(/\./g, "");
         vllimpro.replace(/\./g, ",");
@@ -1844,20 +1843,20 @@ function validarNovoCartao() {
         }
         // Validações para cartão PJ
         if (inpessoa == 2 && (cdadmcrd >= 10 && cdadmcrd <= 80)) {
-// Nome da Empresa deve estar preenchido
+            // Nome da Empresa deve estar preenchido
             if (nmempres.trim() == "") {
                 hideMsgAguardo();
                 showError("error", "Empresa do Plastico deve ser informada.", "Alerta - Aimaro", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
             }
-		// Nome da Empresa não pode conter mais de 23 caracteres
+		    // Nome da Empresa não pode conter mais de 23 caracteres
             if (nmempres.length > 23) {
                 hideMsgAguardo();
                 showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Aimaro", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
             }
 
-// Nome da Empresa não pode conter numeros
+            // Nome da Empresa não pode conter numeros
             if (/[0-9]/gm.test(nmempres)) {
                 hideMsgAguardo();
                 showError("error", "Empresa do Plastico n&atilde;o pode conter n&uacute;meros.", "Alerta - Aimaro", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1871,7 +1870,7 @@ function validarNovoCartao() {
             return false
         }
 
-// Executa script de valida��o do cart�o atrav�s de ajax
+        // Executa script de valida��o do cart�o atrav�s de ajax
         $.ajax({
             type: "POST",
             url: UrlSite + "telas/atenda/cartao_credito/validar_novo.php",
@@ -4509,12 +4508,12 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
                 cdadmcrd = 15;
             }
         } else {
-		 if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
-			cdadmcrd = 17;
-		} else {
-			cdadmcrd = 15;
+            if ($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1) {
+                cdadmcrd = 17;
+            } else {
+                cdadmcrd = 15;
             }
-		}
+        }
 	}
 // Carrega conte�do da op��o atrav�s de ajax
     $.ajax({
@@ -4695,6 +4694,8 @@ function buscaTitulares(nrdconta, escolha) {
         },
         success: function (response) {
             eval(response);
+            hideMsgAguardo();
+            blockBackground(parseInt($("#divRotina").css("z-index")));
         }
     });
 
@@ -4850,13 +4851,13 @@ function lerCartaoChip() {
     fechaConexaoPinpad(oPinpad);
 
     if (oPinpad == "" || oPinpad == false || typeof oPinpad == 'undefined') {
-    try {
-        var oPinpad = new ActiveXObject("Gertec.PPC");
-    } catch (e) {
-        hideMsgAguardo();
+        try {
+            var oPinpad = new ActiveXObject("Gertec.PPC");
+        } catch (e) {
+            hideMsgAguardo();
 //showError("error","A rotina de entrega n&atilde;o &eacute; compat&iacute;vel com este navegador, acesse o Internet Explorer.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        return;
-    }
+            return;
+        }
     }
 
 // Abre a porta do PINPAD
@@ -5340,14 +5341,14 @@ function fechaConexaoPinpad(oPinpad) {
 
     // Se houver conexao ativa, elimina	
     if (oPinpad != false && typeof oPinpad != 'undefined') {
-    oPinpad.ReadMagCard_Stop();
-    oPinpad.ChangeEMVCardPasswordStop();
-    oPinpad.StopPINBlock();
+        oPinpad.ReadMagCard_Stop();
+        oPinpad.ChangeEMVCardPasswordStop();
+        oPinpad.StopPINBlock();
 // Apaga o LED
-    oPinpad.SetLED(0);
+        oPinpad.SetLED(0);
 // Fecha Porta
-    oPinpad.CloseSerial();
-}
+        oPinpad.CloseSerial();
+    }
 }
 
 function altera_cb(oPinpad, sAID, sNTexto4, sNumeroCartao) {
