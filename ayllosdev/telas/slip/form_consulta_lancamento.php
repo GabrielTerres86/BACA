@@ -39,7 +39,7 @@
 						<option value="ME"><? echo utf8ToHtml("<") ?>    </option>														
 				</select>											
 		
-				<label for="cdhistor"><? echo utf8ToHtml("Hist. Ailos:") ?></label>
+				<label for="cdhistor"><? echo utf8ToHtml("Hist. Aimaro:") ?></label>
 				<input name="cdhistor" type="text"  id="cdhistor" class="inteiro campo" style="width: 55px;">
 
 				<label for="nrctadeb"><? echo utf8ToHtml("Conta Débito:") ?></label>

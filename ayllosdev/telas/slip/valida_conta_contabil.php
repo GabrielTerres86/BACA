@@ -61,11 +61,11 @@
 		}
 
 		if ($tipvalida == "LR"){ //risco
-			echo "hideMsgAguardo();mostrarRiscoOperacional();";
+			echo "hideMsgAguardo();formatarTabelaIncRisco();mostrarRiscoOperacional();";
 		}
 
 		if ($tipvalida == "LG"){ //gerencial
-			echo "hideMsgAguardo();mostrarRateioGerencial();";
+			echo "hideMsgAguardo();formatarTabelaGerencialRat();mostrarRateioGerencial();";
 		}
 		
 	}

@@ -118,9 +118,9 @@ function controlaInclusaoRisco(){
 	$('#tabIncRisco').css({'width':'235px'});
 	$('#fsTabincRisco').css({'display':'block'});
 	$('#cdrisco_operacional','#frmRisco').habilitaCampo();
+	limpaTabelaIncRisco();
 	formatarTabelaIncRisco();
 	limparCamposRisco();
-	limpaTabelaIncRisco();
 	focarCodRisco();
 	
 }
@@ -172,7 +172,10 @@ function controlaInclusaoLanc(){
 	limparCamposlanc();
 	limpaTabelaGerencialRat();
 	limpaTabelaRiscoRat();
+	formatarTabelaGerencialRat();
+	//formatarTabelaIncRisco();
 	escoderGerRat();	
+	esconderRiscoRat();
 
 }
 
@@ -204,6 +207,8 @@ function controlaAlteracaoLanc(){
 		limparCamposlanc();
 		limpaTabelaGerencialRat();
 		limpaTabelaRiscoRat();
+		formatarTabelaGerencialRat();
+		//formatarTabelaIncRisco();
 		escoderGerRat();
 		esconderRiscoRat();
 		//esconderBotoesRat();
@@ -253,7 +258,7 @@ function mostrarRateioGerencial(){
 	$('#divRateio').css({'display':'block'});			
 	$('#tabRiscoRat').css({'display':'none'});
 	$('#tabGerencialRat').css({'display':'block'});
-	$('#tabGerencialRat').css({'width':'248px'});		
+	$('#tabGerencialRat').css({'width':'323px'});		
 	$("#fsGerencialRat").css({"display":"block"});
 	$("#fsRiscoRat").css({"display":"none"});
 	focarRatGer();
@@ -361,7 +366,7 @@ function mostrarRiscoOperacional(){
 	$('#divRateio').css({'display':'block'});
 	$('#tabGerencialRat').css({'display':'none'});	
 	$('#tabRiscoRat').css({'display':'block '});	
-	$('#tabRiscoRat').css({'width':'220px '});
+	$('#tabRiscoRat').css({'width':'265px'});
 	$("#fsGerencialRat").css({"display":"none"});
 	$("#fsRiscoRat").css({"display":"block"});
 	focarRatRisco();
@@ -769,7 +774,7 @@ function formataInclusaoLanc(){
 	$('label[for="dtmvtolt"]',"#frmIncLancamento").css({"width":"35px"});
 	$("#dtmvtolt","#frmIncLancamento").desabilitaCampo();
 	
-	$('label[for="cdhistor"]',"#frmIncLancamento").css({"width":"68px"});
+	$('label[for="cdhistor"]',"#frmIncLancamento").css({"width":"78px"});
 	$("#cdhistor","#frmIncLancamento").addClass("inteiro campo").css({"width":"57px"}).attr("maxlength","5").habilitaCampo();
 	
 	$('label[for="nrctadeb"]',"#frmIncLancamento").css({"width":"85px"});
@@ -781,7 +786,7 @@ function formataInclusaoLanc(){
 	$('label[for="vllanmto"]',"#frmIncLancamento").css({"width":"65px"});
 	$("#vllanmto","#frmIncLancamento").addClass('moneratio').css({"width":"100px"});
 		
-	$('label[for="cdhistor_padrao"]',"#frmIncLancamento").css({"width":"80px"});
+	$('label[for="cdhistor_padrao"]',"#frmIncLancamento").css({"width":"90px"});
 	$("#cdhistor_padrao","#frmIncLancamento").addClass("inteiro campo").attr("maxlength","5").css({"width":"45px"}).habilitaCampo();
 
 	$('label[for="dslancamento"]',"#frmIncLancamento").css({"width":"85px"});
@@ -915,7 +920,7 @@ function formataConsultaLanc(){
 	$('label[for="dtmvtolt"]',"#frmConLancamento").css({"width":"80px"});
 	$("#dtmvtolt","#frmConLancamento").css({"width":"80px"}).attr("maxlength","12").habilitaCampo();;
 	
-	$('label[for="cdhistor"]',"#frmConLancamento").css({"width":"70px"});
+	$('label[for="cdhistor"]',"#frmConLancamento").css({"width":"80px"});
 	$("#cdhistor","#frmConLancamento").addClass("inteiro campo").css({"width":"57px"}).attr("maxlength","5").habilitaCampo();
 	
 	$('label[for="nrctadeb"]',"#frmConLancamento").css({"width":"90px"});
@@ -927,7 +932,7 @@ function formataConsultaLanc(){
 	$('label[for="vllanmto"]',"#frmConLancamento").css({"width":"80px"});
 	$("#vllanmto","#frmConLancamento");
 	
-	$('label[for="cdhistor_padrao"]',"#frmConLancamento").css({"width":"126px"});
+	$('label[for="cdhistor_padrao"]',"#frmConLancamento").css({"width":"136px"});
 	$("#cdhistor_padrao","#frmConLancamento").addClass("inteiro campo").attr("maxlength","5").css({"width":"45px"}).habilitaCampo();
 
 	$('label[for="dslancamento"]',"#frmConLancamento").css({"width":"80px"});
@@ -1172,8 +1177,8 @@ function focarvllanmtoRat(){
 
 function controlaFoco(){
 
-	let nrctadeb = $("#nrctadeb","#frmIncLancamento").val();
-	let nrctacrd = $("#nrctacrd","#frmIncLancamento").val();
+	var nrctadeb = $("#nrctadeb","#frmIncLancamento").val();
+	var nrctacrd = $("#nrctacrd","#frmIncLancamento").val();
 	
 	// controlar foco ao carregar hist. do parametro 
 	if (nrctacrd != "" && nrctadeb != ""){
@@ -1631,8 +1636,8 @@ function criarLinhaGerencialRat(cdgerencial,vllanmto){
 
 function criarLinhaRiscoRat(cdrisco_operacionalRat){
 
-	if (cdrisco_operacionalRat){
-		
+	if (cdrisco_operacionalRat != ""){
+		console.log(cdrisco_operacionalRat);
 		$("#tbRiscoRat > tbody")
 			.append($('<tr>') // Linha			
 				.append($('<td>') // Coluna:codigo risco					    				
@@ -2117,7 +2122,7 @@ function formatarTabelaIncRisco(){
     $("#tabIncRisco").css({"margin-top":"5px","margin-left":"32%"});
     $("#incRisco").css({"vertical-align": "top","height":"27px","margin-top":"5px"});
     
-	divRegistro.css({"height":"200px","width":"233px"});
+	divRegistro.css({"height":"200px","width":"220px"});
 
 	var ordemInicial = new Array();
 
@@ -2184,7 +2189,7 @@ function formatarTabelaGerencialRat(){
 
 	$("#tabGerencialRat").css({"margin-top":"5px","margin-left":"27%"});
 	$("#incGerencialRat").css({"vertical-align": "top","height":"27px","margin-top":"5px"});	
-	divRegistro.css({"height":"250px","width":"309px"});
+	divRegistro.css({"height":"250px","width":"323px"});
 	
 	
 	$('label[for="cdgerencialRat"]',"#frmIncLancamento").css({"width":"243px"});
@@ -2221,7 +2226,7 @@ function formatarTabelaRiscoRat(){
 
 	$("#tabRiscoRat").css({"margin-top":"5px","margin-left":"33%"});
 	$("#incRiscoRat").css({"vertical-align": "top","height":"27px","margin-top":"5px"});	
-	divRegistro.css({"height":"250px","width":"230px"});
+	divRegistro.css({"height":"250px","width":"265px"});
 		
 	$('label[for="cdrisco_operacionalRat"]',"#frmIncLancamento").css({"width":"298px"});	
 	
@@ -2574,7 +2579,7 @@ function criarLinhaLanc(seq,cdhistor,nrctadeb,nrctacrd,vllanmto,cdhistor_padrao,
 	
 
 
-	let tr = $('<tr>') // Linha
+	var tr = $('<tr>') // Linha
 			.attr('id',"id_".concat(cdhistor))
 			.append($('<td>') // Coluna: conta contabil				
 				.text(seq)
@@ -2970,9 +2975,16 @@ function validaInclusaoRiscoRat(){
 			
 			if ($("td:eq(0)", $(this)).html() == cdrisco_operacionalRat){
 				flgconta = false;
+				formatarTabelaRiscoRat();
 				showError('alert','Risco Operacional ja Incluido.','Alerta - Aimaro','focarRatRisco();');
 
+			}else{
+				formatarTabelaRiscoRat();
+				showError('alert','Apenas um risco operacional pode ser incluido.','Alerta - Aimaro','focarRatRisco();');
 			}
+			
+			
+
 			
 		});
 
@@ -4072,7 +4084,7 @@ function concluirLancamentoExclusao(){
 function concluirValidacaoRisco(tipvalida){
 	
 	if (tipvalida == "L"){
-		let cddrisco = $('#cdrisco_operacionalRat','#frmIncLancamento').val();
+		var cddrisco = $('#cdrisco_operacionalRat','#frmIncLancamento').val();		
 		criarLinhaRiscoRat(cddrisco);
 		formatarTabelaRiscoRat();	
 		limparCamposRateio();		    
@@ -4085,8 +4097,8 @@ function concluirValidacaoRisco(tipvalida){
 function concluirValidacaoGerencial(tipvalida){
 	
 	if (tipvalida == "L"){
-		let cdgerencial = $('#cdgerencialRat','#frmIncLancamento').val();
-		let vllanmto = $('#vllanmtoRat','#frmIncLancamento').val();
+		var cdgerencial = $('#cdgerencialRat','#frmIncLancamento').val();
+		var vllanmto = $('#vllanmtoRat','#frmIncLancamento').val();
 		criarLinhaGerencialRat(cdgerencial,vllanmto);	
 		formatarTabelaGerencialRat();
 		limparCamposRateio();		    

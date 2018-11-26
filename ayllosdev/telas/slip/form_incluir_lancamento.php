@@ -30,8 +30,8 @@
 			<legend><? echo utf8ToHtml("Inclusão de Lançamentos") ?></legend>
 				<fieldset>			
 						            
-					<label for="cdhistor"><? echo utf8ToHtml("Hist. Ailos:") ?></label>
-					<input name="cdhistor" type="text"  id="cdhistor" class="inteiro campo" style="width: 555px;">
+					<label for="cdhistor"><? echo utf8ToHtml("Hist. Aimaro:") ?></label>
+					<input name="cdhistor" type="text"  id="cdhistor" class="inteiro campo" style="width: 55px;">
 
 					<label for="nrctadeb"><? echo utf8ToHtml("Conta Débito:") ?></label>
 					<input name="nrctadeb" type="text"  id="nrctadeb" class="inteiro campo" style="width: 50px;">

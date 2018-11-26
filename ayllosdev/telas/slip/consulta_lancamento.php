@@ -57,7 +57,7 @@
     $xml .= "   <vllanmto>".$vllanmto."</vllanmto>";
     $xml .= "   <cdhistor_padrao>".$cdhistor_padrao."</cdhistor_padrao>";
     $xml .= "   <dslancamento>".$dslancamento."</dslancamento>";
-    $xml .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+    $xml .= "   <cdoperad>".$cdoperad."</cdoperad>";
     $xml .= "   <nrregist>".$nrregist."</nrregist>";	
 	$xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "   <opevlrlan>".$opevlrlan."</opevlrlan>";

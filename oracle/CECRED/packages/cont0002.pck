@@ -1716,7 +1716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
            FOR rw_rateio IN cr_rateio(pr_cdcooper => rw_lancamentos.cdcooper
                                      ,pr_nseqslip => rw_lancamentos.nrsequencia_slip
                                      ,pr_dtmvtolt => rw_lancamentos.dtmvtolt) LOOP
-              vr_linhadet := rw_rateio.cdgerencial||','|| trim(to_char(rw_rateio.vllanmto,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+              vr_linhadet := lpad(rw_rateio.cdgerencial,3,0)||','|| trim(to_char(rw_rateio.vllanmto,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
               gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet); 
            END LOOP;                                 
                      

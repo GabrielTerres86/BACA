@@ -4,375 +4,228 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SLIP IS
   -- Created : 02/11/2018 17:12:01
   -- Purpose : ROTINAS PARA A TELA SLIP
 
-  PROCEDURE PC_VALIDA_CTA_CONTAB(PR_TIPVALIDA        IN VARCHAR2 DEFAULT NULL,
-                                 PR_NRCONTA_CONTABIL IN TBCONTAB_PRM_CTA_CTB_SLIP.NRCONTA_CONTABIL%TYPE --> nr conta contabil   
-                                ,
-                                 PR_NRCTADEB         IN TBCONTAB_SLIP_LANCAMENTO.NRCTACRD%TYPE DEFAULT NULL --> nr conta contabil   
-                                ,
-                                 PR_NRCTACRD         IN TBCONTAB_SLIP_LANCAMENTO.NRCTADEB%TYPE DEFAULT NULL --> nr conta contabil                                   
-                                ,
-                                 PR_XMLLOG           IN VARCHAR2 --> XML com informações de LOG 
-                                ,
-                                 PR_CDCRITIC         OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC         OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML           IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO         OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO         OUT VARCHAR2);
+  PROCEDURE pc_valida_cta_contab(pr_tipvalida        IN VARCHAR2 DEFAULT NULL
+                                ,pr_nrconta_contabil IN tbcontab_prm_cta_ctb_slip.nrconta_contabil%TYPE --> nr conta contabil   
+                                ,pr_nrctadeb         IN tbcontab_slip_lancamento.nrctacrd%TYPE DEFAULT NULL --> nr conta contabil   
+                                ,pr_nrctacrd         IN tbcontab_slip_lancamento.nrctadeb%TYPE DEFAULT NULL --> nr conta contabil                                   
+                                ,pr_xmllog           IN VARCHAR2 --> xml com informações de log 
+                                ,pr_cdcritic         OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic         OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml           IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo         OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro         OUT VARCHAR2);
 
   PROCEDURE PC_INSERE_PARAM(PR_LSNRCONTA_CONTABIL     IN VARCHAR2 --> lista com nr. conta contabil separados por ";"
-                           ,
-                            PR_LSCDHISTOR             IN VARCHAR2 --> lista com os historicos ||
-                           ,
-                            PR_LSID_RATEIO_GERENCIAL  IN VARCHAR2 --> lista com rateio gerencial || 
-                           ,
-                            PR_LSID_RISCO_OPERACIONAL IN VARCHAR2 --> lista com risco operacional ||                           
-                           ,
-                            PR_XMLLOG                 IN VARCHAR2 --> XML com informações de LOG ||
-                           ,
-                            PR_CDCRITIC               OUT PLS_INTEGER --> Código da crítica
-                           ,
-                            PR_DSCRITIC               OUT VARCHAR2 --> Descrição da crítica
-                           ,
-                            PR_RETXML                 IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                           ,
-                            PR_NMDCAMPO               OUT VARCHAR2 --> Nome do campo com erro
-                           ,
-                            PR_DES_ERRO               OUT VARCHAR2);
+                           ,pr_lscdhistor             IN VARCHAR2 --> lista com os historicos ||
+                           ,pr_lsid_rateio_gerencial  IN VARCHAR2 --> lista com rateio gerencial || 
+                           ,pr_lsid_risco_operacional IN VARCHAR2 --> lista com risco operacional ||                           
+                           ,pr_xmllog                 IN VARCHAR2 --> xml com informações de log ||
+                           ,pr_cdcritic               OUT PLS_INTEGER --> código da crítica
+                           ,pr_dscritic               OUT VARCHAR2 --> descrição da crítica
+                           ,pr_retxml                 IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                           ,pr_nmdcampo               OUT VARCHAR2 --> nome do campo com erro
+                           ,pr_des_erro               OUT VARCHAR2);
 
   PROCEDURE PC_CONSULTA_PARAM(PR_NRCONTA_CONTABIL     IN TBCONTAB_PRM_CTA_CTB_SLIP.NRCONTA_CONTABIL%TYPE --> conta contabil
-                             ,
-                              PR_CDHISTOR             IN TBCONTAB_PRM_CTA_CTB_SLIP.CDHISTOR%TYPE --> historico 
-                             ,
-                              PR_ID_RATEIO_GERENCIAL  IN TBCONTAB_PRM_CTA_CTB_SLIP.IDEXIGE_RATEIO_GERENCIAL%TYPE --> exige rateio S/N
-                             ,
-                              PR_ID_RISCO_OPERACIONAL IN TBCONTAB_PRM_CTA_CTB_SLIP.IDEXIGE_RISCO_OPERACIONAL%TYPE --> exige risco S/N
-                             ,
-                              PR_XMLLOG               IN VARCHAR2 --> XML com informações de LOG ||
-                             ,
-                              PR_CDCRITIC             OUT PLS_INTEGER --> Código da crítica
-                             ,
-                              PR_DSCRITIC             OUT VARCHAR2 --> Descrição da crítica
-                             ,
-                              PR_RETXML               IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                             ,
-                              PR_NMDCAMPO             OUT VARCHAR2 --> Nome do campo com erro
-                             ,
-                              PR_DES_ERRO             OUT VARCHAR2);
+                             ,pr_cdhistor             IN tbcontab_prm_cta_ctb_slip.cdhistor%TYPE --> historico 
+                             ,pr_id_rateio_gerencial  IN tbcontab_prm_cta_ctb_slip.idexige_rateio_gerencial%TYPE --> exige rateio s/n
+                             ,pr_id_risco_operacional IN tbcontab_prm_cta_ctb_slip.idexige_risco_operacional%TYPE --> exige risco s/n
+                             ,pr_xmllog               IN VARCHAR2 --> xml com informações de log ||
+                             ,pr_cdcritic             OUT PLS_INTEGER --> código da crítica
+                             ,pr_dscritic             OUT VARCHAR2 --> descrição da crítica
+                             ,pr_retxml               IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                             ,pr_nmdcampo             OUT VARCHAR2 --> nome do campo com erro
+                             ,pr_des_erro             OUT VARCHAR2);
 
   PROCEDURE PC_INSERE_GERENCIAL(PR_CDCOOPER      IN CRAPASS.CDCOOPER%TYPE --> cdcooper gerencial
-                               ,
-                                PR_LSIDATIVO     IN VARCHAR2 --> lista id ativo ";"
-                               ,
-                                PR_LSCDGERENCIAL IN VARCHAR2 --> lista com os gerenciais||                          
-                               ,
-                                PR_XMLLOG        IN VARCHAR2 --> XML com informações de LOG ||
-                               ,
-                                PR_CDCRITIC      OUT PLS_INTEGER --> Código da crítica
-                               ,
-                                PR_DSCRITIC      OUT VARCHAR2 --> Descrição da crítica
-                               ,
-                                PR_RETXML        IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                               ,
-                                PR_NMDCAMPO      OUT VARCHAR2 --> Nome do campo com erro
-                               ,
-                                PR_DES_ERRO      OUT VARCHAR2);
+                               ,pr_lsidativo     IN VARCHAR2 --> lista id ativo ";"
+                               ,pr_lscdgerencial IN VARCHAR2 --> lista com os gerenciais||                          
+                               ,pr_xmllog        IN VARCHAR2 --> xml com informações de log ||
+                               ,pr_cdcritic      OUT PLS_INTEGER --> código da crítica
+                               ,pr_dscritic      OUT VARCHAR2 --> descrição da crítica
+                               ,pr_retxml        IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                               ,pr_nmdcampo      OUT VARCHAR2 --> nome do campo com erro
+                               ,pr_des_erro      OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_GERENCIAIS(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE,
-                                PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                               ,
-                                PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                               ,
-                                PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                               ,
-                                PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                               ,
-                                PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                               ,
-                                PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_busca_gerenciais(pr_cdcooper IN crapass.cdcooper%TYPE
+                               ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                               ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                               ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                               ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE PC_INSERE_HISTORICOS(PR_LSCDHISTOR IN VARCHAR2 -->  lista historico
-                                ,
-                                 PR_LSNRCTADEB IN VARCHAR2 --> lista  conta debito";"
-                                ,
-                                 PR_LSNRCTACRD IN VARCHAR2 --> lista conta credito ||                          
-                                ,
-                                 PR_XMLLOG     IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC   OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC   OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML     IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO   OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO   OUT VARCHAR2);
+                                ,pr_lsnrctadeb IN VARCHAR2 --> lista  conta debito";"
+                                ,pr_lsnrctacrd IN VARCHAR2 --> lista conta credito ||                          
+                                ,pr_xmllog     IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic   OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic   OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml     IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo   OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro   OUT VARCHAR2);
 
   PROCEDURE PC_INSERE_RISCO(PR_CDRISCO_OPERACIONAL IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE -->  cd risco operacional  
-                           ,
-                            PR_DSRISCO_OPERACIONAL IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE --> descrição
-                           ,
-                            PR_LSNRCONTA_CONTABIL  IN VARCHAR2 -- lista com contas contabeis
-                           ,
-                            PR_XMLLOG              IN VARCHAR2 --> XML com informações de LOG ||
-                           ,
-                            PR_CDCRITIC            OUT PLS_INTEGER --> Código da crítica
-                           ,
-                            PR_DSCRITIC            OUT VARCHAR2 --> Descrição da crítica
-                           ,
-                            PR_RETXML              IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                           ,
-                            PR_NMDCAMPO            OUT VARCHAR2 --> Nome do campo com erro
-                           ,
-                            PR_DES_ERRO            OUT VARCHAR2);
+                           ,pr_dsrisco_operacional IN tbcontab_prm_risco_slip.cdrisco_operacional%TYPE --> descrição
+                           ,pr_lsnrconta_contabil  IN VARCHAR2 -- lista com contas contabeis
+                           ,pr_xmllog              IN VARCHAR2 --> xml com informações de log ||
+                           ,pr_cdcritic            OUT PLS_INTEGER --> código da crítica
+                           ,pr_dscritic            OUT VARCHAR2 --> descrição da crítica
+                           ,pr_retxml              IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                           ,pr_nmdcampo            OUT VARCHAR2 --> nome do campo com erro
+                           ,pr_des_erro            OUT VARCHAR2);
 
   PROCEDURE PC_BUSCA_RISCOS(PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                           ,
-                            PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                           ,
-                            PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                           ,
-                            PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                           ,
-                            PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                           ,
-                            PR_DES_ERRO OUT VARCHAR2);
+                           ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                           ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                           ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE PC_BUSCA_HISTORICOS(PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                               ,
-                                PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                               ,
-                                PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                               ,
-                                PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                               ,
-                                PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                               ,
-                                PR_DES_ERRO OUT VARCHAR2);
+                               ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                               ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                               ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_HIST_PARAM(PR_CDHISTOR IN NUMBER,
-                                PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                               ,
-                                PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                               ,
-                                PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                               ,
-                                PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                               ,
-                                PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                               ,
-                                PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_busca_hist_param(pr_cdhistor IN NUMBER
+                               ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                               ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                               ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                               ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_LANCAMENTOS(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE,
-                                 PR_NRREGIST IN NUMBER,
-                                 PR_NRINISEQ IN NUMBER,
-                                 PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_busca_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
+                                ,pr_nrregist IN NUMBER
+                                ,pr_nriniseq IN NUMBER
+                                ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE PC_INSERE_LANCAMENTO(PR_CDCOOPER              IN CRAPASS.CDCOOPER%TYPE -->  lista historico                            
-                                ,
-                                 PR_CDHISTOR              IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR%TYPE --> lista conta credito ||                 
-                                ,
-                                 PR_NRCTADEB              IN TBCONTAB_SLIP_LANCAMENTO.NRCTADEB%TYPE,
-                                 PR_NRCTACRD              IN TBCONTAB_SLIP_LANCAMENTO.NRCTACRD%TYPE,
-                                 PR_VLLANMTO              IN TBCONTAB_SLIP_LANCAMENTO.VLLANMTO%TYPE,
-                                 PR_CDHISTOR_PADRAO       IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR_PADRAO%TYPE,
-                                 PR_DSLANCAMENTO          IN TBCONTAB_SLIP_LANCAMENTO.DSLANCAMENTO%TYPE,
-                                 PR_CDOPERAD              IN TBCONTAB_SLIP_LANCAMENTO.CDOPERAD%TYPE,
-                                 PR_LSCDGERENCIAL         IN VARCHAR2,
-                                 PR_LSVLLANMTO            IN VARCHAR2,
-                                 PR_LSCDRISCO_OPERACIONAL IN VARCHAR2,
-                                 PR_XMLLOG                IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC              OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC              OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML                IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO              OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO              OUT VARCHAR2);
+                                ,pr_cdhistor              IN tbcontab_slip_lancamento.cdhistor%TYPE --> lista conta credito ||                 
+                                ,pr_nrctadeb              IN tbcontab_slip_lancamento.nrctadeb%TYPE
+                                ,pr_nrctacrd              IN tbcontab_slip_lancamento.nrctacrd%TYPE
+                                ,pr_vllanmto              IN tbcontab_slip_lancamento.vllanmto%TYPE
+                                ,pr_cdhistor_padrao       IN tbcontab_slip_lancamento.cdhistor_padrao%TYPE
+                                ,pr_dslancamento          IN tbcontab_slip_lancamento.dslancamento%TYPE
+                                ,pr_cdoperad              IN tbcontab_slip_lancamento.cdoperad%TYPE
+                                ,pr_lscdgerencial         IN VARCHAR2
+                                ,pr_lsvllanmto            IN VARCHAR2
+                                ,pr_lscdrisco_operacional IN VARCHAR2
+                                ,pr_xmllog                IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic              OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic              OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml                IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo              OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro              OUT VARCHAR2);
 
   PROCEDURE PC_ALTERA_LANCAMENTO(PR_CDCOOPER              IN CRAPASS.CDCOOPER%TYPE -->  coperativa                  
-                                ,
-                                 PR_NRSEQLAN              IN TBCONTAB_SLIP_LANCAMENTO.NRSEQUENCIA_SLIP%TYPE --> sequencia slip
-                                ,
-                                 PR_CDHISTOR              IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR%TYPE --> historico alios                 
-                                ,
-                                 PR_NRCTADEB              IN TBCONTAB_SLIP_LANCAMENTO.NRCTADEB%TYPE --> conta debito
-                                ,
-                                 PR_NRCTACRD              IN TBCONTAB_SLIP_LANCAMENTO.NRCTACRD%TYPE --> conta credito
-                                ,
-                                 PR_VLLANMTO              IN TBCONTAB_SLIP_LANCAMENTO.VLLANMTO%TYPE --> valor do lancamento
-                                ,
-                                 PR_CDHISTOR_PADRAO       IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR_PADRAO%TYPE --> hisotrico padrao
-                                ,
-                                 PR_DSLANCAMENTO          IN TBCONTAB_SLIP_LANCAMENTO.DSLANCAMENTO%TYPE --> descrição do lancamento
-                                ,
-                                 PR_CDOPERAD              IN TBCONTAB_SLIP_LANCAMENTO.CDOPERAD%TYPE --> operador que alterou o lancamento
-                                ,
-                                 PR_LSCDGERENCIAL         IN VARCHAR2 --> lista gerenciais
-                                ,
-                                 PR_LSVLLANMTO            IN VARCHAR2 --> valor lancamento
-                                ,
-                                 PR_LSCDRISCO_OPERACIONAL IN VARCHAR2 --> lista risco operacional
-                                ,
-                                 PR_XMLLOG                IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC              OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC              OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML                IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO              OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO              OUT VARCHAR2);
+                                ,pr_nrseqlan              IN tbcontab_slip_lancamento.nrsequencia_slip%TYPE --> sequencia slip
+                                ,pr_cdhistor              IN tbcontab_slip_lancamento.cdhistor%TYPE --> historico alios                 
+                                ,pr_nrctadeb              IN tbcontab_slip_lancamento.nrctadeb%TYPE --> conta debito
+                                ,pr_nrctacrd              IN tbcontab_slip_lancamento.nrctacrd%TYPE --> conta credito
+                                ,pr_vllanmto              IN tbcontab_slip_lancamento.vllanmto%TYPE --> valor do lancamento
+                                ,pr_cdhistor_padrao       IN tbcontab_slip_lancamento.cdhistor_padrao%TYPE --> hisotrico padrao
+                                ,pr_dslancamento          IN tbcontab_slip_lancamento.dslancamento%TYPE --> descrição do lancamento
+                                ,pr_cdoperad              IN tbcontab_slip_lancamento.cdoperad%TYPE --> operador que alterou o lancamento
+                                ,pr_lscdgerencial         IN VARCHAR2 --> lista gerenciais
+                                ,pr_lsvllanmto            IN VARCHAR2 --> valor lancamento
+                                ,pr_lscdrisco_operacional IN VARCHAR2 --> lista risco operacional
+                                ,pr_xmllog                IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic              OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic              OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml                IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo              OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro              OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_GERENCIAIS_LANC(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE,
-                                     PR_NRSEQLAN IN TBCONTAB_SLIP_RATEIO.NRSEQUENCIA_SLIP%TYPE --> sequencian do lancamento
-                                    ,
-                                     PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                                    ,
-                                     PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                                    ,
-                                     PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                                    ,
-                                     PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                    ,
-                                     PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro 
-                                    ,
-                                     PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_busca_gerenciais_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
+                                    ,pr_nrseqlan IN tbcontab_slip_rateio.nrsequencia_slip%TYPE --> sequencian do lancamento
+                                    ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                                    ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                                    ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro 
+                                    ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_RISCOS_LANC(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE,
-                                 PR_NRSEQLAN IN TBCONTAB_SLIP_RATEIO.NRSEQUENCIA_SLIP%TYPE --> sequencian do lancamento
-                                ,
-                                 PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro 
-                                ,
-                                 PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
+                                ,pr_nrseqlan IN tbcontab_slip_rateio.nrsequencia_slip%TYPE --> sequencian do lancamento
+                                ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro 
+                                ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE PC_EXCLUI_LANCAMENTO(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE -->  lista historico                            
-                                ,
-                                 PR_NRSEQLAN IN TBCONTAB_SLIP_LANCAMENTO.NRSEQUENCIA_SLIP%TYPE --> sequencia slip
-                                ,
-                                 PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG ||
-                                ,
-                                 PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                                ,
-                                 PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                                ,
-                                 PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                ,
-                                 PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                                ,
-                                 PR_DES_ERRO OUT VARCHAR2);
+                                ,pr_nrseqlan IN tbcontab_slip_lancamento.nrsequencia_slip%TYPE --> sequencia slip
+                                ,pr_xmllog   IN VARCHAR2 --> xml com informações de log ||
+                                ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                                ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE PC_VALIDA_GERENCIAL(PR_CDCOOPER    IN CRAPASS.CDCOOPER%TYPE --> cooperativa
-                               ,
-                                PR_CDGERENCIAL IN TBCONTAB_PRM_GERENCIAL_SLIP.CDGERENCIAL%TYPE,
-                                PR_XMLLOG      IN VARCHAR2 --> XML com informações de LOG 
-                               ,
-                                PR_CDCRITIC    OUT PLS_INTEGER --> Código da crítica
-                               ,
-                                PR_DSCRITIC    OUT VARCHAR2 --> Descrição da crítica
-                               ,
-                                PR_RETXML      IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                               ,
-                                PR_NMDCAMPO    OUT VARCHAR2 --> Nome do campo com erro
-                               ,
-                                PR_DES_ERRO    OUT VARCHAR2);
+                               ,pr_cdgerencial IN tbcontab_prm_gerencial_slip.cdgerencial%TYPE
+                               ,pr_xmllog      IN VARCHAR2 --> xml com informações de log 
+                               ,pr_cdcritic    OUT PLS_INTEGER --> código da crítica
+                               ,pr_dscritic    OUT VARCHAR2 --> descrição da crítica
+                               ,pr_retxml      IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                               ,pr_nmdcampo    OUT VARCHAR2 --> nome do campo com erro
+                               ,pr_des_erro    OUT VARCHAR2);
 
-  PROCEDURE PC_VALIDA_RISCO(PR_CDDRISCO IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE,
-                            PR_NRCTADEB IN TBCONTAB_PRM_CTA_CTB_SLIP.NRCONTA_CONTABIL%TYPE,
-                            PR_NRCTACRD IN TBCONTAB_PRM_CTA_CTB_SLIP.NRCONTA_CONTABIL%TYPE,
-                            PR_XMLLOG   IN VARCHAR2 --> XML com informações de LOG 
-                           ,
-                            PR_CDCRITIC OUT PLS_INTEGER --> Código da crítica
-                           ,
-                            PR_DSCRITIC OUT VARCHAR2 --> Descrição da crítica
-                           ,
-                            PR_RETXML   IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                           ,
-                            PR_NMDCAMPO OUT VARCHAR2 --> Nome do campo com erro
-                           ,
-                            PR_DES_ERRO OUT VARCHAR2);
+  PROCEDURE pc_valida_risco(pr_cddrisco IN tbcontab_prm_risco_slip.cdrisco_operacional%TYPE
+                           ,pr_nrctadeb IN tbcontab_prm_cta_ctb_slip.nrconta_contabil%TYPE
+                           ,pr_nrctacrd IN tbcontab_prm_cta_ctb_slip.nrconta_contabil%TYPE
+                           ,pr_xmllog   IN VARCHAR2 --> xml com informações de log 
+                           ,pr_cdcritic OUT PLS_INTEGER --> código da crítica
+                           ,pr_dscritic OUT VARCHAR2 --> descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                           ,pr_nmdcampo OUT VARCHAR2 --> nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE PC_CONSULTA_LANCAMENTOS(PR_CDCOOPER        IN CRAPASS.CDCOOPER%TYPE,
-                                    PR_DTMVTOLT        IN VARCHAR2,
-                                    PR_CDHISTOR        IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR%TYPE,
-                                    PR_NRCTADEB        IN TBCONTAB_SLIP_LANCAMENTO.NRCTADEB%TYPE,
-                                    PR_NRCTACRD        IN TBCONTAB_SLIP_LANCAMENTO.NRCTACRD%TYPE,
-                                    PR_VLLANMTO        IN TBCONTAB_SLIP_LANCAMENTO.VLLANMTO%TYPE,
-                                    PR_CDHISTOR_PADRAO IN TBCONTAB_SLIP_LANCAMENTO.CDHISTOR_PADRAO%TYPE,
-                                    PR_DSLANCAMENTO    IN TBCONTAB_SLIP_LANCAMENTO.DSLANCAMENTO%TYPE,
-                                    PR_CDOPERAD        IN TBCONTAB_SLIP_LANCAMENTO.CDOPERAD%TYPE,
-                                    PR_NRREGIST        IN NUMBER,
-                                    PR_NRINISEQ        IN NUMBER,
-                                    PR_OPEVLRLAN       IN VARCHAR2,
-                                    PR_XMLLOG          IN VARCHAR2 --> XML com informações de LOG ||
-                                   ,
-                                    PR_CDCRITIC        OUT PLS_INTEGER --> Código da crítica
-                                   ,
-                                    PR_DSCRITIC        OUT VARCHAR2 --> Descrição da crítica
-                                   ,
-                                    PR_RETXML          IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                   ,
-                                    PR_NMDCAMPO        OUT VARCHAR2 --> Nome do campo com erro
-                                   ,
-                                    PR_DES_ERRO        OUT VARCHAR2);
+  PROCEDURE pc_consulta_lancamentos(pr_cdcooper        IN crapass.cdcooper%TYPE
+                                   ,pr_dtmvtolt        IN VARCHAR2
+                                   ,pr_cdhistor        IN tbcontab_slip_lancamento.cdhistor%TYPE
+                                   ,pr_nrctadeb        IN tbcontab_slip_lancamento.nrctadeb%TYPE
+                                   ,pr_nrctacrd        IN tbcontab_slip_lancamento.nrctacrd%TYPE
+                                   ,pr_vllanmto        IN tbcontab_slip_lancamento.vllanmto%TYPE
+                                   ,pr_cdhistor_padrao IN tbcontab_slip_lancamento.cdhistor_padrao%TYPE
+                                   ,pr_dslancamento    IN tbcontab_slip_lancamento.dslancamento%TYPE
+                                   ,pr_cdoperad        IN tbcontab_slip_lancamento.cdoperad%TYPE
+                                   ,pr_nrregist        IN NUMBER
+                                   ,pr_nriniseq        IN NUMBER
+                                   ,pr_opevlrlan       IN VARCHAR2
+                                   ,pr_xmllog          IN VARCHAR2 --> xml com informações de log ||
+                                   ,pr_cdcritic        OUT PLS_INTEGER --> código da crítica
+                                   ,pr_dscritic        OUT VARCHAR2 --> descrição da crítica
+                                   ,pr_retxml          IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                   ,pr_nmdcampo        OUT VARCHAR2 --> nome do campo com erro
+                                   ,pr_des_erro        OUT VARCHAR2);
 
-  PROCEDURE PC_BUSCA_CONTA_CONTABIL(PR_CDRISCO_OPERACIONAL IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE,
-                                    PR_XMLLOG              IN VARCHAR2 --> XML com informações de LOG ||
-                                   ,
-                                    PR_CDCRITIC            OUT PLS_INTEGER --> Código da crítica
-                                   ,
-                                    PR_DSCRITIC            OUT VARCHAR2 --> Descrição da crítica
-                                   ,
-                                    PR_RETXML              IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                                   ,
-                                    PR_NMDCAMPO            OUT VARCHAR2 --> Nome do campo com erro
-                                   ,
-                                    PR_DES_ERRO            OUT VARCHAR2);
+  PROCEDURE pc_busca_conta_contabil(pr_cdrisco_operacional IN tbcontab_prm_risco_slip.cdrisco_operacional%TYPE
+                                   ,pr_xmllog              IN VARCHAR2 --> xml com informações de log ||
+                                   ,pr_cdcritic            OUT PLS_INTEGER --> código da crítica
+                                   ,pr_dscritic            OUT VARCHAR2 --> descrição da crítica
+                                   ,pr_retxml              IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                                   ,pr_nmdcampo            OUT VARCHAR2 --> nome do campo com erro
+                                   ,pr_des_erro            OUT VARCHAR2);
 
   PROCEDURE PC_ALTERA_RISCO(PR_CDRISCO_OPERACIONAL IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE -->  cd risco operacional  
-                           ,
-                            PR_DSRISCO_OPERACIONAL IN TBCONTAB_PRM_RISCO_SLIP.CDRISCO_OPERACIONAL%TYPE --> descrição
-                           ,
-                            PR_LSNRCONTA_CONTABIL  IN VARCHAR2 -- lista com contas contabeis
-                           ,
-                            PR_XMLLOG              IN VARCHAR2 --> XML com informações de LOG ||
-                           ,
-                            PR_CDCRITIC            OUT PLS_INTEGER --> Código da crítica
-                           ,
-                            PR_DSCRITIC            OUT VARCHAR2 --> Descrição da crítica
-                           ,
-                            PR_RETXML              IN OUT NOCOPY XMLTYPE --> Arquivo de retorno do XML
-                           ,
-                            PR_NMDCAMPO            OUT VARCHAR2 --> Nome do campo com erro
-                           ,
-                            PR_DES_ERRO            OUT VARCHAR2);
+                           ,pr_dsrisco_operacional IN tbcontab_prm_risco_slip.cdrisco_operacional%TYPE --> descrição
+                           ,pr_lsnrconta_contabil  IN VARCHAR2 -- lista com contas contabeis
+                           ,pr_xmllog              IN VARCHAR2 --> xml com informações de log ||
+                           ,pr_cdcritic            OUT PLS_INTEGER --> código da crítica
+                           ,pr_dscritic            OUT VARCHAR2 --> descrição da crítica
+                           ,pr_retxml              IN OUT NOCOPY xmltype --> arquivo de retorno do xml
+                           ,pr_nmdcampo            OUT VARCHAR2 --> nome do campo com erro
+                           ,pr_des_erro            OUT VARCHAR2);
 
 END TELA_SLIP;
 /

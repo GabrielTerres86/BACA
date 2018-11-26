@@ -29,7 +29,7 @@
 				<thead>								
 					<tr>														
 						<th><? echo utf8ToHtml("Seq. Slip");?></th>								
-						<th><? echo utf8ToHtml("Hist. Ailos:");?></th>								
+						<th><? echo utf8ToHtml("Hist. Aimaro:");?></th>								
 						<th><? echo utf8ToHtml("Conta Débito");?></th>								
 						<th><? echo utf8ToHtml("Conta Crédito");?></th>																
 						<th><? echo utf8ToHtml("Vlr. Lanc.");?></th>	
