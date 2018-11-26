@@ -9439,7 +9439,7 @@ PROCEDURE calcula_multa_juros_boleto:
         /* se concede ate o vencto em @percentual, ja calculou */
         IF  par_cdmensag = 3 THEN
             ASSIGN aux_vldescto = par_vldescto
-                   aux_vlfatura = aux_vlfatura - (aux_vlfatura * (aux_vldescto/100)).
+                   aux_vlfatura = aux_vlfatura - (aux_vlfatura * (aux_vldescto / 100)).
     END.
 
     /* se concede apos o vencimento */
