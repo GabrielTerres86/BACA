@@ -328,7 +328,7 @@ function controlaPesquisa(opcao) {
     if (opcao == 1) {
 
 		if ($('#nrdconta', '#' + frmOpcao).hasClass('campoTelaSemBorda')) {
-		   return false;
+            return false;
     }
 
         mostraPesquisaAssociado('nrdconta', frmOpcao);
@@ -2265,7 +2265,6 @@ function controlaLayoutR() {
     //Inicializar layout
     $('#divInserasa').css({ 'display': 'none' });
     $('#divStatusSMS').css({ 'display': 'none' });
-	$('#btGeraCSV').css({ 'display': 'none' });
     cCdagenci.css({ 'display': 'block' });
     rCdagenci.css({ 'display': 'block' });
     rCdstatus.css({ 'display': 'block' });
@@ -2305,8 +2304,7 @@ function controlaLayoutR() {
         rCdagenci.css({ 'display': 'none' });
         rCdstatus.css({ 'display': 'none' });
         cCdstatus.css({ 'display': 'none' });
-        $('#divStatusSMS').css({ 'display': 'block' });  
-		$('#btGeraCSV').css({ 'display': 'inline-block' });		
+        $('#divStatusSMS').css({ 'display': 'block' });      
         cInStatusSMS.habilitaCampo();        
         
         cInidtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
@@ -2410,35 +2408,6 @@ function formataTabOpS(frmOpcao) {
     return false;
 }
 
-// imprimir
-function Gera_CSV(nmarqcsv) {
-
-    if (cNrdconta.val() == '') {
-        cNrdconta.habilitaCampo();
-        showError('error', 'Informe a conta.', 'Alerta - Ayllos', '$(\'#nrdconta\',\'#frmOpcao\').focus();');
-        return false;
-    }
-
-    cTodosOpcao.habilitaCampo();
-
-    $('#cddopcao', '#' + frmOpcao).val(cddopcao);
-    $('#nmarqcsv', '#' + frmOpcao).val(nmarqcsv);
-
-    var action = UrlSite + 'telas/cobran/imprimir_consulta_sms_csv.php';
-    var callafter = "";
-
-    if (cddopcao == 'R') {
-		if (!flgimped){
-        callafter = "estadoInicial();";
-    }
-    }
-
-	//Ao imprimir o csv não é mais necessário voltar ao estado inicial da tela,
-	//deve ficar na mesma tela para permitir imprimir o pdf.
-    //carregaImpressaoAyllos(frmOpcao, action, callafter);
-	carregaImpressaoAyllos(frmOpcao, action);
-
-}
 
 // imprimir
 function Gera_Impressao(nmarqpdf) {
@@ -2463,10 +2432,7 @@ function Gera_Impressao(nmarqpdf) {
     }
     }
 
-	//Ao imprimir o pdf não é mais necessário voltar ao estado inicial da tela,
-	//deve ficar na mesma tela para permitir imprimir o csv.
-    //carregaImpressaoAyllos(frmOpcao, action, callafter);
-    carregaImpressaoAyllos(frmOpcao, action);
+    carregaImpressaoAyllos(frmOpcao, action, callafter);
 
 }
 
