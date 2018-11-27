@@ -642,6 +642,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --            17/10/2018 - Atualizações referente ao projeto 475 - Sprint C
   --                         Jose Dill - Mouts
+
+  				21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
+                             INC0027280 - Paulo Martins - Mouts
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -661,7 +664,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           ,crapcop.hriniatr
           ,crapcop.hrfimatr
       FROM crapcop
-     WHERE crapcop.cdcooper = pr_cdcooper;
+     WHERE crapcop.cdcooper = pr_cdcooper
+       AND crapcop.Flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
   rw_crapcopgrade cr_crapcop%ROWTYPE; -- Projeto 475
 
