@@ -632,6 +632,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                              Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                              pendente (Lucas Ranghetti #INC0011082)
+
+                21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
+                             INC0027280 - Paulo Martins - Mouts
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -651,7 +654,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           ,crapcop.hriniatr
           ,crapcop.hrfimatr
       FROM crapcop
-     WHERE crapcop.cdcooper = pr_cdcooper;
+     WHERE crapcop.cdcooper = pr_cdcooper
+       AND crapcop.flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
 
   /* Buscar dados das agencias */
