@@ -6,7 +6,8 @@
 	 * DATA CRIACAO : 28/02/2018
 	 * OBJETIVO     : Rotina para salvar informações de mensagens manuais da tela ENVNOT
 	 * --------------
-	 * ALTERCOES   : 
+	 * ALTERCOES   : 18/10/2018 - Ajuste na validacao do arquivo apos o move_upload (Andrey Formigari - Mouts)
+	 *               23/11/2018 - Ajuste na execução do comando CURL pel shell_exec pois os parametros não estavam na ordem correta (Tiago - Ailos)
 	 * -------------- 
 	**/
 	
@@ -82,7 +83,7 @@
 	$inexibe_msg_confirmacao = (isset($_POST['inexibe_msg_confirmacao'])) ? 1 : 0;
 	// $dstexto_botao_acao_mobile = (isset($_POST['dstexto_botao_acao_mobile'])) ? $_POST['dstexto_botao_acao_mobile'] : "";
 	$idacao_banner = (isset($_POST['idacao_banner'])) ? $_POST['idacao_banner'] : 0;
-	$dslink_acao_banner = (isset($_POST['dslink_acao_banner'])) ? $_POST['dslink_acao_banner'] : "";
+	$dslink_acao_banner = (isset($_POST['dslink_acao_banner'])) ? str_replace('&','&amp;',$_POST['dslink_acao_banner']) : "";
 	$cdmenu_acao_mobile = (isset($_POST['cdmenu_acao_mobile'])) ? $_POST['cdmenu_acao_mobile'] : 0;
 	$dsmensagem_acao_banner = (isset($_POST['dsmensagem_acao_banner'])) ? $_POST['dsmensagem_acao_banner'] : "";
 	//EXIBIR PARA
@@ -164,15 +165,22 @@
 		}
 
 		if($moveImg){
-
 			try {
-			  shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg . ' -u '.$user.':'.$pass.' '.$_UP['srvImg']);			
+			  shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg .' '.$_UP['srvImg']. ' -u '.$user.':'.$pass);			
 			} catch(Exception $e){
 				//echo("<script> console.log('Exception');</script> ");
 				gerarErro(utf8_decode("Erro ao carregar arquivo!"));
 				exit;
-			}			
-		}	
+			}
+		}
+		
+		$url = $_UP['srvImg'] . $nmarqimg;
+		$get_http_response_code = get_http_response_code($url);
+		if ($get_http_response_code <> 200) {
+			gerarErro(utf8_decode("Não foi possível enviar a imagem, repita o processo. Codigo HTTP: " . $get_http_response_code));
+			exit;
+		}
+		
 		$inexibir_banner = 1;
 	}else{
 		$nmarqimg = $_POST["nmimagem_banner"];
