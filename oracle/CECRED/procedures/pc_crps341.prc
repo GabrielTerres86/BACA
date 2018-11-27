@@ -1063,7 +1063,9 @@ BEGIN
               vr_cdcritic := 96; --Cheque com contra-ordem.
             END IF;
           END IF;
-        close cr_craplcm;
+        IF cr_craplcm%ISOPEN THEN   
+          close cr_craplcm;
+        END IF;
       END IF;
       --
       IF vr_cdcritic > 0 THEN
