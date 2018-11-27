@@ -18,7 +18,7 @@
 	
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
-	if (($msgError = validaPermissao('ATENDA','',$cddopcao, false)) <> '') {
+	if (($msgError = validaPermissao('SCORE','',$cddopcao, false)) <> '') {
 		//exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 		echo $msgError;
 	}
