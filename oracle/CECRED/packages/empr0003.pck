@@ -1043,6 +1043,9 @@ BEGIN
 
        Alteracoes: 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
+            	   27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
+				   Chamado INC0027935 - Gabriel (Mouts).
+
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -1084,6 +1087,8 @@ BEGIN
                crapage.cdufdcop,
                crawepr.nrseqrrq,
                crawepr.idcobope,
+               crawepr.txminima,
+               ROUND((POWER(1 + (crawepr.txminima / 100),12) - 1) * 100,2) prjurano,
                -- Projeto 410 - 14/03/2018 - SM - incluir campos para calculo IOF e tarifa
                crawepr.idfiniof,
                 crawepr.nrctrliq##1 || ',' ||
@@ -2003,8 +2008,8 @@ BEGIN
                                  '<cnpjdacop>'     ||GENE0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj, 2)              ||'</cnpjdacop>'||
                                  '<dtmvtolt>'||to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')     ||'</dtmvtolt>'||
                                  '<vlemprst>'||'R$ '||to_char(vr_vlemprst,'FM99G999G990D00')||'</vlemprst>'||
-                                 '<txminima>'||to_char(rw_craplcr.txminima,'FM990D00')||' %' ||'</txminima>'||  --% juros remuneratorios ao mes
-                                 '<prjurano>'||to_char(rw_craplcr.prjurano ,'FM990D00')||' %'||'</prjurano>'|| --% juros remuneratorios ao ano
+                                 '<txminima>'||to_char(rw_crawepr.txminima,'FM990D00')||' %' ||'</txminima>'||  --% juros remuneratorios ao mes
+                                 '<prjurano>'||to_char(rw_crawepr.prjurano ,'FM990D00')||' %'||'</prjurano>'|| --% juros remuneratorios ao ano
                                  '<dsperiod>'||'MENSAL'                                      ||'</dsperiod>'||
                                  '<taxjream>'||to_char(vr_taxjream, 'FM990D00')        ||' %'||'</taxjream>'||-- juros encargos mes
                                  '<taxjrean>'||to_char(vr_taxjrean, 'FM990D00')        ||' %'||'</taxjrean>'|| -- juros encargos ano
@@ -2112,6 +2117,9 @@ BEGIN
        Alteracoes: 01/02/2018 - Ajustes na geração do XML de contratos. (Jaison/James - PRJ298)
                   
                   12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+
+                  27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
+				  Chamado INC0027935 - Gabriel (Mouts).
                   
     ............................................................................. */
 
@@ -2163,6 +2171,8 @@ BEGIN
                crawepr.vlpreemp,
                crawepr.dtlibera,
                crawepr.tpemprst,
+               crawepr.txminima,
+               ROUND((POWER(1 + (crawepr.txminima / 100),12) - 1) * 100,2) prjurano,
                 crawepr.nrctrliq##1 || ',' ||
                 crawepr.nrctrliq##2 || ',' ||
                 crawepr.nrctrliq##3 || ',' ||
@@ -2803,8 +2813,8 @@ BEGIN
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
                              '<dtmvtolt>'     || to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')               || '</dtmvtolt>' ||
-                             '<txminima>'     || to_char(rw_craplcr.txminima,'FM990D00') || ' %'         || '</txminima>' || -- % juros remuneratorios ao mes
-                             '<prjurano>'     || to_char(rw_craplcr.prjurano,'FM990D00') || ' %'         || '</prjurano>' || -- % juros remuneratorios ao ano
+                             '<txminima>'     || to_char(rw_crawepr.txminima,'FM990D00') || ' %'         || '</txminima>' || -- % juros remuneratorios ao mes
+                             '<prjurano>'     || to_char(rw_crawepr.prjurano,'FM990D00') || ' %'         || '</prjurano>' || -- % juros remuneratorios ao ano
                              '<percetop>'     || to_char(rw_crawepr.percetop,'fm990d00') || ' %'         || '</percetop>' || -- Custo efetivo total ao ano
                              '<ultvenct>'     || to_char(add_months(rw_crawepr.dtvencto,rw_crawepr.qtpreemp -1),'dd/mm/yyyy')     || '</ultvenct>' ||
                              '<perjurmo>'     || to_char(vr_perjurmo,'FM990D00') || ' % ao mês sobre o valor em atraso'   || '</perjurmo>' || -- % juros moratorios
