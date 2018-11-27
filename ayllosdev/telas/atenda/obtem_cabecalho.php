@@ -734,6 +734,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
+			case "SCORE": {
+				$nomeRotina = "Score"; 
+				$urlRotina = "score_comportamental";
+				$strValue = "";
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
 			default: {
 				$nomeRotina = "";    
                 $urlRotina = "";
