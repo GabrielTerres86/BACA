@@ -1017,14 +1017,17 @@ PROCEDURE pc_insere_historicos(pr_lscdhistor IN VARCHAR2         -->  lista hist
    vr_seq NUMBER;
    vr_dtmvtolt DATE;
    vr_vltotrat NUMBER := 0;
+   vr_cdrisco_operacional VARCHAR2(25);
+   rowid_lanc ROWID;
    -- Tratamento de erros
    vr_exc_erro EXCEPTION;      
                                 
   BEGIN
     pr_des_erro := 'OK';
+    vr_cdrisco_operacional := NULL;
     
-    --Utilizar as datas da CENTRAL
-    OPEN btch0001.cr_crapdat(3);
+    --Utilizar as datas da crapdat
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
     CLOSE btch0001.cr_crapdat;
     
@@ -1092,7 +1095,8 @@ PROCEDURE pc_insere_historicos(pr_lscdhistor IN VARCHAR2         -->  lista hist
         pr_vllanmto,
         pr_cdhistor_padrao,
         gene0007.fn_caract_acento(pr_dslancamento,1),
-        pr_cdoperad);
+        pr_cdoperad)
+        RETURNING ROWID INTO rowid_lanc;
         
         --inserir rateio com a lista de gerencias
         
@@ -1129,12 +1133,19 @@ PROCEDURE pc_insere_historicos(pr_lscdhistor IN VARCHAR2         -->  lista hist
                 (pr_cdcooper,
                  vr_dtmvtolt,
                  vr_seq,
-                 vr_tab_lscdrisco_operacional(idx));
+                 vr_tab_lscdrisco_operacional(idx))                  
+                 RETURNING 
+                 cdrisco_operacional
+                 INTO 
+                 vr_cdrisco_operacional;
                  
                END IF;
           END LOOP;
        END IF; 
         
+      UPDATE tbcontab_slip_lancamento lan SET lan.dslancamento = TRIM(nvl(vr_cdrisco_operacional,'') || ' ' || lan.dslancamento)
+       WHERE lan.rowid = rowid_lanc; 
+               
   
      EXCEPTION
         WHEN OTHERS THEN 
