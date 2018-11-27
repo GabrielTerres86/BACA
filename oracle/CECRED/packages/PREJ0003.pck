@@ -23,10 +23,20 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 							PJ 450 - Diego Simas (AMcom)
+               06/11/2018 - P450 - Nova procedure consultar Prejuizo Ativo (Guilherme/AMcom)
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
                             ou de desconto de título em prejuízo (Fabio - AMcom).
 
 ..............................................................................*/
+
+  TYPE typ_reg_prejuizo IS
+    RECORD(nrdconta  NUMBER
+          ,nrcpfcnpj NUMBER);
+  TYPE typ_tab_prejuizo IS
+    TABLE OF typ_reg_prejuizo
+      INDEX BY VARCHAR2(12);     -- Indexado por CPF/CNPJ Base (11) + inpessoa (1)
+  vr_tab_prejuizo  typ_tab_prejuizo;
+
 
   -- Verifica se a conta corrente se encontra em prejuízo
   FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
@@ -367,11 +377,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
    Alteracoes: 27/06/2018 - P450 - Criação de procedure para consulta de saldos - pc_consulta_sld_cta_prj (Daniel/AMcom)
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)
                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom
-               18/07/2018  -P450 - Pagamento Prejuizo de Forma Automática  - pc_paga_prejuizo_cc
+               18/07/2018 - P450 - Pagamento Prejuizo de Forma Automática  - pc_paga_prejuizo_cc
 							 30/10/2018 - P450 - Ajuste no pagamento do prejuízo para fixar o DTHRTRAN que é gravado na 
 							              TBCCC_PREJUIZO_DETALHE - Reginaldo - AMcom
-				  
-
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
                                    ou de desconto de título em prejuízo (Fabio - AMcom).
                
@@ -426,17 +434,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     -- CURSORES
     -- Listar as contas de um CPF/CNPJ Base
     CURSOR cr_ass_cpfcnpj (pr_tipverif IN INTEGER) IS
-      SELECT ass.nrdconta
+      SELECT ass.nrdconta, ass.inprejuz
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ((pr_tipverif = 1   AND
-               ass.nrcpfcnpj_base IN (SELECT a.nrcpfcnpj_base
+         AND pr_tipverif  = 1   
+         AND ass.nrcpfcnpj_base = (SELECT a.nrcpfcnpj_base
                                         FROM crapass a
                                        WHERE a.cdcooper = pr_cdcooper
                                          AND a.nrdconta = pr_nrdconta)
-               ) OR
-               (pr_tipverif = 2   AND
-                ass.nrdconta = pr_nrdconta));
+      UNION
+      SELECT ass.nrdconta, ass.inprejuz
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND pr_tipverif  = 2
+         AND ass.nrdconta = pr_nrdconta;
     rw_ass_cpfcnpj cr_ass_cpfcnpj%ROWTYPE;
     -- Verificar prejuizo de Emprestimo/CC linha 100
     CURSOR cr_preju_empr (pr_nrdconta IN crapass.nrdconta%TYPE)IS
@@ -474,9 +485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     -- VERIFICAR TODAS AS CONTAS DE UM CPF/CNPJ
     FOR rw_ass_cpfcnpj IN cr_ass_cpfcnpj (vr_tipoverificacao)LOOP
     
-      -- Verificar prejuizo de CC (Modelo Novo)
-      IF fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                               , pr_nrdconta => rw_ass_cpfcnpj.nrdconta) THEN
+      -- Verificar prejuizo de CC
+      IF rw_ass_cpfcnpj.inprejuz = 1 THEN
          RETURN TRUE;
       END IF;
       
