@@ -365,7 +365,7 @@ function reqValidaRiscoOperacional(){
 function mostrarRiscoOperacional(){
 	$('#divRateio').css({'display':'block'});
 	$('#tabGerencialRat').css({'display':'none'});	
-	$('#tabRiscoRat').css({'display':'block '});	
+	$('#tabRiscoRat').css({'display':'block'});	
 	$('#tabRiscoRat').css({'width':'265px'});
 	$("#fsGerencialRat").css({"display":"none"});
 	$("#fsRiscoRat").css({"display":"block"});
