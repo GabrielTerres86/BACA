@@ -20,6 +20,9 @@
              21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
 
              26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
+  
+             08/11/2018 - Inclusao de informacoes na tela devido ao projeto de delegados. P484
+                          Gabriel Marcos (Mouts).
 
 ************************************************************************/
 var cddepart;
@@ -375,6 +378,8 @@ function formataFormularioConsulta() {
     $('label[for="hriniouv"]', "#frmConsulta5").addClass("rotulo").css({ "width": "80px" });
     $('label[for="hrfimouv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "50px" });
 
+    // Projeto 484
+    $('label[for="flgrupos"]', "#frmConsulta5").addClass("rotulo").css({ "width": "80px" });
 
     // campo
     $("#cdcooper", "#frmConsulta").css({ 'width': '60px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
@@ -546,6 +551,9 @@ function formataFormularioConsulta() {
     $('#hrfimsac', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hriniouv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrfimouv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
+
+    // Projeto 484
+    $('#flgrupos', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'left' }).addClass('alpha').attr('maxlength', '8').desabilitaCampo();
 
     $('#frmConsulta').css({ 'display': 'block' });
     $('#frmConsulta2').css({ 'display': 'none' });

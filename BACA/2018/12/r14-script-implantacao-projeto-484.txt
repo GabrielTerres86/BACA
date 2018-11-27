@@ -1,0 +1,383 @@
+declare 
+
+  -- Loop entre cooperativas ativas
+  cursor cr_crapcop is
+  select cop.cdcooper
+       , cop.flgrupos
+    from crapcop cop
+   order
+      by cop.cdcooper;
+      
+  -- Loop para utilizacao aos acessos da tela pessoa
+  cursor cr_crapace is
+  select ace.nmdatela
+       , ace.cddopcao
+       , ace.cdoperad
+       , ace.nmrotina
+       , ace.cdcooper
+       , ace.nrmodulo
+       , ace.idevento
+       , ace.idambace
+    from crapace ace
+       , crapope ope
+       , crapcop cop
+   where cop.flgativo = 1
+     and ace.cdcooper = cop.cdcooper
+     and ace.nmdatela = 'PESSOA'
+     and ace.cddopcao in ('C')
+     and ace.idambace = 1 -- progress
+     and ope.cdcooper = ace.cdcooper
+     and ope.cdoperad = ace.cdoperad
+     and ope.cdsitope = 1;
+  
+  -- Acessos aos operadores da relacao
+  cursor cr_cdoperad (pr_cdoperad in crapope.cdoperad%type) is
+  select ope.cdcooper
+       , ope.cdoperad
+    from crapope ope 
+   where upper(ope.cdoperad) = pr_cdoperad;
+  rw_cdoperad cr_cdoperad%rowtype;
+
+  -- Variaveis do script
+  vr_flgtelbl  number;
+  nm_nrseqrdr  number;
+  vr_idprglog  number;
+  vr_dscritic  varchar2(1000);
+  vr_nmdireto  varchar2(100);
+  vr_nmarquiv  varchar2(100) := 'backup-exec-script-484.log';
+  vr_utlfile   utl_file.file_type;
+  vr_exc_saida exception;
+  vr_cdoperad  gene0002.typ_split;
+
+begin
+
+  begin
+    -- Busca do diretorio base da cooperativa
+    vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => 3
+                                        ,pr_nmsubdir => 'log');
+    -- Abre arquivo para registro de logs
+    gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
+                            ,pr_nmarquiv => vr_nmarquiv
+                            ,pr_tipabert => 'W'
+                            ,pr_utlfileh => vr_utlfile
+                            ,pr_des_erro => vr_dscritic);
+  exception
+    when others then
+      vr_dscritic := 'Erro ao manipular arquivo de log: '||sqlerrm;
+      raise vr_exc_saida;
+  end;
+  
+  -- Aborta caso variavel contenha erro
+  if trim(vr_dscritic) is not null then
+    vr_dscritic := 'Erro ao executar gene0001.pc_abre_arquivo: '||vr_dscritic;
+    raise vr_exc_saida;
+  end if;
+
+  begin
+    -- Atualiza tabela de cooperativas
+    update crapcop cop
+       set cop.flgrupos = 1 
+     where cop.cdcooper in (1,9);
+  exception
+    when others then
+      vr_dscritic := 'Erro ao atualizar tabela crapcop: '||sqlerrm;
+      raise vr_exc_saida;
+  end;
+  
+  begin
+    -- Atualiza tabela de telas
+    update craptel tel
+     set tel.idambtel = 0
+   where tel.nmdatela = 'PESSOA';
+  exception
+    when others then
+      vr_dscritic := 'Erro ao inserir dados na tabela craptel: ' || sqlerrm;
+      raise vr_exc_saida;
+  end;
+
+  begin
+    -- Insere dados para uso da mensageria
+    insert into craprdr (nmprogra,dtsolici) values ('TELA_PESSOA',sysdate) returning nrseqrdr into nm_nrseqrdr;
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCAR_FUN_COOPERADO', 'TELA_PESSOA', 'pc_buscar_cooperado',   'pr_nrdconta, pr_nrregist, pr_nriniseq',                                          nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('INCLUIR_CARGO_FUN',    'TELA_PESSOA', 'pc_inserir_cargos_web', 'pr_nrcpfcgc, pr_cdfuncao, pr_dtinicio_vigencia',                                 nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('ALTERAR_TP_PESSOA',    'TELA_PESSOA', 'pc_alterar_pessoa',     'pr_nrdconta, pr_inpessoa',                                                       nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('EXCLUIR_CARGO_FUN',    'TELA_PESSOA', 'pc_excluir_cargos_web', 'pr_nrcpfcgc, pr_cdfuncao, pr_nrdrowid',                                          nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_CARGOS',         'TELA_PESSOA', 'pc_mostra_cargos',      '',                                                                               nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('INATIVAR_CARGO_FUN',   'TELA_PESSOA', 'pc_inativa_cargos_web', 'pr_nrcpfcgc, pr_dtinicio_vigencia, pr_dtfim_vigencia, pr_cdfuncao, pr_nrdrowid', nm_nrseqrdr);
+  exception
+    when others then
+      vr_dscritic := 'Erro ao inserir dados para mensageria da tela pessoa: '||sqlerrm;
+      raise vr_exc_saida;
+  end;
+
+  -- Limpeza variaveis
+  nm_nrseqrdr := null;
+
+  begin
+    -- Insere dados para uso da mensageria
+    insert into craprdr (nmprogra,dtsolici) values ('TELA_CADGRP',sysdate) returning nrseqrdr into nm_nrseqrdr;
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('EXCLUIR_PRD_EDT_ASS',       'TELA_CADGRP', 'pc_exercicio_excluir_edital', 'pr_nrano_exercicio, pr_rowid',                                                                       nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('ALTERAR_PRD_EDT_ASS',       'TELA_CADGRP', 'pc_exercicio_alterar_edital', 'pr_rowid, pr_dtinicio_grupo, pr_dtfim_grupo',           nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_GRUPO_COOP',          'TELA_CADGRP', 'pc_cursor_opcao_b',           'pr_nrdconta, pr_nrcpfcgc',                                                                           nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_AGENCIAS_GRP',        'TELA_CADGRP', 'pc_cursor_opcao_g',           'pr_cdagenci',                                                                                        nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('ALTERAR_PRM_FRACOES_GRP',   'TELA_CADGRP', 'pc_fracao_alterar_param',     'pr_frmaxima, pr_fraideal',                                                                           nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('ALTERAR_GRUPO_COOP',        'TELA_CADGRP', 'pc_alterar_opcao_b',          'pr_nrdgrupo, pr_rowid',                                                                              nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_PERIODO_EDT_ASSEM',   'TELA_CADGRP', 'pc_exercicio_mostra_param',   'pr_nrregist, pr_nriniseq',                                                                           nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('INCLUIR_PRD_EDT_ASS',       'TELA_CADGRP', 'pc_exercicio_inserir_edital', 'pr_nrano_exercicio, pr_dtinicio_grupo, pr_dtfim_grupo', nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('CONSULTA_DET_GRP',          'TELA_CADGRP', 'pc_cursor_opcao_c',           'pr_cdagenci, pr_nrdgrupo, pr_nrregist, pr_nriniseq',                                                 nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_INFO_AGENCIA_GRP',    'TELA_CADGRP', 'pc_agenci_opcao_g',           'pr_cdagenci',                                                                                        nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('CONSULTAR_PRM_FRACOES_GRP', 'TELA_CADGRP', 'pc_fracao_mostra_param',      '',                                                                                                   nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_GRP_DISP',            'TELA_CADGRP', 'pc_grupo_disponivel',         'pr_nrdgrupo, pr_cdagenci, pr_nrregist, pr_nriniseq',                                                 nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('BUSCA_AGE_DISP',            'TELA_CADGRP', 'pc_agencia_disponivel',       'pr_nrregist, pr_nriniseq',                                                                           nm_nrseqrdr);
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('DST_COOPERATIVA_GRP',       'TELA_CADGRP', 'pc_btn_dstribui_g',           '',                                                                                                   nm_nrseqrdr);
+	
+	insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('VALIDA_DISTRIBUICAO_GRP',   'TELA_CADGRP', 'pc_analisar_param_grupo_web', 'pr_cdagenci,pr_qtdgrupo',
+                        (select r.nrseqrdr from craprdr r where r.nmprogra = 'TELA_CADGRP'));
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('DISTRIBUIR_GRP',            'TELA_CADGRP', 'pc_distribui_conta_grupo_web','pr_cdagenci,pr_qtdgrupo',
+                        (select r.nrseqrdr from craprdr r where r.nmprogra = 'TELA_CADGRP'));
+    insert into crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) values ('ATIVAR_EDT_ASS',            'TELA_CADGRP', 'pc_exercicio_ativar_edital',  'pr_rowid',                                                                                           nm_nrseqrdr);
+  exception
+    when others then
+      vr_dscritic := 'Erro ao inserir dados para mensageria da tela cadgrp: '||sqlerrm;
+      raise vr_exc_saida;
+  end;
+
+  begin
+    -- Inserir funcoes para cooperados
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CA','Conselho de Administracao',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CC','Conselho da Central',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CF','Conselho Fiscal',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CO','Conselho Outras Cooperativas',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('DI','Diretor de Cooperativa',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('DC','Diretor da Central',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('DT','Delegado Titular',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('DS','Delegado Suplente',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CL','Comite Educativo Lider',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CS','Comite Educativo Secretario',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CM','Comite Educativo Membro',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('CD','Comite Educativo e Delegado',1);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('ET','Estagiario Terceiro',0);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('FC','Funcionario da Central',0);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('FO','Funcionario Outras Cooperativas',0);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('FU','Funcionario da Cooperativa',0);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values ('AC','Ass. Comercial de Chapeco',0);
+    insert into tbcadast_funcao_pessoa (cdfuncao,dsfuncao,flgvigencia) values (' ', 'Cooperado',0);
+  exception
+    when others then
+      vr_dscritic := 'Erro ao inserir funções na tabela de funções pessoa: '||sqlerrm;
+      raise vr_exc_saida;
+  end;
+
+  for rw_crapcop in cr_crapcop loop
+  
+    if rw_crapcop.flgrupos = 1 then
+	  vr_flgtelbl := 1;
+	else 
+	  vr_flgtelbl := 0;
+	end if;
+
+    begin
+      -- Insere a tela cadgrp que ainda nao existe
+      insert into craptel (nmdatela, nrmodulo, cdopptel, tldatela, tlrestel, flgteldf, flgtelbl, nmrotina,
+                           lsopptel, inacesso, cdcooper, idsistem, idevento, nrordrot, nrdnivel, nmrotpai, idambtel)
+                   values ('CADGRP', 5, 'B, C, E, G, P', 'Cadastro e Gestao de Rep. Quadro Social', 
+                           'Cadastro e Gestao de Rep. Quadro Social',0,vr_flgtelbl,' ','BUSCAR GRUPO, CONSULTAR COOPERADO, '||
+                           'EDITAL ASSEMBLEIA, MANUTENCAO GRUPOS, PARAMETRIZACAO FRACAO', 1,rw_crapcop.cdcooper,1,0,1,1,' ',2);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao inserir dados na tabela craptel: '||rw_crapcop.cdcooper||' - '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
+    begin
+      -- Inserir parametros para acesso da tela pela web
+      insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
+           values ('PESSOA', 5, '@,M', 'Manutencao do Tipo de Pessoa', 'Manutencao Tipo de Pessoa', 0, vr_flgtelbl, 'MANUTENCAO', 'MANUTENCAO', 0, rw_crapcop.cdcooper, 1, 0, 1, 1, ' ', 2);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao inserir parametros para acesso web: '||rw_crapcop.cdcooper||' - '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
+    begin
+      -- Inserir parametros de fracoes de grupo (padrao)
+      insert into crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) values ('CRED',rw_crapcop.cdcooper,'TELA_CADGRP_OPCAO_P','Registro para controle das variaveis de fracao ideal e maxima utilizadas na Opcao P da tela CADGPR.',1500||';'||1000||';'||200);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao inserir dados na tabela crapprm: '||rw_crapcop.cdcooper||' - '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
+    begin
+      -- Inserir primeiro ano de vigencia ativo
+      insert into tbevento_exercicio (cdcooper,nrano_exercicio,dtinicio_grupo,dtfim_grupo,cdoperad_altera,dhalteracao,flgativo)
+           values (rw_crapcop.cdcooper,trunc(to_date(sysdate,'dd/mm/rrrr'),'rrrr'),to_date(sysdate,'dd/mm/rrrr'),to_date(sysdate,'dd/mm/rrrr'),'1',sysdate,1);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao inserir dados na tabela de edital exercicio: '||rw_crapcop.cdcooper||' - '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
+    begin
+      -- Insere o registro de cadastro do programa
+      insert into crapprg (nmsistem, cdprogra, dsprogra##1, dsprogra##2, dsprogra##3, dsprogra##4, nrsolici, nrordprg, 
+                           inctrprg, cdrelato##1, cdrelato##2, cdrelato##3, cdrelato##4, cdrelato##5, inlibprg, cdcooper) 
+          (select 'CRED', 'CADGRP', 'Cadastro e Gestao de Rep. Quadro Social', '.', '.', '.', 50,
+                  (select max(crapprg.nrordprg) + 1 
+                    from crapprg 
+                   where crapprg.cdcooper = crapcop.cdcooper 
+                     and crapprg.nrsolici = 50), 1, 0, 0, 0, 0, 0, 1, crapcop.cdcooper
+             FROM crapcop          
+            WHERE cdcooper = rw_crapcop.cdcooper);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao inserir dados na tabela crapprg: '||rw_crapcop.cdcooper||' - '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
+  end loop;
+
+  -- Permissões de consulta para os usuários para a tela PESSOA
+  for rw_crapace in cr_crapace loop  
+    begin
+      -- Operador que possui acesso ao caractere tera acesso a tela Web
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values (rw_crapace.nmdatela,rw_crapace.cddopcao,rw_crapace.cdoperad,rw_crapace.nmrotina,rw_crapace.cdcooper,rw_crapace.nrmodulo,rw_crapace.idevento,2);
+    exception
+      when dup_val_on_index then
+        -- Caso viole pula para o proximo registro
+        null;
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(1).';
+        raise vr_exc_saida;
+    end;
+    begin
+      -- Acesso as informacoes da conta informando no label apresentado
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values (rw_crapace.nmdatela,'M',rw_crapace.cdoperad,'MANUTENCAO',rw_crapace.cdcooper,rw_crapace.nrmodulo,rw_crapace.idevento,2);
+    exception
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(2).';
+        raise vr_exc_saida;
+    end;
+  end loop;
+  
+  vr_cdoperad := gene0002.fn_quebra_string('F0090244,F0090308,F0010007,F0010301,F0011534',',');
+
+  -- Permissões de consulta para os usuários para a tela CADGRP
+  for i in vr_cdoperad.first..vr_cdoperad.last loop
+    
+    open cr_cdoperad (vr_cdoperad(i));
+    fetch cr_cdoperad into rw_cdoperad;
+    
+    if cr_cdoperad%notfound then
+      close cr_cdoperad;  
+      vr_dscritic := 'Operador não encontrado.';
+      raise vr_exc_saida;
+    end if;
+    
+    close cr_cdoperad;
+  
+    begin
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('CADGRP','B',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('CADGRP','C',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('CADGRP','E',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('CADGRP','G',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);                        
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('CADGRP','P',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);   
+    exception
+      when dup_val_on_index then
+        -- Caso viole pula para o proximo registro
+        null;
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(3).';
+        raise vr_exc_saida;
+    end;
+    begin
+      -- Operador que possui acesso ao caractere tera acesso a tela Web
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('PESSOA','C',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+    exception
+      when dup_val_on_index then
+        -- Caso viole pula para o proximo registro
+        null;
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(4).';
+        raise vr_exc_saida;
+    end;
+    begin
+      -- Operador que possui acesso ao caractere tera acesso a tela Web
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('PESSOA','M',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+    exception
+      when dup_val_on_index then
+        -- Caso viole pula para o proximo registro
+        null;
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(5).';
+        raise vr_exc_saida;
+    end;
+    begin
+      -- Operador que possui acesso ao caractere tera acesso a tela Web
+      insert into crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)          
+           values ('PESSOA','A',rw_cdoperad.cdoperad,' ',rw_cdoperad.cdcooper,1,1,2);
+    exception
+      when dup_val_on_index then
+        -- Caso viole pula para o proximo registro
+        null;
+      when others then
+        vr_dscritic := 'Erro ao manipular acessos(6).';
+        raise vr_exc_saida;
+    end;  
+  end loop;
+
+  gene0001.pc_fecha_arquivo(vr_utlfile);
+  
+  commit;
+
+exception
+  
+  when vr_exc_saida then
+
+    rollback;
+      
+    vr_idprglog := 0;
+    
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => vr_nmarquiv
+                          ,pr_cdcooper      => 3
+                          ,pr_tpexecucao    => 3   -- Online
+                          ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                          ,pr_cdcriticidade => 3   -- Critico
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => '(1) '||sqlerrm||' Module: '||vr_dscritic
+                          ,pr_idprglog      => vr_idprglog);
+  
+    gene0001.pc_escr_linha_arquivo(vr_utlfile,vr_dscritic); 
+    gene0001.pc_fecha_arquivo(vr_utlfile);
+    
+  when others then
+    
+    rollback;
+      
+    vr_idprglog := 0;
+    
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => vr_nmarquiv
+                          ,pr_cdcooper      => 3
+                          ,pr_tpexecucao    => 3   -- Online
+                          ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                          ,pr_cdcriticidade => 3   -- Critico
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => '(2) '||sqlerrm||' Module: '||vr_dscritic
+                          ,pr_idprglog      => vr_idprglog);
+  
+    gene0001.pc_escr_linha_arquivo(vr_utlfile,vr_dscritic); 
+    gene0001.pc_fecha_arquivo(vr_utlfile);
+
+end;

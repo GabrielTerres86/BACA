@@ -806,6 +806,17 @@
 
     </fieldset>
 
+    <fieldset id="fsetAssembleias" name="fsetAssembleias" style="padding:0px; margin:0px; padding-bottom:10px;">
+
+        <legend>Novo Modelo de Representa&ccedil;&atilde;o do Quadro Social</legend>
+        
+        <label for="flgrupos">
+            <?php echo utf8ToHtml("Situa&ccedil;&atilde;o:"); ?>
+        </label>
+
+        <input type="text" id="flgrupos" name="flgrupos" value=""<?php echo getByTagName($cooperativa->tags,'flgrupos');?>" >
+
+    </fieldset>
 
 </form>
 

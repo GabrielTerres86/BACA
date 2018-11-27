@@ -57,8 +57,12 @@
                             
                02/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
                             PRJ366 (Lombardi).
+
+               08/10/2018 - Adequacao de tela para novos cargos P484. Gabriel (Mouts).		   
+
 ............................................................................. */
 
+{ sistema/generico/includes/var_oracle.i }
 { includes/var_online.i }
 
 DEF        VAR tel_nrdconta AS INT     FORMAT "zzzz,zzz,9"           NO-UNDO.
@@ -74,17 +78,23 @@ DEF        VAR aux_depoilog AS CHAR    FORMAT "x(50)"                NO-UNDO.
 DEF        VAR aux_stimeout AS INT                                   NO-UNDO.
 DEF        VAR aux_cddopcao AS CHAR    FORMAT "x(1)"                 NO-UNDO.
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
-DEF        VAR aux_sigvincu AS CHAR   FORMAT "x(2)"  EXTENT 12   
-               INIT ["  ","CA","CC","CF","CO","ET","FC","FO","FU","DI","DC", "AC"] 
-                                                                     NO-UNDO.
-DEF        VAR aux_desvincu AS CHAR   FORMAT "x(20)"  EXTENT 12
-               INIT ["Cooperado","Conselho de Administ",
-                     "Conselho da Central","Conselho Fiscal",
-                     "Conselho Outras Cooperativas", "Estagiario Terceiro",
-                     "Funcion. da Central","Funcion. Outras Coop",
-                     "Funcion. da Cooperat",
-                     "Diretor de Cooperat","Diretor da Central",
-					 "Ass. Comercial de Chapeco"]     NO-UNDO.
+DEF        VAR aux_sigvincu AS CHAR   FORMAT "x(2)"  EXTENT 18  
+           INIT ["  ","CA","CC","CF","CO","ET","FC","FO","FU","DI","DC","AC",
+                 "CD","CL","CS","CM","DT","DS"]                      NO-UNDO.
+DEF        VAR aux_desvincu AS CHAR   FORMAT "x(20)"  EXTENT 18
+           INIT ["Cooperado","Conselho de Administ",
+                 "Conselho da Central","Conselho Fiscal",
+                 "Conselho Outras Cooperativas","Estagiario Terceiro",
+                 "Funcion. da Central","Funcion. Outras Coop",
+                 "Funcion. da Cooperat",
+                 "Diretor de Cooperat","Diretor da Central",
+                 "Ass. Comercial de Chapeco",
+                 "Com. Educativo e Delegado",
+                 "Com. Educativo Lider",
+                 "Com. Educativo Secretario",
+                 "Com. Educativo Membro",
+                 "Delegado Titular",
+                 "Delegado Suplente"]                                NO-UNDO.
 DEF        VAR aux_i        AS INT                                   NO-UNDO.
 
 DEF TEMP-TABLE w-vinculos
@@ -123,10 +133,12 @@ FORM SKIP(3)
 
      tel_dstipess     AT 32 NO-LABEL
      SKIP(1) 
+     /* Novos cargos somente poderao ser atribuidos pela Tela Pessoa Web */
+     /* Regra serve para: CD, CL, CS, CM, DT e DS - P484*/
      tel_tpvincul     COLON 20 LABEL "Tipo de Vinculo"
                             HELP "Confirme o tipo de vinculo"
                             VALIDATE(CAN-DO("CA,,CF,CC,CO,FU,FC,FO,ET,DI,DC,AC",
-                            tel_tpvincul),"513 - Tipo errado.")
+                            tel_tpvincul),"513 - Tipo errado ou nao permitido.")
      tel_dsvincul           
      SKIP(1)
      WITH ROW 4 SIDE-LABELS NO-LABELS TITLE glb_tldatela OVERLAY
@@ -165,13 +177,14 @@ ON CHOOSE OF btn-ok
 ASSIGN glb_cddopcao = "C"
        glb_cdcritic = 0.
 
-DO aux_i = 1 TO 12:
+DO aux_i = 1 TO 18:
    CREATE w-vinculos.
    ASSIGN w-vinculos.sigla = aux_sigvincu[aux_i]
           w-vinculos.descr = aux_desvincu[aux_i].
 END.
 
-OPEN QUERY q-vinculos FOR EACH w-vinculos.
+/* Nao apresentar cargos novos na Tela Pessoa nao convetida - P484*/
+OPEN QUERY q-vinculos FOR EACH w-vinculos WHERE NOT CAN-DO("CD,CL,CS,CM,DT,DS",w-vinculos.sigla).
 
 DO WHILE TRUE:
 
@@ -374,6 +387,50 @@ DO WHILE TRUE:
                          ELSE
                               UPDATE tel_tpvincul WITH FRAME f_pessoa.
                       END.   
+
+                 /* Inicio - Alteracoes devido ao Projeto 484 - Inicio */
+
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                 RUN STORED-PROCEDURE pc_pessoa_progress 
+                      aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapass.cdcooper,
+                                                          INPUT crapass.nrdconta,   
+                                                          INPUT tel_tpvincul,
+                                                          INPUT glb_cdoperad,
+                                                         OUTPUT 0, 
+                                                         OUTPUT "").
+				
+                 /* Fechar o procedimento para buscarmos o resultado */ 
+                 CLOSE STORED-PROC pc_pessoa_progress
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+				
+                 /* Busca possíveis erros */ 
+                 ASSIGN  glb_cdcritic = 0
+                         glb_dscritic = ""
+                         glb_cdcritic = pc_pessoa_progress.pr_cdcritic WHEN pc_pessoa_progress.pr_cdcritic <> ?
+                         glb_dscritic = pc_pessoa_progress.pr_dscritic WHEN pc_pessoa_progress.pr_dscritic <> ?.
+
+                 IF glb_cdcritic <> 0   OR
+                    glb_dscritic <> ""  THEN
+                      DO:
+                           IF glb_dscritic = "" THEN
+                                DO:
+                                     FIND crapcri WHERE crapcri.cdcritic = glb_cdcritic
+                                                        NO-LOCK NO-ERROR.
+				
+                                     IF AVAIL crapcri THEN
+                                          ASSIGN glb_dscritic = crapcri.dscritic.
+				
+                                END.
+
+                           MESSAGE glb_dscritic.
+                           RETURN "NOK".
+										
+                      END.
+					 
+                 /* Fim - Alteracoes devido ao Projeto 484 - Fim */
 
                  ASSIGN crapass.inpessoa = tel_inpessoa
                         crapass.tpvincul = CAPS(tel_tpvincul).

@@ -117,6 +117,9 @@
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
 
          16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+         
+         08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484.
+                      Gabriel Marcos (Mouts).
 
  * ********************************************************************************** */
 
@@ -323,7 +326,9 @@ if ( isset($cabecalho[28]->cdata) ) {
 		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
 	}
 }
-
+if ( isset($cabecalho[29]->cdata) ) {
+  echo '$("#nrdgrupo","#frmCabAtenda").val("' . $cabecalho[29]->cdata . '");';
+}
 	
 	// Dados complementares da conta/dv	
 if ( isset($compCabecalho[0]->cdata) ) {

@@ -246,7 +246,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
                cdsitdct  crapass.cdsitdct%TYPE,
-			   nmsocial  crapttl.nmsocial%TYPE);
+			   nmsocial  crapttl.nmsocial%TYPE,
+               nrdgrupo  tbevento_grupos.nmdgrupo%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;
 
@@ -6323,6 +6324,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --				16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 	--
+    --              08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484.
+    --                           Gabriel Marcos (Mouts).
+    --
     -- ..........................................................................*/
 
     ---------------> CURSORES <----------------
@@ -6379,6 +6383,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	   AND crapttl.nrdconta = pr_nrdconta
 	   AND crapttl.idseqttl = 2;
     rw_crapttl cr_crapttl%ROWTYPE;
+
+    /* Projeto 484 - Delegados */
+    -- Cursor para buscar numero do grupo
+    cursor cr_nrgrupo (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
+                      ,pr_nrcpfcgc in tbevento_pessoa_grupos.nrcpfcgc%type) is
+    select substr(dsc.nmdgrupo,3) nrdgrupo
+      from tbevento_pessoa_grupos grp
+         , tbevento_grupos        dsc
+     where grp.cdcooper = pr_cdcooper
+       and grp.nrcpfcgc = pr_nrcpfcgc
+       and dsc.cdcooper = grp.cdcooper
+       and dsc.cdagenci = grp.cdagenci
+       and dsc.nrdgrupo = grp.nrdgrupo;
+    rw_nrgrupo cr_nrgrupo%rowtype;
 
     --------------> VARIAVEIS <----------------
     vr_cdcritic   INTEGER;
@@ -6437,6 +6455,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       vr_qttitula := 1;
     END IF;
 
+    /* Projeto 484 - Delegados */
+    -- Buscar grupo do cooperado
+    open cr_nrgrupo (pr_cdcooper
+                    ,rw_crapass.nrcpfcgc);
+    fetch cr_nrgrupo into rw_nrgrupo;
+    close cr_nrgrupo;
+
     --> Carregar temptable de retorno
     vr_idxcab := pr_tab_cabec.count + 1;
     pr_tab_cabec(vr_idxcab).nrmatric := rw_crapass.nrmatric;
@@ -6482,6 +6507,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).qttitula := vr_qttitula;
     pr_tab_cabec(vr_idxcab).dssititg := rw_crapass.dsdctitg;
 	pr_tab_cabec(vr_idxcab).nmsocial := rw_crapass.nmsocial;
+
+    -- P484 - Numero do grupo do cooperado
+    pr_tab_cabec(vr_idxcab).nrdgrupo := rw_nrgrupo.nrdgrupo;
 
     pr_des_reto := 'OK';
 
@@ -7723,6 +7751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||
 						'<nmsocial>'|| vr_tab_cabec(i).nmsocial      ||'</nmsocial>'||
+                        '<nrdgrupo>'|| vr_tab_cabec(i).nrdgrupo      ||'</nrdgrupo>'||
                         '</Registro>');
 
       END LOOP;
