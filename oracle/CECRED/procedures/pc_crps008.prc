@@ -1491,15 +1491,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                                        , pr_cdcritic => vr_cdcritic
                                                        , pr_dscritic => vr_dscritic
                                                        );
-
-                     IF vr_dscritic IS NOT NULL
-                        AND vr_incrineg = 0 THEN -- Erro de sistema/BD
-                       RAISE vr_exc_saida;
-                     END IF;
+                     
                      -- guarda dados par serem utilizados mais a frente
                      rw_craplcm.vllanmto := rw_crapsld(idx).vljurmes;
                      rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljurmes * vr_txcpmfcc,2);
                      rw_craplcm.rowid    := vr_tab_retorno.rowidlct;
+                     
+                     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                        RAISE vr_exc_saida;
+                     END IF;
+                     
                    
                    EXCEPTION
                      WHEN vr_exc_saida THEN
@@ -1560,18 +1561,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
 	                                                   , pr_incrineg => vr_incrineg                                                   
                                                      , pr_cdcritic => vr_cdcritic
                                                      , pr_dscritic => vr_dscritic);
-
-                   IF TRIM(vr_dscritic) IS NOT NULL OR
-                      vr_cdcritic > 0 THEN
-                     RAISE vr_exc_saida;
-                   END IF; 
-                   
+                                                     
                    -- guarda dados par serem utilizados mais a frente
                    rw_craplcm.vllanmto := rw_crapsld(idx).vljursaq;
                    rw_craplcm.vldoipmf := TRUNC(rw_crapsld(idx).vljursaq * vr_txipmsaq,2);
-                   rw_craplcm.rowid    := vr_tab_retorno.rowidlct;
-                 
-
+                   rw_craplcm.rowid    := vr_tab_retorno.rowidlct;  
+                   
+                   IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                   END IF;
+                   
                  EXCEPTION
                    WHEN vr_exc_saida THEN
                      RAISE vr_exc_saida;
