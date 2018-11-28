@@ -170,7 +170,7 @@
 
 					$qtdGravame = 0;
 					foreach ($t->tags as $gravame) {
-						
+
 						$gravameAttr = $gravame->attributes;
 						$iduriservico = $gravameAttr['IDURISERVICO'];
 						$cdoperac = $gravameAttr['CDOPERAC'];
@@ -182,16 +182,17 @@
 						$flaborta = $gravameAttr['FLABORTA'];
 						$flgobrig = $gravameAttr['FLGOBRIG'];
 
-						$xmlstr = new SimpleXMLElement($xmlResult);
-						$sistNac = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->sistemaNacionalGravames );
-						$objContr = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->objetoContratoCredito );
-						$propostaContratoCredito = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->propostaContratoCredito );
+						$xmlstr = new SimpleXMLElement( $xmlResult );
+						$sistNac = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->sistemaNacionalGravames );
+						$objContr = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->objetoContratoCredito );
+						$propostaContratoCredito = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->propostaContratoCredito );
 
 						if ($cdoperac == 1) { //Alienação
 
-							$representanteVendas = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->representanteVendas );
-							$estabelecimentoComercial = json_encode( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->estabelecimentoComercial );
-							$data = '{"sistemaNacionalGravames": '.$sistNac.',
+							$representanteVendas = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->representanteVendas );
+							$estabelecimentoComercial = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->estabelecimentoComercial );
+							$data = '{		"cooperativaCodigo": '.$cdcooper.',
+									  "sistemaNacionalGravames": '.$sistNac.',
 										"objetoContratoCredito": '.$objContr.',
 									  "propostaContratoCredito": '.$propostaContratoCredito.',
 										  "representanteVendas": '.$representanteVendas.',
@@ -199,20 +200,19 @@
 
 						} else if ($cdoperac == 3) { //Baixa Gravame
 
-							$data = '{"sistemaNacionalGravames": '.$sistNac.',
+							$data = '{		"cooperativaCodigo": '.$cdcooper.',
+									  "sistemaNacionalGravames": '.$sistNac.',
 										"objetoContratoCredito": '.$objContr.',
 									  "propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
-
-						//echo ($data); die;
+						//echo($data); die;
 
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
 						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
-						
-						//echo($xmlStr); die;
+
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
@@ -224,6 +224,8 @@
 						} else {
 							$errorMessage = retornarMensagemErro($xmlRet);
 							$errorQtd++;
+
+							//echo $GLOBALS["httpcode"].$xmlStr; die;
 
 							if ( $flgobrig == "S" && $flaborta == "S" ) {
 								exibirErro('error',$msg['erro_baixa_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
@@ -251,7 +253,7 @@
 			}
 
 			if ($qtdGravame) {
-				$msgProposta = $msg['veiculos_alienados'];
+				$msgProposta = $qtdGravame . " " . $msg['veiculos_alienados'];
 			}
 
 		}

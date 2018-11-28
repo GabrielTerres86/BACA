@@ -47,13 +47,21 @@
 		$url = $att['iduriservico'];
 		return $url;
 	}
+	
+	//Função para pegar a URL que vem nos atributos do XML
+	function getCoopCod($xml) {
+		$att = $xml->attributes();
+		$coop = $att['cdcooper'];
+		return $coop;
+	}
 
 	function convertXMLtoJSONAliena($xml) {
-		$data = '{"sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
+		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
+				  "sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
 					"objetoContratoCredito": '.json_encode($xml->objetoContratoCredito).',
-					"propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
-					"representanteVendas": '.json_encode($xml->representanteVendas).',
-					"estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
+				  "propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
+					  "representanteVendas": '.json_encode($xml->representanteVendas).',
+				 "estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
 		return $data;	
 	}
 
@@ -61,7 +69,8 @@
 	function convertXMLtoJSONConsulta($xml) {
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
-		$data = '{"sistemaNacionalGravames": '.$sistNac.',
+		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
+				  "sistemaNacionalGravames": '.$sistNac.',
 					"objetoContratoCredito": '.$objContr.'}';
 		return $data;	
 	}
@@ -71,9 +80,10 @@
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
 		$propostaContratoCredito = json_encode($xml->propostaContratoCredito);
-		$data = '{"sistemaNacionalGravames": '.$sistNac.',
+		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
+				  "sistemaNacionalGravames": '.$sistNac.',
 					"objetoContratoCredito": '.$objContr.',
-					"propostaContratoCredito": '.$propostaContratoCredito.'}';
+				  "propostaContratoCredito": '.$propostaContratoCredito.'}';
 		return $data;	
 	}
 
@@ -243,7 +253,7 @@
   		//$xml      .= "     <dserrcom>".$errorMessage."</dserrcom>";
   		$xml      .= "     <flsituac>".$flsituac."</flsituac>";
   		$xml      .= "  </Dados>";
-  		$xml      .= "</Root>";
+		$xml      .= "</Root>";
 
   		// Executa script para envio do XML
   		$xmlResult = mensageria($xml,"GRVM0001","AUDITGRAVAM",$GLOBALS['cdcooper'],$GLOBALS["cdagenci"],$GLOBALS["nrdcaixa"],$GLOBALS["idorigem"],$GLOBALS["cdoperad"],"</Root>");  		
