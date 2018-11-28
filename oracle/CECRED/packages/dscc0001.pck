@@ -6718,10 +6718,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                  -- retorno
                  ,pr_tab_retorno => vr_tab_retorno
                  ,pr_incrineg => vr_incrineg
-                 ,pr_cdcritic => pr_cdcritic
-                 ,pr_dscritic => pr_dscritic);
+                 ,pr_cdcritic => vr_cdcritic
+                 ,pr_dscritic => vr_dscritic);
+                 
+    vr_vllanmto:= pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori);             
 
-    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+    IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
           -- Gerar crítica
           vr_cdcritic := 0;
@@ -6732,9 +6734,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           RAISE vr_exc_erro;       
        END IF;
     END IF; 
+    
     vr_nrseqdig:= rw_craplot.nrseqdig + 1;
-    vr_vllanmto:= pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori);
-   
+    
 		BEGIN 
 			-- Atualizar valores do lote				
 			UPDATE craplot lot
@@ -7090,10 +7092,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                  -- retorno
                  ,pr_tab_retorno => vr_tab_retorno
                  ,pr_incrineg => vr_incrineg
-                 ,pr_cdcritic => pr_cdcritic
-                 ,pr_dscritic => pr_dscritic);
+                 ,pr_cdcritic => vr_cdcritic
+                 ,pr_dscritic => vr_dscritic);
+                 
+    vr_vllanmto:= vr_vlliquid;             
 
-    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+    IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
           -- Gerar crítica
           vr_cdcritic := 0;
@@ -7104,8 +7108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
            RAISE vr_exc_erro;
        END IF;
     END IF; 
+    
     vr_nrseqdig:= rw_craplot.nrseqdig + 1;
-    vr_vllanmto:= vr_vlliquid;
     	
 		BEGIN 
 			-- Atualizar valores do lote				
@@ -8222,7 +8226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		FETCH cr_craplcm INTO rw_craplcm;
 		-- Se não encontrou
 		IF cr_craplcm%NOTFOUND THEN
-		   --Gravar lancamento
+		--Gravar lancamento
        -- P450 - Regulatório de crédito
        lanc0001.pc_gerar_lancamento_conta(
                   pr_dtmvtolt => rw_craplot.dtmvtolt
@@ -8242,10 +8246,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                  -- retorno
                  ,pr_tab_retorno => vr_tab_retorno
                  ,pr_incrineg => vr_incrineg
-                 ,pr_cdcritic => pr_cdcritic
-                 ,pr_dscritic => pr_dscritic);
+                 ,pr_cdcritic => vr_cdcritic
+                 ,pr_dscritic => vr_dscritic);
 
-      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
          IF vr_incrineg = 0 THEN -- Erro de sistema/BD
             -- Gerar crítica
             vr_cdcritic := 0;
@@ -8390,10 +8394,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                    -- retorno
                    ,pr_tab_retorno => vr_tab_retorno
                    ,pr_incrineg => vr_incrineg
-                   ,pr_cdcritic => pr_cdcritic
-                   ,pr_dscritic => pr_dscritic);
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic);
+                   
+         vr_vllanmto:= ROUND(vr_vltotiof, 2);          
 
-         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+         IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                -- Gerar crítica
                vr_cdcritic := 0;
@@ -8404,8 +8410,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                RAISE vr_exc_erro;
             END IF;
          END IF; 
-         vr_vllanmto:= ROUND(vr_vltotiof, 2);
-         
          	
           BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
