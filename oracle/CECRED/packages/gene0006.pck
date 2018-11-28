@@ -1716,8 +1716,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               pr_protocolo(vr_index).idlstdom := 8;
               
             -- 13 = Pagamento/Agendamento GPS
-            WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
-              pr_protocolo(vr_index).idlstdom := 9;
+            WHEN pr_protocolo(vr_index).cdtippro = 13 THEN              
+              IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
+                pr_protocolo(vr_index).idlstdom := 9; -- Pagamento efetivado
+              ELSE
+                pr_protocolo(vr_index).idlstdom := 14; -- Agendamento
+              END IF;              
               
             -- 24 = Pagamento FGTS
             WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
@@ -2578,7 +2582,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                 
           -- 13 = Pagamento/Agendamento GPS
           WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
-            pr_protocolo(vr_index).idlstdom := 9;
+            IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
+              pr_protocolo(vr_index).idlstdom := 9; -- Pagamento efetivado
+            ELSE
+              pr_protocolo(vr_index).idlstdom := 14; -- Agendamento
+            END IF;
                 
           -- 24 = Pagamento FGTS
           WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
