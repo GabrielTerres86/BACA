@@ -5979,7 +5979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                          , pr_cdcritic  => vr_cdcritic      -- OUT
                                          , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
-        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+        IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_erro;	
         END IF;				
 
@@ -8014,7 +8014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                          , pr_cdcritic => vr_cdcritic
                                          , pr_dscritic => vr_dscritic); 
                                          
-          IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+          IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
             RAISE vr_exc_erro;
           END IF;                                 
@@ -11901,7 +11901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                  , pr_cdcritic  => vr_cdcritic      -- OUT
                                                  , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
                     
-                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                   -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
                     RAISE vr_exc_erro;
                 END IF;				
@@ -13303,7 +13303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
                        
-                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                    -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
                      RAISE vr_exc_erro;
                  END IF;				
@@ -15584,7 +15584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                    , pr_cdcritic  => vr_cdcritic      -- OUT
                                                    , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
-                  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                  IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                       RAISE vr_exc_erro;
                   END IF;				
 				  
