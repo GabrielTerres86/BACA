@@ -2206,15 +2206,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                               ,pr_cdcritic => pr_cdcritic
                                               ,pr_dscritic => pr_dscritic); 
                                            
-          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          	IF nvl(pr_cdcritic, 0) > 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
               -- Se foi retornado apenas codigo
               IF nvl(pr_cdcritic,0) > 0 AND trim(pr_dscritic) IS NULL THEN
                 -- Buscar a descricao
                 pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-      			END IF;                                                                                         
+      		  END IF;                                                                                         
               
-		       		RETURN;
-      			END IF;     
+		      RETURN;
+      		END IF;     
                                                                                                 
           EXCEPTION
             WHEN OTHERS THEN
