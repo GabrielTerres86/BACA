@@ -714,18 +714,6 @@ PROCEDURE Grava_Regulariza:
         IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
             UNDO Grava, LEAVE Grava.
 
-        /* Se Conta Integracao e nao ativa */
-        IF  crapneg.cdbanchq = 1                                 AND
-            crapneg.nrdctabb = f_ver_contaitg(crapass.nrdctitg)  THEN           
-            DO:                  
-                IF  NOT(crapass.flgctitg = 2 AND crapass.nrdctitg <> "")  THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "A conta integracao deve estar ativa para efetuar a regularizacao.".
-                        UNDO Grava, LEAVE Grava.
-                    END.
-            END. /* IF  crapneg.cdbanchq = 1  */
-
         ASSIGN aux_flgzerar = FALSE.
 
         IF  crapneg.dtfimest = ? THEN

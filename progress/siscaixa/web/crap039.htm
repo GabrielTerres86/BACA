@@ -1,0 +1,346 @@
+<!--
+  Programa: crap039.htm
+
+  19/10/2018 - Peter Rausch - Criação do documento
+  
+-->
+<html>
+
+<head>
+	<meta http-equiv="Content-Language" content="pt-br">
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+	<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+	<meta name="ProgId" content="FrontPage.Editor.Document">
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta http-equiv="Pragma" content="No-Cache">
+	<meta http-equiv="Expires" content="0">
+	<script language=JavaScript src="/script/formatadadosie.js"></script>
+	<link rel=StyleSheet type="text/css" href="/script/viacredi.css">
+	<title>RECEBIMENTO DE TARIFA</title>
+	<script language=JavaScript src="/script/jquery.js"></script>
+	<script>
+		function submitForm() {
+			document.getElementById('divProcessando').style.display = 'block';
+			for (var i = 0; i < document.forms[0].length; i++) {
+				document.forms[0].elements[i].disabled = false;
+			}
+			document.forms[0].submit();
+		}
+	</script>
+	<style>
+		.disabled {
+			color: #DFDFDF;
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onload="click();" onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
+	<form onKeyDown="change_page(event)" method=post>
+
+		<input type="hidden" name="v_msg">
+		<input type="hidden" name="v_btn_ok" value="false">
+		<input type="hidden" name="v_btn_cancela" value="false">
+
+		<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+		<div align="center">
+			<center>
+				<table width="100%" class=cabtab>
+					<tr>
+						<td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readonly>
+						</td>
+						<td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp" readonly>
+						</td>
+						<td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readonly>
+						</td>
+						<td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp"
+							 readOnly>
+						</td>
+						<td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readonly>
+						</td>
+					</tr>
+				</table>
+			</center>
+		</div>
+		<div align="center">
+			<center>
+				<table width="100%" class=cabtab>
+					<tr>
+						<td class=titulo>RECEBIMENTO DE TARIFA</td>
+						<td width="21%" class=programa align="right">P.039&nbsp; V.1.00</td>
+					</tr>
+				</table>
+			</center>
+		</div>
+
+		<div align="center">
+			<center>
+				<table cellspacing=0 cellpadding=0 width=100%>
+					<tr>
+						<td width="100%" valign="middle" align="center">
+							<div align="center">
+								<center>
+									<table valign="middle" align="center" width="100%" cellspacing=0 cellpadding=1 class=tcampo>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="50%" align="right" class="linhaform">Conta/Dv:</td>
+											<td colspan="3">
+												<input type="text" name="v_conta" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);"
+												 onchange="submitForm();" style="text-align: right" maxlength="10" size="10" class="input">
+												<input type="text" name="v_nome" size="40" class="input disabled" style="font-weight: bold" disabled>
+											</td>
+										</tr>
+										<tr>
+											<td width=50% align="right">Tipo Tarifa:&nbsp;</td>
+											<td width=50% align="left" class="linhaform">
+												<select name="v_tipo_tarifa" id="v_tipo_tarifa" onchange="submitForm()" size="1" style="width: 310px"></select>
+											</td>
+										</tr>
+										<tr>
+											<td width=50% align="right">Documento:&nbsp;</td>
+											<td width=50% align="left" class="linhaform">
+												<input type="text" name="v_documento" id="v_documento" maxlength="30" size="30" class="input"></select>
+											</td>
+										</tr>
+									</table>
+									<table valign="middle" id="tab_form" align="center" width="100%" cellspacing=0 cellpadding=1 class=tcampo>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td align="right" class="linhaform" width="100%" colspan="2">
+												<hr class="input">
+											</td>
+										</tr>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="50%" align="right" class="linhaform">Hist&oacute;rico:</td>
+											<td colspan="3">
+												<input type="text" name="v_cod_historico" style="text-align: right" maxlength="10" size="10" class="input disabled"
+												 disabled>
+												<input type="text" name="v_desc_historico" size="40" class="input disabled" style="font-weight: bold"
+												 disabled>
+											</td>
+										</tr>
+										<tr>
+											<td width="50%" align="right" class="linhaform">C&oacute;d. Hist&oacute;rico Cont&aacute;bil:</td>
+											<td colspan="3">
+												<input type="text" name="v_hist_contabil" style="text-align: right" maxlength="10" size="10" class="input disabled"
+												 disabled>
+											</td>
+										</tr>
+										<tr>
+											<td width=50% align="right">Conta D&eacute;bito:&nbsp;</td>
+											<td width=50% align="left"><input type="text" name="v_conta_debito" id="v_conta_debito" size="10" class="input disabled"
+												 style="text-align: right" disabled></td>
+										</tr>
+										<tr>
+											<td width=50% align="right">Conta Cr&eacute;dito:&nbsp;</td>
+											<td width=50% align="left"><input type="text" name="v_conta_credito" id="v_conta_credito" size="10" class="input disabled"
+												 style="text-align: right" disabled></td>
+										</tr>
+										<tr>
+											<td width=50% align="right">Valor:&nbsp;</td>
+											<td width=50% align="left"><input type="text" name="v_valor_tarifa" id="v_valor_tarifa" size="16" class="input disabled"
+												 disabled maxlength="14" onKeyDown="JavaScript:FormataValor(this,14,event)" onChange="JavaScript: formataDecimal(this,true,event);"
+												 style="text-align: right"></td>
+										</tr>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width=50%>&nbsp;</td>
+											<td width=50%>&nbsp;</td>
+										</tr>
+										<tr>
+											<td width=50% align="right">
+												<input type="button" id="Ok" value="Ok" name="ok" class="button" ondblclick="return false;" onclick="document.getElementById('v_indempre').value = document.getElementById('v_cdempcon').selectedIndex; document.forms[0].ok.disabled='true';document.forms[0].v_btn_ok.value='true'; submitForm();">
+											</td>
+											<td width=50% align="left">
+												&nbsp;&nbsp;&nbsp;<input type="button" value="Cancelar" name="cancela" class="button" onclick="document.forms[0].cancela.disabled='true'; document.forms[0].v_btn_cancela.value='true'; submitForm();"></td>
+						</td>
+					</tr>
+					<tr>
+						<td width=50%>&nbsp;</td>
+						<td width=50%>&nbsp;</td>
+					</tr>
+					<tr>
+						<td width=50%>&nbsp;</td>
+						<td width=50%>&nbsp;</td>
+					</tr>
+					<tr>
+						<td width=50%>&nbsp;</td>
+						<td width=50%>&nbsp;</td>
+					</tr>
+					<tr>
+						<td width=50%>&nbsp;</td>
+						<td width=50%>&nbsp;</td>
+					</tr>
+				</table>
+			</center>
+		</div>
+		</td>
+		</tr>
+		</table>
+		</center>
+		</div>
+	</form>
+
+	<div id="divAguardeSenha" name="divAguardeSenha" style="display:none;  z-index: -1; width:100%; height:100px; margin-top:-97px; margin-left: 50px; text-align:center;"
+	 align="center">
+		<form>
+			<table class="tableForm" style="text-align:center; background-color:rgb(255, 255, 206); width: 250px;">
+				<tr>
+					<td colspan="2" id="msgAguardeSenha">
+						<font style="font-family: Arial, Verdana, sans-serif; font-size:11pt;">Aguarde a digitação da senha</font>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+	<div id="divProcessando" name="divProcessando" style="display:none; z-index: -1; position:fixed; width:100%; height:100px; margin-top:-97px; margin-left: 50px; text-align:center;"
+	 align="center">
+		<form>
+			<table class="tableForm" style="text-align:center; background-color:rgb(255, 255, 206); width: 250px;">
+				<tr>
+					<td colspan="2" id="divProcessando">
+						<font style="font-family: Arial, Verdana, sans-serif; font-size:11pt;">Processando...</font>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+</body>
+
+</html>
+
+<script language="JavaScript">
+
+	function formataDecimal(objField, flgBlur, e) {
+		if (flgBlur) { // Utilizar no evento onBlur
+			if (objField.value != "") { // Se campo possui algum conteúdo
+
+				var flgVirgula = false;
+				var contDecimos = 0;
+				var value = "";
+				var temp = "";
+				var comeco = false;
+
+				for (var i = 0; i < objField.value.length; i++) {
+					temp = objField.value.substr(i, 1);
+
+					if (temp != "0") {
+						comeco = true;
+					}
+
+					if (comeco) {
+						value += temp;
+					} else {
+						continue;
+					}
+
+					if (flgVirgula) {
+						contDecimos++;
+					}
+
+					if (!flgVirgula && temp == ",") {
+						if (value == ",") {
+							value = "0" + value;
+						}
+						flgVirgula = true;
+					}
+
+					if (contDecimos == 2) {
+						break;
+					}
+				}
+
+				value += !flgVirgula ? ",00" : contDecimos == 0 ? "00" : contDecimos == 1 ? "0" : "";
+
+				if (value.length > objField.maxLengt) {
+					objField.maxLengt = value.length;
+				}
+
+				objField.value = value;
+
+			}
+		} else {
+			if (retornaTecla(e) == 44) {
+				if (objField.value == "" || objField.value.indexOf(",") != "-1") {
+					return false;
+				}
+
+				return true;
+			}
+
+			// Permitir a utilização das teclas de setas, tab, home e end.
+			if ((retornaTecla(e) >= 35 && retornaTecla(e) <= 40) || (retornaTecla(e) == 9)) {
+				return true;
+			}
+
+			if (!validaNumero(e)) {
+				return false;
+			}
+
+			return true;
+		}
+	}
+
+	// var objempcon = new Array();
+
+	// function populaConvenios() {
+
+	// 	var opt;
+	// 	var index = "";
+
+	// 	for (i = 0; i < tmp_objempcon.length; i++) {
+	// 		eval('var obj=' + tmp_objempcon[i]);
+	// 		objempcon.push(obj);
+	// 	}
+
+	// 	for (i = 0; i < objempcon.length; i++) {
+
+	// 		if (document.getElementById("v_segmento").value != 99 &&
+	// 			document.getElementById("v_segmento").value != objempcon[i].cdsegmto) {
+	// 			continue;
+	// 		}
+
+	// 		if (document.getElementById("tmp_cdempcon").value != "" &&
+	// 			document.getElementById("tmp_cdempcon").value == objempcon[i].cdempcon) {
+	// 			index = i;
+	// 		}
+
+	// 		opt = document.createElement("option");
+	// 		opt.value = objempcon[i].cdempcon;
+	// 		opt.innerHTML = objempcon[i].nmextcon;
+	// 		document.getElementById("v_cdempcon").appendChild(opt);
+
+	// 	}
+
+	// 	if (index != "") {
+	// 		document.getElementById('v_cdempcon').selectedIndex = index;
+	// 	}
+
+	// 	return false;
+
+	// }
+
+</script>
