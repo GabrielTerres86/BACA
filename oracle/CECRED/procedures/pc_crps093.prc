@@ -1038,14 +1038,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                                                 , pr_cdcritic  => vr_cdcritic      -- OUT
                                                 , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
     					
-              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                 -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                 IF vr_incrineg = 0 THEN  
-                   
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                     vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
                     --Sair do programa
                     RAISE vr_exc_undo;
-                 END IF;
               END IF;  
                 
             END;
@@ -1193,14 +1189,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                                                 , pr_cdcritic  => vr_cdcritic      -- OUT
                                                 , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
     					
-              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                 -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                 IF vr_incrineg = 0 THEN  
-                 
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                     vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
                     --Sair do programa
                     RAISE vr_exc_undo;
-                 END IF;
               END IF;    
                 
                 
