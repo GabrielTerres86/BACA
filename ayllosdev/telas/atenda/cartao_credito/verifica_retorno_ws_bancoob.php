@@ -12,6 +12,7 @@
 		}
 		$nrdconta = $_POST['nrdconta'];
 		$nrctrcrd = $_POST['nrctrcrd'];
+		$dssituac = $_POST['dssituac'];		
 		$funcaoAposErro = 'bloqueiaFundo(divRotina);';	
 			
 		$bancoobXML .= "<Root>";
@@ -38,7 +39,8 @@
 			echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Aimaro\", \"\");";
 		else{
 			echo "nrctrcrd =  $nrctrcrd;";
-			echo "showError(\"error\", \"".utf8ToHtml(str_replace("Ã£",'a', $procXML->Dados->inf->mensagem))."\", \"Alerta - Aimaro\", \" carregaHistorico(0);\");";
+			echo "dssituac =  '$dssituac';";
+			echo "showError(\"error\", \"".utf8ToHtml(str_replace("Ã£",'a', $procXML->Dados->inf->mensagem))."\", \"Alerta - Ayllos\", \" carregaHistorico(0,$nrctrcrd);\");";
 			?>	
 				//$("#emiteTermoBTN").attr("nrctrcrd","<? echo $nrctrcrd;?>");
 				//$("#emiteTermoBTN").click();

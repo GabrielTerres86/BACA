@@ -6368,6 +6368,7 @@ function reenviarBancoob(nrctrcrd){
 	var objectSend = {
         tpacao: 'montagrid',
         nrdconta: nrdconta,
+        glbadc  : glbadc,
         nrctrcrd: nrctrcrd,
         dsgraupr: dsgraupr,
         inpessoa: inpessoa,
@@ -6394,13 +6395,15 @@ function verificaRetornoBancoob(nrctrcrd){
               
     /* envia bancoob*/
      showMsgAguardo("Aguarde Enviando verificando retorno do bancoob"); 
+     var sitcrd = $("#dssituac").val();
         $.ajax({
             type: "POST",
             dataType: "html",
             url: UrlSite + "telas/atenda/cartao_credito/verifica_retorno_ws_bancoob.php",
             data: {
                 nrdconta: nrdconta,
-                nrctrcrd: nrctrcrd                
+                nrctrcrd: nrctrcrd,
+                dssituac: sitcrd            
             },
             error: function (objAjax, responseError, objExcept) {
 

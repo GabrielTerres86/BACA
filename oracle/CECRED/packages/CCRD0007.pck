@@ -337,6 +337,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                         ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
                                         ,pr_nrseqcrd IN crawcrd.nrseqcrd%TYPE
                                         ,pr_insitcrd IN crawcrd.insitcrd%TYPE
+                                        ,pr_nrcctitg IN crawcrd.nrcctitg%TYPE DEFAULT NULL
+                                        ,pr_nrcrcard IN crawcrd.nrcrcard%TYPE DEFAULT NULL
                                         ,pr_dscritic OUT VARCHAR2)IS
 
     BEGIN
@@ -345,6 +347,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          SET insitcrd = pr_insitcrd
            , nrseqcrd = nvl(pr_nrseqcrd,nrseqcrd)
            , dtsolici = trunc(SYSDATE)
+           , nrcctitg = nvl(pr_nrcctitg, nrcctitg)
+           , nrcrcard = nvl(pr_nrcrcard, nrcrcard)
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrcrd = pr_nrctrcrd;
@@ -2597,7 +2601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-    dbms_output.put_line('Teste 1');
+
     --> Gerar informações no padrao JSON da solicitação do cartão
     pc_gera_json_bancoob (pr_cdcooper   => vr_cdcooper      --> Codigo da cooperativa
                          ,pr_nrdconta   => pr_nrdconta      --> Número do caixa
@@ -2617,9 +2621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     dbms_lob.open(vr_obj_cartao_clob, dbms_lob.lob_readwrite);
     json.to_clob(vr_obj_cartao,vr_obj_cartao_clob);
 
-    dbms_output.put_line('Teste 2');
     dbms_output.put_line(vr_obj_cartao_clob);
-    dbms_output.put_line('Teste 3');
 
     pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
                         pr_cdagenci    => vr_cdagenci,  --> Codigo da agencia
@@ -2812,6 +2814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     vr_method        VARCHAR2(100);
     vr_conta_cartao  VARCHAR2(100);
     vr_idusuario     VARCHAR2(100);
+    vr_idusuario2    VARCHAR2(100);
     vr_nrcartao      VARCHAR2(100);
 
     vr_obj_retorno json      := json();
@@ -2991,7 +2994,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           vr_conta_cartao := vr_obj_retorno.get('numeroConta').to_char();
           
           vr_obj_lst   := json_list(vr_obj_retorno.get('componentes').to_char());
-          vr_idusuario := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
+
+         -- ajustado para quando e PJ ele gera um cartao ficticio e o segundo e o original
+         IF json_ac.array_count(vr_obj_lst) > 1  THEN
+           --vr_idusuario  := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
+           --vr_idusuario2 := json(vr_obj_lst.get(2).to_char()).get('idComponente').to_char();
+           vr_idusuario  := json(vr_obj_lst.get(2).to_char()).get('idComponente').to_char();
+         ELSE
+           vr_idusuario := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
+         END IF;
           
           --======== Agora vamos buscar os dados do cartao gerado bancoob =========
           pc_carrega_param_bancoob(pr_cdcooper      => pr_cdcooper, -- Codigo da cooperativa
@@ -3044,13 +3055,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           -- Troca os caracteres * por 0 (zero), referente a mascara do cartao.
           vr_nrcartao := trim(replace(replace(vr_obj_retorno.get('cartao').to_char(),'*','0'),'"',''));
 
-          
           -- Altera a situação do Cartão para 2 (Solicitado)
           pc_altera_sit_cartao_bancoob(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta
                                       ,pr_nrctrcrd => pr_nrctrcrd
                                       ,pr_nrseqcrd => NULL
                                       ,pr_insitcrd => 2
+                                      ,pr_nrcctitg => vr_conta_cartao
+                                      ,pr_nrcrcard => vr_nrcartao
                                       ,pr_dscritic => vr_dscritic);
                                       
           IF vr_dscritic IS NOT NULL THEN

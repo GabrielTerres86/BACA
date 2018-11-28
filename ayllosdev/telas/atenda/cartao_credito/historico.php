@@ -137,6 +137,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 													}
 													}
 												?>
+												<input type="hidden" id="dssituac" value="<?=$sitcrd?>">
                                             </tbody>
                                         </table>
                                     </div>
@@ -150,6 +151,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 									<?if(($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 ((($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
