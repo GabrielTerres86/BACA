@@ -1328,8 +1328,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrsequni := Nvl(rw_craplot_dst.nrseqdig,0);
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia,0);
                
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
         EXCEPTION	 
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica 
@@ -1666,8 +1664,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrsequni := nvl(rw_craplot_ori.nrseqdig,0);
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia_lcm,0);
                
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
         EXCEPTION	
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica
@@ -1953,8 +1949,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrsequni := Nvl(rw_craplot_dst.nrseqdig,0);
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia,0);
                rw_craplcm.nrdocmto := pr_nro_docto_cred;
-
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
         EXCEPTION		  
           WHEN vr_exc_erro THEN		  
@@ -3607,9 +3601,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_incrineg    => vr_incrineg
                                                 ,pr_cdcritic    => vr_cdcritic
                                                 ,pr_dscritic    => vr_dscritic); 
-                                                
-              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                                                 
+                IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
 
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := vr_dscritic;
                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
                                      ,pr_nrdcaixa => pr_nro_caixa
@@ -3618,12 +3614,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                      ,pr_flg_erro => TRUE
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
-                  pr_cdcritic := vr_cdcritic;
-                  pr_dscritic := vr_dscritic;
-                   RAISE vr_exc_erro;
-              END IF;
+                  IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic;
+                    RAISE vr_exc_erro;
+                  end if;
 
-                RAISE vr_exc_erro;                
+                  RAISE vr_exc_erro;
+
+                END IF;
+
               END IF;                                                                                               
              
               vr_i_seq_386 := rw_consulta_lot.nrseqdig;
@@ -3791,7 +3791,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                
            IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                   
-             cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
                                   ,pr_cod_erro => pr_cdcritic
@@ -3799,10 +3801,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                   ,pr_flg_erro => TRUE
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic;
+                 RAISE vr_exc_erro;
+              end if;
            
-             -- Levantar excecao
-              pr_cdcritic := vr_cdcritic;
-              pr_dscritic := vr_dscritic;
               RAISE vr_exc_erro;
            END IF;
            
@@ -4426,6 +4430,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
             
             IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN      
               
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
               cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                    ,pr_cdagenci => pr_cod_agencia
                                    ,pr_nrdcaixa => pr_nro_caixa
@@ -4434,10 +4440,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                    ,pr_flg_erro => TRUE
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
+               IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := vr_dscritic;
+                  RAISE vr_exc_erro;
+               end if;
                                    
               -- Levantar excecao
-                 pr_cdcritic := vr_cdcritic;
-                 pr_dscritic := vr_dscritic;
                  RAISE vr_exc_erro;                 
               
             END IF;
@@ -5951,7 +5960,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 
               IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                 
-                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic; 
+                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
                                      ,pr_nrdcaixa => pr_nro_caixa
                                      ,pr_cod_erro => pr_cdcritic
@@ -5959,11 +5970,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                      ,pr_flg_erro => TRUE
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
-                                     
+                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic;
+                    RAISE vr_exc_erro;
+                 end if;
                 -- Levantar excecao
-                   pr_cdcritic := vr_cdcritic;
-                   pr_dscritic := vr_dscritic; 
-                   RAISE vr_exc_erro;
+                 RAISE vr_exc_erro;
                 
               END IF;
               
@@ -6134,6 +6147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                   
            IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                   
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic; 
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -6142,10 +6157,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                   ,pr_flg_erro => TRUE
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
-                                      
-             -- Levantar excecao
+
+             IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+               -- Levantar excecao
                pr_cdcritic := vr_cdcritic;
                pr_dscritic := vr_dscritic; 
+               RAISE vr_exc_erro;
+             end if;
 
              RAISE vr_exc_erro;
                   
@@ -6739,6 +6757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                               
                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                               
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic; 
                     cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                          ,pr_cdagenci => pr_cod_agencia
                                          ,pr_nrdcaixa => pr_nro_caixa
@@ -6747,11 +6767,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                          ,pr_flg_erro => TRUE
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                 
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
+                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                     pr_cdcritic := vr_cdcritic;
+                     pr_dscritic := vr_dscritic; 
+                     RAISE vr_exc_erro;
+                   end if;
 
-                    RAISE vr_exc_erro;
+                   RAISE vr_exc_erro;
                               
                   END IF;
                   
@@ -6919,6 +6941,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                                 
                                     IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                                 
+                                      pr_cdcritic := vr_cdcritic;
+                                      pr_dscritic := vr_dscritic; 
                                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                            ,pr_cdagenci => pr_cod_agencia
                                                            ,pr_nrdcaixa => pr_nro_caixa
@@ -6928,9 +6952,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,pr_cdcritic => vr_cdcritic
                                                            ,pr_dscritic => vr_dscritic);
                                                                    
-                                      -- Levantar excecao
+                                      IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                         pr_cdcritic := vr_cdcritic;
                                         pr_dscritic := vr_dscritic; 
+                                        RAISE vr_exc_erro;
+                                      end if;
 
                                       RAISE vr_exc_erro;
                                                 
@@ -8478,6 +8504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                           
               IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                 
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic; 
                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
                                      ,pr_nrdcaixa => pr_nro_caixa
@@ -8486,9 +8514,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                      ,pr_flg_erro => TRUE
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
-                -- Levantar excecao
-                   pr_cdcritic := vr_cdcritic;
-                   pr_dscritic := vr_dscritic; 
+                IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := vr_dscritic; 
+                  RAISE vr_exc_erro;
+                end if;
 
                 RAISE vr_exc_erro;
               END IF;
@@ -8659,6 +8689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                        
            IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic; 
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -8667,9 +8699,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                   ,pr_flg_erro => TRUE
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
-             -- Levantar excecao
+             IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                 pr_cdcritic := vr_cdcritic;
                 pr_dscritic := vr_dscritic; 
+                RAISE vr_exc_erro;
+             end if;
 
              RAISE vr_exc_erro;
            END IF;
@@ -9440,6 +9474,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                     
                         IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                            
+                          pr_cdcritic := vr_cdcritic;
+                          pr_dscritic := vr_dscritic; 
                           cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                ,pr_cdagenci => pr_cod_agencia
                                                ,pr_nrdcaixa => pr_nro_caixa
@@ -9448,11 +9484,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                ,pr_flg_erro => TRUE
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
-                          -- Levantar excecao
-                             pr_cdcritic := vr_cdcritic;
-                             pr_dscritic := vr_dscritic; 
+                         IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                            pr_cdcritic := vr_cdcritic;
+                            pr_dscritic := vr_dscritic; 
+                            RAISE vr_exc_erro;
+                         end if;
 
-                          RAISE vr_exc_erro;
+                         RAISE vr_exc_erro;
                         END IF;
                         
                         BEGIN
@@ -9580,6 +9618,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                       
                          IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                            
+                           pr_cdcritic := vr_cdcritic;
+                           pr_dscritic := vr_dscritic; 
                            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                 ,pr_cdagenci => pr_cod_agencia
                                                 ,pr_nrdcaixa => pr_nro_caixa
@@ -9588,9 +9628,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_flg_erro => TRUE
                                                 ,pr_cdcritic => vr_cdcritic
                                                 ,pr_dscritic => vr_dscritic);
-                           -- Levantar excecao
+                           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                               pr_cdcritic := vr_cdcritic;
                               pr_dscritic := vr_dscritic; 
+                              RAISE vr_exc_erro;
+                           end if;
 
                            RAISE vr_exc_erro;
                          END IF;
