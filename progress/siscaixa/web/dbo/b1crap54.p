@@ -81,7 +81,11 @@
                             (Jean Michel / Kledir Dalçóquio).
                             									
                09/11/2018 - Alterado para nao atualizar operacao diaria nas operacoes de
-							pagamento. (Reinert)
+							pagamento. (Reinert)		  
+							
+				13/11/2018 - Alteraçoes para Prj. 435 Cobranca de tarifas avulsas.
+						(Fabio Stein - Supero).
+                            
 ............................................................................ **/
 
 /*----------------------------------------------------------------------*/
@@ -791,6 +795,7 @@ PROCEDURE atualiza-cheque-avulso:
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
     DEF VAR aux_indopera AS INTE NO-UNDO.
 	DEF VAR aux_dscampos AS CHAR NO-UNDO.
+	DEF VAR aux_tiposaque AS DECI NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
@@ -1128,6 +1133,13 @@ PROCEDURE atualiza-cheque-avulso:
 
     IF crapcop.flsaqpre = FALSE AND aux_cdhistor <> 2553 THEN DO:
     
+	IF (p-opcao = "R" )   THEN
+        ASSIGN aux_tiposaque = 1. /* Recibo */
+    ELSE IF (p-opcao = "C" )  THEN
+        ASSIGN aux_tiposaque = 0. ./* Cartao */	 
+    END.
+	
+	
     /*VERIFICACAO TARIFAS DE SAQUE*/
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
@@ -1142,8 +1154,10 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */   
                                  INPUT p-nro-conta,      /* Numero da Conta */
                                  INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
-                                 INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
+                                 INPUT aux_tiposaque,    /* Tipo de TAA  - No siscaixa 0 para saque com cartao e 1 para saque sem cartao - Recibo. */
                                    INPUT 0,                /* Quantidade de registros da operacao (Custodia, contra-ordem, folhas de cheque) */
+								 INPUT  p-nrdocto, /* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+								 INPUT  TIME, /* hora de realização da operação -adicionado por Valeria Supero */  
                                   OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operacao */
                                   OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Nao isenta,1-Isenta */
                                 OUTPUT 0,                /* Codigo da critica */

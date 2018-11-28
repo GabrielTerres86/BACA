@@ -343,7 +343,31 @@ PROCEDURE estorna-cheque-avulso.
              DELETE crapcme.
          END. 
                     
-    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+    ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
+           craplot.qtinfoln  = craplot.qtinfoln - 1
+           craplot.vlcompdb  = craplot.vlcompdb - p-valor
+           craplot.vlinfodb  = craplot.vlinfodb - p-valor.
+
+		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+		RUN STORED-PROCEDURE pc_estorno_tarifa_saque  aux_handproc = PROC-HANDLE NO-ERROR
+								(INPUT 	craplcm.cdcooper,    /*Código da Cooperativa */
+								 INPUT p-cod-agencia,		 /*Agencia*/
+								 INPUT p-nro-caixa, 		 /*Caixa*/
+								 INPUT p-cod-operador,		 /*Operador*/
+								 INPUT crapdat.dtmvtocd,	 /* Data Movimento */
+								 INPUT "b1crap74",		     /* Nomte da Tela */
+								 INPUT  2,					 /* Caixa online */
+								 INPUT p-nro-conta, 		 /* Numero da Conta */
+								 INPUT p-nrdocto,		     /* Numero do documento */
+								 OUTPUT 0,
+								 OUTPUT ""). 
+								
+		/* Fechar o procedimento para buscarmos o resultado */ 
+		CLOSE STORED-PROC pc_estorno_tarifa_saque
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+	IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
        RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
                   
     RUN estorna_lancamento_conta IN h-b1wgen0200 
@@ -379,10 +403,6 @@ PROCEDURE estorna-cheque-avulso.
     IF  VALID-HANDLE(h-b1wgen0200) THEN
       DELETE PROCEDURE h-b1wgen0200.
    
-    ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
-           craplot.qtinfoln  = craplot.qtinfoln - 1
-           craplot.vlcompdb  = craplot.vlcompdb - p-valor
-           craplot.vlinfodb  = craplot.vlinfodb - p-valor.
 
    IF  craplot.vlcompdb = 0 and
        craplot.vlinfodb = 0 and

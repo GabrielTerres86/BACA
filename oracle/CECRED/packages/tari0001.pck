@@ -99,7 +99,10 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --              23/10/2018 - Padrões: Others, Modulo/Action, PC Internal Exception, PC Log Programa
   --                           Inserts, Updates, Deletes e SELECT's, Parâmetros, troca de mensagens por código
   --                           Parte 1: pc_verifica_pct_tari_web
-  --                             (Envolti - Belli - REQ0011726)
+  --                             (Envolti - Belli - REQ0011726)	 
+  --
+  --              20/11/2018 - Inclusao da rotina de estorno da tarifa de adiantamento a depositante (APD).
+  --                         - PRJ435 - Adriano Nagasava (Supero).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -235,6 +238,16 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                          ,pr_cdcritic  OUT INTEGER   --Codigo Critica
                                          ,pr_dscritic  OUT VARCHAR2   --Descricao Critica
                                          ,pr_tab_erro  OUT GENE0001.typ_tab_erro); --Tabela erros
+
+  /* Procedure responsavel por carregar dados da tarifa vigente   */
+  PROCEDURE pc_carrega_dados_tar_vigen_prg (pr_cdcooper  IN INTEGER     --Codigo Cooperativa
+                                           ,pr_cdbattar  IN VARCHAR2    --Codigo da sigla da tarifa (CRAPBAT) - Ao popular este parâmetro o pr_cdtarifa não é necessário
+                                           ,pr_cdprogra  IN VARCHAR2    --Codigo Programa
+                                           ,pr_cdhistor  OUT INTEGER    --Codigo Historico
+                                           ,pr_cdhisest  OUT NUMBER     --Historico Estorno
+                                           ,pr_vltarifa  OUT NUMBER     --Valor tarifa
+                                           ,pr_cdcritic  OUT INTEGER    --Codigo Critica
+                                           ,pr_dscritic  OUT VARCHAR2); --Descricao Critica 
 
   /* Procedure para buscar tarifa intercooperativa */
   PROCEDURE pc_busca_tar_transf_intercoop (pr_cdcooper IN INTEGER --Codigo Cooperativa
@@ -479,8 +492,10 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                        ,pr_idorigem IN INTEGER                  --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
                                        ,pr_nrdconta IN INTEGER                  --> Numero da Conta
                                        ,pr_tipotari IN INTEGER                  --> Tipo de Tarifa(1-Saque,2-Consulta)
-                                       ,pr_tipostaa IN INTEGER                  --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+                                       ,pr_tipostaa IN INTEGER                    --> Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
                                        ,pr_qtoperac IN INTEGER                  --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
+                                       ,pr_nrdocumento IN NUMBER default null     --> numero do documento (somente para saque)
+                                       ,pr_hroperacao  IN NUMBER default null     --> hora de realização da operação de saque
                                        ,pr_qtacobra OUT INTEGER                 --> Quantidade de registros a cobrar tarifa na operação
                                        ,pr_fliseope OUT INTEGER                 --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo da critica
@@ -586,6 +601,24 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_vltarifa OUT NUMBER                  --> Valor da Tarifa
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo da critica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao da critica  
+  -- Estorno da tarifa de ADP
+	PROCEDURE pc_estorno_tarifa_adp(pr_cdcooper IN  craplat.cdcooper%TYPE
+																 ,pr_nrdconta IN  craplat.nrdconta%TYPE
+																 ,pr_dscritic OUT VARCHAR2
+		                             );
+                              
+  /* Procedure para estorno de tarifa de saque*/
+  procedure pc_estorno_tarifa_saque (pr_cdcooper  IN INTEGER  --> Codigo Cooperativa
+                                    ,pr_cdagenci  IN INTEGER  --> Codigo Agencia
+                                    ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
+                                    ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
+                                    ,pr_dtmvtolt  IN DATE     --> Data Lancamento
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
+                                    ,pr_idorigem  IN INTEGER  --> Indicador de origem
+                                    ,pr_nrdconta  IN INTEGER  --> Numero da Conta
+                                    ,pr_nrdocmto  IN INTEGER  --> Numero do documento
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE); 
                                        
   -- Rotina de Log - tabela: tbgen prglog ocorrencia
   PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
@@ -684,7 +717,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       pc_taa_lancamento_tarifas_ext
                                       pc_busca_tar_transf_intercoop
                                (Envolti - Belli - REQ0011726)                             
+
+	               20/11/2018 - Inclusao da rotina de estorno da tarifa de adiantamento a depositante (APD).
+	                          - PRJ435 - Adriano Nagasava (Supero).	  
+                20/11/2018 - Alteração da pc_tarifa_operação para tarifar saques avulsos e realizar controle de tempo de 30 min para a tarifacao.
+                             (Fabio Stein - Supero)
+                20/11/2018 - incluido procedure  pc_estorno_tarifa_saque para estorno de tarifa de saque.
+                             (Fabio Stein - Supero)
                              
+
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -2662,6 +2703,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                  
     END;
   END pc_carrega_dados_tar_vigente;
+
+  PROCEDURE pc_carrega_dados_tar_vigen_prg (pr_cdcooper  IN INTEGER       --Codigo Cooperativa
+                                           ,pr_cdbattar  IN VARCHAR2      --Codigo da sigla da tarifa (CRAPBAT) - Ao popular este parâmetro o pr_cdtarifa não é necessário
+                                           ,pr_cdprogra  IN VARCHAR2      --Codigo Programa
+                                           ,pr_cdhistor  OUT INTEGER      --Codigo Historico
+                                           ,pr_cdhisest  OUT NUMBER       --Historico Estorno
+                                           ,pr_vltarifa  OUT NUMBER       --Valor tarifa
+                                           ,pr_cdcritic  OUT INTEGER      --Codigo Critica
+                                           ,pr_dscritic  OUT VARCHAR2) IS --Descricao Critica 
+
+    vr_dtdivulg     DATE;
+    vr_dtvigenc     DATE;
+    vr_cdfvlcop     INTEGER;          
+    vr_tab_erro     GENE0001.typ_tab_erro;
+  BEGIN
+    /*  Busca valor da tarifa sem registro*/
+    TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper    --Codigo Cooperativa
+                                          ,pr_cdbattar  => pr_cdbattar    --Codigo Tarifa
+                                          ,pr_vllanmto  => 0              --Valor Lancamento
+                                          ,pr_cdprogra  => pr_cdprogra    --Codigo Programa
+                                          ,pr_cdhistor  => pr_cdhistor    --Codigo Historico
+                                          ,pr_cdhisest  => pr_cdhisest    --Historico Estorno
+                                          ,pr_vltarifa  => pr_vltarifa    --Valor tarifa
+                                          ,pr_dtdivulg  => vr_dtdivulg    --Data Divulgacao
+                                          ,pr_dtvigenc  => vr_dtvigenc    --Data Vigencia
+                                          ,pr_cdfvlcop  => vr_cdfvlcop    --Codigo faixa valor cooperativa
+                                          ,pr_cdcritic  => pr_cdcritic    --Codigo Critica
+                                          ,pr_dscritic  => pr_dscritic    --Descricao Critica
+                                          ,pr_tab_erro  => vr_tab_erro);  --Tabela erros
+
+  END pc_carrega_dados_tar_vigen_prg;
 
   /* Procedure para buscar tarifa intercooperativa */
   PROCEDURE pc_busca_tar_transf_intercoop (pr_cdcooper IN INTEGER --Codigo Cooperativa
@@ -6549,6 +6621,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       ROLLBACK;  
   END pc_cobra_tarifa_imgchq;
   
+    /*função para verificar se operação de saque foi realizada no intervalo definido */
+  Function f_verifica_intervalo_saque(p_data_operacao date
+                                     ,p_nrdconta number
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                     ,pr_dscritic OUT crapcri.dscritic%TYPE)     --> Descricao da critica
+  --criada por Valéria (Supero)  em outubro/2018
+  --intervalo:deve ser informado em minutos e refere-se ao período para verificação de saldos realizados
+  --data em que ocorreu a operação
+  return number
+  as
+    ------------------- CURSOR --------------------
+    CURSOR cr_pat_pco IS
+      SELECT b.dsconteu
+      FROM cecred.crappat a, cecred.crappco b
+      WHERE a.NMPARTAR LIKE 'TEMPO_GRATUIDADE_SAQUE'
+        AND a.cdpartar = b.cdpartar
+        AND rownum = 1;
+        
+    CURSOR cr_operacoes_diarias(pr_data_operacao DATE,
+                                pr_nrdconta NUMBER,
+                                pr_dsconteu crappco.dsconteu%TYPE) IS
+    SELECT COUNT(*)
+    FROM cecred.tbcc_operacoes_diarias op
+    WHERE op.cdoperacao = 1
+      AND op.nrdconta = pr_nrdconta
+      AND op.hroperacao BETWEEN (pr_data_operacao - pr_dsconteu / 1440) AND (pr_data_operacao + pr_dsconteu /1440)
+      AND op.hroperacao <> pr_data_operacao;
+    
+    ------------------ VARIAVEIS ------------------
+    vr_dsconteu crappco.dsconteu%TYPE;
+    vr_retorno number;
+    
+    -- Variaveis de critica
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_exc_saida  EXCEPTION;
+    vr_exc_null  EXCEPTION;
+    
+  begin
+      begin
+        --parametro de intervalo cadastrado 
+        OPEN cr_pat_pco();
+        FETCH cr_pat_pco INTO vr_dsconteu;
+        -- Se não encontrar
+        IF cr_pat_pco%NOTFOUND THEN
+          -- Fechar o cursor pois efetuaremos raise
+          CLOSE cr_pat_pco;
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+
+          RAISE vr_exc_saida;
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE cr_pat_pco;
+        END IF;
+        
+        OPEN cr_operacoes_diarias(pr_data_operacao => p_data_operacao,
+                                  pr_nrdconta => p_nrdconta,
+                                  pr_dsconteu => vr_dsconteu);
+        FETCH cr_operacoes_diarias INTO vr_retorno;
+        -- Se não encontrar
+        IF cr_operacoes_diarias%NOTFOUND THEN
+          -- Fechar o cursor pois efetuaremos raise
+          CLOSE cr_operacoes_diarias;
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+          RAISE vr_exc_saida;
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE cr_operacoes_diarias;
+        END IF;
+        
+        if vr_retorno > 0 then
+          return 1; -- possui saques no intervarlo informado
+        else
+          return 0; -- não possui saque no intervalo informado;
+        end if;
+      exception
+          when no_data_found then 
+            dbms_output.put_line('Intervalo de saque não cadastrado');
+      end;
+  end f_verifica_intervalo_saque;
   /* Efetua verificacao para cobrancas de tarifas sobre operacoes */
   PROCEDURE pc_verifica_tarifa_operacao(pr_cdcooper IN NUMBER                     --> Codigo da Cooperativa
                                        ,pr_cdoperad IN VARCHAR2                   --> Codigo Operador
@@ -6561,10 +6715,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                        ,pr_tipotari IN INTEGER                    --> Tipo de Tarifa(1-Saque,2-Consulta)
                                        ,pr_tipostaa IN INTEGER                    --> Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
                                        ,pr_qtoperac IN INTEGER                    --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
+                                       ,pr_nrdocumento IN NUMBER default null     --> numero do documento (somente para saque)
+                                       ,pr_hroperacao  IN NUMBER default null     --> hora de realização da operação de saque
                                        ,pr_qtacobra OUT INTEGER                   --> Quantidade de registros a cobrar tarifa na operação
                                        ,pr_fliseope OUT INTEGER                   --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica  
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descricao da critica        
+                                       ) IS
+
     /* ............................................................................
 
      Programa: pc_verifica_tarifa_operacao
@@ -6604,17 +6762,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     rw_crapass cr_crapass%ROWTYPE;    
 
+    -- alterado por Valéria Supero out/2018
+    --se tipo de operação = 1 (saque) verifica se o flag para determinar o saque foi descontado do pacote ou não (flag fldescontapacote)
+    --somente não será descontado se estiver no intervalo de 30min e ou quando houver estorno do saque
     CURSOR cr_tbcc_operacoes_diarias(pr_tpoperacao tbcc_operacoes_diarias.cdoperacao%TYPE) IS
+
       SELECT
-        COUNT(tbc.cdcooper)       AS numregis
-        ,NVL(MAX(tbc.nrsequen),0) AS nrsequen
+        nvl(sum(tbc2.soma),0)       AS numregis
+        ,NVL(MAX(tbc2.nrsequen),0) AS nrsequen
+      from
+      (select tbc.fldescontapacote, tbc.nrsequen,
+              (CASE WHEN (tbc.cdoperacao = 1 and tbc.fldescontapacote = 1)
+                  THEN 1
+                  WHEN (tbc.cdoperacao = 1 and tbc.fldescontapacote = 0)
+                  THEN 0
+                  ELSE 1
+               END) soma
       FROM
         tbcc_operacoes_diarias tbc
       WHERE
             tbc.cdcooper = pr_cdcooper
         AND tbc.nrdconta = pr_nrdconta
-        AND tbc.cdoperacao = pr_tpoperacao
-        AND TO_CHAR(tbc.dtoperacao,'MM/RRRR') = TO_CHAR(pr_dtmvtolt,'MM/RRRR');
+        and ((pr_tpoperacao IN(1) AND  tbc.cdoperacao IN(1)) OR tbc.cdoperacao = pr_tpoperacao)
+        AND TO_CHAR(tbc.dtoperacao,'MM/RRRR') = TO_CHAR(pr_dtmvtolt,'MM/RRRR')) tbc2;
 
     rw_tbcc_operacoes_diarias cr_tbcc_operacoes_diarias%ROWTYPE;
 
@@ -6660,6 +6830,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     --Tipo de Dados para cursor data
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    
+    CURSOR cr_lat_cdlantar(pr_rowid ROWID) IS
+      SELECT cdlantar
+      FROM   cecred.craplat
+      WHERE ROWID = pr_rowid;
+      
     ------------------ VARIAVEIS ------------------
     
     -- Variaveis de critica
@@ -6675,6 +6851,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_nrsequen tbcc_operacoes_diarias.nrsequen%TYPE := 0;
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_rowid_craplat ROWID;
+    vr_cdlantar number;
+    vr_rowid_insert ROWID;
+    vr_hroperacao_aux varchar2(100);
+    vr_hroperacao date;
 
     vr_cdhistor INTEGER; --Codigo Historico
     vr_nrdolote INTEGER; --Codigo Lote
@@ -6690,6 +6870,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_qtdopera INTEGER := 0;
 
   BEGIN
+                                  
+    --  hora da operação será a data do movimento concatenato com a hora extraída do sysdate (adicionado por Valéria Supero out/2018)
+   select cecred.gene0002.fn_converte_time_data(pr_nrsegs => pr_hroperacao,
+                                                   pr_tipsaida => 'S')
+    into vr_hroperacao_aux
+    from dual;
+
+    vr_hroperacao_aux := to_char(pr_dtmvtolt,'DD/MM/YYYY') || ' ' ||vr_hroperacao_aux;
+    vr_hroperacao := to_date(vr_hroperacao_aux,'DD/MM/YYYY HH24:MI:SS');
+
+    ---------------------------------------------------------------------------------------------------------------------------------
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat
@@ -6752,10 +6943,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       CASE pr_idorigem
         WHEN 2 THEN -- Caixa Online
+          IF pr_tipostaa = 0  THEN --Tipo de saque avulso com cartao.
           IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
             vr_cdbattar := 'SAQUEPREPF';
           ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
             vr_cdbattar := 'SAQUEPREPJ';
+              END IF;
+           ELSE   
+             IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
+                vr_cdbattar := 'SAQUEAVUPF';
+              ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
+                vr_cdbattar := 'SAQUEAVUPJ';
+           END IF;
           END IF;
         WHEN 4 THEN -- TAA
           CASE pr_tipostaa
@@ -7045,7 +7244,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
             vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
-            IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes THEN
+            IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes
+               --adicionado por valéria (supero) - 10/2018
+               --também não será tributado se o for operação do tipo saque dentro de intervalo de 30 mim
+               OR (pr_tipotari = 1
+                   AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                          ,pr_nrdconta
+                                                          ,vr_cdcritic
+                                                          ,vr_dscritic) = 1)
+               AND NVL(vr_cdcritic,0) = 0 THEN --alterar
+
               -- INSERE NOVO REGISTRO SEM TRIBUTACAO
               BEGIN
                 INSERT
@@ -7055,14 +7263,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    ,cdoperacao
                    ,dtoperacao
                    ,nrsequen
-                   ,flgisencao_tarifa)
+                   ,flgisencao_tarifa
+                   ,fldescontapacote
+                   ,hroperacao
+                   ,nrdocmto
+                   )
                  VALUES(
                     pr_cdcooper
                    ,pr_nrdconta
                    ,pr_tipotari
                    ,pr_dtmvtolt
                    ,vr_nrsequen
-                   ,0);
+                   ,0
+                   ,1 -- desconta do pacote
+                   ,vr_hroperacao
+                   ,nvl(pr_nrdocumento,0)
+                   ) returning rowid into vr_rowid_insert;
+
+                   --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
+                   IF (pr_tipotari = 1
+                       AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                              ,pr_nrdconta
+                                                              ,vr_cdcritic
+                                                              ,vr_dscritic) = 1)
+                      AND NVL(vr_cdcritic,0) = 0 THEN
+                      
+                     update tbcc_operacoes_diarias
+                     set fldescontapacote = 0
+                     where rowid = vr_rowid_insert;
+                   
+                   END IF;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
@@ -7081,14 +7311,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                       ,cdoperacao
                       ,dtoperacao
                       ,nrsequen
-                      ,flgisencao_tarifa)
+                      ,flgisencao_tarifa
+                      ,fldescontapacote
+                      ,hroperacao
+                   	  ,nrdocmto)
                     VALUES(
                        pr_cdcooper
                       ,pr_nrdconta
                       ,pr_tipotari
                       ,pr_dtmvtolt
                       ,vr_nrsequen
-                      ,1);    
+                      ,1
+                      ,1
+                      ,vr_hroperacao
+                      ,nvl(pr_nrdocumento,0)
+                   );
+                                      --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
+                   IF (pr_tipotari = 1
+                       AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                              ,pr_nrdconta
+                                                              ,vr_cdcritic
+                                                              ,vr_dscritic) = 1)
+                      AND NVL(vr_cdcritic,0) = 0 THEN
+                      
+                     update tbcc_operacoes_diarias
+                     set fldescontapacote = 0
+                     where rowid = vr_rowid_insert;
+                   
+                   END IF;
+
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
@@ -7116,7 +7367,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
           vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
-          IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes THEN
+          IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes
+             --adicionado por valéria (supero) - 10/2018
+             --também não será tributado se o for operação do tipo saque dentro de intervalo de 30 mim
+             OR (pr_tipotari = 1
+                 AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                        ,pr_nrdconta
+                                                        ,vr_cdcritic
+                                                        ,vr_dscritic) = 1)
+             AND NVL(vr_cdcritic,0) = 0 THEN
             -- INSERE NOVO REGISTRO SEM TRIBUTACAO
             BEGIN
               INSERT
@@ -7126,20 +7385,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                  ,cdoperacao
                  ,dtoperacao
                  ,nrsequen
-                 ,flgisencao_tarifa)
+                 ,flgisencao_tarifa
+                 ,fldescontapacote
+                 ,hroperacao)
                VALUES(
                   pr_cdcooper
                  ,pr_nrdconta
                  ,pr_tipotari
                  ,pr_dtmvtolt
                  ,vr_nrsequen
-                 ,0);
+                 ,0
+                 ,1 -- desconta do pacote
+                 ,vr_hroperacao) returning rowid into vr_rowid_insert;
+                   --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
+                   if (pr_tipotari = 1 and TARI0001.f_verifica_intervalo_saque (vr_hroperacao
+                                                                               ,pr_nrdconta
+                                                                               ,vr_cdcritic
+                                                                               ,vr_dscritic) = 1) then
+                     update tbcc_operacoes_diarias
+                     set fldescontapacote = 0
+                     where rowid = vr_rowid_insert;
+                   end if;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;                 
-
+            --vr_des_erro :=SQLERRM;
             pr_fliseope := 1; -- Não tarifar
             --Retornar para rotina que efetuou a chamada
             RAISE vr_exc_null;
@@ -7155,14 +7427,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                     ,cdoperacao
                     ,dtoperacao
                     ,nrsequen
-                    ,flgisencao_tarifa)
+                    ,flgisencao_tarifa
+                    ,hroperacao
+                    ,nrdocmto)
                   VALUES(
                      pr_cdcooper
                     ,pr_nrdconta
                     ,pr_tipotari
                     ,pr_dtmvtolt
                     ,vr_nrsequen
-                    ,1);    
+                    ,1
+                    ,vr_hroperacao
+                    ,nvl(pr_nrdocumento,0));
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
@@ -7215,7 +7491,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       vr_qtdopera := rw_tbcc_operacoes_diarias.numregis;
 
-      IF vr_qtdopera < vr_dsconteu THEN
+      IF vr_qtdopera < vr_dsconteu
+         -- adicionado Valéria Supero outubro/2018
+         OR (pr_tipotari = 1
+             AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                    ,pr_nrdconta
+                                                    ,vr_cdcritic
+                                                    ,vr_dscritic) = 1)
+         AND NVL(vr_cdcritic,0) = 0 THEN
+         
         -- INSERE NOVO REGISTRO SEM TRIBUTACAO
         BEGIN
           INSERT
@@ -7225,14 +7509,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           ,cdoperacao
             ,dtoperacao
             ,nrsequen
-            ,flgisencao_tarifa)
+            ,flgisencao_tarifa
+            ,fldescontapacote
+            ,hroperacao)
            VALUES(
              pr_cdcooper
             ,pr_nrdconta
             ,pr_tipotari
             ,pr_dtmvtolt
             ,vr_nrsequen
-            ,0);
+            ,0
+            ,1
+            ,vr_hroperacao) returning rowid into vr_rowid_insert;
+             --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
+             if (pr_tipotari = 1 and TARI0001.f_verifica_intervalo_saque (vr_hroperacao
+                                                                         ,pr_nrdconta
+                                                                         ,vr_cdcritic
+                                                                         ,vr_dscritic) = 1) then
+               update tbcc_operacoes_diarias
+               set fldescontapacote = 0
+               where rowid = vr_rowid_insert;
+             end if;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
@@ -7246,7 +7543,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     END IF;  
 
-    -- INSERE NOVO REGISTRO COM TRIBUTACAO
+    -- adicionado por Valéria Supero: se saque estiver dentro do intervalor não será tarifado
+    IF (pr_tipotari = 1
+        AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                               ,pr_nrdconta
+                                               ,vr_cdcritic
+                                               ,vr_dscritic) = 1)
+        AND NVL(vr_cdcritic,0) = 0 THEN
+        
+        -- INSERE NOVO REGISTRO SEM TRIBUTACAO
     BEGIN
       INSERT
        INTO tbcc_operacoes_diarias(
@@ -7255,19 +7560,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       ,cdoperacao
         ,dtoperacao
         ,nrsequen
-        ,flgisencao_tarifa)
+            ,flgisencao_tarifa
+            ,fldescontapacote
+            ,hroperacao
+            )
        VALUES(
          pr_cdcooper
         ,pr_nrdconta
         ,pr_tipotari
         ,pr_dtmvtolt
         ,vr_nrsequen
-        ,1);
+            ,0
+            ,0
+            ,vr_hroperacao
+            );
+            vr_vltarifa := 0;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
       RAISE vr_exc_saida;
     END;
+    else             -- INSERE NOVO REGISTRO COM TRIBUTACAO
+        BEGIN
+          INSERT
+           INTO tbcc_operacoes_diarias(
+             cdcooper
+            ,nrdconta
+          ,cdoperacao
+            ,dtoperacao
+            ,nrsequen
+            ,flgisencao_tarifa
+            ,fldescontapacote
+            ,hroperacao
+            ,nrdocmto
+            )
+           VALUES(
+             pr_cdcooper
+            ,pr_nrdconta
+            ,pr_tipotari
+            ,pr_dtmvtolt
+            ,vr_nrsequen
+            ,1
+            ,1
+            ,vr_hroperacao
+            ,nvl(pr_nrdocumento,0)
+            );
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+    end if;
 
     TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
                                          ,pr_cdbattar => vr_cdbattar
@@ -7321,7 +7664,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       ,pr_tab_erro => vr_tab_erro
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
+    -----------------------------------------------------------------------------------------------------
+    --atualiza o lancamento com o codigo do cdlantar (que será utilizado posteriormente para estorno da tarifa)
+    --Adicionado por Valéria Supero out/2018
+    OPEN cr_lat_cdlantar(pr_rowid => vr_rowid_craplat);
+    FETCH cr_lat_cdlantar INTO vr_cdlantar;
+    CLOSE cr_lat_cdlantar;
 
+    IF vr_cdlantar IS NOT NULL THEN
+      UPDATE cecred.tbcc_operacoes_diarias od
+      SET od.cdlantar = vr_cdlantar
+      WHERE od.nrsequen = vr_nrsequen
+            AND od.nrdconta = pr_nrdconta
+            AND od.dtoperacao = pr_dtmvtolt;
+    END IF;
+    ----------------------------------------------------------------------------------------------------------------
       -- Verifica se Houve Erro no Retorno
     IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 OR vr_tab_erro.count > 0 THEN
         -- Envio Centralizado de Log de Erro
@@ -7350,7 +7707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       ROLLBACK;
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na TARI0001.pc_verifica_tarifa_operacao para conta '||pr_nrdconta||':'||SQLERRM;
+      pr_dscritic := 'Erro na TARI0001.pc_verifica_tarifa_operacao_v para conta '||pr_nrdconta||':'||SQLERRM;
       ROLLBACK;
   END pc_verifica_tarifa_operacao;
   
@@ -9705,14 +10062,21 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
     END IF;
     
     CASE pr_idorigem
-      WHEN 2 THEN
-        -- Caixa Online
-        IF rw_crapass.inpessoa = 1 THEN
-          -- Pessoa Fisica
+      WHEN 2 THEN -- Caixa Online
+        IF pr_tipostaa = 0  THEN --Tipo de saque avulso com cartao.
+            IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
           vr_cdbattar := 'SAQUEPREPF';
-        ELSIF rw_crapass.inpessoa = 2 THEN
-          -- Pessoa Juridica
+            ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
           vr_cdbattar := 'SAQUEPREPJ';
+            END IF;
+        ELSE   
+          IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
+            vr_cdbattar := 'SAQUEAVUPF';
+            --vr_cdbatsaq := 'SAQUEAVUPF';
+          ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
+            vr_cdbattar := 'SAQUEAVUPJ';
+            --vr_cdbatsaq := 'SAQUEAVUPJ';
+          END IF;
         END IF;
       WHEN 4 THEN
         -- TAA
@@ -9995,6 +10359,646 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                      ,pr_cdcritic => pr_cdcritic);
       ROLLBACK;
   END pc_verifica_tarifa_saque;
+	--
+	-- Estorno da tarifa de ADP
+	PROCEDURE pc_estorno_tarifa_adp(pr_cdcooper IN  craplat.cdcooper%TYPE
+																 ,pr_nrdconta IN  craplat.nrdconta%TYPE
+																 ,pr_dscritic OUT VARCHAR2
+		                             ) IS
+		/* ............................................................................
+    
+       Programa: pc_estorno_tarifa_adp
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Adriano Nagasava
+       Data    : Novembro/2018                        Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que chamado
+       Objetivo  : Verifica se existe cobrança de tarifa de adiantamento a depositante e se o saldo do cooperado foi regularizado
+			             ao ter sido devolvido o(s) cheque(s). Caso positivo, estorna a tarifa de adiantamento a depositante (APD).
+    
+       Alteracoes: 
+    ............................................................................ */
+		
+		-- Busca a cobrança de tarifa de adiantamento a depositante
+		CURSOR cr_busca_adp(pr_cdcooper craplat.cdcooper%TYPE
+											 ,pr_nrdconta craplat.nrdconta%TYPE
+											 ,pr_dtmvtolt craplat.dtmvtolt%TYPE
+											 ) IS
+			SELECT craplat.cdlantar
+						,craplat.dtefetiv
+						,craplat.insitlat
+						,craplat.cdpesqbb
+						,craplat.cdhistor
+				FROM craplat
+			 WHERE cdcooper = pr_cdcooper
+				 AND nrdconta = pr_nrdconta
+				 AND cdhistor IN(SELECT crapfvl.cdhistor
+													 FROM crapbat
+															 ,craptar
+															 ,crapfvl
+													WHERE crapbat.cdcadast = craptar.cdtarifa
+														AND craptar.cdtarifa = crapfvl.cdtarifa
+														AND 1 BETWEEN crapfvl.vlinifvl AND crapfvl.vlfinfvl
+														AND crapbat.cdbattar IN('ADTODEPOPF', 'ADTODEPOPJ')
+												)
+				 AND insitlat IN(1, 2)
+				 AND dtmvtolt = pr_dtmvtolt
+				 AND dtdestor IS NULL;
+		--
+		rw_busca_adp cr_busca_adp%ROWTYPE;
+					 
+		-- Busca o valor total dos cheques devolvidos
+		CURSOR cr_busca_cheques_devolvidos(pr_cdcooper crapdev.cdcooper%TYPE
+																			,pr_nrdconta crapdev.nrdconta%TYPE
+																			,pr_dtmvtolt crapdev.dtmvtolt%TYPE
+																			) IS
+			SELECT sum(crapdev.vllanmto) vllanmto_tot
+				FROM crapdev
+			 WHERE crapdev.cdcooper = pr_cdcooper
+				 AND crapdev.nrdconta = pr_nrdconta
+				 AND crapdev.cdhistor = 47 -- CHQ.DEVOL.
+				 AND crapdev.insitdev = 1 -- Devolvido
+				 AND crapdev.dtmvtolt = pr_dtmvtolt;
+
+		-- Busca o saldo do dia anterior
+		CURSOR cr_saldo_dia_anterior(pr_cdcooper crapsda.cdcooper%TYPE
+																,pr_nrdconta crapsda.nrdconta%TYPE
+																,pr_dtmvtolt crapsda.dtmvtolt%TYPE
+																) IS
+		SELECT crapsda.vlsddisp + crapsda.vlsdchsl + NVL(crapsda.vllimcre,0) vlsldant
+			FROM crapsda
+		 WHERE crapsda.cdcooper = pr_cdcooper
+			 AND crapsda.nrdconta = pr_nrdconta
+			 AND crapsda.dtmvtolt = pr_dtmvtolt;
+			 
+		-- Busca o histórico de estorno da tarifa de adiantamento a depositante
+		CURSOR cr_busca_hist_estorno(pr_cdhistor crapfvl.cdhisest%TYPE
+		                            ) IS
+			SELECT crapfvl.cdhisest
+				FROM crapbat
+						,craptar
+						,crapfvl
+			 WHERE crapbat.cdcadast = craptar.cdtarifa
+				 AND craptar.cdtarifa = crapfvl.cdtarifa
+				 AND 1 BETWEEN crapfvl.vlinifvl AND crapfvl.vlfinfvl
+				 AND crapbat.cdbattar IN('ADTODEPOPF', 'ADTODEPOPJ')
+				 AND crapfvl.cdhistor = pr_cdhistor;
+		
+		-- Busca cobrança da tarifa parcial ou total
+		CURSOR cr_cobr_tarifa(pr_cdcooper crapsda.cdcooper%TYPE
+												 ,pr_dtmvtolt crapsda.dtmvtolt%TYPE
+												 ,pr_cdhistor craplat.cdhistor%TYPE
+												 ,pr_nrdconta crapsda.nrdconta%TYPE
+												 ,pr_cdpesqbb craplcm.cdpesqbb%TYPE
+												 ) IS
+			SELECT craplcm.cdcooper
+						,craplcm.dtmvtolt
+						,craplcm.cdagenci
+						,craplcm.cdbccxlt
+						,craplcm.nrdolote
+						,craplcm.nrdctabb
+						,craplcm.nrdocmto
+						,craplcm.nrdctitg
+						,craplcm.cdpesqbb
+						,craplcm.cdbanchq
+						,craplcm.cdagechq
+						,craplcm.nrctachq
+						,craplcm.vllanmto
+						,craplcm.cdcoptfn
+						,craplcm.cdagetfn
+						,craplcm.nrterfin
+						,craplcm.nrsequni
+						,craplcm.nrautdoc
+						,craplcm.dsidenti
+				FROM craplcm
+			 WHERE craplcm.cdcooper = pr_cdcooper
+				 AND craplcm.dtmvtolt = pr_dtmvtolt
+				 AND craplcm.cdhistor = pr_cdhistor
+				 AND craplcm.nrdconta = pr_nrdconta
+				 AND craplcm.cdpesqbb = pr_cdpesqbb;
+		--
+		rw_cobr_tarifa cr_cobr_tarifa%ROWTYPE;
+	  --
+		vr_vllanmto_tot NUMBER := 0;
+		vr_vlsldant     NUMBER := 0;
+		vr_vlslnegat    NUMBER := -20.0;
+		vr_dscritic     VARCHAR2(4000);
+		--
+		vr_exc_erro     EXCEPTION;
+		--
+		vr_cdhistor     craplcm.cdhistor%TYPE;
+		-- Tipo de dados para cursor data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+		--
+		vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+		--
+		PROCEDURE pc_atualiza_craplat(pr_cdlantar IN  craplat.cdlantar%TYPE
+																 ,pr_insitlat IN  craplat.insitlat%TYPE
+																 ,pr_dtdestor IN  craplat.dtdestor%TYPE
+																 ,pr_dscritic OUT VARCHAR2
+																 ) IS
+			--
+		BEGIN
+			/*-- Carrega os dados
+			GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+														 ,pr_texto_completo => vr_xml_temp
+														 ,pr_texto_novo     => 'Achou pc_atualiza_craplat'
+														 );*/
+			--
+			UPDATE craplat
+				 SET craplat.insitlat = pr_insitlat
+						,craplat.cdmotest = 1 -- Cobrança Indevida
+						,craplat.dtdestor = pr_dtdestor
+						,craplat.cdopeest = '1' -- Fixo
+			 WHERE craplat.cdlantar = pr_cdlantar;
+			--
+		EXCEPTION
+			WHEN OTHERS THEN
+				pr_dscritic := 'Erro ao atualizar a craplat: ' || SQLERRM;
+		END pc_atualiza_craplat;
+		--
+		PROCEDURE pc_gera_lancto_estorno_cc(pr_cdcooper IN  craplcm.cdcooper%TYPE
+																			 ,pr_cdagenci IN  craplcm.cdagenci%TYPE
+																			 ,pr_nrdconta IN  craplcm.nrdconta%TYPE
+																			 ,pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+																			 ,pr_nrdolote IN  craplcm.nrdolote%TYPE
+																			 ,pr_tplotmov IN  craplot.tplotmov%TYPE
+																			 ,pr_cdoperad IN  craplcm.cdoperad%TYPE
+																			 ,pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
+																			 ,pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+																			 ,pr_nrdctitg IN  craplcm.nrdctitg%TYPE
+																			 ,pr_cdhistor IN  craplcm.cdhistor%TYPE
+																			 ,pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE
+																			 ,pr_cdbanchq IN  craplcm.cdbanchq%TYPE
+																			 ,pr_cdagechq IN  craplcm.cdagechq%TYPE
+																			 ,pr_nrctachq IN  craplcm.nrctachq%TYPE
+																			 ,pr_vltarifa IN  NUMBER
+																			 ,pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																			 ,pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE
+																			 ,pr_cdagetfn IN  craplcm.cdagetfn%TYPE
+																			 ,pr_nrterfin IN  craplcm.nrterfin%TYPE
+																			 ,pr_nrsequni IN  craplcm.nrsequni%TYPE
+																			 ,pr_nrautdoc IN  craplcm.nrautdoc%TYPE
+																			 ,pr_dsidenti IN  craplcm.dsidenti%TYPE
+																			 ,pr_dscritic OUT VARCHAR2
+																			 ) IS
+		--
+		rw_craplot lote0001.cr_craplot%ROWTYPE;
+		--
+		vr_nrdocmto craplcm.nrdocmto%TYPE;
+		--
+		BEGIN
+			-- Gera a CRAPLOT
+			LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
+														 ,pr_dtmvtolt => pr_dtmvtolt
+														 ,pr_cdagenci => pr_cdagenci
+														 ,pr_cdbccxlt => pr_cdbccxlt
+														 ,pr_nrdolote => pr_nrdolote
+														 ,pr_cdoperad => pr_cdoperad
+														 ,pr_nrdcaixa => NULL
+														 ,pr_tplotmov => pr_tplotmov
+														 ,pr_cdhistor => pr_cdhistor
+														 -- Out 
+														 ,pr_craplot  => rw_craplot
+														 ,pr_dscritic => pr_dscritic
+														 );
+			--
+			IF pr_dscritic IS NULL THEN
+				--
+				BEGIN
+					--
+					IF pr_nrdocmto > 0 THEN
+						--
+						vr_nrdocmto := pr_nrdocmto;
+						--
+					ELSE
+						--
+						vr_nrdocmto := rw_craplot.nrseqdig;
+						--
+					END IF;
+					--
+					INSERT INTO craplcm(cdcooper
+														 ,dtmvtolt
+														 ,cdagenci
+														 ,cdbccxlt
+														 ,nrdolote
+														 ,dtrefere
+														 ,hrtransa
+														 ,cdoperad
+														 ,nrdconta
+														 ,nrdctabb
+														 ,nrdctitg
+														 ,nrseqdig
+														 ,nrsequni
+														 ,nrdocmto
+														 ,cdhistor
+														 ,vllanmto
+														 ,cdpesqbb
+														 ,cdbanchq
+														 ,cdagechq
+														 ,nrctachq
+														 ,cdcoptfn
+														 ,cdagetfn
+														 ,nrterfin
+														 ,nrautdoc
+														 ,dsidenti
+														 )
+											 VALUES(pr_cdcooper
+														 ,rw_craplot.dtmvtolt
+														 ,pr_cdagenci
+														 ,pr_cdbccxlt
+														 ,pr_nrdolote
+														 ,rw_craplot.dtmvtolt
+														 ,to_char(SYSDATE, 'sssss')
+														 ,pr_cdoperad
+														 ,pr_nrdconta
+														 ,pr_nrdctabb
+														 ,pr_nrdctitg
+														 ,rw_craplot.nrseqdig
+														 ,decode(pr_nrsequni, 0, rw_craplot.nrseqdig, pr_nrsequni)
+														 ,vr_nrdocmto
+														 ,pr_cdhistor
+														 ,pr_vltarifa
+														 ,pr_cdpesqbb
+														 ,pr_cdbanchq
+														 ,pr_cdagechq
+														 ,pr_nrctachq
+														 ,pr_cdcoptfn
+														 ,pr_cdagetfn
+														 ,pr_nrterfin
+														 ,pr_nrautdoc
+														 ,pr_dsidenti
+														 );
+					--
+				EXCEPTION
+					WHEN OTHERS THEN
+						pr_dscritic := 'Erro ao gerar o lancamento na CRAPLCM: ' || SQLERRM;
+				END;
+				--
+			END IF;
+			--
+		END pc_gera_lancto_estorno_cc;
+		--
+	BEGIN
+		/*-- Cria a variavel CLOB
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);*/
+
+		/*-- Carrega os dados
+    GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => 'Chamou a pc_estorno_tarifa_adp'
+													 );*/
+
+		-- Leitura do calendário da cooperativa
+		OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+		FETCH btch0001.cr_crapdat
+			INTO rw_crapdat;
+		-- Se não encontrar
+		IF btch0001.cr_crapdat%NOTFOUND THEN
+			-- Fechar o cursor pois efetuaremos raise
+			CLOSE btch0001.cr_crapdat;
+			-- Montar mensagem de critica
+			vr_dscritic := 'Erro ao buscar a data do movimento.';
+			RAISE vr_exc_erro;
+		ELSE
+			-- Apenas fechar o cursor
+			CLOSE btch0001.cr_crapdat;
+		END IF;	
+		-- Busca a cobrança de tarifa de adiantamento a depositante
+		OPEN cr_busca_adp(pr_cdcooper
+										 ,pr_nrdconta
+										 ,rw_crapdat.dtmvtoan
+										 );
+		--
+		FETCH cr_busca_adp INTO rw_busca_adp;
+		--
+		CLOSE cr_busca_adp;
+		-- Verifica se achou a cobrança de tarifa de adiantamento a depositante
+		IF nvl(rw_busca_adp.cdlantar, 0) > 0 THEN
+			/*-- Carrega os dados
+			GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+														 ,pr_texto_completo => vr_xml_temp
+														 ,pr_texto_novo     => 'Achou cr_busca_adp'
+														 );*/
+
+			OPEN cr_busca_cheques_devolvidos(pr_cdcooper
+																			,pr_nrdconta
+																			,rw_crapdat.dtmvtoan
+																			);
+			--
+			FETCH cr_busca_cheques_devolvidos INTO vr_vllanmto_tot;
+			--
+			CLOSE cr_busca_cheques_devolvidos;
+			-- Verifica se achou devoluções de cheques
+			IF nvl(vr_vllanmto_tot, 0) > 0 THEN
+				/*-- Carrega os dados
+				GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+															 ,pr_texto_completo => vr_xml_temp
+															 ,pr_texto_novo     => 'Achou cr_busca_cheques_devolvidos'
+															 );*/
+
+				OPEN cr_saldo_dia_anterior(pr_cdcooper
+																	,pr_nrdconta
+																	,rw_crapdat.dtmvtoan
+																	);
+				--
+				FETCH cr_saldo_dia_anterior INTO vr_vlsldant;
+				--
+				CLOSE cr_saldo_dia_anterior;
+				-- Verifica se a soma do saldo do dia anterior com o valor dos cheques devolvidos regulariza o saldo da conta
+				IF NVL((vr_vlsldant + vr_vllanmto_tot), 0) >= vr_vlslnegat THEN
+					/*-- Carrega os dados
+					GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+																 ,pr_texto_completo => vr_xml_temp
+																 ,pr_texto_novo     => 'Achou cr_saldo_dia_anterior'
+																 );*/
+
+					-- Busca o histórico de estorno da tarifa de adiantamento a depositante
+					OPEN cr_busca_hist_estorno(rw_busca_adp.cdhistor
+		                                );
+					--
+					FETCH cr_busca_hist_estorno INTO vr_cdhistor;
+					--
+					IF cr_busca_hist_estorno%NOTFOUND THEN
+						--
+						vr_dscritic := 'Historico de estorno nao encontrado para o lancamento de historico: ' || rw_busca_adp.cdhistor;
+            --
+						CLOSE cr_busca_hist_estorno;
+						--
+						RAISE vr_exc_erro;
+						--
+					ELSE
+						--
+						CLOSE cr_busca_hist_estorno;
+						--
+					END IF;
+					-- Se o lançamento estiver pendente, deve ser baixado
+					IF rw_busca_adp.insitlat = 1 THEN
+						/*-- Carrega os dados
+						GENE0002.pc_escreve_xml(pr_xml            => vr_clob           
+																	 ,pr_texto_completo => vr_xml_temp
+																	 ,pr_texto_novo     => 'Achou cr_busca_hist_estorno'
+																	 );*/
+
+						-- Atualiza o lançamento de tarifa para Baixado
+						pc_atualiza_craplat(pr_cdlantar => rw_busca_adp.cdlantar -- IN
+															 ,pr_insitlat => 3                     -- IN -- Baixado
+															 ,pr_dtdestor => rw_crapdat.dtmvtolt   -- IN
+															 ,pr_dscritic => vr_dscritic           -- OUT
+															 );
+						--
+						IF vr_dscritic IS NOT NULL THEN
+							--
+							RAISE vr_exc_erro;
+							--
+						END IF;
+						-- Verifica se houve cobrança parcial
+						OPEN cr_cobr_tarifa(pr_cdcooper
+															 ,rw_crapdat.dtmvtolt
+															 ,rw_busca_adp.cdhistor
+															 ,pr_nrdconta
+															 ,rw_busca_adp.cdpesqbb
+															 );
+						--
+						LOOP
+							--
+							FETCH cr_cobr_tarifa INTO rw_cobr_tarifa;
+							EXIT WHEN cr_cobr_tarifa%NOTFOUND;
+								
+							-- Gera estorno caso encontre a cobrança de tarifa
+							pc_gera_lancto_estorno_cc(pr_cdcooper => pr_cdcooper             -- IN
+																			 ,pr_cdagenci => rw_cobr_tarifa.cdagenci -- IN
+																			 ,pr_nrdconta => pr_nrdconta             -- IN
+																			 ,pr_cdbccxlt => rw_cobr_tarifa.cdbccxlt -- IN
+																			 ,pr_nrdolote => 10030                   -- IN -- Fixo
+																			 ,pr_tplotmov => 1                       -- IN
+																			 ,pr_cdoperad => 1                       -- IN
+																			 ,pr_dtmvtolt => rw_crapdat.dtmvtolt     -- IN
+																			 ,pr_nrdctabb => rw_cobr_tarifa.nrdctabb -- IN
+																			 ,pr_nrdctitg => rw_cobr_tarifa.nrdctitg -- IN
+																			 ,pr_cdhistor => vr_cdhistor             -- IN
+																			 ,pr_cdpesqbb => rw_cobr_tarifa.cdpesqbb -- IN
+																			 ,pr_cdbanchq => rw_cobr_tarifa.cdbanchq -- IN
+																			 ,pr_cdagechq => rw_cobr_tarifa.cdagechq -- IN
+																			 ,pr_nrctachq => rw_cobr_tarifa.nrctachq -- IN
+																			 ,pr_vltarifa => rw_cobr_tarifa.vllanmto -- IN
+																			 ,pr_nrdocmto => rw_cobr_tarifa.nrdocmto -- IN
+																			 ,pr_cdcoptfn => rw_cobr_tarifa.cdcoptfn -- IN
+																			 ,pr_cdagetfn => rw_cobr_tarifa.cdagetfn -- IN
+																			 ,pr_nrterfin => rw_cobr_tarifa.nrterfin -- IN
+																			 ,pr_nrsequni => rw_cobr_tarifa.nrsequni -- IN
+																			 ,pr_nrautdoc => rw_cobr_tarifa.nrautdoc -- IN
+																			 ,pr_dsidenti => rw_cobr_tarifa.dsidenti -- IN
+																			 ,pr_dscritic => vr_dscritic             -- OUT
+																			 );
+							--
+							IF vr_dscritic IS NOT NULL THEN
+								--
+								CLOSE cr_cobr_tarifa;
+								--
+								RAISE vr_exc_erro;
+								--
+							END IF;
+							--
+						END LOOP;
+						--
+						CLOSE cr_cobr_tarifa;
+						--
+					-- Se o lançamento estiver efetivado, deve ser estornado
+					ELSIF rw_busca_adp.insitlat = 2 THEN
+						-- Atualiza o lançamento de tarifa para Estornado
+						pc_atualiza_craplat(pr_cdlantar => rw_busca_adp.cdlantar -- IN
+															 ,pr_insitlat => 4                     -- IN -- Estornado
+															 ,pr_dtdestor => rw_crapdat.dtmvtolt   -- IN
+															 ,pr_dscritic => vr_dscritic           -- OUT
+															 );
+						--
+						IF vr_dscritic IS NOT NULL THEN
+							--
+							RAISE vr_exc_erro;
+							--
+						END IF;
+						-- Verifica se houve cobrança total
+						OPEN cr_cobr_tarifa(pr_cdcooper
+															 ,rw_crapdat.dtmvtolt
+															 ,rw_busca_adp.cdhistor
+															 ,pr_nrdconta
+															 ,rw_busca_adp.cdpesqbb
+															 );
+						--
+						LOOP
+							--
+							FETCH cr_cobr_tarifa INTO rw_cobr_tarifa;
+							EXIT WHEN cr_cobr_tarifa%NOTFOUND;
+								
+							-- Gera estorno caso encontre a cobrança de tarifa
+							pc_gera_lancto_estorno_cc(pr_cdcooper => pr_cdcooper             -- IN
+																			 ,pr_cdagenci => rw_cobr_tarifa.cdagenci -- IN
+																			 ,pr_nrdconta => pr_nrdconta             -- IN
+																			 ,pr_cdbccxlt => rw_cobr_tarifa.cdbccxlt -- IN
+																			 ,pr_nrdolote => 10030                   -- IN -- Fixo
+																			 ,pr_tplotmov => 1                       -- IN
+																			 ,pr_cdoperad => 1                       -- IN
+																			 ,pr_dtmvtolt => rw_crapdat.dtmvtolt     -- IN
+																			 ,pr_nrdctabb => rw_cobr_tarifa.nrdctabb -- IN
+																			 ,pr_nrdctitg => rw_cobr_tarifa.nrdctitg -- IN
+																			 ,pr_cdhistor => vr_cdhistor             -- IN
+																			 ,pr_cdpesqbb => rw_cobr_tarifa.cdpesqbb -- IN
+																			 ,pr_cdbanchq => rw_cobr_tarifa.cdbanchq -- IN
+																			 ,pr_cdagechq => rw_cobr_tarifa.cdagechq -- IN
+																			 ,pr_nrctachq => rw_cobr_tarifa.nrctachq -- IN
+																			 ,pr_vltarifa => rw_cobr_tarifa.vllanmto -- IN
+																			 ,pr_nrdocmto => rw_cobr_tarifa.nrdocmto -- IN
+																			 ,pr_cdcoptfn => rw_cobr_tarifa.cdcoptfn -- IN
+																			 ,pr_cdagetfn => rw_cobr_tarifa.cdagetfn -- IN
+																			 ,pr_nrterfin => rw_cobr_tarifa.nrterfin -- IN
+																			 ,pr_nrsequni => rw_cobr_tarifa.nrsequni -- IN
+																			 ,pr_nrautdoc => rw_cobr_tarifa.nrautdoc -- IN
+																			 ,pr_dsidenti => rw_cobr_tarifa.dsidenti -- IN
+																			 ,pr_dscritic => vr_dscritic             -- OUT
+																			 );
+							--
+							IF vr_dscritic IS NOT NULL THEN
+								--
+								CLOSE cr_cobr_tarifa;
+								--
+								RAISE vr_exc_erro;
+								--
+							END IF;
+							--
+						END LOOP;
+						--
+						CLOSE cr_cobr_tarifa;
+						--
+					END IF;
+					--
+				END IF;
+				--
+			END IF;
+				--
+			END IF;
+		--
+		/*GENE0002.pc_escreve_xml(pr_xml => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo => 'FIM'
+                           ,pr_fecha_xml => TRUE
+                           );
+		-- Gera o relatorio
+    GENE0002.pc_clob_para_arquivo(pr_clob => vr_clob
+                                 ,pr_caminho => '/usr/coop/viacredi/upload/'
+                                 ,pr_arquivo => 'pc_estorno_tarifa_adp.txt'
+                                 ,pr_des_erro => pr_dscritic
+																 );*/
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			pr_dscritic := vr_dscritic;
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro ao gerar estorno de tarifa de adiantamento a depositante: ' || SQLERRM;
+	END pc_estorno_tarifa_adp;
+	--
+  
+  /* Procedure para estorno de tarifa de saque*/
+  procedure pc_estorno_tarifa_saque (pr_cdcooper  IN INTEGER  --> Codigo Cooperativa
+                                    ,pr_cdagenci  IN INTEGER  --> Codigo Agencia
+                                    ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
+                                    ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
+                                    ,pr_dtmvtolt  IN DATE     --> Data Lancamento
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
+                                    ,pr_idorigem  IN INTEGER  --> Indicador de origem
+                                    ,pr_nrdconta  IN INTEGER  --> Numero da Conta
+                                    ,pr_nrdocmto  IN INTEGER  --> Numero do documento
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) as     --> Descricao da critica
+    
+    ------------------- CURSOR --------------------
+
+    CURSOR cr_ope_tarifa IS
+      select op.cdlantar, op.fldescontapacote, op.dtoperacao
+      from tbcc_operacoes_diarias op
+      WHERE op.cdcooper = pr_cdcooper
+            AND op.nrdconta = pr_nrdconta
+            and op.nrdocmto = pr_nrdocmto
+            and op.flgisencao_tarifa = 1;
+
+    CURSOR cr_lat (pr_cdlantar IN craplat.cdlantar%TYPE) IS
+      SELECT
+           * 
+      from CRAPLAT LAT
+      WHERE 
+      LAT.CDLANTAR = pr_cdlantar;  
+
+      
+    ------------------ VARIAVEIS ------------------
+    vr_cddopcap  NUMERIC(1);
+    vr_lscdlant  VARCHAR2(255);
+
+    rw_ope_tarifa cr_ope_tarifa%ROWTYPE;
+    rw_lat    cr_lat%ROWTYPE;
+  
+    -- Variaveis de critica
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_exc_saida  EXCEPTION;
+    vr_exc_null  EXCEPTION;
+  
+  begin 
+    OPEN cr_ope_tarifa;
+    FETCH cr_ope_tarifa INTO rw_ope_tarifa;
+    
+    IF cr_ope_tarifa%FOUND THEN
+    -- se cdlantar é diferente de nulo significa que foi cobrada a tarifa
+        if rw_ope_tarifa.cdlantar is not null THEN
+           OPEN cr_lat(rw_ope_tarifa.cdlantar);
+           FETCH cr_lat INTO RW_LAT;           
+	         
+           IF cr_lat%FOUND THEN
+              
+              IF RW_LAT.INSITLAT = 2 THEN
+                   vr_cddopcap  := 1; /* Tarida efetivada. Precisa estornar */
+               ELSE
+                   vr_cddopcap  := 2; /* Tarida NAO efetivada. Precisa baixar */
+              END IF;
+          
+              pc_estorno_baixa_tarifa( pr_cdcooper 	=> pr_cdcooper,
+                                          pr_cdagenci => pr_cdagenci,
+                                          pr_nrdcaixa => pr_nrdcaixa,
+                                          pr_cdoperad => pr_cdoperad,
+                                          pr_dtmvtolt => pr_dtmvtolt,
+                                          pr_nmdatela => pr_nmdatela,
+                                          pr_idorigem => pr_idorigem,
+                                          pr_inproces => 0,
+                                          pr_nrdconta => pr_nrdconta,
+                                          pr_cddopcap => vr_cddopcap,
+                                          pr_lscdlant => TO_CHAR(rw_ope_tarifa.cdlantar),
+                                          pr_lscdmote => '',
+                                          pr_flgerlog => 1,
+                                          pr_cdcritic => pr_cdcritic,
+                                          pr_dscritic => pr_dscritic);
+                
+				IF pr_dscritic IS NOT NULL  THEN
+                  UPDATE TBCC_OPERACOES_DIARIAS OP
+                  SET FLDESCONTAPACOTE = 0
+                  WHERE OP.CDCOOPER = pr_cdcooper
+                      AND OP.NRDCONTA = pr_nrdconta
+                      AND OP.NRDOCMTO = pr_nrdocmto
+                      AND OP.DTOPERACAO = rw_ope_tarifa.dtoperacao
+                      AND OP.FLGISENCAO_TARIFA = 1;
+                END IF;
+
+           END IF;      
+        end if; --rw_ope_tarifa.cdlantar
+     END IF; -- cr_ope_tarifa%FOUND
+     EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro ao gerar estorno de tarifa de saque: ' || SQLERRM;
+
+  end pc_estorno_tarifa_saque;
 
   /*Procedures Rotina de Log - tabela: tbgen prglog ocorrencia*/     
   PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
