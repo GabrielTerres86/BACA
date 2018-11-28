@@ -15,6 +15,7 @@
  *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
  *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  *                26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+ *                30/05/2018 - Incluido botão Bloquear Imagens e Liberar Imagens. PRJ 372 (Mateus - Mouts)
  * --------------
  */
 
@@ -30,7 +31,7 @@ var cdcooper;
 
 var nmrescop, tremessa, compechq, bancochq, agencchq, contachq, numerchq, datacomp;
 
-var bGerarPdf, bSalvarImgs;
+var bGerarPdf, bSalvarImgs, bBloquearImagens, bLiberarImagens;
 
 var imgchqF  = false;
 var imgchqV  = false;
@@ -72,6 +73,8 @@ function controlaLayout() {
     bProcurar = $('#btnProcurar', '#frmConsultaImagem');
     bGerarPdf = $('#btnGerarPdf', '#frmConsultaImagem');
     bSalvarImgs = $('#btnSalvarImg', '#frmConsultaImagem');
+    bBloquearImagens = $('#btnBloquearImagens', '#frmConsultaImagem');
+    bLiberarImagens = $('#btnLiberarImagens', '#frmConsultaImagem');   
 
     rNmrescop.addClass('rotulo').css({ 'width': '120px' });
     rTiporeme.addClass('rotulo-linha').css({ 'width': '170px', 'margin-left': '60px' });
@@ -122,6 +125,8 @@ function mostraCamposChq() {
     cCampos.limpaFormulario();
     bGerarPdf.css({ 'display': 'none' });
     bSalvarImgs.css({ 'display': 'none' });
+    bBloquearImagens.css({ 'display': 'none' });
+    bLiberarImagens.css({ 'display': 'none' });
     $('#divBotoes', '#frmConsultaImagem').css({ 'display': 'block' });
 
     $('#divImagem').html("");
@@ -759,4 +764,115 @@ function validarNumeroConta() {
     nrdconta = mascara(nrdconta, "####.###.#");
 
     cCartaoAs.html("<a class='txtNormal' style='margin-left: 265px; margin-top: 7px;' href='http://" + dscsersm + "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + nrdconta + "&cooperativa=" + cdcooper + "' target='_blank' >&nbsp;&nbsp;Cart&atilde;o Ass.</a>");
+}
+
+function bloquearImagens(flgBloquear) {
+
+    var dtcompen, cdcmpchq, cdbanchq, cdagechq, nrctachq, nrcheque, tpremess, flgblqim;
+
+    flgblqim = flgBloquear;
+
+    if (flgblqim == 'S') {
+        showMsgAguardo("Aguarde, bloqueando imagens ...");
+    } else if (flgblqim == 'N') {
+        showMsgAguardo("Aguarde, liberando imagens ...");        
+    }
+
+    dtcompen = cDtcompen.val();
+    nrctachq = retiraCaracteres(cContachq.val(), "0123456789", true);
+    nrcheque = retiraCaracteres(cNumerchq.val(), "0123456789", true);
+    tpremess = cTiporeme.val();
+
+    if (dtcompen == "") {
+        hideMsgAguardo();
+        showError("error", "Data de compensa&ccedil;&atilde;o n&atilde;o informada.", "Alerta - Ayllos", "$('#dtcompen','#frmConsultaImagem').focus()");
+        return false;
+    }
+
+    if (tpremess == "N") {
+        cdcmpchq = retiraCaracteres(cCompechq.val(), "0123456789", true);
+        cdbanchq = retiraCaracteres(cBancochq.val(), "0123456789", true);
+        cdagechq = retiraCaracteres($('#agencchq', '#frmConsultaImagem').val(), "0123456789", true);
+
+        if ((!validaNumero(cdcmpchq, true, 0, 0)) || (cdcmpchq == "")) {
+            hideMsgAguardo();
+            showError("error", "Compe inv&aacute;lida.", "Alerta - Ayllos", "$('#compechq','#frmConsultaImagem').focus();");
+            return false;
+        }
+
+        if ((!validaNumero(cdbanchq, true, 0, 0)) || (cdbanchq == "")) {
+            hideMsgAguardo();
+            showError("error", "Banco inv&aacute;lido.", "Alerta - Ayllos", "$('#bancochq','#frmConsultaImagem').focus();");
+            return false;
+        }
+
+        if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
+            hideMsgAguardo();
+            showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
+            return false;
+        }
+
+    } else
+        if (tpremess == "S") {
+            cdbanchq = 85;
+        }
+
+    if (cooploga == "3")
+        cdcooper = cNmrescop.val();
+    else
+        cdcooper = cooploga;
+
+    if ((!validaNumero(nrctachq, true, 0, 0)) || (nrctachq == "")) {
+        hideMsgAguardo();
+        showError("error", "Conta do cheque inv&aacute;lida.", "Alerta - Ayllos", "$('#contachq','#frmConsultaImagem').focus();");
+        return false;
+    }
+
+    if ((!validaNumero(nrcheque, true, 0, 0)) || (nrcheque == "")) {
+        hideMsgAguardo();
+        showError("error", "N&uacute;mero do cheque inv&aacute;lido.", "Alerta - Ayllos", "$('#numechq','#frmConsultaImagem').focus();");
+        return false;
+    }
+
+    flgblqim = flgBloquear;
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/imgchq/bloquear_imagens.php',
+        data: {
+            cdcooper: cdcooper,
+            dtcompen: dtcompen,
+            cdcmpchq: cdcmpchq,
+            cdbanchq: cdbanchq,
+            cdagechq: cdagechq,
+            nrctachq: nrctachq,
+            nrcheque: nrcheque,
+            tpremess: tpremess,
+            flgblqim: flgblqim,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "unblockBackground();");
+        },
+        success: function (response) {
+            try {
+                if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+                    if (flgblqim == 'S') {
+                        showError('inform','Imagens bloqueadas com sucesso.','Alerta - Ayllos','preConsultaCheque();');
+                    } else if (flgblqim == 'N') {
+                        showError('inform','Imagens liberadas com sucesso.','Alerta - Ayllos','preConsultaCheque();');
+                    }
+                } else {
+                    eval(response);
+                }
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "unblockBackground();");
+            }
+        }
+    });
+
 }

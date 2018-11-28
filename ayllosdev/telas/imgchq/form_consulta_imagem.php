@@ -12,6 +12,7 @@
  *                12/05/2015 - Trocado funcao do botao Gerar PDF. (Jorge/Elton) - SD 283911
  *                15/03/2016 - Projeto 316 - Novo botão para Salvar Imagem (Guilherme/SUPERO)
  *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *                30/05/2018 - Incluido botão Bloquear Imagens e Liberar Imagens. PRJ 372 (Mateus - Mouts)
  * --------------
  */
 
@@ -111,6 +112,8 @@
         <?php if (in_array("S", $opcoesTela) && $glbvars['cdcooper'] == 3) { ?>
         <a class="botao" href="" id="btnSalvarImg" width="76" height="20" border="0" onClick="SalvarZip();return false;">Salvar Imagens</a>
         <?php }?>
+        <a class="botao" href="" id="btnBloquearImagens" width="76" height="20" border="0" onClick="bloquearImagens('S');return false;">Bloquear Imagens</a>
+        <a class="botao" href="" id="btnLiberarImagens" width="76" height="20" border="0" onClick="bloquearImagens('N');return false;">Liberar Imagens</a>
 
     </div>
 

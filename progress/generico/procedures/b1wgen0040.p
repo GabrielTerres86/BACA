@@ -27,7 +27,7 @@
 
     Programa: b1wgen0040.p
     Autor   : David
-    Data    : Maio/2009                       Ultima Atualizacao: 19/10/2017
+    Data    : Maio/2009                       Ultima Atualizacao: 01/06/2018
            
     Dados referentes ao programa:
                 
@@ -70,6 +70,9 @@
 				19/10/2017 - Ajuste para remover as rotinas busca-cheques e gera-tt-cheque,
 				             pois foram convertidas para oracle
 							 (Adriano - SD 774552).
+               
+               01/06/2018 - Ajuste no retorno da PROC consulta-cheque-compensado
+                             para retornar o INBLQVIC. PRJ 372 - (Mateus Z / Mouts)
 
 ..............................................................................*/
 
@@ -703,6 +706,8 @@ PROCEDURE consulta-cheque-compensado:
     DEF OUTPUT PARAM par_dsdocmc7 AS CHAR NO-UNDO.
     DEF OUTPUT PARAM par_nmrescop AS CHAR NO-UNDO.
     DEF OUTPUT PARAM par_cdtpddoc AS INTE NO-UNDO.
+    /* PRJ 372 */
+    DEF OUTPUT PARAM par_indblqvic AS CHAR NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -754,7 +759,9 @@ PROCEDURE consulta-cheque-compensado:
 
             ASSIGN par_dsdocmc7 = crapfdc.dsdocmc7
                    par_cdcmpchq = crapfdc.cdcmpchq
-                   par_cdtpddoc = crapfdc.cdtpdchq.
+                   par_cdtpddoc = crapfdc.cdtpdchq
+                   /* PRJ 372 */
+                   par_indblqvic = crapfdc.indblqvic.
         END.
     END.
     ELSE /* nossa remessa */
@@ -769,7 +776,9 @@ PROCEDURE consulta-cheque-compensado:
 
         IF AVAIL crapchd THEN
            ASSIGN par_dsdocmc7 = crapchd.dsdocmc7
-                  par_cdagechq = crapcop.cdagectl.
+                  par_cdagechq = crapcop.cdagectl
+                  /* PRJ 372 */
+                  par_indblqvic = crapchd.indblqvic.
     END.
 
     RETURN "OK".

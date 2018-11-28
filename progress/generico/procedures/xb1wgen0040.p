@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0040.p
    Autor   : André (DB1)
-   Data    : Maio/2011                     Ultima atualizacao: 19/10/2017
+   Data    : Maio/2011                     Ultima atualizacao: 01/06/2018
 
    Dados referentes ao programa:
 
@@ -19,6 +19,9 @@
 				19/10/2017 - Ajuste para remover a chamada da rotina busca-cheques,
 				             pois a mesma foi convertida para oracle
 							 (Adriano - SD 774552).
+               
+               01/06/2018 - Ajuste no retorno da PROC consulta-cheque-compensado
+                             para retornar o INBLQVIC. PRJ 372 - (Mateus Z / Mouts)
 				          
 ............................................................................ */
 
@@ -52,6 +55,8 @@ DEF VAR aux_tpremess AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsdocmc7 AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmrescop AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdtpddoc AS INTE                                           NO-UNDO.
+/* PRJ 372 */
+DEF VAR aux_indblqvic AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_dttransa AS DATE                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
@@ -163,6 +168,8 @@ PROCEDURE consulta-cheque-compensado:
                                           OUTPUT aux_dsdocmc7,
                                           OUTPUT aux_nmrescop,
                                           OUTPUT aux_cdtpddoc,
+                                          /* PRJ 372 */
+                                          OUTPUT aux_indblqvic,
                                           OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -187,6 +194,8 @@ PROCEDURE consulta-cheque-compensado:
         RUN piXmlAtributo (INPUT "dsdocmc7", INPUT STRING(aux_dsdocmc7)).
         RUN piXmlAtributo (INPUT "nmrescop", INPUT STRING(aux_nmrescop)).
         RUN piXmlAtributo (INPUT "cdtpddoc", INPUT STRING(aux_cdtpddoc)).
+        /* PRJ 372 */
+        RUN piXmlAtributo (INPUT "indblqvic", INPUT STRING(aux_indblqvic)).
         RUN piXmlSave.
     END.
 

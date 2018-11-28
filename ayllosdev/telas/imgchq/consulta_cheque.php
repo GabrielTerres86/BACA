@@ -23,6 +23,8 @@
     //***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)        ***//
     //***                                                                                                             ***//
     //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
+	//***                                                                                                             ***//
+    //***             30/05/2018 - Controle do botão Bloquear Imagens e Liberar Imagens. PRJ 372 (Mateus - Mouts)     ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -89,11 +91,12 @@
             exibeErro($xmlObjCheque->roottag->tags[0]->tags[0]->tags[4]->cdata);
         }
 
-        $dsdocmc7   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"] : '';
-        $cdagechq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"] : '';
-        $nmrescop   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"] : '';
-        $cdcmpchq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"] : '';
-        $cdtpddoc   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"] : '';
+        $dsdocmc7   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"]) )  ? $xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"]  : '';
+        $cdagechq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"]) )  ? $xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"]  : '';
+        $nmrescop   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"]) )  ? $xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"]  : '';
+        $cdcmpchq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"]) )  ? $xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"]  : '';
+        $cdtpddoc   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"]) )  ? $xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"]  : '';
+        $indblqvic  = ( isset($xmlObjCheque->roottag->tags[0]->attributes["INDBLQVIC"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["INDBLQVIC"] : '';
 
         if ($dsdocmc7 == ""){
             echo "bGerarPdf.hide();bSalvarImgs.hide();";
@@ -243,8 +246,16 @@
             exibeErro("Cheque n&atilde;o encontrado!");
         }
 
-        //mostra botao de gerar pdf se chegar ateh aki
+        //mostra botao de gerar pdf se chegar até aqui
         echo "bGerarPdf.show('slow');bSalvarImgs.show('slow');";
+        //controlar exibicao dos botoes bloquear/liberar imagem dependendo do valor do campo INDBLQVIC
+        if ($indblqvic == 'S') {
+            echo "bLiberarImagens.show();";
+            echo "bBloquearImagens.hide();";
+        } else if($indblqvic == 'N') {
+            echo "bBloquearImagens.show();";
+            echo "bLiberarImagens.hide();";
+        }
 
         ?>
 
