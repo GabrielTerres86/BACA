@@ -89,10 +89,10 @@ DEF        VAR aux_desvincu AS CHAR   FORMAT "x(20)"  EXTENT 18
                  "Funcion. da Cooperat",
                  "Diretor de Cooperat","Diretor da Central",
                  "Ass. Comercial de Chapeco",
-                 "Com. Educativo e Delegado",
-                 "Com. Educativo Lider",
-                 "Com. Educativo Secretario",
-                 "Com. Educativo Membro",
+                 "Com. Cooperativo e Delegado",
+                 "Com. Cooperativo Lider",
+                 "Com. Cooperativo Secretario",
+                 "Com. Cooperativo Membro",
                  "Delegado Titular",
                  "Delegado Suplente"]                                NO-UNDO.
 DEF        VAR aux_i        AS INT                                   NO-UNDO.
