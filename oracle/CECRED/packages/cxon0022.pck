@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                             varias procedures desta package.(Carlos Rafael Tanholi).                                                             
 
                28/03/2016 - Adicionados parâmetros para geraçao de LOG
-                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)														       
+                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)                                   
 
                27/06/2017 - Removida separacao de cheques Maior e Menor, Praça e Fora Praça,
                             e utilizado historico único 1523. PRJ367 - Compe Sessao Unica (Lombardi)
@@ -63,7 +63,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
   TYPE typ_tab_chq IS
     TABLE OF typ_reg_cheques
     INDEX BY VARCHAR2(20);
-   
+
   vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
   vr_tab_retorno lanc0001.typ_reg_retorno;
   vr_incrineg  INTEGER;
@@ -98,9 +98,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                                      ,pr_idagenda           IN INTEGER  --Indicador Agendamento
                                      ,pr_cdcoptfn           IN INTEGER  --Codigo Cooperativa
                                      ,pr_nrterfin           IN INTEGER  --Numero do terminal
-									 ,pr_flmobile           IN INTEGER  --Indicador Mobile
-									 ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
-									 ,pr_nrcartao           IN NUMBER   --Numero Cartao																		 
+                                     ,pr_flmobile           IN INTEGER  --Indicador Mobile
+                                     ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
+                                     ,pr_nrcartao           IN NUMBER   --Numero Cartao                                     
                                      ,pr_literal_autentica  OUT VARCHAR2 --Numero literal autenticacao
                                      ,pr_ult_seq_autentica  OUT INTEGER  --Sequencial autenticacao
                                      ,pr_nro_docto          OUT NUMBER   --Numero do Documento
@@ -185,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : Procedimentos e funcoes das transacoes do caixa online
   
   -- Alteracoes: 12/06/2014 - Transferencia e deposito entre cooperativas
-                           (Andre Santos - SUPERO).   
+                              (Andre Santos - SUPERO).   
                            
   --             10/07/2014 - Corrigido o retorno da procedure PC_REALIZA_TRANSFERENCIA. Não estava retornando o erro.
  
@@ -215,13 +215,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                               sobre o campo cdopecxa.(Carlos Rafael Tanholi).
 
                  26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                       crapass, crapttl, crapjur (Adriano - P339).
+                             crapass, crapttl, crapjur (Adriano - P339).
                  
                  12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                  
-                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
-                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+                 14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                              da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
                
                  16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
                  
@@ -265,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   CURSOR cr_crapass(pr_cdcooper IN craptab.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT crapass.cdcooper 
-	      ,crapass.nrdconta
+        ,crapass.nrdconta
           ,crapass.nmprimtl
           ,crapass.inpessoa
           ,crapass.cdagenci
@@ -481,9 +481,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                      ,pr_idagenda           IN INTEGER  --Indicador Agendamento
                                      ,pr_cdcoptfn           IN INTEGER  --Codigo Cooperativa
                                      ,pr_nrterfin           IN INTEGER  --Numero do terminal
- 									                   ,pr_flmobile           IN INTEGER  --Indicador Mobile
-									                   ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
-									                   ,pr_nrcartao           IN NUMBER   --Numero Cartao
+                                      ,pr_flmobile           IN INTEGER  --Indicador Mobile
+                                     ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
+                                     ,pr_nrcartao           IN NUMBER   --Numero Cartao
                                      ,pr_literal_autentica  OUT VARCHAR2 --Numero literal autenticacao
                                      ,pr_ult_seq_autentica  OUT INTEGER  --Sequencial autenticacao
                                      ,pr_nro_docto          OUT NUMBER   --Numero do Documento
@@ -586,7 +586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
               ,craplcm.nrautdoc
               ,craplcm.cdpesqbb
               ,craplcm.dsidenti
-			  ,craplcm.cdhistor
+        ,craplcm.cdhistor
               ,craplcm.rowid
         FROM craplcm
         WHERE  craplcm.cdcooper = pr_cdcooper
@@ -630,15 +630,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         AND   crapagb.cddbanco = pr_cddbanco;
       rw_crapagb cr_crapagb%ROWTYPE;
 
-	  CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
-	                   ,pr_nrdconta crapttl.nrdconta%TYPE)IS
-	  SELECT crapttl.nmextttl
-	        ,crapttl.nrcpfcgc
-	    FROM crapttl
-	   WHERE crapttl.cdcooper = pr_cdcooper
-	     AND crapttl.nrdconta = pr_nrdconta
-		 AND crapttl.idseqttl = 2;
-	  rw_crapttl cr_crapttl%ROWTYPE;
+    CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+                     ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+    SELECT crapttl.nmextttl
+          ,crapttl.nrcpfcgc
+      FROM crapttl
+     WHERE crapttl.cdcooper = pr_cdcooper
+       AND crapttl.nrdconta = pr_nrdconta
+     AND crapttl.idseqttl = 2;
+    rw_crapttl cr_crapttl%ROWTYPE;
 
       --Variaveis Locais
       vr_desc_banco        crapban.nmresbcc%type;
@@ -653,7 +653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       vr_cgc_para_1        crapass.nrcpfcgc%TYPE;
       vr_cgc_para_2        crapttl.nrcpfcgc%TYPE;
       vr_index             INTEGER;
-      vr_cdorigem          INTEGER;			
+      vr_cdorigem          INTEGER;      
       vr_nro_lote          INTEGER;
       vr_cdhisdeb          INTEGER;
       vr_cdhistor          INTEGER;
@@ -666,7 +666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       vr_ult_sequencia_lcm INTEGER;
       vr_registro_lcm_cre  ROWID;
       vr_registro_lcm_deb  ROWID;
-	  vr_nmsegntl          crapttl.nmextttl%TYPE;
+    vr_nmsegntl          crapttl.nmextttl%TYPE;
 
       --Tipo de Dados para cursor cooperativa
       rw_crabcop  cr_crapcop%ROWTYPE;
@@ -1098,11 +1098,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_cdoperad => pr_cod_operador,
                pr_tab_retorno => vr_tab_retorno,
                pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
+               pr_cdcritic => vr_cdcritic,
+               pr_dscritic => vr_dscritic
                );
 
-               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
+               if (nvl(vr_cdcritic,0) <>0 or trim(vr_dscritic) is not null) then
                   -- Desfaz as alterações
                   ROLLBACK TO real_trans;
                   --Levantar Excecao
@@ -1118,9 +1118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           rw_craplcm.nrautdoc := nvl(vr_ult_sequencia_lcm,0);
           rw_craplcm.cdhistor := 1014;
           
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
-        EXCEPTION
+        EXCEPTION			 
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
@@ -1132,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            RAISE vr_exc_erro;
         END;
 
-		vr_cdhisdeb := rw_craplcm.cdhistor;
+    vr_cdhisdeb := rw_craplcm.cdhistor;
 
         IF pr_idagenda > 1 THEN
           rw_craplcm.cdpesqbb:= rw_craplcm.cdpesqbb ||' AGENDADO';
@@ -1310,11 +1308,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_cdoperad => pr_cod_operador,
                pr_tab_retorno => vr_tab_retorno,
                pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
+               pr_cdcritic => vr_cdcritic,
+               pr_dscritic => vr_dscritic
                );
 
-               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
+               if (nvl(vr_cdcritic,0) <>0 or trim(vr_dscritic) is not null) then
                   -- Desfaz as alterações
                   ROLLBACK TO real_trans;
                   --Levantar Excecao
@@ -1329,9 +1327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrsequni := Nvl(rw_craplot_dst.nrseqdig,0);
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia,0);
                
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
-        EXCEPTION
+        EXCEPTION	 
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica 
           WHEN Others THEN
@@ -1617,7 +1613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   RAISE vr_exc_erro;
                     
                 END IF;
-              END IF;	
+              END IF;  
             --Fechar Cursor
             CLOSE cr_craplcm_dup;
         END IF;
@@ -1649,10 +1645,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_cdoperad => pr_cod_operador,
                pr_tab_retorno => vr_tab_retorno,
                pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
+               pr_cdcritic => vr_cdcritic,
+               pr_dscritic => vr_dscritic
                );
-               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
+               if (nvl(vr_cdcritic,0) <>0 or trim(vr_dscritic) is not null) then
                   -- Desfaz as alterações
                   ROLLBACK TO real_trans;
                   --Levantar Excecao
@@ -1667,9 +1663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrsequni := nvl(rw_craplot_ori.nrseqdig,0);
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia_lcm,0);
                
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
-        EXCEPTION
+        EXCEPTION	
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
@@ -1680,9 +1674,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
             --Levantar Excecao
            RAISE vr_exc_erro;
         END;
-				
-		vr_cdhisdeb := rw_craplcm.cdhistor;
-				
+        
+    vr_cdhisdeb := rw_craplcm.cdhistor;
+        
         --Agendamento
         IF pr_idagenda > 1 THEN
           rw_craplcm.cdpesqbb:= rw_craplcm.cdpesqbb ||' AGENDADO';
@@ -1936,10 +1930,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_cdoperad => pr_cod_operador,
                pr_tab_retorno => vr_tab_retorno,
                pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
+               pr_cdcritic => vr_cdcritic,
+               pr_dscritic => vr_dscritic
                );
-               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
+               if (nvl(vr_cdcritic,0) <>0 or trim(vr_dscritic) is not null) then
                   -- Desfaz as alterações
                   ROLLBACK TO real_trans;
                   --Levantar Excecao
@@ -1955,9 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                rw_craplcm.nrautdoc := nvl(vr_ult_sequencia,0);
                rw_craplcm.nrdocmto := pr_nro_docto_cred;
 
-          dbms_output.put_line('rowid='||rw_craplcm.ROWID);
-
-        EXCEPTION
+        EXCEPTION		  
           WHEN vr_exc_erro THEN		  
             raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
@@ -2036,7 +2028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           -- Desfaz as alterações
           ROLLBACK TO real_trans;
-		  --Levantar Excecao
+      --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
       END IF;
@@ -2104,23 +2096,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       --Numero do CPF
       vr_cgc_para_1:= rw_crabass.nrcpfcgc;
 
-	  IF rw_crabass.inpessoa = 1 THEN
+    IF rw_crabass.inpessoa = 1 THEN
 
-	    OPEN cr_crapttl(pr_cdcooper => rw_crabass.cdcooper
-		               ,pr_nrdconta => rw_crabass.nrdconta);
+      OPEN cr_crapttl(pr_cdcooper => rw_crabass.cdcooper
+                   ,pr_nrdconta => rw_crabass.nrdconta);
 
-		FETCH cr_crapttl INTO rw_crapttl;
+    FETCH cr_crapttl INTO rw_crapttl;
 
-	    IF cr_crapttl%FOUND THEN
+      IF cr_crapttl%FOUND THEN
           
-		  vr_cgc_para_2:= rw_crapttl.nrcpfcgc;
-		  vr_nmsegntl  := rw_crapttl.nmextttl;
+      vr_cgc_para_2:= rw_crapttl.nrcpfcgc;
+      vr_nmsegntl  := rw_crapttl.nmextttl;
 
-		END IF;
+    END IF;
 
-		CLOSE cr_crapttl;
+    CLOSE cr_crapttl;
 
-	  END IF;
+    END IF;
 
       --Limpar vetor
       vr_tab_literal.DELETE;
@@ -2359,12 +2351,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           RAISE vr_exc_erro;
       END;
       END IF;
-	IF pr_flmobile = 1 THEN
-		vr_cdorigem := 10; --> MOBILE
-	ELSE 
-		vr_cdorigem := pr_idorigem;
-	END IF;
-	-- Geracao de log para operacoes que podem utilizar o cartao ORIGEM	
+  IF pr_flmobile = 1 THEN
+    vr_cdorigem := 10; --> MOBILE
+  ELSE 
+    vr_cdorigem := pr_idorigem;
+  END IF;
+  -- Geracao de log para operacoes que podem utilizar o cartao ORIGEM  
 	CADA0004.pc_gera_log_ope_cartao( pr_cdcooper 		    => rw_crapcop.cdcooper -- Codigo da cooperativa
 									                ,pr_nrdconta 	      => pr_nrdcontade       -- Numero da conta
 									                ,pr_indoperacao 	  => 4                   -- Operacao realizada no log (1-Saque/2-Doc/3-Ted/4-Transferencia/5-Talao de cheque) Alterar Andrino
@@ -2377,18 +2369,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 									                ,pr_cdoperad 	      => pr_cod_operador     -- Codigo do operador
 									                ,pr_cdbccrcb 	      => 0                   -- Codigo do banco de destino para os casos de TED e DOC
 									                ,pr_cdfinrcb 	      => 0                   -- Codigo da finalidade para operacoes de TED e DOC
-									                ,pr_cdpatrab        => pr_cod_agencia 
+                                  ,pr_cdpatrab        => pr_cod_agencia 
                                   ,pr_nrseqems        => 0 
                                   ,pr_nmreceptor      => ''
                                   ,pr_nrcpf_receptor  => 0
-									                ,pr_dscritic        => vr_dscritic);       -- Descricao do erro quando houver
-	IF nvl(vr_cdcritic,0) <> 0 OR trim(vr_dscritic) IS NOT NULL THEN			
-		vr_cdcritic:= 0;			
-		 -- Desfaz as alterações
-		ROLLBACK TO real_trans;
-		--Levantar Excecao
-		RAISE vr_exc_erro;
-	END IF;
+                                  ,pr_dscritic        => vr_dscritic);       -- Descricao do erro quando houver
+  IF nvl(vr_cdcritic,0) <> 0 OR trim(vr_dscritic) IS NOT NULL THEN      
+    vr_cdcritic:= 0;      
+     -- Desfaz as alterações
+    ROLLBACK TO real_trans;
+    --Levantar Excecao
+    RAISE vr_exc_erro;
+  END IF;
       
     EXCEPTION
        WHEN vr_exc_erro THEN
@@ -2441,9 +2433,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
    Alteracoes: 14/12/2016 - Corrigida atribuicao da variavel vr_aux_nrctachq para incorporacao (Diego).
 
-	           26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-						   (Adriano - P339).
+               26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
 
                03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
 
@@ -2505,7 +2497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            ,ass.nmprimtl
            ,ass.cdagenci
            ,ass.cdcooper
-		   ,ass.inpessoa
+       ,ass.inpessoa
        FROM crapass ass
       WHERE ass.cdcooper = p_coop
         AND ass.nrdconta = p_nrdconta;
@@ -2535,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            ,ass.cdbcochq
            ,ass.nmprimtl
            ,ass.cdagenci
-		   ,ass.cdcooper
+       ,ass.cdcooper
        FROM crapass ass
       WHERE ass.cdcooper = p_coop
         AND ass.nrdconta = p_nrdconta
@@ -2863,12 +2855,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   rw_existe_bcx cr_existe_bcx%ROWTYPE;
 
   CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
-	               ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
   SELECT crapttl.nmextttl
     FROM crapttl
    WHERE crapttl.cdcooper = pr_cdcooper
-	 AND crapttl.nrdconta = pr_nrdconta
-	 AND crapttl.idseqttl = 2;
+   AND crapttl.nrdconta = pr_nrdconta
+   AND crapttl.idseqttl = 2;
 
   -- Variaveis Erro
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2979,16 +2971,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       
      END IF;
 
-	 IF rw_verifica_ass.inpessoa = 1 THEN
+   IF rw_verifica_ass.inpessoa = 1 THEN
 
-	   OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
-	                  ,pr_nrdconta => rw_verifica_ass.nrdconta);
+     OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
+                    ,pr_nrdconta => rw_verifica_ass.nrdconta);
 
-	   FETCH cr_crapttl INTO vr_nmsegntl;
+     FETCH cr_crapttl INTO vr_nmsegntl;
 
-	   CLOSE cr_crapttl;
+     CLOSE cr_crapttl;
 
-	 END IF;
+   END IF;
 
      -- Verifica Transferencia e Duplicacao de Matricula - Associado de Destino
      OPEN cr_tdm_ass(rw_cod_coop_dest.cdcooper
@@ -3210,7 +3202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
               RAISE vr_exc_erro;
            END IF;
            
-     END IF; -- Verifica Horario de Corte
+     END IF; -- Verifica Horario de Corte     
      
      -- Criacao do LOTE de DESTINO (CREDITO)
      vr_i_nro_lote    := 10118;
@@ -3266,7 +3258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            END;
         END IF;
      CLOSE cr_existe_lot;
-
+    
      vr_de_valor_total    := 0;
      vr_de_cooperativa    := 0;
      vr_de_chq_intercoopc := 0;
@@ -3607,26 +3599,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_cdcritic    => vr_cdcritic
                                                 ,pr_dscritic    => vr_dscritic); 
                                                 
-              IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+                IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                   
-                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                         ,pr_cdagenci => pr_cod_agencia
-                                         ,pr_nrdcaixa => pr_nro_caixa
-                                         ,pr_cod_erro => pr_cdcritic
-                                         ,pr_dsc_erro => pr_dscritic
-                                         ,pr_flg_erro => TRUE
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                    -- Levantar excecao
-                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                       pr_cdcritic := vr_cdcritic;
-                       pr_dscritic := vr_dscritic;
-                       RAISE vr_exc_erro;
-                    END IF;
-
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := vr_dscritic;
+                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => pr_nro_caixa
+                                     ,pr_cod_erro => pr_cdcritic
+                                     ,pr_dsc_erro => pr_dscritic
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                  IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                   pr_cdcritic := vr_cdcritic;
+                   pr_dscritic := vr_dscritic;
+                   RAISE vr_exc_erro;
+                  end if;
+                                                  
                     RAISE vr_exc_erro;
               END IF;                                                                                               
-              
+             
               vr_i_seq_386 := rw_consulta_lot.nrseqdig;
      
               -- Verifica se existe lote
@@ -3675,8 +3668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   END IF;
                CLOSE cr_existe_lot;                            
            END IF;                  
-        END IF;
-     CLOSE cr_verifica_mrw;
+        END IF;     
+	 CLOSE cr_verifica_mrw;
      
      vr_nrsequen := 0;
      
@@ -3791,30 +3784,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_cdcritic    => vr_cdcritic
                                              ,pr_dscritic    => vr_dscritic);  
                                                
-           IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                   
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+             cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                  ,pr_cdagenci => pr_cod_agencia
+                                  ,pr_nrdcaixa => pr_nro_caixa
+                                  ,pr_cod_erro => pr_cdcritic
+                                  ,pr_dsc_erro => pr_dscritic
+                                  ,pr_flg_erro => TRUE
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+                RAISE vr_exc_erro;
+              end if;
            
-                       -- Levantar excecao
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic;
-                          RAISE vr_exc_erro;
-              END IF;
-           
-                      RAISE vr_exc_erro;
+             RAISE vr_exc_erro;
            END IF;
-
+           
            -- Guarda o sequencial usado no lancamento
            pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-     
+           
            -- Verifica se existe lote
            OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
                              ,rw_dat_cop.dtmvtocd
@@ -4333,7 +4326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                     */
                           vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                           vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
-                  	/*
+                    /*
                        END IF;
                     ELSE
                        -- BANCO DO BRASIL - SEM DIGITO
@@ -4401,12 +4394,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                END IF;
             CLOSE cr_verifica_fdc;
             
-               IF  rw_verifica_fdc.tpcheque = 1  THEN
-                   vr_aux_cdhistor := 21;
-               ELSE
-                   vr_aux_cdhistor := 26;
-               END IF;
-
+            IF  rw_verifica_fdc.tpcheque = 1  THEN
+              vr_aux_cdhistor := 21;
+            ELSE
+              vr_aux_cdhistor := 26;
+            END IF;
+            
             -- Chamada a LANC0001 -- 3
             /* Pagamento Cheque */
             LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
@@ -4430,28 +4423,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                               ,pr_cdcritic    => vr_cdcritic
                                               ,pr_dscritic    => vr_dscritic); 
             
-            IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN      
- 
-                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                         ,pr_cdagenci => pr_cod_agencia
-                                         ,pr_nrdcaixa => pr_nro_caixa
-                                         ,pr_cod_erro => pr_cdcritic
-                                         ,pr_dsc_erro => pr_dscritic
-                                         ,pr_flg_erro => TRUE
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                                   
-                    -- Levantar excecao
-                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                       pr_cdcritic := vr_cdcritic;
-                       pr_dscritic := vr_dscritic;
-                       RAISE vr_exc_erro;
-                    END IF;
-
-                    RAISE vr_exc_erro;
+            IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN      
               
-            END IF;
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => pr_nro_caixa
+                                   ,pr_cod_erro => pr_cdcritic
+                                   ,pr_dsc_erro => pr_dscritic
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+               IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic;
+                 RAISE vr_exc_erro;                 
+               end if;
+              
+              -- Levantar excecao
+              RAISE vr_exc_erro;
 
+            END IF;
+                        
             -- Verifica se existe lote
             OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
                               ,rw_dat_cop.dtmvtolt
@@ -4751,8 +4745,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : 
 
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							 (Adriano - P339).
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).
                
                  03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
                  
@@ -4853,7 +4847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            ,ass.cdbcochq
            ,ass.nmprimtl
            ,ass.cdagenci
-		   ,ass.cdcooper
+       ,ass.cdcooper
        FROM crapass ass
       WHERE ass.cdcooper = p_coop
         AND ass.nrdconta = p_nrdconta
@@ -5204,12 +5198,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   rw_existe_bcx cr_existe_bcx%ROWTYPE;
 
   CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
-	               ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
   SELECT crapttl.nmextttl
-	FROM crapttl
+  FROM crapttl
    WHERE crapttl.cdcooper = pr_cdcooper
-	 AND crapttl.nrdconta = pr_nrdconta
-	 AND crapttl.idseqttl = 2;
+   AND crapttl.nrdconta = pr_nrdconta
+   AND crapttl.idseqttl = 2;
 
   -- Variaveis Erro
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -5268,7 +5262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_nmtabela     VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
   vr_incrineg     INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
   vr_tabretor     LANC0001.typ_reg_retorno; --> Tabela de retorno 
-
+  
   -- Guardar registro dstextab  
   vr_dstextab craptab.dstextab%TYPE;
 
@@ -5333,16 +5327,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
        
      END IF;
        
-	 IF rw_verifica_ass.inpessoa = 1 THEN
+   IF rw_verifica_ass.inpessoa = 1 THEN
 
-	   OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
-	                  ,pr_nrdconta => rw_verifica_ass.nrdconta);
+     OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
+                    ,pr_nrdconta => rw_verifica_ass.nrdconta);
 
-	   FETCH cr_crapttl INTO vr_nmsegntl;
+     FETCH cr_crapttl INTO vr_nmsegntl;
 
-	   CLOSE cr_crapttl;
+     CLOSE cr_crapttl;
 
-	 END IF;
+   END IF;
        
      -- Verifica Transferencia e Duplicacao de Matricula - Associado de Destino
      OPEN cr_tdm_ass(rw_cod_coop_dest.cdcooper
@@ -5959,25 +5953,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_cdcritic    => vr_cdcritic
                                                 ,pr_dscritic    => vr_dscritic); 
                                                 
-              IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                                  
-                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                         ,pr_cdagenci => pr_cod_agencia
-                                         ,pr_nrdcaixa => pr_nro_caixa
-                                         ,pr_cod_erro => pr_cdcritic
-                                         ,pr_dsc_erro => pr_dscritic
-                                         ,pr_flg_erro => TRUE
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                                     
-                    -- Levantar excecao
-                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                       pr_cdcritic := vr_cdcritic;
-                       pr_dscritic := vr_dscritic; 
-                       RAISE vr_exc_erro;
-                    END IF;
-
-                    RAISE vr_exc_erro;
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic; 
+                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => pr_nro_caixa
+                                     ,pr_cod_erro => pr_cdcritic
+                                     ,pr_dsc_erro => pr_dscritic
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                   pr_cdcritic := vr_cdcritic;
+                   pr_dscritic := vr_dscritic; 
+                   RAISE vr_exc_erro;
+                 end if;
+                -- Levantar excecao
+                RAISE vr_exc_erro;
                 
               END IF;
               
@@ -6119,7 +6113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  RAISE vr_exc_erro;
               END IF;            
            CLOSE cr_existe_lcm1;
-              
+           
            -- Chamada a LANC0001 -- 5
            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
                                              ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -6146,8 +6140,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_cdcritic    => vr_cdcritic
                                              ,pr_dscritic    => vr_dscritic);  
                                                   
-           IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                   
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic; 
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -6157,19 +6153,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
                                       
+             IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              -- Levantar excecao
-             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                pr_cdcritic := vr_cdcritic;
                pr_dscritic := vr_dscritic; 
                RAISE vr_exc_erro;
-             END IF;
+             end if;
 
              RAISE vr_exc_erro;
                   
            END IF;
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+           
+           -- Guarda o sequencial usado no lancamento
+           pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
            
            -- Verifica se existe lote
            OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
@@ -6726,12 +6722,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   END;
                   
                   /* Pagamento Cheque */
-                     IF  rw_verifica_fdc.tpcheque = 1  THEN
-                         vr_aux_cdhistor := 21;
-                     ELSE
-                         vr_aux_cdhistor := 26;
-                     END IF;
-
+                  IF  rw_verifica_fdc.tpcheque = 1  THEN
+                    vr_aux_cdhistor := 21;
+                  ELSE
+                    vr_aux_cdhistor := 26;
+                  END IF;
+                  
                   -- Chamada a LANC0001 -- 6
                   LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                     ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -6754,28 +6750,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                     ,pr_cdcritic    => vr_cdcritic
                                                     ,pr_dscritic    => vr_dscritic); 
                                                               
-                  IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-             
-                          cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                               ,pr_cdagenci => pr_cod_agencia
-                                               ,pr_nrdcaixa => pr_nro_caixa
-                                               ,pr_cod_erro => pr_cdcritic
-                                               ,pr_dsc_erro => pr_dscritic
-                                               ,pr_flg_erro => TRUE
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                 
-                          -- Levantar excecao
-                          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                             pr_cdcritic := vr_cdcritic;
-                             pr_dscritic := vr_dscritic; 
-                             RAISE vr_exc_erro;
-                          END IF;
+                  IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
 
-                          RAISE vr_exc_erro;
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic; 
+                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                         ,pr_cdagenci => pr_cod_agencia
+                                         ,pr_nrdcaixa => pr_nro_caixa
+                                         ,pr_cod_erro => pr_cdcritic
+                                         ,pr_dsc_erro => pr_dscritic
+                                         ,pr_flg_erro => TRUE
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                      pr_cdcritic := vr_cdcritic;
+                      pr_dscritic := vr_dscritic; 
+                      RAISE vr_exc_erro;
+                   end if;
+                              
+                    RAISE vr_exc_erro;
                               
                   END IF;
-
+                  
                   -- Verifica se existe lote
                   OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
                                     ,rw_dat_cop.dtmvtocd
@@ -6910,12 +6906,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  IF cr_existe_lot%FOUND THEN
                                    
                                     /* Pagamento Cheque */
-                                       IF  rw_verifica_fdc.tpcheque = 1  THEN
-                                           vr_aux_cdhistor := 21;
-                                       ELSE
-                                           vr_aux_cdhistor := 26;
-                                       END IF;
-
+                                    IF  rw_verifica_fdc.tpcheque = 1  THEN
+                                      vr_aux_cdhistor := 21;
+                                    ELSE
+                                      vr_aux_cdhistor := 26;
+                                    END IF;
+                                    
                                     -- Chamada a LANC0001 -- 7
                                     LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                                       ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -6938,25 +6934,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                       ,pr_cdcritic    => vr_cdcritic
                                                                       ,pr_dscritic    => vr_dscritic); 
                                                                                 
-                                    IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                               
-                                            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                                 ,pr_cdagenci => pr_cod_agencia
-                                                                 ,pr_nrdcaixa => pr_nro_caixa
-                                                                 ,pr_cod_erro => pr_cdcritic
-                                                                 ,pr_dsc_erro => pr_dscritic
-                                                                 ,pr_flg_erro => TRUE
-                                                                 ,pr_cdcritic => vr_cdcritic
-                                                                 ,pr_dscritic => vr_dscritic);
+                                    IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                                                                    
-                                            -- Levantar excecao
-                                            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                               pr_cdcritic := vr_cdcritic;
-                                               pr_dscritic := vr_dscritic; 
-                                               RAISE vr_exc_erro;
-                                            END IF;
+                                      pr_cdcritic := vr_cdcritic;
+                                      pr_dscritic := vr_dscritic; 
+                                      cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                                           ,pr_cdagenci => pr_cod_agencia
+                                                           ,pr_nrdcaixa => pr_nro_caixa
+                                                           ,pr_cod_erro => pr_cdcritic
+                                                           ,pr_dsc_erro => pr_dscritic
+                                                           ,pr_flg_erro => TRUE
+                                                           ,pr_cdcritic => vr_cdcritic
+                                                           ,pr_dscritic => vr_dscritic);
 
-                                            RAISE vr_exc_erro;
+                                      IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                                        pr_cdcritic := vr_cdcritic;
+                                        pr_dscritic := vr_dscritic; 
+                                        RAISE vr_exc_erro;
+                                      END IF;
+                                                
+                                      RAISE vr_exc_erro;
                                                 
                                     END IF;                                    
                                     
@@ -7270,12 +7267,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : 
 
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
- 			                  crapass, crapttl, crapjur 
-							  (Adriano - P339).
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).
                 
-                03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
+                 03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
                 
-                16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
+                 16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
                  
                  29/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente  
                               PRJ450 - Diego Simas - AMcom 
@@ -7761,12 +7758,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   rw_verifica_fdc cr_verifica_fdc%ROWTYPE;  
 
   CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
-	               ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
   SELECT crapttl.nmextttl
-	FROM crapttl
+  FROM crapttl
    WHERE crapttl.cdcooper = pr_cdcooper
-	 AND crapttl.nrdconta = pr_nrdconta
-	 AND crapttl.idseqttl = 2;
+   AND crapttl.nrdconta = pr_nrdconta
+   AND crapttl.idseqttl = 2;
  
   -- Variaveis Erro
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -7886,14 +7883,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   
      IF rw_verifica_ass.inpessoa = 1 THEN
 
-	   OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
-	                  ,pr_nrdconta => rw_verifica_ass.nrdconta);
+     OPEN cr_crapttl(pr_cdcooper => rw_verifica_ass.cdcooper
+                    ,pr_nrdconta => rw_verifica_ass.nrdconta);
 
-	   FETCH cr_crapttl INTO vr_nmsegntl;
+     FETCH cr_crapttl INTO vr_nmsegntl;
 
-	   CLOSE cr_crapttl;
+     CLOSE cr_crapttl;
 
-	 END IF;
+   END IF;
   
      -- Verifica Transferencia e Duplicacao de Matricula - Associado de Destino
      OPEN cr_tdm_ass(rw_cod_coop_dest.cdcooper
@@ -8500,24 +8497,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_cdcritic    => vr_cdcritic
                                                 ,pr_dscritic    => vr_dscritic); 
                                                           
-              IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                                  
-                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                         ,pr_cdagenci => pr_cod_agencia
-                                         ,pr_nrdcaixa => pr_nro_caixa
-                                         ,pr_cod_erro => pr_cdcritic
-                                         ,pr_dsc_erro => pr_dscritic
-                                         ,pr_flg_erro => TRUE
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                    -- Levantar excecao
-                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                       pr_cdcritic := vr_cdcritic;
-                       pr_dscritic := vr_dscritic; 
-                       RAISE vr_exc_erro;
-                    END IF;
+              IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic; 
+                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => pr_nro_caixa
+                                     ,pr_cod_erro => pr_cdcritic
+                                     ,pr_dsc_erro => pr_dscritic
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                   pr_cdcritic := vr_cdcritic;
+                   pr_dscritic := vr_dscritic; 
+                   RAISE vr_exc_erro;
+                end if;
 
-                    RAISE vr_exc_erro;
+                RAISE vr_exc_erro;
               END IF;
               
               vr_i_seq_386 := rw_consulta_lot.nrseqdig;
@@ -8657,7 +8655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  RAISE vr_exc_erro;
               END IF;            
            CLOSE cr_existe_lcm1;
-              
+           
            -- Chamada a LANC0001 -- 9
            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
                                              ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -8684,8 +8682,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_cdcritic    => vr_cdcritic
                                              ,pr_dscritic    => vr_dscritic);  
                                                        
-           IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-             
+           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic; 
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -8694,18 +8694,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                   ,pr_flg_erro => TRUE
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
-             -- Levantar excecao
-             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                 pr_cdcritic := vr_cdcritic;
                 pr_dscritic := vr_dscritic; 
                 RAISE vr_exc_erro;
-             END IF;
+             end if;
 
              RAISE vr_exc_erro;
            END IF;
 
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+           -- Guarda o sequencial usado no lancamento
+           pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
 
            -- Verifica se existe lote
            OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
@@ -9440,12 +9439,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         END;
                                                                                                             
                         /* Pagamento Cheque */
-                           IF rw_verifica_fdc.tpcheque = 1  THEN
-                              vr_aux_cdhistor := 521;
-                           ELSE
-                              vr_aux_cdhistor := 26;
-                           END IF;
-
+                        IF rw_verifica_fdc.tpcheque = 1  THEN
+                          vr_aux_cdhistor := 521;
+                        ELSE
+                          vr_aux_cdhistor := 26;
+                        END IF;
+                        
                         -- Chamada a LANC0001 -- 10
                         LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_existe_lot2.cdcooper 
                                                           ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -9468,26 +9467,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                           ,pr_cdcritic    => vr_cdcritic
                                                           ,pr_dscritic    => vr_dscritic); 
                                                                     
-                        IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+                        IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                            
-                                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                     ,pr_cdagenci => pr_cod_agencia
-                                                     ,pr_nrdcaixa => pr_nro_caixa
-                                                     ,pr_cod_erro => pr_cdcritic
-                                                     ,pr_dsc_erro => pr_dscritic
-                                                     ,pr_flg_erro => TRUE
-                                                     ,pr_cdcritic => vr_cdcritic
-                                                     ,pr_dscritic => vr_dscritic);
-                                -- Levantar excecao
-                                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                   pr_cdcritic := vr_cdcritic;
-                                   pr_dscritic := vr_dscritic; 
-                                   RAISE vr_exc_erro;
-                                END IF;
+                          pr_cdcritic := vr_cdcritic;
+                          pr_dscritic := vr_dscritic; 
+                          cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                               ,pr_cdagenci => pr_cod_agencia
+                                               ,pr_nrdcaixa => pr_nro_caixa
+                                               ,pr_cod_erro => pr_cdcritic
+                                               ,pr_dsc_erro => pr_dscritic
+                                               ,pr_flg_erro => TRUE
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic);
+                         IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                             pr_cdcritic := vr_cdcritic;
+                             pr_dscritic := vr_dscritic; 
+                             RAISE vr_exc_erro;
+                         end if;
 
-                                RAISE vr_exc_erro;
+                          RAISE vr_exc_erro;
                         END IF;
-
+                        
                         BEGIN
                            UPDATE craplot lot
                               SET lot.nrseqdig = lot.nrseqdig + 1
@@ -9582,13 +9582,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                          END;
                                                                                                             
                          /* Pagamento Cheque */
-                                           
-                            IF  rw_verifica_fdc.tpcheque = 1  THEN
-                                vr_aux_cdhistor := 21;
-                            ELSE
-                                vr_aux_cdhistor := 26;
-                            END IF;
-
+                         
+                         IF  rw_verifica_fdc.tpcheque = 1  THEN
+                           vr_aux_cdhistor := 21;
+                         ELSE
+                           vr_aux_cdhistor := 26;
+                         END IF;
+                         
                          -- Chamada a LANC0001 -- 11
                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                            ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
@@ -9611,26 +9611,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,pr_cdcritic    => vr_cdcritic
                                                            ,pr_dscritic    => vr_dscritic);  
                                                                       
-                         IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                         
-                                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                      ,pr_cdagenci => pr_cod_agencia
-                                                      ,pr_nrdcaixa => pr_nro_caixa
-                                                      ,pr_cod_erro => pr_cdcritic
-                                                      ,pr_dsc_erro => pr_dscritic
-                                                      ,pr_flg_erro => TRUE
-                                                      ,pr_cdcritic => vr_cdcritic
-                                                      ,pr_dscritic => vr_dscritic);
-                                 -- Levantar excecao
-                                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                    pr_cdcritic := vr_cdcritic;
-                                    pr_dscritic := vr_dscritic; 
-                                    RAISE vr_exc_erro;
-                                 END IF;
+                         IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                           
+                           pr_cdcritic := vr_cdcritic;
+                           pr_dscritic := vr_dscritic; 
+                           cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                                ,pr_cdagenci => pr_cod_agencia
+                                                ,pr_nrdcaixa => pr_nro_caixa
+                                                ,pr_cod_erro => pr_cdcritic
+                                                ,pr_dsc_erro => pr_dscritic
+                                                ,pr_flg_erro => TRUE
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+                           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                              pr_cdcritic := vr_cdcritic;
+                              pr_dscritic := vr_dscritic; 
+                              RAISE vr_exc_erro;
+                           end if;
 
-                                 RAISE vr_exc_erro;
+                           RAISE vr_exc_erro;
                          END IF;
-
+                         
                          BEGIN
                             UPDATE craplot lot
                                SET lot.nrseqdig = lot.nrseqdig + 1
