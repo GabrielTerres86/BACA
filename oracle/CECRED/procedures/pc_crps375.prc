@@ -315,6 +315,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
                  05/07/2016 - Ajuste para evitar envio de inpessoa=3 (Marcos-Supero)
 
+      29/05/2018  - Lançamento de Credito e Debito utilizando LANC0001 - Rangel Decker AMcom                           
+
   ............................................................................ */
 
     DECLARE
@@ -485,6 +487,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
       vr_tab_cratrej     typ_tab_cratrej;
       vr_tab_comando     typ_comando := typ_comando();
 
+      
+      vr_rowidlcm   ROWID;             --> ROWID do lançamento inserido na CRAPLCM
+      vr_nmtabela   VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+      vr_incrineg   INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      
+      vr_tab_retorno lanc0001.typ_reg_retorno;
       --Tabela para receber arquivos lidos no unix
       vr_tab_arquivo     gene0002.typ_split;
 
@@ -775,6 +783,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
       vr_ind_comando PLS_INTEGER :=0;
       -- Variável de Controle de XML
       vr_des_xml      CLOB;
+
+      vr_fldebita     BOOLEAN DEFAULT TRUE;
 
       --Procedure que escreve linha no arquivo CLOB
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
@@ -1080,6 +1090,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
           -- Armazena o valor do parâmetro ref. aos convênios de migração
           vr_nrconven_ceb VARCHAR2(4000);
+          
+          -- Variaveis Excecao
+         vr_exc_erro   EXCEPTION;
         BEGIN
 
           vr_nmarqlog := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
@@ -2171,36 +2184,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
           -- insere dados na craplcm
           BEGIN
-            INSERT INTO craplcm( craplcm.dtmvtolt
-                                ,craplcm.cdagenci
-                                ,craplcm.cdbccxlt
-                                ,craplcm.nrdolote
-                                ,craplcm.nrdconta
-                                ,craplcm.nrdctabb
-                                ,craplcm.nrdctitg
-                                ,craplcm.nrdocmto
-                                ,craplcm.cdhistor
-                                ,craplcm.nrseqdig
-                                ,craplcm.vllanmto
-                                ,craplcm.cdpesqbb
-                                ,craplcm.cdcooper
-                                ,craplcm.dsidenti
-            ) VALUES (        rw_craplot.dtmvtolt
-                              ,rw_craplot.cdagenci
-                              ,rw_craplot.cdbccxlt
-                              ,rw_craplot.nrdolote
-                              ,nvl(pr_nrdconta,0)
-                              ,nvl(pr_nrdconta,0)
-                              ,lpad(pr_nrdctabb,8,'0')
-                              ,nvl(vr_nrdocmto,0)
-                              ,nvl(pr_cdhistor,0)
-                              ,rw_craplot.nrseqdig + 1
-                              ,nvl(pr_vllanmto,0) /* Tarifa - Debito */
-                              ,nvl(vr_cdpesqbb,' ')
-                              ,nvl(pr_cdcooper,0)
-                              ,To_Char(pr_qtdbolet))
-            RETURNING craplcm.nrseqdig
-                 INTO vr_nrseqdig;
+            -- Inserir lancamento
+            vr_nrseqdig:= rw_craplot.nrseqdig + 1;  
+            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt
+                                              ,pr_cdagenci =>rw_craplot.cdagenci
+                                              ,pr_cdbccxlt =>rw_craplot.cdbccxlt                                                                                            
+                                              ,pr_nrdolote =>rw_craplot.nrdolote                                              
+                                              ,pr_nrdconta =>nvl(pr_nrdconta,0)                                              
+                                              ,pr_nrdctabb =>nvl(pr_nrdconta,0)                                              
+                                              ,pr_nrdctitg =>lpad(pr_nrdctabb,8,'0')
+                                              ,pr_nrdocmto =>nvl(vr_nrdocmto,0)                                              
+                                              ,pr_cdhistor =>nvl(pr_cdhistor,0)  
+                                              ,pr_nrseqdig =>rw_craplot.nrseqdig + 1  
+                                              ,pr_vllanmto =>nvl(pr_vllanmto,0) /* Tarifa - Debito */    
+                                              ,pr_cdpesqbb =>nvl(vr_cdpesqbb,' ')
+                                              ,pr_cdcooper =>nvl(pr_cdcooper,0)
+                                              ,pr_dsidenti =>To_Char(pr_qtdbolet) 
+                                              -- OUTPUT --
+                                              ,pr_tab_retorno => vr_tab_retorno
+                                              ,pr_incrineg => vr_incrineg
+                                              ,pr_cdcritic => pr_cdcritic
+                                              ,pr_dscritic => pr_dscritic); 
+                                           
+          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              -- Se foi retornado apenas codigo
+              IF nvl(pr_cdcritic,0) > 0 AND trim(pr_dscritic) IS NULL THEN
+                -- Buscar a descricao
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      		  END IF;                                                                                         
+              
+		      RETURN;
+      		END IF;     
+                                                                                                
           EXCEPTION
             WHEN OTHERS THEN
             pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
@@ -6651,4 +6666,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
     END;
   END pc_crps375;
-/
+  
