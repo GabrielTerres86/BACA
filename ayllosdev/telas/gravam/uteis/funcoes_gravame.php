@@ -56,34 +56,29 @@
 	}
 
 	function convertXMLtoJSONAliena($xml) {
-		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
-				"sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
-				  "objetoContratoCredito": '.json_encode($xml->objetoContratoCredito).',
-				"propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
-					"representanteVendas": '.json_encode($xml->representanteVendas).',
-			   "estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
+		$data = '{			"cooperativa": { "codigo": "'.getCoopCod($xml).'" },
+				"sistemaNacionalGravames": '.convertXMLtoJSONnode0($xml->sistemaNacionalGravames).',
+				  "objetoContratoCredito": '.convertXMLtoJSONnode0($xml->objetoContratoCredito).',
+				"propostaContratoCredito": '.convertXMLtoJSONnode0($xml->propostaContratoCredito).',
+					"representanteVendas": '.convertXMLtoJSONnode0($xml->representanteVendas).',
+			   "estabelecimentoComercial": '.convertXMLtoJSONnode0($xml->estabelecimentoComercial).'}';
 		return $data;	
 	}
 
 	//Função para converter os nós "sistemaNacionalGravames" e "objetoContratoCredito" do XML em JSON
 	function convertXMLtoJSONConsulta($xml) {
-		$sistNac = json_encode($xml->sistemaNacionalGravames);
-		$objContr = json_encode($xml->objetoContratoCredito);
-		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
-				"sistemaNacionalGravames": '.$sistNac.',
-				  "objetoContratoCredito": '.$objContr.'}';
+		$data = '{			"cooperativa": { "codigo": "'.getCoopCod($xml).'" },
+				"sistemaNacionalGravames": '.convertXMLtoJSONnode0($xml->sistemaNacionalGravames).',
+				  "objetoContratoCredito": '.convertXMLtoJSONnode0($xml->objetoContratoCredito).'}';
 		return $data;	
 	}
 
 	//Função para converter os nós "sistemaNacionalGravames", "objetoContratoCredito" e "propostaContratoCredito" do XML em JSON
 	function convertXMLtoJSONBaixaCancel($xml) {
-		$sistNac = json_encode($xml->sistemaNacionalGravames);
-		$objContr = json_encode($xml->objetoContratoCredito);
-		$propostaContratoCredito = json_encode($xml->propostaContratoCredito);
-		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
-				"sistemaNacionalGravames": '.$sistNac.',
-				  "objetoContratoCredito": '.$objContr.',
-				"propostaContratoCredito": '.$propostaContratoCredito.'}';
+		$data = '{			"cooperativa": { "codigo": "'.getCoopCod($xml).'" },
+				"sistemaNacionalGravames": '.convertXMLtoJSONnode0($xml->sistemaNacionalGravames).',
+				  "objetoContratoCredito": '.convertXMLtoJSONnode0($xml->objetoContratoCredito).',
+				"propostaContratoCredito": '.convertXMLtoJSONnode0($xml->propostaContratoCredito).'}';
 		return $data;	
 	}
 
@@ -115,12 +110,12 @@
 
     function verificarRetornoAliena($xmlStr) {
     	$xmlRet = getObjectXML($xmlStr);
-    	$retContr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
+		$retContr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
     	$retGravame = $xmlRet->roottag->tags[0]->tags[1]->cdata;
     	$GLOBALS["identificador"] = $xmlRet->roottag->tags[0]->tags[3]->cdata;
-    	$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[2]->cdata);
+    	$dataInteracao = ($xmlRet->roottag->tags[0]->tags[2]->cdata) ? timestampParaDateTime($xmlRet->roottag->tags[0]->tags[2]->cdata) : "";
     	$idRegistro = $xmlRet->roottag->tags[0]->tags[3]->cdata;
-    	gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'N', 1,  $identificador); //$retGravame, $retContr, $identificador);
+    	gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], retornarMensagemErro($xmlRet), $dataInteracao, $idRegistro, 'N', 1,  $identificador); //$retGravame, $retContr, $identificador);
     	if($GLOBALS["httpcode"] == 200 && ($retGravame == 30 || $retContr == 90)){
     		return true;
     	} else{
@@ -259,11 +254,11 @@
   		$xmlResult = mensageria($xml,"GRVM0001","AUDITGRAVAM",$GLOBALS['cdcooper'],$GLOBALS["cdagenci"],$GLOBALS["nrdcaixa"],$GLOBALS["idorigem"],$GLOBALS["cdoperad"],"</Root>");  		
   		$xmlObj = getObjectXML($xmlResult);
 
-		// Se ocorrer um erro, mostra crítica
+		/*/ Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
-		}
+		}*/
     }
 
     //Função que trata o retorno de erro e monta a mensagem para salvar.
