@@ -21,7 +21,6 @@
 	// Recebe a operação que está sendo realizada
 	$cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : '' ;
 	$dtcompen = (isset($_POST['dtcompen'])) ? $_POST['dtcompen'] : '' ;
-	$cdcmpchq = (isset($_POST['cdcmpchq'])) ? $_POST['cdcmpchq'] : '' ;
 	$cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : '' ;
 	$cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : '' ;
 	$nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : '' ;
@@ -38,7 +37,6 @@
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
 	$xml .= "   <dtmvtolt>".$dtcompen."</dtmvtolt>";
-	$xml .= "   <cdcmpchq>".$cdcmpchq."</cdcmpchq>";
 	$xml .= "   <cdbanchq>".$cdbanchq."</cdbanchq>";
 	$xml .= "   <cdagechq>".$cdagechq."</cdagechq>";
 	$xml .= "   <nrctachq>".$nrctachq."</nrctachq>";

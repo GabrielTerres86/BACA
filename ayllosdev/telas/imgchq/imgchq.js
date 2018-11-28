@@ -792,7 +792,7 @@ function bloquearImagens(flgBloquear) {
     if (tpremess == "N") {
         cdcmpchq = retiraCaracteres(cCompechq.val(), "0123456789", true);
         cdbanchq = retiraCaracteres(cBancochq.val(), "0123456789", true);
-        cdagechq = retiraCaracteres($('#agencchq', '#frmConsultaImagem').val(), "0123456789", true);
+        cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);
 
         if ((!validaNumero(cdcmpchq, true, 0, 0)) || (cdcmpchq == "")) {
             hideMsgAguardo();
@@ -815,6 +815,7 @@ function bloquearImagens(flgBloquear) {
     } else
         if (tpremess == "S") {
             cdbanchq = 85;
+            cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);
         }
 
     if (cooploga == "3")
