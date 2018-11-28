@@ -1302,7 +1302,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                           ,pr_cdcritic => vr_cdcritic
                                                           ,pr_dscritic => vr_dscritic);
 
-                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                       IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                            RAISE vr_exc_saida;
                        END IF;
                        rw_craplcm.rowid := vr_tab_retorno.rowidlct;
@@ -1606,7 +1606,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                , pr_cdcritic => vr_cdcritic
                                                , pr_dscritic => vr_dscritic);
 
-                        IF vr_dscritic IS NOT NULL THEN
+                        IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                            RAISE vr_exc_saida;
                         END IF;
 
@@ -1649,14 +1649,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                        , pr_cdcritic => vr_cdcritic
                                                        , pr_dscritic => vr_dscritic
                                                        );
-                      IF vr_dscritic IS NOT NULL
-                        AND vr_incrineg = 0 THEN -- Erro de sistema/BD
+                      IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                          RAISE vr_exc_saida;
                       END IF;
 
                       -- guarda dados par serem utilizados mais a frente
                       rw_craplcm.vllanmto := rw_crapsld.vljuresp;
                       rw_craplcm.vldoipmf := TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2);
+                      rw_craplcm.rowid    := vr_tab_retorno.rowidlct;
 
                    -- Se na carga inicial não haviam lançamentos do dia para a conta
                    IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
@@ -2435,7 +2435,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic);
 
-                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                      RAISE vr_exc_saida;
                  END IF;
                  --vr_nrdrowid := vr_tab_retorno.rowidlct;
