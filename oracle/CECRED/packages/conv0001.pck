@@ -3434,44 +3434,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         RAISE vr_exc_erro;
       END IF;
       
-      /* Prj421 - Geracao de arquivo contabil */
-      -- Busca do diretório onde ficará o arquivo
-      vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
-                                                pr_cdcooper => pr_cdcooper,
-                                                pr_nmsubdir => 'contab');
-                                                
-      -- Busca o diretório final para copiar arquivos
-      vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                              ,pr_cdcooper => 0
-                                              ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
-      -- Nome do arquivo a ser gerado
-      vr_dtmvtolt_yymmdd := to_char(pr_dtmvtolt, 'yymmdd');
-      vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_IOF_DPVAT.txt';
-
-      -- Abre o arquivo para escrita
-      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
-                               pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
-                               pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
-                               pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
-                               pr_des_erro => vr_dscritic);
-
-      if vr_dscritic is not null then
-        vr_cdcritic := 0;
-        RAISE vr_exc_erro;
-      end if;
-
-      /* Escrita arquivo */
-      vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
-                     trim(to_char(pr_dtmvtolt,'ddmmyy'))||','||
-                     '4336,'||
-                     '4118,'||
-                     trim(to_char(vr_vltotiof, '99999999999990.00'))||','||
-                     '5210,'||
-                     '"VALOR REF. IOF SOBRE ARRECADACOES DO SEGURO DPVAT"';
-
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-      /* Fim escrita arquivo */
-      
       CASE WHEN to_number(to_char(pr_dtmvtolt,'DD')) BETWEEN 1 AND 10 THEN
         vr_dtini    := TO_DATE('21' || TO_CHAR(add_months(pr_dtmvtolt,-1), '/MM/RRRR'), 'DD/MM/RRRR');
         vr_dtfim    := LAST_DAY(add_months(pr_dtmvtolt,-1));
@@ -3512,6 +3474,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                                                 ,pr_dtmvtolt => vr_dtrecolh
                                                 ,pr_tipo => 'P');
       
+      IF nvl(vr_vltotiof,0) > 0 
+      OR vr_dtrecolh = pr_dtmvtolt THEN
+      
+        /* Prj421 - Geracao de arquivo contabil */
+        -- Busca do diretório onde ficará o arquivo
+        vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                  pr_cdcooper => pr_cdcooper,
+                                                  pr_nmsubdir => 'contab');
+                                                  
+        -- Busca o diretório final para copiar arquivos
+        vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => 0
+                                                ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
+        -- Nome do arquivo a ser gerado
+        vr_dtmvtolt_yymmdd := to_char(pr_dtmvtolt, 'yymmdd');
+        vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_IOF_DPVAT.txt';
+
+        -- Abre o arquivo para escrita
+        gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                                 pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                                 pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                                 pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                                 pr_des_erro => vr_dscritic);
+
+        if vr_dscritic is not null then
+          vr_cdcritic := 0;
+          RAISE vr_exc_erro;
+        end if;
+        
+        IF nvl(vr_vltotiof,0) > 0 THEN
+          /* Escrita arquivo */
+          vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                         trim(to_char(pr_dtmvtolt,'ddmmyy'))||','||
+                         '4336,'||
+                         '4118,'||
+                         trim(to_char(vr_vltotiof, '99999999999990.00'))||','||
+                         '5210,'||
+                         '"VALOR REF. IOF SOBRE ARRECADACOES DO SEGURO DPVAT"';
+
+          gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+          /* Fim escrita arquivo */
+        END IF;
+        
       --Se o dia atual é o dia do recolhimento decendial, deve-se realizar lancamento de baixa dos valores
       IF vr_dtrecolh = pr_dtmvtolt THEN
         vr_vltotiof := 0;
@@ -3571,6 +3576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
          vr_cdcritic := 1040;
          gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
       end if;
+      END IF;
 
       COMMIT;
 

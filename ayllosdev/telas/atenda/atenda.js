@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 16/07/2018 ***//
+//*** Data : Agosto/2007                  Última Alteração: 23/11/2018 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -87,6 +87,8 @@
                   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
 				   
                   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+
+                  23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 				   
 ***************************************************************************/
 
@@ -622,9 +624,10 @@ function formataCabecalho() {
     rDssitdct = $('label[for="dssitdct"]', '#frmCabAtenda');
     rIndnivel = $('label[for="indnivel"]', '#frmCabAtenda');
     rCdempres = $('label[for="cdempres"]', '#frmCabAtenda');
-    rCdsecext = $('label[for="cdsecext"]', '#frmCabAtenda');
-    rCdturnos = $('label[for="cdturnos"]', '#frmCabAtenda');
-    rCdtipsfx = $('label[for="cdtipsfx"]', '#frmCabAtenda');
+    //rCdsecext = $('label[for="cdsecext"]', '#frmCabAtenda');
+    //rCdturnos = $('label[for="cdturnos"]', '#frmCabAtenda');
+    //rCdtipsfx = $('label[for="cdtipsfx"]', '#frmCabAtenda');
+    rCdscobeh = $('label[for="cdscobeh"]', '#frmCabAtenda');
     rQtdevolu = $('label[for="qtdevolu"]', '#frmCabAtenda');
     rQtdddeve = $('label[for="qtdddeve"]', '#frmCabAtenda');
     rDtabtcct = $('label[for="dtabtcct"]', '#frmCabAtenda');
@@ -652,9 +655,10 @@ function formataCabecalho() {
     rDssitdct.addClass('rotulo-linha').css({ 'width': '55px' });
     rIndnivel.addClass('rotulo').css({ 'width': '111px' });
     rCdempres.addClass('rotulo-linha').css({ 'width': '56px' });
-    rCdsecext.addClass('rotulo-linha').css({ 'width': '39px' });
-    rCdturnos.addClass('rotulo-linha').css({ 'width': '39px' });
-    rCdtipsfx.addClass('rotulo-linha').css({ 'width': '71px' });
+    //rCdsecext.addClass('rotulo-linha').css({ 'width': '39px' });
+    //rCdturnos.addClass('rotulo-linha').css({ 'width': '39px' });
+    //rCdtipsfx.addClass('rotulo-linha').css({ 'width': '71px' });
+    rCdscobeh.addClass('rotulo-linha').css({ 'width': '104px' });
     rQtdevolu.addClass('rotulo').css({ 'width': '111px' });
     rQtdddeve.addClass('rotulo-linha').css({ 'width': '105px' });
     rDtabtcct.addClass('rotulo-linha').css({ 'width': '78px' });
@@ -683,9 +687,10 @@ function formataCabecalho() {
     cDssitdct = $('#dssitdct', '#frmCabAtenda');
     cIndnivel = $('#indnivel', '#frmCabAtenda');
     cCdempres = $('#cdempres', '#frmCabAtenda');
-    cCdsecext = $('#cdsecext', '#frmCabAtenda');
-    cCdturnos = $('#cdturnos', '#frmCabAtenda');
-    cCdtipsfx = $('#cdtipsfx', '#frmCabAtenda');
+    //cCdsecext = $('#cdsecext', '#frmCabAtenda');
+    //cCdturnos = $('#cdturnos', '#frmCabAtenda');
+    //cCdtipsfx = $('#cdtipsfx', '#frmCabAtenda');
+    cCdscobeh = $('#cdscobeh', '#frmCabAtenda');
     cQtdevolu = $('#qtdevolu', '#frmCabAtenda');
     cQtdddeve = $('#qtdddeve', '#frmCabAtenda');
     cDtabtcct = $('#dtabtcct', '#frmCabAtenda');
@@ -713,9 +718,10 @@ function formataCabecalho() {
     cDssitdct.css({ 'width': '170px' });
     cIndnivel.css({ 'width': '38px' });;
     cCdempres.css({ 'width': '45px' });
-    cCdsecext.css({ 'width': '45px' });
-    cCdturnos.css({ 'width': '38px' });
-    cCdtipsfx.css({ 'width': '30px' });
+    //cCdsecext.css({ 'width': '45px' });
+    //cCdturnos.css({ 'width': '38px' });
+    //cCdtipsfx.css({ 'width': '30px' });
+    cCdscobeh.css({ 'width': '170px' });
     cQtdevolu.css({ 'width': '80px' });
     cQtdddeve.css({ 'width': '80px' });
     cDtabtcct.css({ 'width': '70px' });
@@ -740,9 +746,9 @@ function formataCabecalho() {
         rDssitdct.css({ 'width': '58px' });
 
         rCdempres.css({ 'width': '59px' });
-        rCdsecext.css({ 'width': '42px' });
-        rCdturnos.css({ 'width': '42px' });
-        rCdtipsfx.css({ 'width': '74px' });
+        //rCdsecext.css({ 'width': '42px' });
+        //rCdturnos.css({ 'width': '42px' });
+        //rCdtipsfx.css({ 'width': '74px' });
 
         rQtdddeve.css({ 'width': '107px' });
         rDtabtcct.css({ 'width': '81px' });

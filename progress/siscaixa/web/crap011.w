@@ -25,17 +25,20 @@ Alteracoes: 30/04/2009 -  Excluida as variaveis "v_complem4" e "v_complem5"
             18/05/2017 - Incluir DO TRANSACTION para a critica do historico 707 
                          pois estava ocorrendo erro ao compilar o fonte (Lucas Ranghetti #654609)
 
-			14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital (Jonata - RKAM P364).
+			      14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital (Jonata - RKAM P364).
 
-			27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
+			      27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
                         (Jonata - MOUTS SD 812703/810959 )
                         
             14/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                          norturno rodando (Douglas Pagel - AMcom).
 						 
 						 
-		    04/09/2018 - chamar procedure pc_valida_valor_devolucao, para validar valor da devolução.
-			             (Alcemir - Mout's : SM 364)
+		        04/09/2018 - chamar procedure pc_valida_valor_devolucao, para validar valor da devolução.
+			                  (Alcemir - Mout's : SM 364)
+                        
+            23/11/2018 - Implantacao Projeto 421 (Parte 2)
+                         Heitor (Mouts) - Prj421
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -123,7 +126,7 @@ DEFINE VARIABLE l-valor    AS LOGICAL.
 DEFINE VARIABLE c-hist     AS CHARACTER NO-UNDO.
 DEF VAR l-ok AS LOG NO-UNDO.
 DEF VAR l-habilita         AS INT INIT 0 NO-UNDO.
-
+DEF VAR l-his-senha        AS CHAR      NO-UNDO.
 
 DEF VAR l-houve-erro    AS LOG          NO-UNDO.
 
@@ -1067,9 +1070,21 @@ PROCEDURE process-web-request :
             DISABLE v_complem3 WITH FRAME {&FRAME-NAME}.
                   ENABLE  v_doc      WITH FRAME {&FRAME-NAME}.
                
+
+			FIND crapprm WHERE crapprm.cdcooper = crapcop.cdcooper
+	        	           AND crapprm.cdacesso = 'HIS_SENHA_ROTINA_11'
+				           AND crapprm.nmsistem = 'CRED'
+				           NO-LOCK NO-ERROR.
+
+			IF AVAIL crapprm THEN
+			  ASSIGN l-his-senha = crapprm.dsvlrprm.
+			ELSE
+			  ASSIGN l-his-senha = " ".
+			
             IF  INT(v_hist) = 701  OR INT(v_hist) = 702  OR
                 INT(v_hist) = 733  OR INT(v_hist)= 734   OR
-                INT(v_hist) = 1152 OR INT(v_hist) = 1153 THEN
+                INT(v_hist) = 1152 OR INT(v_hist) = 1153 OR
+                CAN-DO(l-his-senha,v_hist)				THEN
                 ENABLE  v_cod v_senha WITH FRAME {&FRAME-NAME}.
             ELSE
                 DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.
@@ -1088,10 +1103,20 @@ PROCEDURE process-web-request :
     ELSE
       DISABLE v_doc         WITH FRAME {&FRAME-NAME}.
    
+    FIND crapprm WHERE crapprm.cdcooper = crapcop.cdcooper
+				   AND crapprm.cdacesso = 'HIS_SENHA_ROTINA_11'
+				   AND crapprm.nmsistem = 'CRED'
+				   NO-LOCK NO-ERROR.
+
+	IF AVAIL crapprm THEN
+	  ASSIGN l-his-senha = crapprm.dsvlrprm.
+	ELSE
+	  ASSIGN l-his-senha = " ".
        
     IF  INT(v_hist) = 701  OR INT(v_hist) = 702  OR
         INT(v_hist) = 733  OR INT(v_hist)= 734   OR
-        INT(v_hist) = 1152 OR INT(v_hist) = 1153 THEN
+        INT(v_hist) = 1152 OR INT(v_hist) = 1153 OR
+        CAN-DO(l-his-senha,v_hist)               THEN
         ENABLE  v_cod v_senha WITH FRAME {&FRAME-NAME}.
     ELSE
         DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.

@@ -8885,7 +8885,9 @@ create or replace package body cecred.PAGA0002 is
                  RAISE vr_exc_erro;
               END IF;
               
-              
+              rw_craplcm.nrdconta := rw_crapccs.nrctatrf; 
+              rw_craplcm.vllanmto := rw_craplcs.vllanmto;
+              rw_craplcm.nrdocmto := rw_craplcs.nrdocmto;
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -8894,6 +8896,7 @@ create or replace package body cecred.PAGA0002 is
                                ||' nrdolote: '|| rw_craplot.nrdolote|| ' :'||SQLERRM;
             RAISE vr_exc_erro;
         END;
+
 
         --Atualizar dados do lote no rowtype
         rw_craplot.qtcompln := rw_craplot.qtcompln + 1;

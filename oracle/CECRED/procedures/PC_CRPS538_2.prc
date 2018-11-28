@@ -59,6 +59,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        06/11/2018 - Não passar e-mail indevido de causa de feriados não tratados.
                     (Belli - Envolti - Chamado REQ0032105)   
 
+	   23/11/2018 - Implantacao Projeto 421 (Parte 2)
+                    Heitor (Mouts) - Prj421
+
    ................................................................................................*/
 
      DECLARE
@@ -501,7 +504,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           dev.cdagerem,
           dev.dscodbar,
           dev.vlliquid,
-          dev.cdmotdev
+             dev.cdmotdev,
+             dev.nrdconta
      FROM tbcobran_devolucao dev,
           crapban ban
     WHERE dev.cdcooper = pr_cdcooper
@@ -511,10 +515,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                   
     ---------> VARIAVEIS <----------
     vr_dsmotdev VARCHAR2(4000);     
+      vr_clobcri    CLOB;
+      vr_dscontabil VARCHAR2(4000);
+      
+      vr_dircon       VARCHAR2(200);
+      vr_arqcon       VARCHAR2(200);
+      vc_dircon       CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos';
+      vc_cdacesso     CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+      vr_caminho_puro VARCHAR2(1000);
            
     BEGIN
            
       vr_nmarqimp:= 'crrl574.lst';
+
+      -- Preparar o CLOB para armazenar as infos do arquivo
+      dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
 
       -- Inicializar o CLOB
       dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -546,6 +562,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          vr_dsmotdev := 'Descrição de motivo não encontrada';
       END CASE;    
 
+        IF rw_devolucao.cdmotdev = 53 THEN
+          vr_dscontabil := TO_CHAR(pr_dtmvtolt,'RRRRMMDD') || ',' || TO_CHAR(pr_dtmvtolt,'DDMMRRRR') ||
+                           ',1455,4894,' || TO_CHAR(rw_devolucao.vlliquid,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                           ',5210,"' ||'APRESENTACAO INDEVIDA. COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_devolucao.nrdconta) ||
+                           ' (CONFORME CRITICA RELATORIO 574) - A REGULARIZAR"' || chr(10);
+          
+          -- Adiciona a linha ao arquivo de criticas
+          dbms_lob.writeappend(vr_clobcri, length(vr_dscontabil),vr_dscontabil);
+        END IF;
+
       --Escrever no Arquivo XML
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
        '<dado>
@@ -558,6 +584,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
             '<cdmotdev>'|| rw_devolucao.cdmotdev   ||'</cdmotdev>'||
             '<dsmotdev>'|| gene0007.fn_caract_acento(vr_dsmotdev) ||'</dsmotdev>
         </dado>');        
+        
         -- Retorna nome do modulo logado
         GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
       END LOOP;
@@ -601,6 +628,44 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         -- Gerar excecao
         RAISE vr_exc_saida;
       END IF;
+      
+      IF LENGTH(vr_clobcri) > 0 THEN
+        -- Busca o diretório para contabilidade
+        vr_caminho_puro:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsubdir => NULL);
+
+        vr_dircon := gene0001.fn_param_sistema('CRED', 0, vc_cdacesso);
+        vr_dircon := vr_dircon || vc_dircon;
+        vr_arqcon := TO_CHAR(pr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_574.txt';
+
+        -- Chama a geracao do TXT
+        GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
+                                        ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
+                                        ,pr_dtmvtolt  => pr_dtmvtolt      --> Data do movimento atual
+                                        ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
+                                        ,pr_dsarqsaid => vr_caminho_puro || '/contab/' || vr_arqcon    --> Arquivo final com o path
+                                        ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
+                                        ,pr_flg_gerar => 'N'                      --> Apenas submeter
+                                        ,pr_dspathcop => vr_dircon
+                                        ,pr_fldoscop  => 'S'
+                                        ,pr_des_erro  => vr_dscritic);            --> Saída com erro
+      
+      IF vr_dscritic IS NOT NULL THEN
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 1197;
+        vr_dscritic := vr_dscritic ||
+                       ' - gene0002.pc_solicita_relato';
+        -- Gerar excecao
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_clobcri);
+      dbms_lob.freetemporary(vr_clobcri);
+
+     END IF;
+      
       -- Retorna nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
 

@@ -251,6 +251,9 @@ BEGIN
   --                          BLQPREJU
   --                          (Renato Cordeiro - AMcom)
 
+  				 20/11/2018 - Ajuste no fechamento do cursor cr_craplot_II, irá fechar somente se estiver aberto. 
+  				 			  (Douglas - Mouts - PRB0040348 )
+
   ............................................................................................*/
   
   DECLARE
@@ -1375,7 +1378,9 @@ BEGIN
           END IF;
           
           -- FECHAR O CURSOR
-          CLOSE cr_craplot_II;
+           IF  cr_craplot_II%ISOPEN THEN
+          	   CLOSE cr_craplot_II;
+           END IF;
 
           -- BUSCA REGISTRO REFERENTE AO LOTE CRIADO
           OPEN cr_craplot_II(pr_cdcooper => vr_cdcooper,
@@ -1404,7 +1409,9 @@ BEGIN
       END IF;
 
       -- FECHAR O CURSOR
-      CLOSE cr_craplot_II;
+      IF  cr_craplot_II%ISOPEN THEN
+          CLOSE cr_craplot_II;
+      END IF;
 
       -- VERIFICA SE É UMA CONTA MIGRADA
       IF vr_ctamigra = 1 THEN

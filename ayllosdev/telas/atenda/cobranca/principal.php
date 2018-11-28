@@ -301,22 +301,37 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
 	<input type="hidden" id= "inenvcob"    name="inenvcob">
 
-    <?php //Habilitar botão apenas se possuir cobrança ativa
-          // e se o serviço estiver ativo ou com algum tipo de alerta
-          // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
-          if ($aux_insitceb == 1 && 
-              ($flsitsms == 1 || $dsalerta != "")) { ?>
-        		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
-    		<?php  } ?>
-    
-    <a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
-    <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
-    <a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
-    <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
-    <a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
-	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
+    <?php
+	// Habilitar botão apenas se possuir cobrança ativa
+    // e se o serviço estiver ativo ou com algum tipo de alerta
+    // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
+    if ($aux_insitceb == 1 && ($flsitsms == 1 || $dsalerta != "")) {
+	?>
+		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
+    <?php
+	}
+	// utilizada variavel para controle da origem da tela
+	$telaOrigem = $_POST['telaOrigem'];
+	
+	if ($telaOrigem == 'RECIPROCIDADE') {
+	?>
+		<a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
+		<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+		<a href="#" class="botao" onclick="carregaReciprocidade(); return false;">Voltar</a>
+	<?php
+	} else {
+	?>
+		<a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
+		<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
+		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+		<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
+		<a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
+		<a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
+		<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
+	<?php
+	}
+	?>
 	
 	<input type="hidden" id= "flsercco"    name="flsercco">
 	

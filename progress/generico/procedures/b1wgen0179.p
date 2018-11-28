@@ -81,6 +81,8 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+	DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_cdagrupa AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -111,7 +113,7 @@ PROCEDURE Busca_Dados:
     EMPTY TEMP-TABLE tt-histor.
     EMPTY TEMP-TABLE tt-erro.
     
-    IF  NOT CAN-DO("A,B,C,I,O,X",par_cddopcao) THEN
+    IF  NOT CAN-DO("A,B,C,I,O,X,T",par_cddopcao) THEN
         DO:
             ASSIGN aux_cdcritic = 014
                    aux_dscritic = "".
@@ -162,9 +164,10 @@ PROCEDURE Busca_Dados:
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".
 
-    IF  par_cddopcao = "A" OR par_cddopcao = "I" OR par_cddopcao = "X" THEN DO:
+    IF  par_cddopcao = "A" OR par_cddopcao = "I" OR par_cddopcao = "X" OR par_cddopcao = "T" THEN DO:
 
-        /* Validar se o Codigo Novo nao existe (apenas cddopcao = "I") */
+        /* Codigo do historico sera gerado automaticamente
+        Validar se o Codigo Novo nao existe (apenas cddopcao = "I")
         IF par_cddopcao = "I"  THEN
             DO:
                 FIND FIRST craphis WHERE craphis.cdcooper = par_cdcooper 
@@ -187,7 +190,7 @@ PROCEDURE Busca_Dados:
                                        INPUT-OUTPUT aux_dscritic).
                         RETURN "NOK".
                     END.
-            END.
+            END.*/
 
         /* Para as opcoes Incluir, Alterar e Replicar 
            deve carregar os dados do historico informado */
@@ -223,6 +226,8 @@ PROCEDURE Busca_Dados:
               INPUT par_nrregist,
               INPUT par_nriniseq,
               INPUT aux_txcpmfcc,
+			  INPUT par_cdprodut,
+			  INPUT par_cdagrupa,
              OUTPUT par_qtregist,
              OUTPUT TABLE tt-histor).
 
@@ -291,6 +296,8 @@ PROCEDURE Busca_Consulta PRIVATE:
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txcpmfcc AS DECI                           NO-UNDO.
+	DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_cdagrupa AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-histor.
@@ -321,6 +328,10 @@ PROCEDURE Busca_Consulta PRIVATE:
 						         craphis.dsexthst MATCHES "*" + TRIM(par_dshistor) + "*" )
                            AND ((craphis.cdgrphis = par_cdgrphis    AND
                                  par_cdgrphis <> 0) OR par_cdgrphis = 0)
+						   AND ((craphis.cdprodut = par_cdprodut    AND
+                                 par_cdprodut <> 0) OR par_cdprodut = 0)
+						   AND ((craphis.cdagrupa = par_cdagrupa    AND
+                                 par_cdagrupa <> 0) OR par_cdagrupa = 0)
                          NO-LOCK
                          BY craphis.cdhistor:
             
@@ -877,6 +888,7 @@ PROCEDURE Grava_Dados:
 	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdhisnov AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     /* Valores das tarifas */ 
@@ -1184,6 +1196,7 @@ PROCEDURE Grava_Dados:
            verificar se o historico nao existe */
         IF  par_cddopcao = "I"  THEN
             DO:
+                /* Codigo sera gerado automaticamente
                 IF par_cdhinovo = 0 THEN
                     DO:
                         ASSIGN aux_cdcritic = 0 
@@ -1207,15 +1220,34 @@ PROCEDURE Grava_Dados:
                                 LEAVE Grava.
                             END.
                     END.
+                */
+                
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Busca a proxima sequencia do campo crapldt.nrsequen */
+                RUN STORED-PROCEDURE pc_sequence_progress
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPHIS"
+                                                    ,INPUT "CDHISTOR"
+                                                    ," "
+                                                    ,INPUT "N"
+                                                    ,"").
+
+                CLOSE STORED-PROC pc_sequence_progress
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN par_cdhisnov = INTE(pc_sequence_progress.pr_sequence)
+                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
                 /* Criar o registro do historico */
                 CREATE craphis.
                 ASSIGN craphis.cdcooper = par_cdcooper
-                       craphis.cdhistor = par_cdhinovo.
+                       craphis.cdhistor = par_cdhisnov.
             END.
 
             /* Quando opcao "A", lock no historico para que sejam atualizados os campos */
-            IF par_cddopcao = "A" THEN
+            IF par_cddopcao = "A" or par_cddopcao = "T" THEN
                 DO:
                     
                     Contador: DO aux_contador = 1 TO 10:
@@ -1307,7 +1339,7 @@ PROCEDURE Grava_Dados:
                         esta alterando o historico */
                 END.
 
-            IF par_cddopcao = "A" OR par_cddopcao = "I"  THEN
+            IF par_cddopcao = "A" OR par_cddopcao = "I" OR par_cddopcao = "T" THEN
                 DO:
                     /* Atualizar o historico */
                     ASSIGN craphis.cdhstctb  =  par_cdhstctb
@@ -1423,7 +1455,7 @@ PROCEDURE Grava_Dados:
                           DO:
                           
                             ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-                            aux_dstransa = "O operador " + STRING(par_operauto) + " - " + STRING(crapope.nmoperad) + " autorizou a alteracao do indicador de utilizacao do historico no Bloqueio Judicial do Historico " + STRING(par_cdhinovo) + " de 'Sim' para 'Nao'".
+                            aux_dstransa = "O operador " + STRING(par_operauto) + " - " + STRING(crapope.nmoperad) + " autorizou a alteracao do indicador de utilizacao do historico no Bloqueio Judicial do Historico " + STRING(par_cdhisnov) + " de 'Sim' para 'Nao'".
                           
                           END.
                         
@@ -2555,3 +2587,25 @@ PROCEDURE gera_logtel:
 
 END PROCEDURE.
 
+PROCEDURE Busca_Indfuncao:
+	DEF INPUT  PARAM par_cdcooper AS INTE NO-UNDO.
+	DEF OUTPUT PARAM par_qtregist AS INTE NO-UNDO.
+	DEF OUTPUT PARAM TABLE FOR tt-indfuncao.
+
+	DEF VAR aux_nrseqatu AS INTE NO-UNDO.
+
+	ASSIGN aux_nrseqatu = 0.
+	
+	FOR EACH crapfhs WHERE crapfhs.cdcooper = par_cdcooper NO-LOCK
+    BY crapfhs.inhistor:
+	    ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
+
+		CREATE tt-indfuncao.
+		ASSIGN tt-indfuncao.inhistor = crapfhs.inhistor
+		       tt-indfuncao.fnhistor = crapfhs.fnhistor.
+	END.
+	
+	ASSIGN par_qtregist = aux_nrseqatu.
+	
+	RETURN "OK".
+END PROCEDURE.

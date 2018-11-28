@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 16/07/2018
+	 Data : Julho/2007                   Última Alteração: 23/11/2018
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -116,8 +116,12 @@
 
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
 
-         16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+                 16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
+				 15/11/2018 - Validacao e mudança do link de cobrança caso seja cooperativa piloto (Andre Clemer - Supero).
+
+                 23/11/2018 - P442 - Inclusao de campos do Score + Remoção de campos de empresa (Thaise - Envolti)
+                   
  * ********************************************************************************** */
 
 	session_start();	
@@ -275,9 +279,9 @@ if ( isset($cabecalho[12]->cdata) ) {
 if ( isset($cabecalho[13]->cdata) ) {
 	echo '$("#nrcpfcgc","#frmCabAtenda").val("' . $cabecalho[13]->cdata . '");';
 }
-if ( isset($cabecalho[14]->cdata) ) {
-	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
-}
+//if ( isset($cabecalho[14]->cdata) ) {
+//	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
+//}
 if ( isset($cabecalho[15]->cdata) ) {
 	echo '$("#indnivel","#frmCabAtenda").val("' . $cabecalho[15]->cdata . '");';
 }
@@ -290,11 +294,14 @@ if ( isset($cabecalho[17]->cdata) ) {
 if ( isset($cabecalho[18]->cdata) ) {
 	echo '$("#cdempres","#frmCabAtenda").val("' . $cabecalho[18]->cdata . '");';
 }
-if ( isset($cabecalho[19]->cdata) ) {
-	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
-}
-if ( isset($cabecalho[20]->cdata) ) {
-	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//if ( isset($cabecalho[19]->cdata) ) {
+//	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
+//}
+//if ( isset($cabecalho[20]->cdata) ) {
+//	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+//}
+if ( isset($cabecalho[29]->cdata) ) {
+	echo '$("#cdscobeh","#frmCabAtenda").val("' . $cabecalho[29]->cdata . '");';
 }
 if ( isset($cabecalho[21]->cdata) ) {
 	echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';
@@ -311,7 +318,7 @@ if ( isset($cabecalho[25]->cdata) ) {
 	}
 if ( isset($cabecalho[28]->cdata) ) {
 	echo '$("#nmsocial","#frmCabAtenda").val("' . $cabecalho[28]->cdata . '");';
-	
+
 	// se for pessoa física
 	if ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata > 1) {
 		echo '$("#nmsocial","#frmCabAtenda").hide();';
@@ -323,7 +330,7 @@ if ( isset($cabecalho[28]->cdata) ) {
 		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
 	}
 }
-
+	
 	
 	// Dados complementares da conta/dv	
 if ( isset($compCabecalho[0]->cdata) ) {
@@ -589,6 +596,16 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			case "COBRANCA": {
 				$nomeRotina = "Cobran&ccedil;a";
                 $urlRotina = "cobranca";
+				if ( isset($cabecalho[30]->cdata) && $cabecalho[30]->cdata == 1 ) {
+					$urlRotina = "reciprocidade";
+				}
+                $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "RECIPROCIDADE": {
+				$nomeRotina = "Reciprocidade";
+                $urlRotina = "reciprocidade";
                 $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
 				$telaPermitadaAcessoBacen = 0;
 				break;
@@ -714,6 +731,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Previd&ecirc;ncia"; 
 				$urlRotina = "";
 				$strValue = ( isset($valores[22]->cdata) ) ? ($valores[22]->cdata == "1" OR $valores[22]->cdata == "2")  ? "SIM" : "NAO" : "NAO"; 
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "SCORE": {
+				$nomeRotina = "Score"; 
+				$urlRotina = "score_comportamental";
+				$strValue = "";
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}

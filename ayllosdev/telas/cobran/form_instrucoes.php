@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   :  30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  *                 22/09/2017 - Ajustes nas validações para exibir as instruções de Serasa e Protesto (Douglas - Chamado 754911)
+ *			       05/10/2018 - Adicionado validação para não exibir Protesto 9 quando sacado estiver em uma UF não autorizada (Anderson Alan - SM_Projeto_352)
  * --------------
  */
 
@@ -70,6 +71,15 @@ foreach( $registro as $r ) {
 				// Não criar a opção
 				$cria_opcao = 0;
 			} 
+		}
+		
+		// Verifica se o UF sacado está em um UF sem autorização para estar em protesto, caso estiver, não permite instrução 9
+		if ($estaEmDsnegufds) {
+			if( getByTagName($r->tags,'cdocorre') == 9 || // Protestar
+				getByTagName($r->tags, 'cdocorre') == 80) { // Incluir Instrução Automática de Protesto
+				// Não criar a opção
+				$cria_opcao = 0;
+	}
 		}
 	}
 

@@ -87,7 +87,27 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SIMCRP AS
                                           ,pr_retxml                   IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
                                           ,pr_nmdcampo                 OUT VARCHAR2               --Nome do Campo
                                           ,pr_des_erro                 OUT VARCHAR2);             --Saida OK/NOK
-
+  /* Calcula a reciprocidade */
+	PROCEDURE pc_calcula_reciprocidade(pr_cdcooper             IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
+		                                ,pr_ls_nrconvenio        IN  VARCHAR2                             -- Lista com os número dos convênios
+		                                ,pr_qtboletos_liquidados IN  INTEGER                               -- Quantidade de boletos liquidados
+																		,pr_vlliquidados         IN  VARCHAR2                               -- Volume (R$) de boletos liquidados
+																		,pr_idfloating           IN  INTEGER                               -- Quantidade de dias de floating
+																		,pr_idvinculacao         IN  INTEGER                               -- Identificador do grau de vinculação do cooperado
+																		,pr_vlaplicacoes         IN  VARCHAR2                               -- Valor a ser aplicado pelo cooperado
+																		,pr_vldeposito           IN  VARCHAR2                               -- Valor a ser depositado pelo cooperado
+																		,pr_idcoo                IN  INTEGER                               -- Cooperado emite e expede
+																		,pr_idcee                IN  INTEGER                               -- Cooperativa emite e expede
+--																		,pr_lsconvenios          IN  VARCHAR2                             -- Lista de convênios
+--																		,pr_vlcustos_coo         IN  NUMBER                               -- Valor dos custos COO
+--																		,pr_vlcustos_cee         IN  NUMBER                               -- Valor dos custos CEE
+																		,pr_xmllog               IN  VARCHAR2                             -- XML com informações de LOG
+																		,pr_cdcritic             OUT PLS_INTEGER                          -- Código da crítica
+																		,pr_dscritic             OUT VARCHAR2                             -- Descrição da crítica
+																		,pr_retxml               IN OUT NOCOPY xmltype                    -- Arquivo de retorno do XML
+																		,pr_nmdcampo             OUT VARCHAR2                             -- Nome do campo com erro
+																		,pr_des_erro             OUT VARCHAR2                             -- Erros do processo
+																		);
 END TELA_SIMCRP;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
@@ -1452,6 +1472,478 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
       ROLLBACK;
 
   END pc_confirma_simc_reciprocidade;
+	
+	-- PRJ431
+	PROCEDURE pc_calcula_reciprocidade(pr_cdcooper             IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
+		                                ,pr_ls_nrconvenio        IN  VARCHAR2                             -- Lista com os número dos convênios
+		                                ,pr_qtboletos_liquidados IN  INTEGER                               -- Quantidade de boletos liquidados
+																		,pr_vlliquidados         IN  VARCHAR2                               -- Volume (R$) de boletos liquidados
+																		,pr_idfloating           IN  INTEGER                               -- Quantidade de dias de floating
+																		,pr_idvinculacao         IN  INTEGER                               -- Identificador do grau de vinculação do cooperado
+																		,pr_vlaplicacoes         IN  VARCHAR2                               -- Valor a ser aplicado pelo cooperado
+																		,pr_vldeposito           IN  VARCHAR2                               -- Valor a ser depositado pelo cooperado
+																		,pr_idcoo                IN  INTEGER                               -- Cooperado emite e expede
+																		,pr_idcee                IN  INTEGER                               -- Cooperativa emite e expede
+																		,pr_xmllog               IN  VARCHAR2                             -- XML com informações de LOG
+																		,pr_cdcritic             OUT PLS_INTEGER                          -- Código da crítica
+																		,pr_dscritic             OUT VARCHAR2                             -- Descrição da crítica
+																		,pr_retxml               IN OUT NOCOPY xmltype                    -- Arquivo de retorno do XML
+																		,pr_nmdcampo             OUT VARCHAR2                             -- Nome do campo com erro
+																		,pr_des_erro             OUT VARCHAR2                             -- Erros do processo
+																		) IS
+    /* .............................................................................
+
+    Programa: pc_calcula_reciprocidade
+    Sistema : Ayllos Web
+    Autor   : Adriano Nagasava - Supero
+    Data    : 23/07/2018                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para calcular a reciprocidade.
+
+    Alteracoes: 
+		
+    ..............................................................................*/
+		
+		-- Cursor para buscar os indicadores para o cálculo
+		CURSOR cr_indicador(pr_cdcooper crapcco.cdcooper%TYPE
+		                   ,pr_nrconven crapcco.nrconven%TYPE
+		                    ) IS
+      SELECT tpic.idindicador
+						,tpic.vlminimo
+						,tpic.vlmaximo
+						,(tpic.vlpercentual_peso / 100) vlpercentual_peso
+						,(tpic.vlpercentual_desconto / 100) vlpercentual_desconto
+						,(tpc.vldesconto_maximo_cee / 100) vldesconto_maximo_cee
+						,(tpc.vldesconto_maximo_coo / 100) vldesconto_maximo_coo
+						,tpc.idparame_reciproci
+				FROM crapcco
+						,tbrecip_parame_indica_calculo tpic
+						,tbrecip_parame_calculo tpc
+				WHERE crapcco.idprmrec        = tpic.idparame_reciproci
+				  AND tpic.idparame_reciproci = tpc.idparame_reciproci
+					AND crapcco.cdcooper        = pr_cdcooper
+					AND crapcco.nrconven        = pr_nrconven
+		 ORDER BY tpic.idindicador;
+		
+		rw_indicador cr_indicador%ROWTYPE;
+		
+		CURSOR cr_vinculacao(pr_idvinculacao       tbrecip_vinculacao_parame.idvinculacao_reciproci%TYPE
+		                    ,pr_idparame_reciproci tbrecip_vinculacao_parame.idparame_reciproci%TYPE
+		                    ) IS
+      SELECT tvp.idvinculacao_reciproci
+						,(tvp.vlpercentual_desconto / 100) vlpercentual_desconto
+						,(tvp.vlpercentual_peso / 100) vlpercentual_peso
+				FROM tbrecip_vinculacao_parame tvp
+			 WHERE tvp.flgativo               = 1
+			   AND tvp.idvinculacao_reciproci = pr_idvinculacao
+				 AND tvp.idparame_reciproci     = pr_idparame_reciproci;
+		
+		rw_vinculacao cr_vinculacao%ROWTYPE;
+		
+		-- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+		
+		-- Variável de críticas
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic VARCHAR2(10000);
+
+		-- Tratamento de erros
+		vr_exc_erro EXCEPTION;
+		
+		-- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+		--
+		vr_conf_geral   GENE0002.typ_split;
+		
+		-- Variáveis utilizadas no cálculo
+		vr_qtfloating         NUMBER;
+		--
+		vr_resultado_ind02    NUMBER;
+		vr_resultado_ind03    NUMBER;
+		vr_resultado_ind21    NUMBER;
+		vr_resultado_ind22    NUMBER;
+		vr_resultado_ind23    NUMBER;
+		--
+		vr_resultado_indvi    NUMBER;
+		vr_desconto_indvi_cee NUMBER;
+		vr_desconto_indvi_coo NUMBER;
+		--
+		vr_desconto_ind02_cee NUMBER;
+		vr_desconto_ind03_cee NUMBER;
+		vr_desconto_ind21_cee NUMBER;
+		vr_desconto_ind22_cee NUMBER;
+		vr_desconto_ind23_cee NUMBER;
+		vr_desconto_total_cee NUMBER;
+		--
+		vr_desconto_ind02_coo NUMBER;
+		vr_desconto_ind03_coo NUMBER;
+		vr_desconto_ind21_coo NUMBER;
+		vr_desconto_ind22_coo NUMBER;
+		vr_desconto_ind23_coo NUMBER;
+		vr_desconto_total_coo NUMBER;
+		
+		--
+		vr_vlaplicacoes NUMBER;
+		vr_vlliquidados NUMBER;
+    vr_vldeposito   NUMBER;
+		
+		-- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
+                            ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE
+                            ) IS
+    BEGIN
+      --
+      gene0002.pc_escreve_xml(vr_des_xml
+                             ,vr_texto_completo
+                             ,pr_des_dados
+                             ,pr_fecha_xml
+                             );
+      --
+    END;
+		--
+	BEGIN
+		vr_vlaplicacoes := to_number(pr_vlaplicacoes);
+		vr_vlliquidados :=  to_number(pr_vlliquidados);
+		vr_vldeposito :=  to_number(pr_vldeposito);		
+		
+		-- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_SIMCRP'
+                              ,pr_action => null); 
+    
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+														);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+			--
+      RAISE vr_exc_erro;
+			--
+    END IF;
+		-- Irá pegar apenas a primeira ocorrência, pois por definição, 
+		-- não poderão existir parâmetros diferentes para os convênios da mesma cooperativa.
+		vr_conf_geral := gene0002.fn_quebra_string(pr_ls_nrconvenio,',');
+		--
+		OPEN cr_indicador(pr_cdcooper
+										 ,vr_conf_geral(1)
+											);
+		--
+		pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+		--
+		LOOP
+			--
+			FETCH cr_indicador INTO rw_indicador;
+			EXIT WHEN cr_indicador%NOTFOUND;
+			-- Processa cada um dos indicadores retornados
+			CASE rw_indicador.idindicador
+				-- Valor de boletos compensados
+				WHEN 2 THEN
+					--
+					IF vr_vlliquidados < rw_indicador.vlminimo THEN
+						--
+						vr_resultado_ind02 := 0;
+						--
+					ELSIF vr_vlliquidados > rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind02 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					ELSIF vr_vlliquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind02 := ((vr_vlliquidados - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					END IF;
+					--
+					IF pr_idcee = 1 THEN
+						--
+						vr_desconto_ind02_cee := vr_resultado_ind02;
+						--
+					END IF;
+					--
+					IF pr_idcoo = 1 THEN
+						--
+						vr_desconto_ind02_coo := vr_resultado_ind02;
+						--
+					END IF;
+				-- Quantidade de pagamentos
+				WHEN 3 THEN
+					--
+					IF pr_qtboletos_liquidados < rw_indicador.vlminimo THEN
+						--
+						vr_resultado_ind03 := 0;
+						--
+					ELSIF pr_qtboletos_liquidados > rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind03 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					ELSIF pr_qtboletos_liquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind03 := ((pr_qtboletos_liquidados - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					END IF;
+					--
+					IF pr_idcee = 1 THEN
+						--
+						vr_desconto_ind03_cee := vr_resultado_ind03;
+						--
+					END IF;
+					--
+					IF pr_idcoo = 1 THEN
+						--
+						vr_desconto_ind03_coo := vr_resultado_ind03;
+						--
+					END IF;
+				-- Quantidade de Floating
+				WHEN 21 THEN
+					-- Busca a quantidade de dias
+					BEGIN
+						--
+						SELECT tdc.dscodigo
+						  INTO vr_qtfloating
+						  FROM tbcobran_dominio_campo tdc
+						 WHERE tdc.nmdominio = 'TPFLOATING_RECIPR'
+						   AND tdc.cddominio = pr_idfloating;
+						--
+					EXCEPTION
+						WHEN no_data_found THEN
+							vr_dscritic := 'Floating ' || pr_idfloating || ' não encontrado!';
+							RAISE vr_exc_erro;
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao buscar o Floating: ' || SQLERRM;
+							RAISE vr_exc_erro;
+					END;
+					--
+					IF vr_qtfloating < rw_indicador.vlminimo THEN
+						--
+						vr_resultado_ind21 := 0;
+						--
+					ELSIF vr_qtfloating > rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind21 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					ELSIF vr_qtfloating BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind21 := ((vr_qtfloating - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					END IF;
+					--
+					IF pr_idcee = 1 THEN
+						--
+						vr_desconto_ind21_cee := vr_resultado_ind21;
+						--
+					END IF;
+					--
+					IF pr_idcoo = 1 THEN
+						--
+						vr_desconto_ind21_coo := vr_resultado_ind21;
+						--
+					END IF;
+				-- Quantidade da Aplicação
+				WHEN 22 THEN
+					--
+					IF vr_vlaplicacoes < rw_indicador.vlminimo THEN
+						--
+						vr_resultado_ind22 := 0;
+						--
+					ELSIF vr_vlaplicacoes > rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind22 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					ELSIF vr_vlaplicacoes BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+						--
+						vr_resultado_ind22 := ((vr_vlaplicacoes - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						--
+					END IF;
+					--
+					IF pr_idcee = 1 THEN
+						--
+						vr_desconto_ind22_cee := vr_resultado_ind22;
+						--
+					END IF;
+					--
+					IF pr_idcoo = 1 THEN
+						--
+						vr_desconto_ind22_coo := vr_resultado_ind22;
+						--
+					END IF;
+				-- Quantidade de Depósito à Vista
+				WHEN 25 THEN
+					-- Só considera este indicador para a cooperativa Viacredi
+					IF pr_cdcooper = 16 THEN
+						--
+						IF vr_vldeposito < rw_indicador.vlminimo THEN
+							--
+							vr_resultado_ind23 := 0;
+							--
+						ELSIF vr_vldeposito > rw_indicador.vlmaximo THEN
+							--
+							vr_resultado_ind23 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+							--
+						ELSIF vr_vldeposito BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+							--
+							vr_resultado_ind23 := ((vr_vldeposito - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+							--
+						END IF;
+						--
+						IF pr_idcee = 1 THEN
+							--
+							vr_desconto_ind23_cee := vr_resultado_ind23;
+							--
+						END IF;
+						--
+						IF pr_idcoo = 1 THEN
+							--
+							vr_desconto_ind23_coo := vr_resultado_ind23;
+							--
+						END IF;
+						--
+					END IF;
+				-- Caso o indicador não tenha tratamento
+				ELSE
+					--
+					NULL; -- Verificar
+					--
+			END CASE;
+			--
+		END LOOP;
+		-- Verifica o grau de vinculação
+		OPEN cr_vinculacao(pr_idvinculacao
+		                  ,rw_indicador.idparame_reciproci
+		                  );
+		--
+		FETCH cr_vinculacao INTO rw_vinculacao;
+		--
+		IF cr_vinculacao%FOUND THEN
+			--
+			vr_resultado_indvi := rw_vinculacao.vlpercentual_desconto * rw_vinculacao.vlpercentual_peso;
+			--
+		ELSE
+			--
+			vr_dscritic := 'Vinculação ' || pr_idvinculacao || ' não encontrada!';
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		IF pr_idcee = 1 THEN
+			--
+		  vr_desconto_indvi_cee := vr_resultado_indvi;
+			--
+		END IF;
+		--
+		IF pr_idcoo = 1 THEN
+			--
+			vr_desconto_indvi_coo := vr_resultado_indvi;
+			--
+		END IF;
+		--
+		vr_desconto_total_cee := round(nvl(vr_desconto_ind02_cee, 0) + 
+																	 nvl(vr_desconto_ind03_cee, 0) +
+																	 nvl(vr_desconto_ind21_cee, 0) +
+																	 nvl(vr_desconto_ind22_cee, 0) +
+																	 nvl(vr_desconto_ind23_cee, 0) +
+																	 nvl(vr_desconto_indvi_cee, 0), 2);
+		--
+		vr_desconto_total_coo := round(nvl(vr_desconto_ind02_coo, 0) + 
+																	 nvl(vr_desconto_ind03_coo, 0) +
+																	 nvl(vr_desconto_ind21_coo, 0) +
+																	 nvl(vr_desconto_ind22_coo, 0) +
+																	 nvl(vr_desconto_ind23_coo, 0) +
+																	 nvl(vr_desconto_indvi_coo, 0), 2);
+		-- Valor do Desconto CEE
+		IF vr_desconto_total_cee > rw_indicador.vldesconto_maximo_cee THEN
+			--
+			vr_desconto_total_cee := rw_indicador.vldesconto_maximo_cee;
+			--
+		END IF;
+		-- Valor do Desconto COO
+		IF vr_desconto_total_coo > rw_indicador.vldesconto_maximo_coo THEN
+			--
+			vr_desconto_total_coo := rw_indicador.vldesconto_maximo_coo;
+			--
+		END IF;
+		--
+		-- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+		--
+		pc_escreve_xml('<inf>'||
+											'<vldesconto_cee>' || vr_desconto_total_cee ||'</vldesconto_cee>' ||
+											'<vldesconto_coo>' || vr_desconto_total_coo ||'</vldesconto_coo>' ||
+									 '</inf>');
+		--
+		IF cr_indicador%ROWCOUNT > 0 THEN
+			--
+			pc_escreve_xml('</dados></root>',TRUE);    
+			--
+			pr_retxml := XMLType.createXML(vr_des_xml);
+			--
+		ELSE
+			--
+			vr_dscritic := 'Nenhuma indicador encontrado para o calculo: ' || pr_cdcooper || ' - ' || vr_conf_geral(1);
+      RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		CLOSE cr_vinculacao;
+		--
+		CLOSE cr_indicador;
+		--
+		pr_retxml := XMLType.createXML(vr_des_xml);
+		--
+		COMMIT;
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			IF vr_cdcritic <> 0 THEN
+				--
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				--
+			ELSE
+				--
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+				--
+			END IF;
+			
+			-- Carregar XML padrão para variável de retorno não utilizada.
+			-- Existe para satisfazer exigência da interface.
+			pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Erro>' || pr_dscritic ||
+																		 '</Erro></Root>');
+			ROLLBACK;
+		WHEN OTHERS THEN
+			pr_cdcritic := vr_cdcritic;
+			pr_dscritic := 'Erro geral na rotina da tela SIMCRP: ' || SQLERRM;
+
+			-- Carregar XML padrão para variável de retorno não utilizada.
+			-- Existe para satisfazer exigência da interface.
+			pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Erro>' || pr_dscritic ||
+																		 '</Erro></Root>');
+			ROLLBACK;
+	END pc_calcula_reciprocidade;
+	-- PRJ431
 
 END TELA_SIMCRP;
 /

@@ -32,6 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARPRT IS
                            ,pr_flcancelamento         	IN TBCOBRAN_PARAM_PROTESTO.flcancelamento%TYPE --> Flag para definir se permite cancelamento quando boleto ja estiver em cartorio
                            ,pr_dsuf                   	IN TBCOBRAN_PARAM_PROTESTO.dsuf%TYPE --> Lista de UFs que autorizam exclusão
                            ,pr_dscnae                 	IN TBCOBRAN_PARAM_PROTESTO.dscnae%TYPE --> Lista de CNAEs não permitidos para protesto
+                           ,pr_dsnegufds                IN TBCOBRAN_PARAM_PROTESTO.dsnegufds%TYPE --> UFs nao autorizadas a protestar boletos com DS
                            ,pr_xmllog                 	IN VARCHAR2 --> XML com informacoes de LOG
                            ,pr_cdcritic               	OUT PLS_INTEGER --> Codigo da critica
                            ,pr_dscritic               	OUT VARCHAR2 --> Descricao da critica
@@ -50,15 +51,20 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARPRT IS
                                    ,pr_des_erro                OUT VARCHAR2
                                    ,pr_dscritic                OUT VARCHAR2);
 
+  PROCEDURE pc_validar_dsnegufds_parprt(pr_cdcooper    IN crapsab.cdcooper%TYPE
+                                       ,pr_cdufsaca    IN crapsab.cdufsaca%TYPE
+                                       ,pr_des_erro    OUT VARCHAR2
+                                       ,pr_dscritic    OUT VARCHAR2);
+
 END TELA_PARPRT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
   ---------------------------------------------------------------------------
   --
   --  Programa : TELA_PARPRT
-  --  Sistema  : Ayllos Web
+  --  Sistema  : Aimaro Web
   --  Autor    : Marcus Guilherme Kaefer
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 29/01/2018
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 08/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -80,9 +86,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     /* .............................................................................
 
     Programa: pc_busca_param
-    Sistema : Ayllos Web
+    Sistema : Aimaro Web
     Autor   : Marcus Guilherme Kaefer
-    Data    : Janeiro/2018                 Ultima atualizacao: 29/01/2018
+    Data    : Janeiro/2018                 Ultima atualizacao: 08/10/2018
 
     Dados referentes ao programa:
 
@@ -91,6 +97,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     Objetivo  : Rotina para buscar parametrizacao de Negativacao Serasa.
 
     Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
+  
+                08/10/2018 - Inclusao de parametro dsnegufds referente às UFs nao autorizadas 
+                             a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
+                             Marcelo R. Kestring - Supero)
+
     ..............................................................................*/
     DECLARE
 
@@ -102,7 +113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                TBCOBRAN_PARAM_PROTESTO.qtlimitemin_tolerancia,
                TBCOBRAN_PARAM_PROTESTO.qtlimitemax_tolerancia,
                TBCOBRAN_PARAM_PROTESTO.qtdias_cancelamento,
-               TBCOBRAN_PARAM_PROTESTO.flcancelamento
+               TBCOBRAN_PARAM_PROTESTO.flcancelamento,
+               TBCOBRAN_PARAM_PROTESTO.dsnegufds
           FROM TBCOBRAN_PARAM_PROTESTO
          WHERE TBCOBRAN_PARAM_PROTESTO.cdcooper = pr_cdcooper;
 
@@ -207,6 +219,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                             ,pr_tag_cont => rw_param.dscnae
                             ,pr_des_erro => vr_dscritic);
 
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'inf'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'dsnegufds'
+                            ,pr_tag_cont => rw_param.dsnegufds
+                            ,pr_des_erro => vr_dscritic);
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
@@ -242,6 +261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                            ,pr_flcancelamento       	IN TBCOBRAN_PARAM_PROTESTO.flcancelamento%TYPE --> Flag para definir se permite cancelamento quando boleto ja estiver em cartorio
                            ,pr_dsuf                 	IN TBCOBRAN_PARAM_PROTESTO.dsuf%TYPE --> Lista de UFs que autorizam exclusão
                            ,pr_dscnae                 IN TBCOBRAN_PARAM_PROTESTO.dscnae%TYPE --> Lista de CNAEs não permitidos para protesto
+                           ,pr_dsnegufds                IN TBCOBRAN_PARAM_PROTESTO.dsnegufds%TYPE --> UFs nao autorizadas a protestar boletos com DS
                            ,pr_xmllog                 IN VARCHAR2 --> XML com informacoes de LOG
                            ,pr_cdcritic               OUT PLS_INTEGER --> Codigo da critica
                            ,pr_dscritic               OUT VARCHAR2 --> Descricao da critica
@@ -253,9 +273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     /* .............................................................................
 
     Programa: pc_atualiza_parprt
-    Sistema : Ayllos Web
+    Sistema : Aimaro Web
     Autor   : Marcus Guilherme Kaefer
-    Data    : Janeiro/2018                 Ultima atualizacao: 29/01/2018
+    Data    : Janeiro/2018                 Ultima atualizacao: 08/10/2018
 
     Dados referentes ao programa:
 
@@ -264,6 +284,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     Objetivo  : Rotina para alterar parametrizacao de Negativacao Serasa.
 
     Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
+  
+                08/10/2018 - Inclusao de parametro dsnegufds referente às UFs nao autorizadas 
+                             a protestar boletos com DS. (projeto "PRJ352 - Protesto" - 
+                             Marcelo R. Kestring - Supero)
+
     ..............................................................................*/
     DECLARE
 
@@ -311,7 +336,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                    ,TBCOBRAN_PARAM_PROTESTO.qtdias_cancelamento
                    ,TBCOBRAN_PARAM_PROTESTO.flcancelamento
                    ,TBCOBRAN_PARAM_PROTESTO.dsuf
-                   ,TBCOBRAN_PARAM_PROTESTO.dscnae)
+                   ,TBCOBRAN_PARAM_PROTESTO.dscnae
+                   ,TBCOBRAN_PARAM_PROTESTO.dsnegufds
+                   )
              VALUES(pr_cdcooper
                    ,pr_qtlimitemin_tolerancia
                    ,pr_qtlimitemax_tolerancia
@@ -319,7 +346,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                    ,pr_qtdias_cancelamento
                    ,pr_flcancelamento
                    ,pr_dsuf
-                   ,pr_dscnae);
+                   ,pr_dscnae
+                   ,pr_dsnegufds
+                   );
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
           -- Se ja existe deve alterar
@@ -332,6 +361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                   ,TBCOBRAN_PARAM_PROTESTO.flcancelamento         = pr_flcancelamento
                   ,TBCOBRAN_PARAM_PROTESTO.dsuf                   = pr_dsuf
                   ,TBCOBRAN_PARAM_PROTESTO.dscnae                 = pr_dscnae
+                  ,TBCOBRAN_PARAM_PROTESTO.dsnegufds              = pr_dsnegufds
              WHERE TBCOBRAN_PARAM_PROTESTO.cdcooper               = pr_cdcooper;
 
           EXCEPTION
@@ -526,6 +556,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                                                     ' --> ' || pr_dscritic);
     
   END pc_consulta_ufs_parprt;
+
+/* ..........................................................................
+  
+    Programa : pc_validar_dsnegufds_parprt
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Anderson-Alan 
+    Data     : Outubro/2018.                   Ultima atualizacao: --/--/----
+  
+    Dados referentes ao programa:
+  
+    Frequencia: Sempre que for chamado
+    Objetivo  : Procedure para validar	Se houver emissão de boletos com protesto e com espécie de documento DS, cujo UF está na tela PARPRT pr_dsnegufds
+  
+    Alteração : --/--/---- 
+  
+  ...........................................................................*/
+ 
+  PROCEDURE pc_validar_dsnegufds_parprt (pr_cdcooper                IN crapsab.cdcooper%TYPE
+                                        ,pr_cdufsaca                IN crapsab.cdufsaca%TYPE
+                                        ,pr_des_erro                OUT VARCHAR2
+                                        ,pr_dscritic                OUT VARCHAR2) IS
+    
+    vr_dsnegufds tbcobran_param_protesto.dsnegufds%TYPE;
+    
+    --> Verificar se o uf saca é permitido protestar
+    CURSOR cr_cdufsaca_dsnegufds(pr_cdcooper crapsab.cdcooper%TYPE,
+                                 pr_cdufsaca crapsab.cdufsaca%TYPE) IS
+      SELECT p.dsnegufds
+        FROM tbcobran_param_protesto p
+       WHERE p.cdcooper = pr_cdcooper
+         AND p.dsnegufds NOT LIKE '%' || pr_cdufsaca || '%';
+    
+    --> seleciona os uf não permitidor para protestar
+    CURSOR cr_dsnegufds(pr_cdcooper crapsab.cdcooper%TYPE) IS
+      SELECT p.dsnegufds
+        FROM tbcobran_param_protesto p
+       WHERE p.cdcooper = pr_cdcooper;
+    
+    --Variaveis de erro
+    vr_exc_saida EXCEPTION;
+    
+  BEGIN
+    
+    --Buscando informacao da uf e protesto
+    OPEN cr_cdufsaca_dsnegufds(pr_cdcooper, pr_cdufsaca);
+    FETCH cr_cdufsaca_dsnegufds INTO vr_dsnegufds;
+      IF cr_cdufsaca_dsnegufds%NOTFOUND THEN
+        CLOSE cr_cdufsaca_dsnegufds;
+        
+        --Buscando os uf não permitidos para protestar
+        OPEN cr_dsnegufds(pr_cdcooper);
+        FETCH cr_dsnegufds INTO vr_dsnegufds;
+        CLOSE cr_dsnegufds;
+        
+        pr_dscritic := 'Não será possível concluir a emissão do boleto, não é permitido protesto com espécie de documento DS aos estados ' || vr_dsnegufds;
+        RAISE vr_exc_saida;
+      END IF;
+    CLOSE cr_cdufsaca_dsnegufds;
+    
+    --Retorna OK para a procedure
+    pr_des_erro := 'OK';
+    
+  EXCEPTION
+     WHEN OTHERS THEN
+       pr_des_erro := 'NOK';
+       
+       IF pr_dscritic <> '' THEN
+          pr_dscritic := 'Erro nao tratado na procedure TELA_PARPRT.pc_validar_dsnegufds_parprt: ' || SQLERRM;
+       END IF;
+       
+       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                 ,pr_ind_tipo_log => 2 
+                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                 ,pr_des_log      => to_char(SYSDATE,
+                                                    'hh24:mi:ss') ||
+                                                    ' - ' || 'COBR0009' ||
+                                                    ' --> ' || pr_dscritic);
+    
+  END pc_validar_dsnegufds_parprt;
 
 END TELA_PARPRT;
 /

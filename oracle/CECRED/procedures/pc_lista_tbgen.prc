@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 01/11/2018  
+  Data    : Maio/2018                   Ultima atualizacao: 21/11/2018  
     
   Dados referentes ao programa:
   
@@ -47,6 +47,11 @@ BEGIN
               01/11/2018 - Tratar programa exclusivo retirado da cadeia e não reexecutado
                          - Atualizar lay-out de decimal para minutos.
                          - (Envolti - Belli - Chamado - REQ0032025)
+                           
+              21/11/2018 - Utilizar nova última hora 2359 e não mais 0800 como limite de fim de processo
+                         - Vai subir um SCRIPT com o e-mail do diretor para receber as informações deste processo
+                         - Ajustar nomenclatura quando não houver minutos e somente segundos
+                         - (Envolti - Belli - Chamado - REQ0033876)
               
   ....................................................................................... */
     
@@ -89,7 +94,11 @@ DECLARE
   vr_ctsequec           NUMBER(15);      
   vr_qtmeddia           NUMBER(15,5);
   vr_prmeddia           NUMBER(15,5);
-  vr_prmvtdia           NUMBER(15,5);
+  vr_prmvtdia           NUMBER(15,5);  
+  -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+  vr_dsminuto           VARCHAR(10) := 'minutos';
+  vr_dssegund           VARCHAR(10) := 'segundos';
+  vr_dstiptem           VARCHAR(10) := NULL;
   
   -- Tabela para guardar os registros de erros - desta forma o programa fica bem rapido
   TYPE typ_reg_tbgen_prglog_ocor IS RECORD
@@ -98,8 +107,8 @@ DECLARE
          ,idocorrencia tbgen_prglog_ocorrencia.idocorrencia%type
          ,dsmensagem   tbgen_prglog_ocorrencia.dsmensagem%type
          ,cdprogra     tbgen_prglog.cdprograma%TYPE
-         ,idtipo       VARCHAR2 (1)
-         ,hrparada     VARCHAR2(10)
+         ,idtipo       VARCHAR2   (1)
+         ,hrparada     VARCHAR2  (10)
          );
   -- Tipos de erros - idtipo          
   -- E - Erros - Erros que retornam aos controladores CRPS359.P e CRPS000.P
@@ -1057,6 +1066,9 @@ DECLARE
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - Tratar programa exclusivo retirado da cadeia
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              21/11/2018 - Ajustar nomenclatura quando não houver minutos e somente segundos
+                         - (Envolti - Belli - Chamado - REQ0033876)
     
   ............................................................................. */ 
 
@@ -1184,8 +1196,7 @@ DECLARE
         FOR rw_tbgen_retsal IN cr_tbgen_retsal  LOOP
           vr_dtretsal := rw_tbgen_retsal.dhocorrencia;
           IF rw_tbgen_retsal.dhocorrencia > rw_tbgen_oco_min.dhocorrencia THEN
-             vr_dtretsal := rw_tbgen_retsal.dhocorrencia;
-             
+             vr_dtretsal := rw_tbgen_retsal.dhocorrencia;             
              vr_dthorret := vr_dtretsal;
              EXIT;
           END IF;
@@ -1194,8 +1205,15 @@ DECLARE
       END IF;
       
       IF vr_dthorret IS NOT NULL THEN
-        vr_qthorpar := TO_NUMBER(REPLACE(TRUNC((((vr_dthorret) - (rw_tbgen_oco_min.dhocorrencia)) * 24 * 60 ),2),',''.'));       
-        vr_dslispr2 := ' de ' || TO_CHAR(TRUNC(vr_qthorpar), 'FM900') || ':' || TO_CHAR(MOD((vr_qthorpar * 60), 60), 'FM00') || ' minutos';      
+        vr_qthorpar := TO_NUMBER(REPLACE(TRUNC((((vr_dthorret) - (rw_tbgen_oco_min.dhocorrencia)) * 24 * 60 ),2),',''.'));
+        -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+        IF vr_qthorpar = 0 THEN
+          vr_dstiptem := vr_dssegund;
+        ELSE
+          vr_dstiptem := vr_dsminuto;
+        END IF;
+        vr_dslispr2 := ' de ' || TO_CHAR(TRUNC(vr_qthorpar), 'FM900') ||
+                         ':' || TO_CHAR(MOD((vr_qthorpar * 60), 60), 'FM00') || ' ' || vr_dstiptem;
       END IF;
       vr_dsparcad := '***';
       vr_ctregist := 0;
@@ -1320,6 +1338,9 @@ DECLARE
   Alteracoes:                           
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              21/11/2018 - Ajustar nomenclatura quando não houver minutos e somente segundos
+                         - (Envolti - Belli - Chamado - REQ0033876)
     
   ............................................................................. */
   
@@ -1400,13 +1421,20 @@ DECLARE
             IF vr_tab_tbgen_prglog_ocor(vr_idoco).idtipo = 'O' THEN 
               vr_dsparcad := '***';       
               vr_ctsequec := vr_ctsequec + 1;
+              -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+              IF vr_tab_tbgen_prglog_ocor(vr_idoco).hrparada = '00:'    OR
+                 vr_tab_tbgen_prglog_ocor(vr_idoco).hrparada = '00:00:'    THEN
+                vr_dstiptem := vr_dssegund;
+              ELSE
+                vr_dstiptem := vr_dsminuto;
+              END IF;
               vr_dslisout := TO_CHAR(vr_ctsequec,'9900') || 
                              '&nbsp;-&nbsp;' || 
                              'O programa "' || LOWER(vr_nmprogra) || '" (' || rw_crapprg.cdprogra || ') ' ||
                              'teve sua execução interrompida ' ||
                              'devido a um erro (o que gerou um atraso de ' || 
                              vr_tab_tbgen_prglog_ocor(vr_idoco).hrparada  ||        
-                             ' minutos).';               
+                             ' ' || vr_dstiptem || ').';               
               IF vr_dslisexe IS NULL THEN
                 vr_dslisexe := vr_dslisout;  
               ELSE
@@ -1481,17 +1509,29 @@ DECLARE
           vr_dsminmed := TO_CHAR(TRUNC(vr_qtminmed), 'FM900') || ':' || TO_CHAR(MOD((vr_qtminmed * 60), 60), 'FM00');
 
           IF vr_dsdiamov IS NULL THEN      
+            -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+            IF TRUNC(vr_qtminatu - TRUNC(vr_qtminmed,2) ) = 0 THEN
+              vr_dstiptem := vr_dssegund;
+            ELSE
+              vr_dstiptem := vr_dsminuto;
+            END IF;
             vr_dslisve2 := ' de ' || 
                            TO_CHAR(TRUNC(vr_qtminatu - TRUNC(vr_qtminmed,2) ), 'FM900') || ':' || 
                            TO_CHAR(MOD(((vr_qtminatu - TRUNC(vr_qtminmed,2) ) * 60), 60), 'FM00') || 
-                           ' minutos';
+                           ' ' || vr_dstiptem;
                                                
             vr_ctsequec := vr_ctsequec + 1;
+            -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+            IF TRUNC(vr_qtminmed) = 0 THEN
+              vr_dstiptem := vr_dssegund;
+            ELSE
+              vr_dstiptem := vr_dsminuto;
+            END IF;
             vr_dslisver := TO_CHAR(vr_ctsequec,'9900') || '&nbsp;-&nbsp;O programa "' || LOWER(vr_nmprogra) || '" (' ||
                            vr_cdprogra || ') '  || 
                            'executou em ' || vr_dsminatu || ' minutos ' ||                     
                            '(quando o esperado é em torno de '   || vr_dsminmed ||
-                           ' minutos e que gerou um atraso' || vr_dslisve2 || ').';
+                           ' ' || vr_dstiptem ||' e que gerou um atraso' || vr_dslisve2 || ').';
                            
             IF vr_dslisexe IS NULL THEN
               vr_dslisexe := vr_dslisver;  
@@ -1552,9 +1592,18 @@ DECLARE
                 vr_dsminatu := TO_CHAR(TRUNC(vr_qtminatu), 'FM900') || ':' || TO_CHAR(MOD((vr_qtminatu * 60), 60), 'FM00');
                 vr_dsminmed := TO_CHAR(TRUNC(vr_qtminmed), 'FM900') || ':' || TO_CHAR(MOD((vr_qtminmed * 60), 60), 'FM00');
                 vr_ctsequec := vr_ctsequec + 1;
+                -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+                IF TRUNC(vr_qtminatu) = 0 THEN
+                  vr_dstiptem := vr_dssegund;
+                ELSE
+                  vr_dstiptem := vr_dsminuto;
+                END IF;
                 vr_dslispad := TO_CHAR(vr_ctsequec,'9900') || '&nbsp;-&nbsp;O programa "' || LOWER(vr_nmprogra) || '" (' ||
                                vr_cdprogra || ') '  || 
-                               'voltou a executar em ' || TO_CHAR(vr_qtminatu,'9990d00') || ' minutos, conforme esperado.'; 
+                               'voltou a executar em ' || 
+                               TO_CHAR(TRUNC(vr_qtminatu), 'FM900') || ':' || TO_CHAR(MOD((vr_qtminatu * 60), 60), 'FM00') || 
+                               ' ' || vr_dstiptem || 
+                               ', conforme esperado.'; 
               
                 IF vr_dslisexe IS NULL THEN
                   vr_dslisexe := vr_dslispad;  
@@ -1769,6 +1818,9 @@ DECLARE
   Alteracoes:                            
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              21/11/2018 - Ajustar nomenclatura quando não houver minutos e somente segundos
+                         - (Envolti - Belli - Chamado - REQ0033876)
     
   ............................................................................. */  
   
@@ -1916,7 +1968,7 @@ DECLARE
           vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).idocorrencia := 0;
           vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).dsmensagem   := 'Programa paralelo que interrompeu a cadeia';
           vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).cdprogra     := rw_erro_programa_na_paralela.cdprogra;  
-          vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).hrparada     := '00:00:00';
+          vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).hrparada     := '00:00:00'; 
           
         END LOOP;
         
@@ -1978,13 +2030,20 @@ DECLARE
         
         
         vr_ctsequec := vr_ctsequec + 1;
+        -- Ajustar nomenclatura quando não houver minutos e somente segundos - 21/11/2018 - REQ0033876
+        IF SUBSTR(vr_hrparada,1,3) = '00:'  OR
+           SUBSTR(vr_hrparada,1,4) = '000:'    THEN
+          vr_dstiptem := vr_dssegund;
+        ELSE
+          vr_dstiptem := vr_dsminuto;
+        END IF;
         -- Tratar programa exclusivo retirado da cadeia e não reexecutado - 01/11/2018 - REQ0032025    
         vr_dslispla := TO_CHAR(vr_ctsequec,'9900') || 
                        '&nbsp;-&nbsp;' || 
                        vr_dslispl1 ||
                        'devido a erros (o que gerou um atraso de ' || 
                        vr_hrparada || 
-                       ' minutos).'; 
+                       ' ' || vr_dstiptem || ').'; 
               
         IF vr_dslisexe IS NULL THEN
           vr_dslisexe := vr_dslispla;  
@@ -2076,7 +2135,7 @@ DECLARE
   Procedure: pc_crapcop
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
+  Data     : 03/05/2018                        Ultima atualizacao: 21/11/2018
     
   Dados referentes ao programa:
     
@@ -2087,6 +2146,10 @@ DECLARE
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - Tratar programa exclusivo retirado da cadeia
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              21/11/2018 - Utilizar nova última hora 2359 e não mais 0800
+                         - Vai subir um SCRIPT com o e-mail do diretor para receber as informações deste processo.
+                         - (Envolti - Belli - Chamado - REQ0033876)
     
   ............................................................................. */   
     
@@ -2317,7 +2380,7 @@ DECLARE
                                                                                ', dtpar002: '   || rw_erro_outros.dtpar002 ||
                                                                                ', dtreinicio: ' || rw_erro_outros.dtreinicio;
           vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).cdprogra     := rw_erro_outros.cdprograma;  
-          vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).hrparada     := vr_hrparada;
+          vr_tab_tbgen_prglog_ocor(vr_index_tbgen_prglog_ocor).hrparada     := vr_hrparada; 
         END IF;                   
           
       END LOOP;               
@@ -2325,7 +2388,8 @@ DECLARE
       vr_fgftulpr := TRUE;   
       BEGIN
         --  
-        SELECT  NVL(TO_CHAR(MAX(t13.dhfim),'HH24MI'),'0800') 
+        -- Utilizar nova última hora 2359 e não mais 0800 - 21/11/2018 - Chd REQ0033876
+        SELECT  NVL(TO_CHAR(MAX(t13.dhfim),'HH24MI'),'2359') 
         INTO    vr_dsulthor
         FROM    tbgen_prglog  t13 
         WHERE   t13.cdcooper     = vr_cdcooper
@@ -2333,7 +2397,8 @@ DECLARE
         AND     t13.cdprograma   = vr_cdultpro;
       EXCEPTION 
         WHEN NO_DATA_FOUND THEN
-          vr_dsulthor := '0800';
+          -- Utilizar nova última hora 2359 e não mais 0800 - 21/11/2018 - Chd REQ0033876
+          vr_dsulthor := '2359';
           vr_fgftulpr := FALSE;    
         WHEN vr_exc_montada THEN  
           RAISE vr_exc_montada;  
@@ -2352,9 +2417,7 @@ DECLARE
                          '. ' || SQLERRM; 
           RAISE vr_exc_montada;
       END;
-      IF vr_dsulthor > '0800' THEN
-        vr_dsulthor := '0800';
-      END IF;
+      -- Utilizar nova última hora 2359 e não mais 0800 e então regra é eliminada - 21/11/2018 - Chd REQ0033876
 
       vr_cdacesso := 'ALERTA_VERMELHO';      
       pc_le_crapprm;
@@ -3322,7 +3385,7 @@ DECLARE
   Procedure: pc_controle_execucao
   Sistema  : Rotina de Log
   Autor    : Belli/Envolti
-  Data     : 03/05/2018                        Ultima atualizacao: 09/10/2018
+  Data     : 03/05/2018                        Ultima atualizacao: 21/11/2018
     
   Dados referentes ao programa:
     
@@ -3345,6 +3408,10 @@ DECLARE
   Alteracoes:                            
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              21/11/2018 - Utilizar nova última hora 2359 e não mais 0800
+                         - Vai subir um SCRIPT com o e-mail do diretor para receber as informações deste processo.
+                         - (Envolti - Belli - Chamado - REQ0033876)
     
   ............................................................................. */
   --
@@ -3507,7 +3574,8 @@ DECLARE
         vr_tab_cooper(vr_index_cooper).dtmvtoan := vr_dtmvtoan;
         -- Buscar a data e hora final da cadeia para não listar os erros pós cadeia
         BEGIN
-          SELECT MAX(NVL(TO_CHAR(t1.dhfim,'HH24MI'),'0800')) 
+          -- Utilizar nova última hora 2359 e não mais 0800 - 21/11/2018 - Chd REQ0033876
+          SELECT MAX(NVL(TO_CHAR(t1.dhfim,'HH24MI'),'2359')) 
           INTO   vr_hrultpro
           FROM   tbgen_prglog  t1 
           WHERE  t1.cdcooper     = vr_cdcooper
@@ -3626,7 +3694,7 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
   nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
   nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
   -- Incluida SYSDATE em variavel vr_dtsysdat para manupilar melhor quando teste - 09/10/2018 - Chd REQ0029484
-  vr_dtsysdat := SYSDATE;
+  vr_dtsysdat := SYSDATE; 
   pc_controle_execucao;
    
   -- Retorno nome do módulo logado

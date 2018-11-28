@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
+ * 000: [08/11/2018] Adicionado campos para busca e filtro da lista por CPF/CNPJ e Nr. de Apólice. ( Christian Grauppe/ENVOLTI )
  */
 ?>
 
@@ -20,6 +21,8 @@
 	
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
+	$nrapolice = (isset($_POST['nrapolice']) && $_POST['nrapolice'] != "") ? $_POST['nrapolice'] : 0;
+	$nrcpfcnj = (isset($_POST['nrcpfcnj']) && $_POST['nrcpfcnj'] != "") ? $_POST['nrcpfcnj'] : 0;
 
     $retornoAposErro = '';
 
@@ -33,12 +36,8 @@
     $xml .= '   <Dados>';
 	$xml .= '       <nrregist>'.$nrregist.'</nrregist>';
 	$xml .= '       <nriniseq>'.$nriniseq.'</nriniseq>';
-    $xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-    $xml .= '       <cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-    $xml .= '       <nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-    $xml .= '       <cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-    $xml .= '       <nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
-    $xml .= '       <idorigem>'.$glbvars['idorigem'].'</idorigem>';
+	$xml .= '       <nrapolice>'.$nrapolice.'</nrapolice>';
+	$xml .= '       <nrcpfcnj>'.$nrcpfcnj.'</nrcpfcnj>';
     $xml .= '   </Dados>';
     $xml .= '</Root>';
 

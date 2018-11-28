@@ -7,7 +7,10 @@
  * ALTERACOES   : 
  *     			  03/05/2013 - Adicionado cdisntru 7, concessao de desconto. (Jorge)
  *
- *				  01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+ *				  01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto 
+ * 
+ *                27/11/2018 - Ajuste na chamada da procedure de consulta limite de dias para protesto
+ *                             (P352 - Protesto) (Supero)
  */	 
 ?>
 
@@ -21,16 +24,16 @@
 	require_once('../../class/xmlfile.php');
 	
 	$cdinstru 	= $_POST['cdinstru'];
+	
+	if ($cdinstru == 80) {
 	$nrdconta 	= $_POST['nrdconta'];
-	$nrconven 	= $_POST['nrconven'];
-	$nrcnvceb	= '0';
+		$nrcnvcob 	= $_POST['nrcnvcob'];
 	
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <nrconven>".$nrconven."</nrconven>";
-	$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
+		$xml .= "   <nrconven>".$nrcnvcob."</nrconven>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
@@ -47,8 +50,9 @@
 	  exit();
 	}
 	
-	$qtlimmip = $xmlObj->roottag->tags[0]->tags[4]->tags[0]->cdata;
-	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[4]->tags[1]->cdata;
+		$qtlimmip = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+		$qtlimaxp = $xmlObj->roottag->tags[0]->tags[1]->cdata;
+	}
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >

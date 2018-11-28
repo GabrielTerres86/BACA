@@ -21,6 +21,9 @@
          
                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
 
+               15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
+                            de dentro da b1wgen0200 
+                            (Renato AMcom)
 ..............................................................................*/
 { sistema/generico/includes/b1wgen0200tt.i }
 
@@ -123,9 +126,9 @@ PROCEDURE inclui-registro:
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:  
                 IF aux_incrineg > 0 THEN
-					par_dscritic = aux_dscritic.
+					par_dscritic = "Não foi possível efetuar o lançamento de débito.".
 				ELSE
-					par_dscritic = aux_dscritic.
+					par_dscritic = "Transferencia nao efetivada, tente novamente (03).".
 
 				RETURN "NOK".
               END.   
@@ -164,8 +167,33 @@ PROCEDURE exclui-registro:
              RETURN "NOK".
          END.
 
-    /* Cria o registro */
-    DELETE craplcm.
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+       RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                  
+    RUN estorna_lancamento_conta IN h-b1wgen0200 
+      (INPUT craplcm.cdcooper               /* par_cdcooper */
+      ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+      ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+      ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+      ,INPUT craplcm.nrdolote               /* par_nrdolote */
+      ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+      ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+      ,INPUT craplcm.cdhistor               /* par_cdhistor */
+      ,INPUT craplcm.nrctachq               /* PAR_nrctachq */
+      ,INPUT craplcm.nrdconta               /* PAR_nrdconta */
+      ,INPUT craplcm.cdpesqbb               /* PAR_cdpesqbb */
+      ,INPUT ""                             /* par_rowid */
+      ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+      ,OUTPUT par_dscritic).                /* Descricao da critica                          */
+                
+    IF aux_cdcritic > 0 AND par_dscritic = "" THEN
+       DO:
+          ASSIGN par_dscritic = "Erro na chamada estona_lancto_conta=" 
+                                + STRING(aux_cdcritic).
+       END.   
+                
+    IF  VALID-HANDLE(h-b1wgen0200) THEN
+      DELETE PROCEDURE h-b1wgen0200.
     
 END PROCEDURE. /* exclui-registro */
 

@@ -7,6 +7,14 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 																,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
 																,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
 																,pr_des_erro OUT VARCHAR2);        --> Erros do processo
+                                
+  PROCEDURE pc_obtem_vinculacoes(pr_cdcooper IN INTEGER            --> Cooperativa
+		                            ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																,pr_des_erro OUT VARCHAR2);        --> Erros do processo
 
 	PROCEDURE pc_obtem_idindicador(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -26,8 +34,8 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 															 ,pr_retxml   IN OUT NOCOPY xmltype                 --> Arquivo de retorno do XML
 															 ,pr_nmdcampo OUT VARCHAR2                          --> Nome do campo com erro
 															 ,pr_des_erro OUT VARCHAR2);                        --> Erros do processo
-
-	PROCEDURE pc_altera_indicador(pr_idindica IN tbrecip_indicador.idindicador%TYPE --> Identificador do indicador
+                               
+  PROCEDURE pc_altera_indicador(pr_idindica IN tbrecip_indicador.idindicador%TYPE --> Identificador do indicador
                                ,pr_nmindica IN tbrecip_indicador.nmindicador%TYPE --> Nome do indicador
                                ,pr_tpindica IN tbrecip_indicador.tpindicador%TYPE --> Tipo do indicador ('M' - Moeda, 'Q' - Quantidade e 'A' - Adesão)
                                ,pr_flgativo IN tbrecip_indicador.flgativo%TYPE    --> Disponibilidade do indicador (0 - Inativo, 1 - Ativo)
@@ -54,6 +62,14 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 																	 ,pr_retxml        IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
 																	 ,pr_nmdcampo     OUT VARCHAR2           --> Nome do campo com erro
 																	 ,pr_des_erro     OUT VARCHAR2);         --> Erros do processo
+                                   
+  PROCEDURE pc_pesquisa_vinculacoes(pr_nmvinculacao  IN VARCHAR2           --> Descrição parcial do Indicador
+																	 ,pr_xmllog        IN VARCHAR2           --> XML com informações de LOG
+																	 ,pr_cdcritic     OUT PLS_INTEGER        --> Código da crítica
+																	 ,pr_dscritic     OUT VARCHAR2           --> Descrição da crítica
+																	 ,pr_retxml        IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+																	 ,pr_nmdcampo     OUT VARCHAR2           --> Nome do campo com erro
+																	 ,pr_des_erro     OUT VARCHAR2);         --> Erros do processo
 
 	PROCEDURE pc_pesquisa_produtos(pr_dsproduto     IN VARCHAR2           --> Descrição parcial do Produto
 														  	,pr_xmllog        IN VARCHAR2           --> XML com informações de LOG
@@ -70,6 +86,14 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 														 	 ,pr_retxml   IN OUT NOCOPY xmltype       --> Arquivo de retorno do XML
 															 ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
 															 ,pr_des_erro OUT VARCHAR2);              --> Erros do processo
+                               
+  PROCEDURE pc_valida_vinculacao(pr_idvinculacao IN INTEGER        --> Vinculacao
+                                ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);        --> Erros do processo
 
 	PROCEDURE pc_valida_produto(pr_cdproduto IN INTEGER           --> Produto
 														 ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -87,6 +111,21 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 																	,pr_vlmaximo IN NUMBER             --> Valor máximo
 																	,pr_perscore IN NUMBER             --> Percentual de score
 																	,pr_pertoler IN NUMBER             --> Percentual de tolerância
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2);        --> Erros do processo
+                                  
+  PROCEDURE pc_insere_param_vinculacao(pr_cdcooper IN INTEGER        --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER        --> Id. da vinculacao
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
 																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
 																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
 																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -102,6 +141,21 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 																	,pr_vlmaximo IN NUMBER             --> Valor máximo
 																	,pr_perscore IN NUMBER             --> Percentual de score
 																	,pr_pertoler IN NUMBER             --> Percentual de tolerância
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2);        --> Erros do processo
+                                  
+  PROCEDURE pc_altera_param_vinculacao(pr_cdcooper IN INTEGER        --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER        --> Id. da vinculacao
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
 																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
 																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
 																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -111,6 +165,17 @@ CREATE OR REPLACE PACKAGE CECRED.tela_paridr IS
 
 	PROCEDURE pc_exclui_param_indica(pr_cdcooper IN INTEGER            --> Cooperativa
 		                              ,pr_idindica IN INTEGER            --> Id. do indicador
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2);        --> Erros do processo
+                                  
+  PROCEDURE pc_exclui_param_vinculacao(pr_cdcooper IN INTEGER        --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER        --> Id. da vinculacao
 																	,pr_cdprodut IN INTEGER            --> Cód. do produto
 																	,pr_inpessoa IN INTEGER            --> PF/PJ
 																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -179,6 +244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 							                                                                     ,pr_vlaformatar => prc.vlmaximo)) vlmaximo
 							,to_char(prc.perscore, 'fm990d00') perscore
 							,decode(irc.tpindicador, 'A', '-', to_char(prc.pertolera, 'fm990d00')) pertolera
+              ,to_char(nvl(prc.vlpercentual_peso,0), 'fm990d00') vlpercentual_peso
+              ,to_char(nvl(prc.vlpercentual_desconto,0), 'fm990d00') vlpercentual_desconto
 					FROM tbcc_produto prd
 							,tbrecip_parame_indica_coop prc
 							,tbrecip_indicador irc
@@ -283,6 +350,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
                               ,pr_tag_nova => 'pertolera'
                               ,pr_tag_cont => rw_indicadores.pertolera
                               ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'indicador'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'vlpercentual_peso'
+                              ,pr_tag_cont => rw_indicadores.vlpercentual_peso
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'indicador'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'vlpercentual_desconto'
+                              ,pr_tag_cont => rw_indicadores.vlpercentual_desconto
+                              ,pr_des_erro => vr_dscritic);
 
 
         vr_auxconta := vr_auxconta + 1;
@@ -327,6 +406,173 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
     END;
 
   END pc_obtem_indicadores;
+  
+  PROCEDURE pc_obtem_vinculacoes(pr_cdcooper IN INTEGER  --> Cooperativa
+		                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+																,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+																,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_obtem_vinculacoes
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer
+    Data    : Agosto - 2018.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar vinculacoes de reciprocidade
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados
+      CURSOR cr_vinculacoes IS
+				SELECT vnc.idvinculacao
+							,upper(vnc.nmvinculacao) nmvinculacao
+							,prd.cdproduto
+							,prd.dsproduto
+							,decode(vpc.inpessoa,1,'Física','Jurídica') inpessoa
+							,vpc.inpessoa inpessoa2
+              ,to_char(nvl(vpc.vlpercentual_peso,0), 'fm990d00') vlpercentual_peso
+              ,to_char(nvl(vpc.vlpercentual_desconto,0), 'fm990d00') vlpercentual_desconto
+					FROM tbcc_produto prd
+              ,tbrecip_vinculacao_parame_coop vpc
+							,tbrecip_vinculacao vnc
+				 WHERE vpc.cdcooper               = pr_cdcooper
+					 AND vpc.idvinculacao_reciproci = vnc.idvinculacao
+					 AND vpc.cdproduto              = prd.cdproduto;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis auxiliares
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+
+    BEGIN
+
+		  gene0001.pc_informa_acesso(pr_module => 'TELA_PARIDR');
+
+      -- Criar cabeçalho do XML
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      FOR rw_vinculacoes IN cr_vinculacoes LOOP
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'vinculacao'
+                              ,pr_tag_cont => NULL
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'idvinculacao'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.idvinculacao)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'nmvinculacao'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.nmvinculacao)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'cdproduto'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.cdproduto)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'dsproduto'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.dsproduto)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'inpessoa'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.inpessoa)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'inpessoa2'
+                              ,pr_tag_cont => to_char(rw_vinculacoes.inpessoa2)
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'vlpercentual_peso'
+                              ,pr_tag_cont => rw_vinculacoes.vlpercentual_peso
+                              ,pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'vinculacao'
+                              ,pr_posicao  => vr_auxconta
+                              ,pr_tag_nova => 'vlpercentual_desconto'
+                              ,pr_tag_cont => rw_vinculacoes.vlpercentual_desconto
+                              ,pr_des_erro => vr_dscritic);
+
+
+        vr_auxconta := vr_auxconta + 1;
+
+      END LOOP;
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Qtdregis'
+                            ,pr_tag_cont => vr_auxconta
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARIDR: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_obtem_vinculacoes;
 
 	PROCEDURE pc_obtem_idindicador(pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -1195,6 +1441,75 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
         ROLLBACK;
     END;
   END pc_pesquisa_indicadores;
+  
+  PROCEDURE pc_pesquisa_vinculacoes(pr_nmvinculacao  IN VARCHAR2           --> Descrição parcial do Indicador
+																	 ,pr_xmllog        IN VARCHAR2           --> XML com informações de LOG
+																	 ,pr_cdcritic     OUT PLS_INTEGER        --> Código da crítica
+																	 ,pr_dscritic     OUT VARCHAR2           --> Descrição da crítica
+																	 ,pr_retxml        IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+																	 ,pr_nmdcampo     OUT VARCHAR2           --> Nome do campo com erro
+																	 ,pr_des_erro     OUT VARCHAR2) IS       --> Erros do processo
+  BEGIN
+    /* .............................................................................
+    Programa: pc_pesquisa_vinculacoes
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Andre Clemer
+    Data    : 17/08/2018                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para buscar as vinculacoes pelo nome
+
+    Alteracoes:
+    ............................................................................. */
+    DECLARE
+      -- Exceção
+      vr_exc_erro  EXCEPTION;
+
+      -- Variáveis de erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      CURSOR cr_vinculacoes IS
+         SELECT vin.idvinculacao
+               ,vin.nmvinculacao
+           FROM tbrecip_vinculacao vin
+          WHERE vin.flgativo = 1
+					  AND UPPER(vin.nmvinculacao) LIKE UPPER('%' || NVL(pr_nmvinculacao,'') || '%');
+
+    BEGIN
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><vinculacoes></vinculacoes></Root>');
+
+      FOR rw_vinculacoes IN cr_vinculacoes LOOP
+        -- Criar nodo filho
+        pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                            ,'/Root/vinculacoes'
+                                            ,XMLTYPE('<vinculacao>'
+                                                   ||'  <idvinculacao>'||rw_vinculacoes.idvinculacao||'</idvinculacao>'
+                                                   ||'  <nmvinculacao>'||UPPER(rw_vinculacoes.nmvinculacao)||'</nmvinculacao>'
+                                                   ||'</vinculacao>'));
+      END LOOP;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral (TELA_PARIDR.pc_pesquisa_indicadores): ' || SQLERRM;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+  END pc_pesquisa_vinculacoes;
 
 	PROCEDURE pc_pesquisa_produtos(pr_dsproduto     IN VARCHAR2           --> Descrição parcial do Produto
 														  	,pr_xmllog        IN VARCHAR2           --> XML com informações de LOG
@@ -1492,6 +1807,117 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
     END;
 
   END pc_valida_produto;
+  
+  PROCEDURE pc_valida_vinculacao(pr_idvinculacao IN INTEGER        --> Vinculacao
+                                ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_valida_vinculacao
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer - Supero
+    Data    : Agosto - 2018.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para validar vinculacao inserida
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados do produto pelo código
+      CURSOR cr_vinculacao IS
+				SELECT upper(nmvinculacao) nmvinculacao
+					FROM tbrecip_vinculacao
+				 WHERE idvinculacao = pr_idvinculacao
+					 AND tbrecip_vinculacao.flgativo = 1;
+			rw_vinculacao cr_vinculacao%ROWTYPE;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis auxiliares
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+
+    BEGIN
+
+      -- Criar cabeçalho do XML
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      OPEN cr_vinculacao;
+			FETCH cr_vinculacao INTO rw_vinculacao;
+
+      IF cr_vinculacao%NOTFOUND THEN
+				-- Gera crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Vinculação não cadastrada!';
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml
+														,pr_tag_pai  => 'Dados'
+														,pr_posicao  => 0
+														,pr_tag_nova => 'vinculacao'
+														,pr_tag_cont => NULL
+														,pr_des_erro => vr_dscritic);
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml
+														,pr_tag_pai  => 'vinculacao'
+														,pr_posicao  => vr_auxconta
+														,pr_tag_nova => 'nmvinculacao'
+														,pr_tag_cont => to_char(rw_vinculacao.nmvinculacao)
+														,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARIDR: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_valida_vinculacao;
 
 	PROCEDURE pc_insere_param_indica(pr_cdcooper IN INTEGER            --> Cooperativa
 		                              ,pr_idindica IN INTEGER            --> Id. do indicador
@@ -1501,6 +1927,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 																	,pr_vlmaximo IN NUMBER             --> Valor máximo
 																	,pr_perscore IN NUMBER             --> Percentual de score
 																	,pr_pertoler IN NUMBER             --> Percentual de tolerância
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
 																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
 																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
 																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -1597,8 +2025,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 			END IF;
 
       BEGIN
-				INSERT INTO tbrecip_parame_indica_coop(cdcooper, idindicador, cdproduto, inpessoa, vlminimo, vlmaximo, perscore, pertolera, flgativo)
-				                       VALUES(pr_cdcooper, pr_idindica, pr_cdprodut, pr_inpessoa, pr_vlminimo, pr_vlmaximo, pr_perscore, pr_pertoler, 1);
+				INSERT INTO tbrecip_parame_indica_coop(cdcooper, idindicador, cdproduto, inpessoa, vlminimo, vlmaximo, perscore, pertolera, vlpercentual_peso, vlpercentual_desconto, flgativo)
+				                       VALUES(pr_cdcooper, pr_idindica, pr_cdprodut, pr_inpessoa, pr_vlminimo, pr_vlmaximo, pr_perscore, pr_pertoler, pr_perpeso, pr_perdesc, 1);
 			EXCEPTION
 				WHEN OTHERS THEN
 					vr_dscritic := 'Atenção! Houve erro durante a gravação, detalhes: ' || SQLERRM;
@@ -1674,11 +2102,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 																pr_dsdadant => ' ',
 																pr_dsdadatu => to_char(pr_perscore, 'fm990d00') || '%');
 
-		  -- Percentual Score
+		  -- Percentual Tolerancia
 			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
 																pr_nmdcampo => 'Percentual Tolerancia',
 																pr_dsdadant => ' ',
 																pr_dsdadatu => to_char(pr_pertoler, 'fm990d00') || '%');
+
+		  -- Percentual Peso
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Peso',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_perpeso, 'fm990d00') || '%');
+
+		  -- Percentual Desconto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Desconto',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_perdesc, 'fm990d00') || '%');
 
 
       COMMIT;
@@ -1713,6 +2153,213 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
         ROLLBACK;
     END;
 	END pc_insere_param_indica;
+  
+  PROCEDURE pc_insere_param_vinculacao(pr_cdcooper IN INTEGER            --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER            --> Id. da vinculacao
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_insere_param_vinculacao
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer
+    Data    : Agosto - 2018.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para inserir parametros por cooperativa de vinculacao de
+		            reciprocidade
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+		  -- Verificar se já existe parametrização
+		  CURSOR cr_param_exis IS
+			  SELECT 1
+				  FROM tbrecip_vinculacao_parame_coop vinp
+				 WHERE vinp.cdcooper = pr_cdcooper
+				   AND vinp.idvinculacao_reciproci = pr_idvinculacao
+					 AND vinp.cdproduto = pr_cdprodut
+					 AND vinp.inpessoa = pr_inpessoa;
+		  rw_param_exis cr_param_exis%ROWTYPE;
+
+			-- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Inclusao parametro de indicador de reciprocidade';
+			vr_nrdrowid ROWID;
+			vr_inpessoa VARCHAR2(10);
+
+    BEGIN
+
+		  gene0001.pc_informa_acesso(pr_module => 'TELA_PARIDR');
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+   		-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+		  -- Verifica se já existe parametrização
+		  OPEN cr_param_exis;
+			FETCH cr_param_exis INTO rw_param_exis;
+
+		  -- Alimenta descrição da origem
+		  vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
+
+			IF cr_param_exis%FOUND THEN
+				-- Gera crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Parametrização existente! Favor selecionar outra combinação ' ||
+				               'de ''Vinculacao'', ''Produto'' e ''Tipo de Pessoa'' para a Cooperativa!';
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+      BEGIN
+				INSERT INTO tbrecip_vinculacao_parame_coop(cdcooper, idvinculacao_reciproci, cdproduto, inpessoa, vlpercentual_peso, vlpercentual_desconto)
+				                       VALUES(pr_cdcooper, pr_idvinculacao, pr_cdprodut, pr_inpessoa, pr_perpeso, pr_perdesc);
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a gravação, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;
+
+			-- Gera log na lgm
+			gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+				                   pr_cdoperad => vr_cdoperad,
+													 pr_dscritic => '',
+													 pr_dsorigem => vr_dsorigem,
+													 pr_dstransa => vr_dstransa,
+													 pr_dttransa => TRUNC(SYSDATE),
+													 pr_flgtrans => 1,
+													 pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+													 pr_idseqttl => 0,
+													 pr_nmdatela => vr_nmdatela,
+													 pr_nrdconta => 0,
+													 pr_nrdrowid => vr_nrdrowid);
+
+ 		  -- Cooperativa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cooperativa',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_cdcooper));
+
+
+		  -- ID Indicador
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'ID Vinculacao',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_idvinculacao));
+
+		  -- Cód. do produto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cod. do produto',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_cdprodut));
+
+      IF pr_inpessoa = 1 THEN
+				vr_inpessoa := 'Fisica';
+			ELSE
+				vr_inpessoa := 'Juridica';
+			END IF;
+
+		  -- Tipo Pessoa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Tipo Pessoa',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => vr_inpessoa);
+
+		  -- Atividade Vinculacao
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Atividade Vinculacao',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => 'Ativo');
+
+		  -- Percentual Peso
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Peso',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_perpeso, 'fm990d00') || '%');
+
+		  -- Percentual Desconto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Desconto',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_perdesc, 'fm990d00') || '%');
+
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARIDR: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+	END pc_insere_param_vinculacao;
 
 	PROCEDURE pc_altera_param_indica(pr_cdcooper IN INTEGER            --> Cooperativa
 		                              ,pr_idindica IN INTEGER            --> Id. do indicador
@@ -1722,6 +2369,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 																	,pr_vlmaximo IN NUMBER             --> Valor máximo
 																	,pr_perscore IN NUMBER             --> Percentual de score
 																	,pr_pertoler IN NUMBER             --> Percentual de tolerância
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
 																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
 																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
 																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
@@ -1754,6 +2403,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
               ,indp.vlmaximo
               ,indp.perscore
               ,indp.pertolera
+              ,indp.vlpercentual_peso
+              ,indp.vlpercentual_desconto
 				  FROM tbrecip_parame_indica_coop indp
 				 WHERE indp.cdcooper = pr_cdcooper
 				   AND indp.idindicador = pr_idindica
@@ -1825,6 +2476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 							,vlmaximo = pr_vlmaximo
 							,perscore = pr_perscore
 							,pertolera = pr_pertoler
+              ,vlpercentual_peso = pr_perpeso
+              ,vlpercentual_desconto = pr_perdesc
 				 WHERE indp.cdcooper = pr_cdcooper
 				   AND indp.idindicador = pr_idindica
 					 AND indp.cdproduto = pr_cdprodut
@@ -1905,11 +2558,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
 																pr_dsdadant => to_char(rw_param_exis.perscore, 'fm990d00') || '%',
 																pr_dsdadatu => to_char(pr_perscore, 'fm990d00') || '%');
 
-		  -- Percentual Score
+		  -- Percentual Tolerancia
 			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
 																pr_nmdcampo => 'Percentual Tolerancia',
 																pr_dsdadant => to_char(rw_param_exis.pertolera, 'fm990d00') || '%',
 																pr_dsdadatu => to_char(pr_pertoler, 'fm990d00') || '%');
+                                
+      -- Percentual Peso
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Peso',
+																pr_dsdadant => to_char(rw_param_exis.vlpercentual_peso, 'fm990d00') || '%',
+																pr_dsdadatu => to_char(pr_perpeso, 'fm990d00') || '%');
+                                
+      -- Percentual Desconto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Desconto',
+																pr_dsdadant => to_char(rw_param_exis.vlpercentual_desconto, 'fm990d00') || '%',
+																pr_dsdadatu => to_char(pr_perdesc, 'fm990d00') || '%');
 
 
       COMMIT;
@@ -1944,6 +2609,204 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
         ROLLBACK;
     END;
 	END pc_altera_param_indica;
+  
+  PROCEDURE pc_altera_param_vinculacao(pr_cdcooper IN INTEGER            --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER            --> Id. da vinculacao
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+                                  ,pr_perpeso  IN NUMBER             --> Percentual peso
+                                  ,pr_perdesc  IN NUMBER             --> Percentual de desconto
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_altera_param_vinculacao
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer
+    Data    : Agosto - 2018.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para inserir parametros por cooperativa de vinculacoes de
+		            reciprocidade
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+		  -- Verificar se existe parametrização
+		  CURSOR cr_param_exis IS
+			  SELECT vinp.vlpercentual_peso
+              ,vinp.vlpercentual_desconto
+				  FROM tbrecip_vinculacao_parame_coop vinp
+				 WHERE vinp.cdcooper = pr_cdcooper
+				   AND vinp.idvinculacao_reciproci = pr_idvinculacao
+					 AND vinp.cdproduto = pr_cdprodut
+					 AND vinp.inpessoa = pr_inpessoa;
+		  rw_param_exis cr_param_exis%ROWTYPE;
+
+			-- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Alteracao parametro de vinculacao de reciprocidade';
+			vr_nrdrowid ROWID;
+			vr_inpessoa VARCHAR2(10);
+
+    BEGIN
+
+		  gene0001.pc_informa_acesso(pr_module => 'TELA_PARIDR');
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+   		-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+		  BEGIN
+				UPDATE tbrecip_vinculacao_parame_coop vinp
+				   SET vlpercentual_peso = pr_perpeso
+              ,vlpercentual_desconto = pr_perdesc
+				 WHERE vinp.cdcooper = pr_cdcooper
+				   AND vinp.idvinculacao_reciproci = pr_idvinculacao
+					 AND vinp.cdproduto = pr_cdprodut
+					 AND vinp.inpessoa = pr_inpessoa;
+
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a gravação, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;
+
+			-- Gera log na lgm
+			gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+				                   pr_cdoperad => vr_cdoperad,
+													 pr_dscritic => '',
+													 pr_dsorigem => vr_dsorigem,
+													 pr_dstransa => vr_dstransa,
+													 pr_dttransa => TRUNC(SYSDATE),
+													 pr_flgtrans => 1,
+													 pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+													 pr_idseqttl => 0,
+													 pr_nmdatela => vr_nmdatela,
+													 pr_nrdconta => 0,
+													 pr_nrdrowid => vr_nrdrowid);
+
+ 		  -- Cooperativa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cooperativa',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_cdcooper));
+
+
+		  -- ID Indicador
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'ID Vinculacao',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_idvinculacao));
+
+		  -- Cód. do produto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cod. do produto',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => to_char(pr_cdprodut));
+
+      IF pr_inpessoa = 1 THEN
+				vr_inpessoa := 'Fisica';
+			ELSE
+				vr_inpessoa := 'Juridica';
+			END IF;
+
+		  -- Tipo Pessoa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Tipo Pessoa',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => vr_inpessoa);
+
+		  -- Atividade Indicador
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Atividade Vinculacao',
+																pr_dsdadant => ' ',
+																pr_dsdadatu => 'Ativo');
+
+      -- Percentual Peso
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Peso',
+																pr_dsdadant => to_char(rw_param_exis.vlpercentual_peso, 'fm990d00') || '%',
+																pr_dsdadatu => to_char(pr_perpeso, 'fm990d00') || '%');
+                                
+      -- Percentual Desconto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Percentual Desconto',
+																pr_dsdadant => to_char(rw_param_exis.vlpercentual_desconto, 'fm990d00') || '%',
+																pr_dsdadatu => to_char(pr_perdesc, 'fm990d00') || '%');
+
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARIDR: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+	END pc_altera_param_vinculacao;
 
 	PROCEDURE pc_exclui_param_indica(pr_cdcooper IN INTEGER            --> Cooperativa
 		                              ,pr_idindica IN INTEGER            --> Id. do indicador
@@ -2167,6 +3030,202 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_paridr IS
         ROLLBACK;
     END;
 	END pc_exclui_param_indica;
+  
+  PROCEDURE pc_exclui_param_vinculacao(pr_cdcooper IN INTEGER            --> Cooperativa
+		                              ,pr_idvinculacao IN INTEGER            --> Id. da vinculacao
+																	,pr_cdprodut IN INTEGER            --> Cód. do produto
+																	,pr_inpessoa IN INTEGER            --> PF/PJ
+																	,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+																	,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+																	,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+																	,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																	,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+																	,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_exclui_param_vinculacao
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer
+    Data    : Agosto - 2018.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para excluir parametros por cooperativa de vinculacoes de
+		            reciprocidade
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+		  -- Verificar se existe parametrização
+		  CURSOR cr_param_exis IS
+			  SELECT vinp.vlpercentual_peso
+              ,vinp.vlpercentual_desconto
+				  FROM tbrecip_vinculacao_parame_coop vinp
+				 WHERE vinp.cdcooper = pr_cdcooper
+				   AND vinp.idvinculacao_reciproci = pr_idvinculacao
+					 AND vinp.cdproduto = pr_cdprodut
+					 AND vinp.inpessoa = pr_inpessoa;
+		  rw_param_exis cr_param_exis%ROWTYPE;
+
+			-- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Exclusao parametro de vinculacao de reciprocidade';
+			vr_nrdrowid ROWID;
+			vr_inpessoa VARCHAR2(10);
+
+    BEGIN
+
+		  gene0001.pc_informa_acesso(pr_module => 'TELA_PARIDR');
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+   		-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+		  -- Verifica se já existe parametrização
+		  OPEN cr_param_exis;
+			FETCH cr_param_exis INTO rw_param_exis;
+
+		  -- Alimenta descrição da origem
+		  vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
+
+			IF cr_param_exis%NOTFOUND THEN
+				-- Gera crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Parametrização não encontrada para a Cooperativa!';
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+      BEGIN
+				DELETE FROM tbrecip_vinculacao_parame_coop indp
+				 WHERE indp.cdcooper = pr_cdcooper
+				   AND indp.idvinculacao_reciproci = pr_idvinculacao
+					 AND indp.cdproduto = pr_cdprodut
+					 AND indp.inpessoa = pr_inpessoa;
+
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a gravação, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;
+
+			-- Gera log na lgm
+			gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+				                   pr_cdoperad => vr_cdoperad,
+													 pr_dscritic => '',
+													 pr_dsorigem => vr_dsorigem,
+													 pr_dstransa => vr_dstransa,
+													 pr_dttransa => TRUNC(SYSDATE),
+													 pr_flgtrans => 1,
+													 pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+													 pr_idseqttl => 0,
+													 pr_nmdatela => vr_nmdatela,
+													 pr_nrdconta => 0,
+													 pr_nrdrowid => vr_nrdrowid);
+
+ 		  -- Cooperativa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cooperativa',
+																pr_dsdadant => to_char(pr_cdcooper),
+																pr_dsdadatu => ' ');
+
+
+		  -- ID Indicador
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'ID Vinculacao',
+																pr_dsdadant => to_char(pr_idvinculacao),
+																pr_dsdadatu => ' ');
+
+		  -- Cód. do produto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Cod. do produto',
+																pr_dsdadant => to_char(pr_cdprodut),
+																pr_dsdadatu => ' ');
+
+      IF pr_inpessoa = 1 THEN
+				vr_inpessoa := 'Fisica';
+			ELSE
+				vr_inpessoa := 'Juridica';
+			END IF;
+
+		  -- Tipo Pessoa
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Tipo Pessoa',
+																pr_dsdadant => vr_inpessoa,
+																pr_dsdadatu => ' ');
+
+		  -- Atividade Vinculacao
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Atividade Vinculacao',
+																pr_dsdadant => 'Ativo',
+																pr_dsdadatu => ' ');
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARIDR: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+	END pc_exclui_param_vinculacao;
 
 END tela_paridr;
 /

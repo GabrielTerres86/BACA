@@ -1965,6 +1965,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
       rw_craplim cr_craplim%ROWTYPE;
 			
+      -- Busca dos scores do Cooperado
+      CURSOR cr_tbcrd_score(pr_cdcooper crapcop.cdcooper%TYPE
+                           ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT sco.cdmodelo
+              ,csc.dsmodelo
+              ,sco.dtbase
+              ,sco.nrscore_alinhado
+              ,sco.dsclasse_score
+              ,sco.flvigente
+              ,row_number() over (partition By sco.cdmodelo
+                                      order by sco.flvigente DESC, sco.dtbase DESC) nrseqreg 
+          FROM crapass     ass
+              ,tbcrd_score sco
+              ,tbcrd_carga_score csc
+         WHERE csc.cdmodelo      = sco.cdmodelo
+           AND csc.dtbase        = sco.dtbase
+           AND sco.cdcooper      = ass.cdcooper
+           AND sco.tppessoa      = ass.inpessoa
+           AND sco.nrcpfcnpjbase = ass.nrcpfcnpj_base
+           AND ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+         ORDER BY sco.flvigente DESC
+                 ,sco.dtbase DESC;
+			
     BEGIN
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -3762,6 +3786,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_qtdopliq := SUBSTR(vr_dstextab, 52, 3);
       END IF;
+        
+      -- Montar objeto para scoreBehaviour
+      vr_lst_generic3 := json_list();
+    
+      -- Buscar todos os seguros da Conta do Cooperado 
+      -- Efetuar laço para trazer todos os registros 
+      FOR rw_score IN cr_tbcrd_score(pr_cdcooper,pr_nrdconta) LOOP
+        -- Desprezar 6º score adiante
+        IF rw_score.nrseqreg > 6 THEN
+          EXIT;
+        END IF;
+        -- Criar objeto para a operação e enviar suas informações 
+        vr_obj_generic3 := json();
+        vr_obj_generic3.put('cdModelo', rw_score.cdmodelo);
+        vr_obj_generic3.put('dsModelo',rw_score.dsmodelo);
+        vr_obj_generic3.put('dtBase ', to_char(rw_score.dtbase,'dd/mm/rrrr'));
+        vr_obj_generic3.put('dsClasseScore ', rw_score.dsclasse_score);
+        vr_obj_generic3.put('nrScoreAlinhado ', rw_score.nrscore_alinhado);
+        vr_obj_generic3.put('flSituacao ', rw_score.flvigente);
+        -- Adicionar Score na lista
+        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+      END LOOP; -- Final da leitura os seguros
+    
+      -- Adicionar o array seguro no objeto informações adicionais
+      vr_obj_generic2.put('scoreBehaviour', vr_lst_generic3);      
         
       -- Efetuar laço para trazer todos os registros 
       FOR rw_crapepr IN cr_crapepr LOOP

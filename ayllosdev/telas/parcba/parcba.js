@@ -18,8 +18,7 @@ $(document).ready(function() {
 	formataTabHis();
 	formataTabExc();
 	formataTabCad();
-	
-	
+	formataTabTar();
 });
 
 function estadoInicial(){
@@ -37,11 +36,14 @@ function estadoInicial(){
 	
 	formataCadastroParametro();
 	
+	formataCadastroTarifa();
+	
 	formataConsultaParametro();
     
 	formataOpcaoParametrizacao();
 
 	formataExclusaoParametro();
+	
 	// fim formatacao
 
 	removeOpacidade("divTela");
@@ -55,7 +57,9 @@ function estadoInicial(){
 	$("#divCadastroParametro").css({"display":"none"});
 	$("#divConsultaParametro").css({"display":"none"});
 	$("#divExcluirParametro").css({"display":"none"});
-		
+	$("#divCadastroTarifa").css({"display":"none"});
+	$("#divConsultaTarifa").css({"display":"none"});
+	$("#divGeraConciliacao").css({"display":"none"});
     
 	//Esconder os botões da tela
 	$("#divBotoes").css({"display":"none"});
@@ -134,8 +138,6 @@ function formataConsultaParametro(){
 			return false;
 		}
     });	
-	
-
 }
 
 function formataCabecalho() {
@@ -189,6 +191,22 @@ function liberaFormulario(){
 			estadoInicialExclusao();
 		break;
 
+		case "G": // Gerar conciliacao
+			estadoInicialConciliacao();
+		break;
+		
+		case "PT": //Parametrizacao tarifa
+			estadoInicialCadastroTarifa();
+		break;
+		
+		case "CT": //Consulta tarifa
+			estadoInicialConsultaTarifa();
+		break;
+		
+		case "ET": //Exclusao tarifa
+			estadoInicialCadastroTarifa();
+		break;
+
 		default:
 			estadoInicial();
 		break;
@@ -200,7 +218,10 @@ function controlaVoltar(){
 }
 
 function controlaConcluir(){
-
+	if ($("#cddotipo","#frmCab").val() == "PT") {
+		//Quando for inclusão, solicita confirmação
+		showConfirmacao('Confirma a grava&ccedil;&atilde;o do Parametro?','Confirma&ccedil;&atilde;o - Aimaro','manterTarifa();','','sim.gif','nao.gif');
+	} else {
 	var cdtransa = $('#cdtransa','#frmCadParametro').val();
     var dstransa = $('#dstransa','#frmCadParametro').val();
     var indebcre = $('#indebcre','#frmCadParametro').val();
@@ -222,12 +243,10 @@ function controlaConcluir(){
 		}
 
 	}
-
+	}
 }
 
 function estadoInicialExclusao(){
-	
-
 	//Retorna para a principal
 	flgVoltarGeral = 1;
 	hideMsgAguardo();	
@@ -242,9 +261,12 @@ function estadoInicialExclusao(){
 	$("#tbConcon > thead").html("");
     $("#tbExcpar > tbody").html("");
 	$("#tbExcpar > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
 
 	$("#btConcluir","#divBotoes").hide();
 	$("#btExcluir","#divBotoes").show();
+	$("#btGerarConciliacao","#divBotoes").hide();
 
 	$("#divExcluirParametro").css({"display":"block"});
 	$("#tabExcpar").css({"display":"block"});
@@ -264,31 +286,41 @@ function estadoInicialExclusao(){
 }
 
 function controlaExcluir(){
+	if ($("#cddotipo","#frmCab").val() == "ET") {
+		var cdhistor = $("#cdhistor","#frmCadTarifa").val();
 	
+		if (cdhistor != "") {
+			showConfirmacao('Confirma a Exclus&atilde;o do Parametro?','Confirma&ccedil;&atilde;o - Aimaro','manterTarifa();','','sim.gif','nao.gif');		
+		}
+	} else {
 	var cdtransa = $("#cdtransa","#frmExcParametro").val();
 
 	if (cdtransa != ""){
 		showConfirmacao('Confirma a Exclus&atilde;o do Parametro?','Confirma&ccedil;&atilde;o - Aimaro','confirmouExclusao();','','sim.gif','nao.gif');		
 	}
-
+	}
 }
 
 function confirmouExclusao(){
-	
 	var cdtransa = $("#cdtransa","#frmExcParametro").val();
 
 	if (cdtransa != ""){
-		
 		manterParametro("E",cdtransa,"","","","");	
 	}
-	
-
 }
 
 function finalizaExclusao(){
 
 	showError('inform','Exclus&atilde;o efetuada com sucesso!','Alerta - Aimaro','estadoInicialExclusao();');
 
+}
+
+function finalizaGravacaoTarifa(){
+	showError('inform','Grava&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','estadoInicialCadastroTarifa();');
+}
+
+function finalizaExclusaoTarifa(){
+	showError('inform','Exclus&atilde;o efetuada com sucesso!','Alerta - Aimaro','estadoInicialCadastroTarifa();');
 }
 
 function estadoInicialCadastro(){
@@ -305,6 +337,8 @@ function estadoInicialCadastro(){
 	$("#tbConhis > thead").html("");
 	$("#tbConcon > tbody").html("");
 	$("#tbConcon > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
 
 	$("#divCadastroParametro").css({"display":"block"});
 
@@ -313,6 +347,7 @@ function estadoInicialCadastro(){
 	$("#divBotoes").css({"display":"block"});
 	$("#btConcluir","#divBotoes").show();
 	$("#btExcluir","#divBotoes").hide();
+	$("#btGerarConciliacao","#divBotoes").hide();
 
 	//Exibe cabeçalho e define tamanho da tela
 	$("#frmCadParametro","#divCadastroParametro").css({"display":"block"});
@@ -340,6 +375,8 @@ function estadoInicialConsulta(){
 	$("#tbConhis > thead").html("");
 	$("#tbConcon > tbody").html("");
 	$("#tbConcon > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
 
 	$("#divConsultaParametro").css({"display":"block"});
 
@@ -352,6 +389,7 @@ function estadoInicialConsulta(){
 	// Esconder o botão de Concluir
 	$("#btConcluir","#divBotoes").hide();
 	$("#btExcluir","#divBotoes").hide();
+	$("#btGerarConciliacao","#divBotoes").hide();
 
 	//Limpa os campos do formulário e remove o erro dos campos
 	$('input[type="text"],select','#frmConParametro').limpaFormulario().removeClass('campoErro');
@@ -374,6 +412,8 @@ function estadoInicialAlteracao(){
 	$("#tbConhis > thead").html("");
 	$("#tbConcon > tbody").html("");
 	$("#tbConcon > thead").html("");	
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
 
 
 	//Esconde cadastro e os botões
@@ -405,24 +445,58 @@ function formataCadastroParametro(){
 			return false;
         }
     });
-    /*
-	//Define ação para o campo de código do historico ailos
-	$("#cdhistor","#frmCadParametro").unbind('keypress').bind('keypress', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
 
-			buscaDesHistoricoAilos($("#cdhistor","#frmCadParametro").val());
+	return false;
+
+}
+
+function formataCadastroTarifa() {
+	
+    var cddotipo = $("#cddotipo","#frmCab");
+
+	$("#cdhistor","#frmCadTarifa").habilitaCampo();
+    $("#dsexthst","#frmCadTarifa").desabilitaCampo();
+	$("#dscontabil","#frmCadTarifa").habilitaCampo();
+	$("#nrctadeb_pf","#frmCadTarifa").habilitaCampo();
+	$("#nrctacrd_pf","#frmCadTarifa").habilitaCampo();
+	$("#nrctadeb_pj","#frmCadTarifa").habilitaCampo();
+	$("#nrctacrd_pj","#frmCadTarifa").habilitaCampo();
+
+	if (cddotipo.val() == "ET") {
+		$("#dscontabil","#frmCadTarifa").desabilitaCampo();
+		$("#nrctadeb_pf","#frmCadTarifa").desabilitaCampo();
+		$("#nrctacrd_pf","#frmCadTarifa").desabilitaCampo();
+		$("#nrctadeb_pj","#frmCadTarifa").desabilitaCampo();
+		$("#nrctacrd_pj","#frmCadTarifa").desabilitaCampo();
+	}
+	
+    $("#cdhistor","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+    /*
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            buscaDesHistoricoAilos($("#cdhistor","#frmCadTarifa").val());
 			return false;
 		}
-    });*/
+    });
 
 	return false;
 
 }
 
 function buscaDesHistoricoAilos(cdhistor){
+    var cddotipo = $("#cddotipo","#frmCab");
 		   
     if (cdhistor != ""){
+		if (cddotipo.val() == "PT" || cddotipo.val() == "ET") {
+			manterParametro("BHT","",cdhistor,"","",""); //buscar descrição historico ailos
+		} else {
        manterParametro("BH","",cdhistor,"","","");	//buscar descrição historico ailos
+    }
     }
 
 }
@@ -558,6 +632,43 @@ function formataTabHis() {
 	return false;
 }
 
+function formataTabTar() {
+	// Tabela
+	var divRegistro = $("div.divRegistros", "#tabContar");
+	var tabela      = $("table", divRegistro );
+	var linha       = $("table > tbody > tr", divRegistro );
+
+	$("#tabContar").css({"margin-top":"5px"});
+	divRegistro.css({"height":"170px","width":"700px","padding-bottom":"2px"});
+
+	var ordemInicial = new Array();
+
+	//Define a largura dos campos
+	var arrayLargura = new Array();
+    arrayLargura[0] = "53px";
+    arrayLargura[1] = "";
+	arrayLargura[2] = "51px";
+	arrayLargura[3] = "51px";
+	arrayLargura[4] = "51px";
+	arrayLargura[5] = "51px";
+
+	//Define a posição dos elementos nas células da linha
+    var arrayAlinha = new Array();
+	arrayAlinha[0] = "right";
+	arrayAlinha[1] = "left";
+	arrayAlinha[2] = "center";
+	arrayAlinha[3] = "center";
+	arrayAlinha[4] = "center";
+	arrayAlinha[5] = "center";
+
+	//Aplica as informações na tabela
+	$(".ordemInicial","#tabContar").remove();
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
+	//
+	
+	return false;
+}
+
 
 function formataOpcaoParametrizacao(){
 
@@ -599,17 +710,108 @@ function formataOpcaoParametrizacao(){
 			return false;	
         }
     });
-/*
-	//Define ação para o campo de código do operador
-	$("#cdtransa","#frmCadParametro").unbind('keypress').bind('keypress', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
-			buscaDesTrasacaoBancoob("BT",$("#cdtransa","#frmCadParametro").val());
-			return false;
-		}
-    });	*/
 
 	return false;
 
+}
+
+function formataOpcaoParametrizacaoTarifa(){
+
+	// rotulo
+	$('label[for="cdhistor"]',"#frmCadTarifa").addClass('rotulo').css({"width":"125px"});
+	$('label[for="dsexthst"]',"#frmCadTarifa").addClass('rotulo-linha').css({"width":"125px"});
+	$('label[for="dscontabil"]',"#frmCadTarifa").addClass('rotulo').css({"width":"125px"});
+	$('label[for="nrctadeb_pf"]',"#frmCadTarifa").addClass('rotulo').css({"width":"125px"});
+	$('label[for="nrctacrd_pf"]',"#frmCadTarifa").addClass('rotulo-linha').css({"width":"125px"});
+	$('label[for="nrctadeb_pj"]',"#frmCadTarifa").addClass('rotulo').css({"width":"125px"});
+	$('label[for="nrctacrd_pj"]',"#frmCadTarifa").addClass('rotulo-linha').css({"width":"125px"});
+
+	// campo
+	$("#cdhistor","#frmCadTarifa").addClass("inteiro campo").css({"width":"50px"}).attr("maxlength","5");
+	$("#dsexthst","#frmCadTarifa").addClass("campo").css({"width":"360px"}).attr("maxlength","50");
+	$("#dscontabil","#frmCadTarifa").addClass("campo").css({"width":"541px"}).attr("maxlength","240");
+	$("#nrctadeb_pf","#frmCadTarifa").addClass("inteiro campo").css({"width":"50px"}).attr("maxlength","5");
+	$("#nrctacrd_pf","#frmCadTarifa").addClass("inteiro campo").css({"width":"50px"}).attr("maxlength","5");
+	$("#nrctadeb_pj","#frmCadTarifa").addClass("inteiro campo").css({"width":"50px"}).attr("maxlength","5");
+	$("#nrctacrd_pj","#frmCadTarifa").addClass("inteiro campo").css({"width":"50px"}).attr("maxlength","5");
+
+    $("#btnIncluirTransacao","#frmCadTarifa").hide();        
+    $("#btnAlterarTransacao","#frmCadTarifa").hide();
+
+    $("#fscadtar","#frmCadTarifa").css({"display":"block"});  
+
+	$("#cdhistor","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+        /* 
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            buscaDesHistoricoAilos($("#cdhistor","#frmCadTarifa").val());
+			$("#dscontabil","#frmCadTarifa").focus();
+			return false;
+        }
+    });
+	
+	$("#dscontabil","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+        /* 
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            $("#nrctadeb_pf","#frmCadTarifa").focus();
+			return false;
+        }
+    });
+	
+	$("#nrctadeb_pf","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+/*
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            $("#nrctacrd_pf","#frmCadTarifa").focus();
+			return false;
+		}
+    });
+
+	$("#nrctacrd_pf","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+/*
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            $("#nrctadeb_pj","#frmCadTarifa").focus();
+	return false;
+		}
+    });
+
+	$("#nrctadeb_pj","#frmCadTarifa").unbind('keydown').bind('keydown', function(e){
+        /* 
+         * verifica se o evento é Keycode (para IE e outros browsers)
+         * se não for pega o evento Which (Firefox)
+        */
+        var tecla = (e.keyCode?e.keyCode:e.which);
+
+        /* verifica se a tecla pressionada foi o ENTER ou TAB*/
+        if(tecla == 13 || tecla == 9){
+            $("#nrctacrd_pj","#frmCadTarifa").focus();
+	return false;
+        }
+    });
+
+	return false;
 }
 
 function setarDestransacaoBancoob(cddopcao,cdtransa,dstransa,indebcre){
@@ -672,8 +874,6 @@ function alterarTransacaoBancoob(){
 
 
 function carregaHistoricoAilos(cdtransa,cddopcao){
-		
-		              
         $("#cdtransa","#frmCadParametro").desabilitaCampo();
 		$("#dstransa","#frmCadParametro").desabilitaCampo();
 		$("#indebcre","#frmCadParametro").desabilitaCampo();
@@ -807,6 +1007,38 @@ function criaLinhaHistorico(cdhistor,dshistor,indebcre){
 		);
 }
 
+function criaLinhaTarifa(cdhistor,dscontabil,nrctadeb_pf,nrctacrd_pf,nrctadeb_pj,nrctacrd_pj){	
+	// Criar a linha na tabela
+	$("#tbContar > tbody")
+		.append($('<tr>') // Linha
+			.attr('id',"id_".concat(cdhistor))
+			.append($('<td>') 
+				.attr('style','width: 53px; text-align:right')
+				.text(cdhistor)
+			)
+			.append($('<td>')  
+				.attr('style','text-align:left')
+				.text(dscontabil)
+			)
+			.append($('<td>') 
+				.attr('style','width: 51px; text-align:right')
+				.text(nrctadeb_pf)
+			)
+			.append($('<td>') 
+				.attr('style','width: 51px; text-align:right')
+				.text(nrctacrd_pf)
+			)
+			.append($('<td>')
+				.attr('style','width: 51px; text-align:right')
+				.text(nrctadeb_pj)
+			)
+			.append($('<td>') 
+				.attr('style','width: 51px; text-align:right')
+				.text(nrctacrd_pj)
+			)
+		);
+}
+
 function mostraTabelasConsulta(){
 	$('#tabConcon','#frmConParametro').show();
 	$('#tabConhis','#frmConParametro').show();
@@ -909,7 +1141,6 @@ function excluirLinhaHistorico(linha) {
 }
 
 function limpaTabelaHistorico() {	
-	
 	$("#tbCadpar > tbody").html("");
 	$("#tbConhis > tbody").html("");
 	$("#tbExcpar > tbody").html("");
@@ -922,7 +1153,10 @@ function limpaTabelaTransacao(){
 
 function limpaTabelaExlcusao(){
 	$("#tbExcpar > tbody").html("");
+}
 
+function limpaTabelaTarifa(){
+	$("#tbContar > tbody").html("");
 }
 
 function selecionaLinhaConsulta(linha) {
@@ -930,18 +1164,36 @@ function selecionaLinhaConsulta(linha) {
 }
 
 function ConsultaHistoricoAilos(linha) {
-		
 	var cdtransa = $("td:eq(0)", linha ).html();
 	
 	if (cdtransa != null){			
 	  	manterParametro("CH",cdtransa,"","","","");		
     }	
-
-	
 }
 
 function setarDesHistoricoAilos(dshistor){
 	$("#dshistor","#frmCadParametro").val(dshistor);
+}
+
+function setarDesHistoricoAilosTarifa(dshistor,dscontabil,nrctadeb_pf,nrctacrd_pf,nrctadeb_pj,nrctacrd_pj) {
+	var cddopcao = $("#cddotipo","#frmCab").val();
+
+	if (cddopcao == "ET") {
+		if (dscontabil == "") {
+			showError('alert','Parametriza&ccedil;&atilde;o n&atilde;o encontrada!','Alerta - Aimaro','estadoInicialCadastroTarifa()');
+		}
+}
+	
+	if (dshistor == "") {
+		showError('alert','Hist&oacute;rico n&atilde;o encontrado!','Alerta - Aimaro','estadoInicialCadastroTarifa()');
+}
+
+	$("#dsexthst","#frmCadTarifa").val(dshistor);
+	$("#dscontabil","#frmCadTarifa").val(dscontabil);
+	$("#nrctadeb_pf","#frmCadTarifa").val(nrctadeb_pf);
+	$("#nrctacrd_pf","#frmCadTarifa").val(nrctacrd_pf);
+	$("#nrctadeb_pj","#frmCadTarifa").val(nrctadeb_pj);
+	$("#nrctacrd_pj","#frmCadTarifa").val(nrctacrd_pj);
 }
 
 function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,indebcre_histor){
@@ -962,6 +1214,52 @@ function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,ind
 			lsindebcre:          lsindebcre,
 			dstransa:     dstransa,			
 			redirect:     "script_ajax"
+		},
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        },
+        success: function(response) {
+           hideMsgAguardo();
+			try {
+				eval(response);
+			} catch (error) {
+					hideMsgAguardo();
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+			}
+		}
+    });
+    return false;
+}
+
+function manterTarifa(){
+    showMsgAguardo('Aguarde efetuando operacao...');
+
+    var cddopcao = $("#cddotipo","#frmCab").val();
+
+	if (cddopcao == "PT") {
+		var cdhistor = $('#cdhistor', '#frmCadTarifa').val();
+		var dscontabil = $('#dscontabil', '#frmCadTarifa').val();
+		var nrctadeb_pf = $('#nrctadeb_pf', '#frmCadTarifa').val();
+		var nrctacrd_pf = $('#nrctacrd_pf', '#frmCadTarifa').val();
+		var nrctadeb_pj = $('#nrctadeb_pj', '#frmCadTarifa').val();
+		var nrctacrd_pj = $('#nrctacrd_pj', '#frmCadTarifa').val();
+	} else if (cddopcao == "ET") {
+		var cdhistor = $('#cdhistor', '#frmCadTarifa').val();
+	}
+
+	$.ajax({
+        type: "POST",
+        url: UrlSite + "telas/parcba/manter_rotina_tarifa.php",
+        data: {
+            cddopcao:            cddopcao,
+			cdhistor:     		 cdhistor,
+			dscontabil:          dscontabil,
+			nrctadeb_pf:         nrctadeb_pf,
+			nrctacrd_pf:         nrctacrd_pf,
+			nrctadeb_pj:         nrctadeb_pj,
+			nrctacrd_pj:         nrctacrd_pj,
+			redirect:            "script_ajax"
 		},
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
@@ -1047,5 +1345,119 @@ function incluirHistoricoAilos(){
 	    formataTabCad();	
         limpaCamposHistorico();
 	}
+}
 
+function estadoInicialCadastroTarifa(){
+	//Retorna para a principal
+	var cddopcao = $("#cddotipo","#frmCab").val();
+
+	flgVoltarGeral = 1;
+
+	hideMsgAguardo();
+
+	removeOpacidade("divTela");
+
+	$("#tbCadpar > tbody").html("");
+	$("#tbCadpar > thead").html("");
+	$("#tbConhis > tbody").html("");
+	$("#tbConhis > thead").html("");
+	$("#tbConcon > tbody").html("");
+	$("#tbConcon > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
+
+	$("#divCadastroTarifa").css({"display":"block"});
+
+	//Esconde cadastro e os botões
+	$("#divBotoes").css({"display":"block"});
+	$("#btConcluir","#divBotoes").show();
+	$("#btExcluir","#divBotoes").hide();
+	$("#btGerarConciliacao","#divBotoes").hide();
+	
+	if (cddopcao == "ET") {
+		$("#btConcluir","#divBotoes").hide();
+		$("#btExcluir","#divBotoes").show();
+	}
+
+	//Exibe cabeçalho e define tamanho da tela
+	$("#frmCadTarifa","#divCadastroTarifa").css({"display":"block"});
+
+	//Limpa os campos do formulário e remove o erro dos campos
+	$('input[type="text"],select','#frmCadTarifa').limpaFormulario().removeClass('campoErro');
+
+	formataCadastroTarifa();
+	formataOpcaoParametrizacaoTarifa();
+
+    $('#cdhistor','#frmCadTarifa').focus();
+}
+
+function estadoInicialConsultaTarifa(){
+	//Retorna para a principal
+	flgVoltarGeral = 1;
+
+	hideMsgAguardo();
+
+	removeOpacidade("divTela");
+
+	$("#tbCadpar > tbody").html("");
+	$("#tbCadpar > thead").html("");
+	$("#tbConhis > tbody").html("");
+	$("#tbConhis > thead").html("");
+	$("#tbConcon > tbody").html("");
+	$("#tbConcon > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
+
+	$("#divConsultaTarifa").css({"display":"block"});
+
+	//Esconde cadastro e os botões
+	$("#divBotoes").css({"display":"block"});
+	$("#btConcluir","#divBotoes").hide();
+	$("#btExcluir","#divBotoes").hide();
+	$("#btGerarConciliacao","#divBotoes").hide();
+
+	//Exibe cabeçalho e define tamanho da tela
+	$("#frmConTarifa","#divConsultaTarifa").css({"display":"block"});
+
+	//Limpa os campos do formulário e remove o erro dos campos
+	$('input[type="text"],select','#frmConTarifa').limpaFormulario().removeClass('campoErro');
+
+	manterTarifa();
+}
+
+function estadoInicialConciliacao () {
+	//Retorna para a principal
+	flgVoltarGeral = 1;
+
+	hideMsgAguardo();
+
+	removeOpacidade("divTela");
+
+	$("#tbCadpar > tbody").html("");
+	$("#tbCadpar > thead").html("");
+	$("#tbConhis > tbody").html("");
+	$("#tbConhis > thead").html("");
+	$("#tbConcon > tbody").html("");
+	$("#tbConcon > thead").html("");
+	$("#tbContar > tbody").html("");
+	$("#tbContar > thead").html("");
+
+	$("#divGeraConciliacao").css({"display":"block"});
+
+	//Esconde cadastro e os botões
+	$("#divBotoes").css({"display":"block"});
+	$("#btConcluir","#divBotoes").hide();
+	$("#btExcluir","#divBotoes").hide();
+	$("#btGerarConciliacao","#divBotoes").show();
+
+	//Exibe cabeçalho e define tamanho da tela
+	$("#frmGeraConciliacao","#divGeraConciliacao").css({"display":"block"});
+}
+
+function geraConciliacao() {
+	showConfirmacao('Confirma a solicita&ccedil;&atilde;o de concilia&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterParametro("G","","","","","");','','sim.gif','nao.gif');
+}
+
+function finalizaConciliacao() {
+	showError('inform','Concilia&ccedil;&atilde;o solicitada com sucesso, dentro de alguns minutos os arquivos estar&atilde;o dispon&iacute;veis!','Alerta - Aimaro','estadoInicial();');
 }

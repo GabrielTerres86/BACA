@@ -73,7 +73,40 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
                                    ,pr_des_erro OUT VARCHAR2);
                                                                                 
                                                                                                                     
+  PROCEDURE pc_insere_tarifa(pr_cdhistor    IN     tbcontab_prm_his_tarifa.cdhistor%TYPE
+                            ,pr_dscontabil  IN     tbcontab_prm_his_tarifa.dscontabil%TYPE
+                            ,pr_nrctadeb_pf IN     tbcontab_prm_his_tarifa.nrctadeb_pf%TYPE
+                            ,pr_nrctacrd_pf IN     tbcontab_prm_his_tarifa.nrctacrd_pf%TYPE
+                            ,pr_nrctadeb_pj IN     tbcontab_prm_his_tarifa.nrctadeb_pj%TYPE
+                            ,pr_nrctacrd_pj IN     tbcontab_prm_his_tarifa.nrctacrd_pj%TYPE
+                            ,pr_xmllog      IN     VARCHAR2           --> XML com informações de LOG
+                            ,pr_cdcritic       OUT PLS_INTEGER       --> Código da crítica
+                            ,pr_dscritic       OUT VARCHAR2          --> Descrição da crítica
+                            ,pr_retxml      IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                            ,pr_nmdcampo       OUT VARCHAR2          --> Nome do campo com erro
+                            ,pr_des_erro       OUT VARCHAR2);
+
+  PROCEDURE pc_consulta_tarifa_bancoob(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);
                                                                                                                                                                    
+  PROCEDURE pc_exclui_tarifa_bancoob(pr_cdhistor    IN     tbcontab_prm_his_tarifa.cdhistor%TYPE
+                                    ,pr_xmllog      IN     VARCHAR2           --> XML com informações de LOG
+                                    ,pr_cdcritic       OUT PLS_INTEGER       --> Código da crítica
+                                    ,pr_dscritic       OUT VARCHAR2          --> Descrição da crítica
+                                    ,pr_retxml      IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo       OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro       OUT VARCHAR2);
+
+  PROCEDURE pc_executa_conciliacao(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);
 END TELA_PARCBA;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
@@ -345,8 +378,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
          AND  tcb.cdtransa = pr_cdtransa;
 
       CURSOR cr_craphis (pr_cdhistor IN craphis.cdhistor%TYPE) IS
-       SELECT his.dsexthst FROM craphis his
-        WHERE his.cdcooper = 3
+       SELECT his.dsexthst
+            , tar.dscontabil
+            , tar.nrctadeb_pf
+            , tar.nrctacrd_pf
+            , tar.nrctadeb_pj
+            , tar.nrctacrd_pj
+         FROM tbcontab_prm_his_tarifa tar
+            , craphis his
+        WHERE tar.cdhistor (+) = his.cdhistor
+          AND his.cdcooper = 3
          AND  his.cdhistor = pr_cdhistor;         
       
       -- Subrotina para escrever texto na variável CLOB do XML
@@ -359,22 +400,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
     BEGIN
     
       pr_des_erro := 'OK';
-     /* -- Extrai dados do xml
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcoplog,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-    
-      -- Se retornou alguma crítica
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exceção
-        RAISE vr_exc_erro;
-      END IF;*/
          
       -- Inicializar o CLOB
       vr_des_xml := null;
@@ -393,6 +418,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
           FOR rw_craphis IN cr_craphis(pr_cdhistor => pr_cdhistor) LOOP  
             pc_escreve_xml( '<historico>
                              <dshistor>'|| rw_craphis.dsexthst ||'</dshistor>'||
+                            '<dscontabil>'|| rw_craphis.dscontabil ||'</dscontabil>'||
+                            '<nrctadeb_pf>'|| rw_craphis.nrctadeb_pf ||'</nrctadeb_pf>'||
+                            '<nrctacrd_pf>'|| rw_craphis.nrctacrd_pf ||'</nrctacrd_pf>'||
+                            '<nrctadeb_pj>'|| rw_craphis.nrctadeb_pj ||'</nrctadeb_pj>'||
+                            '<nrctacrd_pj>'|| rw_craphis.nrctacrd_pj ||'</nrctacrd_pj>'||
                             '</historico>');   
           END LOOP;                          
         EXCEPTION
@@ -985,6 +1015,477 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
   
   END pc_deleta_historico_ailos;
     
+  PROCEDURE pc_insere_tarifa(pr_cdhistor    IN     tbcontab_prm_his_tarifa.cdhistor%TYPE
+                            ,pr_dscontabil  IN     tbcontab_prm_his_tarifa.dscontabil%TYPE
+                            ,pr_nrctadeb_pf IN     tbcontab_prm_his_tarifa.nrctadeb_pf%TYPE
+                            ,pr_nrctacrd_pf IN     tbcontab_prm_his_tarifa.nrctacrd_pf%TYPE
+                            ,pr_nrctadeb_pj IN     tbcontab_prm_his_tarifa.nrctadeb_pj%TYPE
+                            ,pr_nrctacrd_pj IN     tbcontab_prm_his_tarifa.nrctacrd_pj%TYPE
+                            ,pr_xmllog      IN     VARCHAR2           --> XML com informações de LOG
+                            ,pr_cdcritic       OUT PLS_INTEGER       --> Código da crítica
+                            ,pr_dscritic       OUT VARCHAR2          --> Descrição da crítica
+                            ,pr_retxml      IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                            ,pr_nmdcampo       OUT VARCHAR2          --> Nome do campo com erro
+                            ,pr_des_erro       OUT VARCHAR2) IS
+      /* .............................................................................
+
+        Programa: pc_insere_tarifa
+        Sistema : CECRED
+        Sigla   : TELA_PARCBA
+        Autor   : Heitor Schmitt - Mout's
+        Data    : 03/11/2018.                    Ultima atualizacao: --/--/----
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Inserir parametros de tarifas BANCOOB
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+    
+      ----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcoplog INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcoplog,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;
+
+     BEGIN
+       INSERT INTO tbcontab_prm_his_tarifa(cdhistor,
+                                           dscontabil,
+                                           nrctadeb_pf,
+                                           nrctacrd_pf,
+                                           nrctadeb_pj,
+                                           nrctacrd_pj)
+                                   VALUES (pr_cdhistor,
+                                           pr_dscontabil,
+                                           pr_nrctadeb_pf,
+                                           pr_nrctacrd_pf,
+                                           pr_nrctadeb_pj,
+                                           pr_nrctacrd_pj);
+     EXCEPTION
+       WHEN dup_val_on_index THEN
+         BEGIN
+           UPDATE tbcontab_prm_his_tarifa t
+              SET t.dscontabil  = pr_dscontabil
+                , t.nrctadeb_pf = pr_nrctadeb_pf
+                , t.nrctacrd_pf = pr_nrctacrd_pf
+                , t.nrctadeb_pj = pr_nrctadeb_pj
+                , t.nrctacrd_pj = pr_nrctacrd_pj
+            WHERE t.cdhistor    = pr_cdhistor;
+         END;
+       WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao parametrizar. Tente novamente!' || SQLERRM;
+          RAISE vr_exc_erro;
+     END;
+
+     COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_insere_tarifa;
+  
+  PROCEDURE pc_consulta_tarifa_bancoob(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS       --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consulta_tarifa_bancoob
+        Sistema : CECRED
+        Sigla   : TELA_PARCBA
+        Autor   : Heitor Schmitt - Mout's
+        Data    : 03/11/2018.                    Ultima atualizacao: --/--/----
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Buscar tarifas bancoob
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+      ----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
      
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcoplog INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+
+      --> variaveis auxiliares
+      vr_des_xml         CLOB;
+      vr_texto_completo  VARCHAR2(32600);
+
+      ---------->> CURSORES <<--------
+      --> Buscar transacao bancoob
+      CURSOR cr_tarifa IS
+        SELECT tar.cdhistor
+             , tar.dscontabil
+             , tar.nrctadeb_pf
+             , tar.nrctacrd_pf
+             , tar.nrctadeb_pj
+             , tar.nrctacrd_pj
+          FROM tbcontab_prm_his_tarifa tar
+         ORDER BY tar.cdhistor;
+
+      -- Subrotina para escrever texto na variável CLOB do XML
+      procedure pc_escreve_xml(pr_des_dados in varchar2,
+                               pr_fecha_xml in boolean default false) is
+      begin
+        gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+      end;
+    BEGIN
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcoplog,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Inicializar o CLOB
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- Inicilizar as informações do XML
+      vr_texto_completo := null;
+
+      -- Criar cabeçalho do XML
+      pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?>'||
+                     '<Dados>');
+
+      FOR rw_tarifa IN cr_tarifa LOOP
+        BEGIN
+          pc_escreve_xml( '<tarifa>
+                           <cdhistor>'|| rw_tarifa.cdhistor ||'</cdhistor>'||
+                          '<dscontabil>'|| rw_tarifa.dscontabil ||'</dscontabil>'||
+                          '<nrctadeb_pf>'|| rw_tarifa.nrctadeb_pf ||'</nrctadeb_pf>'||
+                          '<nrctacrd_pf>'|| rw_tarifa.nrctacrd_pf ||'</nrctacrd_pf>'||
+                          '<nrctadeb_pj>'|| rw_tarifa.nrctadeb_pj ||'</nrctadeb_pj>'||
+                          '<nrctacrd_pj>'|| rw_tarifa.nrctacrd_pj ||'</nrctacrd_pj>'||
+                          '</tarifa>');
+        EXCEPTION
+          WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao montar tabela de tarifas'||': '||SQLERRM;
+          RAISE vr_exc_erro;
+        END;
+      END LOOP;
+
+      pc_escreve_xml('</Dados>',TRUE);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_consulta_tarifa_bancoob;
+  
+  PROCEDURE pc_exclui_tarifa_bancoob(pr_cdhistor    IN     tbcontab_prm_his_tarifa.cdhistor%TYPE
+                                    ,pr_xmllog      IN     VARCHAR2           --> XML com informações de LOG
+                                    ,pr_cdcritic       OUT PLS_INTEGER       --> Código da crítica
+                                    ,pr_dscritic       OUT VARCHAR2          --> Descrição da crítica
+                                    ,pr_retxml      IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo       OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro       OUT VARCHAR2) IS
+      /* .............................................................................
+
+        Programa: pc_exclui_tarifa_bancoob
+        Sistema : CECRED
+        Sigla   : TELA_PARCBA
+        Autor   : Heitor Schmitt - Mout's
+        Data    : 03/11/2018.                    Ultima atualizacao: --/--/----
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Excluir parametros de tarifas BANCOOB
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+    
+      ----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcoplog INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcoplog,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;
+
+     BEGIN
+       DELETE tbcontab_prm_his_tarifa t
+        WHERE t.cdhistor = pr_cdhistor;
+     EXCEPTION
+       WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao excluir parametro. Tente novamente!' || SQLERRM;
+          RAISE vr_exc_erro;
+     END;
+
+     COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_exclui_tarifa_bancoob;
+  
+  PROCEDURE pc_executa_conciliacao(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS
+    vr_cdprogra      VARCHAR2(100) := 'JBCONTAB_PRCCTB';
+    vr_jobname       VARCHAR2(100);
+    vr_nmarqlog      VARCHAR2(100);
+    vr_idparale      INTEGER; 
+    vr_dsplsql       VARCHAR2(1000);
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(1000);
+    vr_exc_erro      EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcoplog INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+  BEGIN
+    pr_des_erro := 'OK';
+
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcoplog,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+
+    vr_jobname := vr_cdprogra ||'_$';
+
+    vr_dsplsql := 'declare 
+                     vr_cdcritic integer; 
+                     vr_dscritic varchar2(4000); 
+                   begin 
+                     cont0002.pc_processa_arquivo_bancoob (pr_cdcooper  => 3,
+                                                           pr_cdcritic  => vr_cdcritic,
+                                                           pr_dscritic  => vr_dscritic); 
+                   end;';
+
+    -- Faz a chamada ao programa paralelo atraves de JOB
+    gene0001.pc_submit_job(pr_cdcooper => 3            --> Código da cooperativa
+                          ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                          ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                          ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                          ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                          ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                          ,pr_des_erro => vr_dscritic);    
+
+    -- Testar saida com erro
+    IF vr_dscritic is not null THEN 
+      -- Levantar exceçao
+      raise vr_exc_erro;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END;
 END TELA_PARCBA;
 /

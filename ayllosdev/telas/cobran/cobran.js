@@ -1859,6 +1859,28 @@ function buscaExportar() {
     return false;
 }
 
+function geraRemessa(skipConfirm) {
+    if (!skipConfirm) {
+        showConfirmacao("Deseja gerar o arquivo de remessa?", "Confirma&ccedil;&atilde;o - Ayllos", "geraRemessa(true);", "hideMsgAguardo();", "sim.gif", "nao.gif");
+        return;
+    }
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    var ininrdoc = $('#ininrdoc', '#' + frmOpcao).val();
+    var fimnrdoc = $('#fimnrdoc', '#' + frmOpcao).val();
+    var tpconsul = $('#tpconsul', '#' + frmOpcao).val();
+    var inestcri = $('#inestcri', '#' + frmOpcao).val();
+
+    $('#nrdconta', '#frmExportarREM').val(nrdconta);
+    $('#ininrdoc', '#frmExportarREM').val(ininrdoc);
+    $('#fimnrdoc', '#frmExportarREM').val(fimnrdoc);
+    $('#tpconsul', '#frmExportarREM').val(tpconsul);
+    $('#inestcri', '#frmExportarREM').val(inestcri);
+
+    $('#frmExportarREM').submit();
+    return false;
+}
+
 
 
 // opcao I

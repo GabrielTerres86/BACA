@@ -21,6 +21,9 @@
     * 							  PJ 450 - Diego Simas - AMcom	
 
 	*				 08/08/2018 - Adicionado TBDSCT_LANCAMENTO_BORDERO na estrutura - Luis Fernando (GFT)
+	*                
+	*                23/11/2018 - Implantacao do Projeto 421, parte 2
+    *                             Heitor (Mouts)
 	*							  			
 	* --------------
 	*/ 
@@ -54,6 +57,130 @@
 		'TBDSCT_LANCAMENTO_BORDERO',
         'TBCC_PREJUIZO_DETALHE'
 	);
+	
+	$dsestrutLst = array(
+		'CRAPCBB - Movimentos Correspondente Bancario - Banco do Brasil',
+		'CRAPCHD - Cheques acolhidos para depositos nas contas dos associados',
+		'CRAPLAC - Lancamento de aplicacao da captacao',
+		'CRAPLAP - Cadastro dos lancamentos de aplicacoes RDCA',
+		'CRAPLCI - Lancamentos da conta investimento',
+		'CRAPLCM - Lancamentos em depositos a vista',
+		'CRAPLCS - Lancamentos dos funcionarios que optaram por transferir salario para outra instituicao',
+		'CRAPLCT - Lancamentos de cotas/capital',
+		'CRAPLCX - Contem os lancamentos extra-sistema que compoem o boletim de caixa',
+		'CRAPLEM - Lancamentos em emprestimos',
+		'CRAPLFT - Lancamentos de faturas',
+		'CRAPLGP - Lancamentos das Guias da Previdencia Social',
+		'CRAPLPI - Lancamentos dos pagamentos do INSS',
+		'CRAPLPP - Cadastro de lancamentos de aplicacoes de poupanca programada',
+		'CRAPLTR - Log das transacoes efetuadas nos caixas e cash dispensers',
+		'CRAPTIT - Titulos acolhidos',
+		'CRAPTVL - Tranferencia de valores (DOC C, DOC D E TEDS)',
+		'TBCC_PREJUIZO_LANCAMENTO - Lancamentos bloqueados por conta em prejuizo',
+		'TBDSCT_LANCAMENTO_BORDERO - Lancamentos contabeis em Limite Desconto Titulo',
+        'TBCC_PREJUIZO_DETALHE - Lancamentos detalhados do extrato do prejuizo'
+	);
+	
+	$tplotmovLst = array(
+		'0',
+		'1',
+		'2',
+		'3',
+		'4',
+		'5',
+		'6',
+		'7',
+		'8',
+		'9',
+		'10',
+		'11',
+		'12',
+		'13',
+		'14',
+		'15',
+		'16',
+		'17',
+		'18',
+        '19',
+		'20',
+		'21',
+		'22',
+		'23',
+		'24',
+		'25',
+		'28',
+		'29',
+		'30',
+		'31',
+		'32',
+		'122',
+		'124',
+		'125'
+	);
+	
+	$dslotmovLst = array(
+		'0 - Generico',
+		'1 - Deposito a Vista',
+		'2 - Capital',
+		'3 - Pagto de Planos de Cotas',
+		'4 - Contratos de Emprestimos',
+		'5 - Lancamentos de Emprestimos',
+		'6 - FORA DE USO',
+		'7 - FORA DE USO',
+		'8 - Contratos de Planos de Cotas',
+		'9 - Aplicacoes RDC',
+		'10 - Aplicacoes RDCA 30/60',
+		'11 - Resgates de Aplicacoes',
+		'12 - Lancamentos Automaticos',
+		'13 - Faturas (SAMAE, TELESC, etc)',
+		'14 - Poupanca Programada',
+		'15 - Seguros',
+		'16 - Proposta Cartao CREDICARD',
+		'17 - Debitos de Cartao de Credito',
+		'18 - Lancamentos de Cobrancas',
+		'19 - Custodia de Cheques',
+		'20 - Titulos',
+		'21 - Impostos PREFEITURA DE BLUMENAU',
+		'22 - Reservado para o SISTEMA - Caixa on-line (craplcx)',
+		'23 - Captura de cheques',
+		'24 - DOC',
+		'25 - TED',
+		'28 - COBAN',
+		'29 - Lancamentos da conta investimento (craplci)',
+		'30 - Pagamento de GPS',
+		'31 - Pagamento de Beneficios do INSS via COBAN',
+		'32 - Lancamentos da conta salario (craplcs)',
+		'122 - Compensacao',
+		'124 - DOC',
+		'125 - TED'
+	);
+	
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= '	<Cabecalho>';
+	$xml .= '		<Bo>b1wgen0179.p</Bo>';
+	$xml .= '		<Proc>Busca_Indfuncao</Proc>';
+	$xml .= '	</Cabecalho>';
+	$xml .= '	<Dados>';
+	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+
+	$xmlResult = getDataXML($xml);
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+		$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibirErro('error',$msgErro,'Alerta - Ayllos',"liberaFormulario();",false);
+	}
+
+	$indfuncao = $xmlObjeto->roottag->tags[0]->tags;
+
+	
+	
 ?>
 
 <form id="frmHistorico" name="frmHistorico" class="formulario condensado">
@@ -92,11 +219,28 @@
 					</td>
 					<td>
 						<label for="tplotmov">Tipo do Lote:</label>
-						<input id="tplotmov" name="tplotmov" type="text"/>
+						<select id="tplotmov" name="tplotmov">
+						<?php
+						foreach ($tplotmovLst as $i => $tplotmov) { 
+						?>
+							<option value="<?php echo $tplotmovLst[$i];?>"><?php echo $dslotmovLst[$i];?></option>
+						<?php
+						}
+						?>
 					</td>
 					<td>
 						<label for="inhistor">Ind. Fun&ccedil;&atilde;o:</label>
-						<input id="inhistor" name="inhistor" type="text"/>
+						<select id="inhistor" name="inhistor">
+							<option value="0">0</option>
+
+							<?php
+								foreach ($indfuncao as $i) {
+								?>
+									<option value="<?= getByTagName($i->tags, 'inhistor'); ?>"> <?= getByTagName($i->tags, 'inhistor').'-'.getByTagName($i->tags, 'fnhistor'); ?></option> 
+								<?php
+								}
+								?>
+						</select>
 					</td>
 				</tr>
 				<tr>
@@ -117,9 +261,9 @@
 						<select id="nmestrut" name="nmestrut">
 							<option value="">&nbsp;</option>
 						<?php
-						foreach ($nmestrutLst as $nmestrut) { 
+						foreach ($nmestrutLst as $i => $nmestrut) { 
 						?>
-							<option value="<?php echo $nmestrut;?>"><?php echo $nmestrut;?></option>
+							<option value="<?php echo $nmestrutLst[$i];?>"><?php echo $dsestrutLst[$i];?></option>
 						<?php
 						}
 						?>
@@ -146,14 +290,14 @@
 				</tr>
 				<tr>
 					<td>
-						<label for="inautori">Ind. p/ autoriza&ccedil;&atilde;o d&eacute;bito:</label>
+						<label for="inautori">Apresentar tela AUTORI:</label>
 						<select id="inautori" name="inautori">
 							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 					<td>
-						<label for="inavisar">Ind. de aviso p/ d&eacute;bito:</label>
+						<label for="inavisar">Apresentar LAUTOM:</label>
 						<select id="inavisar" name="inavisar">
 							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
@@ -161,13 +305,6 @@
 					</td>
 				</tr>
 				<tr>
-					<td>
-						<label for="indcompl">Indicador de Complemento:</label>
-						<select id="indcompl" name="indcompl">
-							<option value="1">Sim </option>
-							<option value="0">N&atilde;o </option>
-						</select>
-					</td>
 					<td>
 						<label for="indebcta">Ind. D&eacute;bito em Conta:</label>
 						<select id="indebcta" name="indebcta">
@@ -209,9 +346,9 @@
 				</tr>
 				<tr>
 					<td colspan="2">
-						<label for="tpctbccu">Tipo de Contab. Centro Custo:</label>
+						<label for="tpctbccu">Contabilizar gerencial:</label>
 						<select id="tpctbccu" name="tpctbccu">
-							<option value="1">1 - Por centro de custo </option>
+							<option value="1">1 - Sim </option>
 							<option value="0">0 - N&atilde;o </option>
 						</select>
 					</td>
@@ -224,31 +361,32 @@
 							<option value="1">1 - Contabiliza&ccedil;&atilde;o geral</option> 
 							<option value="2">2 - Contabiliza&ccedil;&atilde;o a d&eacute;bito por caixa</option> 
 							<option value="3">3 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito por caixa</option> 
-							<option value="4">4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
-							<option value="5">5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil</option> 
-							<option value="6">6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
+							<option value="4" disabled>4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
+							<option value="5" disabled>5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil</option> 
+							<option value="6" disabled>6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
 						</select>
 					</td>
 				</tr>
 				<tr>
 					<td>
-						<label for="nrctacrd">Conta a Creditar:</label>
-						<input id="nrctacrd" name="nrctacrd" type="text"/>
+						<label for="indcompl">Indicador de Complemento:</label>
+						<select id="indcompl" name="indcompl">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
 					</td>
+				</tr>
+				<tr>
 					<td>
 						<label for="nrctadeb">Conta a Debitar:</label>
 						<input id="nrctadeb" name="nrctadeb" type="text"/>
 					</td>
+					<td>
+						<label for="nrctacrd">Conta a Creditar:</label>
+						<input id="nrctacrd" name="nrctacrd" type="text"/>
+					</td>
 				</tr>
 				<tr>
-					<td>
-						<label for="ingercre">Gerencial a Cr&eacute;dito:</label>
-						<select name="ingercre" id="ingercre">
-							<option value="1">1 - N&atilde;o</option> 
-							<option value="2">2 - Geral</option> 
-							<option value="3">3 - PA</option> 
-						</select>
-					</td>
 					<td>
 						<label for="ingerdeb">Gerencial a D&eacute;bito:</label>
 						<select name="ingerdeb" id="ingerdeb">
@@ -257,15 +395,13 @@
 							<option value="3">3 - PA</option> 
 						</select>
 					</td>
-				</tr>
-				<tr>
 					<td>
-						<label for="nrctatrc">Conta Tarifa Cr&eacute;dito:</label>
-						<input id="nrctatrc" name="nrctatrc" type="text"/>
-					</td>
-					<td>
-						<label for="nrctatrd">Conta Tarifa D&eacute;bito:</label>
-						<input id="nrctatrd" name="nrctatrd" type="text"/>
+						<label for="ingercre">Gerencial a Cr&eacute;dito:</label>
+						<select name="ingercre" id="ingercre">
+							<option value="1">1 - N&atilde;o</option> 
+							<option value="2">2 - Geral</option> 
+							<option value="3">3 - PA</option> 
+						</select>
 					</td>
 				</tr>
 				<tr class='estouraConta'>
@@ -297,6 +433,17 @@
 			<table width="100%">
 				<tr>
 					<td>
+						<label for="nrctatrd">Conta Tarifa D&eacute;bito:</label>
+						<input id="nrctatrd" name="nrctatrd" type="text"/>
+					</td>
+					<td>
+						<label for="nrctatrc">Conta Tarifa Cr&eacute;dito:</label>
+						<input id="nrctatrc" name="nrctatrc" type="text"/>
+					</td>
+				</tr>
+
+				<tr>
+					<td>
 						<label for="vltarayl">AYLLOS:</label>
 						<input id="vltarayl" name="vltarayl" type="text"/>
 					</td>
@@ -304,6 +451,9 @@
 						<label for="vltarcxo">CAIXA:</label>
 						<input id="vltarcxo" name="vltarcxo" type="text"/>
 					</td>
+				</tr>
+
+				<tr>
 					<td>
 						<label for="vltarint">INTERNET:</label>
 						<input id="vltarint" name="vltarint" type="text"/>
@@ -312,7 +462,7 @@
 						<label for="vltarcsh">CASH:</label>
 						<input id="vltarcsh" name="vltarcsh" type="text"/>
 					</td>
-				<tr>
+				</tr>
 			</table>
 		</fieldset>
 
@@ -363,7 +513,7 @@
 					<td colspan="2">
 						<label for="cdprodut">Produto:</label>
 						<input name="cdprodut" id="cdprodut" type="text"/>
-						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaProduto(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaProduto('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
 						<input name="dsprodut" id="dsprodut" type="text"/>
 					</td>
 				</tr>
@@ -371,7 +521,7 @@
 					<td colspan="2">
 						<label for="cdagrupa">Agrupamento:</label>
 						<input name="cdagrupa" id="cdagrupa" type="text"/>
-						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaAgrupamento(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaAgrupamento('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
 						<input name="dsagrupa" id="dsagrupa" type="text"/>
 					</td>
 				<tr>

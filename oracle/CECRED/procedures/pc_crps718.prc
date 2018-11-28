@@ -284,13 +284,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
       vr_inenvcip := 3; -- confirmado
       vr_flgcbdda := 1;
       vr_dhenvcip := SYSDATE;
-      vr_dsmensag := 'Titulo Registrado - CIP';
+      vr_dsmensag := 'Boleto registrado no Sistema Financeiro Nacional';
     ELSE
       vr_insitpro := 0; --> Sacado comun
       vr_inenvcip := 4; -- Rejeitadp
       vr_flgcbdda := 0;
       vr_dhenvcip := NULL;
-      vr_dsmensag := 'Titulo Rejeitado na CIP';
+      vr_dsmensag := 'Falha ao registrar boleto no Sistema Financeiro Nacional';
       vr_inregcip := 0; -- sem registro na CIP;
     END IF;
     
@@ -450,7 +450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     IF pr_cdstiope = 'PJ' THEN
       NULL;
     ELSIF pr_cdstiope = 'RC' THEN --Registrado com sucesso      
-      vr_dsmensag := 'Alteração de Titulo Registrado - CIP';
+      vr_dsmensag := 'Alteração de vencimento registrada no Sistema Financeiro Nacional';
       
       --> Atualizar informações do boleto
       BEGIN
@@ -598,7 +598,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
           RAISE vr_exc_erro;
       END;            
          
-      vr_dsmensag := 'Baixa de Titulo Registrado - CIP';                   
+      vr_dsmensag := 'Boleto Baixado no Sistema Financeiro Nacional';
     ELSIF pr_cdstiope IN ('EJ','EC') THEN
       vr_dsmensag := 'Baixa de Titulo Rejeitado na CIP';      
       

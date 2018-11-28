@@ -22,6 +22,8 @@
                 15/05/2018 - 364 - SM 5- Incluir campo inperdes - Rafael Mouts
 
                 19/07/2018 - P450 - Incluído novo campo indebprj - Diego Simas (AMcom)
+
+                23/11/2018 - Implantacao Projeto 421, parte 2 - Heitor (Mouts)
                 
 .............................................................................*/
 
@@ -90,3 +92,7 @@ DEF TEMP-TABLE tt-produto NO-UNDO
 DEF TEMP-TABLE tt-agrupamento NO-UNDO
     FIELD cdagrupa AS INTE
     FIELD dsagrupa AS CHAR.
+
+DEF TEMP-TABLE tt-indfuncao NO-UNDO
+	FIELD inhistor LIKE crapfhs.inhistor
+	FIELD fnhistor LIKE crapfhs.fnhistor.

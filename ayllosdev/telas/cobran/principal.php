@@ -7,7 +7,9 @@
  * --------------
  * ALTERAÇÕES   :  16/11/2015 - Adicioando campo "somente crise" inestcri. (Jorge/Andrino)
  *
- *  		       30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ *  		       30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)
+ *   
+ *                 27/11/2018 - Adicionado variavel convenio de cobranca (nrcnvcob) (P352 - Protesto) (Supero)	
  * -------------- 
  */ 
  
@@ -25,6 +27,7 @@
 	$operacao 			= (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$cddopcao 			= (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
 	$nrdconta			= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
+	$nrcnvcob			= (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : 0  ;
 	$nrdcontx			= (isset($_POST['nrdcontx'])) ? $_POST['nrdcontx'] : 0  ;
 	$ininrdoc			= (isset($_POST['ininrdoc'])) ? $_POST['ininrdoc'] : 0  ;
 	$fimnrdoc			= (isset($_POST['fimnrdoc'])) ? $_POST['fimnrdoc'] : 0  ;
@@ -49,6 +52,7 @@
 	$nrregist 			= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 50  ;
 	
 	$inserasa 			= (isset($_POST['inserasa'])) ? $_POST['inserasa'] : ''  ;
+	$ls_nrdoc 			= array();
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
@@ -65,50 +69,65 @@
 	if ( $consulta == '8' ) {
 		$nrdconta = $nrdcontx;
 	}
-	
-	// Monta o xml de requisição
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0010.p</Bo>';
-	$xml .= '		<Proc>'.$procedure.'</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
-	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
-	$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
-	$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
-	$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
-	$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
-	$xml .= '		<numregis>'.$numregis.'</numregis>';	
-	$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
-	$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
-	$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
-	$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
-	$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
-	$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
-	$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
-	$xml .= '		<consulta>'.$consulta.'</consulta>';
-	$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
-	$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
-	$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
-	$xml .= '		<inestcri>'.$inestcri.'</inestcri>';
-	$xml .= '		<nriniseq>'.$nriniseq.'</nriniseq>';
-	$xml .= '		<nrregist>'.$nrregist.'</nrregist>';
-	$xml .= '		<inserasa>'.$inserasa.'</inserasa>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
+
+	function monta_xml($paginado) {
+		global $procedure, $glbvars, $nrdconta, $ininrdoc, $fimnrdoc, $nrinssac, $nmprimtl, $indsitua,
+			   $numregis, $iniseque, $inidtven, $fimdtven, $inidtdpa, $fimdtdpa, $inidtmvt, $fimdtmvt,
+			   $consulta, $tpconsul, $dsdoccop, $flgregis, $inestcri, $nriniseq, $nrregist, $inserasa;
+
+		// Monta o xml de requisição
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Cabecalho>';
+		$xml .= '		<Bo>b1wgen0010.p</Bo>';
+		$xml .= '		<Proc>'.$procedure.'</Proc>';
+		$xml .= '	</Cabecalho>';
+		$xml .= '	<Dados>';
+		$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+		$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+		$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
+		$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
+		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '		<ininrdoc>'.$ininrdoc.'</ininrdoc>';	
+		$xml .= '		<fimnrdoc>'.$fimnrdoc.'</fimnrdoc>';	
+		$xml .= '		<nrinssac>'.$nrinssac.'</nrinssac>';	
+		$xml .= '		<nmprimtl>'.$nmprimtl.'</nmprimtl>';	
+		$xml .= '		<indsitua>'.$indsitua.'</indsitua>';	
+		$xml .= '		<numregis>'.$numregis.'</numregis>';	
+		$xml .= '		<iniseque>'.$iniseque.'</iniseque>';	
+		$xml .= '		<inidtven>'.$inidtven.'</inidtven>';	
+		$xml .= '		<fimdtven>'.$fimdtven.'</fimdtven>';	
+		$xml .= '		<inidtdpa>'.$inidtdpa.'</inidtdpa>';	
+		$xml .= '		<fimdtdpa>'.$fimdtdpa.'</fimdtdpa>';
+		$xml .= '		<inidtmvt>'.$inidtmvt.'</inidtmvt>';
+		$xml .= '		<fimdtmvt>'.$fimdtmvt.'</fimdtmvt>';
+		$xml .= '		<consulta>'.$consulta.'</consulta>';
+		$xml .= '		<tpconsul>'.$tpconsul.'</tpconsul>';
+		$xml .= '		<dsdoccop>'.$dsdoccop.'</dsdoccop>';
+		$xml .= '		<flgregis>'.$flgregis.'</flgregis>';
+		$xml .= '		<inestcri>'.$inestcri.'</inestcri>';
+		if (!$paginado) {
+			$xml .= '		<nriniseq>1</nriniseq>';
+			$xml .= '		<nrregist>1000</nrregist>';
+		} else {
+			$xml .= '		<nriniseq>'.$nriniseq.'</nriniseq>';
+			$xml .= '		<nrregist>'.$nrregist.'</nrregist>';
+		}
+		$xml .= '		<inserasa>'.$inserasa.'</inserasa>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
+
+		return $xml;
+	}
+
+	// Monta o XML com paginação
+	$xml = monta_xml(true);
 	
 	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
 	$xmlResult 	= getDataXML($xml);
 	$xmlObjeto 	= getObjectXML($xmlResult);
-    
 	
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
@@ -117,11 +136,11 @@
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."','#frmOpcao').focus();"; }
 		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro, false);
 	} 
-	
+
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;
 	$dados 		= $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	$qtregist	= $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];
-	
+
 	include('form_opcao_cabecalho.php');
 	include('form_opcao_c.php');
 	

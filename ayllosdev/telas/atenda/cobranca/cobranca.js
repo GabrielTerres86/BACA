@@ -95,7 +95,8 @@ function habilitaSetor(setorLogado) {
 		type: "POST",
 		url: UrlSite + "telas/atenda/cobranca/principal.php",
 		data: {
-			nrdconta: nrdconta,
+		    nrdconta: nrdconta,
+		    telaOrigem: telaOrigem,
 			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2232,4 +2233,8 @@ function HabilitaSMS() {
             }
         });
     }
+}
+
+function carregaReciprocidade() {
+    acessaRotina("#labelRot20", "RECIPROCIDADE", "Reciprocidade", "reciprocidade", "0");
 }

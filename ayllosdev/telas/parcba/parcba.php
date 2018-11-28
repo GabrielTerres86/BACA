@@ -87,6 +87,8 @@
 
 																				<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>																			
 																				<a href="#" class="botao" id="btExcluir" onclick="controlaExcluir(); return false;">Excluir</a>
+																				
+																				<a href="#" class="botao" id="btGerarConciliacao" onclick="geraConciliacao(); return false;"><? echo utf8ToHtml("Executar concilia&ccedil;&atildeo") ?></a>																			
 
 																			</div>
 																		</div>

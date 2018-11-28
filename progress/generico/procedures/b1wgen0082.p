@@ -215,10 +215,18 @@ PROCEDURE carrega-convenios-ceb:
     
     EMPTY TEMP-TABLE tt-emails-titular.
 
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'DT_VIG_IMP_CTR_V2'
+                             NO-LOCK NO-ERROR.
+    IF NOT AVAIL crapprm THEN
+    DO:
+      ASSIGN par_dsdmesag = "Data de corte nao informada.".
+    END.
 
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
-                            crapceb.nrdconta = par_nrdconta     NO-LOCK,
+                            crapceb.nrdconta = par_nrdconta     AND
+                            crapceb.dtcadast < DATE(crapprm.dsvlrprm) NO-LOCK,
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,

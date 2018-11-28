@@ -3725,8 +3725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
       SELECT 1
         FROM crapceb
        WHERE crapceb.cdcooper = pr_cdcooper
-         AND crapceb.nrdconta = pr_nrdconta
-         AND crapceb.insitceb = 1;
+         AND crapceb.nrdconta = pr_nrdconta;
        rw_crapceb cr_crapceb_2%ROWTYPE;
          
     ------------------------------- VARIAVEIS -------------------------------

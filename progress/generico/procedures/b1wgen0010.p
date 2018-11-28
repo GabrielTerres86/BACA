@@ -1233,10 +1233,10 @@ PROCEDURE consulta-bloqueto.
                         END.
 
                     /* Restringir busca */
-                    IF  ( p-fim-documento - p-ini-documento ) > 10 THEN
+                    IF  ( p-fim-documento - p-ini-documento ) > 1000 THEN
                         DO:
                             ASSIGN i-cod-erro = 0 
-                                   c-dsc-erro = "Faixa de boletos solicitadas superior a 10 (dez)"
+                                   c-dsc-erro = "Faixa de boletos solicitadas superior a 1000 (mil)"
                                    par_nmdcampo = "fimnrdoc".
            
                             {sistema/generico/includes/b1wgen0001.i}

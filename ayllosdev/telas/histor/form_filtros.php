@@ -6,6 +6,7 @@
 	* OBJETIVO     : Filtros para a tela HISTOR
 	* --------------
 	* ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+	*              : 23/11/2018 - Implantacao do Projeto 421, parte 2 - Heitor (Mouts)
 	* --------------
 	*/
 
@@ -44,6 +45,22 @@
 					<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
 					<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmFiltros'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
 					<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3">
+					<label for="cdprodut">Produto:</label>
+					<input name="cdprodut" id="cdprodut" type="text"/>
+					<a style="margin-top:0px;" href="#" onClick="controlaPesquisaProduto('frmFiltros'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+					<input name="dsprodut" id="dsprodut" type="text"/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3">
+					<label for="cdagrupa">Agrupamento:</label>
+					<input name="cdagrupa" id="cdagrupa" type="text"/>
+					<a style="margin-top:0px;" href="#" onClick="controlaPesquisaAgrupamento('frmFiltros'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+					<input name="dsagrupa" id="dsagrupa" type="text"/>
 				</td>
 			</tr>
 		</table>

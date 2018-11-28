@@ -12,6 +12,8 @@
  *                             de dshistor para dsexthst;
  *                             Comentada a coluna de CPMF(Carlos)
  *
+ *                23/11/2018 - Implantacao do Projeto 421, parte 2
+ *                             Heitor (Mouts)
  * -------------- 
  *
  * -------------- 
@@ -29,6 +31,8 @@
 	$dshistor	= (isset($_POST['dshistor'])) ? $_POST['dshistor'] : '';
 	$tpltmvpq	= (isset($_POST['tpltmvpq'])) ? $_POST['tpltmvpq'] : 0;
 	$cdgrphis	= (isset($_POST['cdgrphis'])) ? $_POST['cdgrphis'] : 0;
+	$cdprodut	= (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : 0;
+	$cdagrupa	= (isset($_POST['cdagrupa'])) ? $_POST['cdagrupa'] : 0;
 	$nrregist	= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 	$nriniseq	= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 	
@@ -58,6 +62,8 @@
 	$xml .= '       <cdgrphis>'.$cdgrphis.'</cdgrphis>';
 	$xml .= '       <nrregist>'.$nrregist.'</nrregist>';
 	$xml .= '       <nriniseq>'.$nriniseq.'</nriniseq>';
+	$xml .= '       <cdprodut>'.$cdprodut.'</cdprodut>';
+	$xml .= '       <cdagrupa>'.$cdagrupa.'</cdagrupa>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 			
