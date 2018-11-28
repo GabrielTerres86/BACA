@@ -56,12 +56,12 @@
 	}
 
 	function convertXMLtoJSONAliena($xml) {
-		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
-				  "sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
-					"objetoContratoCredito": '.json_encode($xml->objetoContratoCredito).',
-				  "propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
-					  "representanteVendas": '.json_encode($xml->representanteVendas).',
-				 "estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
+		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
+				"sistemaNacionalGravames": '.json_encode($xml->sistemaNacionalGravames).',
+				  "objetoContratoCredito": '.json_encode($xml->objetoContratoCredito).',
+				"propostaContratoCredito": '.json_encode($xml->propostaContratoCredito).',
+					"representanteVendas": '.json_encode($xml->representanteVendas).',
+			   "estabelecimentoComercial": '.json_encode($xml->estabelecimentoComercial).'}';
 		return $data;	
 	}
 
@@ -69,9 +69,9 @@
 	function convertXMLtoJSONConsulta($xml) {
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
-		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
-				  "sistemaNacionalGravames": '.$sistNac.',
-					"objetoContratoCredito": '.$objContr.'}';
+		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
+				"sistemaNacionalGravames": '.$sistNac.',
+				  "objetoContratoCredito": '.$objContr.'}';
 		return $data;	
 	}
 
@@ -80,10 +80,10 @@
 		$sistNac = json_encode($xml->sistemaNacionalGravames);
 		$objContr = json_encode($xml->objetoContratoCredito);
 		$propostaContratoCredito = json_encode($xml->propostaContratoCredito);
-		$data = '{		"cooperativaCodigo": "'.getCoopCod($xml).'",
-				  "sistemaNacionalGravames": '.$sistNac.',
-					"objetoContratoCredito": '.$objContr.',
-				  "propostaContratoCredito": '.$propostaContratoCredito.'}';
+		$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
+				"sistemaNacionalGravames": '.$sistNac.',
+				  "objetoContratoCredito": '.$objContr.',
+				"propostaContratoCredito": '.$propostaContratoCredito.'}';
 		return $data;	
 	}
 

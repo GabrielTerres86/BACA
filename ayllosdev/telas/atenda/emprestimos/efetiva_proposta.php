@@ -191,19 +191,19 @@
 
 							$representanteVendas = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->representanteVendas );
 							$estabelecimentoComercial = convertXMLtoJSONnode0( $xmlstr->gravameB3[$qtdGravameB3]->gravame[$qtdGravame]->estabelecimentoComercial );
-							$data = '{		"cooperativaCodigo": '.$cdcooper.',
-									  "sistemaNacionalGravames": '.$sistNac.',
-										"objetoContratoCredito": '.$objContr.',
-									  "propostaContratoCredito": '.$propostaContratoCredito.',
-										  "representanteVendas": '.$representanteVendas.',
-									 "estabelecimentoComercial": '.$estabelecimentoComercial.'}';
+							$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
+									"sistemaNacionalGravames": '.$sistNac.',
+									  "objetoContratoCredito": '.$objContr.',
+									"propostaContratoCredito": '.$propostaContratoCredito.',
+										"representanteVendas": '.$representanteVendas.',
+								   "estabelecimentoComercial": '.$estabelecimentoComercial.'}';
 
 						} else if ($cdoperac == 3) { //Baixa Gravame
 
-							$data = '{		"cooperativaCodigo": '.$cdcooper.',
-									  "sistemaNacionalGravames": '.$sistNac.',
-										"objetoContratoCredito": '.$objContr.',
-									  "propostaContratoCredito": '.$propostaContratoCredito.'}';
+							$data = '{			"cooperativa": { "codigo": "'.$cdcooper.'" },
+									"sistemaNacionalGravames": '.$sistNac.',
+									  "objetoContratoCredito": '.$objContr.',
+									"propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
 						//echo($data); die;
@@ -212,7 +212,6 @@
 						//var_dump( $GLOBALS["httpcode"] );die;
 						$xmlRet = getObjectXML($xmlStr);
 						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
-
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
@@ -239,7 +238,9 @@
 
 						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador);// $retGravame, $retContr, $identificador);
 						//gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador)
-
+						
+						echo $data . $xmlStr; die;
+						
 						$qtdGravame++;
 					}
 
