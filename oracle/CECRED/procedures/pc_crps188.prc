@@ -425,11 +425,11 @@ BEGIN
                    ,pr_vllanmto => vr_vlanuida
                    ,pr_tab_retorno => vr_tab_retorno
                    ,pr_incrineg => vr_incrineg
-                   ,pr_cdcritic => pr_cdcritic
-                   ,pr_dscritic => pr_dscritic
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
                    );
 
-           if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+           if (nvl(vr_cdcritic,0) <> 0 or trim(vr_dscritic) is not null) then
               RAISE vr_exc_saida;
            end if;
       EXCEPTION
