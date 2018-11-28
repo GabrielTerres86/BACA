@@ -43,7 +43,9 @@ DEF TEMP-TABLE tt-consulta-cheque                                       NO-UNDO
     FIELD vlcheque LIKE crapfdc.vlcheque
     FIELD dtretchq LIKE crapfdc.dtretchq
     FIELD dtliqchq LIKE crapfdc.dtliqchq
-    FIELD dssitchq AS CHAR.
+    FIELD dssitchq AS CHAR
+    FIELD cdbanchq LIKE crapfdc.cdbanchq
+    FIELD cdagechq LIKE crapfdc.cdagechq.
 
 DEFINE TEMP-TABLE tt-cheques                                            NO-UNDO
     FIELD cdbanchq LIKE crapfdc.cdbanchq

@@ -681,7 +681,9 @@ PROCEDURE cria-registro-cheque:
            tt-consulta-cheque.vlcheque = crapfdc.vlcheque
            tt-consulta-cheque.dtretchq = crapfdc.dtretchq
            tt-consulta-cheque.dtliqchq = crapfdc.dtliqchq
-           tt-consulta-cheque.dssitchq = par_dssitchq.
+           tt-consulta-cheque.dssitchq = par_dssitchq
+           tt-consulta-cheque.cdbanchq = crapfdc.cdbanchq
+           tt-consulta-cheque.cdagechq = crapfdc.cdagechq.
     
 END PROCEDURE.
 

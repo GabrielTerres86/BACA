@@ -2470,6 +2470,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         ELSE
           vr_sql := vr_sql || 'order by dtemschq desc, nrcheque desc';  
         END IF;
+      WHEN 6 THEN
+          vr_sql := vr_sql || 'and nrcheque = ' || pr_nrcheque || ' order by nrcheque'; 
     END CASE;
 
     -- Buscar ID da execução DBMS

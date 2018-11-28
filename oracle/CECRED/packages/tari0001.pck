@@ -6722,7 +6722,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'DSCCHQBOPJ';
       END IF; 
-    END IF;  
+/* Prieto -- imagem de cheque */
+    ELSIF pr_tipotari = 23 THEN -- IMAGEM DE CHEQUE ONLINE
+       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
+          vr_cdbattar := 'IMGCHQOPF';
+       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
+          vr_cdbattar := 'IMGCHQOPJ';
+       END IF;  
+    END IF;
       
     IF cr_tbtarif_contas_pacote%FOUND THEN
 
@@ -7858,6 +7865,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
           vr_cdbattar := 'DSTBORDEPJ'; -- EMISSAO BORDERO DESCONTO DE TITULO PESSOA JURIDICA
         END IF;                     
+/* Prieto -- imagem de cheque */
+      WHEN 23 THEN -- IMAGEM DE CHEQUE ONLINE
+        IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
+          vr_cdbattar := 'IMGCHQOPF';
+        ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
+          vr_cdbattar := 'IMGCHQOPJ';
+        END IF;                           
     END CASE;
    
     TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
