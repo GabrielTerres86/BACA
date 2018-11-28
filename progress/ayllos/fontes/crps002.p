@@ -80,7 +80,7 @@ FOR EACH crapdpb WHERE crapdpb.cdcooper = glb_cdcooper  AND
              ASSIGN aux_cdhistor = craphis.cdhistor
                     aux_inhistor = craphis.inhistor.
          END.
-
+-- ponto 2
     IF   crapdpb.nrdconta <> aux_nrdconta   THEN
          DO:
              FIND craptrf WHERE craptrf.cdcooper = glb_cdcooper      AND
@@ -153,7 +153,7 @@ FOR EACH crapdpb WHERE crapdpb.cdcooper = glb_cdcooper  AND
                           END.
 
                      DO WHILE TRUE:
-
+ -- ponto 3
                         FIND crapres WHERE crapres.cdcooper = glb_cdcooper  AND
                                            crapres.cdprogra = glb_cdprogra
                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -185,7 +185,7 @@ FOR EACH crapdpb WHERE crapdpb.cdcooper = glb_cdcooper  AND
 
                   END.  /* Fim da transacao */
          END.
-
+-- ponto 4
     IF   aux_inhistor = 3   THEN
          aux_vlsdbloq = aux_vlsdbloq + crapdpb.vllanmto.
     ELSE
@@ -207,6 +207,8 @@ FOR EACH crapdpb WHERE crapdpb.cdcooper = glb_cdcooper  AND
 
 END.   /* Fim do FOR EACH */
 
+
+-- ponto 5
 IF   aux_nrdconta <> 0   THEN
      TRANS1:
 
