@@ -67,21 +67,27 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0009 AS
 END  gene0009;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
-
   /*---------------------------------------------------------------------------------------------------------------
 
       Programa : GENE0008
       Sistema  : Rotinas genéricas
       Sigla    : GENE
       Autor    : Odirlei Busana - AMcom
-      Data     : Outubro/2015.                   Ultima atualizacao: 28/03/2016
+      Data     : Outubro/2015.                   Ultima atualizacao: 28/11/2018
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Definir variaveis e funções genericas
 
-      Alterações:
+      Alterações: 
+
+      15/09/2017 - #753383 Fechando o arquivo sempre que o mesmo não for mais utilizado (Carlos)
+      
+      28/11/2018 - INC0027972, INC0027984 - Problema de performance/arquivos nas rotinas de integração de arquivos 
+                   cnab240 e cnab400 causaram lentidão no servidor e instabilidade nos sistemas. Liberação do chamado
+                   #753383 não estava em produção (Carlos)
+
   ------------------------------------------------------------------------------------------------------------------*/
   PROCEDURE pc_importa_arq_layout ( pr_nmlayout   IN VARCHAR2,            --> Nome do Layout do arquivo a ser importado
                                     pr_dsdireto   IN VARCHAR2,            --> Descrição do diretorio onde o arquivo se enconta
@@ -384,17 +390,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
         WHEN no_data_found THEN
           -- Fechar o arquivo
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
       END; 
       
       pr_tab_linhas := vr_tab_linhas;
     
     EXCEPTION
       WHEN vr_exc_erro  THEN
-         pr_dscritic := vr_dscritic;
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
+        pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-         pr_dscritic := 'Erro ao importar linhas do arquivo '||pr_nmarquiv||': '||SQLERRM||
-                        dbms_utility.format_error_backtrace || ' - ' ||
-                        dbms_utility.format_error_stack;
+        cecred.pc_internal_exception;
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
+        pr_dscritic := 'Erro ao importar linhas do arquivo '||pr_nmarquiv||': '||SQLERRM||
+                       dbms_utility.format_error_backtrace || ' - ' ||
+                       dbms_utility.format_error_stack;
     END pc_importa_arq_layout;
     
 END  gene0009;

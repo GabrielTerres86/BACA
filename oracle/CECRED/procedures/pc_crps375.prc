@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
-                                        ,pr_flgresta IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
-                                        ,pr_stprogra OUT PLS_INTEGER            --> Saida de termino da execucao
-                                        ,pr_infimsol OUT PLS_INTEGER            --> Saida de termino da solicitacao
-                                        ,pr_nmtelant IN VARCHAR2                --> Descricao da tela anterior
-                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da critica
-                                        ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da critica
+                                              ,pr_flgresta IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saida de termino da execucao
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saida de termino da solicitacao
+                                              ,pr_nmtelant IN VARCHAR2                --> Descricao da tela anterior
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da critica
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da critica
   BEGIN
   /* ............................................................................
 
@@ -300,18 +300,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                               na cooperativa de origem eram de convenios Pre-Impresso
                               SD240149 (Odirlei-AMcom)
 
-                 
+
                  05/10/2015 - Incluido informacao de nosso numero na gravacao do crapcob
                               SD339759 (Odirlei-AMcom)
-                 
+
                  12/11/2015 - Alterado para quando o convenio utilizar CEB e não contem a informação no
-                              arquivo, tentar identificar atraves do CRAPCOB SD356323 (Odirlei-AMcom)                              
+                              arquivo, tentar identificar atraves do CRAPCOB SD356323 (Odirlei-AMcom)
 
                  15/02/2016 - Inclusao do parametro conta na chamada da
                               TARI0001.pc_carrega_dados_tarifa_cobr. (Jaison/Marcos)
 
-				 08/03/2016 - Correção do direcionamento das mensagens de log do programa para 
-							  proc_message.log conforme SD 403079 (Carlos Rafael Tanholi)			                             
+         08/03/2016 - Correção do direcionamento das mensagens de log do programa para
+                proc_message.log conforme SD 403079 (Carlos Rafael Tanholi)
 
                  05/07/2016 - Ajuste para evitar envio de inpessoa=3 (Marcos-Supero)
 
@@ -486,14 +486,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
       vr_tab_erro        gene0001.typ_tab_erro;
       vr_tab_cratrej     typ_tab_cratrej;
       vr_tab_comando     typ_comando := typ_comando();
-
+      
       
       vr_rowidlcm   ROWID;             --> ROWID do lançamento inserido na CRAPLCM
       vr_nmtabela   VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
       vr_incrineg   INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
       
       vr_tab_retorno lanc0001.typ_reg_retorno;
-      --Tabela para receber arquivos lidos no unix
+  --Tabela para receber arquivos lidos no unix
       vr_tab_arquivo     gene0002.typ_split;
 
       -- Selecionar os dados da Cooperativa
@@ -706,7 +706,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
       vr_nmarqaux VARCHAR2(4000);
       vr_dsdemail crapcem.dsdemail%TYPE;
       vr_nrsequen INTEGER;
-	    vr_nmarqlog VARCHAR2(100);
+      vr_nmarqlog VARCHAR2(100);
 
       vr_cdbancbb INTEGER;
       vr_nrdctabb INTEGER;
@@ -783,7 +783,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
       vr_ind_comando PLS_INTEGER :=0;
       -- Variável de Controle de XML
       vr_des_xml      CLOB;
-
+      
       vr_fldebita     BOOLEAN DEFAULT TRUE;
 
       --Procedure que escreve linha no arquivo CLOB
@@ -1012,13 +1012,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
             ORDER BY crapceb.cdcooper
                     ,crapceb.nrconven
                     ,crapceb.nrcnvceb;
-          
+
           --> Identidicar numero ceb pelas informações da crapcob
           CURSOR cr_crapcob_ceb(pr_cdcooper  crapcob.cdcooper%TYPE,
                                 pr_nrdctabb  crapcob.nrdctabb%TYPE,
                                 pr_nrcnvcob  crapcob.nrcnvcob%TYPE,
                                 pr_cdbandoc  crapcob.cdbandoc%TYPE,
-                                pr_nrdocmto  crapcob.nrdocmto%TYPE) IS                    
+                                pr_nrdocmto  crapcob.nrdocmto%TYPE) IS
             SELECT ceb.nrcnvceb
                    ,COUNT(*) OVER() qtd_reg
             FROM crapcob cob,
@@ -1034,7 +1034,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
              AND cob.incobran = 0
              AND cob.dtmvtolt >= to_date('21/10/2015','DD/MM/RRRR');-- data inicial do periodo onde estava gerando nrnosnum errado
           rw_crapcob_ceb cr_crapcob_ceb%ROWTYPE;
-             
+
           --16012014 - inicio
           -- Cursor para selecionar os parametros do cadastro de cobranca
           -- de determinado convênio que não seja da cooperativa logada
@@ -1250,7 +1250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
               -- Escrevendo a critica no log
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-									                      ,pr_nmarqlog     => vr_nmarqlog
+                                        ,pr_nmarqlog     => vr_nmarqlog
                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || pr_dscritic);
@@ -1343,7 +1343,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                     -- Escrevendo a critica no log
                     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                               ,pr_ind_tipo_log => 2 -- Erro tratato
-											                        ,pr_nmarqlog     => vr_nmarqlog
+                                              ,pr_nmarqlog     => vr_nmarqlog
                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                || vr_cdprogra || ' --> '
                                                                || pr_dscritic);
@@ -1432,7 +1432,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                                        ,pr_vllanmto  => 1                      --Valor Lancamento
                                                        ,pr_cdprogra  => NULL                   --Nome do programa
                                                        ,pr_flaputar  => 1                      --Apurar
-													                             ,pr_cdhistor  => vr_cdtarhis            --Codigo Historico
+                                                       ,pr_cdhistor  => vr_cdtarhis            --Codigo Historico
                                                        ,pr_cdhisest  => vr_cdhisest            --Historico Estorno
                                                        ,pr_vltarifa  => vr_vlrtarif            --Valor Tarifa
                                                        ,pr_dtdivulg  => vr_dtdivulg            --Data Divulgacao
@@ -1528,14 +1528,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                 ELSE
                   pr_tab_regimp(vr_indregimp).nrdconta := 0;
                 END IF;
-                
+
                 pr_tab_regimp(vr_indregimp).nrcnvceb   := substr(vr_setlinha,45,4);
                 pr_tab_regimp(vr_indregimp).incnvaut   := vr_incnvaut;
                 pr_tab_regimp(vr_indregimp).vllanmto   := substr(vr_setlinha,82,15) / 100;
                 vr_vllanmto                            := nvl(vr_vllanmto,0) + nvl(pr_tab_regimp(vr_indregimp).vllanmto,0);
-                
+
                 -- Se utiliza CEB e não localizou numero
-                IF rw_crapcco_global.flgutceb = 1 AND 
+                IF rw_crapcco_global.flgutceb = 1 AND
                    nvl(pr_tab_regimp(vr_indregimp).nrcnvceb,0) = 0 THEN
                   -- Tentar identificar o ceb atraves da crapcob
                   OPEN cr_crapcob_ceb(pr_cdcooper  => pr_cdcooper,
@@ -1548,9 +1548,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                   IF cr_crapcob_ceb%FOUND AND rw_crapcob_ceb.qtd_reg = 1 THEN
                     pr_tab_regimp(vr_indregimp).nrcnvceb := rw_crapcob_ceb.nrcnvceb;
                   END IF;
-                  CLOSE cr_crapcob_ceb;                  
+                  CLOSE cr_crapcob_ceb;
                 END IF;
-                                
+
                 pr_tab_regimp(vr_indregimp).vlrtarif   := substr(vr_setlinha,199,15) / 100;
                 pr_tab_regimp(vr_indregimp).vltarbco   := vr_vltarbco;
                 pr_tab_regimp(vr_indregimp).codmoeda   := substr(vr_setlinha,132,1);
@@ -2181,9 +2181,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
             -- fecha o cursor
             CLOSE cr_craplcm;
           END LOOP;
-
-          -- insere dados na craplcm
-          BEGIN
+          
+            -- insere dados na craplcm
+            BEGIN
             -- Inserir lancamento
             vr_nrseqdig:= rw_craplot.nrseqdig + 1;  
             LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt
@@ -2206,53 +2206,53 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                               ,pr_cdcritic => pr_cdcritic
                                               ,pr_dscritic => pr_dscritic); 
                                            
-          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          	IF nvl(pr_cdcritic, 0) > 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
               -- Se foi retornado apenas codigo
               IF nvl(pr_cdcritic,0) > 0 AND trim(pr_dscritic) IS NULL THEN
                 -- Buscar a descricao
                 pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-      		  END IF;                                                                                         
+      			END IF;                                                                                         
               
-		      RETURN;
-      		END IF;     
+		       		RETURN;
+      			END IF;     
                                                                                                 
           EXCEPTION
             WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
-            -- volta para o programa chamador
-            RETURN;
+               pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
+               -- volta para o programa chamador
+               RETURN;
           END;
 
-          /* CRED. COBRANCA */
-          IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
-            BEGIN
-              UPDATE craplot SET craplot.qtinfoln = craplot.qtinfoln + 1
-                                ,craplot.qtcompln = craplot.qtcompln + 1
-                                ,craplot.vlinfocr = craplot.vlinfocr + Nvl(pr_vllanmto,0)
-                                ,craplot.vlcompcr = craplot.vlcompcr + Nvl(pr_vllanmto,0)
-                                ,craplot.nrseqdig = nvl(vr_nrseqdig,0)
-              WHERE craplot.ROWID = pr_rowid_craplot;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'Erro ao atualizar dados na craplot na rotina pc_efetua_lancamento. '||SQLERRM;
-                -- volta para o programa chamador
-                RETURN;
-            END;
-          ELSE --IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
-            BEGIN
-              UPDATE craplot SET craplot.qtinfoln = craplot.qtinfoln + 1
-                                ,craplot.qtcompln = craplot.qtcompln + 1
-                                ,craplot.vlinfodb = craplot.vlinfodb + Nvl(pr_vllanmto,0)
-                                ,craplot.vlcompdb = craplot.vlcompdb + Nvl(pr_vllanmto,0)
-                                ,craplot.nrseqdig = nvl(vr_nrseqdig,0)
-              WHERE craplot.ROWID = pr_rowid_craplot;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'Erro ao atualizar dados na craplot na rotina pc_efetua_lancamento. '||SQLERRM;
-                -- volta para o programa chamador
-                RETURN;
-            END;
-          END IF;--IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
+            /* CRED. COBRANCA */
+            IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
+              BEGIN
+                UPDATE craplot SET craplot.qtinfoln = craplot.qtinfoln + 1
+                                  ,craplot.qtcompln = craplot.qtcompln + 1
+                                  ,craplot.vlinfocr = craplot.vlinfocr + Nvl(pr_vllanmto,0)
+                                  ,craplot.vlcompcr = craplot.vlcompcr + Nvl(pr_vllanmto,0)
+                                  ,craplot.nrseqdig = nvl(vr_nrseqdig,0)
+                WHERE craplot.ROWID = pr_rowid_craplot;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  pr_dscritic := 'Erro ao atualizar dados na craplot na rotina pc_efetua_lancamento. '||SQLERRM;
+                  -- volta para o programa chamador
+                  RETURN;
+              END;
+            ELSE --IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
+              BEGIN
+                UPDATE craplot SET craplot.qtinfoln = craplot.qtinfoln + 1
+                                  ,craplot.qtcompln = craplot.qtcompln + 1
+                                  ,craplot.vlinfodb = craplot.vlinfodb + Nvl(pr_vllanmto,0)
+                                  ,craplot.vlcompdb = craplot.vlcompdb + Nvl(pr_vllanmto,0)
+                                  ,craplot.nrseqdig = nvl(vr_nrseqdig,0)
+                WHERE craplot.ROWID = pr_rowid_craplot;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  pr_dscritic := 'Erro ao atualizar dados na craplot na rotina pc_efetua_lancamento. '||SQLERRM;
+                  -- volta para o programa chamador
+                  RETURN;
+              END;
+            END IF;--IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
         END;
       END pc_efetua_lancamento;
 
@@ -2631,7 +2631,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
           vr_nrctabol INTEGER;
           vr_nrnosnum crapcob.nrnosnum%TYPE;
-          
+
         BEGIN
           pr_flgcebok := FALSE;
           vr_nrctabol := vr_tab_regimp(pr_ind_regimp).nrdconta;
@@ -2678,17 +2678,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                 IF cr_crapceb3%FOUND THEN
                   -- fechando o cursor
                   CLOSE cr_crapceb3;
-                  
+
                   --> Gerar nosso numero
                   IF LENGTH(to_char(vr_tab_regimp(pr_ind_regimp).nroconve)) <= 6 THEN
                     vr_nrnosnum := to_char(vr_nrctabol,'fm00000000') ||
                                    to_char(vr_tab_regimp(pr_ind_regimp).nrdocmto,'fm000000000');
-                  ELSE   
+                  ELSE
                     vr_nrnosnum := to_char(vr_tab_regimp(pr_ind_regimp).nroconve, 'fm0000000') ||
-                                   to_char(rw_crapceb.nrcnvceb, 'fm0000') || 
-                                   to_char(vr_tab_regimp(pr_ind_regimp).nrdocmto, 'fm000000');    
-                  END IF; 
-                  
+                                   to_char(rw_crapceb.nrcnvceb, 'fm0000') ||
+                                   to_char(vr_tab_regimp(pr_ind_regimp).nrdocmto, 'fm000000');
+                  END IF;
+
                   -- inserindo crapcob
                   BEGIN
                     INSERT INTO crapcob( crapcob.cdcooper
@@ -6173,7 +6173,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
     -- INICIO
     BEGIN
        vr_nmarqlog := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
-       
+
       --------------- VALIDACOES INICIAIS -----------------
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
