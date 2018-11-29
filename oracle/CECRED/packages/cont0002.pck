@@ -2,13 +2,17 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
   /********************************************************************************
     Programa: CONT0002
     Autor   : Heitor / Alcemir (MOUTS)
-    Data    : Outubro/2018                       Ultima Atualizacao: --/--/----
+    Data    : Outubro/2018                       Ultima Atualizacao: 29/11/2018
 
     Dados referentes ao programa:
 
     Objetivo  : Rotina para processamento de ajustes e geracao de arquivos contabeis.
                 Processamento dos ajustes solicitado no Projeto 421 - Melhorias nas
                 ferramentas contabeis e fiscais.
+
+	ALTERAÇÕES: 29/11/2018: Ajuste na conversão dos valores que são extraidos do arquivo da ABBC,
+	                        quando rodado pelo JOB, não se pode usar o "to_number".
+							Alcemir Mouts - INC0028004. 
 
   ********************************************************************************/
   
@@ -1447,10 +1451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                 continue;
               END IF;          
                 
-                vr_cdageori := to_number(TRIM(SUBSTR(vr_setlinha,83,4)));
-                vr_nrcheque := to_number(TRIM(SUBSTR(vr_setlinha,38,6)));
-                vr_vlcheque := to_number(TRIM(REPLACE(SUBSTR(vr_setlinha,49,23),'.','') )); 
-                vr_nrctadep := to_number(TRIM(SUBSTR(vr_setlinha,89,12))); 
+                vr_cdageori := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,83,4)));
+                vr_nrcheque := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,38,6)));
+                vr_vlcheque := GENE0002.fn_char_para_number(TRIM(REPLACE(SUBSTR(vr_setlinha,49,23),'.','') )); 
+                vr_nrctadep := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,89,12))); 
                 
                 IF i = 1 THEN 
                   vr_tpdearqv := 'SF';
