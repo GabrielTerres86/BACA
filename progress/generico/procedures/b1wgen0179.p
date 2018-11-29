@@ -699,6 +699,15 @@ PROCEDURE Busca_Historico:
                    tt-histor.dsagrupa = crapagr.dsagrupa.
         END.
 
+    FIND crapsqu WHERE nmtabela = "CRAPHIS" 
+	               AND nmdcampo = "CDHISTOR" 
+				   AND dsdchave = " "
+				   NO-LOCK NO-ERROR.
+    IF AVAIL crapsqu THEN
+		DO:
+			ASSIGN tt-histor.nrseqatu = crapsqu.nrseqatu + 1.
+		END.
+
     RETURN "OK".
 
 END PROCEDURE. /* Busca_Historico*/

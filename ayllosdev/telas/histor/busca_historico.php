@@ -95,6 +95,7 @@
 	echo "$('#dsexthst','#frmHistorico').val('" . getByTagName($historico,'dsexthst') . "');";
 	echo "$('#dsextrat','#frmHistorico').val('" . getByTagName($historico,'dsextrat') . "');";
 	echo "$('#nmestrut','#frmHistorico').val('" . getByTagName($historico,'nmestrut') . "');";
+	echo "$('#cdhinovo','#frmHistorico').val('" . getByTagName($historico,'nrseqatu') . "');";
 	
 	// Indicadores
 	echo "$('#indoipmf','#frmHistorico').val('" . getByTagName($historico,'indoipmf') . "');";
