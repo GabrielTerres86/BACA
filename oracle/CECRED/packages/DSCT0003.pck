@@ -24,6 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --
   --              24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
   --                           Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
+  --
+  --              18/09/2018 - pc_pagar_titulo: Adicionar nova origem 4 - Acordos. Alterações na procedure para suprir esta origem. (Andrew Albuquerque (GFT))
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
@@ -50,8 +53,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   vr_cdhistordsct_pgtojurosopc   CONSTANT craphis.cdhistor%TYPE := 2686; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (operacao credito)
   vr_cdhistordsct_pgtojurosavcc  CONSTANT craphis.cdhistor%TYPE := 2687; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (conta cooperado)
   vr_cdhistordsct_pgtojurosavopc CONSTANT craphis.cdhistor%TYPE := 2688; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
-  vr_cdhistordsct_creddscttitpgm CONSTANT craphis.cdhistor%TYPE := 2758;-- CREDITO DESCONTO DE TITULO PAGO A MAIOR
-
+  vr_cdhistordsct_credpagmaior   CONSTANT craphis.cdhistor%TYPE := 2758; --CREDITO DESCONTO DE TITULO PAGO A MAIOR
   
   --Tipo de Desconto de Títulos
   TYPE typ_desconto_titulos IS RECORD --(b1wgen0030.p/tt-desconto_titulos)
@@ -238,6 +240,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   FUNCTION fn_cobranca_cobtit(pr_cdcooper IN crapbdt.cdcooper%TYPE --> Código da Cooperativa
                              ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                              ) RETURN BOOLEAN;
+
+
+  FUNCTION fn_retorna_rating(pr_dsinrisc NUMBER) RETURN VARCHAR2 ;
 
   PROCEDURE pc_liberar_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
@@ -610,6 +615,37 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                       ,pr_cdcritic    OUT INTEGER                 --> Codigo Critica
                                       ,pr_dscritic    OUT VARCHAR2                --> Descricao Critica
                                       );
+  
+  PROCEDURE pc_calcula_risco_bordero(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                                     ,pr_nrborder IN crapbdt.nrborder%TYPE
+                                     --------> OUT <--------
+                                     ,pr_dsinrisc OUT VARCHAR2                    --> Risco
+                                     ,pr_cdcritic OUT PLS_INTEGER                 --> código da crítica
+                                     ,pr_dscritic OUT VARCHAR2                    --> descrição da crítica
+                                     );									   
+
+  PROCEDURE pc_expira_bordero (pr_cdcooper    IN crapbdt.cdcooper%TYPE --> Cooperativa
+                              ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                              ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                              );
+
+  PROCEDURE pc_expira_borderos_coop (pr_cdcooper    IN crapbdt.cdcooper%TYPE DEFAULT 0 --> Cooperativa
+                                     --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER                       --> código da crítica
+                                    ,pr_dscritic OUT VARCHAR2                          --> descrição da crítica
+                                    );
+
+  PROCEDURE pc_buscar_borderos_liberados (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                         ,pr_nrctremp  IN craptdb.nrborder%TYPE --> Numero do bordero
+                                         ,pr_xmllog        IN VARCHAR2             --> XML com informações de LOG
+                                         ,pr_cdcritic     OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic     OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml        IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo     OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro     OUT VARCHAR2
+                                        );
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -1246,6 +1282,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                             , pr_des_dados
                             , pr_fecha_xml );
   END pc_escreve_xml;
+
+  FUNCTION fn_retorna_rating(pr_dsinrisc NUMBER) RETURN VARCHAR2 IS
+    BEGIN
+      /*
+      A -> normal ou até atrasar 14 dias
+      B -> atraso de 15 a 30 dias
+      C -> atraso de 31 a 60 dias
+      D -> atraso de 61 a 90 dias
+      E -> atraso de 91 a 120 dias
+      F -> atraso de 121 a 150 dias
+      G -> atraso de 151 a 180 dias
+      H -> atraso de 180 dias
+      */
+      RETURN CASE pr_dsinrisc
+                  WHEN 2 THEN 'A'
+                  WHEN 3 THEN 'B'
+                  WHEN 4 THEN 'C'
+                  WHEN 5 THEN 'D'
+                  WHEN 6 THEN 'E'
+                  WHEN 7 THEN 'F'
+                  WHEN 8 THEN 'G'
+                  ELSE 'H'
+             END;
+  END fn_retorna_rating;
 
   
   /*Procedure que altera os status de um borderô*/
@@ -6912,6 +6972,7 @@ EXCEPTION
      -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%TYPE;
      vr_dscritic crapcri.dscritic%TYPE;
+     vr_rowid_log ROWID;
      
      -- Variaveis de entrada vindas no XML
      vr_cdcooper INTEGER;
@@ -7006,6 +7067,20 @@ EXCEPTION
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
+          
+          -- Efetua os inserts para apresentacao na tela VERLOG
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Pagamento do Bordero Nr.: ' || pr_nrborder || ' Nr.Doc: ' || rw_craptdb.nrdocmto
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
     END LOOP;
     CLOSE cr_tab_tdb;  
 
@@ -7017,6 +7092,19 @@ EXCEPTION
                                    '<Root><dsmensag>1</dsmensag></Root>');
   EXCEPTION
     WHEN vr_exc_erro THEN
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Erro ao pagar Bordero Nr.: ' || pr_nrborder
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
          IF  vr_cdcritic <> 0 THEN
              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
          END IF;
@@ -7027,6 +7115,19 @@ EXCEPTION
                                           '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
          ROLLBACK;
     WHEN OTHERS THEN
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Erro ao pagar Bordero Nr.: ' || pr_nrborder
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
          pr_des_erro := 'NOK';
          pr_cdcritic := vr_cdcritic;
          pr_dscritic := 'Erro geral na rotina dsct0003.pc_pagar_titulos_vencidos: '||SQLERRM;
@@ -7577,6 +7678,32 @@ EXCEPTION
         AND crapjur.nrdconta = pr_nrdconta;
     rw_crapjur cr_crapjur%ROWTYPE;
     
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    
+    CURSOR cr_lancboraprop(pr_cdcooper IN craptdb.cdcooper%TYPE --> Código da Cooperativa
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                          ,pr_nrborder IN crapbdt.nrborder%TYPE --> numero do bordero
+                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
+                          ,pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
+                          ,pr_cdbandoc IN craptdb.cdbandoc%TYPE --> Codigo do banco impresso no boleto
+                          ,pr_nrdctabb IN craptdb.nrdctabb%TYPE --> Numero da conta base do titulo
+                          ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE --> Numero do convenio de cobranca
+                          ,pr_nrdocmto IN craptdb.nrdocmto%TYPE --> Numero do documento
+                          ) IS
+    SELECT SUM(lcb.vllanmto) vllanmto
+      FROM tbdsct_lancamento_bordero lcb
+     WHERE lcb.cdcooper = pr_cdcooper
+       AND lcb.nrdconta = pr_nrdconta
+       AND lcb.nrborder = pr_nrborder
+       AND lcb.cdbandoc = pr_cdbandoc
+       AND lcb.nrdctabb = pr_nrdctabb
+       AND lcb.nrcnvcob = pr_nrcnvcob
+       AND lcb.nrdocmto = pr_nrdocmto
+       AND lcb.cdhistor = pr_cdhistor
+       AND lcb.dtmvtolt < pr_dtmvtolt;
+    rw_lancboraprop cr_lancboraprop%ROWTYPE;
+    
     /* TYPES */
     
     TYPE typ_dados_tarifa IS RECORD 
@@ -7986,6 +8113,19 @@ EXCEPTION
         RAISE vr_exc_erro;
       END IF;
       
+      OPEN cr_lancboraprop(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrborder => pr_nrborder
+                          ,pr_dtmvtolt => pr_dtmvtolt
+                          ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra
+                          ,pr_cdbandoc => pr_cdbandoc
+                          ,pr_nrdctabb => pr_nrdctabb
+                          ,pr_nrcnvcob => pr_nrcnvcob
+                          ,pr_nrdocmto => pr_nrdocmto
+                          );
+      FETCH cr_lancboraprop INTO rw_lancboraprop;
+      CLOSE cr_lancboraprop;
+      
       -- Lançar valor de apropriação dos juros nos lançamentos do borderô
       pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -7998,7 +8138,7 @@ EXCEPTION
                                    ,pr_nrtitulo => rw_craptdb.nrtitulo
                                    ,pr_cdorigem => 5
                                    ,pr_cdhistor => vr_cdhistordsct_apropjurmra
-                                   ,pr_vllanmto => vr_vlpagmra
+                                   ,pr_vllanmto => (rw_craptdb.vlmratit - nvl(rw_lancboraprop.vllanmto,0))
                                    ,pr_dscritic => vr_dscritic );
 
       -- Condicao para verificar se houve critica                             
@@ -8091,7 +8231,7 @@ EXCEPTION
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_vllanmto => vr_vlpagmto
-                         ,pr_cdhistor => vr_cdhistordsct_creddscttitpgm
+                         ,pr_cdhistor => vr_cdhistordsct_credpagmaior
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad
                          ,pr_nrborder => pr_nrborder
@@ -8745,5 +8885,436 @@ EXCEPTION
          pr_dscritic := 'Erro geral na rotina DSCT0003.pc_processa_liquidacao_cobtit: '||SQLERRM;
   END pc_processa_liquidacao_cobtit;
   
+  PROCEDURE pc_expira_bordero (pr_cdcooper    IN crapbdt.cdcooper%TYPE --> Cooperativa
+                              ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                              ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                              ) IS
+      /*---------------------------------------------------------------------------------------------------------------------
+        Programa  : pc_expira_bordero
+        Sistema   :
+        Sigla     : CRED
+        Autor     : Vitor Shimada Assanuma (GFT)
+        Data      : 18/08/2018
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para expirar um bordero específico.
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Tratamento de erro
+      vr_exc_erro EXCEPTION;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%type; --> cód. erro
+      vr_dscritic varchar2(1000);        --> desc. erro
+
+      -- Retorno da TAB052 para Cooperativa e Cobrança Registrada
+      vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
+      vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+
+      -- Busca o bordero
+      CURSOR cr_crapbdt IS
+        SELECT
+          bdt.cdcooper,
+          bdt.nrdconta,
+          bdt.nrborder,
+          GREATEST(nvl(bdt.dtanabor, bdt.dtmvtolt), nvl(bdt.dtenvmch,bdt.dtmvtolt), nvl(bdt.dtaprova, bdt.dtmvtolt)) AS dtalteracao
+        FROM
+          crapbdt bdt
+        WHERE bdt.cdcooper = pr_cdcooper
+          AND bdt.nrborder = pr_nrborder
+          AND bdt.insitbdt < 3 -- Em estudo e Analisado
+      ;rw_crapbdt cr_crapbdt%ROWTYPE;
+
+      -- Busca o tipo de pessoa
+      CURSOR cr_crapass(pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT
+          crapass.inpessoa
+        FROM
+          crapass
+        WHERE crapass.cdcooper = pr_cdcooper
+          AND crapass.nrdconta = pr_nrdconta
+      ;rw_crapass cr_crapass%ROWTYPE;
+
+      BEGIN
+        -- Leitura do calendário da cooperativa
+        OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat into rw_crapdat;
+        CLOSE btch0001.cr_crapdat;
+
+        -- Abre o cursor da BDT para buscar o bordero
+        OPEN cr_crapbdt;
+        FETCH cr_crapbdt INTO rw_crapbdt;
+
+        -- Valida o bordero
+        IF cr_crapbdt%NOTFOUND THEN
+          CLOSE cr_crapbdt;
+          vr_dscritic := 'Borderô não encontrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapbdt;
+
+        -- Abre o cursor para ir buscar o tipo da conta PF/PJ
+        OPEN cr_crapass(rw_crapbdt.nrdconta);
+        FETCH cr_crapass INTO rw_crapass;
+
+        -- Valida o Associado
+        IF cr_crapass%NOTFOUND THEN
+          CLOSE cr_crapass;
+          vr_dscritic := 'Associado não encontrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapass;
+
+        -- Busca os Parâmetros para o Cooperado e Cobrança Com Registro
+        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper,         -- Cooperativa
+                                            NULL,                -- Agencia de operação
+                                            NULL,                -- Número do caixa
+                                            NULL,                -- Operador
+                                            NULL,                -- Data da Movimentação
+                                            NULL,                -- Identificação de origem
+                                            1,                   -- Tipo de Cobrança: 1: REGISTRADA / 0: NÃO REGISTRADA
+                                            rw_crapass.inpessoa, -- 1: PESSOA FÍSICA / 2: PESSOA JURÍDICA
+                                            -- OUT --
+                                            vr_tab_dados_dsctit,
+                                            vr_tab_cecred_dsctit,
+                                            vr_cdcritic,
+                                            vr_dscritic);
+        IF ((NVL(vr_cdcritic, 0) > 0) OR (vr_dscritic IS NOT NULL)) THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Caso a data da ultima alteração do bordero + qtd. dias de expiração for menor que a data de movimento, expira.
+        IF (to_date(to_char(rw_crapbdt.dtalteracao + vr_tab_dados_dsctit(1).qtdiexbo, 'DD/MM/RRRR'),'DD/MM/RRRR') < rw_crapdat.dtmvtolt)THEN
+          -- Atualiza o bordero com REJEITADO e PRAZO EXPIRADO
+          pc_altera_status_bordero(pr_cdcooper => rw_crapbdt.cdcooper
+                                  ,pr_nrborder => rw_crapbdt.nrborder
+                                  ,pr_nrdconta => rw_crapbdt.nrdconta
+                                  ,pr_status   => 5                          -- Rejeitado
+                                  ,pr_insitapr => 7                          -- Prazo Expirado
+                                  ,pr_dtrejeit => rw_crapdat.dtmvtolt        -- Data de rejeição
+                                  ,pr_hrrejeit => to_char(sysdate,'SSSSS')   -- Hora de rejeião
+                                  ,pr_dscritic => vr_dscritic                -- Se houver registro de crítica
+                                  );
+          IF (vr_dscritic IS NOT NULL) THEN
+              RAISE vr_exc_erro;
+          END IF;
+
+          -- Altera a decisao de todos os titulos daquele bordero para NAO APROVADOS
+          BEGIN
+            UPDATE craptdb SET insittit = 0, insitapr = 2 WHERE nrborder = rw_crapbdt.nrborder AND cdcooper = rw_crapbdt.cdcooper AND nrdconta = rw_crapbdt.nrdconta;
+            COMMIT;
+          EXCEPTION
+            WHEN OTHERS THEN
+              ROLLBACK;
+              vr_dscritic := 'Erro ao atualizar a craptdb, bordero: '|| rw_crapbdt.nrborder || ' em DSCT0003.pc_expira_bordero'||SQLERRM;
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+             -- Se foi retornado apenas código busca a descrição
+             IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+             END IF;
+             -- Variavel de erro recebe erro ocorrido
+             pr_cdcritic := nvl(vr_cdcritic,0);
+             pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+             pr_dscritic := 'Erro nao tratado na DSCT0003.pc_expira_bordero ' ||SQLERRM;
+  END pc_expira_bordero;
+
+ PROCEDURE pc_expira_borderos_coop (pr_cdcooper    IN crapbdt.cdcooper%TYPE DEFAULT 0 --> Cooperativa
+                                   --------> OUT <--------
+                                   ,pr_cdcritic OUT PLS_INTEGER                       --> código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> descrição da crítica
+                                   ) IS
+      /*---------------------------------------------------------------------------------------------------------------------
+        Programa  : pc_expira_borderos_coop
+        Sistema   :
+        Sigla     : CRED
+        Autor     : Vitor Shimada Assanuma (GFT)
+        Data      : 18/08/2018
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para expirar os borderos de uma cooperativa
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Tratamento de erro
+      vr_exc_erro EXCEPTION;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%type; --> cód. erro
+      vr_dscritic varchar2(1000);        --> desc. erro
+
+      -- Busca o bordero, caso nao seja passado cdcooper, pega de todas as cooperativas.
+      CURSOR cr_crapbdt IS
+        SELECT
+           bdt.cdcooper
+          ,bdt.nrborder
+        FROM
+          crapbdt bdt
+        WHERE bdt.cdcooper = decode(pr_cdcooper, 0, bdt.cdcooper, pr_cdcooper)  -- Caso seja passado a coop
+          AND bdt.cdcooper IN (SELECT cdcooper FROM crapcop WHERE flgativo = 1) -- Somente cooperativas ativas
+          AND bdt.insitbdt < 3                                                  -- Em estudo e Analisado
+		  AND bdt.dtlibbdt IS NULL
+      ;rw_crapbdt cr_crapbdt%ROWTYPE;
+
+      BEGIN
+        -- Abre o cursor da BDT para buscar o bordero
+        OPEN cr_crapbdt;
+        LOOP
+          FETCH cr_crapbdt INTO rw_crapbdt;
+          EXIT WHEN cr_crapbdt%NOTFOUND;
+          -- Chama a rotina de expirar bordero
+          pc_expira_bordero(pr_cdcooper => rw_crapbdt.cdcooper
+                           ,pr_nrborder => rw_crapbdt.nrborder
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+          );
+
+          -- Valida a procedure de expirar o bordero
+          IF ((NVL(vr_cdcritic, 0) > 0) OR (vr_dscritic IS NOT NULL)) THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END LOOP;
+        CLOSE cr_crapbdt;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+             -- Se foi retornado apenas código busca a descrição
+             IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+             END IF;
+             -- Variavel de erro recebe erro ocorrido
+             pr_cdcritic := nvl(vr_cdcritic,0);
+             pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+             pr_dscritic := 'Erro nao tratado na DSCT0003.pc_expira_borderos_coop ' ||SQLERRM;
+  END pc_expira_borderos_coop;
+
+  PROCEDURE pc_calcula_risco_bordero(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                                     ,pr_nrborder IN crapbdt.nrborder%TYPE
+                                     --------> OUT <--------
+                                     ,pr_dsinrisc OUT VARCHAR2                    --> Risco
+                                     ,pr_cdcritic OUT PLS_INTEGER                 --> código da crítica
+                                     ,pr_dscritic OUT VARCHAR2                    --> descrição da crítica
+                                     ) IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa  : pc_calcula_risco_bordero
+    Sistema   :
+    Sigla     : CRED
+    Autor     : Luis Fernando (GFT)
+    Data      : 22/08/2018
+    Frequencia: Rotina diária da central de risco
+    Objetivo  : Atualizar o risco do borderô conforme as datas
+  ---------------------------------------------------------------------------------------------------------------------*/
+
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%type;
+    vr_dscritic varchar2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    -- Variaveis para o calculo
+    vr_inrisccalculado number := 2; -- começa como A
+    vr_riscoatual      number := 2; -- começa como A
+    vr_dias            number := 0; -- dias do vencimento até a data de movimento
+    vr_qtrisccalculado NUMBER := 0;
+
+    CURSOR cr_crapbdt IS
+    SELECT
+      bdt.rowid AS id,
+      bdt.nrborder,
+      bdt.nrinrisc,
+      bdt.qtdirisc,
+      bdt.insitbdt,
+      bdt.dtmvtolt,
+      bdt.nrdconta
+    FROM crapbdt bdt
+    WHERE
+      bdt.nrborder = pr_nrborder
+      AND bdt.cdcooper = pr_cdcooper
+    ;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+
+    CURSOR cr_craptdb (pr_nrdconta crapbdt.nrdconta%type) IS
+    SELECT
+      tdb.dtvencto,
+      tdb.dtlibbdt,
+      tdb.insittit
+    FROM
+      craptdb tdb
+    WHERE
+      tdb.cdcooper = pr_cdcooper
+      AND tdb.nrborder = pr_nrborder
+      AND tdb.nrdconta = pr_nrdconta
+      AND tdb.insittit = 4 -- apenas liberados
+    ;
+    rw_craptdb cr_craptdb%ROWTYPE;
+    BEGIN
+      --    Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        vr_cdcritic := 1;
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE BTCH0001.cr_crapdat;
+
+      OPEN cr_crapbdt;
+      FETCH cr_crapbdt INTO rw_crapbdt;
+      IF (cr_crapbdt%NOTFOUND) THEN
+        CLOSE cr_crapbdt;
+        vr_cdcritic := 1166; -- Bordero nao encontrado
+        raise vr_exc_erro;
+      END IF;
+      CLOSE cr_crapbdt;
+
+      IF (rw_crapbdt.insitbdt <> 3) THEN
+        vr_cdcritic := 1175; -- Bordero deve estar LIBERADO
+        raise vr_exc_erro;
+      END IF;
+
+      OPEN cr_craptdb (pr_nrdconta=>rw_crapbdt.nrdconta);
+      LOOP FETCH cr_craptdb INTO rw_craptdb;
+        EXIT WHEN cr_craptdb%NOTFOUND;
+        vr_dias := rw_crapdat.dtmvtolt-rw_craptdb.dtvencto;
+        vr_riscoatual :=CASE
+                          WHEN (vr_dias < 15) THEN 2
+                          WHEN (vr_dias < 31) THEN 3
+                          WHEN (vr_dias < 61) THEN 4
+                          WHEN (vr_dias < 91) THEN 5
+                          WHEN (vr_dias < 121) THEN 6
+                          WHEN (vr_dias < 151) THEN 7
+                          WHEN (vr_dias < 181) THEN 8
+                          ELSE 9
+                        END;
+        -- Calcula o pior risco dos títulos e guarda para o bordero
+        IF (vr_riscoatual>vr_inrisccalculado) THEN
+          vr_inrisccalculado := vr_riscoatual;
+        END IF;
+        IF (vr_qtrisccalculado<vr_dias) THEN
+          vr_qtrisccalculado := vr_dias;
+        END IF;
+      END LOOP;
+      CLOSE cr_craptdb;
+      vr_qtrisccalculado := ABS(vr_qtrisccalculado);
+      rw_crapbdt.nrinrisc := vr_inrisccalculado;
+      rw_crapbdt.qtdirisc := CASE
+                        WHEN (vr_inrisccalculado = 2) THEN rw_crapdat.dtmvtolt - rw_crapbdt.dtmvtolt
+                        WHEN (vr_inrisccalculado = 3) THEN vr_qtrisccalculado-15 -- entre 15 e 31
+                        WHEN (vr_inrisccalculado = 4) THEN vr_qtrisccalculado-30 -- entre 31 e 60
+                        WHEN (vr_inrisccalculado = 5) THEN vr_qtrisccalculado-60 -- entre 61 e 90
+                        WHEN (vr_inrisccalculado = 6) THEN vr_qtrisccalculado-90 -- entre 91 e 120
+                        WHEN (vr_inrisccalculado = 7) THEN vr_qtrisccalculado-120 -- entre 121 e 150
+                        WHEN (vr_inrisccalculado = 8) THEN vr_qtrisccalculado-150 -- entre 151 e 180
+                        ELSE  vr_qtrisccalculado-181 -- a partir de 181 dias
+                      END ;
+
+      UPDATE
+        crapbdt
+      SET
+        nrinrisc = rw_crapbdt.nrinrisc,
+        qtdirisc = rw_crapbdt.qtdirisc
+      WHERE
+        rowid = rw_crapbdt.id;
+      pr_dsinrisc := rw_crapbdt.nrinrisc;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          -- Se foi retornado apenas código busca a descrição
+          IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
+          -- Variavel de erro recebe erro ocorrido
+          pr_cdcritic := nvl(vr_cdcritic,0);
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro nao tratado na DSCT0003.pc_calcula_risco_bordero ' ||SQLERRM;
+  END pc_calcula_risco_bordero;
+
+
+  PROCEDURE pc_buscar_borderos_liberados (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                         ,pr_nrctremp  IN craptdb.nrborder%TYPE --> Numero do bordero
+                                         ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2) IS         --> Erros do processo
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_buscar_borderos_liberados
+      Sistema  :
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 26/05/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Trazer todo os borderôs liberados de uma determinada conta
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Exceção
+    vr_exc_erro  EXCEPTION;
+
+    -- Variáveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+
+    -- Cursor dos titulos
+    CURSOR cr_craptdb (pr_cdcooper craptdb.cdcooper%TYPE) IS
+      SELECT
+         tdb.nrdconta
+         ,tdb.nrborder
+         ,tdb.dtlibbdt
+         ,SUM(vltitulo) AS vltottit
+         ,COUNT(1)      AS qttottit
+         FROM  craptdb tdb
+         WHERE tdb.nrdconta = pr_nrdconta
+           AND tdb.cdcooper = pr_cdcooper
+           AND tdb.dtlibbdt IS NOT NULL -- Liberado
+           AND tdb.nrborder = DECODE(pr_nrctremp, NULL, tdb.nrborder, pr_nrctremp)
+         GROUP BY tdb.nrdconta, tdb.nrborder, tdb.dtlibbdt
+         ORDER BY dtlibbdt DESC
+    ;rw_craptdb cr_craptdb%ROWTYPE;
+
+    BEGIN
+       -- Leitura dos dados
+       gene0004.pc_extrai_dados(pr_xml       => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><borderos></borderos></Root>');
+
+      -- Abertura do cursor dos titulos
+      OPEN  cr_craptdb(vr_cdcooper);
+      LOOP
+        FETCH cr_craptdb INTO rw_craptdb;
+        EXIT WHEN cr_craptdb%NOTFOUND;
+        pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                            ,'/Root/borderos'
+                                            ,XMLTYPE('<bordero>'
+                                                   ||'  <nrdconta>' || rw_craptdb.nrdconta                          ||'</nrdconta>'
+                                                   ||'  <nrborder>' || rw_craptdb.nrborder                          ||'</nrborder>'
+                                                   ||'  <dtlibbdt>' || to_char(rw_craptdb.dtlibbdt,'dd/mm/rrrr')    ||'</dtlibbdt>'
+                                                   ||'  <vltottit>' || TO_CHAR(rw_craptdb.vltottit,'999G999G990D00')||'</vltottit>'
+                                                   ||'  <qttottit>' || rw_craptdb.qttottit||'</qttottit>'
+                                                   ||'</bordero>'));
+      END LOOP;
+
+      -- Fecha cursor
+      CLOSE cr_craptdb;
+
+  END pc_buscar_borderos_liberados;
 END DSCT0003;
 /
