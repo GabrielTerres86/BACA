@@ -1004,9 +1004,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                ,pr_incrineg    => vr_incrineg
                                                ,pr_cdcritic    => vr_cdcritic
                                                ,pr_dscritic    => vr_dscritic);
+											   
+			  rw_craplcm.nrseqdig := vr_nrseqdig;
 
              -- Se houve crítica ou erro
-             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+             IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 
                IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
                -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
@@ -2421,7 +2423,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND dpb.inlibera = 1;
             rw_crapdpb cr_crapdpb%ROWTYPE;
 
-			CURSOR cr_crapass_pa(pr_cdcooper crapass.cdcooper%TYPE
+      CURSOR cr_crapass_pa(pr_cdcooper crapass.cdcooper%TYPE
                                 ,pr_nrdconta crapass.nrdconta%TYPE) IS
              SELECT crapass.cdagenci
                FROM crapass crapass
@@ -2468,7 +2470,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             vr_qtcompln   NUMBER:= 0;
             vr_vlcompdb   NUMBER:= 0;
 
-			vr_cdagenci_pa NUMBER:= 0;
+      vr_cdagenci_pa NUMBER:= 0;
 
             vr_nrdctitg   VARCHAR2(40);
 
@@ -4758,7 +4760,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                             ,pr_cdcritic    => vr_cdcritic
                                                             ,pr_dscritic    => vr_dscritic);
 
-                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                            IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
                              -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
                             IF nvl(vr_cdcritic, 0) = 92 THEN
@@ -4982,7 +4984,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                             ,pr_dscritic    => vr_dscritic);
 
                           -- Se há alguma crítica ou erro
-                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                            IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
                             -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
                              IF nvl(vr_cdcritic, 0) = 92 THEN
@@ -5346,7 +5348,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                             ,pr_dscritic    => vr_dscritic);
 
                           -- Se há alguma crítica ou erro
-                          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                            IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
                             -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
                              IF nvl(vr_cdcritic, 0) = 92 THEN
@@ -5796,7 +5798,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
                       -- Adiciona a linha ao arquivo de criticas
-                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);					                      
+                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                                
                     END IF;
 
 
@@ -5849,7 +5851,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                     END IF;  --vr_cdcritic IN (811,757)
 
-					-- Buscar o numero do PA(cdagenci)
+          -- Buscar o numero do PA(cdagenci)
                     OPEN cr_crapass_pa(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => rw_craprej.nrdconta);
                     FETCH cr_crapass_pa INTO rw_crapass_pa;
@@ -5875,7 +5877,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_tab_critica(vr_idx_cri).dspesqbb := vr_rel_dspesqbb;
                        vr_tab_critica(vr_idx_cri).cdtipdoc := vr_rel_cdtipdoc;
                        vr_tab_critica(vr_idx_cri).nrctadep := REPLACE(rw_craprej.nrdctitg,' ',to_number(SUBSTR(rw_craprej.cdpesqbb,67,12)));
-					   vr_tab_critica(vr_idx_cri).cdagenci := vr_cdagenci_pa;
+             vr_tab_critica(vr_idx_cri).cdagenci := vr_cdagenci_pa;
                        CONTINUE;
                     END IF;
 
@@ -5889,7 +5891,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                      <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                      <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
                                                                      <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>
-																	 <cdagenci_conta>'||vr_cdagenci_pa                             ||'</cdagenci_conta>
+                                   <cdagenci_conta>'||vr_cdagenci_pa                             ||'</cdagenci_conta>
                                                                      <dscritic>'||vr_dscritic                                      ||'</dscritic>
                                                                   </rejeitados>');
 
@@ -5912,7 +5914,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        <vllanmto>'||vr_tab_critica(vr_idx_cri).vllanmto                              ||'</vllanmto>
                                                                        <dspesqbb>'||vr_tab_critica(vr_idx_cri).dspesqbb                              ||'</dspesqbb>
                                                                        <cdtipdoc>'||To_Char(vr_tab_critica(vr_idx_cri).cdtipdoc,'FM999')             ||'</cdtipdoc>
-																	   <cdagenci_conta>'||vr_tab_critica(vr_idx_cri).cdagenci                        ||'</cdagenci_conta>
+                                     <cdagenci_conta>'||vr_tab_critica(vr_idx_cri).cdagenci                        ||'</cdagenci_conta>
                                                                        <dscritic>'||vr_tab_critica(vr_idx_cri).dscritic                              ||'</dscritic>
                                                                     </rejeitados>');
                    END LOOP; --vr_tab_critica
@@ -5976,7 +5978,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                            ,pr_sqcabrel  => 1
                                            ,pr_dspathcop => vr_dircop_rlnsv     --> gerar copia no diretorio
                                            ,pr_nrcopias  => 1                   --> Numero de copias
-										   ,pr_nrvergrl => 1                    --> Numero da versão da função de geração de relatorio
+                       ,pr_nrvergrl => 1                    --> Numero da versão da função de geração de relatorio
                                            ,pr_des_erro  => vr_dscritic);      --> Saida com erro
 
                 dbms_lob.freetemporary(vr_xml_rel);
@@ -6132,7 +6134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_tot_qtregrec:= Nvl(vr_tot_qtregrec,0) + 1;
                       vr_tot_vlregrec:= Nvl(vr_tot_vlregrec,0) + rw_craprej.vllanmto;
 
-					  -- Buscar o numero do PA(cdagenci)
+            -- Buscar o numero do PA(cdagenci)
                       OPEN cr_crapass_pa(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => rw_craprej.nrdconta);
                       FETCH cr_crapass_pa INTO rw_crapass_pa;
@@ -6157,7 +6159,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                        <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
                                                                        <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>
-																	   <cdagenci_conta>'||vr_cdagenci_pa                             ||'</cdagenci_conta>
+                                     <cdagenci_conta>'||vr_cdagenci_pa                             ||'</cdagenci_conta>
                                                                        <dscritic>'||vr_dscritic                                      ||'</dscritic>
                                                                     </rejeitados>');
 
@@ -6239,7 +6241,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                ,pr_fldosmail => 'S'                 --> Conversar anexo para DOS antes de enviar
                                                ,pr_dscmaxmail => ' | tr -d "\032"'  --> Complemento do comando converte-arquivo
                                                ,pr_nrcopias  => 1                   --> Numero de copias
-											   ,pr_nrvergrl => 1                    --> Numero da versão da função de geração de relatorio
+                         ,pr_nrvergrl => 1                    --> Numero da versão da função de geração de relatorio
                                                ,pr_des_erro  => vr_dscritic);       --> Saida com erro
 
                     dbms_lob.freetemporary(vr_xml_rel);
@@ -6457,7 +6459,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        /* A partir de 16/04/2018 nao havera mais Cheque VLB - Projeto Compe Sessao Unica */  
        --Buscar informormacoes da craptab para valores vlb
        vr_dstextab_vlb:= '';
-	   vr_vlchqvlb:= 0;
+     vr_vlchqvlb:= 0;
 
        ----- Gravar informações vindas do cadastro da cooperativa ----
        -- Inicializar contador de arquivos processados
