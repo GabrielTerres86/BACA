@@ -95,14 +95,14 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                    --,pr_vlsdeved  IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                    --,pr_vlsdevat  IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
                                    ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
-                                   --,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                   ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                    ,pr_idorigem  IN NUMBER                       -- Indicador da origem
                                    ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
                                    ,pr_cdoperad  IN VARCHAR2                     -- Código do operador
                                    ,pr_idvlrmin OUT NUMBER                       -- Indica que houve critica do valor minimo
                                    ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                    ,pr_cdcritic OUT NUMBER                       -- Código de críticia
-                                   ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
+                                  ,pr_dscritic OUT VARCHAR2);                    -- Descrição da crítica
 	
   -- Efetuar o calculo do lançamento a ser creditado na conta corrente
   PROCEDURE pc_pagar_contrato_emprestimo(pr_cdcooper  IN crapepr.cdcooper%TYPE       -- Código da Cooperativa
@@ -201,8 +201,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --                                                   -pc_pagar_emprestimo_prejuizo     
   --                                                   -pc_pagar_emprestimo_folha     
   --                                                   -pc_pagar_emprestimo_tr. Rangel Decker (AMcom)
-  --
-  --             17/09/2018 - Criação da pc_pagar_contrato_desc_tit, para ser utilizada na pc_pagar_contrato_acordo no
+
+  --                          lancamentos na CRAPLOT e CRAPLCM (LANC0001.pc_gerar_lancamento_conta). 
+  --                          (PRJ450 - Teobaldo J - AMcom)  --
+  
+--             17/09/2018 - Criação da pc_pagar_contrato_desc_tit, para ser utilizada na pc_pagar_contrato_acordo no
   --                          pagamento de desconto de título (Andrew Albuquerque - GFT)
   --
   --             19/09/2018 - pc_pagar_contrato_acordo -Notificação e tratamento de erro da rotina de pagamento para acordos de.
@@ -778,7 +781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_tab_retorno => vr_tab_retorno ); -- Registro com dados do retorno
 
       -- Independente do erro deve parar o processo, pois utiliza dados da craplcm
-      IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+      IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
       
@@ -1349,7 +1352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                    --,pr_vlsdeved  IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                    --,pr_vlsdevat  IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
                                    ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
-                                   --,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                   ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                    ,pr_idorigem  IN NUMBER                       -- Indicador da origem
                                    ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
                                    ,pr_cdoperad  IN VARCHAR2                     -- Código do operador
@@ -1512,7 +1515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 		END IF;
     
     -- Caso o saldo devedor total do empréstimo for menor que o valor pago no boleto 
-    IF vr_vlsdeved < vr_vldpagto THEN
+		-- ou se estiver realizando a quitação do acordo
+    IF vr_vlsdeved < vr_vldpagto OR NVL(pr_inliqaco,'N') = 'S' THEN
       -- Devemos considerar somente o valor para pagar o saldo devedor.
       vr_vldpagto := vr_vlsdeved;
     END IF;
@@ -2536,7 +2540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 																			       , pr_cdcritic => vr_cdcritic
 																			       , pr_dscritic => vr_dscritic);
 																						 
-						IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+						IF nvl(vr_cdcritic, 0) > 0 or trim(vr_dscritic) IS NOT NULL THEN
 							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
 							vr_flagerro := TRUE;
 
