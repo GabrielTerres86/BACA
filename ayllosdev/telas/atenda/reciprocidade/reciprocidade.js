@@ -190,6 +190,8 @@ function habilitaSetor(setorLogado) {
 
             controlaFoco();
 
+            novosConvenios = [];
+
             if (cddopcao == 'C') {
                 $('input, select', '.tabelaDesconto').desabilitaCampo();
                 $('#btnConveniosCobranca, #gridDescontoConvenios a:last-child, #btnContinuar, #btnAprovacao').remove();

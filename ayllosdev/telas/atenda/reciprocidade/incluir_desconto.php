@@ -28,6 +28,12 @@ if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X"))
 	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }
 
+function nl2br2($string, $convertCharset = true) {
+	if ($convertCharset)
+		$string = htmlentities($string);
+	return str_replace(array("\r\n", "\r", "\n"), "<br />", $string);
+}
+
 $cdcooper                 = ( (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'] );
 $nrdconta                 = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'] );
 $convenios                = ( (!empty($_POST['convenios'])) ? json_decode($_POST['convenios']) : '' );
@@ -94,7 +100,7 @@ if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
     if ($msgErro == "") {
         $msgErro = $xmlDados->tags[0]->cdata;
     }
-    exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+    exibirErro('error',nl2br2($msgErro),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
     $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");

@@ -159,7 +159,7 @@ $dsalerta   = getByTagName($xmlDados->tags,"dsalerta");
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	echo '</script>';
 	exit();
 }		
@@ -204,6 +204,8 @@ function exibeErro($msgErro) {
                        $flsercco =  getByTagName($convenios[$i]->tags,'flsercco');
 					   $qtdfloat =  getByTagName($convenios[$i]->tags,'qtdfloat');		
 					   $flprotes =  (getByTagName($convenios[$i]->tags,'flprotes') == "yes") ? "SIM" : "NAO";
+					   $qtlimaxp =  getByTagName($convenios[$i]->tags,'qtlimmip');
+					   $qtlimmip =  getByTagName($convenios[$i]->tags,'qtlimaxp');
 					   $qtdecprz =  getByTagName($convenios[$i]->tags,'qtdecprz');
   					   $idrecipr =  getByTagName($convenios[$i]->tags,'idrecipr');
   					   $inenvcob =  getByTagName($convenios[$i]->tags,'inenvcob');
@@ -212,7 +214,7 @@ function exibeErro($msgErro) {
                        if ($insitceb == 1 && $aux_insitceb == 0 ){
                            $aux_insitceb = $insitceb;
                        } 
-                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
+                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtlimaxp."','".$qtlimmip."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
 					?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -292,26 +294,45 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "emails_titular" name="emails_titular" value="<?php echo $emails_titular; ?>">
 	<input type="hidden" id= "qtdfloat"    name="qtdfloat">
 	<input type="hidden" id= "flprotes"    name="flprotes">
+	<input type="hidden" id= "flproalt"    name="flproalt" value="0">
+	<input type="hidden" id= "qtlimaxp"    name="qtlimaxp">
+	<input type="hidden" id= "qtlimmip"    name="qtlimmip">
 	<input type="hidden" id= "qtdecprz"    name="qtdecprz">
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
 	<input type="hidden" id= "inenvcob"    name="inenvcob">
 
-    <?php //Habilitar botão apenas se possuir cobrança ativa
-          // e se o serviço estiver ativo ou com algum tipo de alerta
-          // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
-          if ($aux_insitceb == 1 && 
-              ($flsitsms == 1 || $dsalerta != "")) { ?>
-        		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
-    		<?php  } ?>
-    
-    <a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
-    <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
-    <a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
-    <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
-    <a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
-	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
+    <?php
+	// Habilitar botão apenas se possuir cobrança ativa
+    // e se o serviço estiver ativo ou com algum tipo de alerta
+    // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
+    if ($aux_insitceb == 1 && ($flsitsms == 1 || $dsalerta != "")) {
+	?>
+		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
+    <?php
+	}
+	// utilizada variavel para controle da origem da tela
+	$telaOrigem = $_POST['telaOrigem'];
+	
+	if ($telaOrigem == 'RECIPROCIDADE') {
+	?>
+		<a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
+		<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+		<a href="#" class="botao" onclick="carregaReciprocidade(); return false;">Voltar</a>
+	<?php
+	} else {
+	?>
+		<a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
+		<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
+		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+		<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
+		<a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
+		<a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
+		<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
+	<?php
+	}
+	?>
 	
 	<input type="hidden" id= "flsercco"    name="flsercco">
 	
