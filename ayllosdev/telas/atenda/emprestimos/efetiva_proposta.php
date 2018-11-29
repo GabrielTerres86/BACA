@@ -236,11 +236,11 @@
 						}
 						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac . " - " . $retGravame . " - " . $retContr . " - " . $identificador; die;
 
-						echo $data . " " . $xmlStr;
+						//echo $data . " " . $xmlStr;
 						
 						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador);// $retGravame, $retContr, $identificador);
 						//gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador)
-						die;
+						//die;
 						$qtdGravame++;
 					}
 
@@ -253,7 +253,7 @@
 				}
 			}
 
-			if ($qtdGravame) {
+			if ($qtdGravame > 0) {
 				$msgProposta = $qtdGravame . " " . $msg['veiculos_alienados'];
 			}
 
