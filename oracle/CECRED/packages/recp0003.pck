@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.RECP0003 IS
+CREATE OR REPLACE PACKAGE CECRED.RECP0003 IS 
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RECP0003
