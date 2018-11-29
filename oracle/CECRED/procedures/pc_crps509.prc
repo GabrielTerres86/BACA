@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
                                                ,pr_dscritic OUT VARCHAR2               --> Descricao da Critica
-                                               ,pr_inpriori IN VARCHAR2 DEFAULT 'T') IS   --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
+ 											   ,pr_inpriori IN VARCHAR2 DEFAULT 'T') IS   --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
   BEGIN
 
   /* .............................................................................
@@ -63,10 +63,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             Melhora de performance (Fabiano Girardi - AMcom).         
 							
                03/07/2018 - Inclusão do pr_inpriori: Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos).
-                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)
+                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)								
 
                30/10/2018 - Ajuste para o job do paralelismo considerar o pr_inpriori(Fabiano B. Dias - AMcom)
-							
+
      ............................................................................. */
 
      
@@ -617,7 +617,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                      ,pr_qterro   => vr_qterro) loop
           
           -- Montar o prefixo do código do programa para o jobname
-          vr_jobname := vr_cdprogra ||'_'|| reg_crapage.cdagenci || '$';  
+          vr_jobname := SUBSTR(vr_cdprogra,1,9) ||'_'|| reg_crapage.cdagenci || '$';  -- SUBSTR ADD em 30/10/2018.
     
           -- Cadastra o programa paralelo
           gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
@@ -644,9 +644,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                                  'wpr_infimsol,' ||chr(13)||
                                                  'wpr_cdcritic,' ||chr(13)||
                                                  'wpr_dscritic,' ||chr(13)||
-                                                 ''''||pr_inpriori||'''' || -- 30/10/2018.
+                                                 ''''||pr_inpriori||'''' ||
                                                  ');'||chr(13)||
-                        'end;';
+                        'end;';-- pr_inpriori ADD em 30/10/2018.
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
                                 ,pr_cdprogra => vr_cdprogra  --> Código do programa
@@ -801,7 +801,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
 */
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 
-                                                      ,pr_cdprogra => vr_cdprogra);
+                                                      ,pr_cdprogra => SUBSTR(vr_cdprogra,1,7)); -- 30/10/2018.
        
          if (fn_primeira_execucao and fn_existem_jobs) then
            pc_resetar_sequencia;
@@ -822,6 +822,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                           ,pr_dtmvtopg    => vr_dtmvtopg         --Data de pagamento
                                           ,pr_inproces    => rw_crapdat.inproces --Indicador processo
                                           ,pr_cdprogra    => vr_cdprogra         --Nome do programa
+                                          ,pr_inpriori    => pr_inpriori         --Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) -- 30/10/2018.
                                           ,pr_tab_agendto => vr_tab_agendto      --tabela de agendamento
                                           ,pr_cdcritic    => vr_cdcritic         --Codigo da Critica
                                           ,pr_dscritic    => vr_dscritic);       --Descricao da Critica
@@ -829,6 +830,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            vr_dslog := '[BATCH] Fim - pc_obtem_agend_debitos. AGENCIA: ['||cd_todas_agencias||']'||
                      ' INPROCES: ['||rw_crapdat.inproces||']'||
                      ' pr_idparale: ['||pr_idparale||']'||
+                     ' pr_inpriori: ['||pr_inpriori||']'|| -- 30/10/2018
                      ' Qtde Registros: ['||vr_tab_agendto.count()||']';
          
           pc_log_programa(PR_DSTIPLOG     => 'O',
@@ -882,6 +884,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            vr_dslog := '[BATCH-NOP] Fim - pc_obtem_agend_debitos. AGENCIA: ['||cd_todas_agencias||']'||
                        ' INPROCES: ['||rw_crapdat.inproces||']'||
                        ' pr_idparale: ['||pr_idparale||']'||
+                       ' pr_inpriori: ['||pr_inpriori||']'|| -- 30/10/2018
                        ' Qtde Registros: ['||vr_tab_agendto.count()||']';
          
            pc_log_programa(PR_DSTIPLOG     => 'O',
