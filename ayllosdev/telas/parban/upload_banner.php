@@ -7,6 +7,7 @@
 	 * OBJETIVO     : Rotina para salvar informações de mensagens manuais da tela ENVNOT
 	 * --------------
 	 * ALTERCOES   : 18/10/2018 - Ajuste na validacao do arquivo apos o move_upload (Andrey Formigari - Mouts)
+	 *               23/11/2018 - Ajuste na execução do comando CURL pel shell_exec pois os parametros não estavam na ordem correta (Tiago - Ailos)
 	 * -------------- 
 	**/
 	
@@ -165,7 +166,7 @@
 
 		if($moveImg){
 			try {
-			  shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg . ' -u '.$user.':'.$pass.' '.$_UP['srvImg']);			
+			  shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg .' '.$_UP['srvImg']. ' -u '.$user.':'.$pass);			
 			} catch(Exception $e){
 				//echo("<script> console.log('Exception');</script> ");
 				gerarErro(utf8_decode("Erro ao carregar arquivo!"));
