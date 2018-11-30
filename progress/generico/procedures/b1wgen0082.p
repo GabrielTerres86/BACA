@@ -201,6 +201,7 @@ PROCEDURE carrega-convenios-ceb:
     DEF OUTPUT PARAM TABLE FOR tt-titulares.       
     DEF OUTPUT PARAM TABLE FOR tt-emails-titular.
 
+	DEF VAR          aux_dtcadast AS DATE                            NO-UNDO.
     DEF VAR          aux_qtregist AS INTE                            NO-UNDO.
 
 
@@ -216,17 +217,27 @@ PROCEDURE carrega-convenios-ceb:
     EMPTY TEMP-TABLE tt-emails-titular.
 
     FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
-                             crapprm.cdacesso = 'DT_VIG_IMP_CTR_V2'
+                             crapprm.cdacesso = 'DT_VIG_RECECIPR_V2'
+                             NO-LOCK NO-ERROR.
+    IF AVAIL crapprm THEN
+    DO:
+      ASSIGN aux_dtcadast = DATE(crapprm.dsvlrprm).
+    END.
+	
+	FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+							 crapprm.cdcooper = par_cdcooper AND
+                             crapprm.cdacesso = 'RECIPROCIDADE_PILOTO' AND
+							 crapprm.dsvlrprm = '1'
                              NO-LOCK NO-ERROR.
     IF NOT AVAIL crapprm THEN
     DO:
-      ASSIGN par_dsdmesag = "Data de corte nao informada.".
+      ASSIGN aux_dtcadast = NOW.
     END.
 
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
                             crapceb.nrdconta = par_nrdconta     AND
-                            crapceb.dtcadast < DATE(crapprm.dsvlrprm) NO-LOCK,
+                            crapceb.dtcadast <= aux_dtcadast NO-LOCK,
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,
