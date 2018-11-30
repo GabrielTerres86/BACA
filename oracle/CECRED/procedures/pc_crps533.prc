@@ -1004,8 +1004,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                ,pr_incrineg    => vr_incrineg
                                                ,pr_cdcritic    => vr_cdcritic
                                                ,pr_dscritic    => vr_dscritic);
-											   
-			  rw_craplcm.nrseqdig := vr_nrseqdig;
 
              -- Se houve crítica ou erro
              IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
