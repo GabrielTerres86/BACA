@@ -85,7 +85,6 @@ var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
     flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob;
 
-var erroAlcada = false;
 var cee = false;
 var coo = false;
 var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
@@ -2975,42 +2974,15 @@ function validaHabilitacaoCamposBtn(cddopcao) {
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ||
             (atualizacaoDesconto) ) {
 
-		$.ajax({
-		    dataType: "html",
-		    type: "POST",
-		    url: UrlSite + "telas/cadres/valida_alcada.php",
-		    data: {
-		        redirect: "script_ajax"
-		    },
-		    success: function (response) {
-		        if (response) {
-                    // se erro ainda não foi exibido
-                    if (!erroAlcada) {
-                        erroAlcada = true;
-		            eval(response);
-                    }
-		            btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-		            btnContinuar.prop('disabled', true);
-		            btnContinuar.attr('onclick', 'return false;');
+		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+		btnContinuar.prop('disabled', true);
+		btnContinuar.attr('onclick', 'return false;');
 
-		            btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
-		            btnAprovacao.prop('disabled', true);
-		            btnAprovacao.attr('onclick', 'return false;');
-                } else {
-                    btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-                    btnContinuar.prop('disabled', true);
-                    btnContinuar.attr('onclick', 'return false;');
-
-                    btnAprovacao.removeClass('botaoDesativado');
-                    btnAprovacao.prop('disabled', false);
-                    btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
-		        }
-		    }
-		});
+		btnAprovacao.removeClass('botaoDesativado');
+		btnAprovacao.prop('disabled', false);
+		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
 	} else {
-        // reseta variavel para exibir novamente a mensagem de alçada (se houver)
-        erroAlcada = false;
 		btnContinuar.removeClass('botaoDesativado');
 		btnContinuar.prop('disabled', false);
 		btnContinuar.attr('onclick', 'validaDados(false);return false;');
