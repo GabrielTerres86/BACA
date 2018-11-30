@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
     Sistema  : Rotinas auxiliares para busca de informacõees do negocio
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 14/03/2018
   
    Dados referentes ao programa:
   
@@ -18,6 +18,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
    Alterações: 20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
                            (Adriano - SD 620221).
 
+               14/03/2018 - Ajuste na pc_saldo_utiliza para considerar contas em prejuízo
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -200,6 +201,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                   ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
                                   ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
                                   ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
                                   ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
 
@@ -214,6 +216,9 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
 								  RETURN INTEGER;
 																	
+  /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
+  function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer;
+																	
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -223,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 28/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -260,6 +265,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --
   --             24/11/2017 - Correção na consulta de bloqueios judiciais pc_retorna_valor_blqjud, para somar todas 
   --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)               
+  --
+  --             28/03/2018 - #inc0011243 Na rotina pc_saldo_utiliza, alimentado o retorno da crítica para conta 
+  --                          não encontrada por nrdconta ou nrcpfcgc (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -602,7 +610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Setembro/2004                   Ultima atualizacao: 10/06/2016
+   Data    : Setembro/2004                   Ultima atualizacao: 26/02/2018
 
    Dados referentes ao programa:
 
@@ -629,6 +637,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                             crapass em campos de indice que possuem UPPER
                             (Adriano - SD 463762).
                             
+               26/02/2018 - Substituida a verificação do tipo de conta entre 
+                            1 e 11, pela verificação do indicador de conta 
+                            integração do tipo de conta igual a zero.
+                            PRJ366 (Lombardi).
+                            
 ............................................................................. */
     DECLARE
 
@@ -636,11 +649,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdctitg IN crapass.nrdctitg%TYPE) IS
         SELECT crapass.nrdconta
-              ,crapass.cdtipcta
               ,crapass.flgctitg
+              ,tpcta.indconta_itg
         FROM crapass crapass
+            ,tbcc_tipo_conta tpcta
         WHERE crapass.cdcooper = pr_cdcooper
-        AND   UPPER(crapass.nrdctitg) = UPPER(pr_nrdctitg);
+          AND UPPER(crapass.nrdctitg) = UPPER(pr_nrdctitg)
+          AND tpcta.inpessoa = crapass.inpessoa
+          AND tpcta.cdtipo_conta = crapass.cdtipcta;
       rw_crapass cr_crapass%ROWTYPE;
 
       --Variaveis Locais
@@ -701,7 +717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         --Se a conta for
         -- 1=NORMAL, 2=ESPECIAL, 3=NORMAL CONJUNTA, 4=ESPEC. CONJUNTA, 5=CHEQUE SALARIO, 6=CTA APLIC CONJ., 7=CTA APLIC INDIV,
         -- 8=NORMAL CONVENIO, 9=ESPEC. CONVENIO, 10=CONJ. CONVENIO, 11=CONJ.ESP.CONV.
-        IF rw_crapass.cdtipcta BETWEEN 1 AND 11 THEN
+        IF rw_crapass.indconta_itg = 0 THEN
           --Se a conta integracao nao for cadastrada e inativa
           IF rw_crapass.flgctitg NOT IN (2,3) THEN
             --Atribuir nulo para conta integracão
@@ -881,7 +897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Julho/2004.                         Ultima atualizacao: 07/01/2015
+   Data    : Julho/2004.                         Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -937,6 +953,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos 
 			                a liquidar (Marcos-Supero)
 
+			   14/03/2018 - Alteração nos cursores para considerar também contas em prejuízo
+			                Reginaldo (AMcom)
      ............................................................................. */
 
      DECLARE
@@ -960,20 +978,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar o limite de credito usando diretamente a conta ja passada
        CURSOR cr_crapass_cta IS
-         SELECT crapass.vllimcre
-           FROM crapass
+         SELECT cp.vllimcre
+           FROM crapass cp
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta -- Conta solicitada
-            AND dtelimin IS NULL;
+            AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR dtelimin IS NULL);
 
        -- Selecionar os associados da cooperativa por CPF/CGC
        CURSOR cr_crapass_cpfcgc IS
          SELECT nrdconta
                ,vllimcre
-           FROM crapass
+           FROM crapass cp
           WHERE cdcooper = pr_cdcooper
             AND nrcpfcgc = pr_nrcpfcgc -- CPF/CGC passado
-            AND dtelimin IS NULL;
+            AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR dtelimin IS NULL);
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS
@@ -1071,6 +1101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        IF vr_tab_conta.count = 0 THEN
          -- Gerar critica 9
          vr_cdcritic := 9;
+         vr_des_erro := 'Conta (' || pr_nrdconta || ') ou CPF/CGC (' || pr_nrcpfcgc || ') nao foram encontrados.';
          RAISE vr_exc_erro;
        END IF;
 
@@ -1392,7 +1423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Marcos (Supero)
-    --   Data    : Janeiro/2013                          Ultima Atualizacao: 24/11/2015
+    --   Data    : Janeiro/2013                          Ultima Atualizacao: 30/11/2018
     --
     --   Dados referentes ao programa:
     --   Frequencia: Sempre que chamado por outros programas.
@@ -1414,6 +1445,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                 15/05/2017 - Correcao para abortar execucao quando for passada uma data nula, evitando
     --                              que a rotina caia no loop infinito gerando atraso no processo. SD 670255.
     --                              (Carlos Rafael Tanholi)    
+    --
+    --                 30/11/2018 - Correcao na validacao do ultimo dia do ano (Cechet)
     -- .............................................................................
     DECLARE
       -- Data auxiliar
@@ -1427,7 +1460,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
         SELECT fer.dtferiad
           FROM crapfer fer
-         WHERE fer.cdcooper = pr_cdcooper;
+         WHERE fer.cdcooper = pr_cdcooper
+         UNION
+         SELECT CASE to_number(to_char(add_months(TRUNC(pr_dtmvtolt,'RRRR'),12)-1,'d'))  
+                             WHEN 1 THEN (add_months(TRUNC(pr_dtmvtolt,'RRRR'),12)-1) - 2
+                             WHEN 7 THEN (add_months(TRUNC(pr_dtmvtolt,'RRRR'),12)-1) - 1
+                             ELSE (add_months(TRUNC(pr_dtmvtolt,'RRRR'),12)-1)
+                 END 
+           FROM dual;
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
     BEGIN
@@ -1471,10 +1511,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
            -- Verificar se deve desconsiderar o ultimo dia util do ano como feriado  
            ELSIF vr_excultdia = 1 THEN  
              -- Verificar qual o ultimo dia util do ano
-             vr_dtultano := add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1;
-             vr_dtultano := gene0005.fn_valida_dia_util(pr_cdcooper => 1, 
-                                                        pr_dtmvtolt => vr_dtultano, pr_tipo => 'A', 
-                                                        pr_feriado => FALSE);
+             vr_dtultano := CASE to_number(to_char(add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1,'d'))  
+                             WHEN 1 THEN (add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1) - 2
+                             WHEN 7 THEN (add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1) - 1
+                             ELSE (add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1)
+                            END;
              
              --> se é o ultimo dia util do ano que esta sendo verificado
              --  entao pode sair e considerar como dia util inves de feriado
@@ -2604,6 +2645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                   ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
                                   ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
                                   ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
                                   ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
   BEGIN
@@ -2719,7 +2761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                     ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
                                     ,pr_des_corpo       => vr_dscorpo
                                     ,pr_des_anexo       => NULL
-                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_flg_enviar      => pr_flg_enviar
                                     ,pr_des_erro        => vr_dscritic);
           
           IF vr_dscritic IS NOT NULL THEN
@@ -2892,6 +2934,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       RETURN NVL(vr_result, 0);
 		END;																 
   END fn_valida_depart_operad;
+  
+  /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
+  function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer is
+    cursor cr_caduf is
+      select 1
+        from tbcadast_uf u
+       where u.cduf <> 'EX'
+         and upper(u.cduf) = upper(pr_uf);
+    v_retorno   number(1);
+  begin
+    open cr_caduf;
+      fetch cr_caduf into v_retorno;
+      if cr_caduf%notfound then
+        v_retorno := 0;
+      end if;
+    close cr_caduf;
+    return(v_retorno);
+  end;
 
 END GENE0005;
 /
