@@ -21,6 +21,9 @@ create or replace package cecred.CXON0088 is
   --
   ---------------------------------------------------------------------------------------------------------------*/
 
+   vr_cdcritic1 crapcri.cdcritic%TYPE;
+   vr_dscritic1 VARCHAR2(4000);
+
   /* Retona o lancamento para exibir na tela conforme o nro do documento */
   TYPE typ_rec_lancamento IS
     RECORD(tpdocmto NUMBER(4)
@@ -280,6 +283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
    -- Variaveis Erro
    vr_cdcritic crapcri.cdcritic%TYPE;
    vr_dscritic VARCHAR2(4000);
+
    vr_exc_erro EXCEPTION;
 
    -- Variaveis
@@ -1645,27 +1649,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                                     , pr_rowid    => NULL
                                                                     , pr_cdcritic => vr_cdcritic
                                                                     , pr_dscritic => vr_dscritic);   
-                                                                    
-                                     IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN  
-                                   
-                                        pr_cdcritic := 0;
-                                        pr_dscritic := 'Erro ao deletar CRAPLCM : '||sqlerrm;
 
+                                     IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                   
                                         cxon0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
                                                              ,pr_cdagenci => pr_cod_agencia
                                                              ,pr_nrdcaixa => pr_nro_caixa
-                                                             ,pr_cod_erro => pr_cdcritic
-                                                             ,pr_dsc_erro => pr_dscritic
+                                                             ,pr_cod_erro => vr_cdcritic
+                                                             ,pr_dsc_erro => vr_dscritic
                                                              ,pr_flg_erro => TRUE
-                                                             ,pr_cdcritic => vr_cdcritic
-                                                             ,pr_dscritic => vr_dscritic);
+                                                             ,pr_cdcritic => vr_cdcritic1
+                                                             ,pr_dscritic => vr_dscritic1);
 
-                                        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                           pr_cdcritic := vr_cdcritic;
-                                           pr_dscritic := vr_dscritic;
+                                        IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                                           pr_cdcritic := vr_cdcritic1;
+                                           pr_dscritic := vr_dscritic1;
                                            RAISE vr_exc_erro;
                                         END IF;
 
+                                        pr_cdcritic := vr_cdcritic;
+                                        pr_dscritic := vr_dscritic;
                                         RAISE vr_exc_erro;
                                      END IF;    
                                   END;
@@ -1843,30 +1846,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                                        , pr_cdcritic => vr_cdcritic
                                                                        , pr_dscritic => vr_dscritic);   
                                                                     
-                                         IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN 
-                                          
-                                            pr_cdcritic := 0;
-                                            pr_dscritic := 'Erro ao atualizar CRAPCHD : '||sqlerrm;
+                                       IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                     
+                                          cxon0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                                                               ,pr_cdagenci => pr_cod_agencia
+                                                               ,pr_nrdcaixa => pr_nro_caixa
+                                                               ,pr_cod_erro => vr_cdcritic
+                                                               ,pr_dsc_erro => vr_dscritic
+                                                               ,pr_flg_erro => TRUE
+                                                               ,pr_cdcritic => vr_cdcritic1
+                                                               ,pr_dscritic => vr_dscritic1);
 
-                                            cxon0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
-                                                                 ,pr_cdagenci => pr_cod_agencia
-                                                                 ,pr_nrdcaixa => pr_nro_caixa
-                                                                 ,pr_cod_erro => pr_cdcritic
-                                                                 ,pr_dsc_erro => pr_dscritic
-                                                                 ,pr_flg_erro => TRUE
-                                                                 ,pr_cdcritic => vr_cdcritic
-                                                                 ,pr_dscritic => vr_dscritic);
+                                          IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                                             pr_cdcritic := vr_cdcritic1;
+                                             pr_dscritic := vr_dscritic1;
+                                             RAISE vr_exc_erro;
+                                          END IF;
 
-                                            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                               pr_cdcritic := vr_cdcritic;
-                                               pr_dscritic := vr_dscritic;
-                                               RAISE vr_exc_erro;
-                                            END IF;
-
-                                            RAISE vr_exc_erro;
-                                         END IF;   
-                                      END;
-
+                                          pr_cdcritic := vr_cdcritic;
+                                          pr_dscritic := vr_dscritic;
+                                          RAISE vr_exc_erro;
+                                       END IF; 
+                                     END;
                                    END IF;
                                 IF cr_verifica_lcm1%ISOPEN THEN
                                    CLOSE cr_verifica_lcm1;
@@ -1928,28 +1929,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                      , pr_cdcritic => vr_cdcritic
                                                      , pr_dscritic => vr_dscritic);   
                                                                     
-                       IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN   
-                    
-                          pr_cdcritic := 0;
-                          pr_dscritic := 'Erro ao atualizar CRAPCHD : '||sqlerrm;
-
+                       IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                   
                           cxon0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
                                                ,pr_cdagenci => pr_cod_agencia
                                                ,pr_nrdcaixa => pr_nro_caixa
-                                               ,pr_cod_erro => pr_cdcritic
-                                               ,pr_dsc_erro => pr_dscritic
+                                               ,pr_cod_erro => vr_cdcritic
+                                               ,pr_dsc_erro => vr_dscritic
                                                ,pr_flg_erro => TRUE
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
+                                               ,pr_cdcritic => vr_cdcritic1
+                                               ,pr_dscritic => vr_dscritic1);
 
-                          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                             pr_cdcritic := vr_cdcritic;
-                             pr_dscritic := vr_dscritic;
+                          IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                             pr_cdcritic := vr_cdcritic1;
+                             pr_dscritic := vr_dscritic1;
                              RAISE vr_exc_erro;
                           END IF;
 
+                          pr_cdcritic := vr_cdcritic;
+                          pr_dscritic := vr_dscritic;
                           RAISE vr_exc_erro;
-                        END IF;  
+                       END IF;
                     END;
 
                 END IF;
@@ -2544,11 +2544,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic);   
                                                                       
-                   IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN   
-                        pr_cdcritic := 0;
-                        pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
-                        RAISE vr_exc_erro;
-                   END IF;    
+                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                   
+                      cxon0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdagenci => pr_cod_agencia
+                                           ,pr_nrdcaixa => pr_nro_caixa
+                                           ,pr_cod_erro => vr_cdcritic
+                                           ,pr_dsc_erro => vr_dscritic
+                                           ,pr_flg_erro => TRUE
+                                           ,pr_cdcritic => vr_cdcritic1
+                                           ,pr_dscritic => vr_dscritic1);
+
+                      IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                         pr_cdcritic := vr_cdcritic1;
+                         pr_dscritic := vr_dscritic1;
+                         RAISE vr_exc_erro;
+                      END IF;
+
+                      pr_cdcritic := vr_cdcritic;
+                      pr_dscritic := vr_dscritic;
+                      RAISE vr_exc_erro;
+                   END IF; 
                 END;
 
              CLOSE cr_verifica_lcm1;
@@ -3240,28 +3256,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic);   
                                                                       
-                  IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN      
-                    
-                     pr_cdcritic := 0;
-                     pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
+                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                   
+                      cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                           ,pr_cdagenci => pr_cod_agencia
+                                           ,pr_nrdcaixa => pr_nro_caixa
+                                           ,pr_cod_erro => vr_cdcritic
+                                           ,pr_dsc_erro => vr_dscritic
+                                           ,pr_flg_erro => TRUE
+                                           ,pr_cdcritic => vr_cdcritic1
+                                           ,pr_dscritic => vr_dscritic1);
 
-                     cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                          ,pr_cdagenci => pr_cod_agencia
-                                          ,pr_nrdcaixa => pr_nro_caixa
-                                          ,pr_cod_erro => pr_cdcritic
-                                          ,pr_dsc_erro => pr_dscritic
-                                          ,pr_flg_erro => TRUE
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
+                      IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                         pr_cdcritic := vr_cdcritic1;
+                         pr_dscritic := vr_dscritic1;
+                         RAISE vr_exc_erro;
+                      END IF;
 
-                     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                        pr_cdcritic := vr_cdcritic;
-                        pr_dscritic := vr_dscritic;
-                        RAISE vr_exc_erro;
-                     END IF;
-
-                     RAISE vr_exc_erro;
-                  END IF;    
+                      pr_cdcritic := vr_cdcritic;
+                      pr_dscritic := vr_dscritic;
+                      RAISE vr_exc_erro;
+                   END IF; 
                END;
 
             ELSE -- Nao encontrou Registro de LCM
@@ -3481,28 +3496,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                                , pr_cdcritic => vr_cdcritic
                                                , pr_dscritic => vr_dscritic);   
                                                                       
-                IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN      
-             
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao excluir registro da CRAPLCM : '||sqlerrm;
+                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN  
+                                   
+                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                         ,pr_cdagenci => pr_cod_agencia
+                                         ,pr_nrdcaixa => pr_nro_caixa
+                                         ,pr_cod_erro => vr_cdcritic
+                                         ,pr_dsc_erro => vr_dscritic
+                                         ,pr_flg_erro => TRUE
+                                         ,pr_cdcritic => vr_cdcritic1
+                                         ,pr_dscritic => vr_dscritic1);
 
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
+                    IF nvl(vr_cdcritic1,0) > 0 OR trim(vr_dscritic1) IS NOT NULL THEN
+                       pr_cdcritic := vr_cdcritic1;
+                       pr_dscritic := vr_dscritic1;
+                       RAISE vr_exc_erro;
+                    END IF;
 
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-                END IF;   
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic;
+                    RAISE vr_exc_erro;
+                 END IF;    
+ 
              END;
          END IF;
       END LOOP; -- Fim do Processo de LCM de DESTINO
