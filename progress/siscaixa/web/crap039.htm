@@ -26,6 +26,21 @@
 			}
 			document.forms[0].submit();
 		}
+		
+		function formataDecimal(objField) {
+			if (objField.value == "") {
+				return;
+			}	
+
+			var numero = objField.value.replace(new RegExp("\\.", 'g'), "").replace(new RegExp(",", 'g'), ".");
+			var numero2casas = parseFloat(numero).toFixed(2);
+			objField.value = numero2casas.replace(new RegExp("\\.", 'g'), ",");
+		}
+		
+		setTimeout(function() {
+			formataDecimal(document.getElementById("v_valor_tarifa"));
+		},300);
+		
 	</script>
 	<style>
 		.disabled {
@@ -91,7 +106,7 @@
 										</tr>
 										<tr>
 											<td width="50%" align="right" class="linhaform">Conta/Dv:</td>
-											<td colspan="3">
+											<td colspan="1">
 												<input type="text" name="v_conta" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);"
 												 onchange="submitForm();" style="text-align: right" maxlength="10" size="10" class="input">
 												<input type="text" name="v_nome" size="40" class="input disabled" style="font-weight: bold" disabled>
@@ -106,7 +121,7 @@
 										<tr>
 											<td width=50% align="right">Documento:&nbsp;</td>
 											<td width=50% align="left" class="linhaform">
-												<input type="text" name="v_documento" id="v_documento" maxlength="30" size="30" class="input"></select>
+												<input type="text" name="v_documento" onKeyDown="JavaScript:validaInteiro(event);" id="v_documento" maxlength="10" size="30" class="input">
 											</td>
 										</tr>
 									</table>
@@ -126,7 +141,7 @@
 										</tr>
 										<tr>
 											<td width="50%" align="right" class="linhaform">Hist&oacute;rico:</td>
-											<td colspan="3">
+											<td colspan="1">
 												<input type="text" name="v_cod_historico" style="text-align: right" maxlength="10" size="10" class="input disabled"
 												 disabled>
 												<input type="text" name="v_desc_historico" size="40" class="input disabled" style="font-weight: bold"
@@ -135,7 +150,7 @@
 										</tr>
 										<tr>
 											<td width="50%" align="right" class="linhaform">C&oacute;d. Hist&oacute;rico Cont&aacute;bil:</td>
-											<td colspan="3">
+											<td colspan="1">
 												<input type="text" name="v_hist_contabil" style="text-align: right" maxlength="10" size="10" class="input disabled"
 												 disabled>
 											</td>
@@ -153,8 +168,7 @@
 										<tr>
 											<td width=50% align="right">Valor:&nbsp;</td>
 											<td width=50% align="left"><input type="text" name="v_valor_tarifa" id="v_valor_tarifa" size="16" class="input disabled"
-												 disabled maxlength="14" onKeyDown="JavaScript:FormataValor(this,14,event)" onChange="JavaScript: formataDecimal(this,true,event);"
-												 style="text-align: right"></td>
+												 disabled maxlength="14" style="text-align: right"></td>
 										</tr>
 										<tr>
 											<td width=50%>&nbsp;</td>
@@ -170,7 +184,7 @@
 										</tr>
 										<tr>
 											<td width=50% align="right">
-												<input type="button" id="Ok" value="Ok" name="ok" class="button" ondblclick="return false;" onclick="document.getElementById('v_indempre').value = document.getElementById('v_cdempcon').selectedIndex; document.forms[0].ok.disabled='true';document.forms[0].v_btn_ok.value='true'; submitForm();">
+												<input type="button" value="Ok" name="ok" class="button" onclick="document.forms[0].ok.disabled='true'; document.forms[0].v_btn_ok.value='true'; submitForm();">
 											</td>
 											<td width=50% align="left">
 												&nbsp;&nbsp;&nbsp;<input type="button" value="Cancelar" name="cancela" class="button" onclick="document.forms[0].cancela.disabled='true'; document.forms[0].v_btn_cancela.value='true'; submitForm();"></td>
@@ -231,116 +245,3 @@
 </body>
 
 </html>
-
-<script language="JavaScript">
-
-	function formataDecimal(objField, flgBlur, e) {
-		if (flgBlur) { // Utilizar no evento onBlur
-			if (objField.value != "") { // Se campo possui algum conteúdo
-
-				var flgVirgula = false;
-				var contDecimos = 0;
-				var value = "";
-				var temp = "";
-				var comeco = false;
-
-				for (var i = 0; i < objField.value.length; i++) {
-					temp = objField.value.substr(i, 1);
-
-					if (temp != "0") {
-						comeco = true;
-					}
-
-					if (comeco) {
-						value += temp;
-					} else {
-						continue;
-					}
-
-					if (flgVirgula) {
-						contDecimos++;
-					}
-
-					if (!flgVirgula && temp == ",") {
-						if (value == ",") {
-							value = "0" + value;
-						}
-						flgVirgula = true;
-					}
-
-					if (contDecimos == 2) {
-						break;
-					}
-				}
-
-				value += !flgVirgula ? ",00" : contDecimos == 0 ? "00" : contDecimos == 1 ? "0" : "";
-
-				if (value.length > objField.maxLengt) {
-					objField.maxLengt = value.length;
-				}
-
-				objField.value = value;
-
-			}
-		} else {
-			if (retornaTecla(e) == 44) {
-				if (objField.value == "" || objField.value.indexOf(",") != "-1") {
-					return false;
-				}
-
-				return true;
-			}
-
-			// Permitir a utilização das teclas de setas, tab, home e end.
-			if ((retornaTecla(e) >= 35 && retornaTecla(e) <= 40) || (retornaTecla(e) == 9)) {
-				return true;
-			}
-
-			if (!validaNumero(e)) {
-				return false;
-			}
-
-			return true;
-		}
-	}
-
-	// var objempcon = new Array();
-
-	// function populaConvenios() {
-
-	// 	var opt;
-	// 	var index = "";
-
-	// 	for (i = 0; i < tmp_objempcon.length; i++) {
-	// 		eval('var obj=' + tmp_objempcon[i]);
-	// 		objempcon.push(obj);
-	// 	}
-
-	// 	for (i = 0; i < objempcon.length; i++) {
-
-	// 		if (document.getElementById("v_segmento").value != 99 &&
-	// 			document.getElementById("v_segmento").value != objempcon[i].cdsegmto) {
-	// 			continue;
-	// 		}
-
-	// 		if (document.getElementById("tmp_cdempcon").value != "" &&
-	// 			document.getElementById("tmp_cdempcon").value == objempcon[i].cdempcon) {
-	// 			index = i;
-	// 		}
-
-	// 		opt = document.createElement("option");
-	// 		opt.value = objempcon[i].cdempcon;
-	// 		opt.innerHTML = objempcon[i].nmextcon;
-	// 		document.getElementById("v_cdempcon").appendChild(opt);
-
-	// 	}
-
-	// 	if (index != "") {
-	// 		document.getElementById('v_cdempcon').selectedIndex = index;
-	// 	}
-
-	// 	return false;
-
-	// }
-
-</script>

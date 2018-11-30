@@ -1899,6 +1899,8 @@ PROCEDURE atualiza-cheque-avulso-prejuizo:
                                        INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                        INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
                                        INPUT 0,                /* Quantidade de registros da operacao (Custodia, contra-ordem, folhas de cheque) */
+                                       INPUT p-nrdocto,        /* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+								                       INPUT TIME,             /* hora de realização da operação -adicionado por Valeria Supero */  
                                       OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operacao */
                                       OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Nao isenta,1-Isenta */
                                       OUTPUT 0,                /* Codigo da critica */
