@@ -101,46 +101,46 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                17/09/2014 - Incluso tratamento para incorporação cooperativa (Daniel)
 
 			         21/11/2014 - Incluso tratamento para incorporação VIACON SCRMIL (Reinert)
-               
+
                18/12/2014 - Ajustes tratamento para incorporação VIACON SCRMIL (Daniel)
-               
+
                01/04/2015 - Remocao da formatacao da mascara do campo nrprevia do XML.
                             (Jaison/Elton - SD: 269550)
-                            
-               18/01/2016 - Alterado log do proc_batch para o proc_message (Daniel)             
+
+               18/01/2016 - Alterado log do proc_batch para o proc_message (Daniel)
 
                25/04/2016 - Ajustes no relatorio 530 referente a melhoria 112
                             (Tiago/Elton).
-                            
-               24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
+
+               24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
-                            
+
 			   22/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
 
                25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
                             aos cheques VLB (Elton - SD 476261)
 
-			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
+			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)
 
                02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
                07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
-                            do arquivo corretamente (Carlos)	 
+                            do arquivo corretamente (Carlos)
 
-               21/06/2017 - Remoção do processamento do arquivo de cheque VLB(DVN) e tratado novo 
+               21/06/2017 - Remoção do processamento do arquivo de cheque VLB(DVN) e tratado novo
                             arquivo de devolução em contingência(DCG). Ajuste nos historicos.
                             PRJ367 - Compe Sessao Unica (Lombardi)
-                            
+
                03/04/2018 - Tratamento historicos COMPE SESSAO UNICA (Diego).
 
          11/04/2018 - Correção na nomenclatura do arquivo de contingência - COMPE SESSAO UNICA (Diego).
-               
+
                23/05/2018 - P450 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
-                            Renato Cordeiro (AMcom) 
-                            
-               22/11/2018 - P450 - Chamada da rotina LANC0001 para realizar o lançamento na 
-                            conta corrente quando há uma devolução de cheque.  Heckmann (AMcom)          
+                            Renato Cordeiro (AMcom)
+
+               22/11/2018 - P450 - Chamada da rotina LANC0001 para realizar o lançamento na
+                            conta corrente quando há uma devolução de cheque.  Heckmann (AMcom)
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -677,7 +677,7 @@ BEGIN
     FETCH cr_crapcop INTO rw_crapcop;
   CLOSE cr_crapcop;
   --
-  
+
   -- Busca nome do arquivo de log
   vr_nome_arq_log := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
 
@@ -909,7 +909,7 @@ BEGIN
 
       -- Verifica se é final de arquivo
       IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
-         SUBSTR(vr_dstexto,48,06) = 'CEL615'    THEN 
+         SUBSTR(vr_dstexto,48,06) = 'CEL615'    THEN
     IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -920,7 +920,7 @@ BEGIN
                                                              || vr_cdprogra || ' --> '
                                                              || vr_dscritic);
 
-            vr_nrdconta := SUBSTR(vr_dstexto,67,12);           
+            vr_nrdconta := SUBSTR(vr_dstexto,67,12);
 
             vr_flgrejei := TRUE;
             -- Atualiza a tabela de memoria de dados do arquivo
@@ -952,7 +952,7 @@ BEGIN
 
       -- Faz validacoes especificas para a primeira linha
       IF ww_nrlinha = 1 THEN
-        IF  SUBSTR(vr_dstexto,48,06) <> 'CEL615' THEN 
+        IF  SUBSTR(vr_dstexto,48,06) <> 'CEL615' THEN
           vr_cdcritic := 473; --Codigo de remessa invalido.
         ELSIF SUBSTR(vr_dstexto,151,10) <> ww_nrlinha THEN
           vr_cdcritic := 166; -- Sequencia errada
@@ -1120,7 +1120,7 @@ BEGIN
 
             IF (pr_cdcooper IN (1,9,13)) AND
                 vr_arquivos(ind).idarquivo > 2 THEN
-                
+
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
                                   pr_nrctaant => vr_nrctachd,
@@ -1131,8 +1131,8 @@ BEGIN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrdconta := rw_craptco_inc.nrdconta;
               END IF;
-              CLOSE cr_craptco_inc;  
-                
+              CLOSE cr_craptco_inc;
+
             END IF;
 
             -- Atualiza a tabela de memoria de dados do arquivo
@@ -1364,103 +1364,48 @@ BEGIN
         BEGIN
           vr_dscritic := NULL;
           vr_cdcritic := 0;
-          
+
           LANC0001.pc_gerar_lancamento_conta(
-          pr_dtmvtolt => rw_crapdat.dtmvtolt                   , 
-          pr_cdagenci => 1,
-          pr_cdbccxlt => 100, 
-          pr_nrdolote => 4650,
-          pr_nrdconta => vr_nrctachd, 
-          pr_nrdocmto => vr_nrcheque_tmp,
-          pr_cdhistor => vr_cdhistor, 
-          pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1,
-          pr_vllanmto => SUBSTR(vr_dstexto,34,17) / 100, 
-          pr_nrdctabb => vr_nrctachd,
-          pr_nrdctitg => gene0002.fn_mask(vr_nrctachd,'99999999'),
-          pr_cdpesqbb => vr_cdalinea,
-          pr_vldoipmf => 0,
-          pr_nrautdoc => 0, 
-          pr_nrsequni => 0,
-          pr_cdbanchq => rw_crapchd.cdbanchq, 
-          pr_cdcmpchq => rw_crapchd.cdcmpchq,
-          pr_cdagechq => rw_crapchd.cdagechq, 
-          pr_nrctachq => rw_crapchd.nrctachq,
-          pr_nrlotchq => 0, 
-          pr_sqlotchq => 0,
-          pr_cdcooper => pr_cdcooper, 
-          pr_dsidenti => 'CTL',
-          pr_cdcoptfn => vr_cdcoptfn,
-          pr_tab_retorno => vr_tab_retorno,
-          pr_incrineg => vr_incrineg,
+                  pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                  pr_cdagenci => 1,
+                  pr_cdbccxlt => 100,
+                  pr_nrdolote => 4650,
+                  pr_nrdconta => vr_nrctachd,
+                  pr_nrdocmto => vr_nrcheque_tmp,
+                  pr_cdhistor => vr_cdhistor,
+                  pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1,
+                  pr_vllanmto => SUBSTR(vr_dstexto,34,17) / 100,
+                  pr_nrdctabb => vr_nrctachd,
+                  pr_nrdctitg => gene0002.fn_mask(vr_nrctachd,'99999999'),
+                  pr_cdpesqbb => vr_cdalinea,
+                  pr_vldoipmf => 0,
+                  pr_nrautdoc => 0,
+                  pr_nrsequni => 0,
+                  pr_cdbanchq => rw_crapchd.cdbanchq,
+                  pr_cdcmpchq => rw_crapchd.cdcmpchq,
+                  pr_cdagechq => rw_crapchd.cdagechq,
+                  pr_nrctachq => rw_crapchd.nrctachq,
+                  pr_nrlotchq => 0,
+                  pr_sqlotchq => 0,
+                  pr_cdcooper => pr_cdcooper,
+                  pr_dsidenti => 'CTL',
+                  pr_cdcoptfn => vr_cdcoptfn,
+                  pr_tab_retorno => vr_tab_retorno,
+                  pr_incrineg => vr_incrineg,
                   pr_cdcritic => vr_cdcritic,
                   pr_dscritic => vr_dscritic) ;
 
-          IF (nvl(vr_cdcritic,0) <> 0 or vr_dscritic IS NOT NULL) THEN          
+          IF (nvl(vr_cdcritic,0) <> 0 or vr_dscritic IS NOT NULL) THEN
+
             -- Inicio do tratamento da critica
 						vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-            
-            IF vr_incrineg = 0 THEN
-              RAISE vr_exc_saida;
-            ELSE
-            
-						  -- Cria registros na tabela de cheques devolvidos
-  						pc_cria_generica(pr_cdcritic => vr_cdcritic,
-	  													 pr_cdalinea => vr_cdalinea,
-		  												 pr_nmarquiv => vr_arquivos(ind).nmarquivo);
- 
-  						-- Atualiza a tabela de memoria de dados do arquivo
-	  					vr_nrcontad := vr_nrcontad + 1;
-		  				vr_ind_crawrel := '1'||                                      --flgmigra
-			  												'00000'||                                  --agencia
-				  												 lpad(SUBSTR(vr_dstexto,67,12),10,'0')|| --conta
-					  											 lpad(vr_nrcheque_tmp,10,'0')||              --cheque
-						  										 lpad(vr_nrcontad,5,'0');                --sequencial
-  						vr_tab_crawrel(vr_ind_crawrel).cdagenci   := 0;
-	  					vr_tab_crawrel(vr_ind_crawrel).nrdconta   := SUBSTR(vr_dstexto,67,12);
-		  				vr_tab_crawrel(vr_ind_crawrel).nmprimtl   := vr_dscritic;
-			  			vr_tab_crawrel(vr_ind_crawrel).flgmigra   := 1;
-				  		vr_tab_crawrel(vr_ind_crawrel).nralinea   := vr_cdalinea;
-					  	vr_tab_crawrel(vr_ind_crawrel).cdcmpchq   := substr(vr_dstexto,01,03);
-						  vr_tab_crawrel(vr_ind_crawrel).cdbanchq   := vr_cdbanchq;
-  						vr_tab_crawrel(vr_ind_crawrel).cdagechq   := vr_cdagechq;
-	  					vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
-		  				vr_tab_crawrel(vr_ind_crawrel).nrcheque   := vr_nrcheque;
-			  			vr_tab_crawrel(vr_ind_crawrel).vlcheque   := substr(vr_dstexto,34,17) / 100;
-				  		vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
-  
-	  					-- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
-		  				vr_ind_crawrel_2 := vr_ind_crawrel; --substr(vr_ind_crawrel,1,16)||substr(vr_ind_crawrel,27,5);
-			  			vr_tab_crawrel_2(vr_ind_crawrel_2) := vr_tab_crawrel(vr_ind_crawrel);
- 
-  						-- Volta a situaçao para ficar sem criticas
-	  					vr_cdcritic := 0;
-		  				vr_flgrejei := TRUE;  -- Coloca o registro como rejeitado
+            RAISE vr_exc_saida;
 
-						  -- Desfaz atualização do LOTE
-  						BEGIN
-	  						UPDATE craplot
-		  						 SET nrseqdig = nrseqdig - 1,
-			  							 qtcompln = qtcompln - 1,
-				  						 qtinfoln = qtinfoln - 1,
-					  					 vlcompdb = vlcompdb - (SUBSTR(vr_dstexto,34,17) / 100),
-						  				 vlcompcr = 0,
-							  			 vlinfodb = vlcompdb - (SUBSTR(vr_dstexto,34,17) / 100),
-								  		 vlinfocr = 0
-  							 WHERE ROWID = vr_rowid_craplot;
-	  					EXCEPTION
-		  					WHEN OTHERS THEN
-			  					vr_dscritic := 'Erro ao atualizar CRAPLOT: ' ||SQLERRM;
-				  		END;
-
-					  	CONTINUE;
-            END IF;
-            -- Fim do tratamento da critica
-            
 					ELSE  -- Tratamento de quando executado com sucesso o débito
-						vr_dscritic := NULL;
 						vr_cdcritic := 0;
+						vr_dscritic := NULL;
             IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                                                 , pr_nrdconta => vr_nrctachd) THEN                               
+                                              , pr_nrdconta => vr_nrctachd) THEN
               PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
                                             , pr_nrdconta => vr_nrctachd
                                             , pr_cdoperad => 1
@@ -1469,18 +1414,18 @@ BEGIN
                                             , pr_atsldlib => 0
                                             , pr_cdcritic => vr_cdcritic
                                             , pr_dscritic => vr_dscritic);
-                                            
-						  IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-							  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+              IF (nvl(vr_cdcritic,0) <> 0 or vr_dscritic IS NOT NULL) THEN
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 RAISE vr_exc_saida;
               END IF;
-						END IF; 
-					END IF;
+
+            END IF;
+          END IF;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
             RAISE vr_exc_saida;
-        END; 
+        END;
 
         -- Se é depósito intercoop.
         IF vr_cdcopaco <> pr_cdcooper THEN
@@ -1568,7 +1513,7 @@ BEGIN
             -- PA na coopertaiva nova
             IF  (pr_cdcooper IN (1,9,13))
             AND vr_arquivos(ind).idarquivo > 3 THEN
-              
+
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
                                   pr_nrctaant => vr_nrctachd,
@@ -1579,8 +1524,8 @@ BEGIN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrdconta := rw_craptco_inc.nrdconta;
               END IF;
-              CLOSE cr_craptco_inc;  
-              
+              CLOSE cr_craptco_inc;
+
             END IF;
 
             -- Atualiza a tabela de memoria de dados do arquivo
