@@ -1932,7 +1932,7 @@ end;
         -- Fechar o cursor pois efetuaremos raise
         CLOSE cr_crapcop_grade;
         -- Mantem a data de movimento atual
-        vr_aux_DtMovto_pag := to_char(rw_crapdat_mensag.dtmvtolt,'YYYY-MM-DD'); 
+        vr_aux_DtMovto_pag := to_char(rw_crapdat_mensag.dtmvtocd,'YYYY-MM-DD'); 
       ELSE
         -- Apenas fechar o cursor
         CLOSE cr_crapcop_grade;
@@ -1942,7 +1942,7 @@ end;
            vr_aux_DtMovto_pag := to_char(rw_crapdat_mensag.dtmvtopr,'YYYY-MM-DD');
         ELSE
            -- Dentro do horário
-           vr_aux_DtMovto_pag := to_char(rw_crapdat_mensag.dtmvtolt,'YYYY-MM-DD');          
+           vr_aux_DtMovto_pag := to_char(rw_crapdat_mensag.dtmvtocd,'YYYY-MM-DD');          
         END IF;   
       END IF; 
 
