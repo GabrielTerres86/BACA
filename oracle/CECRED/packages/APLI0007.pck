@@ -1073,7 +1073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         
         -- Buscar o dia útil anterior ao dtmvtoan, ou seja, iremos buscar 2 dias úteis atrás
         vr_dtmvto2a := gene0005.fn_valida_dia_util(pr_cdcooper => rw_cop.cdcooper
-                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt -2
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtoan -1
                                                   ,pr_tipo => 'A');
         -- Se por acaso der algum erro
         IF vr_dtmvto2a IS NULL THEN
