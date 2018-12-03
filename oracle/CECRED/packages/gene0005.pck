@@ -121,7 +121,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                               pr_dtmvtolt in crapdat.dtmvtolt%type, --> Data do movimento
                               pr_tipo in varchar2 default 'P',       --> Tipo de busca (P = proximo, A = anterior)
                               pr_feriado IN BOOLEAN DEFAULT TRUE,     --> Considerar feriados
-                              pr_excultdia IN BOOLEAN DEFAULT FALSE --Desconsiderar Feriado 31/12
+                              pr_excultdia IN BOOLEAN DEFAULT FALSE --> Considerar 31/12 como dia útil
                              ) RETURN DATE;
   
   /* Procedimento para validar se o dia e util e, se não for, retornar o proximo ou o anterior 
@@ -1414,7 +1414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                               pr_dtmvtolt in crapdat.dtmvtolt%type, --> Data do movimento
                               pr_tipo in varchar2 default 'P',      --> Tipo de busca (P = proximo, A = anterior)
                               pr_feriado IN BOOLEAN DEFAULT TRUE,   --> Considerar feriados
-                              pr_excultdia IN BOOLEAN DEFAULT FALSE --> Desconsiderar Feriado 31/12
+                              pr_excultdia IN BOOLEAN DEFAULT FALSE --> Considerar 31/12 como dia útil
                              ) RETURN DATE IS
   BEGIN
     -- ..........................................................................
@@ -1480,8 +1480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Se a tabela de feriados estiver vazia
       IF vr_tab_feriado.COUNT = 0 THEN
         -- Alimentar vetor com os feriados
-        vr_tab_feriado.DELETE;        
-
+        vr_tab_feriado.DELETE; 
+        
         FOR rw_crapfer IN cr_crapfer (pr_excultdia => vr_excultdia)  LOOP
           --Montar o indice para o vetor
           vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
@@ -1493,30 +1493,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       LOOP
         -- Montar a data em numero para busca no vetor de feriados
         vr_index := To_Number(To_Char(vr_dtmvtolt,'YYYYMMDD'));
-        -- Sair se o dia não for sabado ou domingo e nem feriado
-        IF pr_feriado AND
-           (to_char(vr_dtmvtolt,'d') not in(1,7)) THEN 
-           IF not vr_tab_feriado.exists(vr_index) THEN             
-             --Sair
-             EXIT;
-           -- Verificar se deve desconsiderar o ultimo dia util do ano como feriado  
-           ELSIF vr_excultdia = 1 THEN  
-             -- Verificar qual o ultimo dia util do ano
-             vr_dtultano := add_months(TRUNC(vr_dtmvtolt,'RRRR'),12)-1;
-             vr_dtultano := gene0005.fn_valida_dia_util(pr_cdcooper => 1, 
-                                                        pr_dtmvtolt => vr_dtultano, pr_tipo => 'A', 
-                                                        pr_feriado => FALSE);
-             
-             --> se é o ultimo dia util do ano que esta sendo verificado
-             --  entao pode sair e considerar como dia util inves de feriado
-             IF (to_char(vr_tab_feriado(vr_index),'DDMM') = to_char(vr_dtultano,'DDMM')) THEN
-               EXIT;  
-             END IF;           
-           END IF;
-        ELSIF NOT pr_feriado AND to_char(vr_dtmvtolt,'d') not IN (1,7) THEN
-          --Sair
-          EXIT;
+        
+        -- Se for fim de semana não entra na regra, e passa direto para adicionar/subtrair um dia
+        IF to_char(vr_dtmvtolt,'d') NOT IN (1,7) THEN
+          -- Se não precisa filtrar por feriado passa
+          IF NOT pr_feriado THEN
+	          EXIT;
+          ELSIF NOT vr_tab_feriado.exists(vr_index) THEN -- Se não for feriado verifica se é o último dia do ano
+            IF pr_excultdia THEN -- Se pode desconsiderar o último dia passa
+              EXIT;
+            ELSE -- Se deve considerar o últimodia, obtém o último dia útil do ando e compara com a data recebida
+              vr_dtultano := fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                               ,pr_dtmvtolt => ADD_MONTHS(TRUNC(vr_dtmvtolt ,'YEAR'),12)-1 -- Dia 31/12 do ano da data recebida
+                                               ,pr_tipo     => 'A'
+                                               ,pr_feriado  => FALSE
+                                               ,pr_excultdia => TRUE
+                                                );
+              IF vr_dtmvtolt <> vr_dtultano THEN
+                 EXIT;
+              END IF;
+            END IF;
+          END IF;
         END IF;
+        
         -- Se não saiu e porque não e util, entao adiciona ou subtrai um dia
         if pr_tipo = 'A' then
           vr_dtmvtolt := vr_dtmvtolt - 1;
@@ -1527,7 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Retornar a data calculada
       RETURN vr_dtmvtolt;
     EXCEPTION
-			WHEN vr_exc_saida THEN
+      WHEN vr_exc_saida THEN
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util - Coop.: '||pr_cdcooper||' - Data inválida (NULL)');

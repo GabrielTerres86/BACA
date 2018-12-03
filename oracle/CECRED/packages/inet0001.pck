@@ -4724,14 +4724,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => FALSE);     --> Nao considera feriados
+                                               ,pr_feriado  => FALSE)      --> Nao considera feriados
+                                               ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
         
         /** Data do agendamento nao pode ser o ultimo dia util do ano **/
         IF pr_idagenda = 2  AND
            pr_tpoperac <> 4 AND 
-           pr_dtmvtopg = vr_dtdialim THEN
+           pr_dtmvtopg > vr_dtdialim THEN
            
           vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
           vr_cdcritic:= 0;
@@ -4920,8 +4921,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
 
           /** Critica se data do pagamento for no ultimo dia util do ano **/
-          IF (pr_idagenda = 1 AND pr_dtmvtolt = vr_dtdialim) OR
-             (pr_idagenda > 1 AND pr_dtmvtopg = vr_dtdialim) THEN
+          IF (pr_idagenda = 1 AND pr_dtmvtolt > vr_dtdialim) OR
+             (pr_idagenda > 1 AND pr_dtmvtopg > vr_dtdialim) THEN
             vr_cdcritic:= 0;
             IF pr_idagenda = 1 THEN
               vr_dscritic:= 'Não é possível efetuar pagamentos neste dia.';
