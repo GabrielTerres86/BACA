@@ -1086,7 +1086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         
         gene0001.pc_fecha_arquivo(vr_arquivo_txt);
 
-        vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_SEGREGACAO_PREJUIZO.txt';                        
+        vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_SEGREGACAO_PREJUIZO.txt';                        
 
         -- Copia o arquivo gerado para o diretório final convertendo para DOS
         gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
