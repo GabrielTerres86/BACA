@@ -162,6 +162,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                19/08/2018 - Incluso trattaiva para efetuar apenas leitura de titulos
                             descontados e liberados (GFT)
 
+               23/10/2018 - PJ439 - nao listar contratos de emprestimo cdc para pendencia (Rafael Faria-Supero)
 
                 31/10/2018 - Incluso a tratativa para não filtrar somente lotes 4.
                 			Relatorio 266 - Contratos de cheques.	            
@@ -695,7 +696,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
              nrctremp,
              vlemprst,
              tpemprst,
-             cdlcremp
+             cdlcremp,
+             cdopeori
         from crapepr
        where crapepr.cdcooper = pr_cdcooper
          and crapepr.dtmvtolt = pr_dtmvtolt
@@ -728,6 +730,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         -- busca proximo contrato
         continue;
       END IF;
+
+      -- Nao listar emprestimos CDC migrados atraves da integracao CDC
+      IF rw_crapepr.cdopeori='AUTOCDC' THEN
+        continue;
+      END IF;
+
       open cr_craplot (pr_cdcooper,
                        pr_dtmvtolt,
                        rw_crapepr.cdagenci,
@@ -837,6 +845,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       -- Verifica se a linha de credito atual esta parametrizada para nao ser processada
       IF instr(vr_dslinhas,';'||rw_crapepr.cdlcremp||';') > 0 THEN
         -- busca proximo contrato
+        continue;
+      END IF;
+      
+      -- Nao listar emprestimos CDC migrados atraves da integracao CDC
+      IF rw_crapepr.cdopeori='AUTOCDC' THEN
         continue;
       END IF;
       
@@ -958,6 +971,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       -- Verifica se a linha de credito atual esta parametrizada para nao ser processada
       IF instr(vr_dslinhas,';'||rw_crapepr.cdlcremp||';') > 0 THEN
         -- busca proximo contrato
+        continue;
+      END IF;
+
+      -- Nao listar emprestimos CDC migrados atraves da integracao CDC
+      IF rw_crapepr.cdopeori='AUTOCDC' THEN
         continue;
       END IF;
 
