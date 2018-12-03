@@ -481,7 +481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := 'Rotina : APLI0007.pc_envia_email_alerta_arq' ||vr_dscarque
                     || '-------------------'
@@ -749,7 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := 'Rotina : APLI0007.pc_busca_saldo_anterior' ||vr_dscarque
                     || '-------------------'
@@ -1253,48 +1253,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                 ,pr_qtdiacar => rw_lcto.qtdiacar
                                 ,pr_dtmvtres => rw_lcto.dtmvtolt) = 'N' THEN  
                 -- Calcular saldo da aplicação anteriormente ao(s) resgates
-              vr_sldaplic := 0;
-              pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
-                                     ,pr_nrdconta  => rw_lcto.nrdconta        --> Conta
-                                     ,pr_nraplica  => rw_lcto.nraplica        --> Aplicação
-                                     ,pr_tpaplica  => rw_lcto.tpaplrdc        --> Tipo aplicação
-                                     ,pr_cdprodut  => rw_lcto.cdprodut        --> Codigo produto 
-                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
-                                     ,pr_dtmvtsld  => rw_lcto.dtmvtolt        --> Data do saldo desejado
-                                     ,pr_tpconsul  => 'R'                     --> Resgates
-                                     ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
-                                     ,pr_idcritic => vr_idcritic              --> Identificador critica
-                                     ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-                                     ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
-              -- Código comum, para gravação do LOG independente de sucesso ou não
-              IF vr_dscritic IS NOT NULL THEN
-                -- Houve erro
-                vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
-                            || ',Conta '||rw_lcto.nrdconta
-                            || ',Aplica '||rw_lcto.nraplica
-                            || ',Data Solicitada '||rw_lcto.dtmvtolt
-                            ||' -> '|| vr_dscritic;
-                RAISE vr_exc_saida;
-              END IF;
-              -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
-              -- o valor dos resgates efetuados neste dia para a conta e aplicação
-              IF vr_sldaplic = 0 THEN
-                OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
-                              ,pr_nrdconta  => rw_lcto.nrdconta   --> Conta
-                              ,pr_nraplica  => rw_lcto.nraplica   --> Aplicação
-                              ,pr_tpaplrdc  => rw_lcto.tpaplrdc   --> TIpo da aplicação
-                              ,pr_dtmvtolt  => rw_lcto.dtmvtolt); --> Data
-                
-                FETCH cr_resgat 
-                 INTO vr_sldaplic;
-                CLOSE cr_resgat;
-              END IF; 
-              -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
-              IF vr_sldaplic = 0 THEN
-                vr_sldaplic := rw_lcto.vllanmto;
-              END IF;
-              -- Calcular preço unitário
-              vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+                vr_sldaplic := 0;
+                pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
+                                       ,pr_nrdconta  => rw_lcto.nrdconta        --> Conta
+                                       ,pr_nraplica  => rw_lcto.nraplica        --> Aplicação
+                                       ,pr_tpaplica  => rw_lcto.tpaplrdc        --> Tipo aplicação
+                                       ,pr_cdprodut  => rw_lcto.cdprodut        --> Codigo produto 
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
+                                       ,pr_dtmvtsld  => rw_lcto.dtmvtolt        --> Data do saldo desejado
+                                       ,pr_tpconsul  => 'R'                     --> Resgates
+                                       ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
+                                       ,pr_idcritic => vr_idcritic              --> Identificador critica
+                                       ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+                                       ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
+                -- Código comum, para gravação do LOG independente de sucesso ou não
+                IF vr_dscritic IS NOT NULL THEN
+                  -- Houve erro
+                  vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
+                              || ',Conta '||rw_lcto.nrdconta
+                              || ',Aplica '||rw_lcto.nraplica
+                              || ',Data Solicitada '||rw_lcto.dtmvtolt
+                              ||' -> '|| vr_dscritic;
+                  RAISE vr_exc_saida;
+                END IF;
+                -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
+                -- o valor dos resgates efetuados neste dia para a conta e aplicação
+                IF vr_sldaplic = 0 THEN
+                  OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
+                                ,pr_nrdconta  => rw_lcto.nrdconta   --> Conta
+                                ,pr_nraplica  => rw_lcto.nraplica   --> Aplicação
+                                ,pr_tpaplrdc  => rw_lcto.tpaplrdc   --> TIpo da aplicação
+                                ,pr_dtmvtolt  => rw_lcto.dtmvtolt); --> Data
+                  
+                  FETCH cr_resgat 
+                   INTO vr_sldaplic;
+                  CLOSE cr_resgat;
+                END IF; 
+                -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
+                IF vr_sldaplic = 0 THEN
+                  vr_sldaplic := rw_lcto.vllanmto;
+                END IF;
+                -- Calcular preço unitário
+                vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
                 vr_vlpreco_unit := rw_lcto.vlpreco_registro;
@@ -1457,7 +1457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_verifi_lanctos_custodia' ||vr_dscarque
@@ -2007,6 +2007,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- Alteracoes:
     --             20/08/2018 - P411 - Usar sempre a Cooperativa zero para montagem do nome do 
     --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)
+    --      
+    -- 		       10/10/2018 - P411 - Não mais checar tabela de conteudo de arquivos, mas sim 
+    --                          setar novas situações de lançamentos em arquivos e assim os mesmos
+    --                          serão desprezados em novas execuções (Daniel - Envolti)
     ---------------------------------------------------------------------------------------------------------------  
     DECLARE
       -- Busca dos lançamentos ainda não gerados em arquivos
@@ -2046,16 +2050,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    and rac.idaplcus = apl.idaplicacao
                ) lct
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
-           -- Não pode haver arquivos criados para este idLançamento
-           -- ou caso existam, a data de criação deve ser inferior
-           -- ao ultimo retorno deste, pois isso significa que é uma
-           -- solicitação de Reenvio
-           and not exists (select 1
-                             from tbcapt_custodia_arquivo      arq,
-                                  tbcapt_custodia_conteudo_arq cont
-                            where arq.idarquivo = cont.idarquivo
-                              and cont.idlancamento = lct.idlancamento
-                              and (lct.idsituacao = 0 or arq.dtcriacao > lct.dtretorno))
            -- Se este possui registros de origem, os registros de origem devem 
            -- ter gerado Numero CETIP e estarem OK 
            and (   lct.idlancto_origem is null
@@ -2286,6 +2280,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         || '. '||sqlerrm;
             RAISE vr_exc_saida;
         END;
+        -- Marca o lançamento como incluído no arquivo
+        begin
+          update tbcapt_custodia_lanctos l
+             set l.idsituacao = decode(l.idsituacao, 0, 4, 2, 5)
+           where l.idlancamento = rw_lct.idlancamento;
+        exception
+          when others then
+            -- Erro não tratado 
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' TBCAPT_CUSTODIA_LANCTO: '
+                        || 'idarquivo: '||vr_idarquivo
+                        || ', nrseq_linha: '||(rw_lct.nrseqreg + 1)
+                        || ', idtipo_linha: '||rw_lct.idtipo_lancto
+                        || ', idaplicacao: '||rw_lct.idaplicacao
+                        || ', idlancamento: '||rw_lct.idlancamento
+                        || ', dslinha: '||vr_dsregistr
+                        || '. '||sqlerrm;
+            raise vr_exc_saida;
+        end;
         
         -- Para Registro de Operação, também vamos enviar as condições de resgate (Carência)
         /*IF rw_lct.idtipo_lancto = 1 THEN 
@@ -2383,7 +2396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_gera_arquivos_envio' ||vr_dscarque
@@ -2481,7 +2494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_envia_arquivo_cd' ||vr_dscarque
@@ -2707,7 +2720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                 -- registros relacionados as linhas deste arquivo
                 BEGIN 
                   UPDATE tbcapt_custodia_lanctos lct
-                     SET lct.idsituacao = decode(lct.idsituacao,0,1,2,3,1) -- Enviado ou Re-envio e aguardando retorno 
+                     SET lct.idsituacao = decode(lct.idsituacao,4,1,5,3,1) -- Enviado ou Re-envio e aguardando retorno 
                         ,lct.dtenvio = SYSDATE 
                    WHERE lct.idlancamento IN(SELECT cnt.idlancamento
                                                FROM tbcapt_custodia_conteudo_arq cnt
@@ -2793,7 +2806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_processa_envio_arquivos' ||vr_dscarque
@@ -2840,7 +2853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_dspadrao         VARCHAR2(100);                             --> Padrão de busca
-      vr_dslstarq         VARCHAR2(4000);                            --> Lista de arquivos encontrados
+      vr_dslstarq         VARCHAR2(32767);                            --> Lista de arquivos encontrados
       vr_lstarqre         gene0002.typ_split;                        --> Split de arquivos encontrados
       vr_utl_file         utl_file.file_type;                        --> Handle
       vr_typ_saida        VARCHAR2(3);                               --> Saída do comando no OS
@@ -3162,7 +3175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_checar_recebe_cd' ||vr_dscarque
@@ -3361,7 +3374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_checar_zips_recebe_cd' ||vr_dscarque
@@ -3828,7 +3841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_processa_retorno_arquivos' ||vr_dscarque
@@ -4369,7 +4382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_processa_conciliacao' ||vr_dscarque
@@ -4397,7 +4410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --  Sistema  : Captação
     --  Sigla    : CRED
     --  Autor    : Marcos - Envolti
-    --  Data     : Março/2018.                   Ultima atualizacao: 
+    --  Data     : Março/2018.                   Ultima atualizacao: 18/10/2018
     --
     -- Dados referentes ao programa:
     --
@@ -4420,7 +4433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --                         3 - Retorno de Lançamentos PEndentes
     -- 
     -- Alteracoes:
-    --
+    --			    18/10/2018 - P411 - Inclusão de tags para monitoramento (Daniel - Envolti)
     -- 
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -4437,6 +4450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_flenvrgt VARCHAR2(1); --> Flag de Envio do Resgate das Aplicações                 
       vr_flprccnc VARCHAR2(1); --> Flag de Processamento da Conciliação das Aplicações    
       vr_dtultcnc DATE;        --> DAta da ultima conciliação                   
+      vr_tag_hora varchar2(14) := to_char(sysdate, 'yyyymmddhh24miss');
       -- Busca do calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
     BEGIN
@@ -4466,10 +4480,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
          INTO rw_crapdat;
         CLOSE btch0001.cr_crapdat; 
         
-        -- Somente executar quando ocorreu virada do dia, estamos em dia útil e sem o processo me execução
+        -- Somente executar quando ocorreu virada do dia, estamos em dia útil e sem o processo em execução
         IF rw_crapdat.dtmvtolt = TRUNC(SYSDATE) AND rw_crapdat.inproces = 1 THEN 
           -- Caso estejamos dentro da janela de comunição entre Ayllos X B3
           IF SYSDATE BETWEEN vr_hriniprc AND vr_hrfimprc THEN
+            -- Incluir tag para monitoramento do job
+            if pr_tipexec = 0 then
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, -- Erro tratado
+                                         pr_nmarqlog     => vr_nmarqlog,
+                                         pr_flfinmsg     => 'N',
+                                         pr_des_log      => vr_dscarque||'INICIO_APLI0007_'||vr_tag_hora||' '||substr(fn_get_time_char, 1, 19));
+            end if;
             -- Iniciando LOG
             pr_dsinform := fn_get_time_char || 'Iniciando execução do processo controlador '||vr_dscarque
                                             || 'Tipo da Execução : '||pr_tipexec|| ' - ' 
@@ -4774,6 +4796,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                           ,pr_des_log      => substr(pr_dsinform, (i-1)*3900+1, 3900));
               end loop;
             end if;
+            -- Incluir tag para monitoramento do job
+            if pr_tipexec = 0 then
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, -- Erro tratado
+                                         pr_nmarqlog     => vr_nmarqlog,
+                                         pr_flfinmsg     => 'N',
+                                         pr_des_log      => chr(13)||'FINAL_APLI0007_'||vr_tag_hora||' '||substr(fn_get_time_char, 1, 19));
+            end if;
           ELSE
             pr_dsinform := 'Operação não realizada! Execução liberada somente '||vr_dsjanexe;
           END IF;
@@ -4787,7 +4817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
         vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||SQLERRM;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'. '||dbms_utility.format_error_backtrace||' '||SQLERRM;
         -- Incluir dados do programa em execução 
         vr_dscritic := fn_get_time_char ||vr_nomdojob||'-->'
                     || 'Rotina : APLI0007.pc_processo_controle' ||vr_dscarque
