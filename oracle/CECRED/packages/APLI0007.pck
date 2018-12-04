@@ -1073,7 +1073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         
         -- Buscar o dia útil anterior ao dtmvtoan, ou seja, iremos buscar 2 dias úteis atrás
         vr_dtmvto2a := gene0005.fn_valida_dia_util(pr_cdcooper => rw_cop.cdcooper
-                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt -2
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtoan -1
                                                   ,pr_tipo => 'A');
         -- Se por acaso der algum erro
         IF vr_dtmvto2a IS NULL THEN
@@ -1293,8 +1293,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                 IF vr_sldaplic = 0 THEN
                   vr_sldaplic := rw_lcto.vllanmto;
                 END IF;
-                -- Calcular preço unitário
-                vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+                  -- Calcular preço unitario
+				          IF vr_qtcotas = 0 THEN
+				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
+				            continue;
+				          ELSE
+                    vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+			            END IF;
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
                 vr_vlpreco_unit := rw_lcto.vlpreco_registro;
@@ -2006,7 +2011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- 
     -- Alteracoes:
     --             20/08/2018 - P411 - Usar sempre a Cooperativa zero para montagem do nome do 
-    --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)	 
+    --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)
     --      
     -- 		       10/10/2018 - P411 - Não mais checar tabela de conteudo de arquivos, mas sim 
     --                          setar novas situações de lançamentos em arquivos e assim os mesmos
@@ -2483,7 +2488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         END IF;
         -- Agora devemos checar o envio do arquivo, que é garantido quando o arquivo
         -- é movido da envia para enviados pelo Connect Direct.
-        -- Testar envio (Existencia na enviados)
+          -- Testar envio (Existencia na enviados)
         IF pr_flaguard and not gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
           -- Se não conseguiu enviar
           pr_dscritic := 'Arquivo persiste na pasta ENVIA';
@@ -4781,12 +4786,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             
             -- Enviar para o arquivo de LOG o texto informativo montado, quebrando a cada 3900 caracteres para evitar estouro de variável na pc_gera_log_batch
             if length(pr_dsinform) <= 3900 then
-              -- Enviar para o arquivo de LOG o texto informativo montado
-              btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => vr_nmarqlog
-                                        ,pr_flfinmsg     => 'N'
-                                        ,pr_des_log      => pr_dsinform);                                          
+            -- Enviar para o arquivo de LOG o texto informativo montado
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_nmarqlog     => vr_nmarqlog
+                                      ,pr_flfinmsg     => 'N'
+                                      ,pr_des_log      => pr_dsinform);                                          
             else
               for i in 1..trunc(length(pr_dsinform)/3900)+1 loop
                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3
