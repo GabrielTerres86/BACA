@@ -29,6 +29,9 @@ BEGIN
                25/09/2018 - Alterado o valor do lançamento da apropriação dos juros de mora (histor 2668). Anteriormente 
                             lançava o valor acumulado dos juros de mora calculado no título, agora irá lançar somente o
                             valor do juros apropriado no mês (Paulo Penteado GFT)
+
+			   29/11/2018 - Correção na apropriação de juros de mora mensal (Lucas Lazari - GFT)
+	
   ............................................................................ */
   DECLARE
 
@@ -46,6 +49,10 @@ BEGIN
     vr_cdcritic  PLS_INTEGER;
     vr_dscritic  VARCHAR2(4000);
 
+    vr_vlmtatit NUMBER;
+    vr_vlmratit NUMBER;
+    vr_vlioftit NUMBER;
+    
     ------------------------------- CURSORES ---------------------------------
     -- Cursor generico de calendario
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
@@ -243,6 +250,25 @@ BEGIN
         FETCH cr_lancboraprop INTO rw_lancboraprop;
         CLOSE cr_lancboraprop;
         
+        -- calcula o juros da mensal
+        DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
+                                      ,pr_nrdconta => rw_craptdb.nrdconta    
+                                      ,pr_nrborder => rw_craptdb.nrborder    
+                                      ,pr_cdbandoc => rw_craptdb.cdbandoc    
+                                      ,pr_nrdctabb => rw_craptdb.nrdctabb    
+                                      ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
+                                      ,pr_nrdocmto => rw_craptdb.nrdocmto    
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt    
+                                      ,pr_vlmtatit => vr_vlmtatit    
+                                      ,pr_vlmratit => vr_vlmratit    
+                                      ,pr_vlioftit => vr_vlioftit    
+                                      ,pr_cdcritic => vr_cdcritic    
+                                      ,pr_dscritic => vr_dscritic);
+        
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
         -- Lança os juros de mora mensal na operação de desconto de titulos
         DSCT0003.pc_inserir_lancamento_bordero( pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => rw_craptdb.nrdconta
@@ -250,7 +276,8 @@ BEGIN
                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                ,pr_cdorigem => 7 -- batch
                                                ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra
-                                               ,pr_vllanmto => (rw_craptdb.vlmratit - nvl(rw_lancboraprop.vllanmto,0))
+                                               --,pr_vllanmto => (rw_craptdb.vlmratit - nvl(rw_lancboraprop.vllanmto,0))
+                                               ,pr_vllanmto => (vr_vlmratit - nvl(rw_lancboraprop.vllanmto,0))
                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob

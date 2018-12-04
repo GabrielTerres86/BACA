@@ -9175,7 +9175,8 @@ EXCEPTION
       bdt.nrinrisc,
       bdt.qtdirisc,
       bdt.insitbdt,
-      bdt.dtmvtolt
+      bdt.dtmvtolt,
+      bdt.nrdconta
     FROM crapbdt bdt
     WHERE
       bdt.nrborder = pr_nrborder
@@ -9183,7 +9184,7 @@ EXCEPTION
     ;
     rw_crapbdt cr_crapbdt%ROWTYPE;
 
-    CURSOR cr_craptdb IS
+    CURSOR cr_craptdb (pr_nrdconta crapbdt.nrdconta%type) IS
     SELECT
       tdb.dtvencto,
       tdb.dtlibbdt,
@@ -9193,6 +9194,7 @@ EXCEPTION
     WHERE
       tdb.cdcooper = pr_cdcooper
       AND tdb.nrborder = pr_nrborder
+      AND tdb.nrdconta = pr_nrdconta
       AND tdb.insittit = 4 -- apenas liberados
     ;
     rw_craptdb cr_craptdb%ROWTYPE;
@@ -9221,7 +9223,7 @@ EXCEPTION
         raise vr_exc_erro;
       END IF;
 
-      OPEN cr_craptdb;
+      OPEN cr_craptdb (pr_nrdconta=>rw_crapbdt.nrdconta);
       LOOP FETCH cr_craptdb INTO rw_craptdb;
         EXIT WHEN cr_craptdb%NOTFOUND;
         vr_dias := rw_crapdat.dtmvtolt-rw_craptdb.dtvencto;

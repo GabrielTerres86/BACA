@@ -5192,6 +5192,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           bdt.cdcooper = pr_cdcooper
           AND bdt.nrdconta = pr_nrdconta
           AND bdt.insitbdt = 3
+		  AND bdt.flverbor = 1	
       ;
       rw_crapbdt_rating cr_crapbdt_rating%ROWTYPE;
       -- Variavel de criticas
