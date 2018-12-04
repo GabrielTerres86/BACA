@@ -31,6 +31,25 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
            ,cdoperador_alteracao        tbrisco_central_parametros.cdoperador_alteracao%TYPE);
   TYPE typ_tab_ctl_parametros IS TABLE OF typ_reg_ctl_parametros INDEX BY PLS_INTEGER;
 
+
+  --Tipo de Registro para PARAMETROS GERAIS DA CENTRAL DE RISCO
+  TYPE typ_reg_contrato IS
+    RECORD (cdcooper                    crapepr.cdcooper%TYPE
+           ,nrdconta                    crapepr.nrdconta%TYPE
+           ,nrctremp                    crapepr.nrctremp%TYPE
+           ,tpctrato                    craplcr.tpctrato%TYPE    -- Tipo do Contrato EPR
+           ,tpctrlcr                    craplcr.tpctrato%TYPE    -- Tipo do Contrato da LCR
+           ,cdlcremp                    crapepr.cdlcremp%TYPE
+           ,dtefetiv                    crapepr.dtmvtolt%TYPE    -- Data Efetivação Contrato
+           ,idcobope                    crawepr.idcobope%TYPE -- Id Cobertura Operacao
+           ,flgavali                    PLS_INTEGER           -- Indicador se tem Avalista
+           ,dscatbem                    crapbpr.dscatbem%TYPE -- Categoria Bem (Tem Garantia)
+           ,vlmerbem                    crapbpr.vlmerbem%TYPE -- Valor Mercado Bem          
+           );
+  TYPE typ_tab_contrato IS TABLE OF typ_reg_contrato INDEX BY PLS_INTEGER;
+
+
+
   vr_execucao PLS_INTEGER :=0;
 
 -- Calendário da cooperativa selecionada
@@ -145,6 +164,7 @@ FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
                                 , pr_nrdconta   NUMBER
                                 , pr_nrctremp   NUMBER
                                 , pr_tpctrato   NUMBER
+                                , pr_perc_min   NUMBER
                                 , pr_perc_blq   NUMBER)
     RETURN BOOLEAN ;
 
@@ -703,8 +723,9 @@ END fn_busca_risco_melhora;
   FUNCTION fn_verifica_garantias (pr_cdcooper   NUMBER
                                 , pr_nrdconta   NUMBER
                                 , pr_nrctremp   NUMBER
-                                , pr_tpctrato   NUMBER
-                                , pr_perc_blq   NUMBER)
+                                , pr_tpctrato   NUMBER    -- Tipo do Contrato com base na Linha de Credito (lcr.tpctrato)
+                                , pr_perc_min   NUMBER    -- Perc. Minimo da Aplicação
+                                , pr_perc_blq   NUMBER)   -- Valor Perc. Parametro Bloqueado
     RETURN BOOLEAN AS vr_tem_garantia BOOLEAN ;
 
     -- >>> CURSORES <<< ---
@@ -718,6 +739,9 @@ END fn_busca_risco_melhora;
      -- FASE 1 TODOS SERÃO TRATADOS COMO "SEM GARANTIA"
      vr_tem_garantia := FALSE;
   
+  
+  
+     -- Verificar Garantia APLICACAO
      --pr_perc_blq
      IF (vr_sld_bloq_garan * (pr_perc_blq/100)) > 1000000 THEN
        NULL;
@@ -727,6 +751,81 @@ END fn_busca_risco_melhora;
      RETURN vr_tem_garantia;
   
   END fn_verifica_garantias;
+
+  -- VERIFICAR SE O CONTRATO POSSUI GARANTIAS --
+  FUNCTION fn_verifica_garantias_2 (pr_tab_ctl_param    IN typ_tab_ctl_parametros
+                                   ,pr_tab_contrato     IN typ_tab_contrato
+                                )
+    RETURN BOOLEAN AS vr_tem_garantia BOOLEAN ;
+
+    -- >>> CURSORES <<< ---
+    CURSOR cr_apli_nova (pr_idcobertura IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+      SELECT t.insituacao, t.perminimo
+            ,t.vldesbloq
+        FROM tbgar_cobertura_operacao t
+       WHERE t.idcobertura = pr_idcobertura;
+    rw_apli_nova     cr_apli_nova%ROWTYPE;
+
+    CURSOR cr_apli_antiga (pr_idcobertura IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+      SELECT t.insituacao, t.perminimo
+            ,t.vldesbloq
+        FROM tbgar_cobertura_operacao t
+       WHERE t.idcobertura = pr_idcobertura
+       ;
+    -- >>> VARIAVEIS <<< ---
+
+
+    -- Tipos Linha de Credito (tpctrlcr)
+    --    1 Empréstimo
+    --    2 Alienação fiduciaria
+    --    3 Hipoteca
+    --    4 Aplicação
+  BEGIN
+
+    -- Iniciar SEM GARANTIA
+    vr_tem_garantia := FALSE;
+
+    -- Verificação se tem Garantia PESSOAL (Avalista)
+    IF pr_tab_contrato(1).flgavali = 1 THEN
+      vr_tem_garantia := TRUE;
+    ELSE
+      -- Tipo Garantia do Contrato, com base na Linha de Credito
+      IF pr_tab_contrato(1).tpctrlcr <> 4 THEN --> Tipos 1,2 ou 3 => (4) Garantia Aplicação )
+
+        -- Verificar BENS do Contrato (Alienado, Nao Baixado e Não Cancelado)
+        IF pr_tab_contrato(1).dscatbem IS NOT NULL THEN
+          vr_tem_garantia := TRUE;
+        END IF;
+
+      ELSE   -- Tipo 4
+        IF pr_tab_contrato(1).dtefetiv > to_date('16/04/2018','dd/mm/yyyy') THEN
+          -- Modelo NOVO de Garantia Aplicacao
+          OPEN cr_apli_nova(pr_idcobertura => pr_tab_contrato(1).idcobope);
+          FETCH cr_apli_nova INTO rw_apli_nova;
+          IF cr_apli_nova%FOUND THEN
+            NULL;
+          --  rw_apli_nova.vldesbloq
+          END IF;
+          CLOSE cr_apli_nova;
+
+          -- b1wgen0148 / TELA_BLQRGT / BLOQ0001
+
+        ELSE
+          -- Modelo ANTIGO de Garantia Aplicacao
+          NULL;
+        END IF;
+
+      END IF;
+      
+    END IF;
+
+
+
+    RETURN vr_tem_garantia;
+  
+  END fn_verifica_garantias_2;
+
+
 
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
                               , pr_nrdconta    IN NUMBER
@@ -2083,12 +2182,14 @@ END pc_carrega_tabela_riscos;
     4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
     5) COOPERADO COM PREJUIZO ATIVO
     6) CONTRATO COM MAIS DE 4 DIAS DE ATRASO
-    7) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
-    8) ADIMPLENCIA COM GARANTIA NÃO ATENDIDA
-    9) ADIMPLENCIA SEM GARANTIA NÃO ATENDIDA
-   10) RISCO OPERACAO MENOR OU IGUAL AO RISCO MELHORA MINIMO
-   11) RISCO OPERACAO MENOR OU IGUAL AO MAIOR RISCO ENTRE RAT/ATR/AGR
-   12) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
+    7) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
+    8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+    9) ADIMPLENCIA COM GARANTIA NÃO ATENDIDA
+   10) ADIMPLENCIA SEM GARANTIA NÃO ATENDIDA
+   11) RISCO OPERACAO MENOR OU IGUAL AO RISCO MELHORA MINIMO
+   12) RISCO OPERACAO MENOR OU IGUAL AO MAIOR RISCO ENTRE RAT/ATR/AGR
+   13) MELHORA MINIMO JA ATINGIDO (MEL)
+   14) MELHORA MINIMO JA ATINGIDO (REF)
 ---------------------------------------*/
 
   BEGIN
@@ -2304,26 +2405,48 @@ END pc_carrega_tabela_riscos;
     SELECT e.cdcooper
           ,e.nrdconta
           ,e.nrctremp
+          ,e.dtmvtolt -- Data Efetivação
           ,e.cdlcremp
           ,e.tpemprst
-          ,w.dsnivris
           ,e.qtprepag -- QTD Parcelas Pagas
           ,e.qtmesdec -- QTD Meses Decorridos
-          ,w.dsnivori inrisco_inclusao -- Risco Original/Inclusao / Nascimento da Proposta
           ,e.inrisco_refin
           ,t.inrisco_melhora
           ,t.dtrisco_melhora
           ,e.vlsaldo_refinanciado
           ,e.vlsdeved
-      FROM crapepr e, crawepr w, cecred.tbrisco_operacoes t
-     WHERE e.rowid       = PR_ROWIDEPR
+          ,l.tpctrato -- Tipo Contrato na Linha de Credito
+          ,l.permingr
+          ,b.dscatbem
+          ,b.vlmerbem
+          ,( CASE
+               WHEN w.nrctaav1 > 0 OR
+                    w.nrctaav2 > 0 OR
+                    w.nmdaval1 <> ' ' OR
+                    w.nmdaval2 <> ' '
+                 THEN 1
+               ELSE 0
+             END ) flgavali          -- Se tem avalista
+          ,w.idcobope          -- Cobertura Aplicacao
+      FROM crapepr e, crawepr w, crapbpr b
+         , cecred.tbrisco_operacoes t, craplcr l
+     WHERE e.rowid       = PR_ROWIDEPR  -- Rowid do Emprestimo
        AND W.CDCOOPER    = e.cdcooper
        AND W.NRDCONTA    = e.nrdconta
        AND W.Nrctremp    = e.nrctremp
+       AND l.cdcooper    = e.cdcooper
+       AND l.cdlcremp    = e.cdlcremp
        AND t.cdcooper(+) = e.cdcooper
        AND t.nrdconta(+) = e.nrdconta
        AND t.nrctremp(+) = e.nrctremp
        AND t.tpctrato(+) = 90
+       AND b.cdcooper(+) = e.cdcooper
+       AND b.nrdconta(+) = e.nrdconta
+       AND b.nrctrpro(+) = e.nrctremp
+       AND b.tpctrpro(+) = 90
+       AND b.flgalien(+) = 1  -- Deve estar Alienado
+       AND b.flgbaixa(+) = 0  -- Não pode ter sido Baixado
+       AND b.flcancel(+) = 0  -- Não pode ter sido Cancelado
      ORDER BY e.nrctremp;
   rw_crapepr   cr_crapepr%ROWTYPE;
   
@@ -2360,6 +2483,8 @@ END pc_carrega_tabela_riscos;
   
   vr_sucesso              BOOLEAN:=TRUE;
 
+  vr_tab_contrato         risc0004_melhora.typ_tab_contrato;  
+
   BEGIN
 
     pr_inrisco_melhora := NULL;
@@ -2387,73 +2512,80 @@ END pc_carrega_tabela_riscos;
     END IF;
     CLOSE cr_crapepr;
 
-/*
-   CECRED.risc0000_tmp.pc_grava_log(pr_cdcooper => rw_crapepr.cdcooper,
-                             pr_dsmensag => 'CADEIA: ' || '   Dentro Risco Melhora: '
-                             || ' Cta: ' || rw_crapepr.nrdconta
-                             || ' Ctr: ' || rw_crapepr.nrctremp
-                             || ' MEL: ' || pr_inrisco_melhora                             
-                            ,pr_des_erro => vr_dscritic);
-*/
+    -- Montar a vr_tab de emprestimos (passar para o fn_verifica_garantias)
+    vr_tab_contrato.delete;        
+    vr_tab_contrato(1).cdcooper := pr_cdcooper;
+    vr_tab_contrato(1).nrdconta := rw_crapepr.nrdconta;
+    vr_tab_contrato(1).nrctremp := rw_crapepr.nrctremp;
+    vr_tab_contrato(1).cdlcremp := rw_crapepr.cdlcremp;
+    vr_tab_contrato(1).dtefetiv := rw_crapepr.dtmvtolt;
+    vr_tab_contrato(1).idcobope := rw_crapepr.idcobope;
+    vr_tab_contrato(1).tpctrlcr := 90;
+    vr_tab_contrato(1).flgavali := rw_crapepr.flgavali;
+    vr_tab_contrato(1).tpctrlcr := rw_crapepr.tpctrato;
 
+
+    IF to_char(rw_crapdat.dtmvtoan, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN
+--      IF rw_crapdat.dtmvtolt <> to_date('05/12/2018','dd/mm/yyyy') THEN --> Condicao apenas para rodar pelo menos 1 vez em 2018 (DtLiberacao = 04/12)
     -- 1) CALCULO DO RISCO MELHORA EXECUTADO APENAS NO PRIMEIRO DIA DO MES
-    IF to_char(rw_crapdat.dtmvtoan, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN     
       vr_cdcritica_melhora := 1;
       RAISE vr_grava_log;
+--      END IF;
     END IF;
 
-    -- 2) RISCO MELHORA JA CALCULADO NO MES
     IF  rw_crapepr.dtrisco_melhora IS NOT NULL
     AND to_char(rw_crapepr.dtrisco_melhora, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN     
+      -- 2) RISCO MELHORA JA CALCULADO NO MES
       vr_cdcritica_melhora := 2;
       RAISE vr_grava_log;
     END IF;
 
-    -- 3) EMPRESTIMO DIFERENTE DE PP E POS (EXCLUSIVO PARA ESSES)
+
     IF rw_crapepr.tpemprst NOT IN(1,2) THEN
+    -- 3) EMPRESTIMO DIFERENTE DE PP E POS (EXCLUSIVO PARA ESSES)
       vr_cdcritica_melhora := 3;
       RAISE vr_grava_log;
     END IF;
 
-    -- 4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
     IF rw_crapepr.inrisco_refin IS NULL THEN
+    -- 4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
       vr_cdcritica_melhora := 4;
       RAISE vr_grava_log;
     END IF;
 
-    -- 5) COOPERADO COM PREJUIZO ATIVO
     IF PREJ0003_MELHORA.fn_verifica_preju_ativo(pr_cdcooper => pr_cdcooper
                                       , pr_nrdconta => rw_crapepr.nrdconta
                                       , pr_tipverif => 1 ) THEN
+      -- 5) COOPERADO COM PREJUIZO ATIVO
       vr_cdcritica_melhora := 5;
       RAISE vr_grava_log;
     END IF;
 
-    -- 6) CONTRATO COM MAIS DE 4 DIAS DE ATRASO
     IF pr_qtdiaatr > 4 THEN
+    -- 6) CONTRATO COM MAIS DE 4 DIAS DE ATRASO
       vr_cdcritica_melhora := 6;
       RAISE vr_grava_log;
     END IF;
-
 
     -- VERIFICAR GARANTIAS
     vr_tem_garantias := RISC0004_MELHORA.fn_verifica_garantias(pr_cdcooper => pr_cdcooper
                                                       ,pr_nrdconta => rw_crapepr.nrdconta
                                                       ,pr_nrctremp => rw_crapepr.nrctremp
-                                                      ,pr_tpctrato => pr_tpctrato
-                                                      ,pr_perc_blq => pr_tab_ctl_param(1).perc_cobert_aplic_bloqueada);
+                                                      ,pr_tpctrato => rw_crapepr.tpctrato  -- Tipo do contrato com base na Linha de Credito
+                                                      ,pr_perc_min => rw_crapepr.permingr  -- Percentual bloqueado pela linha de credito
+                                                      ,pr_perc_blq => pr_tab_ctl_param(1).perc_cobert_aplic_bloqueada);  -- Percentual Bloqueado (Parametro)
     -- Se for Sem Garantia, deve liquidar % minimo do saldo refinanciado, conforme parametro
     IF NOT vr_tem_garantias THEN
       IF rw_crapepr.vlsaldo_refinanciado IS NULL
       OR rw_crapepr.vlsaldo_refinanciado = 0 THEN
-        -- 12) NAO FOI GRAFADO SALDO REFINANCIADO OU É ZERO
+        -- 7) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
         vr_cdcritica_melhora := 7;
         RAISE vr_grava_log;
       ELSE
-        IF NOT (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
+        IF  (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
             ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
-          -- 7) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
-          vr_cdcritica_melhora := 7;
+          -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+          vr_cdcritica_melhora := 8;--alterado (era 7)
           RAISE vr_grava_log;       
         END IF;
       END IF;
@@ -2461,6 +2593,24 @@ END pc_carrega_tabela_riscos;
       -- TEM GARANTIAS
       NULL;
     END IF;
+
+    -- VERIFICAR ADIMPLENCIA DO CONTRATO
+    IF vr_tem_garantias THEN -- Com Garantia
+      IF NOT ((rw_crapepr.qtprepag >= rw_crapepr.qtmesdec)  AND 
+               rw_crapepr.qtprepag > 0) THEN
+        -- 9) Adimplencia COM Garantia não atendida
+        vr_cdcritica_melhora := 9;
+        RAISE vr_grava_log;       
+      END IF;
+    ELSE -- Sem Garantia
+      IF NOT ((rw_crapepr.qtprepag >= (rw_crapepr.qtmesdec * 2))  AND 
+               rw_crapepr.qtprepag > 0) THEN
+        -- 10) Adimplencia SEM Garantia não atendida
+        vr_cdcritica_melhora := 10;
+        RAISE vr_grava_log;       
+      END IF;
+    END IF;
+
 
     -- VERIFICAR RISCOS DA CENTRAL ANTERIOR
     OPEN cr_central (pr_cdcooper => rw_crapepr.cdcooper
@@ -2472,12 +2622,14 @@ END pc_carrega_tabela_riscos;
     IF cr_central%FOUND THEN
       CLOSE cr_central;
       IF rw_central.inrisco_operacao <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
-        vr_cdcritica_melhora := 10; -- 10) Risco Operacao Menor ou Igual ao Risco Melhora Minimo
+        -- 11) Risco Operacao Menor ou Igual ao Risco Melhora Minimo
+        vr_cdcritica_melhora := 11;
         RAISE vr_grava_log;
       ELSE
         IF rw_central.inrisco_operacao < 
            greatest(rw_central.inrisco_rating,rw_central.inrisco_atraso,rw_central.inrisco_agravado) THEN
-          vr_cdcritica_melhora := 11; -- 11) Risco Operacao Menor ou Igual ao Maior risco entre RAT/ATR/AGR
+          -- 12) Risco Operacao Menor ou Igual ao Maior risco entre RAT/ATR/AGR
+          vr_cdcritica_melhora := 12;
           RAISE vr_grava_log;
         END IF;        
       END IF;
@@ -2488,35 +2640,35 @@ END pc_carrega_tabela_riscos;
 
 
 
-    -- VERIFICAR ADIMPLENCIA DO CONTRATO
-    IF vr_tem_garantias THEN -- Com Garantia
-      IF NOT ((rw_crapepr.qtprepag >= rw_crapepr.qtmesdec)  AND 
-               rw_crapepr.qtprepag > 0) THEN
-        vr_cdcritica_melhora := 8; -- 8) Adimplencia COM Garantia não atendida
-        RAISE vr_grava_log;       
-      END IF;
-    ELSE -- Sem Garantia
-      IF NOT ((rw_crapepr.qtprepag >= (rw_crapepr.qtmesdec * 2))  AND 
-               rw_crapepr.qtprepag > 0) THEN
-        vr_cdcritica_melhora := 9; -- 9) Adimplencia SEM Garantia não atendida
-        RAISE vr_grava_log;       
-      END IF;
-    END IF;
-
-
-
-
     -- SE PASSOU DE TODAS AS VALIDAÇÕES, PODE CALCULAR RISCO MELHORA
     IF rw_crapepr.inrisco_melhora IS NOT NULL THEN
+
       -- Risco Melhora ja calculado
       pr_inrisco_melhora := rw_crapepr.inrisco_melhora - 1;
+
+      -- Se o MELHORA Atual ja é menor ou igual ao parametro minimo, não faz nada.
+      IF rw_crapepr.inrisco_melhora <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+        -- 13) Melhora Minimo ja atingido (MEL)
+        vr_cdcritica_melhora := 13;
+        RAISE vr_grava_log;   
+      END IF;
+
       -- Novo Melhora deve respeitar o minimo parametrizado
       IF pr_inrisco_melhora < pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
         pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        
       END IF;
     ELSE
-      -- Risco Melhora ainda não calculado
+      -- Risco MELHORA ainda não calculado
+
       pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
+
+      -- Se o REFIN Atual ja é menor ou igual ao parametro minimo, não faz nada.
+      IF rw_crapepr.inrisco_refin <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+        -- 14) Melhora Minimo ja atingido (REF)
+        vr_cdcritica_melhora := 14;
+        RAISE vr_grava_log;   
+      END IF;
+
       -- Novo Melhora deve respeitar o minimo parametrizado
       IF pr_inrisco_melhora < pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
         pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        

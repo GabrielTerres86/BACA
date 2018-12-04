@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-121
+108
 declare 
   CURSOR cr_cop IS
     SELECT c.cdcooper
@@ -23,15 +23,12 @@ declare
                         WHEN w.dsnivris = 'H'  THEN 9
                         WHEN w.dsnivris = 'HH' THEN 10
                      ELSE 2 END RISCO
-           ,DECODE(e.idquaprc,3,'Renegociacao','Composicao') Qualif_Oper
-           ,DECODE(e.tpemprst,1,'PP','POS') tpemprst
       FROM crawepr w, crapepr e
      WHERE w.cdcooper = e.cdcooper
        AND w.nrdconta = e.nrdconta
        AND w.nrctremp = e.nrctremp
        AND e.cdcooper = pr_cdcooper
-       -- OU Ativo OU Com prejuizo
-       AND (e.inliquid = 0 OR e.inprejuz = 1)
+       AND e.inliquid = 0
 --       AND e.idquaprc IN(3,4)
 --       AND e.tpemprst IN (1,2)
        AND (w.dsnivris = 'A'AND
@@ -88,11 +85,6 @@ BEGIN
                       SYSDATE,
                       NULL
                      );
-/*        dbms_output.put_line('INSERT ' || vr_contador || ' -> '||
-                                          rw_emprestimos.nrdconta || ' - ' 
-                                       || rw_emprestimos.nrctremp || 
-                        '-> MELHORA:  '|| rw_emprestimos.risco
-                  );*/
       ELSE
         CLOSE cr_tbrisco_operacoes;
          UPDATE TBRISCO_OPERACOES t
@@ -103,11 +95,6 @@ BEGIN
             AND t.nrdconta = rw_emprestimos.nrdconta
             AND t.nrctremp = rw_emprestimos.nrctremp
             AND t.tpctrato = 90;
-/*      dbms_output.put_line('UPDATE ' || vr_contador || ' -> '||
-                                        rw_emprestimos.nrdconta || ' - ' 
-                                     || rw_emprestimos.nrctremp || 
-                      '-> MELHORA:  '|| rw_emprestimos.risco
-                );*/
       END IF;
 
 
