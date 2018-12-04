@@ -7830,6 +7830,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               FROM (SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
+						  ,crapceb.dtinsori
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2
@@ -7889,12 +7890,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                                    AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
                      GROUP BY crapceb.idrecipr
                              ,crapceb.dtcadast
+							 ,crapceb.dtinsori
                              ,crapceb.nrdconta
                              ,crapceb.cdcooper
                     UNION
                     SELECT to_char(crapceb.nrconven)
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
+						  ,crapceb.dtinsori
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2
@@ -7957,7 +7960,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                   ,tbrecip_calculo cal
              WHERE ceb.idrecipr = tac.idcalculo_reciproci(+)
                AND ceb.idrecipr = cal.idcalculo_reciproci(+)
-               AND ceb.dtcadast >= to_date(pr_data_corte, 'DD/MM/RRRR')
+               AND ceb.dtinsori >= to_date(pr_data_corte, 'DD/MM/RRRR')
                AND (tac.dtalteracao_status IS NULL OR
                    tac.dtalteracao_status = (SELECT MAX(tac2.dtalteracao_status)
                                                 FROM tbrecip_aprovador_calculo tac2
