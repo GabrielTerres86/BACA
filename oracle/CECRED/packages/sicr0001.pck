@@ -1,11 +1,11 @@
-create or replace package cecred.SICR0001 is 
+create or replace package cecred.SICR0001 is
   /*..............................................................................
 
      Programa: SICR0001      (Antiga: includes/crps642.i)
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 15/05/2018
+     Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
 
      Dados referentes ao programa:
 
@@ -54,7 +54,8 @@ create or replace package cecred.SICR0001 is
                             - Ajuste na prc pc efetua debito automatico 
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 				                      ( Belli - Envolti - Chamado REQ0014479 )
-  
+  							  
+                05/07/2018 - Incluido pr_inpriori na pc_obtem_agendamentos_debito para o "debitador unico" (Fabiano B. Dias - AMcom)
   ..............................................................................*/
 
   -- Chave = dsorigem||fldebito||fltiptra||fltipdoc||lpad(cdcooper,5,'0')||lpad(cdagenci,3,'0')||lpad(nrdconta,9,'0')||ROWID
@@ -100,6 +101,7 @@ create or replace package cecred.SICR0001 is
                                          ,pr_nmrescop  IN crapcop.nmrescop%TYPE        --> Nome resumido da cooperativa
                                          ,pr_dtmvtopg IN DATE                          --> Data do pagamento
                                          ,pr_inproces IN crapdat.inproces%TYPE         --> Indicador do processo
+                                         ,pr_inpriori IN VARCHAR2 DEFAULT 'T'          --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
                                          ,pr_tab_agendamentos IN OUT typ_tab_agendamentos --> Retorna os agendamentos
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                                          ,pr_dscritic OUT VARCHAR2);                   --> descrição do erro se ocorrer
@@ -345,9 +347,11 @@ create or replace package body cecred.SICR0001 is
                               
                  04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
 
+                 05/07/2018 - Incluido pr_inpriori na pc_obtem_agendamentos_debito para o "debitador unico" (Fabiano B. Dias - AMcom)
+
                  05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
                               - Estava concatenando "_EXEC" no final desse parâmetro
-				                      (Ana - Envolti - Chamado INC0023351)
+				                (Ana - Envolti - Chamado INC0023351)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -409,6 +413,7 @@ create or replace package body cecred.SICR0001 is
                                          ,pr_nmrescop  IN crapcop.nmrescop%TYPE        --> Nome resumido da cooperativa
                                          ,pr_dtmvtopg IN DATE                          --> Data do pagamento
                                          ,pr_inproces IN crapdat.inproces%TYPE         --> Indicador do processo
+																				 ,pr_inpriori IN VARCHAR2 DEFAULT 'T'          --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
                                          ,pr_tab_agendamentos IN OUT typ_tab_agendamentos --> Retorna os agendamentos
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                                          ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
@@ -417,7 +422,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Lucas Lunelli
-  --   Data    : Abril/2013                       Ultima atualizacao: 30/01/2018
+  --   Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -449,7 +454,9 @@ create or replace package body cecred.SICR0001 is
   --                         - Pc_set_modulo, cecred.pc_internal_exception
   --                         - Inclusão pc_gera_log na exception vr_exc_saida
   --                         - Tratamento erros others
-  --                          (Ana - Envolti - Chamado 788828)
+  --                          (Ana - Envolti - Chamado 788828)				  
+  --
+  --              05/07/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -477,6 +484,8 @@ create or replace package body cecred.SICR0001 is
                ,craplau.nrseqdig
                ,craplau.ROWID
                ,craplau.progress_recid
+               ,craplau.nrcrcard
+               ,craplau.dscodbar			   
         FROM   craplau,
                craphis
         WHERE craplau.cdcooper = pr_cdcooper
@@ -521,6 +530,8 @@ create or replace package body cecred.SICR0001 is
       vr_chave     VARCHAR2(100);
 
       vr_dtmovini  craplau.dtmvtopg%TYPE;
+			vr_agua_luz     varchar2(1);
+      vr_inconsiderar_lancto varchar2(1);
 
     BEGIN
       -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
@@ -547,7 +558,85 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtopg => pr_dtmvtopg,
                                      pr_dtmovini => vr_dtmovini) LOOP
 
-    vr_fltipdoc := '';
+        vr_fltipdoc := '';
+
+		------------------------------
+        -- Debitador Unico - inicio.
+		------------------------------
+        IF pr_inpriori = 'T' THEN 
+
+           -- Deve considerar "todos" os lancamentos (agua, energia eletrica, demais).
+           vr_inconsiderar_lancto := 'S';
+
+		ELSE						
+
+           -- Verifica se o lancamento eh agua/luz.					
+           vr_agua_luz := 'N';
+
+           BEGIN
+             SELECT 'S'
+               INTO vr_agua_luz
+               FROM crapscn
+                   ,crapcon
+                   ,crapatr
+              WHERE crapscn.cdempcon = crapcon.cdempcon 
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapscn.cdempcon = crapatr.cdempcon 
+                AND crapscn.cdsegmto = crapatr.cdsegmto
+                AND crapatr.cdcooper = rw_craplau.cdcooper  -- CODIGO DA COOPERATIVA
+                AND crapatr.nrdconta = rw_craplau.nrdconta  -- NUMERO DA CONTA
+                AND crapatr.cdhistor = rw_craplau.cdhistor  -- CODIGO DO HISTORICO
+                AND crapatr.cdrefere = rw_craplau.nrcrcard  -- COD. REFERENCIA   							 
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.cdempcon <> 0
+                AND crapscn.dsoparre = 'E' -- debito automatico
+                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapcon.cdcooper = pr_cdcooper
+             UNION
+             SELECT 'S'
+               FROM crapscn
+                   ,crapcon
+              WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = pr_cdcooper;
+           EXCEPTION
+             WHEN NO_DATA_FOUND THEN
+               vr_agua_luz := 'N';
+             WHEN OTHERS THEN
+               pr_dscritic := 'Erro em sicr0001.pc_obtem_agendamentos_debito. Conta '||rw_craplau.nrdconta||' - ao identificar se é água ou luz. '||sqlerrm;
+               -- gerando exceção
+               RAISE vr_exc_erro;					
+           END;
+					
+           IF pr_inpriori = 'S' THEN 
+              -- Deve priorizar e pagar somente agua e energia eletrica.
+              IF vr_agua_luz = 'S' THEN
+                 vr_inconsiderar_lancto := 'S';
+              ELSE
+                 vr_inconsiderar_lancto := 'N';
+              END IF;
+           ELSIF pr_inpriori = 'N' THEN
+              -- Deve priorizar e pagar somente OS QUE NAO SAO agua e energia eletrica.
+              IF vr_agua_luz = 'S' THEN
+                 vr_inconsiderar_lancto := 'N';
+              ELSE
+                 vr_inconsiderar_lancto := 'S';
+              END IF;			  
+           END IF;
+					
+        END IF; -- pr_inpriori = 'T' 
+					
+		------------------------------
+        -- Debitador Unico - fim.
+		------------------------------
+
+        IF vr_inconsiderar_lancto = 'S' THEN 
 
         -- se é pagamento
         IF  rw_craplau.cdtiptra = 2  THEN /** Pagamento **/
@@ -634,6 +723,8 @@ create or replace package body cecred.SICR0001 is
         ELSE
           pr_tab_agendamentos(vr_chave).dsorigem := rw_craplau.dsorigem;
         END IF;
+
+				END IF; -- vr_inconsiderar_lancto = 'S'.
 
       END LOOP; --FOR rw_craplau IN cr_craplau
 
@@ -2906,7 +2997,7 @@ create or replace package body cecred.SICR0001 is
                             ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
                             ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
                             ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
+              ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                             ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
   ---------------------------------------------------------------------------------------------------------------
@@ -3305,8 +3396,8 @@ create or replace package body cecred.SICR0001 is
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
       vr_flsgproc BOOLEAN;
-      vr_flultexe INTEGER;
-      vr_qtdexec  INTEGER;
+    --  vr_flultexe INTEGER;
+   --   vr_qtdexec  INTEGER;
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -3374,6 +3465,7 @@ create or replace package body cecred.SICR0001 is
       -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_SICR0001_efetua_debitos');
 
+	/*  Comentado a inclusão do controle de execução, pois é controle pelo Debitador Único(gen_debitado_unico).
       --> Verificar/controlar a execução da DEBNET e DEBSIC
       pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
                             ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
@@ -3389,7 +3481,8 @@ create or replace package body cecred.SICR0001 is
         --esta exception não grava log
         RAISE vr_exc_erro;
       END IF;
-
+     */
+	 
       -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_SICR0001_efetua_debitos');
 
@@ -3717,10 +3810,13 @@ create or replace package body cecred.SICR0001 is
   --                        - Tratamento erros others
   --                          (Ana - Envolti - Chamado 788828)
   --
+  --             26/03/2018 - Incluido Chamada 509_PRIORI e 642_PRIORI para 
+  --                           o "debitador unico" (Fabiano B. Dias - AMcom) 
   --             05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
   --                          - Estava concatenando "_EXEC" no final desse parâmetro
-	--                          (Ana - Envolti - Chamado INC0023351)
-  --------------------------------------------------------------------------------------------------------------------*/
+  --                            (Ana - Envolti - Chamado INC0023351)
+
+--------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     CURSOR cr_crapprm (pr_cdcooper crapprm.cdcooper%TYPE,
                        pr_cdacesso crapprm.cdacesso%TYPE) IS
@@ -3738,7 +3834,7 @@ create or replace package body cecred.SICR0001 is
     ------------- Variaveis ---------------
     vr_exc_erro  EXCEPTION;
 
-    vr_cdprogra  crapprg.cdprogra%TYPE;
+    vr_cdprogra  VARCHAR2(50);--crapprg.cdprogra%TYPE;
     vr_tbdados   gene0002.typ_split;
     vr_dtctlexc  DATE   := NULL;
     vr_qtctlexc  INTEGER := 0;
@@ -3750,8 +3846,12 @@ create or replace package body cecred.SICR0001 is
 
     IF upper(pr_cdprogra) = 'CRPS642' THEN
       vr_cdprogra := 'DEBSIC';
+    ELSIF upper(pr_cdprogra) = 'CRPS642_PRIORI' THEN
+      vr_cdprogra := 'DEBSIC_PRIORI';
     ELSIF upper(pr_cdprogra) = 'CRPS509' THEN
       vr_cdprogra := 'DEBNET';
+    ELSIF upper(pr_cdprogra) = 'CRPS509_PRIORI' THEN
+      vr_cdprogra := 'DEBNET_PRIORI';
     ELSE
       vr_cdprogra := pr_cdprogra;
     END IF;
@@ -3798,6 +3898,14 @@ create or replace package body cecred.SICR0001 is
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapprm;
+
+    --> Pode ocorrer situação com data de agendamento de horarios para o próximo dia.
+    --> debitador. Exemplo 4#09/08/2018#3 ou 4 (normal)
+    BEGIN
+      SELECT to_number(TRIM(substr(rw_crapprm_qtd.dsvlrprm,1,decode(instr(rw_crapprm_qtd.dsvlrprm,'#'),0,length(rw_crapprm_qtd.dsvlrprm),instr(rw_crapprm_qtd.dsvlrprm,'#')-1))))
+        INTO rw_crapprm_qtd.dsvlrprm
+        FROM dual;
+    END;      
 
     --  Se tipo de operação for Incrementar
     IF pr_cdtipope = 'I' THEN
