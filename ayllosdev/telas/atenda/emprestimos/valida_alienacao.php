@@ -112,11 +112,13 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 		if ($msgErro == '') {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
 	} else if (strtoupper($xmlObject->roottag->tags[0]->name) == "MENSAGEM" && $xmlObject->roottag->tags[0]->cdata != "") {
 		$msgAviso = $xmlObject->roottag->tags[0]->cdata;
 		if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA' && $xmlObject->roottag->tags[1]->cdata != 0) {
 			$metodo = "bloqueiaFundo(divRotina);pedeSenhaCoordenador(2,'".addslashes(addslashes(addslashes($nmfuncao)))."','');";
+		} else {
+			$metodo = "bloqueiaFundo(divRotina);" . $nmfuncao;
 		}
 	}
 
