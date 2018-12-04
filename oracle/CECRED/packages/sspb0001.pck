@@ -436,7 +436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 18/04/2018
+  --  Data     : Julho/2013.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -472,6 +472,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --             19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
   --
   --             18/04/2018 - Ajuste para truncar o nome do banco ao criar a crapban (Adriano ).
+  --
+  --             04/12/2018 - Tratamento para lote em uso quando banco é 85 (Lucas Ranghetti PRB0040456)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -4563,6 +4565,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   26/03/2018 - Ajuste feito para que caso ocorra algum erro na procedure pc_proc_envia_tec_ted
                                seja atualizado a situacao para erro e grave a descrição. SD (852564 - Kelvin)
                                
+                  04/12/2018 - Tratamento para lote em uso quando banco é 85 (Lucas Ranghetti PRB0040456)
+                               
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4713,6 +4717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_inestcri INTEGER;
     vr_clobxmlc CLOB;
     vr_hrlimted NUMBER;
+    vr_idsitlct varchar2(1);
 
     -- Marcelo Telles Coelho - Mouts - Projeto 475
     vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
@@ -4995,27 +5000,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   END;
 
               ELSE
-				  
-				  ROLLBACK;
-				  
+                -- Tratamento para lote em uso
+                if vr_dscritic like 'Registro de lote%em uso%' then
+                  
+                  vr_idsitlct:= 'L'; -- Deixar L para reprocessar na proxima tentativa
+                
+                  -- Deletar lcs criada nessa execução para que na proxima execução nao ocorra erros
                   BEGIN
-                    UPDATE craplfp
-                       SET idsitlct = 'E'  --Erro
-                          ,dsobslct = 'Erro encontrado ' || vr_dscritic
-                     WHERE progress_recid = rw_crapccs.nrridlfp;
-
-                   EXCEPTION
-                        WHEN OTHERS THEN
-                          vr_cdcritic := 9999;
-                          vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: '||SQLERRM;
-                          -- Executa a exceção
-                          RAISE vr_exc_erro;
-                   END;
-				   
-				   COMMIT;
-                   
-                   vr_dscritic := 'Nao foi possivel efetuar a transferencia.'; 
-                   RAISE vr_exc_erro;
+                    delete craplcs s
+                     where s.nrridlfp = rw_crapccs.nrridlfp;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_cdcritic := 9999;
+                      vr_dscritic := 'Erro ao deletar o registro na craplcs: ' ||
+                                     SQLERRM;
+                      -- Executa a exceção
+                      RAISE vr_exc_erro;
+                  END;
+                  
+                  BEGIN
+                    update crappfp p
+                       set p.flsitcre = 0
+                     where p.cdcooper = pr_cdcooper
+                       and p.cdempres = pr_cdempres
+                       and p.dtcredit = rw_crapdat.dtmvtolt;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_cdcritic := 9999;
+                      vr_dscritic := 'Erro ao atualizar o registro na crappfp: ' ||
+                                     SQLERRM;
+                      -- Executa a exceção
+                      RAISE vr_exc_erro;
+                  END;
+                else
+                  vr_idsitlct:= 'E';
+                end if;  
+				  
+                BEGIN
+                  UPDATE craplfp
+                     SET idsitlct = vr_idsitlct,
+                         dsobslct = 'Erro encontrado ' || vr_dscritic
+                   WHERE progress_recid = rw_crapccs.nrridlfp;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_cdcritic := 9999;
+                    vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: ' ||
+                                   SQLERRM;
+                    -- Executa a exceção
+                    RAISE vr_exc_erro;
+                END;
 
               END IF;
 
