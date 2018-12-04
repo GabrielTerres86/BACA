@@ -5,7 +5,7 @@ var idElementAno = "nrmodbem";
 var idElementValor = "vlfipbem";
 
 $(function(){
-    
+
     $("#"+idElementTpVeiulo).change(function(){
         trataCamposFipe($(this));       
         if(validaValorCombo($(this)))
@@ -46,8 +46,10 @@ $(function(){
             var cdMarcaFipe = $("#"+idElementMarca).val();
             var cdModeloFipe = $("#"+idElementModelo).val();
             var cdAnoFipe;
-			if(modeloBem == '') { 
-				cdAnoFipe = $(this).val(); 
+			if(modeloBem == '') {
+				//cdAnoFipe = $(this).val();
+				arrPart = $(this).text().split(" ");
+				cdAnoFipe = arrPart[0];
 			} else { 
 				cdAnoFipe = modeloBem; 
 			}

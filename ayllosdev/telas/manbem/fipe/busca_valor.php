@@ -25,7 +25,9 @@
     $idElementoHtml2            = "vlrdobem";
     $cdMarcaVeiculo		        = (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
     $cdModeloVeiculo	        = (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ; 
-    $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0  ; 
+    $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0  ;
+	
+	$cdMarcaModeloAnoVeiculo	= ($cdMarcaModeloAnoVeiculo <> 3200) ? $cdMarcaModeloAnoVeiculo : "" ; //diferente de ZERO KM, passamos vazio
 
     $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaTabelasFipe";
     $data = '{
@@ -37,20 +39,18 @@
                 "codigo": '.$cdModeloVeiculo.'
             },
             "marcaModeloAnoVeiculo": {
-                "sigla": '.$cdMarcaModeloAnoVeiculo.'
+                "sigla": "'.$cdMarcaModeloAnoVeiculo.'"
             }
         },
 		"cooperativa": {
-			"codigo": "'.$glbvars["cdcooper"].'"
-		},
-        "paginacao": {
-            "pagina": 1,
-            "registrosPorPagina": 100
-        }
+			"codigo": "1"
+		}
     }';
     $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
+	
+	//var_dump($data); die;
 
     /*************************************************** Tratamento dados retornados **************************************************************/
 	
