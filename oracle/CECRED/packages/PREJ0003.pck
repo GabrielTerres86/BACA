@@ -23,33 +23,22 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 							PJ 450 - Diego Simas (AMcom)
-               06/11/2018 - P450 - Nova procedure consultar Prejuizo Ativo (Guilherme/AMcom)
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
-                            ou de desconto de título em prejuízo (Fabio - AMcom).
+                            ou de desconto de título em prejuízo (Fabio - AMcom). 
 
 ..............................................................................*/
-
-  TYPE typ_reg_prejuizo IS
-    RECORD(nrdconta  NUMBER
-          ,nrcpfcnpj NUMBER);
-  TYPE typ_tab_prejuizo IS
-    TABLE OF typ_reg_prejuizo
-      INDEX BY VARCHAR2(12);     -- Indexado por CPF/CNPJ Base (11) + inpessoa (1)
-  vr_tab_prejuizo  typ_tab_prejuizo;
-
 
   -- Verifica se a conta corrente se encontra em prejuízo
   FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
                                  , pr_nrdconta craplcm.nrdconta%TYPE) RETURN BOOLEAN;
-																 
+
     -- Verifica se a conta possui algum prejuizo ativo --> CC / EMPRESTTIMO / DESC.TITULO
   FUNCTION fn_verifica_preju_ativo(pr_cdcooper craplcm.cdcooper%TYPE
                                  , pr_nrdconta craplcm.nrdconta%TYPE
-                                 , pr_tipverif INTEGER DEFAULT 2) RETURN BOOLEAN;
-                               
-																 
+                                 , pr_tipverif INTEGER DEFAULT 2) RETURN BOOLEAN;                                
+
 	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
-	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE)
 		RETURN BOOLEAN;
 
 	-- Verifica se o prejuízo de conta corrente foi liquidado em uma data específica
@@ -73,11 +62,11 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                    ,pr_dscritic OUT VARCHAR2
                                    ,pr_tab_erro OUT gene0001.typ_tab_erro  );
-																	 
+
   -- Obtem o saldo devedor atual do prejuízo de conta corrente
 	FUNCTION fn_obtem_saldo_prejuizo_cc(pr_cdcooper IN NUMBER
 		                                , pr_nrdconta IN NUMBER)
-    RETURN NUMBER;																	 
+    RETURN NUMBER;
 
   FUNCTION fn_sld_cta_prj(pr_cdcooper   IN NUMBER --> Código da Cooperativa
                          ,pr_nrdconta   IN NUMBER --> Número da conta
@@ -93,11 +82,11 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
                              , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER;
 
-	-- Gera número de documento para lançar um determinado histórico na CRAPLCM sem duplicidade						 
+	-- Gera número de documento para lançar um determinado histórico na CRAPLCM sem duplicidade
   FUNCTION fn_gera_nrdocmto_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
 		                              , pr_nrdconta IN craplcm.nrdconta%TYPE
 																	, pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
-																	, pr_cdhistor IN craplcm.cdhistor%TYPE)	RETURN craplcm.nrdocmto%TYPE;													 
+																	, pr_cdhistor IN craplcm.cdhistor%TYPE)	RETURN craplcm.nrdocmto%TYPE;
 
    PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
@@ -128,7 +117,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 																, pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
-																
+
    PROCEDURE pc_gera_cred_cta_prj(pr_cdcooper  IN NUMBER                 --> Código da Cooperativa
                                  ,pr_nrdconta  IN NUMBER                --> Número da conta
                                  ,pr_cdoperad  IN VARCHAR2 DEFAULT '1'  --> Código do Operador
@@ -136,7 +125,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                  ,pr_dtmvtolt  IN DATE                  --> Data da cooperativa
 												   			,pr_nrdocmto  IN tbcc_prejuizo_lancamento.nrdocmto%TYPE DEFAULT NULL
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
-                                 ,pr_dscritic  OUT VARCHAR2);															
+                                 ,pr_dscritic  OUT VARCHAR2);
 
    PROCEDURE pc_gera_debt_cta_prj(pr_cdcooper  IN NUMBER                 --> Código da Cooperativa
                                  ,pr_nrdconta  IN NUMBER                --> Número da conta
@@ -345,6 +334,12 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                      ,pr_nmdcampo OUT VARCHAR2                           --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);                         --> Saida OK/NOK
 
+  PROCEDURE pc_define_situacao_cc_prej(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE   --> Código da cooperativa
+                                      ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
+                                      ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+		  				    				        	  ,pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
+                                      );
+
   -- Procedure da Tela: ESTORN, Acao: Relatorio Estorno Pagamento de Prejuizo C/C
   PROCEDURE pc_tela_imprimir_relatorio(pr_nrdconta IN crapepr.nrdconta%TYPE        --> Numero da Conta
                                       ,pr_dtmvtolt IN VARCHAR2                     --> Data de Movimento
@@ -357,6 +352,7 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                       ,pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
                                       ,pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
                                       ,pr_des_erro OUT VARCHAR2);                  --> Erros do processo
+
 
 end PREJ0003;
 /
@@ -377,12 +373,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
    Alteracoes: 27/06/2018 - P450 - Criação de procedure para consulta de saldos - pc_consulta_sld_cta_prj (Daniel/AMcom)
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)
                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom
-               18/07/2018 - P450 - Pagamento Prejuizo de Forma Automática  - pc_paga_prejuizo_cc
-							 30/10/2018 - P450 - Ajuste no pagamento do prejuízo para fixar o DTHRTRAN que é gravado na 
+               18/07/2018  -P450 - Pagamento Prejuizo de Forma Automática  - pc_paga_prejuizo_cc
+							 30/10/2018 - P450 - Ajuste no pagamento do prejuízo para fixar o DTHRTRAN que é gravado na
 							              TBCCC_PREJUIZO_DETALHE - Reginaldo - AMcom
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
-                                   ou de desconto de título em prejuízo (Fabio - AMcom).
-               
+                           ou de desconto de título em prejuízo (Fabio Adriano - AMcom).
+			         29/11/2018 - P450 - Centralzada a Chamada para a rotin PREJ0003.pc_define_situacao_cc_prej
+                            (Conta corrente, emprestimo e Desconto de titulo na mesma rotina) - Fernando Ornelas
+               29/11/2018 - P450 - estória 12166:Transferência Desconto de titulo - Controle 
+                            da situação da conta corrente (Fabio Adriano - AMcom).
+
 ..............................................................................*/
 
   -- clob para conter o dados do excel/csv
@@ -419,35 +419,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_conta_em_prejuizo;
   END fn_verifica_preju_conta;
-	
+
+
   FUNCTION fn_verifica_preju_ativo(pr_cdcooper craplcm.cdcooper%TYPE
                                  , pr_nrdconta craplcm.nrdconta%TYPE
                                  , pr_tipverif INTEGER DEFAULT 2)
     RETURN BOOLEAN AS vr_prejuizo_ativo BOOLEAN;
   -- Verifica se a CPF/CNPJ Base possui algum prejuizo ativo
   -- CC / EMPRESTTIMO / DESC.TITULO
-  --
-  --
   -- pr_tipverif => 1-Verificação por CPF/CNPJ Base (Todas as contas de um CPF/CNPJ base)
   --             => 2-Verificação apenas da Conta
 
     -- CURSORES
     -- Listar as contas de um CPF/CNPJ Base
     CURSOR cr_ass_cpfcnpj (pr_tipverif IN INTEGER) IS
-      SELECT ass.nrdconta, ass.inprejuz
+      SELECT ass.nrdconta
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND pr_tipverif  = 1   
-         AND ass.nrcpfcnpj_base = (SELECT a.nrcpfcnpj_base
+         AND ((pr_tipverif = 1   AND
+               ass.nrcpfcnpj_base IN (SELECT a.nrcpfcnpj_base
                                         FROM crapass a
                                        WHERE a.cdcooper = pr_cdcooper
                                          AND a.nrdconta = pr_nrdconta)
-      UNION
-      SELECT ass.nrdconta, ass.inprejuz
-        FROM crapass ass
-       WHERE ass.cdcooper = pr_cdcooper
-         AND pr_tipverif  = 2
-         AND ass.nrdconta = pr_nrdconta;
+               ) OR
+               (pr_tipverif = 2   AND
+                ass.nrdconta = pr_nrdconta));
     rw_ass_cpfcnpj cr_ass_cpfcnpj%ROWTYPE;
     -- Verificar prejuizo de Emprestimo/CC linha 100
     CURSOR cr_preju_empr (pr_nrdconta IN crapass.nrdconta%TYPE)IS
@@ -474,7 +470,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     vr_tipoverificacao INTEGER;
   BEGIN
     vr_prejuizo_ativo := FALSE;
-    vr_tipoverificacao := pr_tipverif;
 
     -- Tratar parametro invalido
     IF pr_tipverif NOT IN (1,2) THEN
@@ -485,8 +480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     -- VERIFICAR TODAS AS CONTAS DE UM CPF/CNPJ
     FOR rw_ass_cpfcnpj IN cr_ass_cpfcnpj (vr_tipoverificacao)LOOP
     
-      -- Verificar prejuizo de CC
-      IF rw_ass_cpfcnpj.inprejuz = 1 THEN
+      -- Verificar prejuizo de CC (Modelo Novo)
+      IF fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => rw_ass_cpfcnpj.nrdconta) THEN
          RETURN TRUE;
       END IF;
       
@@ -510,15 +506,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_prejuizo_ativo;
   END fn_verifica_preju_ativo;
+	
   
 	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
-	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE)
 		RETURN BOOLEAN AS vr_flg_ativa_preju BOOLEAN;
 	BEGIN
 		vr_flg_ativa_preju := NVL(GENE0001.fn_param_sistema (pr_cdcooper => pr_cdcooper
                                                         ,pr_nmsistem => 'CRED'
                                                         ,pr_cdacesso => 'IN_ATIVA_REGRAS_PREJU'), 'N') = 'S';
-																												
+
 		RETURN vr_flg_ativa_preju;
 	END fn_verifica_flg_ativa_prju;
 
@@ -546,12 +543,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_liquidacao;
   END fn_verifica_liquidacao_preju;
-	
+
 	-- Obtem o saldo devedor atual do prejuízo de conta corrente
 	FUNCTION fn_obtem_saldo_prejuizo_cc(pr_cdcooper IN NUMBER
 		                                , pr_nrdconta IN NUMBER)
     RETURN NUMBER IS
-	  
+
 	  CURSOR cr_prejuizo IS
 		SELECT prj.vlsdprej +
 		       prj.vljuprej +
@@ -561,20 +558,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 		 WHERE prj.cdcooper = pr_cdcooper
 		   AND prj.nrdconta = pr_nrdconta
 		   AND prj.dtliquidacao IS NULL;
-			 
+
 		vr_sldpreju NUMBER;
 	BEGIN
 		OPEN cr_prejuizo;
 		FETCH cr_prejuizo INTO vr_sldpreju;
-		
+
 		IF cr_prejuizo%NOTFOUND THEN
 			vr_sldpreju := 0;
 		END IF;
-		
+
 		CLOSE cr_prejuizo;
-		
+
 		RETURN vr_sldpreju;
-	END;																
+	END;
 
   FUNCTION fn_sld_cta_prj(pr_cdcooper   IN NUMBER --> Código da Cooperativa
                          ,pr_nrdconta   IN NUMBER --> Número da conta
@@ -695,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       FROM tbcc_prejuizo
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta
-	   AND dtliquidacao IS NULL;
+			 AND dtliquidacao IS NULL;
 
     vr_vlcreddisp NUMBER; -- Valor dos créditos disponíveis para uso no pagamento
   BEGIN
@@ -758,35 +755,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 		                              , pr_nrdconta IN craplcm.nrdconta%TYPE
 																	, pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
 																	, pr_cdhistor IN craplcm.cdhistor%TYPE) RETURN craplcm.nrdocmto%TYPE IS
-																	
+
 	  CURSOR cr_craplcm(pr_nrdocmto craplcm.nrdocmto%TYPE) IS
 		SELECT 1
-		  FROM craplcm 
+		  FROM craplcm
 		 WHERE cdcooper = pr_cdcooper
 		   AND nrdconta = pr_nrdconta
 			 AND dtmvtolt = pr_dtmvtolt
 			 AND cdhistor = pr_cdhistor
 			 AND nrdocmto = pr_nrdocmto;
-			
+
 		vr_jaexiste INTEGER;
 		vr_prefixo  INTEGER := 99999;
 		vr_nrdocmto craplcm.nrdocmto%TYPE;
 	BEGIN
 		LOOP
 			vr_nrdocmto := to_number(to_char(vr_prefixo, '00000') || to_char(pr_cdhistor));
-			
+
 			OPEN cr_craplcm(vr_nrdocmto);
 			FETCH cr_craplcm INTO vr_jaexiste;
-			
+
 			IF cr_craplcm%NOTFOUND THEN
 				CLOSE cr_craplcm;
 				EXIT;
 			END IF;
-			
+
 			vr_prefixo := vr_prefixo - 1;
 			CLOSE cr_craplcm;
 		END LOOP;
-		
+
 		RETURN vr_nrdocmto;
 	END fn_gera_nrdocmto_craplcm;
 
@@ -1128,7 +1125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao cancelar produtos/serviços para a conta ' || pr_nrdconta;
 
@@ -1144,7 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                          , pr_cdcritic => vr_cdcritic
                          , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao debitar valores provisionados de juros +60 para conta ' || pr_nrdconta;
 
@@ -1161,7 +1158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                    , pr_cdcritic => vr_cdcritic
                                                    , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao recuperar saldo devedor da conta corrente ' || pr_nrdconta;
 
@@ -1231,8 +1228,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      END;
 
      BEGIN
+       --Transfere conta para prejuizo AQUI
        UPDATE crapass pass
-          SET pass.cdsitdct = 2, -- 2-Em Prejuizo
+          SET --pass.cdsitdct = 2, -- 2-Em Prejuizo  -- Comentado por Ornelas, pois está na nova rotina pc_define_situacao_cc_prej
               pass.inprejuz = 1
         WHERE pass.cdcooper = pr_cdcooper
           AND pass.nrdconta = pr_nrdconta;
@@ -1242,6 +1240,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
           vr_dscritic := 'Erro de update na CRAPASS: '||SQLERRM;
         RAISE vr_exc_saida;
      END;
+     -- ornelas
+     -- Grava situação da conta corrente antes da transferência para Prejuizo
+     pc_define_situacao_cc_prej(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_cdcritic => vr_cdcritic 
+                                        ,pr_dscritic => vr_dscritic );
+                                         
+     if nvl(vr_cdcritic,0) > 0  or TRIM(vr_dscritic) is not null then
+         RAISE vr_exc_saida;
+     end if;    
 
      -- Registra as informações da transferência no extrato do prejuízo
      pc_lanca_transf_extrato_prj(pr_idprejuizo => vr_idprejuizo
@@ -1520,7 +1528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     Sistema :
     Sigla   : PREJ
     Autor   : Rangel Decker  AMcom
-    Data    : Junho/2018.                  Ultima atualizacao: 09/11/2018
+    Data    : Junho/2018.                  Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -1528,8 +1536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  :Alteração do Tipo de Conta em prejuízo liquidado
 
-    Alteracoes: 09/11/2018 - Ajustes nos cursores da liquidação
-	                           (Reginaldo/AMcom/P450)	                    
+    Alteracoes:
     ..............................................................................*/
 
   -- Recupera informações dos prejuízo a serem liquidados (saldo devedor total igual a zero)
@@ -1545,34 +1552,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
            tbprj.vljuprej +
            tbprj.vljur60_ctneg +
            tbprj.vljur60_lcred) = 0;
-
+           
+  --Seleciona informações do cadastro de emprestimos
+  CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE,
+                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
+    SELECT count(*) qtde_crapepr 
+      FROM crapepr
+     WHERE crapepr.cdcooper = pr_cdcooper    
+       AND crapepr.nrdconta = pr_nrdconta
+       AND crapepr.inprejuz = 1  
+       AND crapepr.vlsdprej > 0;
+  rw_crapepr cr_crapepr%ROWTYPE;  
+  
+  -- Borderos de Desconto de Titulos
+  CURSOR cr_crapbdt (pr_cdcooper IN crapepr.cdcooper%TYPE,
+                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
+    SELECT count(*) qtde_crapbdt 
+      FROM crapbdt b
+     WHERE b.cdcooper = pr_cdcooper 
+       AND b.nrdconta = pr_nrdconta
+       AND b.inprejuz = 1
+       AND b.dtliqprj is null;
+  rw_crapbdt cr_crapbdt%ROWTYPE;    
+  
   -- Contas não em prejuizo INPREJUZ=0 e com situação em prejuizo CDSITDCT=2
   CURSOR cr_conta_nprej_sitprej IS
    SELECT ass.nrdconta,
           ass.cdcooper 
      FROM crapass ass
     WHERE ass.inprejuz = 0
-      AND ass.cdsitdct = 2
-			AND EXISTS (
-			      SELECT 1
-						  FROM tbcc_prejuizo prj
-						 WHERE prj.cdcooper = ass.cdcooper
-						   AND prj.nrdconta = ass.nrdconta
-			    ) ;   	
+     and  ass.cdsitdct = 2;   
   rw_cr_conta_nprej_sitprej cr_conta_nprej_sitprej%ROWTYPE;    
   
   -- Prejuizo mais recente
   CURSOR cr_prej_recente (pr_cdcooper  IN crapass.cdcooper%TYPE,     -- tbcc_prejuizo.cdcooper%TYPE,
                           pr_nrdconta IN crapass.nrdconta%TYPE ) IS -- tbcc_prejuizo.nrdconta%TYPE ) IS
-    SELECT cdsitdct_original 
-		  FROM (SELECT DISTINCT
-										 tbprj.dtinclusao,
+    SELECT DISTINCT
+           MAX(tbprj.dtinclusao) dtinc,
            tbprj.cdsitdct_original 
     FROM tbcc_prejuizo tbprj
     WHERE tbprj.cdcooper = pr_cdcooper
      AND  tbprj.nrdconta = pr_nrdconta
-						ORDER BY dtinclusao DESC)
-		WHERE rownum = 1;
+     AND  ROWNUM = 1
+    GROUP BY tbprj.cdsitdct_original
+    ORDER BY dtinc desc;
   rw_prej_recente cr_prej_recente%ROWTYPE;
 
   vr_cdcritic  NUMBER(3);
@@ -1583,10 +1606,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
  BEGIN
-   -- Recupera calendário de datas da cooperativa
-   OPEN BTCH0001.cr_crapdat(pr_cdcooper);
-   FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-   CLOSE BTCH0001.cr_crapdat;
+    -- Recupera calendário de datas da cooperativa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
 
     FOR rw_cr_conta_nprej_sitprej IN cr_conta_nprej_sitprej LOOP
         BEGIN                              
@@ -1621,29 +1644,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     -- Percorre a lista dos prejuízos que devem ser liquidados
     FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
+      
         -- Restaura a situação da conta corrente e retira a flag de "em prejuízo"
         BEGIN                              
-        UPDATE crapass a
+            
+            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
+                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN    
+            BEGIN        
+              UPDATE crapass a
+                 SET a.inprejuz = 0,
+                     a.cdsitdct = rw_conta_liquida.cdsitdct_original
+              WHERE a.cdcooper = pr_cdcooper
+                AND a.nrdconta = rw_conta_liquida.nrdconta;       
+            END;    
+            ELSE BEGIN
+                   UPDATE crapass a
                      SET a.inprejuz = 0
                    WHERE a.cdcooper = pr_cdcooper
                      AND a.nrdconta = rw_conta_liquida.nrdconta;  
-										 
-            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
-                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN           
-              UPDATE crapass a
-                 SET a.cdsitdct = rw_conta_liquida.cdsitdct_original
-              WHERE a.cdcooper = pr_cdcooper
-                AND a.nrdconta = rw_conta_liquida.nrdconta;       
+                 END;    
             END IF;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic :=99999;
-          vr_dscritic := 'Erro ao atualizar a tabela CRAPASS. '||SQLERRM;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic :=99999;
+            vr_dscritic := 'Erro ao atualizar a tabela CRAPASS. '||SQLERRM;
 
-          -- ********** TROCAR POR gera_log *******************
-          RAISE vr_exc_saida;
-      END;
-
+            -- ********** TROCAR POR gera_log *******************
+            RAISE vr_exc_saida;    
+        END ;
+        
       -- Obtém o saldo total da conta transitória
       vr_sldconta:= fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => rw_conta_liquida.nrdconta
@@ -1652,13 +1681,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       IF vr_sldconta > 0 THEN
         -- Gera lançamento para transferência do saldo disponível da conta transitória para a conta corrente
         pc_gera_transf_cta_prj(pr_cdcooper  => pr_cdcooper               --> Código da Cooperativa
-                           ,pr_nrdconta => rw_conta_liquida.nrdconta --> Número da conta
-                           ,pr_cdoperad => 1                         --> Código do Operador
-                           ,pr_vllanmto => vr_sldconta               --> Valor do Lançamento
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                           ,pr_versaldo => 0                         --> Não valida o saldo disponível
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic);
+                              ,pr_nrdconta => rw_conta_liquida.nrdconta --> Número da conta
+                              ,pr_cdoperad => 1                         --> Código do Operador
+                              ,pr_vllanmto => vr_sldconta               --> Valor do Lançamento
+                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                              ,pr_versaldo => 0                         --> Não valida o saldo disponível
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
 
         IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
            -- ********** TROCAR POR gera_log *******************
@@ -1700,6 +1729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                              ,pr_tab_erro => pr_tab_erro);
 				ROLLBACK;
  END  pc_liquida_prejuizo_cc;
+
 
   PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
@@ -2734,7 +2764,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
    WHEN OTHERS THEN
      pr_cdcritic := 0;
      pr_dscritic := 'Erro não tratado na rotina PREJ0003.pc_calc_juros_remun_prov: ' || SQLERRM;
- END pc_calc_juros_remun_prov; 
+ END pc_calc_juros_remun_prov;
 
  PROCEDURE pc_pagar_prejuizo_cc(pr_cdcooper IN crapass.cdcooper%TYPE
                               , pr_nrdconta IN crapass.nrdconta%TYPE
@@ -2833,7 +2863,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   vr_des_erro VARCHAR2(2000);
 
 	vr_exc_saida EXCEPTION;
-	
+
 	vr_dthrtran DATE := SYSDATE; -- Data/hora da transação para armazenar nos lanctos da TBCC_PREJUIZO_DETALHE
  BEGIN
     pr_cdcritic := 0;
@@ -2899,7 +2929,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2323
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vllanciof
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -2953,7 +2983,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2323
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vllanciof
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -3001,7 +3031,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2727
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vljr60_ctneg + vr_vljur60_lcred
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -3068,7 +3098,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                            , pr_cdcritic => vr_cdcritic
                                            , pr_dscritic => vr_dscritic
                                            );
-																	
+
 			  -- Lança juros remuneratórios no extrato
         pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
                                , pr_nrdconta => pr_nrdconta
@@ -3076,7 +3106,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                , pr_cdhistor => 2718
                                , pr_idprejuizo => rw_contaprej.idprejuizo
                                , pr_vllanmto => vr_vljupre_prov
-							   , pr_dthrtran => vr_dthrtran
+															 , pr_dthrtran => vr_dthrtran
                                , pr_cdcritic => vr_cdcritic
                                , pr_dscritic => vr_dscritic);
 
@@ -3101,7 +3131,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2729
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => vr_vljupre_prov + vr_vljupre
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -3163,7 +3193,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                              , pr_cdhistor => 2725
                              , pr_idprejuizo => rw_contaprej.idprejuizo
                              , pr_vllanmto => vr_vlprinc
-							 , pr_dthrtran => vr_dthrtran
+														 , pr_dthrtran => vr_dthrtran
                              , pr_cdcritic => vr_cdcritic
                              , pr_dscritic => vr_dscritic);
 
@@ -3177,7 +3207,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     -- Lançar valor do abono no extrato do prejuízo
     IF nvl(pr_vlrabono, 0) > 0 THEN
-      
+
       -- Valor do abono concedido no pagamento
       pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
                               , pr_nrdconta => pr_nrdconta
@@ -3185,7 +3215,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2723
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrabono
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -3195,49 +3225,49 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                 ,pr_dsdchave => to_char(pr_cdcooper)||';'||
                                  to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') ||';'||
                                 '1;100;650010');
-      vr_nrdocmto := 999992723; 
+      vr_nrdocmto := 999992723;
       LOOP
 
-      -- Efetua lancamento de crédito na CRAPLCM(LANC0001)
-      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        ,pr_cdagenci => 1
-                                        ,pr_cdbccxlt => 100
-                                        ,pr_nrdolote => 650010
-                                        ,pr_nrdconta => pr_nrdconta
+        -- Efetua lancamento de crédito na CRAPLCM(LANC0001)
+        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_cdagenci => 1
+                                          ,pr_cdbccxlt => 100
+                                          ,pr_nrdolote => 650010
+                                          ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrdocmto => vr_nrdocmto
-                                        ,pr_cdoperad => '1'
-                                        ,pr_nrdctabb => pr_nrdconta
-                                        ,pr_nrseqdig => vr_nrseqdig
-                                        ,pr_dtrefere => rw_crapdat.dtmvtolt
-                                        ,pr_vllanmto => pr_vlrabono
-                                        ,pr_cdhistor => 2723
-                                        -- OUTPUT --
-                                        ,pr_tab_retorno => vr_tab_retorno
-                                        ,pr_incrineg => vr_incrineg
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
+                                          ,pr_cdoperad => '1'
+                                          ,pr_nrdctabb => pr_nrdconta
+                                          ,pr_nrseqdig => vr_nrseqdig
+                                          ,pr_dtrefere => rw_crapdat.dtmvtolt
+                                          ,pr_vllanmto => pr_vlrabono
+                                          ,pr_cdhistor => 2723
+                                          -- OUTPUT --
+                                          ,pr_tab_retorno => vr_tab_retorno
+                                          ,pr_incrineg => vr_incrineg
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
 
-      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-        IF vr_incrineg = 0 THEN
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF vr_incrineg = 0 THEN
             IF vr_cdcritic = 92 THEN
               vr_nrdocmto := vr_nrdocmto + 10000;
               continue;
             END IF;
-          RAISE vr_exc_saida;
-        ELSE
-            
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao creditar o abono do prejuízo na conta corrente.';
+            RAISE vr_exc_saida;
+          ELSE
 
-          RAISE vr_exc_saida;
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao creditar o abono do prejuízo na conta corrente.';
+
+            RAISE vr_exc_saida;
+          END IF;
         END IF;
-      END IF;
 
         EXIT;
-      
+
       END LOOP;
-      
+
 
       UPDATE tbcc_prejuizo
          SET vlrabono = nvl(vlrabono, 0) + pr_vlrabono
@@ -3252,7 +3282,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2721
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -3263,7 +3293,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_cdhistor => 2733
                               , pr_idprejuizo => rw_contaprej.idprejuizo
                               , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
-							  , pr_dthrtran => vr_dthrtran
+															, pr_dthrtran => vr_dthrtran
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
@@ -3452,10 +3482,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                               , pr_nrdconta => pr_nrdconta
                                               , pr_nrdctabb => pr_nrdconta
                                               , pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')
-                                              , pr_nrdocmto => fn_gera_nrdocmto_craplcm(pr_cdcooper => pr_cdcooper
-																					  , pr_nrdconta => pr_nrdconta
-																					  , pr_dtmvtolt => pr_dtmvtolt
-																					  , pr_cdhistor => 2323)
+                                              , pr_nrdocmto => fn_gera_nrdocmto_craplcm(pr_cdcooper
+																							                                        , pr_nrdconta
+																																											, pr_dtmvtolt
+																																											, 2323)
                                               , pr_cdhistor => 2323
                                               , pr_vllanmto => pr_vllanmto
                                               , pr_cdpesqbb => to_char(pr_vlbasiof,'fm000g000g000d00')
@@ -4474,9 +4504,9 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
                                    , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
-								   , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
+																	 , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
-								   , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
+																	 , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
@@ -4784,8 +4814,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                           2723, --> ABONO PREJUIZO
                           2725, --> BX.PREJ.PRIN
                           2727, --> BX.PREJ.JUROS
-                          2729) --> BX.PREJ.JUROS                          
-       AND to_char(d.dtmvtolt, 'MM/YYYY') = to_char(pr_dtmvtolt, 'MM/YYYY') 
+                          2729) --> BX.PREJ.JUROS
+       AND to_char(d.dtmvtolt, 'MM/YYYY') = to_char(pr_dtmvtolt, 'MM/YYYY')
   ORDER BY d.dtmvtolt DESC, d.dthrtran DESC, d.cdhistor DESC;
     rw_detalhe_ult_lanc cr_detalhe_ult_lanc%ROWTYPE;
 
@@ -5044,10 +5074,6 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		         25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 						  	  PJ 450 - Diego Simas (AMcom)
 
-                 16/10/2018 - Ajuste na rotina para realizar o estorno do abono na conta corrente do cooperado.
-                              PRJ450-Regulatorio(Odirlei-AMcom)
-
-
     -------------------------------------------------------------------------------------------------------------*/
 
     -- CURSORES --
@@ -5064,7 +5090,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                           2723, --> ABONO PREJUIZO
                           2725, --> BX.PREJ.PRIN
                           2727, --> BX.PREJ.JUROS
-                          2729) --> BX.PREJ.JUROS        
+                          2729) --> BX.PREJ.JUROS
   ORDER BY d.dtmvtolt DESC, d.dthrtran DESC;
     rw_detalhe_ult_lanc cr_detalhe_ult_lanc%ROWTYPE;
 
@@ -5094,7 +5120,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
         OR d.cdhistor = 2733) --> 2733 - Débito para pagamento do prejuízo (para fins contábeis)
   ORDER BY d.dtmvtolt, d.dthrtran DESC, d.cdhistor ASC;
     rw_detalhe_tot_est cr_detalhe_tot_est%ROWTYPE;
-		
+
 	 -- Carrega o calendário de datas da cooperativa
 	 rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -5131,11 +5157,11 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     --Variaveis de Excecoes
     vr_exc_ok    EXCEPTION;
     vr_exc_erro  EXCEPTION;
-		
+
 		vr_incrineg INTEGER;
 		vr_tab_retorno LANC0001.typ_reg_retorno;
 		vr_nrseqdig craplcm.nrseqdig%TYPE;
-		
+
 		vr_vlest_princ NUMBER;
 		vr_vlest_jur60 NUMBER;
 		vr_vlest_jupre NUMBER;
@@ -5143,7 +5169,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		vr_vlest_IOF   NUMBER := 0;
     vr_vldpagto    NUMBER := 0;
     vr_vlest_saldo NUMBER := 0;
-    
+
   BEGIN
     pr_des_erro := 'OK';
     -- Extrai dados do xml
@@ -5162,7 +5188,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
       -- Levanta exceção
       RAISE vr_exc_saida;
     END IF;
-		
+
 		OPEN BTCH0001.cr_crapdat(pr_cdcooper);
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
@@ -5185,13 +5211,13 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                            pr_des_erro => vr_dscritic);
 
     -----> PROCESSAMENTO PRINCIPAL <-----
-    
+
     IF nvl(ltrim(pr_justific), 'VAZIO') = 'VAZIO'  THEN
        vr_cdcritic := 0;
        vr_dscritic := 'Obrigatório o preenchimento do campo justificativa';
        RAISE vr_exc_erro;
     END IF;
-    
+
     OPEN cr_detalhe_ult_lanc(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta);
 
@@ -5269,106 +5295,106 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 						END IF;
        END LOOP;
 
-       
-       
-      IF vr_valordeb > 0 THEN
-       -- Insere lançamento com histórico 2738
-       BEGIN
-         INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
-                 dtmvtolt
-               , cdagenci
-               , nrdconta
-               , nrdocmto
-               , cdhistor
-               , vllanmto
-               , dthrtran
-               , cdoperad
-               , cdcooper
-               , cdorigem
-          )
-          VALUES (
-                 rw_crapdat.dtmvtolt
-               , vr_cdagenci
-               , pr_nrdconta
-               , 999992722
-               , 2738 
-               , vr_valordeb
-               , SYSDATE
-               , vr_cdoperad
-               , pr_cdcooper
-               , 5
-          );
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro de insert na TBCC_PREJUIZO_LANCAMENTO: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-			
-			vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
-                                    ,pr_nmdcampo => 'NRSEQDIG'
-                                    ,pr_dsdchave => to_char(pr_cdcooper)||';'||
-                                    to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
-                                    '1;100;650009');
 
-        vr_nrdocmto := 999992722; 
+
+      IF vr_valordeb > 0 THEN
+         -- Insere lançamento com histórico 2738
+         BEGIN
+           INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
+                   dtmvtolt
+                 , cdagenci
+                 , nrdconta
+                 , nrdocmto
+                 , cdhistor
+                 , vllanmto
+                 , dthrtran
+                 , cdoperad
+                 , cdcooper
+                 , cdorigem
+            )
+            VALUES (
+                   rw_crapdat.dtmvtolt
+                 , vr_cdagenci
+                 , pr_nrdconta
+                 , 999992722
+                 , 2738
+                 , vr_valordeb
+                 , SYSDATE
+                 , vr_cdoperad
+                 , pr_cdcooper
+                 , 5
+            );
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro de insert na TBCC_PREJUIZO_LANCAMENTO: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+
+        vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
+                                      ,pr_nmdcampo => 'NRSEQDIG'
+                                      ,pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                      to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
+                                      '1;100;650009');
+
+        vr_nrdocmto := 999992722;
         LOOP
-          
-			LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                       , pr_cdagenci => vr_cdagenci
-                                       , pr_cdbccxlt => vr_nrdcaixa
-                                       , pr_nrdolote => 650009
-                                       , pr_nrdconta => pr_nrdconta
+
+        LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         , pr_cdagenci => vr_cdagenci
+                                         , pr_cdbccxlt => vr_nrdcaixa
+                                         , pr_nrdolote => 650009
+                                         , pr_nrdconta => pr_nrdconta
                                          , pr_nrdocmto => vr_nrdocmto
-                                       , pr_cdhistor => 2719
-                                       , pr_nrseqdig => vr_nrseqdig
-                                       , pr_vllanmto => vr_valordeb
-                                       , pr_nrdctabb => pr_nrdconta
-                                       , pr_cdpesqbb => 'ESTORNO DE PAGAMENTO DE PREJUÍZO DE C/C'
-                                       , pr_dtrefere => rw_crapdat.dtmvtolt
-                                       , pr_hrtransa => gene0002.fn_busca_time
+                                         , pr_cdhistor => 2719
+                                         , pr_nrseqdig => vr_nrseqdig
+                                         , pr_vllanmto => vr_valordeb
+                                         , pr_nrdctabb => pr_nrdconta
+                                         , pr_cdpesqbb => 'ESTORNO DE PAGAMENTO DE PREJUÍZO DE C/C'
+                                         , pr_dtrefere => rw_crapdat.dtmvtolt
+                                         , pr_hrtransa => gene0002.fn_busca_time
                                          , pr_cdoperad => vr_cdoperad
-                                       , pr_cdcooper => pr_cdcooper
-                                       , pr_cdorigem => 5
-																			 , pr_incrineg => vr_incrineg
-																			 , pr_tab_retorno => vr_tab_retorno
-																			 , pr_cdcritic => vr_cdcritic
-																			 , pr_dscritic => vr_dscritic);
-																			 
-		  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                                         , pr_cdcooper => pr_cdcooper
+                                         , pr_cdorigem => 5
+                                         , pr_incrineg => vr_incrineg
+                                         , pr_tab_retorno => vr_tab_retorno
+                                         , pr_cdcritic => vr_cdcritic
+                                         , pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
             IF vr_incrineg = 0 THEN
               IF vr_cdcritic = 92 THEN
                 vr_nrdocmto := vr_nrdocmto + 10000;
                 continue;
-			  END IF;
+        END IF;
               RAISE vr_exc_erro;
             ELSE
-				RAISE vr_exc_erro;
-			END IF;
+              RAISE vr_exc_erro;
+            END IF;
           END IF;
-          
+
           EXIT;
-        
+
         END LOOP;
-        
-        
+
+
       END IF;
-      
+
       vr_vldpagto := nvl(vr_vldpagto,0) - nvl(vr_valordeb,0);
-      
+
     ELSE
        CLOSE cr_detalhe_ult_lanc;
     END IF;
-    
+
     --> Extornar Abono
-    IF vr_vldpagto > 0 AND 
+    IF vr_vldpagto > 0 AND
        vr_vlest_abono > 0 THEN
-      
+
      IF vr_vlest_abono < vr_vldpagto THEN
        vr_dscritic := 'Não possui valor de abono suficiente para estorno do pagamento.';
-       RAISE vr_exc_erro;     
+       RAISE vr_exc_erro;
      END IF;
-    
+
       --> Estorno na prejuizo detalhe
       BEGIN
         INSERT INTO tbcc_prejuizo_detalhe (
@@ -5397,19 +5423,19 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
         WHEN OTHERS THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Erro de insert na tbcc_prejuizo_detalhe(2724): '||SQLERRM;
-        RAISE vr_exc_erro;
-      END;                    
-      
+          RAISE vr_exc_erro;
+      END;
+
       vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
                                 ,pr_nmdcampo => 'NRSEQDIG'
                                 ,pr_dsdchave => to_char(pr_cdcooper)||';'||
                                                 to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
                                                '1;100;650009');
 
-      vr_nrdocmto := 999992724; 
+      vr_nrdocmto := 999992724;
       LOOP
-          
-        LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
+
+      LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                        , pr_cdagenci => vr_cdagenci
                                        , pr_cdbccxlt => vr_nrdcaixa
                                        , pr_nrdolote => 650009
@@ -5429,30 +5455,30 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                        , pr_tab_retorno => vr_tab_retorno
                                        , pr_cdcritic => vr_cdcritic
                                        , pr_dscritic => vr_dscritic);
-  																			 
-        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
           IF vr_incrineg = 0 THEN
             IF vr_cdcritic = 92 THEN
               vr_nrdocmto := vr_nrdocmto + 10000;
               continue;
-            END IF;
+      END IF;
             RAISE vr_exc_erro;
           ELSE
             RAISE vr_exc_erro;
           END IF;
         END IF;
-          
+
         EXIT;
-        
+
       END LOOP;
-      
+
       --> atualizar valor de abono com o valor que realmente conseguiu abonar
       vr_vlest_abono := vr_vldpagto;
       vr_vldpagto    := 0;
-      
-    END IF;   
-		
-		
+
+    END IF;
+
+
 		BEGIN
 			UPDATE tbcc_prejuizo prj
 				 SET prj.vlrabono = prj.vlrabono - nvl(vr_vlest_abono, 0)
@@ -5521,7 +5547,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
     Frequencia : -----
     Objetivo   : Rotina para consultar o estorno de pagamento de prejuízo de conta corrente.
-    
+
     Alterações : 16/10/2018 - Ajuste na rotina para realizar o estorno do abono na conta corrente do cooperado.
                               PRJ450-Regulatorio(Odirlei-AMcom)
 
@@ -5647,6 +5673,106 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_consulta_estorno_preju;
+
+
+  PROCEDURE pc_define_situacao_cc_prej(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE   --> Código da cooperativa
+                                      ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE  --> Conta do cooperado
+                                      ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+		  				    				        	  ,pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
+                                      ) IS
+  
+    /* .............................................................................
+
+     Programa: pc_define_situacao_cc_prej
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Fabio Adriano (AMcom)
+     Data    : Novemmbro/2018.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia : sempre que for chamado
+     Objetivo   : Define a situação da conta quando passada pra prejuizo
+     Alteracoes :
+
+     ..............................................................................*/
+  BEGIN   
+   declare
+     --cursores
+     -- Verifica se a conta já está marcada como "em preuízo"
+     CURSOR cr_crapass  (pr_cdcooper  crapass.cdcooper%TYPE,
+                         pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT a.inprejuz
+           , a.cdsitdct
+        FROM crapass a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta   = pr_nrdconta;
+     rw_crapass  cr_crapass%ROWTYPE;
+      
+     -- Variável de críticas
+      vr_cdcritic      integer;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+      vr_erro_transfprej EXCEPTION;
+
+      -- Variaveis padrao
+      vr_cdcooper        PLS_INTEGER;
+      vr_cdoperad        VARCHAR2(100);
+      
+  BEGIN
+      
+      -- consulta conta
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;    
+
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic:= 651;
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapass;
+      END IF;
+     
+      --Altera situacao da conta AQUI
+      if rw_crapass.cdsitdct <> 2 then
+        BEGIN
+           UPDATE
+             crapass
+           SET
+             crapass.CDSITDCT_ORIGINAL = rw_crapass.cdsitdct ,
+             crapass.cdsitdct = 2
+        WHERE
+               crapass.cdcooper = pr_cdcooper
+           AND crapass.nrdconta = pr_nrdconta;
+        EXCEPTION
+           WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao alterar a situacao da conta para prejuizo: ' || SQLERRM;
+           RAISE vr_erro_transfprej;
+        END;
+      end if;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      WHEN vr_erro_transfprej THEN
+        -- Efetuar retorno do erro 
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao alterar a situacao da conta para prejuizo: ' ||SQLERRM; 
+      
+   END;   
+  
+  END pc_define_situacao_cc_prej;                                     
+
 
   PROCEDURE pc_tela_imprimir_relatorio(pr_nrdconta IN crapepr.nrdconta%TYPE        --> Numero da Conta
                                       ,pr_dtmvtolt IN VARCHAR2                     --> Data de Movimento
@@ -5926,6 +6052,9 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     END;
 
   END pc_tela_imprimir_relatorio;
+
+ 
+
 
 END PREJ0003;
 /

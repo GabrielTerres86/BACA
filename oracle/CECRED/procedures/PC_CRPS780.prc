@@ -27,6 +27,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                            Exclusão da implementação referente a transferência de 
                            conta corrente conforme solicitação SM 6 - M324
                            (Rafael Monteiro - Mout'S).
+              29/11/2018 - P450 - estória 12166:Transferência Desconto de titulo - Controle 
+                            da situação da conta corrente (Fabio Adriano - AMcom).
+                                         
     ............................................................................. */
 
    vl_flgprocesso integer := 3; -- para efeito de testes 1--gera só emprestimos; 2--gera so cc; 3--ambos
@@ -62,13 +65,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
          AND epr.cdcooper = ris.cdcooper
          AND epr.nrdconta = ris.nrdconta
          AND epr.nrctremp = ris.nrctremp
+         AND epr.tpemprst IN (0,1)
          AND epr.inprejuz = 0
          AND epr.inliquid = 0
          AND ris.innivris IN (9,10) -- risco H
          AND ris.cdorigem = 3 -- emprestimos
          AND ris.inddocto = 1
          AND (TRUNC(dat.dtmvtolt) - TRUNC(ris.dtdrisco)) > 179
-         AND ris.qtdiaatr > 179
+         --AND ris.qtdiaatr > 179
+         AND DECODE(epr.tpemprst,1,NULL,ris.qtdiaatr) > 179
          AND ris.dttrfprj IS NOT NULL
          AND ris.dttrfprj <= dat.dtmvtolt -- data atual
          AND ris.dtrefere = dat.dtmvtoan -- dia de ontem
@@ -178,7 +183,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                 gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
                                     ,pr_cdoperad => '1'
                                     ,pr_dscritic => vr_dscritic
-                                    ,pr_dsorigem => 'AYLLOS'
+                                    ,pr_dsorigem => 'AIMARO'
                                     ,pr_dstransa => 'Falha Transf Prejuizo PP'
                                     ,pr_dttransa => trunc(sysdate)
                                     ,pr_flgtrans => 1
@@ -188,6 +193,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrdconta => rw_busca_epr.nrdconta
                                     ,pr_nrdrowid => vr_nrdrowid);
 
+              ELSE 
+                
+                  --Define a situação da conta para prejuizo 
+                  PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => rw_busca_cooper.cdcooper
+                                                     ,pr_nrdconta => rw_busca_epr.nrdconta
+                                                     ,pr_cdcritic => vr_cdcritic 
+                                                     ,pr_dscritic => vr_dscritic );
+                                                       
+                  if TRIM(vr_dscritic) is not null then
+                      -- Gerar LOG
+                      gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
+                                          ,pr_cdoperad => '1'
+                                          ,pr_dscritic => vr_dscritic
+                                          ,pr_dsorigem => 'AIMARO'
+                                          ,pr_dstransa => 'Falha ao alterar a situacao da conta para prejuizo'
+                                          ,pr_dttransa => trunc(sysdate)
+                                          ,pr_flgtrans => 1
+                                          ,pr_hrtransa => to_number(to_char(sysdate,'HH24MISS'))
+                                          ,pr_idseqttl => 1
+                                          ,pr_nmdatela => 'CRPS780'
+                                          ,pr_nrdconta => rw_busca_epr.nrdconta
+                                          ,pr_nrdrowid => vr_nrdrowid);
+                  end if;   
               END IF;
               -- Confirmar a transferencia quando sem erro ou confirmar o log na base caso com erro
               COMMIT;            
@@ -218,7 +246,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                 gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
                                     ,pr_cdoperad => '1'
                                     ,pr_dscritic => vr_dscritic
-                                    ,pr_dsorigem => 'AYLLOS'
+                                    ,pr_dsorigem => 'AIMARO'
                                     ,pr_dstransa => 'Falha Transf Prejuizo TR'
                                     ,pr_dttransa => trunc(sysdate)
                                     ,pr_flgtrans => 1
@@ -228,6 +256,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrdconta => rw_busca_epr.nrdconta
                                     ,pr_nrdrowid => vr_nrdrowid);                               
     
+              ELSE 
+                
+                  --Define a situação da conta para prejuizo 
+                  PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => rw_busca_cooper.cdcooper
+                                                     ,pr_nrdconta => rw_busca_epr.nrdconta
+                                                     ,pr_cdcritic => vr_cdcritic 
+                                                     ,pr_dscritic => vr_dscritic );
+                                                       
+                  if TRIM(vr_dscritic) is not null then
+                      -- Gerar LOG
+                      gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
+                                          ,pr_cdoperad => '1'
+                                          ,pr_dscritic => vr_dscritic
+                                          ,pr_dsorigem => 'AIMARO'
+                                          ,pr_dstransa => 'Falha ao alterar a situacao da conta para prejuizo'
+                                          ,pr_dttransa => trunc(sysdate)
+                                          ,pr_flgtrans => 1
+                                          ,pr_hrtransa => to_number(to_char(sysdate,'HH24MISS'))
+                                          ,pr_idseqttl => 1
+                                          ,pr_nmdatela => 'CRPS780'
+                                          ,pr_nrdconta => rw_busca_epr.nrdconta
+                                          ,pr_nrdrowid => vr_nrdrowid);
+                  end if;   
               END IF;
             
               -- Confirmar a transferencia quando sem erro ou confirmar o log na base caso com erro
