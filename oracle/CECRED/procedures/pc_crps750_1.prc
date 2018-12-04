@@ -47,6 +47,8 @@ BEGIN
 
               23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
 
+			  22/11/2018 - Selecionar emprestimo consignado apenas no processo batch noturno (Rodrigo)
+
     ............................................................................. */
 
   DECLARE
@@ -107,7 +109,10 @@ BEGIN
            AND epr.indpagto = 0                    --> Nao pago no mês ainda
            AND epr.flgpagto = 0                    --> Débito em conta
            AND epr.tpemprst = 0                    --> Price
-           AND epr.dtdpagto <= vr_dtcursor
+           AND epr.dtdpagto <= vr_dtcursor			  
+           AND ((rw_crapdat.inproces = 1           --
+           AND   epr.tpdescto <> 2)				   --> Débito de empréstimo consignado ocorre apenas no processo batch noturno
+            OR  (rw_crapdat.inproces > 1))         --
          ORDER BY epr.nrdconta
                  ,epr.nrctremp;
 

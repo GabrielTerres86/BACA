@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --                      (Alcemir Mout's) - PRB0040107.
   --
   --         18/07/2018 - Inclusão de pc_internal_exception nas exceptions others da procedure pc_paga_titulo
-  --                      (André Bohn Mout's) - PRB0040172  
+  --                      (André Bohn Mout's) - PRB0040172
   --
   --          23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   --     
@@ -1677,7 +1677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	   04/07/2018 - Ajustado cursor cr_craprtc nas procedures pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
 	                para poder trazer todos os titulos do dia, para gerar em um unico arquivo de retorno.
 					(Alcemir Mout's) - SCTASK0010677.
-     
+		
      29/10/2018 - Ajuste critica/ mensagem / continuação do processo
                   ( Belli - Envolti - PRB0040400)
 		
@@ -10848,7 +10848,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
       -- Save point
       SAVEPOINT undopoint;
-														
+
 	  IF vr_flgpgdda THEN
 		vr_cdoperacao := 8; -- DDA
 	  ELSE
@@ -14430,7 +14430,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       Sistema  : Rotinas Internet
       Sigla    : INET
       Autor    : Alisson C. Berrido - AMcom
-      Data     : Junho/2013.                   Ultima atualizacao: 15/12/2017
+      Data     : Junho/2013.                   Ultima atualizacao: 05/11/2018
     
       Dados referentes ao programa:
     
@@ -14478,7 +14478,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	                 26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
 	
                    12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
-	
+
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -14681,25 +14681,19 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 				,crapcon b
            WHERE a.cdhisdeb = rw_craplau.cdhistor 
              AND a.cdhiscxa = b.cdhistor  
-             AND b.cdsegmto in (2,3) -- 3=energia; 2=agua.
+             AND b.cdsegmto in (2,3) -- 2=agua/ 3=energia.
 			 AND b.cdcooper = pr_cdcooper
            UNION
-            SELECT 'S' FROM crapscn,crapcon
-             WHERE crapscn.cdempcon = crapcon.cdempcon 
-               AND crapscn.cdsegmto = crapcon.cdsegmto 
-               AND crapcon.flgcnvsi = 0 -- indica que eh Proprio
-               AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
-               AND crapscn.cdsegmto IN(2,3) -- agua / energia
-               AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4))
-               AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))
+            SELECT 'S' FROM crapcon
+             WHERE crapcon.flgcnvsi = 0 -- indica que eh Proprio
+               AND crapcon.cdsegmto IN (2,3) -- 2=agua / 3=energia.
+               AND crapcon.cdempcon = TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),16,4))
+               AND crapcon.cdsegmto = TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),2,1))
+               AND TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),1,1)) = 8 -- 8=fatura, 2=titulo. -- 05/11/2018.
                AND crapcon.cdcooper = pr_cdcooper;
  		  EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-			  vr_agua_luz := 'N';
 			WHEN OTHERS THEN
- 			  pr_dscritic := 'Erro em  paga0001.pc_obtem_agend_debitos. Conta '||rw_craplau.nrdconta||' - ao identificar se é água ou luz. '||sqlerrm;
-			  -- gerando exceção
-			  RAISE vr_exc_erro;					
+			  vr_agua_luz := 'N';
 		  END;
 					
 		  IF pr_inpriori = 'S' THEN 
@@ -14965,7 +14959,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --               05/01/2018 - Adicionado tratativas para arrecadacao de FGTS/DAE.
     --                            PRJ406-FGTS(Odirlei-AMcom) 
-    -- 
+    --
     --               29/10/2018 - Ajuste critica/ mensagem / continuação do processo
     --                            ( Belli - Envolti - PRB0040400)
     --
@@ -15150,7 +15144,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_altera_situac_trans');      
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_altera_situac_trans');
       --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
       vr_dsparame :=  ' pr_cdcooper:' || pr_cdcooper || 
                       ', pr_nrdconta:' || pr_nrdconta ||
@@ -15210,7 +15204,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               RAISE vr_exc_erro;
             END IF;
             --Fechar Cursor
-            CLOSE cr_tbtransf_trans_pend;              
+            CLOSE cr_tbtransf_trans_pend;
               
             vr_idagenda := rw_tbtransf_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbtransf_trans_pend.dtdebito;
@@ -15233,7 +15227,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               RAISE vr_exc_erro;
             END IF;
             --Fechar Cursor
-            CLOSE cr_tbpagto_trans_pend;     
+            CLOSE cr_tbpagto_trans_pend;
               
             vr_idagenda := rw_tbpagto_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbpagto_trans_pend.dtdebito; 
@@ -15277,8 +15271,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               RAISE vr_exc_erro;
             END IF;
             --Fechar Cursor
-            CLOSE cr_tbspb_trans_pend;        
-                          
+            CLOSE cr_tbspb_trans_pend;
+              
             vr_idagenda := rw_tbspb_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbspb_trans_pend.dtdebito;                
         ELSIF vr_tptransa = 13 THEN
@@ -15325,15 +15319,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_idagenda := rw_tbtrib_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbtrib_trans_pend.dtdebito;
         ELSE
-    			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
-          -- não permite agendamento
-    			IF vr_tptransa NOT IN(10,12,16,17,18) THEN -- SM 454.1 - Foi inclusa a transação 18
-		    		vr_idagenda := 1;
-				    vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
-    			END IF;
+			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
+      -- não permite agendamento
+			IF vr_tptransa NOT IN(10,12,16,17,18) THEN -- SM 454.1 - Foi inclusa a transação 18
+				vr_idagenda := 1;
+				vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
+			END IF;
         
-	    	END IF;       
-                                     
+		END IF;
+
         vr_dsparame := vr_dsparlp1 ||
                        vr_dsparlp2 ||
                        ', vr_idagenda:' || vr_idagenda ||
@@ -15481,7 +15475,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         ELSE /* Transferencias */
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(1).hrfimpag,'hh24:mi'),'sssss'); 
         END IF;
-        
+
         vr_dsparame := vr_dsparlp1 ||
                        vr_dsparlp2 ||
                        ', vr_idagenda:' || vr_idagenda ||
@@ -15560,7 +15554,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 					END IF;
         END IF;
         END IF;
-        
+
         vr_dsparlp3 := ', vr_dtmvtopg:' || vr_dtmvtopg  ||
                        ', pr_dtmvtolt:' || pr_dtmvtolt  ||
                        ', SYSDATE:'     || SYSDATE      ||
@@ -15678,7 +15672,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 				        END IF;
                 --Fechar Cursor
                 CLOSE cr_crapavt;
-        
+                
                 vr_dsparame := vr_dsparlp1 ||
                                vr_dsparlp2 ||
                                vr_dsparlp3 ||
@@ -15700,7 +15694,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                        --Levantar Excecao - 29/10/2018 - INC0099999
                        RAISE vr_exc_continua;
                     END IF;
-                    --Fechar Cursor 
+                    --Fechar Cursor
                     CLOSE cr_crapass;
         
                     vr_dsparame := vr_dsparlp1 ||
@@ -15729,7 +15723,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                    RAISE vr_exc_continua;
                 END IF;
                 --Fechar Cursor
-                CLOSE cr_crapsnh;
+                CLOSE cr_crapsnh;              
                 -- Prepara mensagem - 29/10/2018 - PRB0040400                    
                 vr_dsparlp4 := ', rw_tbgen_aprova_trans_pend.nrcpf_responsavel_aprov:' ||
                                ', vr_nrctarep:' || vr_nrctarep ||
@@ -15783,7 +15777,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 END IF;
 	              -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
 		            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_altera_situac_trans');
-                
+           
                 vr_notif_dsdmensg := vr_dsdmensg;           
                 vr_dsdmensg := 'Atenção, ' || vr_nmprimtl || '!<br><br>' ||
                                'Informamos que a seguinte transação expirou:<br><br>' || 
@@ -15840,10 +15834,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
                                             ,pr_idseqttl => vr_idseqttl
-                                            ,pr_variaveis => vr_variaveis_notif); 
+                                            ,pr_variaveis => vr_variaveis_notif);                 
 	              -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
 		            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_altera_situac_trans');                                
-                -- 
+                --                    
               EXCEPTION                
                -- Gera Log e continua rotina - 29/10/2018 - PRB0040400                  
                 WHEN vr_exc_continua THEN
@@ -19273,7 +19267,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
              SET o.flgbaixa_efetiva = 1
            WHERE o.nrdident = rw_crapcob.nrdident
              AND o.tpoperac_jd = 'BO';
-      EXCEPTION
+    EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
             CECRED.pc_internal_exception (pr_cdcooper => rw_crapcob.cdcooper);  
@@ -21792,15 +21786,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' '||vr_comando;
             RAISE vr_exc_erro;
           END IF;
-	      -- Retornar nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab240');
+	        -- Retornar nome do módulo logado - 15/12/2017 - Chamado 779415
+		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab240');
         END IF; --LAST-OF
       END LOOP;
 
-      --Se processou nao for nulo
-      IF pr_flgproce IN (0,1) THEN
-        /** Define o registro como "Processado" **/
-        BEGIN
+          --Se processou nao for nulo
+          IF pr_flgproce IN (0,1) THEN
+            /** Define o registro como "Processado" **/
+            BEGIN
           UPDATE craprtc 
              SET craprtc.flgproce = 1
            WHERE craprtc.cdcooper = pr_cdcooper
@@ -21833,10 +21827,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                              ' flgproce:'   || '1' ||
                              '. ' ||sqlerrm;
                 RAISE vr_exc_erro;
-        END;
-      END IF;
-	  -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+            END;
+          END IF;
+	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
       -- Disparadores: paga0001.pc_gera_arq_cooperado          - Grava TBGEN
@@ -22865,15 +22859,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' '||vr_comando;
             RAISE vr_exc_erro;
           END IF;
-	      -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab400');
+	        -- Retorna nome do módulo logado - 15/12/2017 - Chamado 779415
+		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_gera_arq_coop_cnab400');
         END IF; --LAST-OF
       END LOOP;  
       
       -- Se processou nao for nulo
-      IF pr_flgproce IN (0,1) THEN
-        /** Define o registro como "Processado" **/
-        BEGIN
+          IF pr_flgproce IN (0,1) THEN
+            /** Define o registro como "Processado" **/
+            BEGIN
           UPDATE craprtc 
              SET craprtc.flgproce = 1
            WHERE craprtc.cdcooper = pr_cdcooper
@@ -22896,8 +22890,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                                       AND ret.nrcnvcob = craprtc.nrcnvcob
                                                       AND ret.dtocorre = craprtc.dtmvtolt
                                                       AND ret.nrretcoo = craprtc.nrremret)); 
-        EXCEPTION
-          WHEN OTHERS THEN
+            EXCEPTION
+              WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
                 -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
@@ -22908,10 +22902,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                '. ' ||sqlerrm;
                 --Levantar Excecao
                 RAISE vr_exc_erro;
-        END;
-      END IF;
-	  -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+            END;
+          END IF;
+	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
       -- Disparadores: paga0001.pc_gera_arq_cooperado          - TBGEN

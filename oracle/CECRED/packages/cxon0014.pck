@@ -9154,6 +9154,10 @@ END pc_gera_titulos_iptu_prog;
   --
   --             14/08/2015 - pc_gera_titulo_iptu e pc_gera_faturas -> inclusão do parametro pr_tpcptdoc, para identificacao do tipo de captura
   --                          (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
+  -- 
+  --             29/11/2018 - Ajustado rotina pc_inseri_lote para utilizar a sequence igual a quando executado 
+  --                          paralelismo, para que não ocorra em de utilizar o mesmo numero do nrseqdig(Debitador unico - Odirlei/AMcom ).           
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -9289,7 +9293,7 @@ END pc_gera_titulos_iptu_prog;
                   ,pr_cdagenci
                   ,pr_cdbccxlt
                   ,pr_nrdolote
-                  ,1  -- craplot.nrseqdig
+                  ,PAGA0001.fn_seq_parale_craplcm() -- craplot.nrseqdig
                   ,13 -- craplot.tplotmov
                   ,pr_cdoperad
                   ,0
@@ -9318,7 +9322,7 @@ END pc_gera_titulos_iptu_prog;
         ELSE
           -- ou atualizar o nrseqdig para reservar posição
           UPDATE craplot
-             SET craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+             SET craplot.nrseqdig = PAGA0001.fn_seq_parale_craplcm()
            WHERE craplot.ROWID = rw_craplot.ROWID
            RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
         END IF;
