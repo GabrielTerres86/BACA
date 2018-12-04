@@ -22,7 +22,7 @@
 	require_once('../gravam/uteis/funcoes_gravame.php');
 	isPostMethod();
 
-  $cddopcao   = (isset($_POST['cddopcao']))   ? $_POST['cddopcao']   : '' ;
+	$cddopcao		= (isset($_POST['cddopcao']))   ? $_POST['cddopcao']   : '' ;
     $operacao		= (isset($_POST['operacao']))   ? $_POST['operacao']   : '' ;
 	$nrdconta		= (isset($_POST['nrdconta']))   ? $_POST['nrdconta']   : 0  ;
 	$nrctremp		= (isset($_POST['nrctremp']))   ? $_POST['nrctremp']   : 0  ;
@@ -48,28 +48,28 @@
 	// Montar o xml de Requisicao
 	$xmlCarregaDados  = "";
 	$xmlCarregaDados .= "<Root>";
-	$xmlCarregaDados .= " <Dados>";
-	$xmlCarregaDados .= "  <nrdconta>" . $nrdconta . "</nrdconta>";
-	$xmlCarregaDados .= "  <nrctremp>" . $nrctremp . "</nrctremp>";
-	$xmlCarregaDados .= "  <tpctrato>" . $tpctrato . "</tpctrato>";
-    $xmlCarregaDados .= "  <nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-	$xmlCarregaDados .= "  <cddopcao>" . $cddopcao . "</cddopcao>";
-	$xmlCarregaDados .= "  <dscatbem>" . $dscatbem . "</dscatbem>";
-	$xmlCarregaDados .= "  <dstipbem>" . $dstipbem . "</dstipbem>";
-	$xmlCarregaDados .= "  <nrmodbem>" . $nrmodbem . "</nrmodbem>";
-	$xmlCarregaDados .= "  <nranobem>" . $nranobem . "</nranobem>";
-	$xmlCarregaDados .= "  <dsbemfin>" . $dsbemfin . "</dsbemfin>";
-	$xmlCarregaDados .= "  <vlrdobem>" . $vlrdobem . "</vlrdobem>";
-	$xmlCarregaDados .= "  <tpchassi>" . $tpchassi . "</tpchassi>";
-	$xmlCarregaDados .= "  <dschassi>" . $dschassi . "</dschassi>";
-	$xmlCarregaDados .= "  <dscorbem>" . $dscorbem . "</dscorbem>";
-	$xmlCarregaDados .= "  <ufdplaca>" . $ufdplaca . "</ufdplaca>";
-	$xmlCarregaDados .= "  <nrdplaca>" . $nrdplaca . "</nrdplaca>";
-	$xmlCarregaDados .= "  <nrrenava>" . $nrrenava . "</nrrenava>";
-	$xmlCarregaDados .= "  <uflicenc>" . $uflicenc . "</uflicenc>";
-	$xmlCarregaDados .= "  <nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";
-	$xmlCarregaDados .= "  <idseqbem>" . $idseqbem . "</idseqbem>";
-	$xmlCarregaDados .= " </Dados>";
+	$xmlCarregaDados .= "	<Dados>";
+	$xmlCarregaDados .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+	$xmlCarregaDados .= "		<nrctremp>" . $nrctremp . "</nrctremp>";
+	$xmlCarregaDados .= "		<tpctrato>" . $tpctrato . "</tpctrato>";
+    $xmlCarregaDados .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
+	$xmlCarregaDados .= "		<cddopcao>" . $cddopcao . "</cddopcao>";
+	$xmlCarregaDados .= "		<dscatbem>" . $dscatbem . "</dscatbem>";
+	$xmlCarregaDados .= "		<dstipbem>" . $dstipbem . "</dstipbem>";
+	$xmlCarregaDados .= "		<nrmodbem>" . $nrmodbem . "</nrmodbem>";
+	$xmlCarregaDados .= "		<nranobem>" . $nranobem . "</nranobem>";
+	$xmlCarregaDados .= "		<dsbemfin>" . $dsbemfin . "</dsbemfin>";
+	$xmlCarregaDados .= "		<vlrdobem>" . $vlrdobem . "</vlrdobem>";
+	$xmlCarregaDados .= "		<tpchassi>" . $tpchassi . "</tpchassi>";
+	$xmlCarregaDados .= "		<dschassi>" . $dschassi . "</dschassi>";
+	$xmlCarregaDados .= "		<dscorbem>" . $dscorbem . "</dscorbem>";
+	$xmlCarregaDados .= "		<ufdplaca>" . $ufdplaca . "</ufdplaca>";
+	$xmlCarregaDados .= "		<nrdplaca>" . $nrdplaca . "</nrdplaca>";
+	$xmlCarregaDados .= "		<nrrenava>" . $nrrenava . "</nrrenava>";
+	$xmlCarregaDados .= "		<uflicenc>" . $uflicenc . "</uflicenc>";
+	$xmlCarregaDados .= "		<nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";
+	$xmlCarregaDados .= "		<idseqbem>" . $idseqbem . "</idseqbem>";
+	$xmlCarregaDados .= "	</Dados>";
 	$xmlCarregaDados .= "</Root>";
 
 	$xmlResult = mensageria($xmlCarregaDados
@@ -85,46 +85,53 @@
 	echo 'hideMsgAguardo();';
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+
 		$msgErro = $xmlObject->roottag->tags[0]->cdata;
 		if ($msgErro == '') {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
 		echo 'intervenienteValidado=false;';
 		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
-	}
-	else {
+
+	} else if ($operacao == 'PROCALIENA') {
+
 		parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
 		$retAliena = processarAlienacao($xmlResult, $Url_SOA, $Auth_SOA);
-		
-		if($retAliena == true){
-			processarBaixaAditiv($xmlResult, 0, $Url_SOA, $Auth_SOA);
+
+		if ($retAliena === TRUE) {
+			processarBaixaAditiv($xmlResult, $Url_SOA, $Auth_SOA);
+		} else {
+			echo $retAliena; die;
 		}
+
+	} else if ($operacao == 'VD')  {
+
 		// Verificar se é obrigatorio aprovação do coordenador
-    	$aprovacao == 0;
+    	$aprovacao = 0;
     	if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
       		$aprovacao = $xmlObject->roottag->tags[1]->cdata;
     	}
-    
+
     	// Se é necessário pedir aprovação do coordenador
-    	if($aprovacao==1){
+    	if ($aprovacao == 1) {
 			$funcaoSim = 'SenhaCoordenador();';
-    	}else{
-      		$funcaoSim = 'SubstituiBem();';
-    	}  
-    
+    	} else {
+      		$funcaoSim = 'SubstituiBem("PROCALIENA");showMsgAguardo("Aguarde, gerando impress&atilde;o ...");';
+    	}
+
     	//echo ("console.log('aprovacao: $aprovacao');");
     	//echo ("console.log('funcaoSim: $funcaoSim');");
-    
+
 		$funcaoNao = 'CancelaSubstituicao();';
 		$msgAvisoDefault = "Este processo irá primeiro alienar o novo veículo e depois baixar/cancelar a alienação do veículo a ser substituído.";
-    
+
     	// Se ha mensagem
-		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {
 			$msgAviso = $xmlObject->roottag->tags[0]->cdata;
         	if ($msgAviso != '') {
-            	$msgAviso = "<br/>".$msgAviso;
-        	}  
-    	}   
+            	$msgAviso = "<br/>" . $msgAviso;
+        	}
+    	}
 
     	// Mostrar confirmação    
 		echo "showConfirmacao(' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?','Confirma?- Ayllos','".$funcaoSim."','".$funcaoNao."','sim.gif','nao.gif');";
