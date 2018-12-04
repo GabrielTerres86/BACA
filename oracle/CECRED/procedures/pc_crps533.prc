@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 11/06/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa:
 
@@ -330,10 +330,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             Chamado PRB0040059 (Gabriel - Mouts).
 
 			   17/08/2018 - SCTASK0018345-Borderô desconto cheque - Paulo Martins - Mouts
-
-               11/06/2018 - P450 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente
-                            (Diego Simas/AMcom)
-
 ............................................................................. */
 
      DECLARE
@@ -447,8 +443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 ,cdsitdct crapass.cdsitdct%type
                 ,cdagenci crapass.cdagenci%type
                 ,cdsitdtl crapass.cdsitdtl%TYPE
-                ,vllimcre crapass.vllimcre%TYPE
-                ,inprejuz crapass.inprejuz%TYPE);
+                ,vllimcre crapass.vllimcre%TYPE);
 
        --Tipo de tabela para associados
        TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
@@ -494,7 +489,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.cdagenci
                ,crapass.cdsitdtl
                ,crapass.vllimcre
-               ,crapass.inprejuz
           FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper;
        rw_crapass cr_crapass%ROWTYPE;
@@ -589,9 +583,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        
        vr_flg_criou_lcm   BOOLEAN := FALSE;
        vr_nrseqdig        NUMBER;
-       vr_tabretor        LANC0001.typ_reg_retorno; --> Tabela de retorno
-       vr_nmtabela        VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
-     vr_incrineg        INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
        
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
@@ -761,7 +752,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                ,pr_nrctachq crapfdc.nrctachq%TYPE
                                ,pr_nrcheque crapfdc.nrcheque%TYPE) IS
            SELECT /*+ INDEX (crapfdc crapfdc##crapfdc1) */ crapfdc.rowid
-                 ,crapfdc.tpcheque
             FROM crapfdc  crapfdc
            WHERE crapfdc.cdcooper = pr_cdcooper
            AND   crapfdc.cdbanchq = pr_cdbcoctl
@@ -796,10 +786,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          vr_flgdig        BOOLEAN;
          vr_flgsair       BOOLEAN;
          vr_cdcritic      NUMBER:= 0;
-         vr_indevchq      NUMBER:= 0;
          vr_segpar        NUMBER:= 0;
          vr_nrdocmt2      NUMBER:= 0;
-         vr_cdalinea      NUMBER:= 0;
          vr_dscritic      VARCHAR2(4000);
          vr_compl_erro    VARCHAR2(4000);
          vr_nrlotetc      craplot.nrdolote%TYPE;
@@ -977,206 +965,59 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
            vr_nrseqdig := nvl(vr_tab_chqtco(idx).nrseqarq,0);
            
            WHILE NOT vr_flg_criou_lcm LOOP
-
-             -- Chamada a LANC0001 -- 1
-             LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_tab_chqtco(idx).cdcooper
-                                               ,pr_dtmvtolt    => pr_dtmvtolt
-                                               ,pr_cdagenci    => nvl(pr_cdagenci,0)
-                                               ,pr_cdbccxlt    => nvl(pr_cdbccxlt,0)
-                                               ,pr_nrdolote    => nvl(vr_nrlotetc,0)
-                                               ,pr_nrdconta    => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                               ,pr_nrdctabb    => nvl(vr_tab_chqtco(idx).nrdctabb,0)
-                                               ,pr_nrdocmto    => nvl(vr_nrdocmt2,0)
-                                               ,pr_cdhistor    => nvl(vr_tab_chqtco(idx).cdhistor,0)
-                                               ,pr_vllanmto    => nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                               ,pr_nrseqdig    => vr_nrseqdig
-                                               ,pr_cdpesqbb    => nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
-                                               ,pr_dtrefere    => pr_dtleiarq
-                                               ,pr_cdbanchq    => nvl(vr_tab_chqtco(idx).cdbandep,0)
-                                               ,pr_cdcmpchq    => nvl(vr_tab_chqtco(idx).cdcmpdep,0)
-                                               ,pr_cdagechq    => nvl(vr_tab_chqtco(idx).cdagedep,0)
-                                               ,pr_nrctachq    => nvl(vr_tab_chqtco(idx).nrctadep,0)
-                                               ,pr_sqlotchq    => nvl(vr_tab_chqtco(idx).sqlotchq,0)
-                                               ,pr_nrlotchq    => nvl(vr_tab_chqtco(idx).nrlotchq,0)
-                                               ,pr_cdcoptfn    => 0
-                                               -- OUTPUT --
-                                               ,pr_tab_retorno => vr_tabretor
-                                               ,pr_incrineg    => vr_incrineg
-                                               ,pr_cdcritic    => vr_cdcritic
-                                               ,pr_dscritic    => vr_dscritic);
-
-             -- Se houve crítica ou erro
-             IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-
-               IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
-               -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
-               IF nvl(vr_cdcritic, 0) = 92 THEN
+           BEGIN
+             --Inserir Lancamentos de deposito a vista (CRAPLCM)
+             INSERT INTO craplcm (craplcm.cdcooper
+                               ,craplcm.dtmvtolt
+                               ,craplcm.cdagenci
+                               ,craplcm.cdbccxlt
+                               ,craplcm.nrdolote
+                               ,craplcm.nrdconta
+                               ,craplcm.nrdctabb
+                               ,craplcm.nrdocmto
+                               ,craplcm.cdhistor
+                               ,craplcm.vllanmto
+                               ,craplcm.nrseqdig
+                               ,craplcm.cdpesqbb
+                               ,craplcm.dtrefere
+                               ,craplcm.cdbanchq
+                               ,craplcm.cdcmpchq
+                               ,craplcm.cdagechq
+                               ,craplcm.nrctachq
+                               ,craplcm.sqlotchq
+                               ,craplcm.nrlotchq
+                               ,craplcm.cdcoptfn)
+                          VALUES
+                               (vr_tab_chqtco(idx).cdcooper
+                               ,pr_dtmvtolt
+                               ,nvl(pr_cdagenci,0)
+                               ,nvl(pr_cdbccxlt,0)
+                               ,nvl(vr_nrlotetc,0)
+                               ,nvl(vr_tab_chqtco(idx).nrdconta,0)
+                               ,nvl(vr_tab_chqtco(idx).nrdctabb,0)
+                               ,nvl(vr_nrdocmt2,0)
+                               ,nvl(vr_tab_chqtco(idx).cdhistor,0)
+                               ,nvl(vr_tab_chqtco(idx).vllanmto,0)
+                                 ,vr_nrseqdig
+                               ,nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
+                               ,pr_dtleiarq
+                               ,nvl(vr_tab_chqtco(idx).cdbandep,0)
+                               ,nvl(vr_tab_chqtco(idx).cdcmpdep,0)
+                               ,nvl(vr_tab_chqtco(idx).cdagedep,0)
+                               ,nvl(vr_tab_chqtco(idx).nrctadep,0)
+                               ,nvl(vr_tab_chqtco(idx).sqlotchq,0)
+                               ,nvl(vr_tab_chqtco(idx).nrlotchq,0)
+                               ,0)
+             RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;
+           EXCEPTION
+               WHEN DUP_VAL_ON_INDEX THEN
                  vr_nrseqdig := vr_nrseqdig + 100000;
-                   CONTINUE;
-               ELSE
+                 continue;
+             WHEN OTHERS THEN
                  cecred.pc_internal_exception;
-                 vr_des_erro := vr_dscritic;
-                 RAISE vr_exc_erro;
-               END IF;
-               ELSE  -- Critica de negocio.
--------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                 IF rw_crapfdc.tpcheque= 1 THEN
-                   vr_indevchq := 1;
-                 ELSE
-                   vr_indevchq := 3;                                
-             END IF;
-
-                 vr_cdcritic := 717; -- Não há saldo suficiente para operação
-
-                 /***********************************************************
-                 **************** ALINEA DE DEVOLUÇÃO ***********************
-                 ***********************************************************/
-                                 
-                 IF cr_crapneg_2%ISOPEN THEN
-                   CLOSE cr_crapneg_2;  
-                 END IF;  
-                 -- Verificar se existe alineas ja devolvidas
-                 OPEN cr_crapneg_2(pr_cdcooper => vr_tab_chqtco(idx).cdcooper
-                                  ,pr_nrdconta => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                  ,pr_nrdocmto => nvl(vr_nrdocmt2,0));
-                 FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
-
-                 -- Caso houver alguma alinea devolvida
-                 IF cr_crapneg_2%FOUND THEN
-                   CLOSE cr_crapneg_2;        
-                                  
-                   IF cr_crapneg_reg%ISOPEN THEN
-                     CLOSE cr_crapneg_reg;  
-                   END IF;  
-                                        
-                   OPEN cr_crapneg_reg(pr_cdcooper => vr_tab_chqtco(idx).cdcooper
-                                      ,pr_nrdconta => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                      ,pr_nrdocmto => nvl(vr_nrdocmt2,0)
-                                      ,pr_cdobserv => 12);
-                   FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-                                     
-                   -- Caso encontre registro de devolucao automatica com alinea 12
-                   IF cr_crapneg_reg%FOUND THEN
-                     CLOSE cr_crapneg_reg;  
-                     vr_cdalinea := 49;
-                   ELSE 
-                     CLOSE cr_crapneg_reg;  
-                     OPEN cr_crapneg_reg(pr_cdcooper => vr_tab_chqtco(idx).cdcooper
-                                        ,pr_nrdconta => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                        ,pr_nrdocmto => nvl(vr_nrdocmt2,0)
-                                        ,pr_cdobserv => 11);
-                     FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-                                      
-                     -- Caso encontre registro de devolucao automatica com alinea 11
-                     IF cr_crapneg_reg%FOUND THEN
-                       CLOSE cr_crapneg_reg;  
-                       vr_cdalinea := 12;
-                     ELSE
-                       CLOSE cr_crapneg_reg;  
-                       vr_cdalinea := 49;
-                     END IF;
-                   END IF;
-                 ELSE
-                   CLOSE cr_crapneg_2;  
-                   vr_cdalinea:= 11;
-                 END IF;
-
-                 /***********************************************************
-                 **************** GRAVAR INFORMAÇÕES NO CRRL526 *************
-                 ***********************************************************/
-                                  
-                 --Inserir registro na tabela de rejeicao
-                 BEGIN
-                   INSERT INTO craprej (cdcooper
-                                       ,dtrefere
-                                       ,nrdconta
-                                       ,nrdocmto
-                                       ,vllanmto
-                                       ,nrseqdig
-                                       ,cdcritic
-                                       ,cdpesqbb
-                                       ,tpintegr
-                                       ,nrdctitg) -- Conta depositada
-                              VALUES   (vr_tab_chqtco(idx).cdcooper
-                                       ,pr_dtleiarq
-                                       ,nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                       ,nvl(vr_nrdocmt2,0)
-                                       ,nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                       ,nvl(vr_nrseqdig,0)
-                                       ,nvl(vr_cdcritic,0)
-                                       ,nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
-                                       ,1
-                                       ,nvl(vr_tab_chqtco(idx).nrdconta,0));
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                     vr_cdcritic  := 843;
-                     vr_des_erro  := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                     vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_tab_chqtco(idx).nrdconta,0)))||
-                                     ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmt2,'zzzz.zzz.9'))||
-                                     ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqdig,'zzzz.zz9'));
-
-                     -- Envio centralizado de log de erro
-                     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                               ,pr_ind_tipo_log => 2 -- Erro tratato
-                                               ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                   || vr_cdprogra || ' --> '
-                                                                   || vr_des_erro || vr_compl_erro);
-                     RAISE vr_exc_erro;
-                 END;
-                 vr_cdcritic := 0;
-                                  
-                 /***********************************************************
-                 ************************* DEVOLUÇÃO ************************
-                 ***********************************************************/
-                                  
-                 --Executar rotina para criar registros de devolucao/taxa de cheques.
-                 cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
-                                                   ,pr_dtmvtolt => pr_dtmvtolt
-                                                   ,pr_cdbccxlt => pr_cdbcoctl
-                                                   ,pr_cdbcoctl => pr_cdbcoctl
-                                                   ,pr_inchqdev => vr_indevchq
-                                                   ,pr_nrdconta => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                                   ,pr_nrdocmto => vr_nrdocmt2
-                                                   ,pr_nrdctitg => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                                   ,pr_vllanmto => nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                                   ,pr_cdalinea => vr_cdalinea
-                                                   ,pr_cdhistor => (CASE rw_crapfdc.tpcheque
-                                                                      WHEN 1 THEN 47
-                                                                      ELSE 78
-                                                                    END)
-                                                   ,pr_cdoperad => '1'
-                                                   ,pr_cdagechq => nvl(vr_cdagectl_incorp,pr_cdagectl)
-                                                   ,pr_nrctachq => nvl(vr_tab_chqtco(idx).nrdconta,0)
-                                                   ,pr_cdprogra => vr_cdprogra
-                                                   ,pr_nrdrecid => 0
-                                                   ,pr_vlchqvlb => nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                                   ,pr_cdcritic => vr_cdcritic
-                                                   ,pr_des_erro => vr_des_erro);
-
-                 IF vr_des_erro IS NOT NULL THEN                             
-                                  
-                   --Complementar a mensagem de erro
-                   vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_tab_chqtco(idx).nrdconta,0)))||
-                                   ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmt2,'zzzz.zzz.9'))||
-                                   ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqdig,'zzzz.zz9'));
-
-                   -- Envio centralizado de log de erro
-                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                             ,pr_ind_tipo_log => 2 -- Erro tratato
-                                             ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                 || vr_cdprogra || ' --> '
-                                                                 || vr_des_erro || vr_compl_erro);
-                   RAISE vr_exc_erro;
-                 END IF;
-                                  
-                 vr_cdcritic := 0;
-                 CONTINUE;
--------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-               END IF;  -- FIM vr_incrineg
-
-             END IF;  -- FIM CRITICA 
+               vr_dscritic:= 'Erro ao inserir craplcm na rotina pc_crps533.pc_processamento_tco: '||SQLERRM;
+               RAISE vr_exc_erro;
+           END;
 
              vr_flg_criou_lcm := TRUE;
              
@@ -4101,8 +3942,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF; --vr_cdcritic > 0
 
                       -- Se não tiver critica
-                      IF  vr_cdcritic = 0
-                      AND vr_cdcritic_aux = 0 THEN                        
+                      IF vr_cdcritic = 0 AND 
+                         vr_cdcritic_aux = 0 THEN                        
                       
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
@@ -4728,219 +4569,68 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq,0);
                         
                         WHILE NOT vr_flg_criou_lcm LOOP
-
-                          -- Chamada a LANC0001 -- 2
-                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                                                            ,pr_dtrefere => pr_dtleiarq
-                                                            ,pr_cdagenci => nvl(rw_craplot.cdagenci,0)
-                                                            ,pr_cdbccxlt => nvl(rw_craplot.cdbccxlt,0)
-                                                            ,pr_nrdolote => nvl(rw_craplot.nrdolote,0)
-                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
-                                                            ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                            ,pr_cdhistor => nvl(vr_cdhistor,0)
-                                                            ,pr_vllanmto => nvl(vr_vllanmto,0)
-                                                            ,pr_nrseqdig => vr_nrseqdig
-                                                            ,pr_cdpesqbb => nvl(vr_cdpesqbb,' ')
-                                                            ,pr_cdbanchq => nvl(vr_cdbandep,0)
-                                                            ,pr_cdcmpchq => nvl(vr_cdcmpdep,0)
-                                                            ,pr_cdagechq => nvl(vr_cdagedep,0)
-                                                            ,pr_nrctachq => nvl(vr_nrctadep,0)
-                                                            ,pr_nrlotchq => nvl(vr_nrlotchq,0)
-                                                            ,pr_sqlotchq => nvl(vr_sqlotchq,0)
-                                                            ,pr_cdcoptfn => vr_cdcoptfn
-                                                            ,pr_cdagetfn => vr_cdageapr
-                                                            ,pr_hrtransa => to_char(SYSDATE,'sssss')
-                                                            -- OUTPUT --
-                                                            ,pr_tab_retorno => vr_tabretor
-                                                            ,pr_incrineg    => vr_incrineg
-                                                            ,pr_cdcritic    => vr_cdcritic
-                                                            ,pr_dscritic    => vr_dscritic);
-
-                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                           IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
-                             -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
-                            IF nvl(vr_cdcritic, 0) = 92 THEN
+                          BEGIN
+                          --Inserir lancamento
+                          INSERT INTO craplcm (cdcooper
+                                              ,dtmvtolt
+                                              ,dtrefere
+                                              ,cdagenci
+                                              ,cdbccxlt
+                                              ,nrdolote
+                                              ,nrdconta
+                                              ,nrdctabb
+                                              ,nrdocmto
+                                              ,cdhistor
+                                              ,vllanmto
+                                              ,nrseqdig
+                                              ,cdpesqbb
+                                              ,cdbanchq
+                                              ,cdcmpchq
+                                              ,cdagechq
+                                              ,nrctachq
+                                              ,nrlotchq
+                                              ,sqlotchq
+                                              ,cdcoptfn
+                                              ,cdagetfn
+                                              ,hrtransa)
+                                     VALUES   (pr_cdcooper
+                                              ,rw_craplot.dtmvtolt
+                                              ,pr_dtleiarq
+                                              ,nvl(rw_craplot.cdagenci,0)
+                                              ,nvl(rw_craplot.cdbccxlt,0)
+                                              ,nvl(rw_craplot.nrdolote,0)
+                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
+                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
+                                              ,nvl(vr_nrdocmto,0)
+                                              ,nvl(vr_cdhistor,0)
+                                              ,nvl(vr_vllanmto,0)
+                                                ,vr_nrseqdig
+                                              ,nvl(vr_cdpesqbb,' ')
+                                              ,nvl(vr_cdbandep,0)
+                                              ,nvl(vr_cdcmpdep,0)
+                                              ,nvl(vr_cdagedep,0)
+                                              ,nvl(vr_nrctadep,0)
+                                              ,nvl(vr_nrlotchq,0)
+                                              ,nvl(vr_sqlotchq,0)
+                                              ,vr_cdcoptfn
+                                              ,vr_cdageapr
+                                              ,to_char(SYSDATE,'sssss'));
+                        EXCEPTION
+                            WHEN DUP_VAL_ON_INDEX THEN
                               vr_nrseqdig := vr_nrseqdig + 100000;
-                               CONTINUE;
-                            ELSE
+                              continue;
+                          WHEN OTHERS THEN
                               cecred.pc_internal_exception;
-                              vr_des_erro:= vr_dscritic;
+                            vr_des_erro:= 'Erro ao inserir na tabela craplcm, deposito intercooperativa. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
                             RAISE vr_exc_erro;
-                            END IF;
-                           ELSE  -- Critica de negocio.
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                             IF rw_crapfdc.tpcheque= 1 THEN
-                               vr_indevchq := 1;
-                             ELSE
-                               vr_indevchq := 3;                                
-                          END IF;
-
-                             vr_cdcritic     := 717; -- Não há saldo suficiente para operação
-                             vr_cdcritic_aux := vr_cdcritic;
-                             vr_cdcritic     := 0;
-
-                             /***********************************************************
-                             **************** ALINEA DE DEVOLUÇÃO ***********************
-                             ***********************************************************/
-
-                             IF cr_crapneg_2%ISOPEN THEN
-                               CLOSE cr_crapneg_2;  
-                             END IF;  
-                             -- Verificar se existe alineas ja devolvidas
-                             OPEN cr_crapneg_2(pr_cdcooper => pr_cdcooper
-                                              ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                              ,pr_nrdocmto => nvl(vr_nrdocmto,0));
-                             FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
-
-                             -- Caso houver alguma alinea devolvida
-                             IF cr_crapneg_2%FOUND THEN
-                               CLOSE cr_crapneg_2;        
-
-                               IF cr_crapneg_reg%ISOPEN THEN
-                                 CLOSE cr_crapneg_reg;  
-                               END IF;
-
-                               OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                  ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                  ,pr_cdobserv => 12);
-                               FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                               -- Caso encontre registro de devolucao automatica com alinea 12
-                               IF cr_crapneg_reg%FOUND THEN
-                                 CLOSE cr_crapneg_reg;  
-                                 vr_cdalinea := 49;
-                               ELSE 
-                                 CLOSE cr_crapneg_reg;  
-                                 OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                    ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                    ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                    ,pr_cdobserv => 11);
-                                 FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                                 -- Caso encontre registro de devolucao automatica com alinea 11
-                                 IF cr_crapneg_reg%FOUND THEN
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 12;
-                                 ELSE
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 49;
-                                 END IF;
-                               END IF;
-                             ELSE
-                               CLOSE cr_crapneg_2;  
-                               vr_cdalinea:= 11;
-                             END IF;
-                             
-                             IF vr_flctamig THEN
-                               vr_tpintegr:= 1;
-                             ELSE
-                               vr_tpintegr:= 0;
-                             END IF;
-
-                             /***********************************************************
-                             **************** GRAVAR INFORMAÇÕES NO CRRL526 *************
-                             ***********************************************************/
-
-                             --Inserir registro na tabela de rejeicao
-                             BEGIN
-                               INSERT INTO craprej (cdcooper
-                                                   ,dtrefere
-                                                   ,nrdconta
-                                                   ,nrdocmto
-                                                   ,vllanmto
-                                                   ,nrseqdig
-                                                   ,cdcritic
-                                                   ,cdpesqbb
-                                                   ,tpintegr
-                                                   ,nrdctitg) -- Conta depositada
-                                          VALUES   (pr_cdcooper
-                                                   ,pr_dtauxili
-                                                   ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                                   ,nvl(vr_nrdocmto,0)
-                                                   ,nvl(vr_vllanmto,0)
-                                                   ,nvl(vr_nrseqarq,0)
-                                                   ,nvl(vr_cdcritic_aux,0)
-                                                   ,nvl(vr_cdpesqbb,' ')
-                                                   ,nvl(vr_tpintegr,0)
-                                                   ,nvl(vr_nrctadep,0));
-                             EXCEPTION
-                               WHEN OTHERS THEN
-                                 vr_cdcritic:= 843;
-                                 vr_des_erro:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                                 vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                                 ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                                 ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                                 
-                                 -- Envio centralizado de log de erro
-                                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                           ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                           ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                               || vr_cdprogra || ' --> '
-                                                                               || vr_des_erro || vr_compl_erro);
-                                 RAISE vr_exc_erro;
-                             END;
-
-                             /***********************************************************
-                             ************************* DEVOLUÇÃO ************************
-                             ***********************************************************/
-
-                             --Executar rotina para criar registros de devolucao/taxa de cheques.
-                             cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
-                                                               ,pr_dtmvtolt => pr_dtmvtolt
-                                                               ,pr_cdbccxlt => pr_cdbcoctl
-                                                               ,pr_cdbcoctl => pr_cdbcoctl
-                                                               ,pr_inchqdev => vr_indevchq
-                                                               ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                               ,pr_nrdocmto => vr_nrdocmto
-                                                               ,pr_nrdctitg => vr_nrdctitg
-                                                               ,pr_vllanmto => vr_vllanmto
-                                                               ,pr_cdalinea => vr_cdalinea
-                                                               ,pr_cdhistor => (CASE rw_crapfdc.tpcheque
-                                                                                  WHEN 1 THEN 47
-                                                                                  ELSE 78
-                                                                                END)
-                                                               ,pr_cdoperad => '1'
-                                                               ,pr_cdagechq => nvl(vr_cdagectl_incorp,pr_cdagectl)
-                                                               ,pr_nrctachq => vr_nrdctabb
-                                                               ,pr_cdprogra => pr_cdprogra
-                                                               ,pr_nrdrecid => 0
-                                                               ,pr_vlchqvlb => pr_vlchqvlb
-                                                               ,pr_cdcritic => vr_cdcritic
-                                                               ,pr_des_erro => vr_des_erro);
-
-                             IF vr_des_erro IS NOT NULL THEN                             
-                               --Complementar a mensagem de erro
-                               vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                               ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                               ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                               -- Envio centralizado de log de erro
-                               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                         ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                             || vr_cdprogra || ' --> '
-                                                                             || vr_des_erro || vr_compl_erro);
-                               RAISE vr_exc_erro;
-                             END IF;
-
-                             vr_cdcritic     := 0;
-                             vr_cdcritic_aux := 0;
-
-                             RAISE vr_exc_pula;
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                           END IF;
-
-                          END IF; -- IF nvl(vr_cdcritic, 0) > 0 
+                        END;
                           
                           vr_flg_criou_lcm := TRUE;
                           
                         END LOOP;
 
-                      ELSE  -- Depósito MESMA cooperativa
+                      ELSE
+
                           --Verificar o tipo de cheque para determinar o código do histórico
                           IF rw_crapfdc.tpcheque = 2 THEN
                             vr_cdhistor:= 572;
@@ -4952,212 +4642,59 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq,0);               
                         
                         WHILE NOT vr_flg_criou_lcm LOOP
-
-                          -- Chamada a LANC0001 -- 3
-                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                                                            ,pr_dtrefere => pr_dtleiarq
-                                                            ,pr_cdagenci => nvl(rw_craplot.cdagenci,0)
-                                                            ,pr_cdbccxlt => nvl(rw_craplot.cdbccxlt,0)
-                                                            ,pr_nrdolote => nvl(rw_craplot.nrdolote,0)
-                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
-                                                            ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                            ,pr_cdhistor => nvl(vr_cdhistor,0)
-                                                            ,pr_vllanmto => nvl(vr_vllanmto,0)
-                                                            ,pr_nrseqdig => vr_nrseqdig
-                                                            ,pr_cdpesqbb => nvl(vr_cdpesqbb,' ')
-                                                            ,pr_cdbanchq => nvl(vr_cdbandep,0)
-                                                            ,pr_cdcmpchq => nvl(vr_cdcmpdep,0)
-                                                            ,pr_cdagechq => nvl(vr_cdagedep,0)
-                                                            ,pr_nrctachq => nvl(vr_nrctadep,0)
-                                                            ,pr_nrlotchq => nvl(vr_nrlotchq,0)
-                                                            ,pr_sqlotchq => nvl(vr_sqlotchq,0)
-                                                            ,pr_cdcoptfn => 0
-                                                            ,pr_hrtransa => to_char(SYSDATE,'sssss')
-                                                            -- OUTPUT --
-                                                            ,pr_tab_retorno => vr_tabretor
-                                                            ,pr_incrineg    => vr_incrineg
-                                                            ,pr_cdcritic    => vr_cdcritic
-                                                            ,pr_dscritic    => vr_dscritic);
-
-                          -- Se há alguma crítica ou erro
-                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                           IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
-                            -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
-                            IF nvl(vr_cdcritic, 0) = 92 THEN
+                          BEGIN
+                          --Inserir lancamento
+                          INSERT INTO craplcm (cdcooper
+                                              ,dtmvtolt
+                                              ,dtrefere
+                                              ,cdagenci
+                                              ,cdbccxlt
+                                              ,nrdolote
+                                              ,nrdconta
+                                              ,nrdctabb
+                                              ,nrdocmto
+                                              ,cdhistor
+                                              ,vllanmto
+                                              ,nrseqdig
+                                              ,cdpesqbb
+                                              ,cdbanchq
+                                              ,cdcmpchq
+                                              ,cdagechq
+                                              ,nrctachq
+                                              ,nrlotchq
+                                              ,sqlotchq
+                                              ,cdcoptfn
+                                              ,hrtransa)
+                                     VALUES   (pr_cdcooper
+                                              ,rw_craplot.dtmvtolt
+                                              ,pr_dtleiarq
+                                              ,nvl(rw_craplot.cdagenci,0)
+                                              ,nvl(rw_craplot.cdbccxlt,0)
+                                              ,nvl(rw_craplot.nrdolote,0)
+                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
+                                              ,nvl(nvl(vr_nrdconta_incorp,vr_nrdctabb),0)
+                                              ,nvl(vr_nrdocmto,0)
+                                              ,nvl(vr_cdhistor,0)
+                                              ,nvl(vr_vllanmto,0)
+                                                ,vr_nrseqdig
+                                              ,nvl(vr_cdpesqbb,' ')
+                                              ,nvl(vr_cdbandep,0)
+                                              ,nvl(vr_cdcmpdep,0)
+                                              ,nvl(vr_cdagedep,0)
+                                              ,nvl(vr_nrctadep,0)
+                                              ,nvl(vr_nrlotchq,0)
+                                              ,nvl(vr_sqlotchq,0)
+                                              ,0
+                                              ,to_char(SYSDATE,'sssss'));
+                        EXCEPTION
+                            WHEN DUP_VAL_ON_INDEX THEN
                               vr_nrseqdig := vr_nrseqdig + 100000;
-                               CONTINUE;
-                            ELSE
+                              continue;
+                          WHEN OTHERS THEN
                               cecred.pc_internal_exception;
-                              vr_des_erro:= vr_dscritic;
-                              RAISE vr_exc_erro;
-                             END IF;
-                           ELSE  -- Critica de negocio.
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                             IF rw_crapfdc.tpcheque= 1 THEN
-                               vr_indevchq := 1;
-                             ELSE
-                               vr_indevchq := 3;                                
-                             END IF;
-
-                             vr_cdcritic     := 717; -- Não há saldo suficiente para operação
-                             vr_cdcritic_aux := vr_cdcritic;
-                             vr_cdcritic     := 0;
-
-                             /***********************************************************
-                             **************** ALINEA DE DEVOLUÇÃO ***********************
-                             ***********************************************************/
-
-                             IF cr_crapneg_2%ISOPEN THEN
-                               CLOSE cr_crapneg_2;  
-                             END IF;  
-                             -- Verificar se existe alineas ja devolvidas
-                             OPEN cr_crapneg_2(pr_cdcooper => pr_cdcooper
-                                              ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                              ,pr_nrdocmto => nvl(vr_nrdocmto,0));
-                             FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
-
-                             -- Caso houver alguma alinea devolvida
-                             IF cr_crapneg_2%FOUND THEN
-                               CLOSE cr_crapneg_2;        
-
-                               IF cr_crapneg_reg%ISOPEN THEN
-                                 CLOSE cr_crapneg_reg;  
-                               END IF;
-
-                               OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                  ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                  ,pr_cdobserv => 12);
-                               FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                               -- Caso encontre registro de devolucao automatica com alinea 12
-                               IF cr_crapneg_reg%FOUND THEN
-                                 CLOSE cr_crapneg_reg;  
-                                 vr_cdalinea := 49;
-                               ELSE 
-                                 CLOSE cr_crapneg_reg;  
-                                 OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                    ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                    ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                    ,pr_cdobserv => 11);
-                                 FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                                 -- Caso encontre registro de devolucao automatica com alinea 11
-                                 IF cr_crapneg_reg%FOUND THEN
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 12;
-                                 ELSE
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 49;
-                                 END IF;
-                               END IF;
-                             ELSE
-                               CLOSE cr_crapneg_2;  
-                               vr_cdalinea:= 11;
-                             END IF;
-                             
-                             IF vr_flctamig THEN
-                               vr_tpintegr:= 1;
-                             ELSE
-                               vr_tpintegr:= 0;
-                             END IF;
-
-                             /***********************************************************
-                             **************** GRAVAR INFORMAÇÕES NO CRRL526 *************
-                             ***********************************************************/
-
-                             --Inserir registro na tabela de rejeicao
-                             BEGIN
-                               INSERT INTO craprej (cdcooper
-                                                   ,dtrefere
-                                                   ,nrdconta
-                                                   ,nrdocmto
-                                                   ,vllanmto
-                                                   ,nrseqdig
-                                                   ,cdcritic
-                                                   ,cdpesqbb
-                                                   ,tpintegr
-                                                   ,nrdctitg) -- Conta depositada
-                                          VALUES   (pr_cdcooper
-                                                   ,pr_dtauxili
-                                                   ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                                   ,nvl(vr_nrdocmto,0)
-                                                   ,nvl(vr_vllanmto,0)
-                                                   ,nvl(vr_nrseqarq,0)
-                                                   ,nvl(vr_cdcritic_aux,0)
-                                                   ,nvl(vr_cdpesqbb,' ')
-                                                   ,nvl(vr_tpintegr,0)
-                                                   ,nvl(vr_nrctadep,0));
-                             EXCEPTION
-                               WHEN OTHERS THEN
-                                 vr_cdcritic:= 843;
-                                 vr_des_erro:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                                 vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                                 ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                                 ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                                 
-                                 -- Envio centralizado de log de erro
-                                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                           ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                           ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                               || vr_cdprogra || ' --> '
-                                                                               || vr_des_erro || vr_compl_erro);
-                                 RAISE vr_exc_erro;
-                             END;
-
-                             /***********************************************************
-                             ************************* DEVOLUÇÃO ************************
-                             ***********************************************************/
-
-                             --Executar rotina para criar registros de devolucao/taxa de cheques.
-                             cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
-                                                               ,pr_dtmvtolt => pr_dtmvtolt
-                                                               ,pr_cdbccxlt => pr_cdbcoctl
-                                                               ,pr_cdbcoctl => pr_cdbcoctl
-                                                               ,pr_inchqdev => vr_indevchq
-                                                               ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                               ,pr_nrdocmto => vr_nrdocmto
-                                                               ,pr_nrdctitg => vr_nrdctitg
-                                                               ,pr_vllanmto => vr_vllanmto
-                                                               ,pr_cdalinea => vr_cdalinea
-                                                               ,pr_cdhistor => (CASE rw_crapfdc.tpcheque
-                                                                                  WHEN 1 THEN 47
-                                                                                  ELSE 78
-                                                                                END)
-                                                               ,pr_cdoperad => '1'
-                                                               ,pr_cdagechq => nvl(vr_cdagectl_incorp,pr_cdagectl)
-                                                               ,pr_nrctachq => vr_nrdctabb
-                                                               ,pr_cdprogra => pr_cdprogra
-                                                               ,pr_nrdrecid => 0
-                                                               ,pr_vlchqvlb => pr_vlchqvlb
-                                                               ,pr_cdcritic => vr_cdcritic
-                                                               ,pr_des_erro => vr_des_erro);
-
-                             IF vr_des_erro IS NOT NULL THEN                             
-                               --Complementar a mensagem de erro
-                               vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                               ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                               ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                               -- Envio centralizado de log de erro
-                               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                         ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                             || vr_cdprogra || ' --> '
-                                                                             || vr_des_erro || vr_compl_erro);
-                               RAISE vr_exc_erro;
-                             END IF;
-
-                             vr_cdcritic     := 0;
-                             vr_cdcritic_aux := 0;
-                             
-                             RAISE vr_exc_pula;
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                            END IF;
-                          END IF;
+                            vr_des_erro:= 'Erro ao inserir na tabela craplcm. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
+                            RAISE vr_exc_erro;
+                        END;
 
                           vr_flg_criou_lcm := TRUE;
 
@@ -5196,7 +4733,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            vr_des_erro:= 'Erro ao atualizar a tabela crapfdc, deposito intercooperativa. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
                            RAISE vr_exc_erro;
                         END;
-                      ELSE -- Deposito Mesma Cooperativa
+                      ELSE
                         --Atualizar informacoes de folha de cheque
                         BEGIN
                           UPDATE crapfdc SET crapfdc.dtliqchq = pr_dtmvtolt
@@ -5315,213 +4852,64 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrseqdig := nvl(vr_nrseqarq, 0);
 
                         WHILE NOT vr_flg_criou_lcm LOOP
-
-                          -- Chamada a LANC0001 -- 4
-                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                                            ,pr_dtmvtolt => rw_craplot2.dtmvtolt
-                                                            ,pr_dtrefere => pr_dtleiarq
-                                                            ,pr_cdagenci => nvl(rw_craplot2.cdagenci, 0)
-                                                            ,pr_cdbccxlt => nvl(rw_craplot2.cdbccxlt, 0)
-                                                            ,pr_nrdolote => nvl(rw_craplot2.nrdolote, 0)
-                                                            ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0)
-                                                            ,pr_nrdctabb => nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0)
-                                                            ,pr_nrdocmto => nvl(vr_nrdocmto, 0)
-                                                            ,pr_cdhistor => (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END)
-                                                            ,pr_vllanmto => nvl(vr_vllanmto, 0)
-                                                            ,pr_nrseqdig => vr_nrseqdig
-                                                            ,pr_cdpesqbb => vr_alinea_96
-                                                            ,pr_cdbanchq => rw_crapfdc.cdbanchq
-                                                            ,pr_cdagechq => rw_crapfdc.cdagechq
-                                                            ,pr_cdcmpchq => rw_crapfdc.cdcmpchq
-                                                            ,pr_nrctachq => rw_crapfdc.nrctachq
-                                                            ,pr_nrlotchq => nvl(vr_nrlotchq, 0)
-                                                            ,pr_sqlotchq => nvl(vr_sqlotchq, 0)
-                                                            ,pr_cdcoptfn => 0
-                                                            ,pr_dsidenti => 2
-                                                            ,pr_hrtransa => to_char(SYSDATE, 'sssss')
-                                                            -- OUTPUT --
-                                                            ,pr_tab_retorno => vr_tabretor
-                                                            ,pr_incrineg    => vr_incrineg
-                                                            ,pr_cdcritic    => vr_cdcritic
-                                                            ,pr_dscritic    => vr_dscritic);
-
-                          -- Se há alguma crítica ou erro
-                          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                           IF vr_incrineg = 0 THEN -- Nao tem critica de negocio / Erro de processamento  
-                            -- Se houve registro duplicado (DUP_VAL_ON_INDEX)
-                            IF nvl(vr_cdcritic, 0) = 92 THEN
+                        BEGIN
+                         INSERT INTO craplcm
+                           (cdcooper,
+                            dtmvtolt,
+                            dtrefere,
+                            cdagenci,
+                            cdbccxlt,
+                            nrdolote,
+                            nrdconta,
+                            nrdctabb,
+                            nrdocmto,
+                            cdhistor,
+                            vllanmto,
+                            nrseqdig,
+                            cdpesqbb,
+                            cdbanchq,
+                            cdagechq,
+                            cdcmpchq,
+                            nrctachq,
+                            nrlotchq,
+                            sqlotchq,
+                            cdcoptfn,
+                            dsidenti,
+                            hrtransa)
+                         VALUES
+                           (pr_cdcooper,
+                            rw_craplot2.dtmvtolt,
+                            pr_dtleiarq,
+                            nvl(rw_craplot2.cdagenci, 0),
+                            nvl(rw_craplot2.cdbccxlt, 0),
+                            nvl(rw_craplot2.nrdolote, 0),
+                            nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0),
+                            nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0),
+                            nvl(vr_nrdocmto, 0),
+                            (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END),
+                            nvl(vr_vllanmto, 0),
+                              vr_nrseqdig,
+                            vr_alinea_96,
+                            rw_crapfdc.cdbanchq,
+                            rw_crapfdc.cdagechq,
+                            rw_crapfdc.cdcmpchq,
+                            rw_crapfdc.nrctachq,
+                            nvl(vr_nrlotchq, 0),
+                            nvl(vr_sqlotchq, 0),
+                            0,
+                            2, -- dsidenti 
+                            to_char(SYSDATE, 'sssss'));
+                         EXCEPTION
+                             WHEN DUP_VAL_ON_INDEX THEN
+                               -- Incrementar o nrseqdig e tentar inserir novamente
                                vr_nrseqdig := vr_nrseqdig + 100000;
-                               CONTINUE;
-                            ELSE
+                               continue;
+                           WHEN OTHERS THEN
                                cecred.pc_internal_exception;
-                               vr_des_erro:= vr_dscritic;
-                               RAISE vr_exc_erro;
-                             END IF;
-                           ELSE  -- Critica de negocio.
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                             IF rw_crapfdc.tpcheque= 1 THEN
-                               vr_indevchq := 1;
-                             ELSE
-                               vr_indevchq := 3;                                
-                             END IF;
-
-                             vr_cdcritic     := 717; -- Não há saldo suficiente para operação
-                             vr_cdcritic_aux := vr_cdcritic;
-                             vr_cdcritic     := 0;
-
-                             /***********************************************************
-                             **************** ALINEA DE DEVOLUÇÃO ***********************
-                             ***********************************************************/
-
-                             IF cr_crapneg_2%ISOPEN THEN
-                               CLOSE cr_crapneg_2;  
-                             END IF;  
-                             -- Verificar se existe alineas ja devolvidas
-                             OPEN cr_crapneg_2(pr_cdcooper => pr_cdcooper
-                                              ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                              ,pr_nrdocmto => nvl(vr_nrdocmto,0));
-                             FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
-
-                             -- Caso houver alguma alinea devolvida
-                             IF cr_crapneg_2%FOUND THEN
-                               CLOSE cr_crapneg_2;        
-
-                               IF cr_crapneg_reg%ISOPEN THEN
-                                 CLOSE cr_crapneg_reg;  
-                               END IF;
-
-                               OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                  ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                  ,pr_cdobserv => 12);
-                               FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                               -- Caso encontre registro de devolucao automatica com alinea 12
-                               IF cr_crapneg_reg%FOUND THEN
-                                 CLOSE cr_crapneg_reg;  
-                                 vr_cdalinea := 49;
-                               ELSE 
-                                 CLOSE cr_crapneg_reg;  
-                                 OPEN cr_crapneg_reg(pr_cdcooper => pr_cdcooper
-                                                    ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                    ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                    ,pr_cdobserv => 11);
-                                 FETCH cr_crapneg_reg INTO rw_crapneg_reg;                                      
-
-                                 -- Caso encontre registro de devolucao automatica com alinea 11
-                                 IF cr_crapneg_reg%FOUND THEN
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 12;
-                                 ELSE
-                                   CLOSE cr_crapneg_reg;  
-                                   vr_cdalinea := 49;
-                                 END IF;
-                               END IF;
-                             ELSE
-                               CLOSE cr_crapneg_2;  
-                               vr_cdalinea:= 11;
-                             END IF;
-                             
-                             IF vr_flctamig THEN
-                               vr_tpintegr:= 1;
-                             ELSE
-                               vr_tpintegr:= 0;
-                             END IF;
-
-                             /***********************************************************
-                             **************** GRAVAR INFORMAÇÕES NO CRRL526 *************
-                             ***********************************************************/
-
-                             --Inserir registro na tabela de rejeicao
-                             BEGIN
-                               INSERT INTO craprej (cdcooper
-                                                   ,dtrefere
-                                                   ,nrdconta
-                                                   ,nrdocmto
-                                                   ,vllanmto
-                                                   ,nrseqdig
-                                                   ,cdcritic
-                                                   ,cdpesqbb
-                                                   ,tpintegr
-                                                   ,nrdctitg) -- Conta depositada
-                                          VALUES   (pr_cdcooper
-                                                   ,pr_dtauxili
-                                                   ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
-                                                   ,nvl(vr_nrdocmto,0)
-                                                   ,nvl(vr_vllanmto,0)
-                                                   ,nvl(vr_nrseqarq,0)
-                                                   ,nvl(vr_cdcritic_aux,0)
-                                                   ,nvl(vr_cdpesqbb,' ')
-                                                   ,nvl(vr_tpintegr,0)
-                                                   ,nvl(vr_nrctadep,0));
-                             EXCEPTION
-                               WHEN OTHERS THEN
-                                 vr_cdcritic:= 843;
-                                 vr_des_erro:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                                 vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                                 ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                                 ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                                 
-                                 -- Envio centralizado de log de erro
-                                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                           ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                           ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                               || vr_cdprogra || ' --> '
-                                                                               || vr_des_erro || vr_compl_erro);
-                                 RAISE vr_exc_erro;
-                             END;
-
-                             /***********************************************************
-                             ************************* DEVOLUÇÃO ************************
-                             ***********************************************************/
-
-                             --Executar rotina para criar registros de devolucao/taxa de cheques.
-                             cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
-                                                               ,pr_dtmvtolt => pr_dtmvtolt
-                                                               ,pr_cdbccxlt => pr_cdbcoctl
-                                                               ,pr_cdbcoctl => pr_cdbcoctl
-                                                               ,pr_inchqdev => vr_indevchq
-                                                               ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                               ,pr_nrdocmto => vr_nrdocmto
-                                                               ,pr_nrdctitg => vr_nrdctitg
-                                                               ,pr_vllanmto => vr_vllanmto
-                                                               ,pr_cdalinea => vr_cdalinea
-                                                               ,pr_cdhistor => (CASE rw_crapfdc.tpcheque
-                                                                                  WHEN 1 THEN 47
-                                                                                  ELSE 78
-                                                                                END)
-                                                               ,pr_cdoperad => '1'
-                                                               ,pr_cdagechq => nvl(vr_cdagectl_incorp,pr_cdagectl)
-                                                               ,pr_nrctachq => vr_nrdctabb
-                                                               ,pr_cdprogra => pr_cdprogra
-                                                               ,pr_nrdrecid => 0
-                                                               ,pr_vlchqvlb => pr_vlchqvlb
-                                                               ,pr_cdcritic => vr_cdcritic
-                                                               ,pr_des_erro => vr_des_erro);
-
-                             IF vr_des_erro IS NOT NULL THEN                             
-                               --Complementar a mensagem de erro
-                               vr_compl_erro:= ' Conta: ' || To_Char(gene0002.fn_mask_conta(nvl(vr_nrdconta_incorp,vr_nrdconta)))||
-                                               ' Docmto: '|| To_Char(gene0002.fn_mask(vr_nrdocmto,'zzzz.zzz.9'))||
-                                               ' Seq: '   || To_Char(gene0002.fn_mask(vr_nrseqarq,'zzzz.zz9'));
-                               -- Envio centralizado de log de erro
-                               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                         ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                             || vr_cdprogra || ' --> '
-                                                                             || vr_des_erro || vr_compl_erro);
-                               RAISE vr_exc_erro;
-                             END IF;
-
-                             vr_cdcritic     := 0;
-                             vr_cdcritic_aux := 0;
-
-                             RAISE vr_exc_pula;
-            -------------- TRATAMENTO NAO PODE FAZER DEBITO / PREJUIZO ------------------------
-                            END IF;
-                          END IF;
+                             vr_des_erro:= 'Erro ao inserir na tabela craplcm (devolucao). Rotina'
+                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
+                             RAISE vr_exc_erro;
+                        END;
                         
                           vr_flg_criou_lcm := TRUE;
 
