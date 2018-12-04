@@ -24,7 +24,7 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddo
 }
 
 $xml = new XmlMensageria();
-$xml->add('cdcooper',$cdcooper);
+$xml->add('cdcooprt',$cdcooper);
 $xml->add('cdalcada_aprovacao',$cdalcada);
 
 $xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_APROVADORES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");

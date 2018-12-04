@@ -739,4 +739,7 @@ onChangeProtesto();
     }
 	
 ?>
+sitflcee = $("#flceeexp","#divOpcaoConsulta").prop('checked');
+sitflcoo = $("#flcooexp","#divOpcaoConsulta").prop('checked');
+
 </script>

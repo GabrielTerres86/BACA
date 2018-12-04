@@ -85,11 +85,12 @@ var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
     flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob;
 
-var erroAlcada = false;
 var cee = false;
 var coo = false;
 var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
 var incluindoConvenio = false;
+
+var sitflcee, sitflcoo;
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -189,6 +190,8 @@ function habilitaSetor(setorLogado) {
             $('#cddopcao', '#divConteudoOpcao').val(cddopcao);
 
             controlaFoco();
+
+            novosConvenios = [];
 
             if (cddopcao == 'C') {
                 $('input, select', '.tabelaDesconto').desabilitaCampo();
@@ -2733,11 +2736,16 @@ function validaEmiteExpede(limparCampos) {
     cJustificativaDesc.desabilitaCampo();
     
     if (limparCampos) {
-        cVldesconto_coo.val('0,00');
-        cVldesconto_cee.val('0,00');
-        cDataFimAdicionalCee.val('');
-        cDataFimAdicionalCoo.val('');
-        cJustificativaDesc.val('');
+        if (sitflcee !== $("#flceeexp","#divOpcaoConsulta").prop('checked')) {
+            cVldesconto_cee.val('0,00');
+            cDataFimAdicionalCee.val('');
+            cJustificativaDesc.val('');
+        }
+        if (sitflcoo !== $("#flcooexp","#divOpcaoConsulta").prop('checked')) {
+            cVldesconto_coo.val('0,00');
+            cDataFimAdicionalCoo.val('');
+            cJustificativaDesc.val('');
+        }
     }
 
     if (cddopcao == 'C')
@@ -2966,57 +2974,30 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		cDataFimAdicionalCoo.habilitaCampo();
 	}
 
-	if (	(vVldesconto_cee != vVldesconto_ceeOld && vVldesconto_cee) ||
+    if (	(vVldesconto_cee != vVldesconto_ceeOld && vVldesconto_cee) ||
 			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ||
             (atualizacaoDesconto) ) {
 
-		$.ajax({
-		    dataType: "html",
-		    type: "POST",
-		    url: UrlSite + "telas/cadres/valida_alcada.php",
-		    data: {
-		        redirect: "script_ajax"
-		    },
-		    success: function (response) {
-		        if (response) {
-                    // se erro ainda não foi exibido
-                    if (!erroAlcada) {
-                        erroAlcada = true;
-		            eval(response);
-                    }
-		            btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-		            btnContinuar.prop('disabled', true);
-		            btnContinuar.attr('onclick', 'return false;');
+        btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+        btnContinuar.prop('disabled', true);
+        btnContinuar.attr('onclick', 'return false;');
 
-		            btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
-		            btnAprovacao.prop('disabled', true);
-		            btnAprovacao.attr('onclick', 'return false;');
-                } else {
-                    btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-                    btnContinuar.prop('disabled', true);
-                    btnContinuar.attr('onclick', 'return false;');
+        btnAprovacao.removeClass('botaoDesativado');
+        btnAprovacao.prop('disabled', false);
+        btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
-                    btnAprovacao.removeClass('botaoDesativado');
-                    btnAprovacao.prop('disabled', false);
-                    btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
-		        }
-		    }
-		});
+    } else {
+        btnContinuar.removeClass('botaoDesativado');
+        btnContinuar.prop('disabled', false);
+        btnContinuar.attr('onclick', 'validaDados(false);return false;');
 
-	} else {
-        // reseta variavel para exibir novamente a mensagem de alçada (se houver)
-        erroAlcada = false;
-		btnContinuar.removeClass('botaoDesativado');
-		btnContinuar.prop('disabled', false);
-		btnContinuar.attr('onclick', 'validaDados(false);return false;');
-
-		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnAprovacao.prop('disabled', true);
-		btnAprovacao.attr('onclick', 'return false;');
-	}
+        btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
+        btnAprovacao.prop('disabled', true);
+        btnAprovacao.attr('onclick', 'return false;');
+    }
 
 }
 
@@ -3125,25 +3106,25 @@ function abrirAprovacao(hideBtnDetalhes) {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            if (response.substr(0, 14) == 'hideMsgAguardo') {
-                eval(response);
-            } else {
-                var telaAprovacao = $('#telaAprovacao');
-                $("#divConteudoOpcao").hide();
-                telaAprovacao.html(response);
-                telaAprovacao.find('#btVoltar').click(function () {
-                    acessaOpcaoContratos();
-                    telaAprovacao.html('');
-                });
-                if (hideBtnDetalhes) {
-                    telaAprovacao.find('#btDetalhes').hide();
-                } else {
-                    telaAprovacao.find('#btDetalhes').click(function () {
-                        telaAprovacao.hide();
-                        acessaOpcaoDescontos('C');
-                    });
-                }
-            }
+			if (response.substr(0,14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				var telaAprovacao = $('#telaAprovacao');
+				$("#divConteudoOpcao").hide();
+				telaAprovacao.html(response);
+				telaAprovacao.find('#btVoltar').click(function (){
+					acessaOpcaoContratos();
+					telaAprovacao.html('');
+				});
+				if (hideBtnDetalhes) {
+					telaAprovacao.find('#btDetalhes').hide();
+				} else {
+					telaAprovacao.find('#btDetalhes').click(function (){
+						telaAprovacao.hide();
+						acessaOpcaoDescontos('C');
+					});
+				}
+			}
         }
     });
 }
@@ -3182,16 +3163,16 @@ function abrirRejeicao() {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            if (response.substr(0, 14) == 'hideMsgAguardo') {
-                eval(response);
-            } else {
-                var telaRejeicao = $('#telaRejeicao');
-                $("#divConteudoOpcao").hide();
-                telaRejeicao.html(response);
-                telaRejeicao.find('#btVoltar').click(function () {
-                    acessaOpcaoContratos();
-                });
-            }
+			if (response.substr(0,14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				var telaRejeicao = $('#telaRejeicao');
+				$("#divConteudoOpcao").hide();
+				telaRejeicao.html(response);
+				telaRejeicao.find('#btVoltar').click(function (){
+					acessaOpcaoContratos();
+				});
+			}
         }
     });
 }
