@@ -234,6 +234,19 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
+PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE 
+                                    , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+                                    , pr_cdagenci IN  craplcm.cdagenci%TYPE 
+                                    , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+                                    , pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+                                    , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                    , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                    , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                    , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
+                                    , pr_vllanmto IN  craplcm.vllanmto%TYPE
+                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                    , pr_dscritic OUT crapcri.dscritic%TYPE); 
+
 END LANC0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
@@ -255,6 +268,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --
   -- Alterado  : 23/10/2018 - Correção histórico 2738 ao excluir lançamentos conta transitória
   --                          (Renato - AMcom - PRJ 450)
+  --
+  --             16/11/2018 - prj450 - história 10669:Crédito de Estorno de Saque em conta em Prejuízo
+  --                          (Fabio Adriano - AMcom).
   ---------------------------------------------------------------------------------------------------------------
 
 -- Record para armazenar dados dos históricos para evitar consultas repetitivas
@@ -1538,6 +1554,108 @@ begin
 												 , pr_dscritic => pr_dscritic);
   
 end pc_estorna_lancto_prog;
+
+
+-- Rotina para estorno de saque em conta em prejuizo
+PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE 
+                                    , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+                                    , pr_cdagenci IN  craplcm.cdagenci%TYPE 
+                                    , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+                                    , pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+                                    , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                    , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                    , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                    , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
+                                    , pr_vllanmto IN  craplcm.vllanmto%TYPE
+                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                    , pr_dscritic OUT crapcri.dscritic%TYPE) IS
+BEGIN
+  
+     IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN 
+	   	  -- Efetua débito do valor que será transferido para a Conta Transitória (créditos bloqueados por prejuízo em conta)
+        /*INSERT INTO craplcm (
+                              dtmvtolt
+                            , cdagenci
+                            , cdbccxlt
+                            , nrdolote
+                            , nrdconta
+                            , nrdocmto
+                            , cdhistor
+                            , nrseqdig
+                            , vllanmto
+                            , nrdctabb
+                            , cdpesqbb
+                            , dtrefere
+                            , hrtransa
+                            , cdoperad
+                            , cdcooper
+                            , cdorigem
+                          )
+        VALUES (
+                pr_dtmvtolt
+              , pr_cdagenci
+              , pr_cdbccxlt
+              , 650009
+              , pr_nrdconta
+              , pr_nrdocmto
+              , 2719
+              , pr_nrseqdig
+              , pr_vllanmto
+              , pr_nrdctabb
+              , 'ESTORNO DE CREDITO RECEBIDO EM C/C EM PREJUIZO'
+              , pr_dtmvtolt
+              , gene0002.fn_busca_time
+              , 1
+              , pr_cdcooper
+              , 5
+            );
+        */    
+        --Substituida a inserção de débito pela exclusão do registro de crédito porque violou o indice CRAPLCM3 
+        DELETE FROM craplcm lcm
+		     WHERE lcm.dtmvtolt   = pr_dtmvtolt
+           AND lcm.cdagenci   = pr_cdagenci
+           AND lcm.cdbccxlt   = pr_cdbccxlt
+           AND lcm.nrdconta   = pr_nrdconta
+           AND lcm.nrdocmto   = pr_nrdocmto
+           AND lcm.cdhistor   = pr_cdhistor
+           AND lcm.nrseqdig   = pr_nrseqdig
+           AND lcm.vllanmto   = pr_vllanmto
+           AND lcm.nrdctabb   = pr_nrdctabb
+           AND lcm.cdcooper   = pr_cdcooper;    
+
+        -- Insere lançamento do crédito transferido para a Conta Transitória
+        INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
+                                               dtmvtolt
+                                             , cdagenci
+                                             , nrdconta
+                                             , nrdocmto
+                                             , cdhistor
+                                             , vllanmto
+                                             , dthrtran
+                                             , cdoperad
+                                             , cdcooper
+                                             , cdorigem
+                                             )
+        VALUES (
+                 pr_dtmvtolt
+               , pr_cdagenci
+               , pr_nrdconta
+               , pr_nrdocmto
+               , 2738 
+               , pr_vllanmto
+               , SYSDATE
+               , 1
+               , pr_cdcooper
+               , 5
+               );   
+  	 END IF;
+  
+EXCEPTION
+	WHEN OTHERS THEN
+		pr_cdcritic := 0;
+		pr_dscritic := 'Erro nao tratado na rotina "LANC0001.pc_estorna_saque_conta_prej": ' || SQLERRM;
+  
+END pc_estorna_saque_conta_prej;
 
 END LANC0001;
 /
