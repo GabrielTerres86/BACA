@@ -136,6 +136,7 @@
     function verificarRetornoConsulta($xmlStr) {
     	$cdoperac = 4;
     	$xmlRet = getObjectXML($xmlStr);
+		//echo $xmlStr; die;
     	if ( $GLOBALS["httpcode"] == 200 ) {
     		$qtdOcorr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
     		$index = $qtdOcorr - 1;
@@ -146,21 +147,18 @@
 				$errorMessage['msg'] = "Quantidade de ocorrência é 0";
 				$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';
 			} else {
-				$interacaoGravame = $xmlRet->roottag->tags[1]->tags[$index]->tags[3]->tags[$index]->tags[0];
-				$dataInteracao = timestampParaDateTime($interacaoGravame->tags[0]->cdata);
-				$idRegistro = $xmlRet->roottag->tags[1]->tags[0]->tags[0]->tags[5]->cdata;
-				$seqLista = $interacaoGravame->tags[2]->cdata;
-				if ($seqLista != '' && $seqLista == $qtdOcorr) {
-					$tipoInteracao = $interacaoGravame->tags[3]->tags[0]->cdata;
-					if ($tipoInteracao == 'PLEDGE-OUT') {
-						$contrato = $xmlRet->roottag->tags[1]->tags[$index]->tags[2]->tags[1]->cdata;
-						if ( $contrato == $GLOBALS["nrctrpro"] ) {
-							echo "atualizarDadosAlienacaoAuto('".$dataInteracao."', '".$idRegistro."');";
-							$funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');inclusaoManual(\'A\');';
-							echo "showConfirmacao('".utf8ToHtml('Confirmar gravação da alienação automática?')."', 'Confirma&ccedil;&atilde;o - Ayllos', ".$funcao.", '', 'sim.gif', 'nao.gif');";
-						} else {
-							$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';		
-						}
+				$interacaoGravame = $xmlRet->roottag->tags[1]->tags[$index];
+				$dataInteracao = timestampParaDateTime($interacaoGravame->tags[3]->tags[0]->tags[0]->tags[0]->cdata);
+				$idRegistro = $interacaoGravame->tags[0]->tags[1]->cdata; //$xmlRet->roottag->tags[1]->tags[0]->tags[0]->tags[5]->cdata 
+				$contrato = $interacaoGravame->tags[2]->tags[0]->cdata;
+				$tipoInteracao = $interacaoGravame->tags[3]->tags[1]->tags[0]->tags[1]->tags[0]->cdata;
+
+				if ($tipoInteracao == 'PLEDGE-OUT') {
+					echo $contrato . " - " . $GLOBALS["nrctrpro"];die;
+					if ( $contrato == $GLOBALS["nrctrpro"] ) {
+						echo "atualizarDadosAlienacaoAuto('".$dataInteracao."', '".$idRegistro."');";
+						$funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');inclusaoManual(\'A\');';
+						echo "showConfirmacao('".utf8ToHtml('Confirmar gravação da alienação automática?')."', 'Confirma&ccedil;&atilde;o - Ayllos', ".$funcao.", '', 'sim.gif', 'nao.gif');";
 					} else {
 						$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';		
 					}
