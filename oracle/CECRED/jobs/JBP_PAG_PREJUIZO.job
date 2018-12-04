@@ -22,6 +22,7 @@ begin
   vr_infimsol integer;
   vr_cdcritic integer;
   vr_dscritic varchar2(500);
+  vr_dataexec DATE;
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   cursor cr_coop is
   select cdcooper
@@ -34,8 +35,8 @@ begin
   OPEN btch0001.cr_crapdat(vr_coop.cdcooper);
   FETCH btch0001.cr_crapdat  INTO rw_crapdat;
   CLOSE btch0001.cr_crapdat;
-    
-  IF rw_crapdat.inproces <> 1 OR (to_char(sysdate,''D'') IN (1,7)) THEN
+  vr_dataexec := gene0005.fn_valida_dia_util(pr_cdcooper => vr_coop.cdcooper, pr_dtmvtolt => SYSDATE);
+  IF rw_crapdat.inproces <> 1 OR (TRUNC(vr_dataexec) <> TRUNC(SYSDATE)) THEN
   CONTINUE;
   END IF;
   pc_crps770(pr_cdcooper => vr_coop.cdcooper
