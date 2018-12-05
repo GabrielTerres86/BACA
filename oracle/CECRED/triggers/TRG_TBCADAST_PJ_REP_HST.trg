@@ -16,8 +16,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PJ_REP_HST
       Objetivo  : Trigger para gravar Historico/Auditoria da tabela
 
      Alteração :
-
-
+                 27/06/2018 - Campo dsvalor_novo_original e PC_INSERE_COMUNIC_SOA. Alexandre Borgmann - Mout´s Tecnologia
   ............................................................................*/
 
 
@@ -33,8 +32,9 @@ DECLARE
   vr_cdoperad   tbcadast_pessoa_historico.cdoperad_altera%TYPE;
 
   vr_exc_erro   EXCEPTION;
-  vr_cdcritic   INTEGER;
   vr_dscritic   VARCHAR2(2000);
+  -- Variável indicando que esta dentro da funçao insere_historico
+  vr_flginsere_historico   boolean :=FALSE;
 
   --> Function para retornar descrição do tipo cargo representante  
   FUNCTION fn_desc_tpcargo_representante (pr_tpcargo_representante  IN tbcadast_pessoa_juridica_rep.tpcargo_representante%TYPE) 
@@ -68,10 +68,12 @@ DECLARE
   --> Grava a tabela historico
   PROCEDURE Insere_Historico(pr_nmdcampo IN VARCHAR2,
                              pr_dsvalant IN tbcadast_pessoa_historico.dsvalor_anterior%TYPE,
-                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE) IS
-
-
+                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE,
+                             pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE
+                            ) IS
   BEGIN
+    -- Deve-se enviar o historico para o SOA
+    vr_flginsere_historico:=TRUE;
 
     CADA0014.pc_grava_hist_pessoa
                         ( pr_nmdatela    => vr_nmdatela   --> Nome da tela
@@ -83,6 +85,7 @@ DECLARE
                          ,pr_tpoperac    => vr_tpoperac   --> Tipo de operacao (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                          ,pr_dsvalant    => pr_dsvalant   --> Valor anterior
                          ,pr_dsvalnov    => pr_dsvalnov   --> Valor novo
+                         ,pr_dsvalor_novo_original => pr_dsvalor_novo_original --> Valor Original sem descrição
                          ,pr_cdoperad    => vr_cdoperad   --> Valor novo
                          ,pr_dscritic    => vr_dscritic);  --> Retornar Critica
 
@@ -149,67 +152,105 @@ BEGIN
     IF nvl(:new.IDPESSOA,0) <> nvl(:OLD.IDPESSOA,0) THEN
       Insere_Historico(pr_nmdcampo => 'IDPESSOA',
                        pr_dsvalant => :old.IDPESSOA,
-                       pr_dsvalnov => :new.IDPESSOA);
+                       pr_dsvalnov => :new.IDPESSOA,
+                       pr_dsvalor_novo_original => :new.IDPESSOA                       
+                      );
     END IF;
 
     --> NRSEQ_REPRESENTANTE
     IF nvl(:new.NRSEQ_REPRESENTANTE,0) <> nvl(:OLD.NRSEQ_REPRESENTANTE,0) THEN
       Insere_Historico(pr_nmdcampo => 'NRSEQ_REPRESENTANTE',
                        pr_dsvalant => (:old.NRSEQ_REPRESENTANTE),
-                       pr_dsvalnov => (:new.NRSEQ_REPRESENTANTE ));
+                       pr_dsvalnov => (:new.NRSEQ_REPRESENTANTE ),
+                       pr_dsvalor_novo_original => :new.NRSEQ_REPRESENTANTE                       
+                      );
     END IF;
     
     --> IDPESSOA_REPRESENTANTE
     IF nvl(:new.IDPESSOA_REPRESENTANTE,0) <> nvl(:OLD.IDPESSOA_REPRESENTANTE,0) THEN
       Insere_Historico(pr_nmdcampo => 'IDPESSOA_REPRESENTANTE',
                        pr_dsvalant => (:old.IDPESSOA_REPRESENTANTE),
-                       pr_dsvalnov => (:new.IDPESSOA_REPRESENTANTE ));
+                       pr_dsvalnov => (:new.IDPESSOA_REPRESENTANTE ),
+                       pr_dsvalor_novo_original => :new.IDPESSOA_REPRESENTANTE                      
+                      );
     END IF;
     
     --> TPCARGO_REPRESENTANTE
     IF nvl(:new.TPCARGO_REPRESENTANTE,0) <> nvl(:OLD.TPCARGO_REPRESENTANTE,0) THEN
       Insere_Historico(pr_nmdcampo => 'TPCARGO_REPRESENTANTE',
                        pr_dsvalant => fn_desc_tpcargo_representante(:old.TPCARGO_REPRESENTANTE),
-                       pr_dsvalnov => fn_desc_tpcargo_representante(:new.TPCARGO_REPRESENTANTE));
+                       pr_dsvalnov => fn_desc_tpcargo_representante(:new.TPCARGO_REPRESENTANTE),
+                       pr_dsvalor_novo_original => :new.TPCARGO_REPRESENTANTE                      
+                      );
     END IF;
     
     --> DTVIGENCIA
     IF nvl(:new.DTVIGENCIA,vr_data) <> nvl(:OLD.DTVIGENCIA,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTVIGENCIA',
                        pr_dsvalant => to_char(:old.DTVIGENCIA,'DD/MM/RRRR'),
-                       pr_dsvalnov => to_char(:new.DTVIGENCIA,'DD/MM/RRRR'));
+                       pr_dsvalnov => to_char(:new.DTVIGENCIA,'DD/MM/RRRR'),
+                       pr_dsvalor_novo_original => to_char(:new.DTVIGENCIA,'DD/MM/RRRR')                     
+                      );
     END IF; 
     
     --> DTADMISSAO
     IF nvl(:new.DTADMISSAO,vr_data) <> nvl(:OLD.DTADMISSAO,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTADMISSAO',
                        pr_dsvalant => to_char(:old.DTADMISSAO,'DD/MM/RRRR'),
-                       pr_dsvalnov => to_char(:new.DTADMISSAO,'DD/MM/RRRR'));
+                       pr_dsvalnov => to_char(:new.DTADMISSAO,'DD/MM/RRRR'),
+                       pr_dsvalor_novo_original => to_char(:new.DTADMISSAO,'DD/MM/RRRR')                    
+                      );
     END IF; 
         
     --> PERSOCIO
     IF nvl(:new.PERSOCIO,0) <> nvl(:OLD.PERSOCIO,0) THEN
       Insere_Historico(pr_nmdcampo => 'PERSOCIO',
                        pr_dsvalant => cada0014.fn_formata_valor(:old.PERSOCIO),
-                       pr_dsvalnov => cada0014.fn_formata_valor(:new.PERSOCIO));
+                       pr_dsvalnov => cada0014.fn_formata_valor(:new.PERSOCIO),
+                       pr_dsvalor_novo_original => :new.PERSOCIO                    
+                      );
     END IF;
        
     --> FLGDEPENDENCIA_ECONOMICA
     IF nvl(:new.FLGDEPENDENCIA_ECONOMICA,0) <> nvl(:OLD.FLGDEPENDENCIA_ECONOMICA,0) THEN
       Insere_Historico(pr_nmdcampo => 'FLGDEPENDENCIA_ECONOMICA',
                        pr_dsvalant => fn_desc_sim_nao(:old.FLGDEPENDENCIA_ECONOMICA),
-                       pr_dsvalnov => fn_desc_sim_nao(:new.FLGDEPENDENCIA_ECONOMICA));
+                       pr_dsvalnov => fn_desc_sim_nao(:new.FLGDEPENDENCIA_ECONOMICA),
+                       pr_dsvalor_novo_original => :new.FLGDEPENDENCIA_ECONOMICA                    
+                      );
     END IF;
     
     --> CDOPERAD_ALTERA
     IF nvl(:new.CDOPERAD_ALTERA,' ') <> nvl(:OLD.CDOPERAD_ALTERA,' ') THEN
       Insere_Historico(pr_nmdcampo => 'CDOPERAD_ALTERA',
                        pr_dsvalant => :old.CDOPERAD_ALTERA,
-                       pr_dsvalnov => :new.CDOPERAD_ALTERA);
+                       pr_dsvalnov => :new.CDOPERAD_ALTERA,
+                       pr_dsvalor_novo_original => :new.CDOPERAD_ALTERA                    
+                      );
     END IF;
     
-    
   END IF;
+  -- Se gerou historico, entao deve-se transmitir para o SOA
+  IF vr_flginsere_historico THEN 
+    
+     CADA0014.PC_INSERE_COMUNIC_SOA(vr_nmdatela, -- nmtabela_oracle 
+                                    vr_idpessoa, -- idpessoa 
+                                    vr_nrsequen, -- nrsequencia 
+                                    vr_dhaltera, --dhalteracao 
+                                    vr_tpoperac, --tpoperacao --Tipo de alteracao do registro (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
+                                    vr_dscritic    -- descrição do erro
+                                   );
+     
+     IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+  END IF;
+  END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      raise_application_error(-20100,vr_dscritic);
+    WHEN OTHERS THEN
+      raise_application_error(-20100,'Erro TRG_TBCADAST_PJ_REP_HST: '||SQLERRM);
 
 END TRG_TBCADAST_PJ_REP_HST;
 /
