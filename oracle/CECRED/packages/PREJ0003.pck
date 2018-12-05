@@ -23,10 +23,20 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 							PJ 450 - Diego Simas (AMcom)
+               06/11/2018 - P450 - Nova procedure consultar Prejuizo Ativo (Guilherme/AMcom)
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
                             ou de desconto de título em prejuízo (Fabio - AMcom). 
 
 ..............................................................................*/
+
+  TYPE typ_reg_prejuizo IS
+    RECORD(nrdconta  NUMBER
+          ,nrcpfcnpj NUMBER);
+  TYPE typ_tab_prejuizo IS
+    TABLE OF typ_reg_prejuizo
+      INDEX BY VARCHAR2(12);     -- Indexado por CPF/CNPJ Base (11) + inpessoa (1)
+  vr_tab_prejuizo  typ_tab_prejuizo;
+
 
   -- Verifica se a conta corrente se encontra em prejuízo
   FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
@@ -37,6 +47,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                  , pr_nrdconta craplcm.nrdconta%TYPE
                                  , pr_tipverif INTEGER DEFAULT 2) RETURN BOOLEAN;                                
 
+																 
 	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
 	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE)
 		RETURN BOOLEAN;
@@ -377,8 +388,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 							 30/10/2018 - P450 - Ajuste no pagamento do prejuízo para fixar o DTHRTRAN que é gravado na
 							              TBCCC_PREJUIZO_DETALHE - Reginaldo - AMcom
                07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
-                           ou de desconto de título em prejuízo (Fabio Adriano - AMcom).
-			         29/11/2018 - P450 - Centralzada a Chamada para a rotin PREJ0003.pc_define_situacao_cc_prej
+                            ou de desconto de título em prejuízo (Fabio Adriano - AMcom).
+               29/11/2018 - P450 - Centralzada a Chamada para a rotin PREJ0003.pc_define_situacao_cc_prej
                             (Conta corrente, emprestimo e Desconto de titulo na mesma rotina) - Fernando Ornelas
                29/11/2018 - P450 - estória 12166:Transferência Desconto de titulo - Controle 
                             da situação da conta corrente (Fabio Adriano - AMcom).
@@ -427,23 +438,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     RETURN BOOLEAN AS vr_prejuizo_ativo BOOLEAN;
   -- Verifica se a CPF/CNPJ Base possui algum prejuizo ativo
   -- CC / EMPRESTTIMO / DESC.TITULO
+  --
+  --
   -- pr_tipverif => 1-Verificação por CPF/CNPJ Base (Todas as contas de um CPF/CNPJ base)
   --             => 2-Verificação apenas da Conta
 
     -- CURSORES
     -- Listar as contas de um CPF/CNPJ Base
     CURSOR cr_ass_cpfcnpj (pr_tipverif IN INTEGER) IS
-      SELECT ass.nrdconta
+      SELECT ass.nrdconta, ass.inprejuz
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ((pr_tipverif = 1   AND
-               ass.nrcpfcnpj_base IN (SELECT a.nrcpfcnpj_base
+         AND pr_tipverif  = 1   
+         AND ass.nrcpfcnpj_base = (SELECT a.nrcpfcnpj_base
                                         FROM crapass a
                                        WHERE a.cdcooper = pr_cdcooper
                                          AND a.nrdconta = pr_nrdconta)
-               ) OR
-               (pr_tipverif = 2   AND
-                ass.nrdconta = pr_nrdconta));
+      UNION
+      SELECT ass.nrdconta, ass.inprejuz
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND pr_tipverif  = 2
+         AND ass.nrdconta = pr_nrdconta;
     rw_ass_cpfcnpj cr_ass_cpfcnpj%ROWTYPE;
     -- Verificar prejuizo de Emprestimo/CC linha 100
     CURSOR cr_preju_empr (pr_nrdconta IN crapass.nrdconta%TYPE)IS
@@ -470,6 +486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     vr_tipoverificacao INTEGER;
   BEGIN
     vr_prejuizo_ativo := FALSE;
+    vr_tipoverificacao := pr_tipverif;
 
     -- Tratar parametro invalido
     IF pr_tipverif NOT IN (1,2) THEN
@@ -480,9 +497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     -- VERIFICAR TODAS AS CONTAS DE UM CPF/CNPJ
     FOR rw_ass_cpfcnpj IN cr_ass_cpfcnpj (vr_tipoverificacao)LOOP
     
-      -- Verificar prejuizo de CC (Modelo Novo)
-      IF fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                               , pr_nrdconta => rw_ass_cpfcnpj.nrdconta) THEN
+      -- Verificar prejuizo de CC
+      IF rw_ass_cpfcnpj.inprejuz = 1 THEN
          RETURN TRUE;
       END IF;
       
@@ -507,7 +523,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     RETURN vr_prejuizo_ativo;
   END fn_verifica_preju_ativo;
 	
-  
 	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
 	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE)
 		RETURN BOOLEAN AS vr_flg_ativa_preju BOOLEAN;
@@ -1528,7 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     Sistema :
     Sigla   : PREJ
     Autor   : Rangel Decker  AMcom
-    Data    : Junho/2018.                  Ultima atualizacao:
+    Data    : Junho/2018.                  Ultima atualizacao: 09/11/2018
 
     Dados referentes ao programa:
 
@@ -1536,7 +1551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  :Alteração do Tipo de Conta em prejuízo liquidado
 
-    Alteracoes:
+    Alteracoes: 09/11/2018 - Ajustes nos cursores da liquidação
+	                           (Reginaldo/AMcom/P450)	                    
     ..............................................................................*/
 
   -- Recupera informações dos prejuízo a serem liquidados (saldo devedor total igual a zero)
@@ -1553,49 +1569,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
            tbprj.vljur60_ctneg +
            tbprj.vljur60_lcred) = 0;
            
-  --Seleciona informações do cadastro de emprestimos
-  CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE,
-                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
-    SELECT count(*) qtde_crapepr 
-      FROM crapepr
-     WHERE crapepr.cdcooper = pr_cdcooper    
-       AND crapepr.nrdconta = pr_nrdconta
-       AND crapepr.inprejuz = 1  
-       AND crapepr.vlsdprej > 0;
-  rw_crapepr cr_crapepr%ROWTYPE;  
-  
-  -- Borderos de Desconto de Titulos
-  CURSOR cr_crapbdt (pr_cdcooper IN crapepr.cdcooper%TYPE,
-                     pr_nrdconta IN crapepr.nrdconta%TYPE ) IS
-    SELECT count(*) qtde_crapbdt 
-      FROM crapbdt b
-     WHERE b.cdcooper = pr_cdcooper 
-       AND b.nrdconta = pr_nrdconta
-       AND b.inprejuz = 1
-       AND b.dtliqprj is null;
-  rw_crapbdt cr_crapbdt%ROWTYPE;    
-  
   -- Contas não em prejuizo INPREJUZ=0 e com situação em prejuizo CDSITDCT=2
   CURSOR cr_conta_nprej_sitprej IS
    SELECT ass.nrdconta,
           ass.cdcooper 
      FROM crapass ass
     WHERE ass.inprejuz = 0
-     and  ass.cdsitdct = 2;   
+      AND ass.cdsitdct = 2
+			AND EXISTS (
+			      SELECT 1
+						  FROM tbcc_prejuizo prj
+						 WHERE prj.cdcooper = ass.cdcooper
+						   AND prj.nrdconta = ass.nrdconta
+			    ) ;   	
   rw_cr_conta_nprej_sitprej cr_conta_nprej_sitprej%ROWTYPE;    
   
   -- Prejuizo mais recente
   CURSOR cr_prej_recente (pr_cdcooper  IN crapass.cdcooper%TYPE,     -- tbcc_prejuizo.cdcooper%TYPE,
                           pr_nrdconta IN crapass.nrdconta%TYPE ) IS -- tbcc_prejuizo.nrdconta%TYPE ) IS
-    SELECT DISTINCT
-           MAX(tbprj.dtinclusao) dtinc,
+    SELECT cdsitdct_original 
+		  FROM (SELECT DISTINCT
+										 tbprj.dtinclusao,
            tbprj.cdsitdct_original 
     FROM tbcc_prejuizo tbprj
     WHERE tbprj.cdcooper = pr_cdcooper
      AND  tbprj.nrdconta = pr_nrdconta
-     AND  ROWNUM = 1
-    GROUP BY tbprj.cdsitdct_original
-    ORDER BY dtinc desc;
+						ORDER BY dtinclusao DESC)
+		WHERE rownum = 1;
   rw_prej_recente cr_prej_recente%ROWTYPE;
 
   vr_cdcritic  NUMBER(3);
@@ -1644,25 +1644,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     -- Percorre a lista dos prejuízos que devem ser liquidados
     FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
-      
         -- Restaura a situação da conta corrente e retira a flag de "em prejuízo"
         BEGIN                              
-            
-            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
-                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN    
-            BEGIN        
               UPDATE crapass a
-                 SET a.inprejuz = 0,
-                     a.cdsitdct = rw_conta_liquida.cdsitdct_original
-              WHERE a.cdcooper = pr_cdcooper
-                AND a.nrdconta = rw_conta_liquida.nrdconta;       
-            END;    
-            ELSE BEGIN
-                   UPDATE crapass a
                      SET a.inprejuz = 0
                    WHERE a.cdcooper = pr_cdcooper
                      AND a.nrdconta = rw_conta_liquida.nrdconta;  
-                 END;    
+										 
+            IF NOT fn_verifica_preju_ativo(pr_cdcooper => rw_conta_liquida.cdcooper
+                                          ,pr_nrdconta => rw_conta_liquida.nrdconta ) THEN           
+              UPDATE crapass a
+                 SET a.cdsitdct = rw_conta_liquida.cdsitdct_original
+              WHERE a.cdcooper = pr_cdcooper
+                AND a.nrdconta = rw_conta_liquida.nrdconta;       
             END IF;
         EXCEPTION
           WHEN OTHERS THEN
@@ -1729,7 +1723,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                              ,pr_tab_erro => pr_tab_erro);
 				ROLLBACK;
  END  pc_liquida_prejuizo_cc;
-
 
   PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
@@ -3396,8 +3389,8 @@ Alteracoes:	29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
          vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
                                                    pr_nrdconta => rw_contaprej.nrdconta);
                                   
-         IF vr_vlsddisp > 0 AND 
-            nvl(vr_vlsldprj,0) > 0 THEN
+         IF  vr_vlsddisp > 0
+         AND nvl(vr_vlsldprj,0) > 0 THEN
 
            pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
                            , pr_nrdconta => rw_contaprej.nrdconta
@@ -5086,6 +5079,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		         25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 						  	  PJ 450 - Diego Simas (AMcom)
 
+                 16/10/2018 - Ajuste na rotina para realizar o estorno do abono na conta corrente do cooperado.
+                              PRJ450-Regulatorio(Odirlei-AMcom)
+
+
     -------------------------------------------------------------------------------------------------------------*/
 
     -- CURSORES --
@@ -6064,9 +6061,6 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     END;
 
   END pc_tela_imprimir_relatorio;
-
- 
-
 
 END PREJ0003;
 /
