@@ -1108,8 +1108,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           INDEX BY PLS_INTEGER;
       vr_tab_ass_ris   typ_tab_ass_ris;
 
-      vr_tab_central_param risc0004_melhora.typ_tab_ctl_parametros;
-      vr_tab_prejuizo      prej0003_melhora.typ_tab_prejuizo;
+      vr_tab_central_param risc0004.typ_tab_ctl_parametros;
+      vr_tab_prejuizo      prej0003.typ_tab_prejuizo;
       
 
 
@@ -3098,7 +3098,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         ----------------------- RISCO MELHORA ---------------------
         vr_inrisco_melhora := NULL;
-        risc0004_melhora.pc_calcula_risco_melhora(pr_cdcooper        => pr_cdcooper,
+        risc0004.pc_calcula_risco_melhora(pr_cdcooper        => pr_cdcooper,
                                           pr_rowidepr        => pr_rw_crapepr.rowidepr,
                                           pr_tpctrato        => 90,
                                           pr_qtdiaatr        => vr_qtdiaatr, -- Dias em atraso do contrato atual
@@ -3739,7 +3739,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         ----------------------- RISCO MELHORA ---------------------
         vr_inrisco_melhora := NULL;
-        risc0004_melhora.pc_calcula_risco_melhora(pr_cdcooper        => pr_cdcooper,
+        risc0004.pc_calcula_risco_melhora(pr_cdcooper        => pr_cdcooper,
                                           pr_rowidepr        => pr_rw_crapepr.rowidepr,
                                           pr_tpctrato        => 90,
                                           pr_qtdiaatr        => vr_qtdiaatr, -- Dias em atraso do contrato atual
@@ -6558,12 +6558,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_idx_epr := vr_tab_crapepr_up.FIRST;
       WHILE vr_idx_epr IS NOT NULL LOOP
 
-        UPDATE crapepr
+        UPDATE crapepr x
            SET inrisco_refin       = vr_tab_crapepr_up(vr_idx_epr).inrisco_refin
               ,qtdias_atraso_refin = vr_tab_crapepr_up(vr_idx_epr).qtdias_atraso_refin
          WHERE cdcooper = vr_tab_crapepr_up(vr_idx_epr).cdcooper
            AND nrdconta = vr_tab_crapepr_up(vr_idx_epr).nrdconta
-           AND nrctremp = vr_tab_crapepr_up(vr_idx_epr).nrctremp;
+           AND nrctremp = vr_tab_crapepr_up(vr_idx_epr).nrctremp
+           AND qtdias_atraso_refin <= vr_tab_crapepr_up(vr_idx_epr).qtdias_atraso_refin;
+           -- Condição para travar o Risco Refin, e não poder diminuir
 
         vr_idx_epr := vr_tab_crapepr_up.NEXT(vr_idx_epr);
       END LOOP;
@@ -6815,7 +6817,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_tab_central_param.delete;
 
       -- Carregar Parametros Gerais Central de Risco
-      RISC0004_MELHORA.pc_central_parametros(pr_cdcooper           => pr_cdcooper,
+      RISC0004.pc_central_parametros(pr_cdcooper           => pr_cdcooper,
                                      pr_tab_ctl_parametros => vr_tab_central_param,
                                      pr_dscritic           => vr_dscritic);
 

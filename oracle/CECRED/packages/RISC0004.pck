@@ -2246,12 +2246,12 @@ END pc_carrega_tabela_riscos;
    EXCEPTION
      WHEN vr_exc_erro THEN
        ROLLBACK;
-       pr_dscritic := 'Erro RISC0004_MELHORA.pc_grava_critica_melhora --> ' ||pr_dscritic;
+       pr_dscritic := 'Erro RISC0004.pc_grava_critica_melhora --> ' ||pr_dscritic;
 
      WHEN OTHERS THEN
        ROLLBACK;
        -- Descricao do erro
-       pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_grava_critica_melhora --> ' || SQLERRM;
+       pr_dscritic := 'Erro nao tratado na RISC0004.pc_grava_critica_melhora --> ' || SQLERRM;
 
   END pc_grava_critica_melhora;
 
@@ -2362,13 +2362,13 @@ END pc_carrega_tabela_riscos;
    EXCEPTION
      WHEN vr_exc_erro THEN
        ROLLBACK;
-       pr_dscritic := 'Erro RISC0004_MELHORA.pc_grava_risco_melhora --> ' ||pr_dscritic;
+       pr_dscritic := 'Erro RISC0004.pc_grava_risco_melhora --> ' ||pr_dscritic;
 
 
      WHEN OTHERS THEN
        ROLLBACK;
        -- Descricao do erro
-       pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_grava_risco_melhora --> ' || SQLERRM;
+       pr_dscritic := 'Erro nao tratado na RISC0004.pc_grava_risco_melhora --> ' || SQLERRM;
 
   END pc_grava_risco_melhora;
 
@@ -2483,7 +2483,7 @@ END pc_carrega_tabela_riscos;
   
   vr_sucesso              BOOLEAN:=TRUE;
 
-  vr_tab_contrato         risc0004_melhora.typ_tab_contrato;  
+  vr_tab_contrato         risc0004.typ_tab_contrato;  
 
   BEGIN
 
@@ -2568,7 +2568,7 @@ END pc_carrega_tabela_riscos;
     END IF;
 
     -- VERIFICAR GARANTIAS
-    vr_tem_garantias := RISC0004_MELHORA.fn_verifica_garantias(pr_cdcooper => pr_cdcooper
+    vr_tem_garantias := RISC0004.fn_verifica_garantias(pr_cdcooper => pr_cdcooper
                                                       ,pr_nrdconta => rw_crapepr.nrdconta
                                                       ,pr_nrctremp => rw_crapepr.nrctremp
                                                       ,pr_tpctrato => rw_crapepr.tpctrato  -- Tipo do contrato com base na Linha de Credito
@@ -2678,7 +2678,7 @@ END pc_carrega_tabela_riscos;
 
 
     -- CONCLUIDO O PROCESSO DO MELHORA, GRAVA O VALOR NA TABELA
-    RISC0004_MELHORA.pc_grava_risco_melhora(pr_cdcooper         => rw_crapepr.cdcooper
+    RISC0004.pc_grava_risco_melhora(pr_cdcooper         => rw_crapepr.cdcooper
                                   , pr_nrdconta         => rw_crapepr.nrdconta
                                   , pr_nrctremp         => rw_crapepr.nrctremp
                                   , pr_tpctrato         => pr_tpctrato
@@ -2710,7 +2710,7 @@ END pc_carrega_tabela_riscos;
         pr_dscritic        := NULL;    
       ELSE
         -- Busca o valor ja gravado para esse contrato
-        pr_inrisco_melhora := RISC0004_MELHORA.fn_busca_risco_melhora(pr_cdcooper => rw_crapepr.cdcooper
+        pr_inrisco_melhora := RISC0004.fn_busca_risco_melhora(pr_cdcooper => rw_crapepr.cdcooper
                                                               , pr_nrdconta => rw_crapepr.nrdconta
                                                               , pr_nrctremp => rw_crapepr.nrctremp
                                                               , pr_tpctrato => pr_tpctrato);
@@ -2722,7 +2722,7 @@ END pc_carrega_tabela_riscos;
                                 ,pr_cdcritic_melhora => vr_cdcritica_melhora
                                 ,pr_dscritic => pr_dscritic );
         IF pr_dscritic IS NOT NULL THEN
-          pr_dscritic := 'RISC0004_MELHORA.pc_calcula_risco_melhora => ' || pr_dscritic;
+          pr_dscritic := 'RISC0004.pc_calcula_risco_melhora => ' || pr_dscritic;
         END IF;
 
       END IF;
@@ -2828,7 +2828,7 @@ END pc_carrega_tabela_riscos;
       WHEN OTHERS THEN
         ROLLBACK;
         -- Descricao do erro
-        pr_dscritic := 'Erro nao tratado na RISC0004_MELHORA.pc_central_parametros --> ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na RISC0004.pc_central_parametros --> ' || SQLERRM;
 
   END pc_central_parametros;
 
