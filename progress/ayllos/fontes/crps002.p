@@ -24,6 +24,9 @@
                           - Kbase IT Solutions - Paulo Ricardo Maciel.
                           
                19/10/2009 - Alteracao Codigo Historico (Kbase). 
+               
+               04/12/2018 - Tratamento de saldo para cheque depósito em conta em prejuízo
+                          (Renato Raul Cordeiro - AMCom)
                       
 ............................................................................. */
 
