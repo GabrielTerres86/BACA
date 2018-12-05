@@ -245,6 +245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --            30/10/2018 - P450 - Inclusão da function fn_busca_risco_melhora e atribuicao 
   --						  da variavel vr_inrisco_melhora (Douglas Pagel/AMcom)
   --                       - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
+  --             05/12/2018 - Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1993,6 +1994,29 @@ END pc_carrega_tabela_riscos;
               END;
             END LOOP; -- FIM FOR rw_crapvri
           END LOOP; -- FIM FOR rw_crapris
+          
+          -- Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
+          BEGIN
+            UPDATE crapass
+               SET dsnivris = fn_traduz_risco(vr_maxrisco)
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = rw_contas_grupo.nrdconta;
+          EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'RISC0004.pc_central_risco_grupo - '
+                        || 'Erro ao atualizar Risco da ASS. - '
+                        || 'Grupo:'|| rw_contas_grupo.nrdconta
+                        || '. Detalhes:'||SQLERRM;
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratado
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || 'RISC0004 || ' --> '
+                                                         || vr_dscritic );
+            RAISE vr_exc_erro;
+          END; -- Fim atualização do nível de risco do grupo
+          
         END LOOP; -- FIM FOR rw_contas_grupo
 
         -- Leitura de todos do grupo para atualizar o risco do grupo
