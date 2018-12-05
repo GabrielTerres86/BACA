@@ -3186,21 +3186,25 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
         vr_vlprinc := vr_vlsddisp;
       END IF;
 
-      -- Valor pago do saldo devedor principal do prejuízo
-      pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-                             , pr_nrdconta => pr_nrdconta
-                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                             , pr_cdhistor => 2725
-                             , pr_idprejuizo => rw_contaprej.idprejuizo
-                             , pr_vllanmto => vr_vlprinc
-														 , pr_dthrtran => vr_dthrtran
-                             , pr_cdcritic => vr_cdcritic
-                             , pr_dscritic => vr_dscritic);
+      IF nvl(vr_vlprinc,0) <> 0 THEN
 
-      -- Atualiza o saldo devedor, descontando o valor pago
-      UPDATE tbcc_prejuizo prj
-         SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
-       WHERE prj.rowid = rw_contaprej.rowid;
+        -- Valor pago do saldo devedor principal do prejuízo
+        pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               , pr_cdhistor => 2725
+                               , pr_idprejuizo => rw_contaprej.idprejuizo
+                               , pr_vllanmto => vr_vlprinc
+				  										 , pr_dthrtran => vr_dthrtran
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
+
+        -- Atualiza o saldo devedor, descontando o valor pago
+        UPDATE tbcc_prejuizo prj
+           SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
+         WHERE prj.rowid = rw_contaprej.rowid;
+         
+      END IF;
     END IF;
 
     vr_valrpago := vr_valrpago + vr_vlprinc;
@@ -3341,7 +3345,8 @@ Frequencia: Diária (sempre que chamada)
 Objetivo  : Efetua a o pagamento de prejuízo de forma automática.
 
 
-Alteracoes:
+Alteracoes:	29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda existir saldo de prejuizo
+                         PRJ450 - Regulatorio(Odirlei/AMcom)
  ..............................................................................*/
 --
 
@@ -3374,6 +3379,7 @@ Alteracoes:
      vr_exc_saida exception;
 
      vr_vlsddisp NUMBER;
+     vr_vlsldprj NUMBER;
 
 --     vr_dtrefere_aux  DATE;
   BEGIN
@@ -3385,7 +3391,13 @@ Alteracoes:
          vr_vlsddisp:=  fn_cred_disp_prj(pr_nrdconta => rw_contaprej.nrdconta,
                                          pr_cdcooper => rw_contaprej.cdcooper);
 
-         IF vr_vlsddisp > 0 THEN
+         
+         --> Verificar se ainda possui saldo para de prejuizo para regularizar
+         vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
+                                                   pr_nrdconta => rw_contaprej.nrdconta);
+                                  
+         IF vr_vlsddisp > 0 AND 
+            nvl(vr_vlsldprj,0) > 0 THEN
 
            pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
                            , pr_nrdconta => rw_contaprej.nrdconta
