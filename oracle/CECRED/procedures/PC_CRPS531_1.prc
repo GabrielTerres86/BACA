@@ -322,6 +322,12 @@ end;
              12/09/2018 - Substituido insert na craplcm para utilizar rotina centralizadora LANC0001.
                           PRJ450 - Regulatorio (Odirlei-AMcom)    
                           
+	     29/10/2018 - Ajustes efetuados:
+                          > Passado o código da cooperativa, correto, na chamada da rotina pc_efetua_baixa_titulo;
+                          > Incluido a passagem do parâmetro pr_nrispbpg na chamada das rotinas paga0001.pc_processa_liquidacao,
+                            paga0001.pc_proc_liquid_apos_baixa.
+                          (Adriano - PRB0040386).
+
              01/11/2018 - Ignorar confirmação STR0008R1 para TEDs de protesto (P352 - Cechet)
                           
              17/10/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT C
@@ -8185,6 +8191,7 @@ END pc_trata_arquivo_ldl;
             IF NOT vr_aux_liqaposb THEN
               paga0001.pc_processa_liquidacao(pr_idtabcob => rw_crapcob.rowid
                                              ,pr_nrnosnum => 0
+                                             ,pr_nrispbpg => vr_aux_ISPBIFDebtd
                                              ,pr_cdbanpag => vr_aux_cdbanpag
                                              ,pr_cdagepag => vr_aux_AgDebtd
                                              ,pr_vltitulo => rw_crapcob.vltitulo
@@ -8212,6 +8219,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               paga0001.pc_proc_liquid_apos_baixa(pr_idtabcob => rw_crapcob.rowid
                                                 ,pr_nrnosnum => 0
+                                                ,pr_nrispbpg => vr_aux_ISPBIFDebtd
                                                 ,pr_cdbanpag => vr_aux_cdbanpag
                                                 ,pr_cdagepag => vr_aux_AgDebtd
                                                 ,pr_vltitulo => rw_crapcob.vltitulo
@@ -8323,7 +8331,7 @@ END pc_trata_arquivo_ldl;
             IF vr_tab_descontar.next(vr_idx_descontar) IS NULL
             OR vr_tab_descontar(vr_idx_descontar).nrdconta <> vr_tab_descontar(vr_tab_descontar.next(vr_idx_descontar)).nrdconta THEN
               -- Efetuar a baixa do titulo
-              DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper     -- Codigo Cooperativa
+              DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => rw_crapcco.cdcooper -- Codigo Cooperativa
                                               ,pr_cdagenci    => 0               -- Codigo Agencia
                                               ,pr_nrdcaixa    => 0               -- Numero Caixa
                                               ,pr_cdoperad    => 0               -- Codigo operador
