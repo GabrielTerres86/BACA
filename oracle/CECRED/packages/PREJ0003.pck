@@ -2287,7 +2287,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     Sistema :
     Sigla   : PREJ
     Autor   : Heckmann - AMcom
-    Data    : Julho/2018.                  Ultima atualizacao:
+    Data    : Julho/2018.                  Ultima atualizacao: 05/12/2018
 
     Dados referentes ao programa:
 
@@ -2295,7 +2295,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     Objetivo  : Transferir a conta corrente fraude para prejuízo
 
-    Alteracoes:
+    Alteracoes: 05/12/2018 - Ajustado rotina para permitir transferir apenas contas com saldo negativo.
+                             PRJ450 - Regulatorio(Odirlei/AMcom)
 
     ..............................................................................*/
 
@@ -2319,10 +2320,17 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     vr_nrdrowid ROWID;
+    rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    vr_indsaldo BINARY_INTEGER;
+    
+    --Tipo da tabela de saldos
+    vr_tab_saldo EXTR0001.typ_tab_saldos;
+    --Tipo de tabela de erro
+    vr_tab_erro GENE0001.typ_tab_erro;
 
     ---->> CURSORES <<-----
 
-  begin
+  BEGIN
 
     pr_des_erro := 'OK';
     -- Extrai dados do xml
@@ -2340,6 +2348,75 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       -- Levanta exceção
       RAISE vr_exc_saida;
+    END IF;
+    
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat
+    INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+
+      vr_cdcritic := 1;
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    --Limpar tabela erros e saldos
+    vr_tab_erro.DELETE;
+    vr_tab_saldo.DELETE;
+    --Popular registro crapdat
+
+    --> Verifica se possui saldo para fazer a operacao 
+    EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
+                                ,pr_rw_crapdat => rw_crapdat
+                                ,pr_cdagenci   => vr_cdagenci
+                                ,pr_nrdcaixa   => vr_nrdcaixa
+                                ,pr_cdoperad   => vr_cdoperad
+                                ,pr_nrdconta   => pr_nrdconta
+                                ,pr_vllimcre   => 0
+                                ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
+                                ,pr_flgcrass   => FALSE
+                                ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                ,pr_des_reto   => vr_dscritic
+                                ,pr_tab_sald   => vr_tab_saldo
+                                ,pr_tab_erro   => vr_tab_erro);
+    --Se ocorreu erro
+    IF vr_dscritic = 'NOK' THEN
+      -- Tenta buscar o erro no vetor de erro
+      IF vr_tab_erro.COUNT > 0 THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+      ELSE
+        -- Montar mensagem de critica 
+        vr_cdcritic := 9998; --Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                      ' EXTR0001.pc_obtem_saldo_dia(2), conta: '||pr_nrdconta;
+      END IF;
+      --Levantar Excecao
+      RAISE vr_exc_saida;
+    ELSE
+      vr_dscritic := NULL;
+    END IF;
+	      
+    --Verificar o saldo retornado
+    IF vr_tab_saldo.Count = 0 THEN
+      --Montar mensagem erro
+      vr_cdcritic := 1072; --Nao foi possivel consultar o saldo para a operacao.
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      --Levantar Excecao
+      RAISE vr_exc_saida;
+    ELSE
+      -- Posiciona no primeiro registro da tabela temporária
+      vr_indsaldo := vr_tab_saldo.first;
+      --Se o saldo nao for suficiente
+      IF vr_tab_saldo(vr_indsaldo).vlsddisp >= 0 THEN
+        vr_dscritic := 'Saldo de conta corrente deve ser negativo.';
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+      END IF;
     END IF;
 
     begin
