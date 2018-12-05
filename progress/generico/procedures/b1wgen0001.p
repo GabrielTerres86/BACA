@@ -425,6 +425,9 @@
                 03/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
 
 	            30/05/2018 - Carregado campo dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
+
+				13/11/2018 - Adicionada parametros a procedure 
+							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1539,6 +1542,8 @@ PROCEDURE gera-tarifa-extrato:
                                          INPUT aux_tipotari, /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                          INPUT 0,            /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
                                          INPUT 0,            /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
+										 INPUT 0,			/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+										 INPUT 0,			/* hora de realização da operação -adicionado por Valeria Supero */  
                                          OUTPUT 0,           /* Quantidade de registros a cobrar tarifa na operação */
                                          OUTPUT 0,           /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
                                          OUTPUT 0,           /* Código da crítica */

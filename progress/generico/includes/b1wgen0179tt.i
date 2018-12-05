@@ -77,7 +77,8 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD txcpmfcc AS DECI
     FIELD inestocc AS INTE
 	FIELD idmonpld AS INTE
-    FIELD indebprj AS INTE.
+    FIELD indebprj AS INTE
+	FIELD nrseqatu AS INTE.
     
 DEF TEMP-TABLE tt-crapthi NO-UNDO
     FIELD cdcooper AS INTE

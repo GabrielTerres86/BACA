@@ -419,12 +419,12 @@ BEGIN
                 raise vr_exc_erro;
               END IF; 
             END IF;  
-					ELSE
-						-- Lança débito no extrato do prejuízo (para correto processamento do pagamento pelo CYBER)
+		ELSE
+			-- Lança débito no extrato do prejuízo (para correto processamento do pagamento pelo CYBER)
             PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
                                             , pr_nrdconta => rw_crapepr.nrdconta
                                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                            , pr_cdhistor => 2386
+                                            , pr_cdhistor => 2781
                                             , pr_vllanmto => vr_vldpagto
 																	          , pr_nrctremp => rw_crapepr.nrctremp
                                             , pr_cdcritic => vr_cdcritic

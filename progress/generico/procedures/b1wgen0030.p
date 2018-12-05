@@ -568,6 +568,8 @@
                
                29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
 
+			   13/11/2018 - Adicionada parametros a procedure pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+
                16/11/2018 - Alterado para buscar o qtd dias de renovacao da tabela craprli (Paulo Penteao GFT)
 
 ..............................................................................*/
@@ -2399,6 +2401,8 @@ PROCEDURE efetua_liber_anali_bordero:
                                                         ,INPUT 16                   /* Tipo de tarifa */
                                                         ,INPUT 0                    /* Tipo TAA */
                                                         ,INPUT 1                    /* Quantidade de operacoes */
+														,INPUT 0			/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+														,INPUT 0			/* hora de realização da operação -adicionado por Valeria Supero */
                                                         ,OUTPUT 0                   /* Quantidade de operações a serem cobradas */
                                                         ,OUTPUT 0                   /* Indicador de isencao de tarifa (0 - nao isenta, 1 - isenta) */
                                                         ,OUTPUT 0    /* Código da crítica */

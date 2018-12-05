@@ -355,7 +355,10 @@
                 03/10/2018 - adicionado o parametro IDORIGEM nas procedures valida_senha,
                              valida_senha_cartao_magnetico, valida_senha_cartao_cecred                
                              para que seja possivel zerar a quantidade de senha incorretas quando
-                             estiver sendo executado pela URA (Douglas - Prj 427 URA)
+                             estiver sendo executado pela URA (Douglas - Prj 427 URA)								
+
+				13/11/2018 - Adicionado parametros na procedure pc_verifica_tarifa_operacao. (PRJ 345 - Fabio Stein)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2833,6 +2836,8 @@ PROCEDURE efetua_saque:
                                  INPUT 1,            /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                  INPUT 0,            /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
                                  INPUT 0,            /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
+								 INPUT cratlcm.nrdocmto, /* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+								 INPUT par_hrtransa, /* hora de realização da operação -adicionado por Valeria Supero */  
                                  OUTPUT 0,           /* Quantidade de registros a cobrar tarifa na operação */
                                  OUTPUT 0,           /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
                                 OUTPUT 0,            /* Código da crítica */
@@ -3271,6 +3276,26 @@ PROCEDURE confere_saque:
 
 
         RUN sistema/generico/procedures/b1craplcm.p PERSISTENT SET h-b1craplcm.
+		/*chamar rotina oracle para estorno da tarifa correspondente ao estorno o saque, quando houver */
+		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                     
+                    /* Efetuar a chamada a rotina Oracle  */
+                    		RUN STORED-PROCEDURE pc_estorno_tarifa_saque  aux_handproc = PROC-HANDLE NO-ERROR
+								(INPUT 	craplcm.cdcooper,    /*Código da Cooperativa */
+						 INPUT 1,		 			 /*Agencia*/
+						 INPUT 1, 		 			 /*Caixa*/
+						 INPUT '1',		 			 /*Operador*/
+						 INPUT crapdat.dtmvtocd,	 /* Data Movimento */
+						 INPUT "TAA",		     	 /* Nomte da Tela */
+						 INPUT 1,					 /* Caixa online */
+						 INPUT craplcm.nrdconta, 	 /* Numero da Conta */
+						 INPUT craplcm.nrdocmto,    /* Numero do documento */
+								 OUTPUT 0,
+								 OUTPUT "").
+                    /* Fechar o procedimento para buscarmos o resultado */ 
+                    CLOSE STORED-PROC pc_estorno_tarifa_saque
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 
         IF  VALID-HANDLE(h-b1craplcm)   THEN
             DO:

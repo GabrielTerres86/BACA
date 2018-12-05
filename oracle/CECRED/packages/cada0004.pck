@@ -5439,19 +5439,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       BEGIN
         vr_vltotprv := nvl(vr_vltotprv,0) + vr_tab_dados_epr(vr_idxepr).vlprovis;
         
-        OPEN cr_tbepr_migracao_empr(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_nrctremp => vr_tab_dados_epr(vr_idxepr).nrctremp);
-        FETCH cr_tbepr_migracao_empr INTO rw_tbepr_migracao_empr;
-        
-        vr_exibe_migrado := FALSE;
-        IF cr_tbepr_migracao_empr%FOUND THEN
-          vr_exibe_migrado := TRUE;
-        END IF;
-        CLOSE cr_tbepr_migracao_empr;
-
         -- se nao possuir saldo devedor, deve pular para o proximo       
-        IF vr_tab_dados_epr(vr_idxepr).vlsdeved <= 0  AND NOT vr_exibe_migrado THEN
+        IF vr_tab_dados_epr(vr_idxepr).vlsdeved <= 0 THEN
           RAISE vr_exc_next;
         END IF;
         
@@ -5533,14 +5522,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           vr_epr_portabilidade := vr_epr_portabilidade ||','||rw_portabilidade.nrctremp;
         END IF;
         
-        /* MIGRACAO EMPR - verificar e lista emprestimos migrados*/
-        IF vr_exibe_migrado THEN
-          vr_tbepr_migracao_empr := 'Contrato '|| vr_tab_dados_epr(vr_idxepr).nrctremp || ' foi migrado para o contrato ' || rw_tbepr_migracao_empr.nrctrnov;          
-
-          pc_cria_registro_msg(pr_dsmensag             => vr_tbepr_migracao_empr,
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-        END IF;
-        
         -- Se gerou uma mensagem, deve gravar na temptable de retorno e sair do loop de emprestimos 
         IF vr_dsmensag IS NOT NULL  THEN
           -- Incluir na temptable
@@ -5566,6 +5547,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
     
+    IF vr_tab_dados_epr.count > 0 THEN
+      -- Gerar mensagens de emprestimos migrados
+      FOR vr_contador IN vr_tab_dados_epr.first..vr_tab_dados_epr.LAST LOOP
+
+        OPEN cr_tbepr_migracao_empr(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrctremp => vr_tab_dados_epr(vr_contador).nrctremp);
+        FETCH cr_tbepr_migracao_empr INTO rw_tbepr_migracao_empr;
+
+        IF cr_tbepr_migracao_empr%FOUND THEN
+          vr_tbepr_migracao_empr := 'Contrato '|| vr_tab_dados_epr(vr_contador).nrctremp || ' foi migrado para o contrato ' || rw_tbepr_migracao_empr.nrctrnov;          
+
+          pc_cria_registro_msg(pr_dsmensag             => vr_tbepr_migracao_empr,
+                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+        END IF;
+        CLOSE cr_tbepr_migracao_empr;
+
+      END LOOP;
+    END IF;
+
     --> Buscar emprestimos onde a conta é avalista
     FOR rw_crapavl IN cr_crapavl (pr_cdcooper => pr_cdcooper,
                                   pr_nrdconta => pr_nrdconta) LOOP

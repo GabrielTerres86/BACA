@@ -253,13 +253,17 @@
                            CRITICASDEVOLU.txt (Reinert).
 
               14/08/2018 - Tratamento de devolucoes automaticas, insitdev = 2, setando seus 
-                           valores para insitdev = 1, desta forma registros irao constar no 
-                           Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
+			               valores para insitdev = 1, desta forma registros irao constar no 
+						   Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
 
               06/09/2018 - Cheques com devolucao de historico 573 nao estavam sendo
                            processados com sucesso. Feito tratamento para receber
                            devolucoes automaticas, feitas pelo pc_crps533, corretamente.
                            Chamado SCTASK0027900 - Gabriel (Mouts).
+
+              13/11/2018 - Chamada da rotina para gerar o estorno da tarifa de ADP
+                           quando ocorre a devolucao de cheque, deixando a conta com
+                           a situacao regularizada - Adriano (Supero) - PRJ435.
 
 ..............................................................................*/
 
@@ -564,6 +568,7 @@ ELSE
 PROCEDURE gera_lancamento:
 
     DEF VAR aux_verifloc AS INTEGER NO-UNDO.    
+    DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
 
     IF  NOT VALID-HANDLE(h-b1wgen0153) THEN
         RUN sistema/generico/procedures/b1wgen0153.p 
@@ -999,6 +1004,7 @@ PROCEDURE gera_lancamento:
                       END.
                                              
                  /* VIACON - cria lancamento na coop atual */
+
                  CREATE craplcm.
                  ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                         craplcm.cdagenci = craplot.cdagenci
@@ -1099,6 +1105,7 @@ PROCEDURE gera_lancamento:
                    aux_cdtarifa = "DEVOLCHQPJ") AND 
                    aux_vltarifa > 0             THEN
                    DO:
+
                         RUN cria_lan_auto_tarifa IN h-b1wgen0153
                                                 (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta, 
@@ -1146,6 +1153,7 @@ PROCEDURE gera_lancamento:
                    aux_cdtarbac = "DEVCHQBCPF") AND 
                    aux_vltarbac > 0             THEN
                    DO:
+
                        RUN cria_lan_auto_tarifa IN h-b1wgen0153
                                                (INPUT aux_cdcooper,
                                                 INPUT aux_nrdconta, 
@@ -1488,6 +1496,48 @@ PROCEDURE gera_lancamento:
                       ASSIGN crapdev.insitdev = 1
                              crapdev.indevarq = 2.
             END.
+        
+        VALIDATE crapdev.
+        IF crapdev.nrdconta > 0 THEN
+        DO:
+             /*MESSAGE "cdcooper: " + STRING(crapdev.cdcooper).
+             MESSAGE "nrdconta: " + STRING(crapdev.nrdconta).*/
+            /*Inicio tratamento estorno da tarifa de ADP*/
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            /* Procedure para gerar o estorno da tarifa de ADP quando aplicavel */
+            RUN STORED-PROCEDURE pc_estorno_tarifa_adp
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT crapdev.cdcooper, /* Cooperativa */
+                                         INPUT crapdev.nrdconta, /* Nr. da conta */
+                                         OUTPUT ""). /* Descricao do erro */
+            
+            CLOSE STORED-PROC pc_estorno_tarifa_adp
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = pc_estorno_tarifa_adp.pr_dscritic
+                                      WHEN pc_estorno_tarifa_adp.pr_dscritic <> ?.
+            
+            IF  aux_dscritic <> ""  THEN
+                DO:
+                     ASSIGN glb_dscritic = aux_dscritic.
+                     RUN fontes/critic.p.
+                     PAUSE(2) NO-MESSAGE.
+                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '"  +
+                                       glb_dscritic +
+                                       " Coop: " + STRING(crapdev.cdcooper) + 
+                                       " Conta: " + STRING(crapdev.nrdconta) +
+                                       " >> log/proc_message.log").
+
+                      glb_cdcritic = 0.
+                      UNDO, RETURN "NOK".
+                END.
+            /*Fim tratamento estorno da tarifa ADP*/
+        END.
+            
     END.  /*  Fim do FOR EACH e da transacao  */
     
     IF  VALID-HANDLE(h-b1wgen0153) THEN
@@ -3570,7 +3620,6 @@ PROCEDURE verifica_incorporacao:
         END.
 
     END.
-
 
 END PROCEDURE.
 

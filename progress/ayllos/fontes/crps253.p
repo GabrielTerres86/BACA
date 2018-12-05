@@ -146,6 +146,9 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+			   13/11/2018 - Adicionada parametros a procedure 
+							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+
 ............................................................................. */
 
 DEF STREAM str_1.  /*  Para relatorio dos cartoes magneticos  */
@@ -775,6 +778,8 @@ FOR EACH crapcrm WHERE crapcrm.cdcooper = glb_cdcooper  AND
                                                                 ,INPUT 14                   /* Tipo de tarifa */
                                                                 ,INPUT 0                    /* Tipo TAA */
                                                                 ,INPUT 1                    /* Quantidade de operacoes */
+																,INPUT 0					/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+																,INPUT 0					/* hora de realização da operação -adicionado por Valeria Supero */  
                                                                 ,OUTPUT 0                   /* Quantidade de operações a serem cobradas */
                                                                 ,OUTPUT 0                   /* Indicador de isencao de tarifa (0 - nao isenta, 1 - isenta) */
                                                                 ,OUTPUT 0    /* Código da crítica */

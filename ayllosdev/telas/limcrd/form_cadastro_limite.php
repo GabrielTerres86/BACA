@@ -89,7 +89,7 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddo
 			<label for="tpcartao"  class="rotulo txtNormalBold"><? echo utf8ToHtml("Tipo Cartão") ?>:</label>
 		<td>
 		<td>
-			<select id="tpcartao" class=" " disabled>
+			<select id="tpcartao" class=" ">
 				<option value="0"> - </option>
 				<option value="1">Nacional </option>
 				<option value="2">Internacional </option>

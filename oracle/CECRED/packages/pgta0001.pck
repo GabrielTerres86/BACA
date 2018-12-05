@@ -3450,7 +3450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
   --  Sigla    : PGTA
   --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-  --  Data     : Desconhecido                     Ultima atualizacao: 15/12/2017
+  --  Data     : Desconhecido                     Ultima atualizacao: 03/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3464,6 +3464,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   --              Quando todos programas gerarem codigo a descrição pode ser eliminada
   --              (Belli - Envolti - Chamado 779415)  
   --    
+  -- 03/12/2018 - Quando a crítica da consulta na CIP é 940 ou 950
+  --              deve ser retornada uma mensagem significativa para o cooperado.
+  --              A mensagem retornada apontava erro no parse do xml.
+  --              (AJFink - INC0027949)
+  --
   ---------------------------------------------------------------------------------------------------------------
                                  
    BEGIN
@@ -3843,11 +3848,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                    
               -- Se der erro não retorna informações   
               IF vr_des_erro = 'NOK' THEN
-                IF vr_cdcritic IN (940,950) THEN 
-                  
-                  vr_cdcritic := 0;
-                  vr_dscritic := NULL;
-                END IF;
+                --INC0027949
+                if nvl(vr_cdcritic,0) = 940 then
+                  vr_dscritic := 'Tempo de consulta excedido. Informe o titulo novamente.';
+                elsif nvl(vr_cdcritic,0) = 950 then
+                  vr_dscritic := 'Boleto nao registrado. Favor entrar em contato com o beneficiario.';
+                end if;
               END IF;
               
               --> Validar apenas se nao encontrou erro

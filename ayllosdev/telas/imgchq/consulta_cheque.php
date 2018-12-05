@@ -23,6 +23,8 @@
     //***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)        ***//
     //***                                                                                                             ***//
     //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
+	//***                                                                                                             ***//
+    //***             30/05/2018 - Controle do botão Bloquear Imagens e Liberar Imagens. PRJ 372 (Mateus - Mouts)     ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -56,44 +58,39 @@
         $nrcheque = ( isset($_POST["nrcheque"]) ) ? $_POST["nrcheque"] : '';
         $tpremess = ( isset($_POST["tpremess"]) ) ? $_POST["tpremess"] : '';
 		
-        // Monta o xml de requisição
-        $xmlConsultaCheque  = "";
+        // Montar o xml de Requisicao
         $xmlConsultaCheque .= "<Root>";
-        $xmlConsultaCheque .= " <Cabecalho>";
-        $xmlConsultaCheque .= "     <Bo>b1wgen0040.p</Bo>";
-        $xmlConsultaCheque .= "     <Proc>consulta-cheque-compensado</Proc>";
-        $xmlConsultaCheque .= " </Cabecalho>";
         $xmlConsultaCheque .= " <Dados>";
-        $xmlConsultaCheque .= "     <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlConsultaCheque .= "     <cdcopchq>".$cdcooper."</cdcopchq>";
-        $xmlConsultaCheque .= "     <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-        $xmlConsultaCheque .= "     <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-        $xmlConsultaCheque .= "     <dtcompen>".$dtcompen."</dtcompen>";
-        $xmlConsultaCheque .= "     <cdcmpchq>".$cdcmpchq."</cdcmpchq>";
-        $xmlConsultaCheque .= "     <cdbanchq>".$cdbanchq."</cdbanchq>";
-        $xmlConsultaCheque .= "     <cdagechq>".$cdagechq."</cdagechq>";
-        $xmlConsultaCheque .= "     <nrctachq>".$nrctachq."</nrctachq>";
-        $xmlConsultaCheque .= "     <nrcheque>".$nrcheque."</nrcheque>";
-        $xmlConsultaCheque .= "     <tpremess>".$tpremess."</tpremess>";
+        $xmlConsultaCheque .= "   <cdcooper>".$cdcooper."</cdcooper>";
+        $xmlConsultaCheque .= "   <dtmvtolt>".$dtcompen."</dtmvtolt>";
+        $xmlConsultaCheque .= "   <cdcmpchq>".$cdcmpchq."</cdcmpchq>";
+        $xmlConsultaCheque .= "   <cdbanchq>".$cdbanchq."</cdbanchq>";
+        $xmlConsultaCheque .= "   <cdagechq>".$cdagechq."</cdagechq>";
+        $xmlConsultaCheque .= "   <nrctachq>".$nrctachq."</nrctachq>";
+        $xmlConsultaCheque .= "   <nrcheque>".$nrcheque."</nrcheque>";
+        $xmlConsultaCheque .= "   <tpremess>".$tpremess."</tpremess>";
+        $xmlConsultaCheque .= "   <flgblqim>".$flgblqim."</flgblqim>";
         $xmlConsultaCheque .= " </Dados>";
         $xmlConsultaCheque .= "</Root>";
 
-        // Executa script para envio do XML
-        $xmlResult = getDataXML($xmlConsultaCheque);
+        $xmlResult = mensageria($xmlConsultaCheque, "CHEQ0002", "CONSULTA_CHEQUE_IMGCHQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"],
+            $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
-        // Cria objeto para classe de tratamento de XML
-        $xmlObjCheque = getObjectXML($xmlResult);
+        $xmlObjCheque = simplexml_load_string($xmlResult);
 			
         // Se ocorrer um erro, mostra crítica
-        if (isset($xmlObjCheque->roottag->tags[0]->name) && strtoupper($xmlObjCheque->roottag->tags[0]->name) == "ERRO") {
-            exibeErro($xmlObjCheque->roottag->tags[0]->tags[0]->tags[4]->cdata);
+        $codError = $xmlObjCheque->Erro->Registro->cdcritic;  
+        if (isset($codError)) {
+            $msgErro    = $xmlObjCheque->Erro->Registro->dscritic;
+            exibirErro('error',$msgErro,'Alerta - Ayllos','unblockBackground();',false);
         }
 
-        $dsdocmc7   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"] : '';
-        $cdagechq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"] : '';
-        $nmrescop   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"] : '';
-        $cdcmpchq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"] : '';
-        $cdtpddoc   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"] : '';
+        $dsdocmc7   = ( isset($xmlObjCheque->Dados->inf->dsdocmc7) ) ? $xmlObjCheque->Dados->inf->dsdocmc7 : '';
+        $cdagechq   = ( isset($xmlObjCheque->Dados->inf->cdagechq) ) ? $xmlObjCheque->Dados->inf->cdagechq : '';
+        $nmrescop   = ( isset($xmlObjCheque->Dados->inf->nmrescop) ) ? $xmlObjCheque->Dados->inf->nmrescop : '';
+        $cdcmpchq   = ( isset($xmlObjCheque->Dados->inf->cdcmpchq) ) ? $xmlObjCheque->Dados->inf->cdcmpchq : '';
+        $cdtpddoc   = ( isset($xmlObjCheque->Dados->inf->cdtpddoc) ) ? $xmlObjCheque->Dados->inf->cdtpddoc : '';
+        $indblqvic  = ( isset($xmlObjCheque->Dados->inf->indblqvic) ) ? $xmlObjCheque->Dados->inf->indblqvic : '';
 
         if ($dsdocmc7 == ""){
             echo "bGerarPdf.hide();bSalvarImgs.hide();";
@@ -243,8 +240,16 @@
             exibeErro("Cheque n&atilde;o encontrado!");
         }
 
-        //mostra botao de gerar pdf se chegar ateh aki
+        //mostra botao de gerar pdf se chegar até aqui
         echo "bGerarPdf.show('slow');bSalvarImgs.show('slow');";
+        //controlar exibicao dos botoes bloquear/liberar imagem dependendo do valor do campo INDBLQVIC
+        if ($indblqvic == 'S') {
+            echo "bLiberarImagens.show();";
+            echo "bBloquearImagens.hide();";
+        } else if($indblqvic == 'N') {
+            echo "bBloquearImagens.show();";
+            echo "bLiberarImagens.hide();";
+        }
 
         ?>
 

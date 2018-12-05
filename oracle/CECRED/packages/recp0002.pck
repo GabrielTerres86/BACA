@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
   --
   -- Dados referentes ao programa:
   --
-  -- Frequencia: -----
+  -- Frequencia: ----- 
   -- Objetivo  : Centralizar rotinas relacionadas ao WebService de Acordos
   --
   -- Alteracoes: 19/09/2016 - Alterado soma de saldo da procedure pc_calcula_saldo_contrato,
@@ -874,6 +874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                08/05/2018 - Inclusao dos valores de IOF provisionado ao acordo.
                             PRJ450 (Odirlei-AMcom)
 
+			   26/09/2018 - Retirado a crítica para pós-fixado de forma a atender os requisitos do projeto PRJ298.2 (Adriano Nagasava - Supero)
+
    ..............................................................................*/                                    
    
     ---------------> CURSORES <-------------
@@ -955,12 +957,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Operacao nao permitida para emprestimos consignados
     IF rw_crapepr.tpdescto = 2 THEN
       vr_cdcritic := 987;
-      RAISE vr_exc_erro;  
-    END IF;
-
-    -- Se for emprestimo Pos-Fixado
-    IF rw_crapepr.tpemprst = 2 THEN
-      vr_dscritic := 'Operacao nao permitida para emprestimo Pos-Fixado.';
       RAISE vr_exc_erro;  
     END IF;
     

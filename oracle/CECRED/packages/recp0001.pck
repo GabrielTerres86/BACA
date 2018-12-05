@@ -1,5 +1,5 @@
 CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
-
+ 
   -- Verifica se existe contrato de acordo na situacao informada
   PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
                                        ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta

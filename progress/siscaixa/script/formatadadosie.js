@@ -663,6 +663,9 @@ function change_location() {
 	else if(document.forms[0].v_rotina.value == 38) {
         top.frames[1].window.location.href="crap038.html" ;
     }
+    else if(document.forms[0].v_rotina.value == 39) {
+        top.frames[1].window.location.href="crap039.htm" ;
+    }
     else if(document.forms[0].v_rotina.value == 40) {
         top.frames[1].window.location.href="crap040.html" ;
         }

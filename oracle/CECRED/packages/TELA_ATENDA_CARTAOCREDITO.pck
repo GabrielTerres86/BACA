@@ -1895,6 +1895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    vr_insitdec NUMBER(1) := 1; -- sem aprovacao
     
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -1951,6 +1952,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
           RAISE vr_exc_saida;
       END;
     ELSE
+      
+      este0005.pc_verifica_regras_esteira(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
+                                          ---- OUT ----
+                                          pr_cdcritic => vr_cdcritic,   --> Codigo da critica
+                                          pr_dscritic => vr_dscritic);  --> Descricao da critica
+
+      -- Se houve erro
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_insitdec := 2; --- se estiver em contigencia aprova direto
+      END IF;
+
       --Se vai para a esteira então deixa como insitcrd = 1 e insitdec = 1
       IF NVL(pr_dsjustif,vr_dsjustif) IS NOT NULL THEN
         --Se informado 
@@ -1958,7 +1970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         BEGIN
           UPDATE crawcrd
              SET insitcrd = 1 --Aprovado
-                ,insitdec = 1 --Sem Aprovação
+                ,insitdec = vr_insitdec
                 ,dtmvtolt = SYSDATE
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
@@ -3126,7 +3138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         vr_dscritic := 'Erro ao inserir Proposta de Alteração de Limite. Erro: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
-    
+
     IF pr_idorigem = 15 THEN
       vr_dsorigem := 'BANCOOB';
     ELSE
@@ -4872,6 +4884,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ROLLBACK;
 
   END pc_valida_alt_nome_empr;
-
+  
 END TELA_ATENDA_CARTAOCREDITO;
 /

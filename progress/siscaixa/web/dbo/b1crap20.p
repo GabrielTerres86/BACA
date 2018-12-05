@@ -258,6 +258,9 @@
                              
                 13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                              norturno rodando (Douglas Pagel - AMcom).
+				
+				13/11/2018 - Adicionada parametros a procedure 
+							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
@@ -2120,6 +2123,8 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                             ,INPUT IF p-tipo-doc = 1 OR p-tipo-doc = 2 THEN 10 ELSE 11 /* Tipo de tarifa DOC = 14/TED = 15 */
                                                             ,INPUT 0                    /* Tipo TAA */
                                                             ,INPUT 1                    /* Quantidade de operacoes */
+															,INPUT 0					/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+															,INPUT 0					/* hora de realização da operação -adicionado por Valeria Supero */  
                                                             ,OUTPUT 0                   /* Quantidade de operações a serem cobradas */
                                                             ,OUTPUT 0                   /* Indicador de isencao de tarifa (0 - nao isenta, 1 - isenta) */
                                                             ,OUTPUT 0    /* Código da crítica */

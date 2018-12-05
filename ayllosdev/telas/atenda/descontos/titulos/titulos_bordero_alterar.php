@@ -7,7 +7,7 @@
 	 Objetivo  : Alteração de um novo Bordero
 	 Alteração :
 	  - 09/08/2018 - Vitor Shimada Assanuma(GFT) - Inclusão do parametro vindo da #TAB052 de quantidade máxima de títulos por borderô
-
+	  - 23/11/2018 - Luis Fernando (GFT) - Removido teste de não permitir outro operador alterar o bordero
 	************************************************************************/
 	
 	session_start();
@@ -72,9 +72,7 @@
 	$vllimite = $contrato->vllimite;
 	$pctolera = $contrato->pctolera;
 	$dtfimvig = $contrato->dtfimvig;
-	if ($bordero->cdoperad!=$glbvars["cdoperad"]){
-		exibeErro("Operador deve ser o mesmo que criou o border&ocirc;");
-	}
+
 
 	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
 		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");

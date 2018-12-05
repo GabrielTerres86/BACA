@@ -67,6 +67,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
                    25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
                                 tari0001.pc_cria_lan_auto_tarifa, projeto de 
                                 Tarifas-218(Jean Michel) 
+                                
+                   16/11/2018 - PJ435 Validar conta encerrada - Rafael Faria (Supero)
     ............................................................................ */
 
     DECLARE
@@ -118,7 +120,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
                row_number() over (partition by crapneg.cdbanchq
                                       order by crapneg.cdbanchq,crapass.cdagenci,crapass.nrdconta) nrseqreg,
                COUNT(*) over (partition by crapneg.cdbanchq
-                                      order by crapneg.cdbanchq) nrqtdreg
+                                      order by crapneg.cdbanchq) nrqtdreg,
+               crapass.dtdemiss
           FROM crapneg, crapass
          WHERE crapneg.cdcooper = pr_cdcooper
            AND crapneg.dtfimest >= pr_dtmvtolt
@@ -171,6 +174,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
       vr_migrado    BOOLEAN;           -- Indicador de conta migrada
       vr_rowid_craplat ROWID;          -- rowid do lançamento da craplat
       vr_vlregccf   NUMBER := 0;       -- Valor de lançamento
+      vr_conta_ativa BOOLEAN;          -- somente cobrar tarifa para conta ativa
 
       --Variaveis para armazenar informações do relatorio
       vr_rel_nrcpfcgc  VARCHAR2(20);
@@ -260,6 +264,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
         CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%type,
                            pr_nrdconta crapass.nrdconta%type)IS
           SELECT inpessoa
+                ,dtdemiss
             FROM crapass
            WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrdconta = pr_nrdconta;
@@ -268,6 +273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
         ----------VARIAVEIS-------------
         vr_idx       PLS_INTEGER;
         vr_exc_erro  EXCEPTION;
+        vr_conta_ativa BOOLEAN;      -- somente cobrar tarifa para conta ativa
 
       BEGIN
         --buscar primeiro registro
@@ -292,12 +298,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
           -- Fecha cursor 
           CLOSE cr_crapass;
 
+          vr_conta_ativa := (CASE WHEN rw_crapass.dtdemiss IS NULL THEN TRUE ELSE FALSE END);
+
           IF rw_crapass.inpessoa = 3 THEN
             -- caso for tipo de pessoa 3 deve ir para o proximo
             vr_idx := vr_tab_contas_migradas.next(vr_idx);
             continue;
           END IF;
 
+          -- se a conta esta ativa busca as tarifas e lança na conta
+          -- se nao estiver ativa apenas gera o relatorio
+          IF vr_conta_ativa THEN
           --Definir codigo da tarifa
           IF rw_crapass.inpessoa = 1 THEN
             vr_cdtarifa := 'EXCLUCCFPF';  /* sigla da tarifa */
@@ -305,6 +316,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
           ELSE
             vr_cdtarifa := 'EXCLUCCFPJ';  /* sigla da tarifa */
             vr_cdtarbac := 'EXCCCFBCPJ';  /* cod. tarifa taxa bacen */
+          END IF;
           END IF;
 
           IF vr_cdtarifa IN ('EXCLUCCFPF','EXCLUCCFPJ') THEN
@@ -534,8 +546,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
       FOR rw_crapneg IN cr_crapneg(pr_cdcooper => pr_cdcooper,
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
 
+        vr_conta_ativa := (CASE WHEN rw_crapneg.dtdemiss IS NULL THEN TRUE ELSE FALSE END);
+        
         vr_flg_tarifado := FALSE;
 
+        -- somente cobrar tarifa para contas ativas
+        -- caso a conta nao estiver ativa apenas gerar o relatorio
+        IF vr_conta_ativa THEN
         --Definir tipo de tarifa conforme tipo de pessoa
         IF rw_crapneg.inpessoa = 1 THEN
           vr_cdtarifa := 'EXCLUCCFPF'; /* sigla da tarifa */
@@ -543,6 +560,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
         ELSE
           vr_cdtarifa := 'EXCLUCCFPJ'; /* sigla da tarifa */
           vr_cdtarbac := 'EXCCCFBCPJ'; /* cod. tarifa taxa bacen */
+          END IF;
         END IF;
 
         IF vr_cdtarifa IN ('EXCLUCCFPF','EXCLUCCFPJ') THEN

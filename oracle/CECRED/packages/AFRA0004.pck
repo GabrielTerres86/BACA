@@ -102,7 +102,7 @@ create or replace package body CECRED.AFRA0004 is
       Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
       Sigla    : AFRA
       Autor    : Teobaldo Jamunda - AMcom
-      Data     : Abril/2018.                    Ultima atualizacao: __/__/2018
+      Data     : Abril/2018.                    Ultima atualizacao: 28/11/2018
 
       Dados referentes ao programa:
 
@@ -111,8 +111,8 @@ create or replace package body CECRED.AFRA0004 is
                   Analise de Fraude e mensagens
                   (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
 
-      Alteracoes:  
-      
+      Alteracoes:  28/11/2018 - Ajustado para fechar cursor da craptit na pc_monitora_titulos
+                               corretamente (Tiago - PRB0040447)      
   ----------------------------------------------------------------------------*/
 
   --> Cursores
@@ -1678,7 +1678,7 @@ create or replace package body CECRED.AFRA0004 is
         Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
         Sigla    : CRED
         Autor    : Teobaldo Jamunda - AMcom
-        Data     : Abril/2018.                    Ultima atualizacao: 17/09/2018
+        Data     : Abril/2018.                    Ultima atualizacao: 28/11/2018
 
         Dados referentes ao programa:
 
@@ -1688,7 +1688,11 @@ create or replace package body CECRED.AFRA0004 is
 
         Alteracoes: 28/08/2018 - Inserido parametro com descricao do tipo de titulo (Tiago - RITM0025395) 
         
-                    17/09/2018 - Correções referentes a monitoração de DDA (Tiago - RITM0025395)        
+                    17/09/2018 - Correções referentes a monitoração de DDA (Tiago - RITM0025395)
+                    
+                    28/11/2018 - Dependendo do processo da rotina o cursor da tabela craptit
+                                 ficava aberto ocasionando erro no proograma, ajustado        
+                                 pra fechar o cursor corretamente (Tiago PRB0040447)
     ----------------------------------------------------------------------------*/
 
     --Selecionar informacoes dos titulares da conta
@@ -1910,11 +1914,14 @@ create or replace package body CECRED.AFRA0004 is
           --Se nao encontrar
           IF cr_craptit%FOUND THEN
             
-             -- Se estiver monitorando DDAs, pegar no email apenas titulos DDA
-             IF    pr_flgpgdda = 1  
-              AND  rw_craptit.flgpgdda = 0 THEN
-                CONTINUE;
-             END IF;
+            --Fechar Cursor
+            CLOSE cr_craptit;
+             
+            -- Se estiver monitorando DDAs, pegar no email apenas titulos DDA
+            IF    pr_flgpgdda = 1  
+             AND  rw_craptit.flgpgdda = 0 THEN
+               CONTINUE;
+            END IF;
           
             --Codigo banco Caixa
             vr_cdbccxlt:= to_number(SUBSTR(rw_craptit.dscodbar,1,3));
@@ -2041,9 +2048,10 @@ create or replace package body CECRED.AFRA0004 is
                               vr_agendame||'<BR><BR>';
               END IF;
             END IF; --vr_cdbccxlt IN (1,85)
+          ELSE
+            --Fechar Cursor
+            CLOSE cr_craptit;            
           END IF;
-          --Fechar Cursor
-          CLOSE cr_craptit;
         END LOOP; --rw_crappro
 
         /** Verifica se o valor do pagto eh menor que o parametrizado **/

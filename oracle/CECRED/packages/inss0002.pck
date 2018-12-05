@@ -7386,8 +7386,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
          vr_dtcompet := TO_DATE('01/'||vr_mes_competencia||'/'||vr_ano_competencia,'dd/mm/RRRR');
               ELSE
-         vr_mes_competencia := SUBSTR(pr_dtcompet,1,2);
-         vr_ano_competencia := SUBSTR(pr_dtcompet,3,4);       
+                vr_mes_competencia := SUBSTR(pr_dtcompet,1,2);
+                vr_ano_competencia := SUBSTR(pr_dtcompet,3,4);   
+                
+                IF vr_mes_competencia = '13' THEN
+                   vr_mes_competencia := '12';
+                END IF;    
 
          vr_dtcompet := TO_DATE('01/'||vr_mes_competencia||'/'||vr_ano_competencia,'dd/mm/RRRR');             
               END IF;

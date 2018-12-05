@@ -27,6 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --
   --              18/09/2018 - pc_pagar_titulo: Adicionar nova origem 4 - Acordos. Alterações na procedure para suprir esta origem. (Andrew Albuquerque (GFT))
   --
+  --              23/11/2018 - Criada procedure para verificar a situacao do pagador no biro
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
@@ -243,6 +244,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
 
 
   FUNCTION fn_retorna_rating(pr_dsinrisc NUMBER) RETURN VARCHAR2 ;
+
+  FUNCTION fn_spc_serasa (pr_cdcooper crapcbd.cdcooper%TYPE, pr_nrdconta crapcbd.nrdconta%TYPE, pr_nrcpfcgc crapcbd.nrcpfcgc%TYPE) RETURN VARCHAR2;
 
   PROCEDURE pc_liberar_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
@@ -1307,6 +1310,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
              END;
   END fn_retorna_rating;
 
+  FUNCTION fn_spc_serasa (pr_cdcooper crapcbd.cdcooper%TYPE, pr_nrdconta crapcbd.nrdconta%TYPE, pr_nrcpfcgc crapcbd.nrcpfcgc%TYPE) RETURN VARCHAR2 IS
+    
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : fn_spc_serasa
+      Sistema  : Ayllos
+      Sigla    : DSTC
+      Autor    : Luis Fernando (GFT)
+      Data     : Novembro/2018
+
+      Objetivo  : Retorna se um pagador está com algum alerta em spc/serasa
+    ----------------------------------------------------------------------------------------------------------*/
+    CURSOR cr_crapcbd IS
+      SELECT crapcbd.nrconbir,
+             crapcbd.nrseqdet
+        FROM crapcbd
+       WHERE crapcbd.cdcooper = pr_cdcooper
+         AND crapcbd.nrdconta = pr_nrdconta 
+         AND crapcbd.nrcpfcgc = pr_nrcpfcgc
+         AND crapcbd.inreterr = 0  -- Nao houve erros
+       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
+    rw_crapcbd  cr_crapcbd%rowtype;
+     
+    -- Variaveis para verificar criticas e situacao
+    vr_ibratan char(1);
+    vr_situacao char(1);
+    vr_nrinssac crapcob.nrinssac%TYPE;
+    vr_cdbircon crapbir.cdbircon%TYPE;
+    vr_dsbircon crapbir.dsbircon%TYPE;
+    vr_cdmodbir crapmbr.cdmodbir%TYPE;
+    vr_dsmodbir crapmbr.dsmodbir%TYPE;
+    
+    BEGIN
+      OPEN cr_crapcbd;
+      FETCH cr_crapcbd into rw_crapcbd;
+      IF (cr_crapcbd%NOTFOUND) THEN
+       CLOSE cr_crapcbd;
+       vr_ibratan := 'A';
+      ELSE
+        --vr_ibratan = S se tiver restricao, N se nao tiver
+        SSPC0001.pc_verifica_situacao(rw_crapcbd.nrconbir,rw_crapcbd.nrseqdet,vr_cdbircon,vr_dsbircon,vr_cdmodbir,vr_dsmodbir,vr_ibratan);
+      END IF;
+      RETURN vr_ibratan;
+  END fn_spc_serasa;
   
   /*Procedure que altera os status de um borderô*/
   PROCEDURE pc_altera_status_bordero(pr_cdcooper IN crapbdt.cdcooper%TYPE --> Código da Cooperativa
@@ -1322,6 +1368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                     ,pr_dtrejeit IN crapbdt.dtrejeit%TYPE DEFAULT NULL -- data de rejeição
                                     ,pr_hrrejeit IN crapbdt.hrrejeit%TYPE DEFAULT NULL -- hora de rejeião
                                     ,pr_dtanabor IN crapbdt.dtanabor%TYPE DEFAULT NULL -- data de analise
+                                    ,pr_cdoperad IN crapbdt.cdoperad%TYPE DEFAULT NULL -- operador
                                     ,pr_dscritic OUT PLS_INTEGER          --> Descricao Critica
                                     ) IS
   BEGIN
@@ -1337,6 +1384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
             ,crapbdt.dtrejeit = nvl(pr_dtrejeit,crapbdt.dtrejeit)
             ,crapbdt.hrrejeit = nvl(pr_hrrejeit,crapbdt.hrrejeit)
             ,crapbdt.dtanabor = nvl(pr_dtanabor,crapbdt.dtanabor)
+            ,crapbdt.cdoperad = nvl(pr_cdoperad,crapbdt.cdoperad)
        WHERE crapbdt.cdcooper = pr_cdcooper
          AND crapbdt.nrborder = pr_nrborder
          AND crapbdt.nrdconta = pr_nrdconta;
@@ -3997,6 +4045,7 @@ END pc_inserir_lancamento_bordero;
               WHERE cdcooper = pr_cdcooper
                 AND nrdconta = pr_nrdconta
                 AND nrborder = pr_nrborder
+                AND flgenvmc = 1
                 AND insitapr <> 2; -- Diferente de Rejeitado 
               -- Altera o Borderô setando como enviado para a mesa de checagem.
               pc_altera_status_bordero(pr_cdcooper => pr_cdcooper -- Código da Cooperativa
@@ -4225,7 +4274,12 @@ END pc_inserir_lancamento_bordero;
             AND dap.nrdconta = tdb.nrdconta 
             AND dap.nrinssac = tdb.nrinssac 
             AND dap.INPOSSUI_CRITICAS = 1
-          ) AS fl_critica_pag
+          ) AS fl_critica_pag,
+          CASE WHEN DSCT0003.fn_spc_serasa(pr_cdcooper=>tdb.cdcooper,pr_nrdconta=>tdb.nrdconta,pr_nrcpfcgc =>tdb.nrinssac) = 'S' THEN
+            1  
+          ELSE
+            0
+          END fl_critica_biro
       FROM 
         craptdb tdb
       WHERE
@@ -4361,6 +4415,11 @@ END pc_inserir_lancamento_bordero;
           pr_indrestr := 1;
         END IF;
         CLOSE cr_analise_pagador;
+        
+        IF (DSCT0003.fn_spc_serasa(pr_cdcooper=>pr_cdcooper,pr_nrdconta=>pr_nrdconta,pr_nrcpfcgc =>rw_craptdbcob.nrinssac) = 'S') THEN
+          vr_indrestr := 1;
+          pr_indrestr := 1;
+        END IF;
       END LOOP;
       
       --Verifica se os Títulos estão em algum outro bordero
@@ -4538,6 +4597,7 @@ END pc_inserir_lancamento_bordero;
             pc_altera_status_bordero(pr_cdcooper => pr_cdcooper -- Código da Cooperativa
                                     ,pr_nrborder => pr_nrborder -- Número do Borderô
                                     ,pr_nrdconta => pr_nrdconta -- Número da conta do cooperado
+                                    ,pr_cdoperad => pr_cdoperad
                                     ,pr_status   => 1 -- 1-Em Estudo
                                     ,pr_insitapr => 1 -- 1-Aguardando Checagem
                                     ,pr_dtanabor => pr_dtmvtolt -- Data da analise
@@ -4559,7 +4619,7 @@ END pc_inserir_lancamento_bordero;
               LOOP
                FETCH cr_check_craptdb INTO rw_check_craptdb;
                  EXIT WHEN cr_check_craptdb%NOTFOUND;
-                 IF (rw_check_craptdb.fl_critica_abt=0 AND rw_check_craptdb.fl_critica_pag=0) THEN
+                 IF (rw_check_craptdb.fl_critica_abt = 0 AND rw_check_craptdb.fl_critica_pag = 0 AND rw_check_craptdb.fl_critica_biro = 0) THEN
                    UPDATE 
                      craptdb
                    SET
@@ -4580,16 +4640,6 @@ END pc_inserir_lancamento_bordero;
             -- awae 25/04/2018 - Caso esteja em contingência, não será aprovado e nem enviado para esteira, e emite a mensagem de 
             --                   que está em contingência.
             IF  vr_em_contingencia_ibratan THEN -- Em Contingência
-              -- Não faz a alteração de Situação do Borderô para "Aprovado", e retorna mensagem de contingência.
-/*              pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
-                                         ,pr_cdoperad => pr_cdoperad
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_dsrestri => 'Análise em Contingência, realize análise manual.'
-                                         ,pr_nrseqdig => 0
-                                         ,pr_cdcooper => pr_cdcooper
-                                         ,pr_flaprcoo => 1
-                                         ,pr_dsdetres => ''
-                                         ,pr_dscritic => vr_dscritic);*/
               pr_tab_retorno_analise(0).dssitres := 'Análise em contingência, realize análise manual.';
             ELSE -- ESTEIRA ESTÁ EM FUNCIONAMENTO, ENVIAR 
               pc_envia_esteira (pr_cdcooper => pr_cdcooper
@@ -4630,7 +4680,7 @@ END pc_inserir_lancamento_bordero;
               LOOP
                FETCH cr_check_craptdb INTO rw_check_craptdb;
                  EXIT WHEN cr_check_craptdb%NOTFOUND;
-                 IF (rw_check_craptdb.fl_critica_abt=0 AND rw_check_craptdb.fl_critica_pag=0) THEN
+                 IF (rw_check_craptdb.fl_critica_abt = 0 AND rw_check_craptdb.fl_critica_pag = 0 AND rw_check_craptdb.fl_critica_biro = 0) THEN
                    UPDATE 
                      craptdb
                    SET
@@ -7507,7 +7557,7 @@ EXCEPTION
                                                                         ,pr_nrdocmto => pr_nrdocmto) LOOP
           IF (vr_dtmvtolt <= rw_tbdsct_lancamento_bordero.dtmvtolt) THEN
             vr_valormora  := vr_valormora + NVL(ROUND(vr_valorsaldo * (rw_tbdsct_lancamento_bordero.dtmvtolt - vr_dtmvtolt) * vr_txdiaria,2),0);
-            vr_dtmvtolt := rw_tbdsct_lancamento_bordero.dtmvtolt;
+          vr_dtmvtolt := rw_tbdsct_lancamento_bordero.dtmvtolt;
             vr_valorsaldo := vr_valorsaldo - rw_tbdsct_lancamento_bordero.vllanmto;
         END IF;
     END LOOP;
@@ -8426,9 +8476,9 @@ EXCEPTION
     END IF;
     
     IF pr_cdorigpg <> 1 THEN
-      COMMIT;
+    COMMIT;
     END IF;
-
+        
     EXCEPTION
       WHEN vr_exc_erro THEN
       vr_cdcritic := NVL(vr_cdcritic, 0);
@@ -8439,8 +8489,8 @@ EXCEPTION
       pr_dscritic := vr_dscritic;
       
       IF pr_cdorigpg <> 1 THEN
-        -- Efetuar rollback
-        ROLLBACK;
+      -- Efetuar rollback
+      ROLLBACK;
       END IF;
 
     WHEN OTHERS THEN
@@ -8448,8 +8498,8 @@ EXCEPTION
       pr_dscritic := SQLERRM;
       
       IF pr_cdorigpg <> 1 THEN
-        -- Efetuar rollback
-        ROLLBACK;
+      -- Efetuar rollback
+      ROLLBACK;                            
       END IF;                      
         
     --END;  

@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE CECRED.MENU0001 AS
   --
   --    Objetivo  : Configurar os itens de MENU que sao configurados para exibicao 
   --
-  --    Alteracoes: 
+  --    Alteracoes:  
   --    
   ---------------------------------------------------------------------------------------------------------------
 
@@ -181,8 +181,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       --------------------------------------------------------------------------------------
       -- Inicializar a imagem de cheque como como desabilitada do menu
       vr_flgsitim := 0;
-      
-      
+      BEGIN       
+        -- Carregar a opcao que é cadastrada na tela PARREC na CECRED
+        CHEQ0002.pc_situacao_img_chq_coop(pr_cdcooper => pr_cdcooper,
+                                          pr_idorigem => pr_idorigem,
+                                          pr_flgsitim => vr_flgsitim,
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic);
+      EXCEPTION
+        WHEN OTHERS THEN
+        CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                    ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Imagem de Cheque.');
+      END;   
+   
       --------------------------------------------------------------------------------------
       -------------- VERIFICAR SE A RECARGA DE CELULAR ESTÁ HABILITADA NO CANAL ------------
       --------------------------------------------------------------------------------------

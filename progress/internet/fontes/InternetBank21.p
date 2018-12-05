@@ -102,7 +102,11 @@ FOR EACH tt-consulta-cheque NO-LOCK:
                                        "99/99/9999")) +
                                    "</dtliqchq><dssitchq>" +
                                    tt-consulta-cheque.dssitchq +
-                                   "</dssitchq></CHEQUE>".
+                                   "</dssitchq><cdbanchq>" +
+                                   STRING(tt-consulta-cheque.cdbanchq) +
+                                   "</cdbanchq><cdagechq>" +
+                                   STRING(tt-consulta-cheque.cdagechq) +
+                                   "</cdagechq></CHEQUE>".
            
 END. /** Fim do FOR EACH tt-consulta-cheque **/
     

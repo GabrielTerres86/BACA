@@ -30,6 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
                 11/10/2018 - Ajuste no CURSOR cr_crapcob para carregar situação do título, responsável por buscar informações dos 
                              titulos/boletos (utilizado em outras package) (Andrew Albuquerque - GFT)
+                23/11/2018 - Adicionado para guardar o usuario que fez a ultima analise do bordero (clicou no botao analisar) para ser enviado para a esteira
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -4639,7 +4640,7 @@ END pc_obtem_proposta_aciona_web;
     END pc_busca_dados_limite_web;    
 
 
-PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type   --> Cooperativa conectada
+  PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type   --> Cooperativa conectada
                                  ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
                                  ,pr_chave              in VARCHAR2                --> Lista de 'chaves' de titulos a serem pesquisado
                                  ,pr_qtregist           out integer                --> Qtde total de registros
@@ -4788,26 +4789,8 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
        vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
        vr_dscritic varchar2(1000);        --> Desc. Erro
        
-     -- Variaveis para verificar criticas e situacao
-     vr_ibratan char(1);
      vr_situacao char(1);
      vr_nrinssac crapcob.nrinssac%TYPE;
-     vr_cdbircon crapbir.cdbircon%TYPE;
-     vr_dsbircon crapbir.dsbircon%TYPE;
-     vr_cdmodbir crapmbr.cdmodbir%TYPE;
-     vr_dsmodbir crapmbr.dsmodbir%TYPE;
-     restricao_cnae BOOLEAN;
-
-    CURSOR cr_crapcbd IS
-      SELECT crapcbd.nrconbir,
-             crapcbd.nrseqdet
-        FROM crapcbd
-       WHERE crapcbd.cdcooper = vr_cdcooper
-         AND crapcbd.nrdconta = pr_nrdconta 
-         AND crapcbd.nrcpfcgc = vr_nrinssac
-         AND crapcbd.inreterr = 0  -- Nao houve erros
-       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
-     rw_crapcbd  cr_crapcbd%rowtype;
      
       BEGIN
         pr_des_erro := 'OK';
@@ -4871,14 +4854,6 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
               END IF;
               vr_nrinssac := vr_tab_dados_titulos(vr_index).nrinssac;
               
-              open cr_crapcbd;
-              fetch cr_crapcbd into rw_crapcbd;
-              IF (cr_crapcbd%NOTFOUND) THEN
-                vr_ibratan := 'A';
-              ELSE
-                SSPC0001.pc_verifica_situacao(rw_crapcbd.nrconbir,rw_crapcbd.nrseqdet,vr_cdbircon,vr_dsbircon,vr_cdmodbir,vr_dsmodbir,vr_ibratan);
-              END IF;
-              close cr_crapcbd;
               pc_escreve_xml('<titulos>'||
                                 '<progress_recid>' || vr_tab_dados_titulos(vr_index).progress_recid || '</progress_recid>' ||
                                 '<cdcooper>' || vr_tab_dados_titulos(vr_index).cdcooper || '</cdcooper>' ||
@@ -4895,7 +4870,7 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
                                 '<flgregis>' || vr_tab_dados_titulos(vr_index).flgregis || '</flgregis>' ||
                                 '<cdtpinsc>' || vr_tab_dados_titulos(vr_index).cdtpinsc || '</cdtpinsc>' ||
                                 '<dssituac>' || vr_situacao || '</dssituac>' || 
-                                '<sitibrat>' || vr_ibratan  || '</sitibrat>' || 
+                                '<sitibrat>' || DSCT0003.fn_spc_serasa(pr_cdcooper=>vr_cdcooper,pr_nrdconta=>pr_nrdconta,pr_nrcpfcgc=>vr_nrinssac) || '</sitibrat>' || 
                                 '<cdbandoc>' || vr_tab_dados_titulos(vr_index).cdbandoc || '</cdbandoc>' ||
                                 '<nrdctabb>' || vr_tab_dados_titulos(vr_index).nrdctabb || '</nrdctabb>' ||
                              '</titulos>'
@@ -5157,7 +5132,7 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
 
-         --Caso não consiga conexao ou der erro no biro, nao parar a execucao, tratar somente depois do loop
+         --  Caso não consiga conexao ou der erro no biro, nao parar a execucao, tratar somente depois do loop
          if  vr_cdcritic > 0  or vr_dscritic is not null then
              fl_erro_biro := true;
          end if;

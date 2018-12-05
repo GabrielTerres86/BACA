@@ -2537,6 +2537,19 @@ PROCEDURE incluir-cadtar:
            craptar.cdsubgru = par_cdsubgru.
     VALIDATE craptar.
 
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT "Incluiu a tarifa " + STRING(par_cdtarifa) + " - " + STRING(par_dstarifa),
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADTAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */
+
     RETURN "OK".
 END PROCEDURE.
 
@@ -2623,6 +2636,19 @@ PROCEDURE excluir-cadtar:
             END.
     END.
 
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT "Excluiu a tarifa " + STRING(par_cdtarifa),
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADTAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */
+
     RETURN "OK".
 
 END PROCEDURE.
@@ -2705,6 +2731,19 @@ PROCEDURE alterar-cadtar:
                LEAVE.
             END.
     END.
+
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT "Alterou a tarifa " + STRING(par_cdtarifa),
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADTAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */
 
     RETURN "OK".
 
@@ -4956,6 +4995,19 @@ PROCEDURE incluir-cadpar:
                        INPUT par_idorigem,
                        INPUT aux_dslogpar).
     
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT aux_dslogpar,
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADPAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */                   
+    
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".    
     
@@ -5133,6 +5185,19 @@ PROCEDURE excluir-cadpar:
                        INPUT par_idorigem,
                        INPUT aux_dslogpar).
     
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT aux_dslogpar,
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADPAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */                                      
+    
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".
 
@@ -5278,6 +5343,19 @@ PROCEDURE alterar-cadpar:
                            INPUT par_nmdatela,
                            INPUT par_idorigem,
                            INPUT aux_dslogpar).
+    
+    /* Inicio PRJ 372 */
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT "AIMARO WEB",
+                        INPUT aux_dslogpar,
+                        INPUT TRUE,
+                        INPUT 1,
+                        INPUT "CADPAR",
+                        INPUT 0,
+                       OUTPUT aux_nrdrowid).    
+    /* Fim PRJ 372 */                                              
     
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".
@@ -9346,8 +9424,8 @@ PROCEDURE lan_tarifa_conta_corrente:
                        ,INPUT par_nrdolote      /* par_nrdolote */
                        ,INPUT par_nrdconta      /* par_nrdconta */
                        ,INPUT IF par_nrdocmto > 0 THEN
-                                 INT(aux_nraplica)
-                              ELSE
+                                                 INT(aux_nraplica)
+                                              ELSE
                                  craplot.nrseqdig  /* par_nrdocmto */
                        ,INPUT par_cdhistor      /* par_cdhistor */
                        ,INPUT craplot.nrseqdig  /* par_nrseqdig */
@@ -9357,7 +9435,7 @@ PROCEDURE lan_tarifa_conta_corrente:
                        ,INPUT 0                 /* par_vldoipmf */
                        ,INPUT par_nrautdoc      /* par_nrautdoc */
                        ,INPUT IF par_nrsequni = 0 THEN 
-                                 craplot.nrseqdig
+                                                 craplot.nrseqdig
                               ELSE
                                  par_nrsequni    /* par_nrsequni */
                        ,INPUT par_cdbanchq      /* par_cdbanchq */

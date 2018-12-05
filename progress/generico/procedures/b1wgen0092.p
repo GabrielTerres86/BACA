@@ -2000,6 +2000,8 @@ PROCEDURE grava-dados:
                             DO:
                                 ASSIGN aux_cdempcon = crapcon.cdempcon 
                                        aux_cdsegmto = STRING(crapcon.cdsegmto)
+                                       aux_emconbar = aux_cdempcon
+                                       aux_segmtbar = aux_cdsegmto
                                        aux_tparrecd = crapcon.tparrecd
                                        aux_cdhistor = IF crapcon.cdhistor = 1154 THEN 1019 ELSE aux_cdhistor.
                             END.
