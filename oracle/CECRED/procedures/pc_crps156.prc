@@ -95,7 +95,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                  18/04/2018 - Tratamento se existe valor bloqueado como garantia de operação com poupança programa
                               PRJ404 - Garantia(Oscar-AMcom)              
                               
-								 18/05/2018 - Validar bloqueio de poupança programada (SM404)            
+                                 18/05/2018 - Validar bloqueio de poupança programada (SM404)            
                               
   ............................................................................ */
 
@@ -144,7 +144,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             ,craplrg.flgcreci
             ,craplrg.dtmvtolt
             ,craplrg.rowid
-		    ,craplrg.idautblq
+            ,craplrg.hrtransa
+            ,craplrg.idautblq
         FROM craplrg
        WHERE craplrg.cdcooper  = pr_cdcooper
          AND craplrg.nrdconta  = decode(pr_nrdconta, 0, craplrg.nrdconta, pr_nrdconta)
@@ -152,7 +153,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
          AND craplrg.inresgat  = 0
          AND craplrg.tpaplica  = 4
          AND craplrg.tpresgat IN (1,2,3)
-       ORDER BY craplrg.tpresgat;
+       ORDER BY craplrg.tpresgat, craplrg.progress_recid;
        
     -- Buscar cadastro da poupanca programada.
     CURSOR cr_craprpp (pr_cdcooper craplrg.cdcooper%TYPE,
@@ -173,7 +174,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
          AND craprpp.nrctrrpp = pr_nraplica
          FOR UPDATE NOWAIT;
     rw_craprpp cr_craprpp%ROWTYPE;   
-    
+
+
           -- Selecionar dados de aplicacao
       CURSOR cr_craprac (pr_cdcooper craplrg.cdcooper%TYPE,
                        pr_nrdconta craprac.nrdconta%TYPE,
@@ -289,7 +291,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
     vr_percenir       NUMBER;
     vr_vlresgat       NUMBER;
     vr_saldorpp       NUMBER;
-    vr_vlirabap       NUMBER;	
+    vr_vlirabap       NUMBER;    
     vr_vlsdrdppe      NUMBER;
     vr_des_reto       VARCHAR2(5);
     vr_tab_erro       GENE0001.typ_tab_erro;
@@ -315,7 +317,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
     BEGIN
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
     END;
-      
+
     PROCEDURE pc_gera_resgate_app_prog(pr_cdcooper crapcop.cdcooper%TYPE,
                                           pr_tpresgat craplrg.flgcreci%TYPE,
                                           pr_flgcreci craplrg.flgcreci%TYPE,
@@ -782,8 +784,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       
     END pc_gera_lancamentos_craplci;
 
-  BEGIN
-
+     BEGIN
+                                         
       ------------------------------- VARIAVEIS -------------------------------
             IF pr_flgcreci = 0 /* false */ THEN /*Resgate Conta Corrente*/
               -- Buscar dados do lote
@@ -1081,27 +1083,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           FETCH cr_craprpp INTO rw_craprpp;
           vr_fcraprpp := cr_craprpp%FOUND; 
           CLOSE cr_craprpp;
-          
+
           IF NOT vr_fcraprpp THEN
             vr_cdcritic := 484;
           ELSE
               vr_cdcritic := 0;
               IF (rw_craprpp.cdprodut < 1) THEN
-            /* Rotina de calculo do saldo da aplicac?o ate a data do movimento */
-            APLI0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper,        --> Cooperativa
-                                      pr_dstextab  => vr_dstextab_apli,         --> Percentual de IR da aplicac?o
-                                      pr_cdprogra  => vr_cdprogra,        --> Programa chamador
-                                      pr_inproces  => rw_crapdat.inproces,--> Indicador do processo
-                                      pr_dtmvtolt  => rw_crapdat.dtmvtolt,--> Data do processo
-                                      pr_dtmvtopr  => rw_crapdat.dtmvtopr,--> Proximo dia util
-                                      pr_rpp_rowid => rw_craprpp.rowid,   --> Identificador do registro da tabela CRAPRPP em processamento
-                                      pr_vlsdrdpp  => vr_vlsdrdppe,       --> Saldo da poupanca programada
-                                      -- conforme codigo original do progress, informações sempre são retornadas zeradas
-                                      -- para esse programa
-                                      -- pr_txaplmes  => vr_rpp_txaplmes     --> Taxa de aplicação mês
-                                      -- pr_txaplica  => vr_rpp_txaplica     --> Taxa de aplicação 
-                                      pr_cdcritic  => vr_cdcritic,        --> Codigo da critica de erro
-                                      pr_des_erro  => vr_dscritic);       --> Descric?o do erro encontrado
+                /* Rotina de calculo do saldo da aplicac?o ate a data do movimento */
+                APLI0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper,        --> Cooperativa
+                                          pr_dstextab  => vr_dstextab_apli,         --> Percentual de IR da aplicac?o
+                                          pr_cdprogra  => vr_cdprogra,        --> Programa chamador
+                                          pr_inproces  => rw_crapdat.inproces,--> Indicador do processo
+                                          pr_dtmvtolt  => rw_crapdat.dtmvtolt,--> Data do processo
+                                          pr_dtmvtopr  => rw_crapdat.dtmvtopr,--> Proximo dia util
+                                          pr_rpp_rowid => rw_craprpp.rowid,   --> Identificador do registro da tabela CRAPRPP em processamento
+                                          pr_vlsdrdpp  => vr_vlsdrdppe,       --> Saldo da poupanca programada
+                                          -- conforme codigo original do progress, informações sempre são retornadas zeradas
+                                          -- para esse programa
+                                          -- pr_txaplmes  => vr_rpp_txaplmes     --> Taxa de aplicação mês
+                                          -- pr_txaplica  => vr_rpp_txaplica     --> Taxa de aplicação 
+                                          pr_cdcritic  => vr_cdcritic,        --> Codigo da critica de erro
+                                          pr_des_erro  => vr_dscritic);       --> Descric?o do erro encontrado
         ELSE
               vr_vlresgat := 0;
               vr_saldorpp := 0;
@@ -1254,7 +1256,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;
 
       END IF;
-	  /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
+      /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
       
 
@@ -1262,12 +1264,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
            pc_gera_resgate_poup_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_vlresgat => vr_vlresgat);
+           IF ((rw_craprpp.cdprodut < -1) AND (vr_vlresgat > 0) AND (rw_craplrg.hrtransa < 0) ) THEN
+          --Executa migração de poupança (antigo poupanca.i)
+          cecred.pc_migra_poupanca_prog (pr_cdcooper  => pr_cdcooper,          --> Cooperativa
+                                     pr_cdprogra  => vr_cdprogra,          --> Programa chamador
+                                          pr_inproces  => rw_crapdat.inproces,--> Indicador do processo
+                                     pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
+                                     pr_dtmvtopr  => rw_crapdat.dtmvtopr,          --> Data do processo
+                                     pr_vlsdrdpp  => vr_vlresgat,                     --> Valor de saldo da RPP
+                                     pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
+                                     pr_cdcritic  => vr_cdcritic,          --> Código da critica de erro
+                                     pr_dscritic  => vr_dscritic);         --> Descrição do erro encontrado
+               IF vr_dscritic is not null THEN
+                       raise vr_exc_saida;
+               END IF;
+
+           END IF;
         ELSE
            pc_gera_resgate_app_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_tpresgat => rw_craplrg.tpresgat,
                                           pr_vlresgat => vr_vlresgat);
-              END IF;
+        END IF;
         IF (vr_dscritic IS NULL) THEN         
             /* Atualizar valor resgatado */
             BEGIN
@@ -1295,7 +1313,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                 RAISE vr_exc_saida; 
             END;
           END IF;      
-            vr_regexist := TRUE;
+          vr_regexist := TRUE;
             
       END IF;
       
@@ -1553,5 +1571,5 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         -- Efetuar rollback
         ROLLBACK;
       END IF;
-  END pc_crps156;
+  END pc_crps156; 
 /
