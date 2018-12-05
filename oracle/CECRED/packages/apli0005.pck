@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/07/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -57,6 +57,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
 	--
   --             21/07/2018 - (Proj. 411.2) (CIS Corporate)
   --                          Não desfaz todas as transações em pc_obtem_taxa_modalidade 
+	--
+	--             04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	--                          dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
 
   ---------------------------------------------------------------------------------------------------------------
   
@@ -459,7 +462,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
 															 ,pr_idgerlog IN INTEGER                           --> Identificador de Log (0 – Não / 1 – Sim) 																 
 															 ,pr_cdcritic OUT INTEGER                          --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                         --> Descrição da crítica
-															 ,pr_tab_aplica OUT apli0005.typ_tab_aplicacao);   --> Tabela  com os dados da aplicação
+                               ,pr_tab_aplica OUT APLI0005.typ_tab_aplicacao);   --> Tabela  com os dados da aplicação
 
   PROCEDURE pc_busca_aplicacoes_car(pr_cdcooper IN craprac.cdcooper%TYPE             --> Código da Cooperativa
 																	 ,pr_cdoperad IN crapope.cdoperad%TYPE             --> Código do Operador
@@ -622,7 +625,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
 																				pr_nraplica IN craprac.nraplica%TYPE,        -- Número da Aplicação
 																				pr_idlstdhs IN NUMBER,                       -- Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim)
 																				pr_idgerlog IN NUMBER,                       -- Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim)
-																				pr_tab_extrato OUT apli0005.typ_tab_extrato, -- PLTable com os dados de extrato
+                                        pr_tab_extrato OUT APLI0005.typ_tab_extrato, -- PLTable com os dados de extrato
 																				pr_vlresgat OUT NUMBER,                      -- Valor de resgate
 																				pr_vlrendim OUT NUMBER,                      -- Valor de rendimento
 																				pr_vldoirrf OUT NUMBER,                      -- Valor do IRRF
@@ -860,7 +863,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                    ,pr_dtmvtolt     IN DATE                         --> Data de Movimentação
                                    ,pr_flgcance     IN INTEGER                      --> Flag de Cancelamento           
                                    ,pr_flgerlog     IN INTEGER                      --> Gerar Log (0-False / 1-True)
-                                   ,pr_resg_aplica OUT apli0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
+                                   ,pr_resg_aplica OUT APLI0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE        --> Codigo da critica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE);      --> Descricao da critica
 
@@ -962,7 +965,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Julho/14.                    Ultima atualizacao:
+     Data    : Julho/14.                    Ultima atualizacao: 22/07/2014
 
      Dados referentes ao programa:
 
@@ -1530,7 +1533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+      APLI0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                  ,pr_cdprodut => pr_cdprodut   -- Codigo do Produto 
                                  ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                  ,pr_dscritic => vr_dscritic   -- Descricao da Critica
@@ -1634,7 +1637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+      APLI0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                  ,pr_cdprodut => pr_cdprodut   -- Codigo do Produto 
                                  ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                  ,pr_dscritic => vr_dscritic   -- Descricao da Critica
@@ -2203,7 +2206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
           ELSE
             vr_cdcritic := 0;
-            vr_dscritic := 'Retorno "NOK" na apli0005.pc_obtem_taxa_modalidade e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_obtem_taxa_modalidade e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
           END IF;
           -- Levantar Excecao
           RAISE vr_exc_saida;
@@ -2335,7 +2338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
     BEGIN
       -- Leitura de carencias do produto informado
-      apli0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -2429,7 +2432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      apli0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -2524,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
 
       -- Leitura de carencias do produto informado
-      apli0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
                                        ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
                                        ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
@@ -3036,7 +3039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic := 'Retorno "NOK" na apli0005.pc_valida_cad_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_valida_cad_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
           END IF;
           
           --Levantar Excecao
@@ -3333,7 +3336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
-      apli0005.pc_valida_cad_aplic(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
+      APLI0005.pc_valida_cad_aplic(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad   --> Código do Operador
                                   ,pr_nmdatela => vr_nmdatela   --> Nome da Tela
                                   ,pr_idorigem => vr_idorigem   --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -3553,7 +3556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       END IF;
                                               
-      apli0005.pc_calcula_prazo_aplicacao(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
+      APLI0005.pc_calcula_prazo_aplicacao(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
                                          ,pr_datcaren => vr_datcaren   --> Data de carencia
                                          ,pr_datvenci => vr_datvenci   --> Data de vencimento
                                          ,pr_diaspraz => pr_diaspraz   --> Quantidade de dias de carencia
@@ -3706,6 +3709,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_index_craplrg VARCHAR2(20);
       vr_index_resgate VARCHAR2(25);
       vr_index_acumula INTEGER;
+
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
 
       -- CURSORES --
       
@@ -3979,7 +3985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         CLOSE BTCH0001.cr_crapdat;
       END IF;
       
-      apli0005.pc_valida_cad_aplic(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_valida_cad_aplic(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -4152,7 +4158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '|| rw_crapass.nrdconta;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic := 'Retorno "NOK" na apli0005.pc_cadastra_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
+            vr_dscritic := 'Retorno "NOK" na APLI0005.pc_cadastra_aplic e sem informacao na pr_tab_erro, Conta: '||rw_crapass.nrdconta||' Aplica: 0';
           END IF;
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -4903,138 +4909,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         END;
 
         -- Fim CRÉDITO
-        
-        -- Consulta de lote
-        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                       ,pr_cdagenci => 1
-                       ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 8501);
-
-        FETCH cr_craplot INTO rw_craplot;
-
-        -- Verifica se encontrou registro de lote
-        IF cr_craplot%NOTFOUND THEN
-          -- Fecha cursor
-          CLOSE cr_craplot;
-
-          -- Caso nao exista registro de lote, novo registro é inserido
           BEGIN
-            INSERT INTO
-              craplot(
-                cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,tplotmov
-               ,nrseqdig
-               ,qtinfoln
-               ,qtcompln
-               ,vlinfodb
-               ,vlcompdb)
-            VALUES(
-              pr_cdcooper
-             ,rw_crapdat.dtmvtolt
-             ,1
-             ,100
-             ,8501
-             ,1
-             ,1
-             ,1
-             ,1
-             ,pr_vlaplica
-             ,pr_vlaplica) RETURNING
-               craplot.dtmvtolt
-              ,craplot.cdagenci
-              ,craplot.cdbccxlt
-              ,craplot.nrdolote
-              ,craplot.nrseqdig
-              ,craplot.rowid
-             INTO
-               rw_craplot.dtmvtolt
-              ,rw_craplot.cdagenci
-              ,rw_craplot.cdbccxlt
-              ,rw_craplot.nrdolote
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.rowid;
-  
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir registro de lote na CRAPLOT.';
+           LANC0001.pc_gerar_lancamento_conta(
+                          pr_cdcooper => pr_cdcooper
+                         ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctabb => pr_nrdconta
+                         ,pr_nrdocmto => vr_nraplica
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_dtrefere => rw_craplot.dtmvtolt
+                         ,pr_vllanmto => pr_vlaplica
+                         ,pr_cdhistor => rw_crapcpc.cdhscacc
+                         ,pr_nraplica => vr_nraplica
+                         ,pr_inprolot => 1
+                         ,pr_tplotmov => 1
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
-          END;
-        ELSE
-          -- Fecha cursor
-          CLOSE cr_craplot;
-          
-          -- Caso exista registro de lote ele será atualizado
-          BEGIN
-            -- Atualiza registro de lote
-            UPDATE
-              craplot
-            SET
-              craplot.tplotmov = 1
-             ,craplot.nrseqdig = rw_craplot.nrseqdig + 1
-             ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
-             ,craplot.qtcompln = rw_craplot.qtcompln + 1
-             ,craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica
-             ,craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
-            WHERE
-              craplot.rowid = rw_craplot.rowid
-            RETURNING
-               craplot.dtmvtolt
-              ,craplot.cdagenci
-              ,craplot.cdbccxlt
-              ,craplot.nrdolote
-              ,craplot.nrseqdig
-              ,craplot.rowid
-             INTO
-               rw_craplot.dtmvtolt
-              ,rw_craplot.cdagenci
-              ,rw_craplot.cdbccxlt
-              ,rw_craplot.nrdolote
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.rowid;
-     
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar registro de lote na CRAPLOT.';
-              RAISE vr_exc_saida;
-          END;
         END IF;
-
-        -- Insercao de Registro de lancamento de debito
-        BEGIN
-          INSERT INTO
-            craplcm(
-              cdcooper
-             ,dtmvtolt
-             ,cdagenci
-             ,cdbccxlt
-             ,nrdolote
-             ,nrdconta
-             ,nrdctabb
-             ,nrdocmto
-             ,nrseqdig
-             ,dtrefere
-             ,vllanmto
-             ,cdhistor
-             ,nraplica)
-          VALUES(
-            pr_cdcooper
-           ,rw_craplot.dtmvtolt
-           ,rw_craplot.cdagenci
-           ,rw_craplot.cdbccxlt
-           ,rw_craplot.nrdolote
-           ,pr_nrdconta
-           ,pr_nrdconta
-           ,vr_nraplica
-           ,rw_craplot.nrseqdig
-           ,rw_craplot.dtmvtolt
-           ,pr_vlaplica
-           ,rw_crapcpc.cdhscacc
-           ,vr_nraplica);
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -5341,7 +5241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_dtvencto := TO_DATE(pr_dtvencto,'dd/mm/RRRR');
 
       -- Efetua o cadastro de aplicacoes
-      apli0005.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
+      APLI0005.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
                                 ,pr_cdoperad => vr_cdoperad   -- Código do Operador
                                 ,pr_nmdatela => vr_nmdatela   -- Nome da Tela
                                 ,pr_idorigem => vr_idorigem   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
@@ -5445,7 +5345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     ..............................................................................*/
 
     BEGIN
-         apli0005.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
+         APLI0005.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
                                                  pr_cdoperad => pr_cdoperad,
                                                    pr_nmdatela => pr_nmdatela,
                                                    pr_idorigem => pr_idorigem,
@@ -6344,7 +6244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
 		  -- Procedure para excluir aplicação
-      apli0005.pc_exclui_aplicacao(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_exclui_aplicacao(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -6446,7 +6346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       -- Efetua o cadastro de aplicacoes
-      apli0005.pc_exclui_aplicacao(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
+      APLI0005.pc_exclui_aplicacao(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad   -- Código do Operador
                                   ,pr_nmdatela => vr_nmdatela   -- Nome da Tela
                                   ,pr_idorigem => vr_idorigem   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
@@ -6511,7 +6411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 															 ,pr_idgerlog IN INTEGER                           --> Identificador de Log (0 – Não / 1 – Sim) 																 
 															 ,pr_cdcritic OUT INTEGER                          --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                         --> Descrição da crítica
-															 ,pr_tab_aplica OUT apli0005.typ_tab_aplicacao)--> Tabela com os dados da aplicação
+                               ,pr_tab_aplica OUT APLI0005.typ_tab_aplicacao)--> Tabela com os dados da aplicação
 															 IS  
    BEGIN															 
 	 /* .............................................................................
@@ -6520,7 +6420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Lucas Reinert
-     Data    : Agosto/14.                    Ultima atualizacao: --/--/----
+     Data    : Agosto/14.                    Ultima atualizacao: 04/12/2018
 
      Dados referentes ao programa:
 
@@ -6532,6 +6432,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Alteracoes: 18/07/2018 - 1. Desconsiderar as aplicações programadas 
                               Proj. 411.2 (Claudio - CIS Corporate)
+															
+						     04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)		
+		 
     ..............................................................................*/												
 		
 		DECLARE
@@ -6558,7 +6462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_nrdrowid ROWID;
 			
 			-- Declaração da tabela que conterá os dados da aplicação
-			vr_tab_aplica apli0005.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
 			vr_ind_aplica PLS_INTEGER := 0;
 
       -- Seleciona registro de aplicação de captação       
@@ -6845,19 +6749,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 			
 			-- Gerar log
 			IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-				  COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 1 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 			
 		EXCEPTION
@@ -6873,19 +6777,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-				  COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
@@ -6894,19 +6798,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 		END;
 	END pc_busca_aplicacoes;
@@ -6955,7 +6859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
-      vr_tab_aplica apli0005.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
 
       -- Variaveis de XML 
       vr_xml_temp VARCHAR2(32767);
@@ -6963,7 +6867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
 		  -- Procedure para buscar informações da aplicação
-      apli0005.pc_busca_aplicacoes(pr_cdcooper => pr_cdcooper             --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper => pr_cdcooper             --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad             --> Código do Operador
                                   ,pr_nmdatela => pr_nmdatela             --> Nome da Tela
                                   ,pr_idorigem => pr_idorigem             --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -7097,7 +7001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_auxconta PLS_INTEGER := 0;
 
       -- Temp Table
-      vr_tab_aplica apli0005.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
 		
       -- Variaveis de log
       vr_cdcooper crapcop.cdcooper%TYPE;
@@ -7127,7 +7031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
 			-- Procedure para buscar informações da aplicação
-      apli0005.pc_busca_aplicacoes(pr_cdcooper => vr_cdcooper             --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper => vr_cdcooper             --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad             --> Código do Operador
                                   ,pr_nmdatela => vr_nmdatela             --> Nome da Tela
                                   ,pr_idorigem => to_number(vr_idorigem)  --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -7256,6 +7160,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                  14/04/2015 - Foram adicionados novos campos na PLTABLE montada com 
                               o retorno dos dados da pc_busca_aplicacoes (DTCARENC)
                               SD 266191 (Kelvin).
+															
+								 04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
+															
     ..............................................................................*/												
 		
 		DECLARE
@@ -7268,7 +7176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 			
 			-- Declaração da tabela que conterá os dados da aplicação
-			vr_tab_aplica apli0005.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
       vr_ind_aplica_tmp VARCHAR2(25);
       vr_saldo_rdca apli0001.typ_tab_saldo_rdca; --> Tabela para armazenar saldos de aplicacao
       vr_saldo_rdca_tmp apli0001.typ_tab_saldo_rdca_tmp; --> Tabela para armazenar saldos de aplicacao
@@ -7283,7 +7191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 	  BEGIN
 
       -- Consulta de novas aplicacoes
-      apli0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
                                   ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
                                   ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -7394,18 +7302,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Verifica se deve gerar log
       IF pr_idgerlog = 1 THEN
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdoperad
-                            ,pr_dscritic => pr_dscritic
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> FALSE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+				gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																 ,pr_cdoperad => pr_cdoperad
+																 ,pr_dscritic => pr_dscritic
+																 ,pr_dsorigem => vr_dsorigem
+																 ,pr_dstransa => vr_dstransa
+																 ,pr_dttransa => TRUNC(SYSDATE)
+																 ,pr_flgtrans => 0 --> FALSE
+																 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																 ,pr_idseqttl => pr_idseqttl
+																 ,pr_nmdatela => pr_nmdatela
+																 ,pr_nrdconta => pr_nrdconta
+																 ,pr_nrdrowid => vr_nrdrowid
+																 );
       END IF;  
 
 		EXCEPTION
@@ -7421,38 +7330,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;                    
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;                    
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
         pr_cdcritic := vr_cdcritic;
@@ -7561,7 +7470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       -- Carrega PL table com aplicacoes da conta
-      apli0005.pc_lista_aplicacoes(pr_cdcooper => vr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => vr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => vr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => vr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => vr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -7733,7 +7642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 			
 			-- Declaração da tabela que conterá os dados da aplicação
-			vr_tab_aplica apli0005.typ_tab_aplicacao;
+      vr_tab_aplica APLI0005.typ_tab_aplicacao;
       vr_ind_aplica_tmp VARCHAR2(25);
       vr_saldo_rdca apli0001.typ_tab_saldo_rdca; --> Tabela para armazenar saldos de aplicacao
       vr_saldo_rdca_tmp apli0001.typ_tab_saldo_rdca_tmp; --> Tabela para armazenar saldos de aplicacao
@@ -7748,7 +7657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 	  BEGIN
 
       -- Consulta de novas aplicacoes
-      apli0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+      APLI0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
                                   ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
                                   ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -7986,7 +7895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
 		  -- pc_lista_aplicacoes com pr_dtinicio e pr_dtfim
-      apli0005.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -8160,7 +8069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
 		  -- Carrega PL table com aplicacoes da conta
-      apli0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -8979,7 +8888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
       
       -- Valida resgate de aplicacao
-      apli0005.pc_val_solicit_resg(pr_cdcooper => pr_cdcooper    --> Código da Cooperativa
+      APLI0005.pc_val_solicit_resg(pr_cdcooper => pr_cdcooper    --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad    --> Código do Operador
                                   ,pr_nmdatela => pr_nmdatela    --> Nome da Tela
                                   ,pr_idorigem => pr_idorigem    --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  )
@@ -9052,7 +8961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Verifica se o resgate é on-line
       IF pr_dtresgat = rw_crapdat.dtmvtolt THEN
-        apli0005.pc_efetua_resgate(pr_cdcooper => pr_cdcooper
+        APLI0005.pc_efetua_resgate(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nraplica => pr_nraplica
                                   ,pr_vlresgat => pr_vlresgat
@@ -11375,7 +11284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 																				pr_nraplica IN craprac.nraplica%TYPE,    -- Número da Aplicação
 																				pr_idlstdhs IN NUMBER,                   -- Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim)
 																				pr_idgerlog IN NUMBER,                   -- Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim)
-																				pr_tab_extrato OUT apli0005.typ_tab_extrato, -- PLTable com os dados de extrato
+                                        pr_tab_extrato OUT APLI0005.typ_tab_extrato, -- PLTable com os dados de extrato
 																				pr_vlresgat OUT NUMBER,                  -- Valor de resgate
 																				pr_vlrendim OUT NUMBER,                  -- Valor de rendimento
 																				pr_vldoirrf OUT NUMBER,                  -- Valor do IRRF
@@ -11436,7 +11345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 			vr_txlancto NUMBER;
 			
 			-- PLTable que conterá os dados do extrato
-			vr_tab_extrato apli0005.typ_tab_extrato;
+      vr_tab_extrato APLI0005.typ_tab_extrato;
 			vr_ind_extrato PLS_INTEGER := 0;
 		
 			-- Busca registro de aplicações de captação
@@ -11875,7 +11784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
- 			vr_tab_extrato apli0005.typ_tab_extrato;
+       vr_tab_extrato APLI0005.typ_tab_extrato;
 
       -- Variaveis de XML
       vr_xml_temp VARCHAR2(32767);
@@ -12026,7 +11935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 
       -- Temp Table
- 			vr_tab_extrato apli0005.typ_tab_extrato;
+       vr_tab_extrato APLI0005.typ_tab_extrato;
 			
 			-- Variáveis locais
       vr_contador PLS_INTEGER := 0;
@@ -12377,7 +12286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
       -- Procedure para buscar informações de resgates
-      apli0005.pc_consulta_resgates(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_consulta_resgates(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_dtmvtolt => pr_dtmvtolt
                                    ,pr_nraplica => pr_nraplica
@@ -12544,7 +12453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
       
       -- Procedure para buscar informações de resgates
-      apli0005.pc_consulta_resgates(pr_cdcooper => vr_cdcooper
+      APLI0005.pc_consulta_resgates(pr_cdcooper => vr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_dtmvtolt => vr_dtmvtolt
                                    ,pr_nraplica => pr_nraplica
@@ -14064,7 +13973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       -- Procedure para cancelar resgate de aplicacao
-      apli0005.pc_cancela_resgate(pr_cdcooper => vr_cdcooper
+      APLI0005.pc_cancela_resgate(pr_cdcooper => vr_cdcooper
                                  ,pr_cdagenci => vr_cdagenci
                                  ,pr_nrdcaixa => vr_nrdcaixa
                                  ,pr_cdoperad => vr_cdoperad
@@ -14208,7 +14117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_tab_erro.DELETE;
 
       -- Consulta as informações das aplicações
-      apli0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
@@ -15212,7 +15121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       /* Procedure para resgate de aplicacao */
-      apli0005.pc_ret_apl_resg_aut(pr_cdcooper => vr_cdcooper   -- Codigo da cooperativa
+      APLI0005.pc_ret_apl_resg_aut(pr_cdcooper => vr_cdcooper   -- Codigo da cooperativa
                                   ,pr_cdagenci => vr_cdagenci   -- Codigo do PA
                                   ,pr_nrdcaixa => vr_nrdcaixa   -- Codigo do Caixa
                                   ,pr_cdoperad => vr_cdoperad   -- Codigo do Operador
@@ -15359,7 +15268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       IF pr_idvalida = 0 THEN
         -- Validacao de solicitacao de resgate
-        apli0005.pc_val_solicit_resg(pr_cdcooper => vr_cdcooper
+        APLI0005.pc_val_solicit_resg(pr_cdcooper => vr_cdcooper
                                     ,pr_cdoperad => vr_cdoperad
                                     ,pr_nmdatela => vr_nmdatela
                                     ,pr_idorigem => vr_idorigem
@@ -15385,7 +15294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       ELSE
         /* Efetivação da solicitacao de resgate */
-        apli0005.pc_solicita_resgate(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
+        APLI0005.pc_solicita_resgate(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
                                     ,pr_cdoperad => vr_cdoperad   --> Código do Operador
                                     ,pr_nmdatela => vr_nmdatela   --> Nome da Tela
                                     ,pr_idorigem => vr_idorigem   --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  )
@@ -15453,7 +15362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                    ,pr_dtmvtolt     IN DATE                         --> Data de Movimentação
                                    ,pr_flgcance     IN INTEGER                      --> Flag de Cancelamento           
                                    ,pr_flgerlog     IN INTEGER                      --> Gerar Log (0-False / 1-True)
-                                   ,pr_resg_aplica OUT apli0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
+                                   ,pr_resg_aplica OUT APLI0005.typ_tab_resg_aplica --> Tabela com os dados de resgate de aplicacoes
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE        --> Codigo da critica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE) IS    --> Descricao da critica
 
@@ -15786,7 +15695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       /* Procedure para consulta de proximos resgates de aplicacao */
-      apli0005.pc_obtem_resgates_conta(pr_cdcooper    => vr_cdcooper
+      APLI0005.pc_obtem_resgates_conta(pr_cdcooper    => vr_cdcooper
                                       ,pr_cdagenci    => vr_cdagenci
                                       ,pr_nrdcaixa    => vr_nrdcaixa
                                       ,pr_cdoperad    => vr_cdoperad
@@ -16156,7 +16065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       pr_vlsldisp := 0;
       
       -- Carrega PL table com aplicacoes da conta
-      apli0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA

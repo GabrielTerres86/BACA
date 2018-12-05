@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 18/12/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -87,7 +87,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** ---------------------------------------------------------**/
 
   TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
 
 
   /** ---------------------------------------------------- **/
@@ -162,6 +162,12 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_lista_arquivos(pr_lista_arquivo OUT TYP_SIMPLESTRINGARRAY
                              ,pr_path          IN VARCHAR2
                              ,pr_pesq          IN VARCHAR2);
+
+  /* Procedimento para mover arquivo */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2 -- arquivo origem
+                         ,pr_dsarqdes IN VARCHAR2 -- arquivo destino
+                         ,pr_typ_saida OUT VARCHAR2
+                         ,pr_des_saida OUT VARCHAR2);
 
   /* Rotina para executar comandos Host pendentes de execução na tabela CRAPCSO */
   PROCEDURE pc_process_OSCommand_penden(pr_nrseqsol  IN crapcso.nrseqsol%TYPE DEFAULT NULL
@@ -254,6 +260,21 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                        ,pr_nmdatela IN craplgm.nmdatela%TYPE
                        ,pr_nrdconta IN craplgm.nrdconta%TYPE
                        ,pr_nrdrowid OUT ROWID);
+
+  /* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														);
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */
@@ -498,7 +519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -538,6 +559,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   --             01/12/2017 - Na rotina pc_submit_job, alterado a forma como é tratado o parâmetro pr_jobname
   --                          para melhorar os eventuais logs (Carlos)
+  --
+  --             19/02/2018 - #827612 Criado o procedimento pc_mv_arquivo para usar o tipo de comando mv_grid, criado
+  --                          na função fn_type_comando. Este tipo de comando foi criado para usar o user grid no
+  --                          exec_comando_oracle.sh para ganho de performance (Carlos)
+  --
+  --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
+  --                          pc_controle_exec                   
+  --                          ( Belli - Envolti - REQ0027434 )
+	--
+	--             04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
+	--                          commit da operacao (Adriano Nagasava - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -636,10 +669,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- .............................................................................
     BEGIN
       -- Retornar o usuário através da função SYS_CONTEXT
-      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'CECRED');
+      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'AILOS');
     EXCEPTION
       WHEN OTHERS THEN
-        RETURN 'CECRED';
+        RETURN 'AILOS';
     END;
   END fn_OSuser;
 
@@ -1062,6 +1095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_typ_comando := 'lp';
     ELSIF UPPER(pr_typ_comando) IN ('SR') THEN
       vr_typ_comando := 'shell_remoto';
+    ELSIF UPPER(pr_typ_comando) IN ('MV') THEN
+      vr_typ_comando := 'mv_grid';
     ELSE
       -- Gerar erro
       pr_des_erro := 'PT_TYP_COMANDO :'||pr_typ_comando||' não suportado';
@@ -1070,6 +1105,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- Retornar
     RETURN vr_typ_comando;
   END;
+
+  /* Procedimento para mover arquivo com o user grid no exec_comando_oracle */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2
+                         ,pr_dsarqdes IN VARCHAR2
+                         ,pr_typ_saida  OUT VARCHAR2
+                         ,pr_des_saida  OUT VARCHAR2) IS
+  BEGIN
+    BEGIN
+      pc_OScommand(pr_typ_comando => 'mv'
+                  ,pr_des_comando => pr_dsarqori || ' ' || pr_dsarqdes
+                  ,pr_flg_aguard  => 'S'
+                  ,pr_typ_saida   => pr_typ_saida
+                  ,pr_des_saida   => pr_des_saida);
+      EXCEPTION
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
+    END;
+  END pc_mv_arquivo;
 
     /* Rotina para executar o comando solicitado  */
   PROCEDURE pc_executa_OSCommand(pr_nrseqsol    IN crapcso.nrseqsol%TYPE    --> Sequencia da solicitação
@@ -1743,7 +1796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: gera_log (Antigo gera_log.i>proc_gerar_log.i)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 02/03/2016
+       Data    : Novembro/2007                      Ultima atualizacao: 03/08/2018
 
        Dados referentes ao programa:
 
@@ -1759,6 +1812,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 via trigger (Andrino - RKAM)
 
                    02/03/2015 - Tratar para não estourar o campo de dscritic (Odirlei-AMcom)             
+
+                   03/08/2018 - Ajuste do tamanho do nome do programa no insert do LOG -- Projeto Debitador Unico 03/08/2018 - AMcom Fabiano B. Dias.
 
     ..............................................................................*/
     BEGIN
@@ -1783,11 +1838,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                          ,pr_flgtrans
                          ,pr_hrtransa
                          ,pr_idseqttl
-                         ,pr_nmdatela
+                         ,substr(pr_nmdatela,1,12)
                          ,pr_nrdconta)
                 RETURNING ROWID INTO pr_nrdrowid;
     END;
   END pc_gera_log;
+	
+	/* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														) IS
+	/*..............................................................................
+
+       Programa: pc_gera_log_auto
+       Autor   : David
+       Data    : Dezembro/2018                      Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo  : Geracao de log utilizando autonomous_transaction com commit da operacao
+
+       Alteracoes: 04/12/2018 - Criar procedure pc_gera_log_auto (Adriano Nagasava - Supero)
+
+    ..............................................................................*/
+		--
+		PRAGMA AUTONOMOUS_TRANSACTION;
+		--
+	BEGIN
+		-- Chama a rotina para inserir o log
+		pc_gera_log(pr_cdcooper => pr_cdcooper -- IN
+							 ,pr_cdoperad => pr_cdoperad -- IN
+							 ,pr_dscritic => pr_dscritic -- IN
+							 ,pr_dsorigem => pr_dsorigem -- IN
+							 ,pr_dstransa => pr_dstransa -- IN
+							 ,pr_dttransa => pr_dttransa -- IN
+							 ,pr_flgtrans => pr_flgtrans -- IN
+							 ,pr_hrtransa => pr_hrtransa -- IN
+							 ,pr_idseqttl => pr_idseqttl -- IN
+							 ,pr_nmdatela => pr_nmdatela -- IN
+							 ,pr_nrdconta => pr_nrdconta -- IN
+							 ,pr_nrdrowid => pr_nrdrowid -- OUT
+							 );
+		--
+		COMMIT;
+		--
+  END pc_gera_log_auto;
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */
@@ -3438,7 +3543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   /* Procedimento para verificar/controlar a execução de programas */
   PROCEDURE pc_controle_exec ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
-                              ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar e V-Validar
+                              ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar, V-Validar e C2-Consultar
                               ,pr_dtmvtolt  IN DATE                         --> Data do movimento
                               ,pr_cdprogra  IN crapprg.cdprogra%TYPE        --> Codigo do programa
                               ,pr_flultexe OUT INTEGER                      --> Retorna se é a ultima execução do procedimento
@@ -3450,7 +3555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Belli - Envolti
-  --   Data    : Agosto/2017                       Ultima atualizacao: 
+  --   Data    : Agosto/2017                       Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3462,6 +3567,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   -- Observação: Rotina Copiada/Refeita da SICR0001 pc_controle_exec_deb, sendo atualizada para ser genérica
   --
   --  Alteracoes:
+  --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
+  --                          pc_controle_exec                   
+  --                          ( Belli - Envolti - REQ0027434 )
   --
   --------------------------------------------------------------------------------------------------------------------*/
     ------------- Variaveis ---------------
@@ -3657,6 +3765,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
     pr_qtdexec := vr_qtdexec;
 
+    -- Consulta 2 - levando em conta a data de parâmetro - 20/09/2018 - REQ0027434
+    IF pr_cdtipope = 'C2' THEN        
+      IF nvl(vr_dtctlexc,to_date('01/01/2001','DD/MM/RRRR')) <> 
+         nvl(TRUNC(pr_dtmvtolt),to_date('01/01/2001','DD/MM/RRRR'))    THEN
+        -- Se a data do parâmetro for diferente da data do cadastro então nesta data não executou
+        pr_flultexe := 0;
+        pr_qtdexec  := 0;
+      END IF;
+    END IF; 
+
   EXCEPTION
     WHEN vr_exc_mensagem THEN  
       -- Efetuar retorno do erro tratado
@@ -3676,7 +3794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Controla Controla log em banco de dados
       pc_controla_log_programa;
   END;
---  
+
+  -- Retornar quantidade de threads paralelas disponíveis para o Programa ou JOB
   FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                  , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtparalelo%TYPE IS
@@ -3687,7 +3806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jonatas Jaqmam(AMcom)
-    --  Data     : Dezembro/2017.                   Ultima atualizacao: 14/12/2017
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 16/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -3696,27 +3815,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Observações : Projeto Ligeirinho
     --                 
     --
-    --   Alteracoes:
+    --   Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Checagem de quantidade de Paralelos
+    --                            quando programa passado for um JOB - Andreatta (MOUTs)
     --
     -- .............................................................................
   
-    vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE;
-                                
-  BEGIN
-    
-    BEGIN
+    -- Busca na tabela de Programas
+    CURSOR cr_prog IS
       SELECT t.qtparalelo
-        INTO vr_qtparalelo
         FROM tbgen_batch_param t
        WHERE t.cdcooper   = pr_cdcooper
          AND t.cdprograma = pr_cdprogra;
-    EXCEPTION
-      WHEN NO_DATA_FOUND THEN
-        vr_qtparalelo := 0;  
-    END;
+
+    -- Validar se o programa é um JOB
+    CURSOR cr_jobs IS
+      SELECT j.nmjob
+        FROM tbgen_batch_jobs j
+       WHERE j.nmjob = pr_cdprogra;
+    v_nmjob tbgen_batch_jobs.nmjob%TYPE;
+
+    --Separacao de valores por hora para vetor
+    vr_txhorarios   gene0002.typ_split;
+
+    -- Variavel padrão
+    vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE := 0;
+
+  BEGIN
+
+    OPEN cr_prog;
+    FETCH cr_prog
+     INTO vr_qtparalelo;
+    IF cr_prog%NOTFOUND THEN
+      CLOSE cr_prog;
+      -- Validar se o programa é um JOB
+      OPEN cr_jobs;
+      FETCH cr_jobs
+       INTO v_nmjob;
+      IF cr_jobs%FOUND THEN
+        CLOSE cr_jobs;
+        -- Buscar nos parâmetros de sistema de acordo com o horário atual
+        -- qual a quantidade de threads liberadas por hora por JOB
+        vr_txhorarios
+               := gene0002.fn_quebra_string
+                           (gene0001.fn_param_sistema('CRED',0,'QT_JB_HORA_BATCH_MASTER'), ';');
+
+        -- Usar a Hora atual e a mesma servira como posicionador no array
+        -- ou seja, 12:00 irá buscar a posição 12 do Array, onde está a quantidde
+        -- de threadas paralelas das 12 as 13.
+        vr_qtparalelo := vr_txhorarios(to_number(to_char(SYSDATE,'hh24'))+1);
+      ELSE
+        CLOSE cr_jobs;
+      END IF;
+    ELSE
+      CLOSE cr_prog;
+    END IF;
 
     RETURN vr_qtparalelo;
-
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN 0;
   END fn_retorna_qt_paralelo;                                 
   --
   FUNCTION fn_retorna_qt_reg_commit( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
