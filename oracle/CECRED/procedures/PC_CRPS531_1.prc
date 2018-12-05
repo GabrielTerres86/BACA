@@ -1064,6 +1064,22 @@ end;
           END IF;
         END IF;
       END IF;
+      -- Marcelo Telles Coelho - Projeto 475 - Sprint C2
+      -- Atualizar a conta migrada na tabela de trace
+      IF pr_dscritic IS NULL AND pr_cdcritic IS NULL THEN
+        
+        IF vr_val_cdcooper <> NVL(rw_b_crapcop.cdcooper,rw_crapcop_mensag.cdcooper)
+        OR vr_val_nrdconta <> to_number(vr_aux_CtCredtd)
+        THEN
+          SSPB0003.pc_atualiza_conta_migrada(pr_nrcontrole_str_pag => vr_trace_nrcontrole_str_pag
+                                            ,pr_nrdconta           => vr_val_nrdconta
+                                            ,pr_cdcooper           => vr_val_cdcooper
+                                            ,pr_nrdconta_migrada   => to_number(vr_aux_CtCredtd)
+                                            ,pr_cdcooper_migrada   => NVL(rw_b_crapcop.cdcooper,rw_crapcop_mensag.cdcooper)
+                                            ,pr_dscritic           => pr_dscritic);
+        END IF;
+      END IF;
+      -- Fim Projeto 475
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 2; -- Conta invalida
@@ -5371,15 +5387,6 @@ END pc_trata_arquivo_ldl;
       
       
     BEGIN -- inicio pc_trata_lancamentos
-      -- Verificar se está rodando o processo
-      IF NOT fn_verifica_processo THEN
-        -- Marcelo Telles Coelho - Projeto 475
-        -- Se processo rodando deverá continuar executando utilizar DTMVTOCD na PC_TRATA_LANCAMENTOS
-        -- Retornar para que o arquivo não seja processado neste momento
-        -- RETURN;
-        NULL;
-        -- Fim Projeto 475
-      END IF;
       -- Para estado de crise
       IF vr_aux_flestcri = 0 THEN
         -- Marcelo Telles Coelho - Projeto 475
@@ -8069,6 +8076,10 @@ END pc_trata_arquivo_ldl;
               vr_aux_inestcri := vr_tab_estad_crise(rw_crapcob.cdcooper).inestcri;
             END IF;
           ELSE
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Escolher a data a ser utilizada no processo
+            -- Se TRUNC(SYSDATE) > DTMVTOLT ==> Utilizar DTMVTOCD senão Utilizar DTMVTOLT
+            -- Definido na FN_VERIFICA_PROCESSO
             vr_aux_dtintegr := vr_dtmovimento;
           END IF;
 
@@ -8567,11 +8578,6 @@ END pc_trata_arquivo_ldl;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
-
-            -- Se não validar processo
-            IF NOT fn_verifica_processo THEN
-              NULL;
-            END IF;
 
             vr_aux_dsdehist := NULL;
 

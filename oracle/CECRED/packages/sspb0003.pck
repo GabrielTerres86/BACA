@@ -125,6 +125,23 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0003 AS
   -- Função para validar horario de abertura da grade de TED
   FUNCTION fn_valida_horario_ted(pr_cdcooper    IN tbspb_mensagem.cdcooper%TYPE) RETURN BOOLEAN;
   
+  -- Rotina para acertar a cooperativa e conta migradas
+  PROCEDURE pc_atualiza_conta_migrada(pr_nrcontrole_str_pag     IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE               --> Nr.controle da Instituição Financeira de destino
+                                     ,pr_nrdconta               IN CRAPASS.NRDCONTA%TYPE                              --> Numero da conta/dv do associado
+                                     ,pr_cdcooper               IN CRAPASS.CDCOOPER%TYPE                              --> Codigo que identifica a Cooperativa
+                                     ,pr_nrdconta_migrada       IN CRAPASS.NRDCONTA%TYPE                              --> Numero da conta/dv do associado migrada
+                                     ,pr_cdcooper_migrada       IN CRAPASS.CDCOOPER%TYPE                              --> Codigo que identifica a Cooperativa migrada
+                                     ,pr_dscritic              OUT VARCHAR2);
+  
+  -- Rotina para retornar os campos VLMENSAGEM, NRISPB_DEB e NRISPB_CRE
+  PROCEDURE pc_busca_vlmensagem (pr_cdfase             IN tbspb_msg_enviada_fase.cdfase%TYPE
+                                ,pr_dsxml_completo     IN tbspb_msg_xml.dsxml_completo%TYPE
+                                ,pr_nrseq_mensagem_xml IN tbspb_msg_enviada_fase.nrseq_mensagem_xml%TYPE
+                                ,pr_vlmensagem        OUT tbspb_msg_enviada.vlmensagem%TYPE
+                                ,pr_nrispb_deb        OUT tbspb_msg_enviada.nrispb_deb%TYPE
+                                ,pr_nrispb_cre        OUT tbspb_msg_enviada.nrispb_cre%TYPE
+                                ,pr_dscritic          OUT VARCHAR2);
+
 END SSPB0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
@@ -536,11 +553,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     vr_inexiste_mensagem_fase VARCHAR2(01);
     vr_cdcooper               CRAPCOP.CDCOOPER%TYPE;
     vr_nrseq_mensagem_xml     TBSPB_MSG_XML.NRSEQ_MENSAGEM_XML%TYPE;
+    vr_inestcri               NUMBER;
+    vr_clobxmlc               CLOB;
+    vr_vlmensagem             TBSPB_MSG_ENVIADA.vlmensagem%TYPE;
+    vr_nrispb_deb             TBSPB_MSG_ENVIADA.nrispb_deb%TYPE;
+    vr_nrispb_cre             TBSPB_MSG_ENVIADA.nrispb_cre%TYPE;
 
   BEGIN -- Inicio pc_grava_trace_spb
     pr_des_erro               := 'OK';
     vr_inexiste_mensagem      := 'N';
     vr_inexiste_mensagem_fase := 'N';
+    vr_vlmensagem             := NULL;
+    vr_nrispb_deb             := NULL;
+    vr_nrispb_cre             := NULL;
     --
     -- Verifica se a fase do parametro está cadastrada
     OPEN cr_busca_fase (pr_cdfase => pr_cdfase);
@@ -571,7 +596,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     --
     CLOSE cr_busca_msg;
     --
+    IF vr_inexiste_mensagem = 'N' THEN
+        -- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
+        -- Busca o indicador estado de crise
+        SSPB0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                                 ,pr_clobxmlc => vr_clobxmlc);
+    END IF;
+    --
     IF rw_busca_msg.idorigem = 'E' THEN
+      pc_busca_vlmensagem (pr_cdfase             => pr_cdfase
+                          ,pr_dsxml_completo     => pr_dsxml_completo
+                          ,pr_nrseq_mensagem_xml => pr_nrseq_mensagem_xml
+                          ,pr_vlmensagem         => vr_vlmensagem
+                          ,pr_nrispb_deb         => vr_nrispb_deb
+                          ,pr_nrispb_cre         => vr_nrispb_cre
+                          ,pr_dscritic           => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+        END IF;
+      --
       IF vr_inexiste_mensagem = 'N' THEN
         -- Incluir registro de Envio
         BEGIN
@@ -585,6 +628,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,dhmensagem
                  ,nrdconta
                  ,cdcooper
+                 ,inestado_crise
+                 ,vlmensagem
+                 ,nrispb_deb
+                 ,nrispb_cre
                  )
           VALUES (NULL                      -- nrseq_mensagem
                  ,pr_nmmensagem             -- nmmensagem
@@ -595,6 +642,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,SYSDATE                   -- dhmensagem
                  ,pr_nrdconta               -- nrdconta
                  ,NVL(pr_cdcooper,3)        -- cdcooper
+                 ,vr_inestcri               -- Indicador de estado crise - Sprint C2
+                 ,vr_vlmensagem
+                 ,vr_nrispb_deb
+                 ,vr_nrispb_cre
                  )
           RETURNING nrseq_mensagem INTO rw_busca_msg.nrseq_mensagem;
         EXCEPTION
@@ -631,6 +682,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                                           ELSE
                                             nmmensagem
                                           END
+                ,vlmensagem             = NVL(vr_vlmensagem,vlmensagem)
+                ,nrispb_deb             = NVL(vr_nrispb_deb,nrispb_deb)
+                ,nrispb_cre             = NVL(vr_nrispb_cre,nrispb_cre)
            WHERE nrseq_mensagem = rw_busca_msg.nrseq_mensagem;
         EXCEPTION
         WHEN OTHERS THEN
@@ -772,6 +826,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
         END;
       END IF;
     ELSIF rw_busca_msg.idorigem = 'R' THEN
+      IF pr_nmmensagem <> 'SLC0001' THEN
+        pc_busca_vlmensagem (pr_cdfase             => pr_cdfase
+                            ,pr_dsxml_completo     => pr_dsxml_completo
+                            ,pr_nrseq_mensagem_xml => pr_nrseq_mensagem_xml
+                            ,pr_vlmensagem         => vr_vlmensagem
+                            ,pr_nrispb_deb         => vr_nrispb_deb
+                            ,pr_nrispb_cre         => vr_nrispb_cre
+                            ,pr_dscritic           => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+        --
       IF vr_inexiste_mensagem = 'N' THEN
         -- Incluir registro de recebimento
         BEGIN
@@ -783,6 +850,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,dhmensagem
                  ,nrdconta
                  ,cdcooper
+                 ,inestado_crise
+                 ,vlmensagem
+                 ,nrispb_deb
+                 ,nrispb_cre
                  )
           VALUES (NULL                                     -- nrseq_mensagem
                  ,pr_nmmensagem                            -- nmmensagem
@@ -791,6 +862,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                  ,SYSDATE                                  -- dhmensagem
                  ,pr_nrdconta                              -- nrdconta
                  ,NVL(pr_cdcooper,3)                       -- cdcooper
+                 ,vr_inestcri                              -- Indicador de estado de crise - Sprint C2
+                 ,vr_vlmensagem
+                 ,vr_nrispb_deb
+                 ,vr_nrispb_cre
                  )
           RETURNING nrseq_mensagem INTO rw_busca_msg.nrseq_mensagem;
         EXCEPTION
@@ -814,6 +889,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                                       ELSE
                                         nmmensagem
                                       END
+                ,vlmensagem         = NVL(vr_vlmensagem,vlmensagem)
+                ,nrispb_deb         = NVL(vr_nrispb_deb,nrispb_deb)
+                ,nrispb_cre         = NVL(vr_nrispb_cre,nrispb_cre)
            WHERE nrseq_mensagem = rw_busca_msg.nrseq_mensagem;
         EXCEPTION
         WHEN OTHERS THEN
@@ -992,13 +1070,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
 
     --Variaveis de Trabalho
     vr_nrseq_mensagem         TBSPB_MSG_ENVIADA.NRSEQ_MENSAGEM%TYPE;
+    vr_vlmensagem             TBSPB_MSG_ENVIADA.VLMENSAGEM%TYPE;
+    vr_nrispb_deb             TBSPB_MSG_ENVIADA.NRISPB_DEB%TYPE;
+    vr_nrispb_cre             TBSPB_MSG_ENVIADA.NRISPB_CRE%TYPE;
 
   BEGIN -- inicio pc_acerta_nmmensagem
     pr_des_erro := 'OK';
     --
+    IF pr_nmmensagem_OLD = 'MSG_TEMPORARIA'
+    AND pr_nrseq_mensagem_xml IS NOT NULL THEN
+      pc_busca_vlmensagem (pr_cdfase             => 10 -- Passar fixo 10, pois é a única fase que tem o nome MSG_TEMPORARIA
+                          ,pr_dsxml_completo     => NULL
+                          ,pr_nrseq_mensagem_xml => pr_nrseq_mensagem_xml
+                          ,pr_vlmensagem         => vr_vlmensagem
+                          ,pr_nrispb_deb         => vr_nrispb_deb
+                          ,pr_nrispb_cre         => vr_nrispb_cre
+                          ,pr_dscritic           => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    --
     BEGIN
       UPDATE tbspb_msg_enviada
          SET nmmensagem    = pr_nmmensagem
+            ,vlmensagem    = NVL(vr_vlmensagem,vlmensagem)
+            ,nrispb_deb    = NVL(vr_nrispb_deb,nrispb_deb)
+            ,nrispb_cre    = NVL(vr_nrispb_cre,nrispb_cre)
        WHERE nrcontrole_if = pr_nrcontrole_if
          AND nmmensagem    = pr_nmmensagem_OLD
       RETURNING nrseq_mensagem INTO vr_nrseq_mensagem;
@@ -1238,7 +1336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
          vr_retorno := 'Erro ao buscar campo '||pr_nrcampo||'. '||SQLERRM;
        END IF;
        RETURN vr_retorno;
-  END;
+  END fn_busca_conteudo_campo;
 
   -- Função para validar o horário de abertura da grade para TEDs
   -- Projeto 475 Sprint C Req14
@@ -1301,5 +1399,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
        RETURN vr_abertura_ted;
   END;
 
+  -- Rotina para acertar a cooperativa e conta migradas
+  PROCEDURE pc_atualiza_conta_migrada(pr_nrcontrole_str_pag     IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE               --> Nr.controle da Instituição Financeira de destino
+                                     ,pr_nrdconta               IN CRAPASS.NRDCONTA%TYPE                              --> Numero da conta/dv do associado
+                                     ,pr_cdcooper               IN CRAPASS.CDCOOPER%TYPE   
+                                     ,pr_nrdconta_migrada       IN CRAPASS.NRDCONTA%TYPE                              --> Numero da conta/dv do associado
+                                     ,pr_cdcooper_migrada       IN CRAPASS.CDCOOPER%TYPE   
+                                     ,pr_dscritic              OUT VARCHAR2)IS
+  BEGIN
+    BEGIN
+      UPDATE tbspb_msg_recebida
+         SET cdcooper_migrada   = pr_cdcooper_migrada 
+            ,cdcooper           = pr_cdcooper
+            ,nrdconta_migrada   = pr_nrdconta_migrada 
+            ,nrdconta           = pr_nrdconta
+       Where nrcontrole_str_pag = pr_nrcontrole_str_pag;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro ao acertar conta migrada  = '||sqlerrm;
+    END;
+  END pc_atualiza_conta_migrada;
+
+  PROCEDURE pc_busca_vlmensagem (pr_cdfase             IN tbspb_msg_enviada_fase.cdfase%TYPE
+                                ,pr_dsxml_completo     IN tbspb_msg_xml.dsxml_completo%TYPE
+                                ,pr_nrseq_mensagem_xml IN tbspb_msg_enviada_fase.nrseq_mensagem_xml%TYPE
+                                ,pr_vlmensagem        OUT tbspb_msg_enviada.vlmensagem%TYPE
+                                ,pr_nrispb_deb        OUT tbspb_msg_enviada.nrispb_deb%TYPE
+                                ,pr_nrispb_cre        OUT tbspb_msg_enviada.nrispb_cre%TYPE
+                                ,pr_dscritic          OUT VARCHAR2)
+                                IS
+  BEGIN
+    pr_vlmensagem := null;
+    pr_nrispb_deb := null;
+    pr_nrispb_cre := null;
+    --
+    IF pr_cdfase IN (10,15,115,992,999) THEN
+      IF pr_nrseq_mensagem_xml IS NOT NULL
+      AND pr_dsxml_completo    IS NULL
+      THEN
+        BEGIN
+          SELECT TO_NUMBER(sspb0003.fn_busca_conteudo_campo(dsxml_completo,'VlrLanc','N' ),'9999999990.00')
+                ,sspb0003.fn_busca_conteudo_campo(dsxml_completo,'ISPBIFDebtd','C' )
+                ,sspb0003.fn_busca_conteudo_campo(dsxml_completo,'ISPBIFCredtd','C' )
+            INTO pr_vlmensagem
+                ,pr_nrispb_deb
+                ,pr_nrispb_cre
+            FROM tbspb_msg_xml
+           WHERE nrseq_mensagem_xml = pr_nrseq_mensagem_xml;
+        EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro ao buscar dados no XML - '||sqlerrm;
+        END;
+      ELSIF pr_dsxml_completo IS NOT NULL
+      THEN
+        pr_vlmensagem := TO_NUMBER(sspb0003.fn_busca_conteudo_campo(pr_dsxml_completo,'VlrLanc','N' ),'9999999990.00');
+        pr_nrispb_deb := sspb0003.fn_busca_conteudo_campo(pr_dsxml_completo,'ISPBIFDebtd','C' );
+        pr_nrispb_cre := sspb0003.fn_busca_conteudo_campo(pr_dsxml_completo,'ISPBIFCredtd','C' );
+      END IF;
+    END IF;
+  END pc_busca_vlmensagem;
 END SSPB0003;
 /

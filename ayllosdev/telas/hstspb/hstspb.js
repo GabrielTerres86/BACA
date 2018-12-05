@@ -49,6 +49,8 @@
 //***                                                                    ***//
 //***             11/05/2017 - Ajustes para a opção "Devoluções" do      ***//
 //***                          campo "TIPO" (Douglas - Chamado 541233)   ***//
+//                20/11/2018 - Alterar url de chamada ajax de logspb para hstspb
+//                             Bruno Luiz Katzjarowski - Mout's  
 //**************************************************************************//
 
 var contWin = 0;
@@ -465,7 +467,7 @@ function obtemLog() {
 
         // Se nenhum dos tipos de conta foi informado
         if (dtmvtlog == "") {
-            showError("error", "Informe a data do log.", "Alerta - Aimaro", "$('#dtmvtlog','#frmLogSPB').focus()");
+            showError("error", "Informe a data do log.", "Alerta - Ayllos", "$('#dtmvtlog','#frmLogSPB').focus()");
             return false;
         }
 
@@ -481,7 +483,7 @@ function obtemLog() {
             // Carrega dados da conta através de ajax
             $.ajax({
                 type: "POST",
-                url: UrlSite + "telas/logspb/obtem_log_spb.php",
+                url: UrlSite + "telas/hstspb/obtem_log_spb.php",
                 data: {
                     flgidlog: flgidlog,
                     dtmvtlog: dtmvtlog,
@@ -497,14 +499,14 @@ function obtemLog() {
                 },
                 error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
                 },
                 success: function (response) {
                     try {
                         eval(response);
                     } catch (error) {
                         hideMsgAguardo();
-                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
+                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
                     }
                 }
             });
@@ -563,7 +565,7 @@ function controlaOperacao(nriniseq, nrregist) {
     // Carrega dados da conta através de ajax
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/logspb/obtem_log_spb.php",
+        url: UrlSite + "telas/hstspb/obtem_log_spb.php",
         data: {
             flgidlog: flgidlog,
             dtmvtlog: dtmvtlog,
@@ -578,14 +580,14 @@ function controlaOperacao(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
             }
         }
     });
@@ -609,7 +611,7 @@ function imprimeLog(nmarqpdf, sidlogin) {
     $('#frmImpressao').append('<input type="hidden" id="nmarqpdf" name="nmarqpdf" value="' + nmarqpdf + '" />');
     $('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + sidlogin + '" />');
 
-    var action = UrlSite + "telas/logspb/impressao_log_spb.php";
+    var action = UrlSite + "telas/hstspb/impressao_log_spb.php";
 
     carregaImpressaoAyllos("frmImpressao", action);
 
@@ -678,9 +680,9 @@ function obtemLogTedsMigradas() {
 
 function ImprimirTodos(tipo) {
     if (tipo == 1) {
-        showConfirmacao('Deseja exportar relat&oacute;rio?', 'Confirma&ccedil;&atilde;o - Aimaro', 'Csv();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja exportar relat&oacute;rio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'Csv();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
     } else {
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'Pdf();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'Pdf();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
     }
 }
 
@@ -708,7 +710,7 @@ function Csv() {
     $('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="' + inestcri + '" />');
     $('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="' + vlrdated + '" />');
 
-    var action = UrlSite + "telas/logspb/impressao_log_csv.php";
+    var action = UrlSite + "telas/hstspb/impressao_log_csv.php";
 
     carregaImpressaoAyllos("frmImpressao", action);
 }
@@ -737,7 +739,7 @@ function Pdf() {
     $('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="' + inestcri + '" />');
     $('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="' + vlrdated + '" />');
 
-    var action = UrlSite + "telas/logspb/impressao_log_pdf.php";
+    var action = UrlSite + "telas/hstspb/impressao_log_pdf.php";
 
     carregaImpressaoAyllos("frmImpressao", action);
 
