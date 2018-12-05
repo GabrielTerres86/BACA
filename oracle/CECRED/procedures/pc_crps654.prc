@@ -285,21 +285,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
         vr_vldebito := 0;
 
 
-        -- PJ450 - Verificar se pode debitar (Regra de Negocio)
-        IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crappla.nrdconta
-                                       ,pr_cdhistor => 127) THEN
-            vr_dscritic := 'Lançamento de debito não efetuado. Cooperativa: '||pr_cdcooper
-                            || ' - Nr. Conta: ' || rw_crappla.nrdconta 
-                            || ' - Cod. historico: 127' ;
-                            
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                       pr_ind_tipo_log => 2, -- Erro tratato
-                                       pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -' || vr_cdprogra || ' --> ' || vr_dscritic);
-                                                                   
-            continue;
-        END IF; 
-    
         /* Se Valor disponivel >= Valor minimo parametrizado para debito */
         IF vr_vlsddisp >= rw_crapcop.vlmidbco AND vr_vlsddisp > 0 THEN
           
