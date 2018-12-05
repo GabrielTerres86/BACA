@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 16/08/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 30/11/2018
 
    Dados referentes ao programa:
 
@@ -485,6 +485,9 @@
                08/08/2018 - Adicionado para não permitir geração de segunda via de boletos de Desconto de Título (Luis Fernando - GFT)
 
                15/10/2018 - Carregar o valor do campo INSITCRT na tt-consulta-blt (Douglas - Prj 285)
+               
+               30/11/2018 - Na procedure calcula_multa_juros_boleto alterar o ROUND por TRUNCATE 
+                            (Lucas Ranghetti INC0027138)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -9400,7 +9403,7 @@ PROCEDURE calcula_multa_juros_boleto:
             ASSIGN aux_vlrmulta = par_vlrmulta.
         ELSE
         IF  par_tpdmulta = 2  THEN /* % de multa */
-            ASSIGN aux_vlrmulta = ROUND( (par_vlrmulta * aux_vlfatura) / 100 , 2).
+            ASSIGN aux_vlrmulta = TRUNCATE( (par_vlrmulta * aux_vlfatura) / 100 , 2).
 
         /* MORA PARA ATRASO */
         IF  par_tpjurmor = 1  THEN /* dias */
@@ -9408,7 +9411,7 @@ PROCEDURE calcula_multa_juros_boleto:
                                   (par_dtmvtocd - par_dtvencto). 
         ELSE
         IF  par_tpjurmor = 2  THEN /* mes */
-            ASSIGN aux_vlrjuros = ROUND( (aux_vlfatura * 
+            ASSIGN aux_vlrjuros = TRUNCATE( (aux_vlfatura * 
                                   ((par_vljurdia / 100) / 30) * 
                                   (par_dtmvtocd - par_dtvencto)), 2). 
     
