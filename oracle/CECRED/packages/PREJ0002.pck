@@ -203,6 +203,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
                - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta              
 
+      06/12/2018 - Correção gera crédito para estorno em dia anterior, usa r_craplem.dtmvtolt ao inves
+                  data atual da cooperativa
+                  (Renato Cordeiro - AMcom)
       ..............................................................................*/                              
 
        -- Cursor principal da rotina de estorno
@@ -558,7 +561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                   pr_nrdconta => pr_nrdconta, 
                                                   pr_cdoperad => '1', 
                                                   pr_vlrlanc  => r_craplcm.vllanmto, 
-                                                  pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                  pr_dtmvtolt => r_craplem.dtmvtolt, 
                                                   pr_nrdocmto => null, 
                                                   pr_cdcritic => vr_cdcritic, 
                                                   pr_dscritic => vr_dscritic);
