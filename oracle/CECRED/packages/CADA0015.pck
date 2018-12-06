@@ -3045,6 +3045,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE pes.idpessoa = pr_idpessoa;
     rw_pessoa_id cr_pessoa_id%ROWTYPE;    
 
+    -- Cursor para verificar se existe registro da crapavt duplicado
+    CURSOR cr_crapavt_duplicado(pr_cdcooper crapavt.cdcooper%TYPE,
+                                pr_nrdconta crapavt.nrdconta%TYPE,
+                                pr_idseqttl tbhistor_crapavt.idseqttl%TYPE,
+                                pr_idpessoa tbhistor_crapavt.idpessoa_relacao%TYPE,
+                                pr_nrcpfcgc tbhistor_crapavt.nrcpfcgc%TYPE) IS
+      SELECT 1
+        FROM tbhistor_crapavt a
+       WHERE a.dhalteracao >= TRUNC(SYSDATE,'MI')
+         AND a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.idseqttl = pr_idseqttl
+         AND ((pr_idpessoa IS NOT NULL 
+         AND   a.idpessoa_relacao = pr_idpessoa)                           
+          OR  (pr_idpessoa IS NULL
+         AND   a.nrcpfcgc = pr_nrcpfcgc));
+    rw_crapavt_duplicado cr_crapavt_duplicado%ROWTYPE;
+
     ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -3056,6 +3074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     vr_idpessoa_avt    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa avt
     vr_idalteracao      tbhistor_conta_comunic_soa.idalteracao%TYPE;
     vr_idpessoa_relacao tbhistor_crapavt.idpessoa_relacao%TYPE;
+    vr_idseqttl         tbhistor_crapavt.idseqttl%TYPE;
 
   BEGIN
 
@@ -3098,6 +3117,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     ELSIF pr_crapavt.tpctrato = 6 AND
        (nvl(pr_crapavt.dsproftl,' ') = 'PROCURADOR' OR
         rw_pessoa_id.tppessoa = 1) THEN
+      -- verificacao para buscar pessoa de contato
+      IF pr_crapavt.nrdctato <> 0 AND pr_tpoperacao <> 3 THEN
+        -- Busca o idpessoa da conta de contato
+        vr_idpessoa_relacao := fn_busca_pessoa(pr_cdcooper => pr_crapavt.cdcooper,
+                                               pr_nrdconta => pr_crapavt.nrdctato,
+                                               pr_idseqttl => 1);
+        IF vr_idpessoa IS NULL THEN
+          vr_dscritic := 'Nao encontrado PESSOA DE CONTATO para alteracao do procurador';
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE
+        vr_idpessoa_relacao := NULL;
+      END IF;
+        
+      IF rw_pessoa_id.tppessoa = 2 THEN
+        vr_idseqttl := 1;
+      ELSE
+        vr_idseqttl := pr_crapavt.nrctremp;
+      END IF;
+      
+      -- Verifica se ja foi inserido o registro no ultimo minuto
+      OPEN cr_crapavt_duplicado(pr_cdcooper => pr_crapavt.cdcooper,
+                                pr_nrdconta => pr_crapavt.nrdconta,
+                                pr_idseqttl => vr_idseqttl,
+                                pr_idpessoa => vr_idpessoa_relacao,
+                                pr_nrcpfcgc => pr_crapavt.nrcpfcgc);
+      FETCH cr_crapavt_duplicado INTO rw_crapavt_duplicado;
+      
+      -- Se nao encontrou, entao pode inserir novo
+      IF cr_crapavt_duplicado%FOUND THEN
+        CLOSE cr_crapavt_duplicado;
+        -- Cria o cabecalho da comunicacao
       vr_idalteracao := cria_conta_comunic_soa(pr_crapavt.cdcooper,
                                                pr_crapavt.nrdconta,
                                                'CRAPAVT');
@@ -3119,7 +3170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
              pr_tpoperacao, 
              pr_crapavt.cdcooper, 
              pr_crapavt.nrdconta, 
-             decode(rw_pessoa_id.tppessoa,2, 1, pr_crapavt.nrctremp),
+               vr_idseqttl,
              pr_crapavt.nrcpfcgc);
         EXCEPTION
           WHEN OTHERS THEN
@@ -3169,7 +3220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                pr_tpoperacao, 
                pr_crapavt.cdcooper, 
                pr_crapavt.nrdconta, 
-               decode(rw_pessoa_id.tppessoa,2, 1, pr_crapavt.nrctremp),
+                 vr_idseqttl,
                pr_crapavt.nrcpfcgc,
                pr_crapavt.nmdavali, 
                pr_crapavt.tpdocava, 
@@ -3202,15 +3253,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               RAISE vr_exc_erro;
           END;          
         ELSE -- Tem conta de contato
-          -- Busca o idpessoa da conta de contato
-          vr_idpessoa_relacao := fn_busca_pessoa(pr_cdcooper => pr_crapavt.cdcooper,
-                                                 pr_nrdconta => pr_crapavt.nrdctato,
-                                                 pr_idseqttl => 1);
-          IF vr_idpessoa IS NULL THEN
-            vr_dscritic := 'Nao encontrado PESSOA DE CONTATO para alteracao do procurador';
-            RAISE vr_exc_saida;
-          END IF;
-
           -- Insere o procurador com a pessoa de contato
           BEGIN
             INSERT INTO tbhistor_crapavt 
@@ -3227,7 +3269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                pr_tpoperacao, 
                pr_crapavt.cdcooper, 
                pr_crapavt.nrdconta, 
-               decode(rw_pessoa_id.tppessoa,2, 1, pr_crapavt.nrctremp),
+                 vr_idseqttl,
                vr_idpessoa_relacao);
           EXCEPTION
             WHEN OTHERS THEN
@@ -3235,6 +3277,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               RAISE vr_exc_erro;
           END;
         END IF;
+      END IF;
+      ELSE
+        CLOSE cr_crapavt_duplicado;
       END IF;
     --> se for representante
     ELSIF pr_crapavt.tpctrato = 6  THEN -- Nao sera levado procuradores
