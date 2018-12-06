@@ -345,6 +345,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               ,cnt.dslinha
               ,cnt.dscritica
               ,arqRet.idtipo_Arquivo
+              ,cnt.idaplicacao
+              ,cnt.dscodigo_b3
           FROM tbcapt_custodia_arquivo      arqRet
               ,tbcapt_custodia_conteudo_arq cnt
          WHERE arqRet.idarquivo = cnt.idarquivo
@@ -353,6 +355,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            AND cnt.idtipo_linha = 'L' -- Somente registros
          ORDER BY cnt.nrseq_linha;
       vr_idtipo_arquivo tbcapt_custodia_arquivo.idtipo_arquivo%TYPE;       
+      
+      -- Buscar aplicação em Custódia
+      CURSOR cr_aplica(pr_idaplic tbcapt_custodia_aplicacao.idaplicacao%TYPE) IS
+        SELECT apl.idaplicacao
+              ,apl.tpaplicacao
+              ,0 cdcooper
+              ,0 nrdconta
+              ,0 nraplica
+              ,rpad(' ',50,' ') tpaplica
+          FROM tbcapt_custodia_aplicacao apl
+        WHERE apl.idaplicacao = pr_idaplic;
+      rw_aplica cr_aplica%ROWTYPE;        
+      
+      -- Buscar aplicação RDA
+      CURSOR cr_craprda(pr_idaplcus craprda.idaplcus%TYPE) IS
+        SELECT rda.cdcooper
+              ,rda.nrdconta
+              ,rda.nraplica
+          FROM craprda rda
+         WHERE rda.idaplcus = pr_idaplcus;
+      
+      -- Buscar aplicação RAC
+      CURSOR cr_craprac(pr_idaplcus craprac.idaplcus%TYPE) IS
+        SELECT rac.cdcooper
+              ,rac.nrdconta
+              ,rac.nraplica
+              ,cpc.nmprodut
+          FROM craprac rac
+              ,crapcpc cpc
+         WHERE rac.idaplcus = pr_idaplcus
+           AND rac.cdprodut = cpc.cdprodut;      
+           
     BEGIN
       -- Inclusão do módulo e ação logado
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_envia_email_alerta_arq');      
@@ -388,6 +422,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<table border="1" style="width:500px; margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;" >');
             -- Montando header
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Nro.Linha</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Cod.B3</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Conta</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Tp.Aplica</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Aplica</th>');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Critica</th>');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Linha Enviada</th>');
           ELSE 
@@ -410,6 +448,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<tr>');
         -- E os detalhes do registro
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td align="right">'||to_char(rw_arq.nrseq_linha)||'</td>');
+        -- Buscar dados da aplicação
+        rw_aplica := NULL;
+        OPEN cr_aplica(rw_arq.idaplicacao);
+        FETCH cr_aplica
+         INTO rw_aplica;
+        -- Se não encontrar
+        IF cr_aplica%NOTFOUND THEN 
+          -- Só fechar o cursor
+          CLOSE cr_aplica;
+        ELSE
+          -- Fechar o cursor
+          CLOSE cr_aplica;
+          -- Buscar aplicação RDA ou RAC relacionada
+          IF rw_aplica.tpaplicacao IN(3,4) THEN 
+            -- Buscar aplicação RAC
+            OPEN cr_craprac(rw_aplica.idaplicacao);
+            FETCH cr_craprac
+             INTO rw_aplica.cdcooper
+                 ,rw_aplica.nrdconta
+                 ,rw_aplica.nraplica
+                 ,rw_aplica.tpaplica;
+            CLOSE cr_craprac;
+          ELSE
+            -- Buscar aplicação RDA
+            OPEN cr_craprda(rw_aplica.idaplicacao);
+            FETCH cr_craprda
+             INTO rw_aplica.cdcooper
+                 ,rw_aplica.nrdconta
+                 ,rw_aplica.nraplica;
+            CLOSE cr_craprda;                
+            -- Montar tipo aplicação
+            IF rw_aplica.tpaplicacao = 1 THEN
+              rw_aplica.tpaplica := 'RDC Pré';
+            ELSE
+              rw_aplica.tpaplica := 'RDC Pós';
+            END IF;
+          END IF;
+        END IF;
+        -- Enviar dados da aplicacao
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dscodigo_b3||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.nrdconta||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.tpaplica||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.nraplica||'</td>');
+        -- Enviar linha e critica
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dscritica||'</td>');
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dslinha||'</td>');
         -- Encerrar a tr
@@ -1298,7 +1380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
 				            continue;
 				          ELSE
-                vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+                    vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
 			            END IF;
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
@@ -2011,11 +2093,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- 
     -- Alteracoes:
     --             20/08/2018 - P411 - Usar sempre a Cooperativa zero para montagem do nome do 
-    --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)	 
+    --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)
     --      
     -- 		       10/10/2018 - P411 - Não mais checar tabela de conteudo de arquivos, mas sim 
     --                          setar novas situações de lançamentos em arquivos e assim os mesmos
     --                          serão desprezados em novas execuções (Daniel - Envolti)
+    --
+    --             06/12/2018 - P411 - Ordernar os registros por idlancamento para eviar
+    --                          que resgates do mesmo dia sejam enviadas em ordens diferentes (MArcos-Envolti)
     ---------------------------------------------------------------------------------------------------------------  
     DECLARE
       -- Busca dos lançamentos ainda não gerados em arquivos
@@ -2065,7 +2150,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                               and lctori.cdoperac_cetip is not null))
          order by lct.cdcooper,
                   lct.idtipo_arquivo,
-                  lct.dtregistro;
+                  lct.dtregistro,
+                  lct.idlancamento;
       -- Busca dos dados da Aplicação em rotina já preparada
       vr_tbsaldo_rdca APLI0001.typ_tab_saldo_rdca;
                 
@@ -2488,7 +2574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         END IF;
         -- Agora devemos checar o envio do arquivo, que é garantido quando o arquivo
         -- é movido da envia para enviados pelo Connect Direct.
-        -- Testar envio (Existencia na enviados)
+          -- Testar envio (Existencia na enviados)
         IF pr_flaguard and not gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
           -- Se não conseguiu enviar
           pr_dscritic := 'Arquivo persiste na pasta ENVIA';
@@ -3879,14 +3965,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --  Sistema  : Captação
     --  Sigla    : CRED
     --  Autor    : Marcos - Envolti
-    --  Data     : Março/2018.                   Ultima atualizacao: 
+    --  Data     : Março/2018.                   Ultima atualizacao: 06/12/2018
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Processar e integrar arquivos de conciliação
     -- Alteracoes:
-    --
+    --             06/12/2018 - P411 - Remocao da conciliação por saldo, manter apenas por quantidade (Marcos-Envolti)
     -- 
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -4151,6 +4237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ELSIF rw_aplica.qtcotas <> vr_txretorn(14) THEN
                         vr_dscritic := 'Quantidade em Carteira ('||vr_txretorn(14)||') diferente da Quantidade de Cotas da Aplicação ('||rw_aplica.qtcotas||').';
                       ELSE
+                        /* Busca de saldo comentada em 06/12 cfme solicitação Hasse
+                        
                         -- Buscar saldo e outras informações da Aplicação
                         pc_busca_saldo_anterior(pr_cdcooper  => rw_aplica.cdcooper      --> Cooperativa
                                                ,pr_nrdconta  => rw_aplica.nrdconta      --> Conta
@@ -4174,13 +4262,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                       ||' -> '|| vr_dscritic;
                         END IF;
                         -- Calcular valor unitário novamente com base no Saldo Ayllos X Quantidade de cotas
-                        vr_vlpreco_unit := vr_sldaplic / rw_aplica.qtcotas; 
+                        vr_vlpreco_unit := vr_sldaplic / rw_aplica.qtcotas; */
+                        
                         -- Validar valor nominal
                         IF rw_aplica.vlpreco_registro <> vr_txretorn(15) THEN
                           vr_dscritic := 'Valor Nominal ('||vr_txretorn(15)||') diferente do Registrado da Aplicação ('||rw_aplica.vlpreco_registro||').';
-                        -- validar a PU atual recebida X calculada
+                        /*-- validar a PU atual recebida X calculada
                         ELSIF vr_vlpreco_unit <> vr_txretorn(16) THEN
-                          vr_dscritic := 'Valor da P.U. ('||vr_txretorn(16)||') diferente da P.U. calculada da Aplicação ('||vr_vlpreco_unit||').';
+                          vr_dscritic := 'Valor da P.U. ('||vr_txretorn(16)||') diferente da P.U. calculada da Aplicação ('||vr_vlpreco_unit||').';*/
                         END IF;
                       END IF;  
                     END IF;
@@ -4239,7 +4328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                     UPDATE tbcapt_custodia_aplicacao apl
                        SET apl.idsitua_concilia = 1
                           ,apl.dtconcilia = SYSDATE
-                          ,apl.vlpreco_unitario = vr_vlpreco_unit
+                          --,apl.vlpreco_unitario = vr_vlpreco_unit
                      WHERE apl.idaplicacao = rw_aplica.idaplicacao;
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -4786,12 +4875,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             
             -- Enviar para o arquivo de LOG o texto informativo montado, quebrando a cada 3900 caracteres para evitar estouro de variável na pc_gera_log_batch
             if length(pr_dsinform) <= 3900 then
-              -- Enviar para o arquivo de LOG o texto informativo montado
-              btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => vr_nmarqlog
-                                        ,pr_flfinmsg     => 'N'
-                                        ,pr_des_log      => pr_dsinform);                                          
+            -- Enviar para o arquivo de LOG o texto informativo montado
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_nmarqlog     => vr_nmarqlog
+                                      ,pr_flfinmsg     => 'N'
+                                      ,pr_des_log      => pr_dsinform);                                          
             else
               for i in 1..trunc(length(pr_dsinform)/3900)+1 loop
                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3
