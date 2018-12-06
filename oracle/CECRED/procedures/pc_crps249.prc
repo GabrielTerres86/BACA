@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 20/11/2018
+   Data    : Novembro/98                     Ultima atualizacao: 23/11/2018
 
    Dados referentes ao programa:
 
@@ -647,6 +647,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             somente as rendas a apropriar do produto da versão antiga do borderô. (Paulo Penteado GFT)
 
 			   20/11/2018 - Ajuste no cursor cr_lanipetb para utilizar a conta de compensação da cooperativa na central (P352 - Cechet)
+
+               23/11/2018 - Adicionado na procedure pc_proc_cbl_mensal a utilização do cursor cr_lancbortot para considerar o valor da 
+                            apropriação do juros de mora do desconto de titulos da tabela de lançamento do borderô ao invês dos valores 
+                            gravados na craptdb, pois na craptdb grava a mora calculada pro dia seguinte (Paulo Penteado GFT)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2580,6 +2584,37 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     ORDER  BY CASE WHEN tmp.cdagenci = 999 THEN 0
                    ELSE tmp.cdagenci END;
              
+    -- Buscar valores aculumados de um determinado histórico da operação de crédito do borderô em aberto
+    CURSOR cr_lancboracum(pr_cdcooper IN crapcop.cdcooper%TYPE
+                         ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
+                         ,pr_cdhistor IN craphis.cdhistor%TYPE
+                         ,pr_flginpes IN NUMBER
+                         ) IS
+    SELECT ass.cdagenci
+          ,decode(pr_flginpes, 1, ass.inpessoa, 0) inpessoa
+          ,age.cdccuage
+          ,SUM(lcb.vllanmto) vllanmto
+      FROM tbdsct_lancamento_bordero lcb
+     INNER JOIN crapass ass ON (ass.nrdconta = lcb.nrdconta
+                            AND ass.cdcooper = lcb.cdcooper)
+     INNER JOIN crapage age ON (age.cdagenci = ass.cdagenci
+                            AND age.cdcooper = lcb.cdcooper)
+     INNER JOIN craptdb tdb ON (tdb.nrdocmto  = lcb.nrdocmto
+                            AND tdb.nrcnvcob  = lcb.nrcnvcob
+                            AND tdb.nrdctabb  = lcb.nrdctabb
+                            AND tdb.cdbandoc  = lcb.cdbandoc
+                            AND tdb.nrborder  = lcb.nrborder
+                            AND tdb.nrdconta  = lcb.nrdconta
+                            AND tdb.cdcooper  = lcb.cdcooper)
+     WHERE tdb.insittit  = 4
+       AND lcb.cdhistor  = pr_cdhistor
+       AND lcb.dtmvtolt <= pr_dtrefere
+       AND lcb.cdcooper  = pr_cdcooper
+     GROUP BY ass.cdagenci
+             ,decode(pr_flginpes, 1, ass.inpessoa, 0)
+             ,age.cdccuage
+     ORDER BY ass.cdagenci;
+             
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
        
@@ -3920,7 +3955,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       select /*+ index (craptdb craptdb##craptdb2)*/
              crapass.cdagenci,
              SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra)
+                           craptdb.vlsldtit
                       ELSE craptdb.vltitulo
                  END) vltitulo
         from crapbdt,
@@ -3949,7 +3984,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                           pr_flgregis in crapcob.flgregis%TYPE,
                           pr_flverbor IN crapbdt.flverbor%TYPE)IS
       SELECT SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra)
+                           craptdb.vlsldtit
                       ELSE craptdb.vltitulo
                  END) vltitulo
             ,crapass.cdagenci
@@ -5483,6 +5518,16 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       vr_tab_cratorc(rw_craptdb8.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_craptdb8.cdagenci).vr_vllanmto, 0) + rw_craptdb8.vltitulo;
       vr_vltotorc := vr_vltotorc + rw_craptdb8.vltitulo;
     end loop;
+    -- Lançamentos de apropriação de juros de mora do Desconto de Títulos
+    FOR rw_lancbor in cr_lancboracum(pr_cdcooper
+                                    ,vr_dtmvtolt
+                                    ,DSCT0003.vr_cdhistordsct_apropjurmra --2668
+                                    ,0 -- não agrupar por tipo de pessoa
+                                    ) LOOP
+      vr_tab_cratorc(rw_lancbor.cdagenci).vr_cdagenci := rw_lancbor.cdagenci;
+      vr_tab_cratorc(rw_lancbor.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_lancbor.cdagenci).vr_vllanmto, 0) + rw_lancbor.vllanmto;
+      vr_vltotorc := vr_vltotorc + rw_lancbor.vllanmto;
+    END LOOP;
     --
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := false; -- Conta do ATIVO
@@ -5510,6 +5555,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        vr_arq_op_cred(20)(rw_craptdb_age.cdagenci)(rw_craptdb_age.inpessoa) := rw_craptdb_age.vltitulo;
        vr_arq_op_cred(20)(999)(rw_craptdb_age.inpessoa)                     := vr_arq_op_cred(20)(999)(rw_craptdb_age.inpessoa) + rw_craptdb_age.vltitulo;
     END LOOP; 
+    -- Lançamentos de apropriação de juros de mora do Desconto de Títulos
+    FOR rw_lancbor in cr_lancboracum(pr_cdcooper
+                                    ,vr_dtmvtolt
+                                    ,DSCT0003.vr_cdhistordsct_apropjurmra --2668
+                                    ,1 -- agrupar por tipo de pessoa
+                                    ) LOOP
+       vr_arq_op_cred(20)(rw_lancbor.cdagenci)(rw_lancbor.inpessoa) := vr_arq_op_cred(20)(rw_lancbor.cdagenci)(rw_lancbor.inpessoa) + rw_lancbor.vllanmto;
+       vr_arq_op_cred(20)(999)(rw_lancbor.inpessoa)                 := vr_arq_op_cred(20)(999)(rw_lancbor.inpessoa) + rw_lancbor.vllanmto;
+    END LOOP;
     -- Provisao de Receita com Desconto de Titulos com registro ............
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;

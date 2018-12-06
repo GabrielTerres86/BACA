@@ -1502,6 +1502,8 @@ END pc_renova_limdesctit;
                15/02/2018 - Adicionado a chamada do procedimento pc_apaga_estudo_limdesctit (Paulo Penteado GFT)
                
                16/02/2018 - Adicionado o cursor cr_crapldc para atualização do saldo das linhas de desconto (Lucas Silva GFT)
+               
+               06/12/2018 - Verificação de qtd máx de renovações do contrato e cancelamento dos contratos da CRAWLIM quando cancelado a CRAPLIM. (Vitor S Assanuma GFT)
     ............................................................................ */
 
     DECLARE
@@ -1562,19 +1564,22 @@ END pc_renova_limdesctit;
 
       -- cursor sobre os contratos de limites de credito
       cursor cr_craplim is
-      select nrctrlim
-            ,nrdconta
-            ,tpctrlim
-            ,insitlim
-            ,vllimite
-            ,dtinivig
-            ,dtfimvig
-            ,qtrenova
-            ,qtrenctr
-            ,qtdiavig
-            ,dtcancel
-            ,rowid
+      select lim.nrctrlim
+            ,lim.nrdconta
+            ,lim.tpctrlim
+            ,lim.insitlim
+            ,lim.vllimite
+            ,lim.dtinivig
+            ,lim.dtfimvig
+            ,lim.qtrenova
+            ,lim.qtrenctr
+            ,lim.qtdiavig
+            ,lim.dtcancel
+            ,lim.rowid
+            ,rli.qtmaxren
       from   craplim lim
+      INNER JOIN crapass ass ON lim.cdcooper = ass.cdcooper AND lim.nrdconta = ass.nrdconta
+      LEFT join  craprli rli ON ass.cdcooper = rli.cdcooper AND ass.inpessoa = rli.inpessoa AND rli.tplimite = 3 -- Desconto de titulo
       where((lim.insitlim        = 2  /** Ativo **/
       and   (lim.dtfimvig between (lim.dtfimvig - 15) and rw_crapdat.dtmvtolt)
             ) or lim.insitlim    = 4) /** Vigente **/
@@ -2059,7 +2064,7 @@ END pc_renova_limdesctit;
         vr_flgregis := TRUE;
     
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
-        IF  rw_craplim.qtrenova < rw_craplim.qtrenctr AND rw_craplim.insitlim = 2  THEN
+        IF  rw_craplim.qtrenova < rw_craplim.qtmaxren AND rw_craplim.insitlim = 2  THEN
           
           pc_renova_limdesctit(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => rw_craplim.nrdconta
@@ -2174,6 +2179,22 @@ END pc_renova_limdesctit;
                    dtcancel = rw_craplim.dtcancel
              WHERE ROWID = rw_craplim.rowid;
       
+             -- Caso tenha sido cancelado o contrato, cancela os contratos de limite
+             IF rw_craplim.insitlim = 3 THEN
+               UPDATE crawlim
+                 SET insitlim = 3
+               WHERE cdcooper = vr_cdcooper
+                 AND nrdconta = rw_craplim.nrdconta
+                 AND tpctrlim = 3 
+                 AND nrctrlim = rw_craplim.nrctrlim;
+               
+              UPDATE crawlim
+                 SET insitlim = 3
+               WHERE cdcooper = vr_cdcooper
+                 AND nrdconta = rw_craplim.nrdconta
+                 AND tpctrlim = 3 
+                 AND nrctrmnt = rw_craplim.nrctrlim;
+             END IF;
           EXCEPTION
             WHEN OTHERS THEN
               -- Colocado Log no padrão - 29/06/2017 - Chamado 660306

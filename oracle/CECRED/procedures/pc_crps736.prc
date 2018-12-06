@@ -128,7 +128,7 @@ BEGIN
        AND lcb.nrcnvcob = pr_nrcnvcob
        AND lcb.nrdocmto = pr_nrdocmto
        AND lcb.cdhistor = pr_cdhistor
-       AND lcb.dtmvtolt < pr_dtmvtolt;
+       AND lcb.dtmvtolt <= pr_dtmvtolt;
     rw_lancboraprop cr_lancboraprop%ROWTYPE;
 
   BEGIN

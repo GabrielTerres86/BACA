@@ -230,6 +230,8 @@ BEGIN
         
         
         
+      vr_index := vr_tab_craptdb.COUNT + 1;   
+      IF (rw_craptdb.dtvencto<=vr_datacalc) THEN -- titulo em atraso
         -- Calcula os valores de atraso do título    
         DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
                                       ,pr_nrdconta => rw_craptdb.nrdconta    
@@ -249,7 +251,10 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
         
-        vr_index := vr_tab_craptdb.COUNT + 1;
+        vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
+        vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
+        vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
+      END IF;
         
         -- Realiza o cálculo dos juros + 60 de mora do título
         IF (rw_crapdat.dtmvtopr - rw_craptdb.dtvencto) > 60 THEN
@@ -257,10 +262,6 @@ BEGIN
         ELSE
           vr_tab_craptdb(vr_index).vljura60 := 0;
         END IF;
-        
-        vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
-        vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
-        vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
         vr_tab_craptdb(vr_index).vr_rowid := rw_craptdb.ROWID;   
       END LOOP;
       
@@ -268,10 +269,10 @@ BEGIN
       BEGIN
         FORALL idx IN INDICES OF vr_tab_craptdb SAVE EXCEPTIONS
           UPDATE craptdb
-             SET craptdb.vlmtatit = vr_tab_craptdb(idx).vlmtatit,    
-                 craptdb.vljura60 = vr_tab_craptdb(idx).vljura60,    
-                 craptdb.vlmratit = vr_tab_craptdb(idx).vlmratit,    
-                 craptdb.vliofcpl = vr_tab_craptdb(idx).vlioftit   
+           SET craptdb.vlmtatit = nvl(vr_tab_craptdb(idx).vlmtatit,craptdb.vlmtatit),
+               craptdb.vljura60 = nvl(vr_tab_craptdb(idx).vljura60,craptdb.vljura60),
+               craptdb.vlmratit = nvl(vr_tab_craptdb(idx).vlmratit,craptdb.vlmratit),
+               craptdb.vliofcpl = nvl(vr_tab_craptdb(idx).vlioftit,craptdb.vliofcpl)
            WHERE ROWID = vr_tab_craptdb(idx).vr_rowid;
       EXCEPTION
         WHEN OTHERS THEN

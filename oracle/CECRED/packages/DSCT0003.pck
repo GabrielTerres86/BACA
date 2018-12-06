@@ -7510,6 +7510,11 @@ EXCEPTION
     END IF;
     CLOSE cr_craptdb;
     
+    IF gene0005.fn_valida_dia_util(pr_cdcooper, rw_craptdb.dtvencto) >= pr_dtmvtolt THEN
+      pr_vlmtatit := 0;
+      pr_vlmratit := 0;
+      pr_vlioftit := 0;
+    ELSE
     vr_vltotal_liquido := 0;
     OPEN cr_craptdb_total(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => pr_nrdconta
@@ -7598,6 +7603,7 @@ EXCEPTION
     END IF;
     
     pr_vlioftit := NVL(ROUND(vr_vliofcpl, 2),0);
+    END IF;
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -7751,7 +7757,7 @@ EXCEPTION
        AND lcb.nrcnvcob = pr_nrcnvcob
        AND lcb.nrdocmto = pr_nrdocmto
        AND lcb.cdhistor = pr_cdhistor
-       AND lcb.dtmvtolt < pr_dtmvtolt;
+       AND lcb.dtmvtolt <= pr_dtmvtolt;
     rw_lancboraprop cr_lancboraprop%ROWTYPE;
     
     /* TYPES */
