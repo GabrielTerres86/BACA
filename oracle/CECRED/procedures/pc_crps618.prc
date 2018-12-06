@@ -8,7 +8,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 10/10/2017
+    Data    : janeiro/2012.                     Ultima atualizacao: 30/11/2018
  
     Dados referentes ao programa:
  
@@ -125,6 +125,9 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                              (sysdate). Caso elas sejam diferentes, os titulos ficam na fila ate que a 
                              informacao de abertura chegue ao sistema.
                              Chamado SCTASK0015832 - Gabriel (Mouts).
+
+                30/11/2018 - Título deve ser enviado para a CIP independente da remessa para a PG.
+                             (INC0025924 - AJFink)
 
   ******************************************************************************/
 
@@ -591,7 +594,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis = 1 /*cobranca registrada*/
           and cob.incobran = 0 /*aberto*/
           and cob.dtdpagto is null /*sem data de pagamento*/
@@ -647,7 +650,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis = 1 /*cobranca registrada*/
           and cob.incobran = 0 /*aberto*/
           and cob.dtdpagto is null /*sem data de pagamento*/
@@ -906,7 +909,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
           and cco.nrconven = cob.nrcnvcob+0
           and cco.cdcooper = cob.cdcooper+0
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis+0 = 1 /*cobranca registrada*/
           and cob.incobran+0 = 0 /*aberto*/
           and trunc(cob.dtdpagto) is null /*sem data de pagamento*/
@@ -957,7 +960,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis+0 = 1 /*cobranca registrada*/
           and cob.incobran+0 = 0 /*aberto*/
           and trunc(cob.dtdpagto) is null /*sem data de pagamento*/
@@ -1233,7 +1236,7 @@ begin
     vr_qtlottit number(10);
     vr_jobname  varchar2(100);
     vr_dsplsql  varchar2(10000);
-    vr_currenttimestamp timestamp;
+    vr_currenttimestamp timestamp with time zone;
     --exceptions
     vr_exc_saida exception;
     --
