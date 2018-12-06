@@ -958,6 +958,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 					TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => par_cdcooper
 					                                                   , pr_nrdconta => rw_conta_negativa.nrdconta
 																														 , pr_dtlimite => par_dtrefere
+                                                           , pr_qtdiaatr => rw_conta_negativa.qtdiaatr
+                                                           , pr_dtinictr => rw_conta_negativa.dtinictr
 																														 , pr_vlsld59d => vr_vlsld59d
 																														 , pr_vlju6037 => vr_vlju6037
 																														 , pr_vlju6038 => vr_vlju6038

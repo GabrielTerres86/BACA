@@ -5,7 +5,9 @@ FUNCTION fn_soma_dias_uteis_data(pr_cdcooper NUMBER, pr_dtmvtolt DATE, pr_qtddia
 
 FUNCTION fn_calc_data_59dias_atraso(pr_cdcooper crapass.cdcooper%TYPE
 	                                , pr_nrdconta crapass.nrdconta%TYPE
-																	, pr_fldtcort INTEGER DEFAULT 1)
+                                  , pr_fldtcort INTEGER DEFAULT 1
+                                  , pr_dtinictr IN DATE   DEFAULT NULL --> Data de inicio do contrato de atraso
+                                  )
   RETURN DATE;
 
 
@@ -104,6 +106,7 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                     , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
                                     , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
                                     , pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
+                                    , pr_dtinictr IN DATE   DEFAULT NULL --> Data de inicio do contrato de atraso
                                     , pr_tppesqui IN NUMBER DEFAULT 1    --> 1|Online  0|Batch
                                     , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
                                     , pr_vlju6037 OUT NUMBER             --> Juros +60 (Hist. 37 + 2718)
@@ -249,7 +252,9 @@ END fn_valida_dia_util;
 
 FUNCTION fn_calc_data_59dias_atraso(pr_cdcooper crapass.cdcooper%TYPE
 	                                , pr_nrdconta crapass.nrdconta%TYPE
-																	, pr_fldtcort INTEGER DEFAULT 1) RETURN DATE IS
+                                  , pr_fldtcort INTEGER DEFAULT 1
+                                  , pr_dtinictr IN DATE   DEFAULT NULL --> Data de inicio do contrato de atraso
+                                  ) RETURN DATE IS
   vr_data_corte_dias_uteis DATE;
 	vr_dtcorte_rendaprop     DATE;
 	vr_data_59dias_atraso    DATE;
@@ -268,6 +273,9 @@ FUNCTION fn_calc_data_59dias_atraso(pr_cdcooper crapass.cdcooper%TYPE
                        FROM crapdat
                       WHERE cdcooper = pr_cdcooper);
 	rw_crapris cr_crapris%ROWTYPE;
+  
+  vr_dtinictr DATE := NULL;
+  
 BEGIN
 	   -- Busca data de corte para contagem de dias de atraso em dias corridos
      vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -279,14 +287,24 @@ BEGIN
                                                                ,pr_nmsistem => 'CRED'
                                                                ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
                                                                ,'DD/MM/RRRR');
+                                                               
+     IF pr_dtinictr IS NULL THEN                                                          
+                                                               
 		 OPEN cr_crapris;
 		 FETCH cr_crapris INTO rw_crapris;
-		 CLOSE cr_crapris;
+		 CLOSE cr_crapris; 
 
-     IF rw_crapris.dtinictr < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
-				vr_data_59dias_atraso := fn_soma_dias_uteis_data(pr_cdcooper, rw_crapris.dtinictr, 59); -- Conta dias úteis
+         vr_dtinictr := rw_crapris.dtinictr;
+       
+     ELSE
+       vr_dtinictr := pr_dtinictr;
+     
+     END IF;
+
+     IF vr_dtinictr < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
+        vr_data_59dias_atraso := fn_soma_dias_uteis_data(pr_cdcooper, vr_dtinictr, 59); -- Conta dias úteis
 		 ELSE
-				vr_data_59dias_atraso := rw_crapris.dtinictr + 59; -- Conta dias corridos
+        vr_data_59dias_atraso := vr_dtinictr + 59; -- Conta dias corridos
 		 END IF;
 
      IF pr_fldtcort = 1 THEN -- Se deve considerar a data de corte do rendas a apropriar
@@ -1682,6 +1700,7 @@ PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> C
                                     , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
                                     , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
                                     , pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
+                                    , pr_dtinictr IN DATE   DEFAULT NULL --> Data de inicio do contrato de atraso
                                     , pr_tppesqui IN NUMBER DEFAULT 1    --> 1|Online  0|Batch
                                     , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
                                     , pr_vlju6037 OUT NUMBER             --> Juros +60 (Hist. 37 + 2718)
@@ -2005,7 +2024,9 @@ BEGIN
         CLOSE cr_prejuizo;
 
         -- Calcula a data em que a aconta atingiu 59 dias de atraso
-        vr_data_59dias_atraso := fn_calc_data_59dias_atraso(pr_cdcooper, pr_nrdconta);
+        vr_data_59dias_atraso := fn_calc_data_59dias_atraso(pr_cdcooper => pr_cdcooper, 
+                                                            pr_nrdconta => pr_nrdconta,
+                                                            pr_dtinictr => pr_dtinictr);
 
         -- Busca o primeiro dia útil anterior a data calculada de 59 dias de atraso
         WHILE NOT fn_valida_dia_util(pr_cdcooper, vr_data_59dias_atraso)  LOOP
@@ -2028,7 +2049,7 @@ BEGIN
 				pr_vlsld59d := pr_vlsld59d - rw_crapass.vllimcre;
 
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-				FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz, rw_crapdat.dtmvtolt) LOOP
+        FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz, nvl(pr_dtlimite,rw_crapdat.dtmvtolt)) LOOP
 					-- Descarta o primeiro registro, usado apenas para popular o saldo do dia anterior para a data que completa 60 dias de atraso
 					IF rw_craplcm.dtmvtolt = vr_data_59dias_atraso THEN
 						continue;
