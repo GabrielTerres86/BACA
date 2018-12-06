@@ -33,16 +33,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.vlsdprej vlsdvpar
           ,epr.inliquid
           ,epr.rowid
-      FROM crapepr epr,
-           crapprp prp
-     WHERE 
-           epr.cdcooper = pr_cdcooper
-       AND epr.cdcooper = prp.cdcooper
-       AND epr.nrdconta = prp.nrdconta
-       AND epr.nrctremp = prp.nrctrato
-       AND epr.inprejuz = 1  --> Somente as em prejuízo
+          
+     FROM crapepr epr
+     
+      LEFT JOIN craplcr lcr
+        ON lcr.cdcooper = epr.cdcooper
+       AND lcr.cdlcremp = epr.cdlcremp
+       
+     WHERE epr.cdcooper = pr_cdcooper
+       AND epr.inprejuz = 1 --> Somente as em prejuízo
        AND epr.dtprejuz IS NOT NULL
-       AND prp.nrgarope = 10 -- Sem Garantia
+       AND lcr.tpctrato = 1 -- Sem Garantia
        AND epr.vlsdprej > 0
        ;
   -- Ordem de maior Valor
@@ -53,17 +54,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.vlsdprej
           ,ROW_NUMBER () OVER (PARTITION BY epr.nrdconta
                                    ORDER BY epr.vlsdprej DESC) sequencia              
-      FROM crapepr epr,
-           crapprp prp
-     WHERE 
-           epr.cdcooper = pr_cdcooper
-       AND epr.cdcooper = prp.cdcooper
-       AND epr.nrdconta = prp.nrdconta
-       AND epr.nrctremp = prp.nrctrato
-       AND epr.inprejuz = 1  --> Somente as em prejuízo
+      FROM crapepr epr
+      
+      LEFT JOIN craplcr lcr
+           ON lcr.cdcooper = epr.cdcooper
+          AND lcr.cdlcremp = epr.cdlcremp
+          
+     WHERE epr.cdcooper = pr_cdcooper
+       AND epr.inprejuz = 1 --> Somente as em prejuízo
        AND epr.dtprejuz IS NOT NULL
-       AND prp.nrgarope <> 10 -- Sem Garantia
-       AND epr.vlsdprej > 0
+       AND lcr.tpctrato IN (2, 3) -- Com Garantia
+       AND epr.vlsdprej > 0   
        ORDER BY epr.nrdconta, sequencia
        ;        
   --
