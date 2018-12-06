@@ -25,14 +25,14 @@ $justific    = (!empty($_POST['justific']))  ? $_POST['justific']  : '';
 $fnconfirm   = (!empty($_POST['fnconfirm'])) ? $_POST['fnconfirm'] : 'hideMsgAguardo();fechaRotina($(\\"#telaAprovacao\\"));estadoInicial();';
 $fnreject    = (!empty($_POST['fnreject']))  ? $_POST['fnreject']  : 'hideMsgAguardo();fechaRotina($(\\"#telaRejeicao\\"));estadoInicial();';
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+if (($msgError = validaPermissao('CADRES','',$cddopcao)) <> '') {
 	exibeErroNew($msgError);
 }
 
 if ( $cddopcao == 'A' ) {
 
     $xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
     $xml->add('idstatus','A');
@@ -51,7 +51,7 @@ if ( $cddopcao == 'A' ) {
 } else if ( $cddopcao == 'R' ) {
 
     $xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
     $xml->add('idstatus','R');

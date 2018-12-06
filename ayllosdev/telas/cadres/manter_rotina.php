@@ -33,15 +33,11 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddo
 if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
 
     $xml = new XmlMensageria();
-    $xml->add('dtmvtolt',$glbvars['dtmvtolt']);
-    $xml->add('cddopcao','');
-    $xml->add('flgerlog',0);
-    $xml->add('nriniseq',1);
-    $xml->add('nrregist',0);
+    $xml->add('cdcooprt', $cdcooper);
 
-    $xmlResult = mensageria($xml, "CADREG", "BUSCACRAPREG", $cdcooper, $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_QTD_REGIONAL", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
-
+	
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $countReg = 0;
     } else {
@@ -49,7 +45,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     }
 
 	$xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
 
     $xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_WORKFLOW", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
@@ -85,7 +81,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         $disabled     = ( ( ( $countReg === 0 && $cdalcada == 1 ) || $cddopcao == 'C' ) ? 'disabled' : '' );
 
         $xml = new XmlMensageria();
-        $xml->add('cdcooper',$cdcooper);
+        $xml->add('cdcooprt',$cdcooper);
         $xml->add('cdalcada_aprovacao',$cdalcada);
 
         $xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_APROVADORES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -96,7 +92,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         $html .= "<tr>";
         $html .= "  <td width=\"35\" align=\"center\"> <input data-count=\"".count($registros)."\" type=\"checkbox\" $flgregra id=\"alcada_$cdalcada\" name=\"chkalcada\" value=\"$cdalcada\" $disabled ></td>";
         $html .= "  <td width=\"361\"> $dsalcada </td>";
-        $html .= "  <td width=\"200\" align=\"center\"> <a href=\"#\" class=\"botao ".($disabled && $cddopcao == 'A' ? 'botaoDesativado' : '')."\" style=\"margin:3px 0\" onclick=\"Grid.onClick_Aprovadores($cdalcada)\" $disabled>Aprovadores</a></td>";
+        $html .= "  <td width=\"200\" align=\"center\"> <a href=\"#\" class=\"botao ".($disabled && $cddopcao == 'A' ? 'botaoDesativado' : '')."\" style=\"margin:3px 0\" onclick=\"".($disabled && $cddopcao == 'A' ? 'return false;' : "Grid.onClick_Aprovadores($cdalcada)")."\" $disabled>Aprovadores</a></td>";
         $html .= '</tr>';
     }
     $html .= '</tbody></table>';
@@ -120,10 +116,11 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     $cdmetodo = (!empty($_POST['cdmetodo'])) ? $_POST['cdmetodo'] : 'I';
 
     $xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('cdaprovador',$cdaprovador);
     $xml->add('dsemail_aprovador',$dsemail);
+	$xml->add('cddopcao','A');
         
     $xmlResult = mensageria($xml, "TELA_CADRES", "INSERE_APROVADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
@@ -141,9 +138,10 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     // deve atualizar alçada
     if ($flregra && $cdmetodo === 'I') {
         $xml = new XmlMensageria();
-        $xml->add('cdcooper',$cdcooper);
+        $xml->add('cdcooprt',$cdcooper);
         $xml->add('cdalcada_aprovacao',$cdalcada);
         $xml->add('flregra_aprovacao','1');
+		$xml->add('cddopcao','A');
 
         $xmlResult = mensageria($xml, "TELA_CADRES", "ATUALIZA_ALCADA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
         $xmlObj = getObjectXML($xmlResult);
@@ -162,9 +160,10 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
 } else if ( $cddopcao == 'FX' ){
 
     $xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('flregra_aprovacao',$flregra);
+	$xml->add('cddopcao','A');
 
     $xmlResult = mensageria($xml, "TELA_CADRES", "ATUALIZA_ALCADA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
@@ -179,9 +178,10 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
 // Opcao de Exclusão
 } else if ( $cddopcao == 'EX' ) {
     $xml = new XmlMensageria();
-    $xml->add('cdcooper',$cdcooper);
+    $xml->add('cdcooprt',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('cdaprovador',$cdaprovador);
+	$xml->add('cddopcao','A');
 
     $xmlResult = mensageria($xml, "TELA_CADRES", "EXCLUIR_APROVADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
