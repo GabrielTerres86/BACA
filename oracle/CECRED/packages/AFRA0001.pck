@@ -5550,7 +5550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-    END IF;
+    
     -- Fim Projeto 475
 
   EXCEPTION
