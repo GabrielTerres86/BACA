@@ -110,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 17/10/2018
+   Data    : Maio/2017                      Ultima atualizacao: 07/12/2018
 
    Dados referentes ao programa:
 
@@ -150,6 +150,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                               
       17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
                - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta 
+							 
+	  07/12/2018 - Refatoração dos lançamentos de estorno na LEM e inclusão da busca pelo valor do lançamento
+	               a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781 (pc_estorno_pagamento).
+	  			   (Reginaldo/AMcom - P450)
                       
 ..............................................................................*/
 
@@ -187,7 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       Sistema : AyllosWeb
       Sigla   : PREJ
       Autor   : Jean Calão - Mout´S
-      Data    : Agosto/2017.                  Ultima atualizacao: 17/10/2018
+      Data    : Agosto/2017.                  Ultima atualizacao: 07/12/2018
 
       Dados referentes ao programa:
 
@@ -206,7 +210,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       06/12/2018 - Correção gera crédito para estorno em dia anterior, usa r_craplem.dtmvtolt ao inves
                   data atual da cooperativa
                   (Renato Cordeiro - AMcom)
+									
+			07/12/2018 - Refatoração dos lançamentos de estorno na LEM e inclusão da busca pelo valor do lançamento
+			             a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781.
+									 (Reginaldo/AMcom - P450)
       ..............................................................................*/                              
+			TYPE typ_reg_historico IS RECORD (cdhistor craphis.cdhistor%TYPE
+			                                , dscritic VARCHAR2(100));
+																			
+			TYPE typ_tab_historicos IS TABLE OF typ_reg_historico INDEX BY PLS_INTEGER;
+			
+			vr_tab_historicos typ_tab_historicos;
 
        -- Cursor principal da rotina de estorno
        CURSOR c_craplem (prc_cdcooper craplem.cdcooper%TYPE
@@ -258,6 +272,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
            AND TO_NUMBER(trim(replace(t.cdpesqbb,'.',''))) = prc_nrctremp
            AND t.dtmvtolt = prc_dtmvtolt;  
            
+			CURSOR c_prejuizo(pr_cdcooper craplcm.cdcooper%TYPE,
+                        pr_nrdconta craplcm.nrdconta%TYPE,
+                        pr_dtmvtolt craplcm.dtmvtolt%TYPE,
+                        pr_nrctremp craplem.nrctremp%type) IS
+        SELECT t.vllanmto
+          FROM tbcc_prejuizo_detalhe t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.cdhistor = 2781 -- Pagamento via conta transitória
+           AND t.nrctremp = pr_nrctremp
+           AND t.dtmvtolt = pr_dtmvtolt;
+
       -- Cursor para buscar o ROWID da CRAPLCM para exclusão do registro pela centralizadora     
       CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
 												 pr_nrdconta IN craplcm.nrdconta%TYPE,
@@ -327,6 +353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       dt_gerarlcm DATE;
       vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
       vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307    
+
+	  vr_vllanmto craplcm.vllanmto%TYPE;
 
       EXC_LCT_NAO_EXISTE exception;
       --
@@ -415,22 +443,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             IF r_craplem.cdhistor = 2388 THEN -- Valor Principal
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
-
             ELSIF r_craplem.cdhistor = 2473 THEN --Juros +60
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
             ELSIF r_craplem.cdhistor = 2389 THEN --Juros atualização
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
-           
             ELSIF r_craplem.cdhistor = 2390 THEN --Multa atraso
               -- Atualizar o valor pago de multa
           rw_crapepr.vlpgmupr := rw_crapepr.vlpgmupr - r_craplem.vllanmto;
-                 
             ELSIF r_craplem.cdhistor = 2475 THEN --Juros Mora
               -- Atualizar o valor pago de juros mora
           rw_crapepr.vlpgjmpr := rw_crapepr.vlpgjmpr - r_craplem.vllanmto;
-            
             END IF;
 
             /* 1) Excluir Lancamento LEM */
@@ -549,26 +573,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
               END IF;
               --
 
-              FOR r_craplcm IN c_craplcm (r_craplem.cdcooper,
+							OPEN c_craplcm (r_craplem.cdcooper,
                                           r_craplem.nrdconta,
                                           r_craplem.dtmvtolt,
-                                          r_craplem.nrctremp) LOOP
-
-                if (prej0003.fn_verifica_preju_conta(pr_cdcooper => r_craplem.cdcooper, 
-                                                     pr_nrdconta => r_craplem.nrdconta)) 
-                       and r_craplem.cdhistor = 2701 then
-                   prej0003.pc_gera_cred_cta_prj (pr_cdcooper => pr_cdcooper, 
+                              r_craplem.nrctremp);
+							FETCH c_craplcm INTO vr_vllanmto;
+							
+							IF c_craplcm%NOTFOUND THEN
+							  -- Reginaldo/AMcom - P450 - 07/12/2018
+                OPEN c_prejuizo(r_craplem.cdcooper,
+                                r_craplem.nrdconta,
+                                r_craplem.dtmvtolt,
+                                r_craplem.nrctremp);
+							  FETCH c_prejuizo INTO vr_vllanmto;
+								CLOSE c_prejuizo;
+							END IF;
+							
+							CLOSE c_craplcm;												
+						  
+							IF r_craplem.cdhistor = 2701 THEN
+							  IF prej0003.fn_verifica_preju_conta(pr_cdcooper => r_craplem.cdcooper,
+                                                    pr_nrdconta => r_craplem.nrdconta) THEN
+									PREJ0003.pc_gera_cred_cta_prj (pr_cdcooper => pr_cdcooper,
                                                   pr_nrdconta => pr_nrdconta, 
                                                   pr_cdoperad => '1', 
-                                                  pr_vlrlanc  => r_craplcm.vllanmto, 
+                                                  pr_vlrlanc  => vr_vllanmto,
                                                   pr_dtmvtolt => r_craplem.dtmvtolt, 
                                                   pr_nrdocmto => null, 
                                                   pr_cdcritic => vr_cdcritic, 
                                                   pr_dscritic => vr_dscritic);
-                   if (vr_cdcritic <> 0 or vr_dscritic is not null) then
+																									
+                  IF nvl(vr_cdcritic,0) <> 0 OR trim(vr_dscritic) IS NOT NULL THEN
                      RAISE vr_erro;
-                   end if;
-                else
+                  END IF;																	 
+								ELSE
                   empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 ,pr_cdagenci => r_craplem.cdagenci
@@ -578,7 +616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                 ,pr_nrdolote => vr_nrdolote
                                                 ,pr_nrdconta => pr_nrdconta
                                                 ,pr_cdhistor => 2387 -- EST.RECUP.PREJUIZO
-                                                ,pr_vllanmto => r_craplcm.vllanmto 
+                                                ,pr_vllanmto => vr_vllanmto
                                                 ,pr_nrparepr => 0
                                                 ,pr_nrctremp => pr_nrctremp
                                                 ,pr_nrseqava => 0
@@ -599,257 +637,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                     END IF;                      
                   END IF;
                 END IF;
-              END LOOP;
+							END IF;
+            END IF;
+						
+						-- Monta tabela de históricos de pagamento e respectivo histórico de estorno
+						-- Reginaldo/AMcom - P450 - 07/12/2018
+						vr_tab_historicos(2388).cdhistor := 2392;
+						vr_tab_historicos(2388).dscritic := 'valor principal';
+						vr_tab_historicos(2473).cdhistor := 2474;
+						vr_tab_historicos(2473).dscritic := 'juros +60';
+						vr_tab_historicos(2389).cdhistor := 2393;
+						vr_tab_historicos(2389).dscritic := 'juros atualizacao';
+						vr_tab_historicos(2390).cdhistor := 2394;
+						vr_tab_historicos(2390).dscritic := 'multa atraso';
+						vr_tab_historicos(2475).cdhistor := 2476;
+						vr_tab_historicos(2475).dscritic := 'juros mora';
+						vr_tab_historicos(2391).cdhistor := 2394;
+						vr_tab_historicos(2391).dscritic := 'abono';
+						vr_tab_historicos(2701).cdhistor := 2702;
+						vr_tab_historicos(2701).dscritic := 'pagamento parcela';
+						
+						empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+																						 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+																						 ,pr_cdagenci => r_craplem.cdagenci
+																						 ,pr_cdbccxlt => 100
+																						 ,pr_cdoperad => '1'
+																						 ,pr_cdpactra => r_craplem.cdagenci
+																						 ,pr_tplotmov => 5
+																						 ,pr_nrdolote => 600029
+																						 ,pr_nrdconta => pr_nrdconta
+																						 ,pr_cdhistor => vr_tab_historicos(r_craplem.cdhistor).cdhistor
+																						 ,pr_nrctremp => pr_nrctremp
+																						 ,pr_vllanmto => r_craplem.vllanmto
+																						 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+																						 ,pr_txjurepr => 0
+																						 ,pr_vlpreemp => 0
+																						 ,pr_nrsequni => 0
+																						 ,pr_nrparepr => r_craplem.nrdocmto
+																						 ,pr_flgincre => true
+																						 ,pr_flgcredi => false
+																						 ,pr_nrseqava => 0
+																						 ,pr_cdorigem => 7 -- batch
+																						 ,pr_cdcritic => vr_cdcritic
+																						 ,pr_dscritic => vr_dscritic);
+
+						IF vr_dscritic is not null THEN
+							vr_dscritic := 'Ocorreu falha ao retornar gravacao LEM (' || 
+								vr_tab_historicos(r_craplem.cdhistor).dscritic || '): ' || vr_dscritic;
+							pr_des_reto := 'NOK';
+							raise vr_erro;
+						END IF;
+						
+						--
+						IF r_craplem.cdhistor IN (2391, 2701) THEN
+							BEGIN
+								UPDATE craplem lem
+									 SET lem.dtestorn = TRUNC(rw_crapdat.dtmvtolt)
+								 WHERE lem.rowid = r_craplem.rowid;
+							EXCEPTION
+								WHEN OTHERS THEN
+									vr_dscritic := 'Ocorreu falha ao registrar data de estorno (' || 
+									  r_craplem.cdhistor || '): ' || vr_dscritic;
+									pr_des_reto := 'NOK';
+									raise vr_erro;
+							END;
             END IF;
 
             --
             IF r_craplem.cdhistor = 2388 THEN -- Valor Principal
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
-                
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2392 -- EST.PAG.PREJ.PRINCIP.
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;            
             ELSIF r_craplem.cdhistor = 2473 THEN --Juros +60
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
-                
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2474 -- EST PGT JUROS +60
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;            
             ELSIF r_craplem.cdhistor = 2389 THEN --Juros atualização
               -- Atualizar o valor vlsdprej da CRAPEPR
           rw_crapepr.vlsdprej := rw_crapepr.vlsdprej + r_craplem.vllanmto;
-                
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2393 -- EST.PAGTO.JUROS PREJ
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;            
             ELSIF r_craplem.cdhistor = 2390 THEN --Multa atraso
               -- Atualizar o valor pago de multa
           rw_crapepr.vlpgmupr := rw_crapepr.vlpgmupr - r_craplem.vllanmto;
-                
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2394 -- EST.PGT MULTA ATRASO
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;                 
             ELSIF r_craplem.cdhistor = 2475 THEN --Juros Mora
               -- Atualizar o valor pago de juros mora
           rw_crapepr.vlpgjmpr := rw_crapepr.vlpgjmpr - r_craplem.vllanmto;
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2476 -- EST.PGT JUROS MORA
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;            
-            ELSIF r_craplem.cdhistor = 2391 THEN -- Abono
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                               ,pr_cdagenci => r_craplem.cdagenci
-                                               ,pr_cdbccxlt => 100
-                                               ,pr_cdoperad => '1'
-                                               ,pr_cdpactra => r_craplem.cdagenci
-                                               ,pr_tplotmov => 5
-                                               ,pr_nrdolote => 600029
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_cdhistor => 2395 -- ESTORNO ABONO PREJ.
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_vllanmto => r_craplem.vllanmto
-                                               ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                               ,pr_txjurepr => 0
-                                               ,pr_vlpreemp => 0
-                                               ,pr_nrsequni => 0
-                                               ,pr_nrparepr => r_craplem.nrdocmto
-                                               ,pr_flgincre => true
-                                               ,pr_flgcredi => false
-                                               ,pr_nrseqava => 0
-                                               ,pr_cdorigem => 7 -- batch
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;     
-              --
-              BEGIN
-                UPDATE craplem lem
-                   SET lem.dtestorn = TRUNC(rw_crapdat.dtmvtolt)
-                 WHERE lem.rowid = r_craplem.rowid;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Ocorreu falha ao registrar data de estorno (2391): ' || vr_dscritic;
-                  pr_des_reto := 'NOK';
-                  raise vr_erro;                  
-              END;                      
-            ELSIF r_craplem.cdhistor = 2701 THEN -- Pagamento
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => r_craplem.cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => '1'
-                                             ,pr_cdpactra => r_craplem.cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => 2702 -- ESTORNO ABONO PREJ.
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => r_craplem.vllanmto
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => r_craplem.nrdocmto
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                       
-              IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                raise vr_erro;
-              END IF;   
-              
-              BEGIN
-                UPDATE craplem lem
-                   SET lem.dtestorn = TRUNC(rw_crapdat.dtmvtolt)
-                 WHERE lem.rowid = r_craplem.rowid;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Ocorreu falha ao registrar data de estorno (2701): ' || vr_dscritic;
-                  pr_des_reto := 'NOK';
-                  raise vr_erro;                  
-              END;
-                         
             END IF;            
           END IF;
     END LOOP;
@@ -896,6 +765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             pr_des_reto := 'NOK';
             RAISE vr_erro;
         END;        
+				
     -- Confirma alterações
     COMMIT;
     EXCEPTION
