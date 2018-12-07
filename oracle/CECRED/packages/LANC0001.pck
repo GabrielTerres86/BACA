@@ -100,7 +100,7 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
                                   , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
                                   , pr_nrdolote IN  craplcm.nrdolote%TYPE
                                   , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                   , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                   , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
                                   , pr_vllanmto IN  craplcm.vllanmto%TYPE
@@ -226,7 +226,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
-																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                 , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_nrdconta IN  craplcm.nrdconta%TYPE
@@ -805,7 +805,7 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
                                   , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
                                   , pr_nrdolote IN  craplcm.nrdolote%TYPE
                                   , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_nrdocmto IN  VARCHAR2 -- craplcm.nrdocmto%TYPE
                                   , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                   , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
                                   , pr_vllanmto IN  craplcm.vllanmto%TYPE
@@ -850,13 +850,15 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
         Sistema : Ayllos
         Sigla   : CRED
         Autor   : Reginaldo/AMcom
-        Data    : Abril/2018                 Ultima atualizacao:
+        Data    : Abril/2018                 Ultima atualizacao: 07/12/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
         Objetivo  : Versão adaptada da procedure para chamada em programas Progress
         Observacao: -----
-        Alteracoes:
+        
+        Alteracoes: 07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
+                                 que na comunicação com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)
     ..............................................................................*/
   --------------> VARIAVEIS <-----------------
   vr_cdcritic PLS_INTEGER;
@@ -1544,7 +1546,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
-																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                 , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_nrdconta IN  craplcm.nrdconta%TYPE
@@ -1552,6 +1554,25 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
+  /* .............................................................................
+
+    Programa: pc_estorna_lancto_prog
+    Sistema :
+    Sigla   : LANC
+    Autor   : 
+    Data    : Agosto/2018.                  Ultima atualizacao: 07/12/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina centralizada para estorno de lançamentos na conta corrente, com tratamento para 
+                contas transferidas para prejuízo - Chamada Progress
+
+    Alteracoes: 07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
+                             que na comunicação com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)
+
+    ..............................................................................*/
 begin
    pc_estorna_lancto_conta(pr_cdcooper => pr_cdcooper
 	                       , pr_dtmvtolt => pr_dtmvtolt

@@ -2,7 +2,7 @@
 
    Programa: b1wgen0200.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : Junho/2018                        Ultima atualizacao: 01/06/2018
+   Data    : Junho/2018                        Ultima atualizacao: 07/12/2018
 
    Dados referentes ao programa:
 
@@ -11,6 +11,9 @@
    Alteracoes: 
                16/11/2018 - prj450 - história 10669:Crédito de Estorno de Saque em conta em Prejuízo
                             (Fabio Adriano - AMcom).
+                            
+               07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
+                            que na comunicaçao com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)             
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -97,7 +100,7 @@ PROCEDURE gerar_lancamento_conta_comple:
         ,INPUT  par_cdbccxlt  /* pr_cdbccxlt */
         ,INPUT  par_nrdolote  /* pr_nrdolote */
         ,INPUT  par_nrdconta  /* pr_nrdconta */
-        ,INPUT  par_nrdocmto  /* pr_nrdocmto */
+        ,INPUT  STRING(par_nrdocmto)  /* pr_nrdocmto */
         ,INPUT  par_cdhistor  /* pr_cdhistor */
         ,INPUT  par_nrseqdig  /* pr_nrseqdig */
         ,INPUT  par_vllanmto  /* pr_vllanmto */
@@ -257,7 +260,7 @@ PROCEDURE estorna_lancamento_conta:
         ,INPUT  par_cdbccxlt  /* pr_cdbccxlt */
         ,INPUT  par_nrdolote  /* pr_nrdolote */
         ,INPUT  par_nrdctabb  /* pr_nrdctabb */
-        ,INPUT  par_nrdocmto  /* pr_nrdocmto */
+        ,INPUT  STRING(par_nrdocmto)  /* pr_nrdocmto */
         ,INPUT  par_cdhistor  /* pr_cdhistor */
         ,INPUT  par_nrctachq  /* pr_nrctachq */
         ,INPUT  par_nrdconta  /* pr_nrdconta */
