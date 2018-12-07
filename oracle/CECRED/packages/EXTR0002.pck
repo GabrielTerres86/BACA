@@ -4533,7 +4533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 14/11/2018
+  --  Data     : Julho/2014                           Ultima atualizacao: 22/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -4638,6 +4638,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              14/11/2018 - Inclusão do juros remuneratórios de prejuízo provisionados na tela LAUTOM
   --                           (Reginaldo/AMcom/P450)
+
+  --              22/11/2018 - Adicionado no detalhamento do lanaçamento futuro os valores de juros de mora, multa
+  --                           e IOF dos titulos do novo produto do borderô que estejam em atrazo (Paulo Penteado GFT)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4952,6 +4956,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         WHERE craphis.cdcooper = pr_cdcooper       
         AND   craphis.cdhistor = pr_cdhistor;                      
       rw_craphis cr_craphis%ROWTYPE; 
+      rw_craphis_mtatit cr_craphis%ROWTYPE;
+      rw_craphis_mratit cr_craphis%ROWTYPE;
+      rw_craphis_iofcpl cr_craphis%ROWTYPE;
+
       --Selecionar Lancamento Agendado Tarifa
       CURSOR cr_craplat (pr_cdcooper IN craplat.cdcooper%type
                         ,pr_nrdconta IN craplat.nrdconta%type) IS
@@ -5125,14 +5133,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                         pr_nrdconta crapass.nrdconta%TYPE,
                         pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
       SELECT tdb.dtvencto,
-             tdb.vltitulo,
+             tdb.vlsldtit,
              tdb.cdcooper,
              tdb.cdbandoc,
              tdb.nrdctabb,
              tdb.nrcnvcob,
              tdb.nrdconta,
-             tdb.nrdocmto
+             tdb.nrdocmto,
+             bdt.flverbor,
+             (tdb.vlmtatit - tdb.vlpagmta) sdmtatit,
+             (tdb.vlmratit - tdb.vlpagmra) sdmratit,
+             (tdb.vliofcpl - tdb.vlpagiof) sdiofcpl
         FROM craptdb tdb
+       INNER JOIN crapbdt bdt ON bdt.cdcooper = tdb.cdcooper 
+                             AND bdt.nrdconta = tdb.nrdconta 
+                             AND bdt.nrborder = tdb.nrborder
        WHERE tdb.cdcooper = pr_cdcooper
          AND tdb.nrdconta = pr_nrdconta
          AND tdb.insittit = 4
@@ -7013,6 +7028,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Fechar Cursor
           CLOSE cr_craphis;
 
+      -- Selecionar Historico de débito de multa de titulo vencido
+      OPEN cr_craphis(pr_cdcooper => pr_cdcooper
+                     ,pr_cdhistor => 2681);
+      FETCH cr_craphis INTO rw_craphis_mtatit;
+      IF cr_craphis%NOTFOUND THEN
+        CLOSE cr_craphis;
+        vr_cdcritic:= 80;
+        vr_dscritic:= NULL;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craphis;
+                                                                                        
+      -- Selecionar Historico de débito de juros de mora de titulo vencido
+      OPEN cr_craphis(pr_cdcooper => pr_cdcooper
+                     ,pr_cdhistor => 2685);
+      FETCH cr_craphis INTO rw_craphis_mratit;
+      IF cr_craphis%NOTFOUND THEN
+        CLOSE cr_craphis;
+        vr_cdcritic:= 80;
+        vr_dscritic:= NULL;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craphis;
+                                                                                        
+      -- Selecionar Historico de débito de iof de titulo vencido
+      OPEN cr_craphis(pr_cdcooper => pr_cdcooper
+                     ,pr_cdhistor => 2321);
+      FETCH cr_craphis INTO rw_craphis_iofcpl;
+      IF cr_craphis%NOTFOUND THEN
+        CLOSE cr_craphis;
+        vr_cdcritic:= 80;
+        vr_dscritic:= NULL;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craphis;
+
       -- Borderos de desconto de titulos
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper,
                                    pr_nrdconta => pr_nrdconta,
@@ -7084,12 +7135,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).dshistor:= rw_craphis.dshistor;
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char( to_number( SUBSTR( rw_crapcob.nrnosnum , LENGTH(rw_crapcob.nrnosnum) - 8, 9 ) ), 'fm999g999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= rw_craphis.indebcre;
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vltitulo;
+          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vlsldtit;
           --Acumular valor automatico
-          vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vltitulo;
+          vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vlsldtit;
           --Acumular valor Credito
-          vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vltitulo;
+          vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vlsldtit;
 
+          IF rw_craptdb.flverbor = 1 THEN
+            IF rw_craptdb.sdmtatit > 0 THEN
+              --Incrementar contador lancamentos na tabela
+              vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+              --Criar Lancamento Futuro na tabela
+              pr_tab_lancamento_futuro(vr_index).dtmvtolt := rw_crapdat.dtmvtolt;
+              pr_tab_lancamento_futuro(vr_index).dsmvtolt := to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+              pr_tab_lancamento_futuro(vr_index).dshistor := rw_craphis_mtatit.dshistor;
+              pr_tab_lancamento_futuro(vr_index).nrdocmto := pr_tab_lancamento_futuro(vr_index-1).nrdocmto;
+              pr_tab_lancamento_futuro(vr_index).indebcre := rw_craphis_mtatit.indebcre;
+              pr_tab_lancamento_futuro(vr_index).vllanmto := rw_craptdb.sdmtatit;
+              --Acumular valor automatico
+              vr_vllautom := nvl(vr_vllautom,0) - rw_craptdb.sdmtatit;
+              --Acumular valor Credito
+              vr_vllaudeb := nvl(vr_vllaudeb,0) + rw_craptdb.sdmtatit;
+            END IF;
+
+            IF rw_craptdb.sdmratit > 0 THEN
+              --Incrementar contador lancamentos na tabela
+              vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+              --Criar Lancamento Futuro na tabela
+              pr_tab_lancamento_futuro(vr_index).dtmvtolt := rw_crapdat.dtmvtolt;
+              pr_tab_lancamento_futuro(vr_index).dsmvtolt := to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+              pr_tab_lancamento_futuro(vr_index).dshistor := rw_craphis_mratit.dshistor;
+              pr_tab_lancamento_futuro(vr_index).nrdocmto := pr_tab_lancamento_futuro(vr_index-1).nrdocmto;
+              pr_tab_lancamento_futuro(vr_index).indebcre := rw_craphis_mratit.indebcre;
+              pr_tab_lancamento_futuro(vr_index).vllanmto := rw_craptdb.sdmratit;
+          --Acumular valor automatico
+              vr_vllautom := nvl(vr_vllautom,0) - rw_craptdb.sdmratit;
+          --Acumular valor Credito
+              vr_vllaudeb := nvl(vr_vllaudeb,0) + rw_craptdb.sdmratit;
+            END IF;
+
+            IF rw_craptdb.sdiofcpl > 0 THEN
+              --Incrementar contador lancamentos na tabela
+              vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+              --Criar Lancamento Futuro na tabela
+              pr_tab_lancamento_futuro(vr_index).dtmvtolt := rw_crapdat.dtmvtolt;
+              pr_tab_lancamento_futuro(vr_index).dsmvtolt := to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+              pr_tab_lancamento_futuro(vr_index).dshistor := rw_craphis_iofcpl.dshistor;
+              pr_tab_lancamento_futuro(vr_index).nrdocmto := pr_tab_lancamento_futuro(vr_index-1).nrdocmto;
+              pr_tab_lancamento_futuro(vr_index).indebcre := rw_craphis_iofcpl.indebcre;
+              pr_tab_lancamento_futuro(vr_index).vllanmto := rw_craptdb.sdiofcpl;
+              --Acumular valor automatico
+              vr_vllautom := nvl(vr_vllautom,0) - rw_craptdb.sdiofcpl;
+              --Acumular valor Credito
+              vr_vllaudeb := nvl(vr_vllaudeb,0) + rw_craptdb.sdiofcpl;
+            END IF;
+          END IF;
         END IF;                                                 
 
       END LOOP;
