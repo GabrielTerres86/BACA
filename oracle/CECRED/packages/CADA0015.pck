@@ -3146,7 +3146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       FETCH cr_crapavt_duplicado INTO rw_crapavt_duplicado;
       
       -- Se nao encontrou, entao pode inserir novo
-      IF cr_crapavt_duplicado%FOUND THEN
+      IF cr_crapavt_duplicado%NOTFOUND THEN
         CLOSE cr_crapavt_duplicado;
         -- Cria o cabecalho da comunicacao
       vr_idalteracao := cria_conta_comunic_soa(pr_crapavt.cdcooper,
