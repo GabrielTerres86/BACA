@@ -12,19 +12,15 @@
 
  * ********************************************************************* */
 
-	session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');	
-	require_once('../../includes/controla_secao.php');
-	require_once('../../class/xmlfile.php');
-	isPostMethod();
-	
-	require_once("../../includes/carrega_permissoes.php");	
-
+?>
+<script type="text/javascript">
+$(document).ready(function () {
+<?
 	require_once("busca_arlog.php");
 	require_once("busca_coop.php");
-	
 ?>
+});
+</script>
 <form id="frmFiltro" name="frmFiltro" class="formulario" style="display:none;">
 	
 	<fieldset id="fsetFiltro" name="fsetFiltro" style="padding:0px; margin-bottom:10px; padding: 10 10 10 10;">

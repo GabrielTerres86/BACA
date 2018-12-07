@@ -7,7 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 
  */
-
+/*
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -18,7 +18,7 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
-
+*/
 // Monta o xml de requisição		
 		$xml  		= "";
 		$xml 	   .= "<Root>";
@@ -38,8 +38,8 @@
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);		
-						
+			//exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+			echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","","NaN");';
 		} 
 			
 		$arlogs = $xmlObj->Arquivos[0]->nmarqlog;
