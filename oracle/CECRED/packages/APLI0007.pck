@@ -304,6 +304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   PROCEDURE pc_envia_email_alerta_arq(pr_dsdemail  IN VARCHAR2                               --> Destinatários
                                      ,pr_dsjanexe  IN VARCHAR2                               --> Descrição horário execução
                                      ,pr_idarquivo IN tbcapt_custodia_arquivo.idarquivo%TYPE --> ID do arquivo
+                                     ,pr_dsdirbkp  IN VARCHAR2                               --> Caminho de backup linux
+                                     ,pr_dsredbkp  IN VARCHAR2                               --> Caminho da rede de Backup
                                      ,pr_flgerrger IN BOOLEAN                                --> erro geral do arquivo
                                      ,pr_idcritic OUT NUMBER                                 --> Criticidade da saida
                                      ,pr_cdcritic OUT NUMBER                                 --> Código da critica
@@ -315,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --  Sistema  : Captação
     --  Sigla    : CRED
     --  Autor    : Marcos - Envolti
-    --  Data     : Março/2018.                   Ultima atualizacao: 
+    --  Data     : Março/2018.                   Ultima atualizacao: 07/12/2018  
     --
     -- Dados referentes ao programa:
     --
@@ -323,7 +325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- Objetivo  : Procedimento responsável por varrer as criticas geradas no processamento do arquivo
     --             e montar email para os responsáveis pela conferência dos problemas
     --    
-    -- Alteracoes:
+    -- Alteracoes: 07/12/2018 - P411 - Melhoria do anexo e Ajustes no email para guardar anexo em pasta (Marcos-Envolti)
     --
     ---------------------------------------------------------------------------------------------------------------  
     DECLARE
@@ -340,13 +342,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       CURSOR cr_arq IS
         SELECT arqRet.nmarquivo
               ,fn_tparquivo_custodia(arqRet.idtipo_arquivo,'E') dstipo_arquivo
-              ,arqRet.dtregistro
               ,cnt.nrseq_linha
               ,cnt.dslinha
               ,cnt.dscritica
               ,arqRet.idtipo_Arquivo
               ,cnt.idaplicacao
               ,cnt.dscodigo_b3
+              ,to_char(arqRet.Dtregistro,'dd/mm/rrrr') dtregistro 
+              ,to_char(arqRet.Dtcriacao,'dd/mm/rrrr hh24:mi:ss') dtcriacao
+              ,to_char(arqRet.Dtprocesso,'dd/mm/rrrr hh24:mi:ss') dtprocesso
           FROM tbcapt_custodia_arquivo      arqRet
               ,tbcapt_custodia_conteudo_arq cnt
          WHERE arqRet.idarquivo = cnt.idarquivo
@@ -390,34 +394,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     BEGIN
       -- Inclusão do módulo e ação logado
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_envia_email_alerta_arq');      
+
+      -- Busca de todas as linhas com erro 
+      FOR rw_arq IN cr_arq LOOP
       -- Quando não for um erro geral
       IF NOT pr_flgerrger THEN 
         -- Buscar diretório Arq e montar nome do anexo
-        vr_dsarqanx := 'log_erro_'||pr_idarquivo||'.html';
+          vr_dsarqanx := 'PROC_'||rw_arq.nmarquivo||'.html';
       END IF;
-      -- Busca de todas as linhas com erro 
-      FOR rw_arq IN cr_arq LOOP
         -- No primeiro registro 
         IF vr_conteudo IS NULL THEN 
           -- Guardar tipo
           vr_idtipo_arquivo := rw_arq.idtipo_arquivo;
           -- Montar assunto 
-          vr_assunto := 'Criticas ao processar o arquivo '||rw_arq.nmarquivo||' de '||rw_arq.dstipo_arquivo||' de operações na B3 Ref '||to_char(rw_arq.dtregistro,'dd/mm/rrrr');
+          vr_assunto := 'Criticas ao processar o arquivo '||rw_arq.nmarquivo||' de '||rw_arq.dstipo_arquivo||' de operações na B3 Ref '||rw_arq.dtregistro;
           -- Se não for um erro geral 
           IF NOT pr_flgerrger THEN 
             -- Montar corpo do email 
-            vr_conteudo := 'Prezados, '||vr_dstagque
-                        || 'Os registros listados no anexo apresentaram criticas e não foram processados';
+            vr_conteudo := 'Prezados, '||vr_dstagque;
             -- Caso conciliação
             IF rw_arq.idtipo_arquivo = 9 THEN
-              vr_conteudo := vr_conteudo || ' pelo Aimaro '||vr_dstagque;
+              vr_conteudo := vr_conteudo || 'Houve diferença na '||rw_arq.dstipo_arquivo||' das aplicações registradas na B3 em comparação com o Aimaro. '||vr_dstagque;
             ELSE
-              vr_conteudo := vr_conteudo || ' pela B3: '||vr_dstagque;
+              vr_conteudo := vr_conteudo || 'Os registros listados no anexo apresentaram criticas e não foram processados pela B3. '||vr_dstagque;
             END IF;      
-            
             -- Montar o início da tabela (Num clob para evitar estouro)
             dbms_lob.createtemporary(vr_dshmtl, TRUE, dbms_lob.CALL);
             dbms_lob.open(vr_dshmtl,dbms_lob.lob_readwrite);
+            -- Enviar dados do arquivo
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<div align="left" style="margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;">');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Dados do arquivo:'||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'ID: '||pr_idarquivo||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Nome: '||rw_arq.nmarquivo||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Tipo: '||rw_arq.dstipo_arquivo||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Data Base: '||rw_arq.dtregistro||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Data Recebimento: '||rw_arq.dtcriacao||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Data Processamento: '||rw_arq.dtprocesso||vr_dstagque||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'Lista de Criticas:'||vr_dstagque);
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</div>');
+             
+            -- Preparar tabela de erros
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<table border="1" style="width:500px; margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;" >');
             -- Montando header
@@ -498,39 +514,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</tr>');
       END LOOP;
       
-      -- Se há arquivo com erros para anexar ao email
+      -- Se há arquivo com erros para anexar ao email ou copiar para uma pasta
       IF vr_dsarqanx IS NOT NULL THEN 
         -- Encerrar o texto e o clob
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'',true);
+        -- Caso conciliação
+        IF vr_idtipo_arquivo = 9 THEN
+          -- Gerar o arquivo na pasta de backup do financeiro
+          gene0002.pc_clob_para_arquivo(pr_clob     => vr_dshmtl
+                                       ,pr_caminho  => pr_dsdirbkp
+                                       ,pr_arquivo  => vr_dsarqanx
+                                       ,pr_des_erro => vr_dscritic);          
+        ELSE
         -- Gerar o arquivo na pasta converte
         gene0002.pc_clob_para_arquivo(pr_clob     => vr_dshmtl
                                      ,pr_caminho  => vr_dsdirarq
                                      ,pr_arquivo  => vr_dsarqanx
                                      ,pr_des_erro => vr_dscritic);
+        END IF;
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_dshmtl);
         dbms_lob.freetemporary(vr_dshmtl);
-        -- Adicionar o caminho completo ao nome do arquivo
-        vr_dsarqanx := vr_dsdirarq||'/'||vr_dsarqanx;
         -- Em caso de erro
         IF vr_dscritic IS NOT NULL THEN
           -- Propagar a critica
           vr_cdcritic := 1044;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Caminho: '||vr_dsarqanx||', erro: '||vr_dscritic;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Caminho: '||vr_dsdirarq||'/'||vr_dsarqanx||', erro: '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
       END IF;
       
-      -- Complementar o conteudo do email caso não seja de conciliação
+      -- Se não for conciliação
       IF vr_idtipo_arquivo <> 9 THEN
+      -- Complementar o conteudo do email caso não seja de conciliação
         vr_conteudo := vr_conteudo
                     || 'Lembre que o registro deve ocorrer até 2 dias úteis após sua realização, favor providenciar a correção e re-envio deste(s).'||vr_dstagque
                     || 'O processamento diário ocorre no período de '||pr_dsjanexe||' horas.'||vr_dstagque;
+        -- Adicionar o caminho completo ao nome do arquivo
+        vr_dsarqanx := vr_dsdirarq||'/'||vr_dsarqanx;
+      ELSE 
+        -- Conciliação teremos o caminho de rede para copiar o anexo
+        vr_conteudo := vr_conteudo
+                    || 'O arquivo encontra-se no caminho de rede abaixo: '||vr_dstagque
+                    || pr_dsredbkp||'\'||vr_dsarqanx||' '||vr_dstagque;
+        -- Limpar a variavel de nome de anexo pois não será enviado por email, mas somente na pasta
+        vr_dsarqanx := NULL;
       END IF;           
                   
       -- Complementar o conteudo do email com texto comum
       vr_conteudo := vr_conteudo|| 'Atenciosamente,'||vr_dstagque
-                  || 'Sistema CECRED';
+                  || 'Sistema AILOS';
       
       -- Ao final, solicitar o envio do Email
       gene0003.pc_solicita_email(pr_cdcooper        => 3 -- Fixo Central
@@ -3887,12 +3920,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           
         END IF;  
           
-        
         -- Após processar o arquivo, se houve algum erro
         IF vr_qtderros > 0 THEN 
            pc_envia_email_alerta_arq(pr_dsdemail  => pr_dsdemail      --> Destinatários
                                     ,pr_dsjanexe  => pr_dsjanexe      --> Descrição horário execução
                                     ,pr_idarquivo => rw_arq.idarquivo --> ID do arquivo
+                                    ,pr_dsdirbkp  => NULL             --> Caminho de backup linux
+                                    ,pr_dsredbkp  => NULL             --> Caminho da rede de Backup
                                     ,pr_flgerrger => vr_flerrger      --> erro geral do arquivo
                                     ,pr_idcritic  => vr_idcritic      --> Criticidade da saida
                                     ,pr_cdcritic  => vr_cdcritic      --> Código da critica
@@ -3954,6 +3988,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                    ,pr_dtultcnc  IN DATE         --> Data da ultima conciiação
                                    ,pr_dsdemail  IN VARCHAR2     --> Destinatários
                                    ,pr_dsjanexe  IN VARCHAR2     --> Descrição horário execução
+                                   ,pr_dsdirbkp  IN VARCHAR2     --> Caminho de backup linux
+                                   ,pr_dsredbkp  IN VARCHAR2      --> Caminho da rede de Backup
                                    ,pr_dsdaviso OUT VARCHAR2     --> Avisos dos eventos ocorridos no processo
                                    ,pr_idcritic OUT NUMBER       --> Criticidade da saida
                                    ,pr_cdcritic OUT NUMBER       --> Código da critica
@@ -4418,9 +4454,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           END;          
           -- Após processar o arquivo, se houve algum erro
           IF vr_qtderros > 0 THEN 
+             -- Enviar as informações por Email
              pc_envia_email_alerta_arq(pr_dsdemail  => pr_dsdemail      --> Destinatários
                                       ,pr_dsjanexe  => pr_dsjanexe      --> Descrição horário execução
                                       ,pr_idarquivo => rw_arq.idarquivo --> ID do arquivo
+                                      ,pr_dsdirbkp  => pr_dsdirbkp      --> Caminho de backup linux
+                                      ,pr_dsredbkp  => pr_dsredbkp      --> Caminho da rede de Backup
                                       ,pr_flgerrger => vr_flerrger      --> erro geral do arquivo
                                       ,pr_idcritic  => vr_idcritic      --> Criticidade da saida
                                       ,pr_cdcritic  => vr_cdcritic      --> Código da critica
@@ -4529,6 +4568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- Alteracoes:
     --			    18/10/2018 - P411 - Inclusão de tags para monitoramento (Daniel - Envolti)
     -- 
+    --          07/12/2018 - P411 - Passagem de parametros de caminhos de Backup windows (Marcos-Envolti)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Parâmetros
@@ -4538,6 +4578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_hrfimprc DATE;           --> Horário Final da Janela de Processamento
       vr_dsdircnd VARCHAR2(1000); --> Diretório Raiz do Connect Direct
       vr_dsdirbkp VARCHAR2(1000); --> Diretório Backup Connect Direct
+      vr_dsredbkp VARCHAR2(1000); --> Diretório Backup Connect Direct pelo caminho Windows
       vr_dsdemail VARCHAR2(1000); --> Lista de destinatários
       vr_dsjanexe VARCHAR2(1000); --> Texto com os horários da janela de execução
       vr_flenvreg VARCHAR2(1); --> Flag de Envio do Registro das Aplicações
@@ -4556,7 +4597,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_hriniprc := to_date(to_char(sysdate,'ddmmrrrr')||gene0001.fn_param_sistema('CRED',0,'HOR_INICIO_CUSTODIA_B3'),'ddmmrrrrhh24:mi');
       vr_hrfimprc := to_date(to_char(sysdate,'ddmmrrrr')||gene0001.fn_param_sistema('CRED',0,'HOR_FINAL_CUSTODIA_B3'),'ddmmrrrrhh24:mi');
       vr_dsdircnd := gene0001.fn_param_sistema('CRED',0,'NOM_CAMINHO_ARQ_ENVI_B3');
-      vr_dsdirbkp := gene0001.fn_param_sistema('CRED',0,'NOM_CAMINHO_ARQ_BKP_B3');   
+      vr_dsdirbkp := gene0002.fn_busca_entrada(1,gene0001.fn_param_sistema('CRED',0,'NOM_CAMINHO_ARQ_BKP_B3'),';');   
+      vr_dsredbkp := gene0002.fn_busca_entrada(2,gene0001.fn_param_sistema('CRED',0,'NOM_CAMINHO_ARQ_BKP_B3'),';');
       vr_dsdemail := gene0001.fn_param_sistema('CRED',0,'DES_EMAILS_PROC_B3');
       vr_flenvreg := gene0001.fn_param_sistema('CRED',0,'FLG_ENV_REG_CUSTODIA_B3'); 
       vr_flenvrgt := gene0001.fn_param_sistema('CRED',0,'FLG_ENV_RGT_CUSTODIA_B3'); 
@@ -4669,6 +4711,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                      ,pr_dtultcnc => vr_dtultcnc --> Data Ultima Conciliação
                                      ,pr_dsdemail => vr_dsdemail --> Destinatários
                                      ,pr_dsjanexe => vr_dsjanexe --> Descrição horário execução
+                                     ,pr_dsdirbkp => vr_dsdirbkp --> Caminho de backup linux
+                                     ,pr_dsredbkp => vr_dsredbkp --> Caminho da rede de Backup
                                      ,pr_dsdaviso => vr_dsdaviso
                                      ,pr_idcritic => vr_idcritic
                                      ,pr_cdcritic => vr_cdcritic
