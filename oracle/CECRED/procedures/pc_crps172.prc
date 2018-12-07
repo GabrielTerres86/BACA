@@ -114,7 +114,10 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 				 
                11/07/2018 - Ao fazer update Controle restart, se não encontrar o registro, criar,
                             pois programa passou a executar durante o dia no Debitador.
-                            (Elton - AMcom)               
+                            (Elton - AMcom)           
+		     
+			   07/12/2018 - Alterado cursor cr_crappla e removido a contabilização do limite de crédito
+                            ass.vllimcre - (Rubens Lima - Mouts)    
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -147,7 +150,7 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
            ass.nrdconta nrdconta_ass,
            ass.cdagenci,
            ass.cdsecext,
-           sld.vlsddisp + ass.vllimcre - sld.vlipmfap - sld.vlipmfpg vlsldtot
+		   sld.vlsddisp - sld.vlipmfap - sld.vlipmfpg vlsldtot
       from crapass ass,
            crapsld sld,
            crapcot cot,
