@@ -70,7 +70,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   -- Alterações : 03/10/2017 - Ajustes na CC Debito Histórico 851 - Marcos(Supero)
   --
   --              16/07/2018 - Adicionados históricos nos arquivos LCTOSCENTRALIZACAO.txt e LCTOSCOMPE.txt
-  --                           (Task SCTASK0010739 e SCTASK0010819 - Reinert) 
+  --                           (Task SCTASK0010739 e SCTASK0010819 - Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -234,6 +234,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --              (Ana - Envolti - Chamado 744433)
   --
   -- 06/08/2018 - Adicionado historico 2736 e 2737 (Rafael Faria - Supero PJ439)
+  --
+  -- 07/12/2018 - Alterado o numero da conta do historico 1090, conta de numero 4453. SCTASK0029392 (Douglas - Mouts)
   ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar informações de lançamentos das filiadas na central
@@ -504,7 +506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(1589).nrctades := 1452;
         vr_tab_historico(1589).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE SERVICO DE SEGURANCA E VIGILANCIA';
 
-				vr_tab_historico(1090).nrctaori := 4957;
+				vr_tab_historico(1090).nrctaori := 4453;
         vr_tab_historico(1090).nrctades := 1452;
         vr_tab_historico(1090).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PAGAMENTO PROCAPCRED';
 
