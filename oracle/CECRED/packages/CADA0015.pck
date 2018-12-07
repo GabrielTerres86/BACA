@@ -3116,6 +3116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --> Se for um procurador
     ELSIF pr_crapavt.tpctrato = 6 AND
        (nvl(pr_crapavt.dsproftl,' ') = 'PROCURADOR' OR
+        pr_crapavt.dsproftl IS NULL OR -- Se for uma exclusao
         rw_pessoa_id.tppessoa = 1) THEN
       -- verificacao para buscar pessoa de contato
       IF pr_crapavt.nrdctato <> 0 AND pr_tpoperacao <> 3 THEN
