@@ -6417,10 +6417,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                           ,pr_nrdconta            IN crapass.nrdconta%TYPE --> Número da conta cooperado
                           ,pr_ls_convenios        IN VARCHAR2 --> Lista de convênios concatenados por vírg.
                           ,pr_boletos_liquidados  IN INTEGER --> Qtde. boletos liquidados
-                          ,pr_volume_liquidacao   IN VARCHAR2 --> Volume liquidação
+                          ,pr_volume_liquidacao   IN NUMBER --> Volume liquidação
                           ,pr_qtdfloat            IN INTEGER --> Floating
-                          ,pr_vlaplicacoes        IN VARCHAR2 --> Aplicações
-                          ,pr_vldeposito          IN VARCHAR2 --> Deposito à Vista
+                          ,pr_vlaplicacoes        IN NUMBER --> Aplicações
+                          ,pr_vldeposito          IN NUMBER --> Deposito à Vista
                           ,pr_dtfimcontrato       IN VARCHAR2 --> Data fim do contrato
                           ,pr_flgdebito_reversao  IN INTEGER --> Débito reajuste da tarifa
                           ,pr_vldesconto_coo      IN NUMBER --> Valor desconto adicional COO
@@ -6467,10 +6467,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     
         -- Variaveis internas
         vr_old_boletos_liquidados   INTEGER;
-        vr_old_volume_liquidacao    VARCHAR2(40);
+        vr_old_volume_liquidacao    NUMBER;
         vr_old_qtdfloat             INTEGER;
-        vr_old_vlaplicacoes         VARCHAR2(40);
-        vr_old_vldeposito           VARCHAR2(40);
+        vr_old_vlaplicacoes         NUMBER;
+        vr_old_vldeposito           NUMBER;
         vr_old_qtdmes_reciprocidade INTEGER;
         vr_old_dtfimcontrato        VARCHAR2(40);
         vr_old_flgdebito_reversao   INTEGER;
@@ -6722,7 +6722,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             END IF;
         END LOOP;
     
-        IF to_number(nvl(pr_boletos_liquidados, 0)) <> to_number(nvl(vr_old_boletos_liquidados, 0)) THEN
+        IF nvl(pr_boletos_liquidados, 0) <> nvl(vr_old_boletos_liquidados, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6733,7 +6733,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                             ,pr_dscritic            => vr_dscritic);
         END IF;
     
-        IF to_number(nvl(pr_volume_liquidacao, 0)) <> to_number(nvl(vr_old_volume_liquidacao, 0)) THEN
+        IF nvl(pr_volume_liquidacao, 0) <> nvl(vr_old_volume_liquidacao, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6749,7 +6749,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                             ,pr_dscritic            => vr_dscritic);
         END IF;
     
-        IF to_number(nvl(pr_qtdfloat, 0)) <> to_number(nvl(vr_old_qtdfloat, 0)) THEN
+        IF nvl(pr_qtdfloat, 0) <> nvl(vr_old_qtdfloat, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6760,7 +6760,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                             ,pr_dscritic            => vr_dscritic);
         END IF;
     
-        IF to_number(nvl(pr_vlaplicacoes, 0)) <> to_number(nvl(vr_old_vlaplicacoes, 0)) THEN
+        IF nvl(pr_vlaplicacoes, 0) <> nvl(vr_old_vlaplicacoes, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6776,7 +6776,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                             ,pr_dscritic            => vr_dscritic);
         END IF;
     
-        IF to_number(nvl(pr_vldeposito, 0)) <> to_number(nvl(vr_old_vldeposito, 0)) THEN
+        IF nvl(pr_vldeposito, 0) <> nvl(vr_old_vldeposito, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6822,7 +6822,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             END IF;
         END IF;
     
-        IF to_number(nvl(pr_vldesconto_coo, 0)) <> to_number(nvl(vr_old_vldesconto_coo, 0)) THEN
+        IF nvl(pr_vldesconto_coo, 0) <> nvl(vr_old_vldesconto_coo, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6849,7 +6849,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                             ,pr_dscritic            => vr_dscritic);
         END IF;
     
-        IF to_number(nvl(pr_vldesconto_cee, 0)) <> to_number(nvl(vr_old_vldesconto_cee, 0)) THEN
+        IF nvl(pr_vldesconto_cee, 0) <> nvl(vr_old_vldesconto_cee, 0) THEN
             pc_gera_log_conv(pr_cdcooper            => pr_cdcooper
                             ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                             ,pr_cdoperador          => pr_cdoperad
@@ -6980,15 +6980,20 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         vr_idorigem VARCHAR2(100);
     
         -- Variaveis internas
-        vr_convenios      gene0002.typ_split;
-        vr_convenio       gene0002.typ_split;
-        vr_flgimpri       INTEGER;
-        vr_blnfound       BOOLEAN;
-        vr_vldesconto_coo NUMBER;
-        vr_vldesconto_cee NUMBER;
-        vr_perdesconto    VARCHAR2(1000);
-        vr_total_cee      NUMBER;
-        vr_total_coo      NUMBER;
+        vr_convenios               gene0002.typ_split;
+        vr_convenio                gene0002.typ_split;
+        vr_flgimpri                INTEGER;
+        vr_blnfound                BOOLEAN;
+        vr_volume_liquidacao       NUMBER;
+        vr_vlaplicacoes            NUMBER;
+        vr_vldeposito              NUMBER;
+        vr_vldesconto_coo          NUMBER;
+        vr_vldesconto_cee          NUMBER;
+        vr_vldescontoconcedido_coo NUMBER;
+        vr_vldescontoconcedido_cee NUMBER;
+        vr_perdesconto             VARCHAR2(1000);
+        vr_total_cee               NUMBER;
+        vr_total_coo               NUMBER;
     
         -- calendário
         rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -7011,22 +7016,27 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             INTO rw_crapdat;
         CLOSE btch0001.cr_crapdat;
     
-        vr_vldesconto_coo := to_number(nvl(pr_vldesconto_coo, 0));
-        vr_vldesconto_cee := to_number(nvl(pr_vldesconto_cee, 0));
+        vr_volume_liquidacao       := to_number(nvl(pr_volume_liquidacao, 0), '9999999999999.99');
+        vr_vlaplicacoes            := to_number(nvl(pr_vlaplicacoes, 0), '9999999999999.99');
+        vr_vldeposito              := to_number(nvl(pr_vldeposito, 0), '9999999999999.99');
+        vr_vldescontoconcedido_coo := to_number(nvl(pr_vldescontoconcedido_coo, 0), '9999999999999.99');
+        vr_vldescontoconcedido_cee := to_number(nvl(pr_vldescontoconcedido_cee, 0), '9999999999999.99');
+        vr_vldesconto_coo          := to_number(nvl(pr_vldesconto_coo, 0), '9999999999999.99');
+        vr_vldesconto_cee          := to_number(nvl(pr_vldesconto_cee, 0), '9999999999999.99');
     
         -- Efetiva a atualizacao de reciprocidade
         BEGIN
             UPDATE tbrecip_calculo
                SET qtdmes_retorno_reciproci  = pr_dtfimcontrato
                   ,flgdebito_reversao        = pr_flgdebito_reversao
-                  ,vldesconto_adicional_coo  = pr_vldesconto_coo
+                  ,vldesconto_adicional_coo  = vr_vldesconto_coo
                   ,idfim_desc_adicional_coo  = pr_dtfimadicional_coo
-                  ,vldesconto_adicional_cee  = pr_vldesconto_cee
+                  ,vldesconto_adicional_cee  = vr_vldesconto_cee
                   ,idfim_desc_adicional_cee  = pr_dtfimadicional_cee
                   ,dsjustificativa_desc_adic = pr_txtjustificativa
                   ,idvinculacao              = pr_idvinculacao
-                  ,vldesconto_concedido_coo  = pr_vldescontoconcedido_coo
-                  ,vldesconto_concedido_cee  = pr_vldescontoconcedido_cee
+                  ,vldesconto_concedido_coo  = vr_vldescontoconcedido_coo
+                  ,vldesconto_concedido_cee  = vr_vldescontoconcedido_cee
              WHERE idcalculo_reciproci = pr_idcalculo_reciproci;
         
         EXCEPTION
@@ -7040,15 +7050,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                     ,pr_nrdconta            => pr_nrdconta
                     ,pr_ls_convenios        => pr_ls_convenios
                     ,pr_boletos_liquidados  => pr_boletos_liquidados
-                    ,pr_volume_liquidacao   => pr_volume_liquidacao
+                    ,pr_volume_liquidacao   => vr_volume_liquidacao
                     ,pr_qtdfloat            => pr_qtdfloat
-                    ,pr_vlaplicacoes        => pr_vlaplicacoes
-                    ,pr_vldeposito          => pr_vldeposito
+                    ,pr_vlaplicacoes        => vr_vlaplicacoes
+                    ,pr_vldeposito          => vr_vldeposito
                     ,pr_dtfimcontrato       => pr_dtfimcontrato
                     ,pr_flgdebito_reversao  => pr_flgdebito_reversao
-                    ,pr_vldesconto_coo      => pr_vldesconto_coo
+                    ,pr_vldesconto_coo      => vr_vldesconto_coo
                     ,pr_dtfimadicional_coo  => pr_dtfimadicional_coo
-                    ,pr_vldesconto_cee      => pr_vldesconto_cee
+                    ,pr_vldesconto_cee      => vr_vldesconto_cee
                     ,pr_dtfimadicional_cee  => pr_dtfimadicional_cee
                     ,pr_txtjustificativa    => pr_txtjustificativa
                     ,pr_cdoperad            => vr_cdoperad);
@@ -7075,7 +7085,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     
         BEGIN
             UPDATE tbrecip_indica_calculo
-               SET vlcontrata = pr_volume_liquidacao
+               SET vlcontrata = vr_volume_liquidacao
              WHERE idcalculo_reciproci = pr_idcalculo_reciproci
                AND idindicador = 2;
         EXCEPTION
@@ -7086,7 +7096,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     
         BEGIN
             UPDATE tbrecip_indica_calculo
-               SET vlcontrata = pr_vlaplicacoes
+               SET vlcontrata = vr_vlaplicacoes
              WHERE idcalculo_reciproci = pr_idcalculo_reciproci
                AND idindicador = 21;
         EXCEPTION
@@ -7097,7 +7107,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     
         BEGIN
             UPDATE tbrecip_indica_calculo
-               SET vlcontrata = pr_vldeposito
+               SET vlcontrata = vr_vldeposito
              WHERE idcalculo_reciproci = pr_idcalculo_reciproci
                AND idindicador = 23;
         EXCEPTION
@@ -7155,8 +7165,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             
                 vr_perdesconto := nvl(pr_perdesconto, '');
             
-                vr_total_cee := to_number(nvl(pr_vldescontoconcedido_cee, 0)) + nvl(pr_vldesconto_cee, 0);
-                vr_total_coo := to_number(nvl(pr_vldescontoconcedido_coo, 0)) + nvl(pr_vldesconto_coo, 0);
+                vr_total_cee := vr_vldescontoconcedido_cee + vr_vldesconto_cee;
+                vr_total_coo := vr_vldescontoconcedido_coo + vr_vldesconto_coo;
             
                 IF vr_total_cee > 0 THEN
                     vr_perdesconto := fn_busca_perdesconto(1, vr_perdesconto, vr_total_cee);
@@ -7830,6 +7840,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               FROM (SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
+						  ,crapceb.dtinsori
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2
@@ -7889,12 +7900,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                                    AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
                      GROUP BY crapceb.idrecipr
                              ,crapceb.dtcadast
+							 ,crapceb.dtinsori
                              ,crapceb.nrdconta
                              ,crapceb.cdcooper
                     UNION
                     SELECT to_char(crapceb.nrconven)
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
+						  ,crapceb.dtinsori
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2
@@ -7957,7 +7970,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                   ,tbrecip_calculo cal
              WHERE ceb.idrecipr = tac.idcalculo_reciproci(+)
                AND ceb.idrecipr = cal.idcalculo_reciproci(+)
-               AND ceb.dtcadast >= to_date(pr_data_corte, 'DD/MM/RRRR')
+               AND ceb.dtinsori >= to_date(pr_data_corte, 'DD/MM/RRRR')
                AND (tac.dtalteracao_status IS NULL OR
                    tac.dtalteracao_status = (SELECT MAX(tac2.dtalteracao_status)
                                                 FROM tbrecip_aprovador_calculo tac2
@@ -8399,6 +8412,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
     
+        IF TRIM(pr_idcalculo_reciproci) IS NULL OR pr_idcalculo_reciproci = 0 THEN
+            vr_dscritic := 'Contrato informado não encontrado.';
+            RAISE vr_exc_saida;
+        END IF;
+
         pc_gera_log_conv(pr_cdcooper            => vr_cdcooper
                         ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                         ,pr_cdoperador          => vr_cdoperad

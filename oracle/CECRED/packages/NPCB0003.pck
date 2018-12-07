@@ -339,7 +339,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 26/11/2018
 
       Dados referentes ao programa:
 
@@ -347,6 +347,11 @@ END;
       Objetivo  : Rotina para converter o xml retornado via webservice em collection
 
       Alteração :
+
+      26/11/2018 - Quando o valor a cobrar é menor que zero, então atribuir zero.
+                   Isso acontece para faturas de cartão de crédito, onde o abatimento
+                   pode ser maior que o valor do título. (AJFink SCTASK0036931)
+
     ..........................................................................*/
   
     -- Cursor para ler todos os nodos que não possuem iteração
@@ -728,6 +733,11 @@ END;
       ELSE       
         pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
       END IF;
+
+      --SCTASK0036931
+      if nvl(pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar,0) < 0 then
+        pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar := 0;
+      end if;
       
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMin   := rw_valorestitulo.VlrCalcdMin;
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMax   := rw_valorestitulo.VlrCalcdMax;

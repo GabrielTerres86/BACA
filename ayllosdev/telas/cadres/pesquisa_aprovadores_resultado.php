@@ -40,8 +40,9 @@ if ( $cdalcada == '1' ) {
     $xml->add('nmoperad',$nmoperad);
     $xml->add('nriniseq',$nriniseq);
     $xml->add('nrregist',$nrregist);
+	$xml->add('cddopcao','C');
 
-    $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "BUSCA_OPERADORES_REG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "BUSCA_OPERADORES_REG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
     $qtdoperad = 0;
@@ -57,11 +58,12 @@ if ( $cdalcada == '1' ) {
 } else if ( $cdalcada == '2' || $cdalcada == '3' ) {
 
 	$xml = new XmlMensageria();
-	$xml->add('cdcooper',$cdcooper);
+	$xml->add('cdcooprt',$cdcooper);
 	$xml->add('cdoperad',$cdoperad);
 	$xml->add('nmoperad',$nmoperad);
 	$xml->add('nriniseq',$nriniseq);
 	$xml->add('nrregist',$nrregist);
+	$xml->add('cddopcao','C');
 
 	$xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_OPERADORES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);

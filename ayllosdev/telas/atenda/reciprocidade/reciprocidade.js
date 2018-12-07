@@ -90,6 +90,8 @@ var coo = false;
 var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
 var incluindoConvenio = false;
 
+var sitflcee, sitflcoo;
+
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
     if ((setorLogado != 1) && (setorLogado != 18) && (setorLogado != 20)) {
@@ -2734,11 +2736,16 @@ function validaEmiteExpede(limparCampos) {
     cJustificativaDesc.desabilitaCampo();
     
     if (limparCampos) {
-        cVldesconto_coo.val('0,00');
+        if (sitflcee !== $("#flceeexp","#divOpcaoConsulta").prop('checked')) {
         cVldesconto_cee.val('0,00');
         cDataFimAdicionalCee.val('');
+            cJustificativaDesc.val('');
+        }
+        if (sitflcoo !== $("#flcooexp","#divOpcaoConsulta").prop('checked')) {
+            cVldesconto_coo.val('0,00');
         cDataFimAdicionalCoo.val('');
         cJustificativaDesc.val('');
+    }
     }
 
     if (cddopcao == 'C')
@@ -2974,13 +2981,13 @@ function validaHabilitacaoCamposBtn(cddopcao) {
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ||
             (atualizacaoDesconto) ) {
 
-		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnContinuar.prop('disabled', true);
-		btnContinuar.attr('onclick', 'return false;');
+        btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+        btnContinuar.prop('disabled', true);
+        btnContinuar.attr('onclick', 'return false;');
 
-		btnAprovacao.removeClass('botaoDesativado');
-		btnAprovacao.prop('disabled', false);
-		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
+                    btnAprovacao.removeClass('botaoDesativado');
+                    btnAprovacao.prop('disabled', false);
+                    btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
 	} else {
 		btnContinuar.removeClass('botaoDesativado');
@@ -3099,20 +3106,20 @@ function abrirAprovacao(hideBtnDetalhes) {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            if (response.substr(0, 14) == 'hideMsgAguardo') {
+			if (response.substr(0,14) == 'hideMsgAguardo') {
                 eval(response);
             } else {
                 var telaAprovacao = $('#telaAprovacao');
                 $("#divConteudoOpcao").hide();
                 telaAprovacao.html(response);
-                telaAprovacao.find('#btVoltar').click(function () {
+				telaAprovacao.find('#btVoltar').click(function (){
                     acessaOpcaoContratos();
                     telaAprovacao.html('');
                 });
                 if (hideBtnDetalhes) {
                     telaAprovacao.find('#btDetalhes').hide();
                 } else {
-                    telaAprovacao.find('#btDetalhes').click(function () {
+					telaAprovacao.find('#btDetalhes').click(function (){
                         telaAprovacao.hide();
                         acessaOpcaoDescontos('C');
                     });
@@ -3156,13 +3163,13 @@ function abrirRejeicao() {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
-            if (response.substr(0, 14) == 'hideMsgAguardo') {
+			if (response.substr(0,14) == 'hideMsgAguardo') {
                 eval(response);
             } else {
                 var telaRejeicao = $('#telaRejeicao');
                 $("#divConteudoOpcao").hide();
                 telaRejeicao.html(response);
-                telaRejeicao.find('#btVoltar').click(function () {
+				telaRejeicao.find('#btVoltar').click(function (){
                     acessaOpcaoContratos();
                 });
             }

@@ -20,7 +20,7 @@ isPostMethod();
 $cdcooper = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 
 $xml = new XmlMensageria();
-$xml->add('cdcooper',$cdcooper);
+$xml->add('cdcooprt',$cdcooper);
 
 $xmlResult = mensageria($xml, "TELA_CADRES", "VALIDA_ALCADA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);

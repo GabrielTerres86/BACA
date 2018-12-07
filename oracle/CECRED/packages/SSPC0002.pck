@@ -1480,6 +1480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
                                    ,pr_flg_impri => 'N'
                                    ,pr_nmformul  => ' '
                                    ,pr_nrcopias  => 1
+                                   ,pr_nrvergrl  => 1
+                                   ,pr_parser    => 'R'
                                    ,pr_des_erro  => vr_dscritic);
 
       -- copia contrato pdf do diretorio da cooperativa para servidor web
@@ -1953,7 +1955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
         -- Verifica o tipo que devera ser impresso
         IF pr_tpimpres = 1 THEN
             -- Se for Adesao
-            vr_dsjasper := 'termo_adesao_cob_reg.jasper';
+            vr_dsjasper := 'termo_adesao_cob_reg_novo.jasper';
             vr_nmarqim  := '/TermoAbertura_' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
         ELSIF pr_tpimpres = 2 THEN
             -- Se for cancelamento
