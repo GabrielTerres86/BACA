@@ -15,6 +15,10 @@
                03/10/2018 - Procedure para receber nova opcao de exclusao na 
                             tela devolu.
                             Chamado SCTASK0029653 - Gabriel (Mouts).
+							
+               07/12/2018 - Melhoria no processo de devoluções de cheques.
+                            Alcemir Mout's (INC0022559).
+							
    
 ............................................................................ */
 
@@ -64,6 +68,9 @@ DEF VAR aux_inchqdev AS INTE                                           NO-UNDO.
 DEF VAR aux_cdhistor AS INTE                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgpagin AS LOG                                            NO-UNDO.
+DEF VAR aux_cdbandep AS INTE                                           NO-UNDO.
+DEF VAR aux_cdagedep AS INTE                                           NO-UNDO.
+DEF VAR aux_nrctadep AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -118,9 +125,11 @@ PROCEDURE valores_entrada:
             WHEN "vllanmto" THEN aux_vllanmto = DECI(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
-            
-        END CASE.
-
+            WHEN "cdbandep" THEN aux_cdbandep = INTE(tt-param.valorCampo).
+            WHEN "cdagedep" THEN aux_cdagedep = INTE(tt-param.valorCampo).
+            WHEN "nrctadep" THEN aux_nrctadep = DECI(tt-param.valorCampo).
+			
+	    END CASE.
     END. /** Fim do FOR EACH tt-param **/
 
     FOR EACH tt-param-i 
@@ -157,7 +166,13 @@ PROCEDURE valores_entrada:
                     WHEN "nrdctitg" THEN
                         tt-desmarcar.nrdctitg = DEC(tt-param-i.valorCampo).
                     WHEN "nrdrecid" THEN
-                        STRING(tt-desmarcar.nrdrecid) = STRING(tt-param-i.valorCampo).
+                        STRING(tt-desmarcar.nrdrecid) = STRING(tt-param-i.valorCampo).						
+					WHEN "cdbandep" THEN
+                        tt-desmarcar.cdbandep = INT(tt-param-i.valorCampo).
+                    WHEN "cdagedep" THEN
+                        tt-desmarcar.cdagedep = INT(tt-param-i.valorCampo).
+                    WHEN "nrctadep" THEN
+					    tt-desmarcar.nrctadep = DEC(tt-param-i.valorCampo).
                     WHEN "flag" THEN
                         tt-desmarcar.flag = LOGICAL(tt-param-i.valorCampo). 
                END CASE.
@@ -298,6 +313,9 @@ PROCEDURE verifica-folha-cheque:
                               INPUT aux_cdagechq,
                               INPUT aux_cddsitua,
                               INPUT aux_nrdrecid,
+							  INPUT aux_cdbandep,
+							  INPUT aux_cdagedep,
+							  INPUT aux_nrctadep,
                               INPUT aux_flag,
                               OUTPUT TABLE tt-erro).
 
@@ -369,6 +387,9 @@ PROCEDURE geracao-devolu:
                     INPUT aux_nrdocmto,
                     INPUT aux_nmdatela,
                     INPUT aux_flag,
+					INPUT aux_cdbandep,
+					INPUT aux_cdagedep,
+					INPUT aux_nrctadep,
                     INPUT TABLE tt-desmarcar,
                     OUTPUT TABLE tt-erro).
 
@@ -496,7 +517,11 @@ PROCEDURE altera-alinea:
                              INPUT aux_nrctachq,
                              INPUT aux_nrdocmto,
                              INPUT aux_cdalinea,
-                             INPUT aux_cdoperad,                             
+                             INPUT aux_cdoperad, 
+                             INPUT aux_cdbandep,
+							 INPUT aux_cdagedep,
+							 INPUT aux_nrctadep,
+							 INPUT aux_vllanmto,								 
                              OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
@@ -525,7 +550,11 @@ PROCEDURE excluir-cheque-devolu:
                                      INPUT aux_nrdconta,
                                      INPUT aux_nrctachq,
                                      INPUT aux_nrdocmto,
-                                     INPUT aux_cdoperad,                             
+                                     INPUT aux_cdoperad, 
+								     INPUT aux_cdbandep,
+									 INPUT aux_cdagedep,
+									 INPUT aux_nrctadep,
+									 INPUT aux_vllanmto,
                                      OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:

@@ -6,7 +6,9 @@
  * OBJETIVO     : Requisição de Conta da tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
- *
+ *     
+ *                07/12/2018 - Melhoria no processo de devoluções de cheques.
+ *                             Alcemir Mout's (INC0022559).
  * --------------
  */
 ?>
@@ -117,5 +119,7 @@
 		$lancamento = $xmlObjeto->roottag->tags[1]->tags;
 		include('tab_devolu_conta.php');
 	}
+	
+	include('form_depositante.php');
 
 ?>

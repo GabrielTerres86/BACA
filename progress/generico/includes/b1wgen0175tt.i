@@ -12,6 +12,10 @@
                
     Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                              de cheques (Lucas Ranghetti #484923)
+				
+			    07/12/2018 - Melhoria no processo de devoluções de cheques.
+                             Alcemir Mout's (INC0022559).
+
                             
 ..............................................................................*/
 
@@ -29,7 +33,10 @@ DEF TEMP-TABLE tt-devolu NO-UNDO
     FIELD vlsldprp AS DECIMAL
     FIELD dsaplica AS CHAR 
     FIELD dtliquid AS DATE
-    FIELD nrctachq AS DEC.
+    FIELD nrctachq AS DEC
+	FIELD cdbandep AS INT
+	FIELD cdagedep AS INT
+	FIELD nrctadep AS DEC.
 
 DEF TEMP-TABLE tt-telefones NO-UNDO    
     FIELD idseqttl LIKE craptfc.idseqttl
@@ -59,13 +66,19 @@ DEF TEMP-TABLE tt-lancto NO-UNDO
     FIELD vlaplica AS DECIMAL
     FIELD vlsldprp AS DECIMAL
     FIELD dsaplica AS CHAR
-    FIELD dstabela AS CHAR.
+    FIELD dstabela AS CHAR
+	FIELD cdbandep AS INT
+	FIELD cdagedep AS INT
+	FIELD nrctadep AS DEC.
     
 DEF TEMP-TABLE tt-desmarcar NO-UNDO    
     FIELD nrcheque AS DEC
     FIELD cdbanchq AS INT
     FIELD cdagechq AS INT
-    FIELD nrdconta AS DEC
+    FIELD cdbandep AS INT
+    FIELD cdagedep AS INT
+    FIELD nrctadep AS DEC
+	FIELD nrdconta AS DEC
     FIELD cdalinea AS INT
     FIELD vllanmto AS DEC
     FIELD nrctachq AS DEC
