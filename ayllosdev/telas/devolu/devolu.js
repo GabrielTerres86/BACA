@@ -18,7 +18,10 @@
  *
  *                03/10/2018 - Scripts para tratamento de opcao de excluir.
  *                             Bruno Luiz K. - Chamado SCTASK0029653 (Mouts).
- * 
+ *              
+ *                07/12/2018 - Melhoria no processo de devoluções de cheques.
+ *                             Alcemir Mout's (INC0022559).
+ *  
  */
 
 // Definição de algumas variáveis globais
@@ -203,6 +206,33 @@ function formataSenhaSistema() {
 	cCodsenha.focus();
 
 	return false;
+
+}
+
+function formataDepositante(){
+
+	highlightObjFocus($('#frmDepositante'));
+
+	rCdbandep = $('label[for="cdbandep"]','#frmDepositante');
+	cCdbandep = $('#cdbandep', '#frmDepositante');
+
+	rCdbandep.css({'width':'335px'});
+	cCdbandep.addClass('campoTelaSemBorda').css({'width':'55px'});
+
+	rCdagedep = $('label[for="cdagedep"]','#frmDepositante');
+	cCdagedep = $('#cdagedep', '#frmDepositante');
+
+	rCdagedep.css({'width':'60px'});
+	cCdagedep.addClass('campoTelaSemBorda').css({'width':'55px'});
+
+	rNrctadep = $('label[for="nrctadep"]','#frmDepositante');
+	cNrctadep = $('#nrctadep', '#frmDepositante');
+
+	rNrctadep.css({'width':'47px'});
+	cNrctadep.addClass('campoTelaSemBorda').css({'width':'100px'});	
+	
+	return false;
+
 }
 
 // Formata a exibicao dos campos na tela
@@ -410,6 +440,7 @@ function BuscaDevolu(nriniseq, nrregist,opcao) {
                         } else {
 							formataTabelaLancto();
                         }
+                        formataDepositante();
 					} catch(error) {
                         hideMsgAguardo();
                         showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
@@ -442,6 +473,7 @@ function formataTabelaDevolu() {
 	// Tabela
 	$('#tabDevoluDados').css({'display':'block'});
     $('#divResultado').css({'display':'block'});
+    $('#divDepositante').css({'display':'block'});
 
     var divRegistro = $('div.divRegistros', '#tabDevoluDados');
 	var tabela      = $('table', divRegistro );
@@ -547,6 +579,10 @@ function excluir_cheque_devolu(){
                      nrdconta : nrdconta_tab,
                      nrctachq : nrctachq,
                      nrdocmto : nrcheque,
+                     cdbandep : cdbandep,
+                     cdagedep : cdagedep,
+                     nrctadep : nrctadep,
+					 vllanmto : vllanmto,
                      redirect: 'script_ajax'
                 }, 
         error: function(objAjax,responseError,objExcept) {
@@ -685,6 +721,14 @@ function selecionaTabela(tr) {
     nrctachq = $('#nrctachq', tr).val();
 	alinea   = $('#cdalinea', tr).val();
     nmoperad = $('#nmoperad', tr).val();
+    cdbandep = $('#cdbandep', tr).val();
+    cdagedep = $('#cdagedep', tr).val();
+    nrctadep = $('#nrctadep', tr).val();
+
+    $("#cdbandep","#frmDepositante").val(cdbandep);
+	$("#cdagedep","#frmDepositante").val(cdagedep);
+	$("#nrctadep","#frmDepositante").val(nrctadep);
+	
 	nrdconta_tab = $('#nrdconta', tr).val();
     flag     = $('#flag', tr).val();
 	dstabela = $('#dstabela', tr).val();
@@ -910,6 +954,9 @@ function verifica_folha_cheque() {
                     cddsitua : cddsitua,
                     nrdrecid : nrdrecid,
                     vllanmto : vllanmto,
+                    cdbandep : cdbandep,
+                    cdagedep : cdagedep,
+                    nrctadep : nrctadep,
                     flag     : flag,
                     redirect: 'script_ajax'
                 },
@@ -1120,6 +1167,10 @@ function alteraAlinea(){
                     nrctachq : nrctachq,
                     nrdocmto : nrcheque,
                     cdalinea : cdalinea,
+					vllanmto : vllanmto,
+					cdbandep : cdbandep,
+                    cdagedep : cdagedep,
+                    nrctadep : nrctadep,
                     redirect: 'script_ajax'
                 },
         error: function(objAjax,responseError,objExcept) {
@@ -1166,6 +1217,9 @@ function geracao_devolu() {
                     nrctachq : nrctachq,
                     nrdocmto : nrcheque,
 					flag     : flag,
+					cdbandep : cdbandep,
+					cdagedep : cdagedep,
+					nrctadep : nrctadep,
 					camposDc : camposDc,
 					dadosDc  : dadosDc,
                     redirect : 'script_ajax'
