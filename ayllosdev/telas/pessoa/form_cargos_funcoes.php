@@ -28,7 +28,7 @@
 	
 		<fieldset id="fsetCooperado" name="fsetCooperado" style="padding:0px; margin:0px; padding-bottom:10px;">
 			
-			<legend><? echo "Cooeperado"; ?></legend>
+			<legend><? echo "Cooperado"; ?></legend>
 			
 			<table  style="border:0px solid black;width:720px;padding:2px;">
 				<tr>
