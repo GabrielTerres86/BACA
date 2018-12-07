@@ -359,6 +359,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       EXC_LCT_NAO_EXISTE exception;
       --
       BEGIN
+    -- Monta tabela de históricos de pagamento e respectivo histórico de estorno
+		-- Reginaldo/AMcom - P450 - 07/12/2018
+		vr_tab_historicos(2388).cdhistor := 2392;
+		vr_tab_historicos(2388).dscritic := 'valor principal';
+		vr_tab_historicos(2473).cdhistor := 2474;
+		vr_tab_historicos(2473).dscritic := 'juros +60';
+		vr_tab_historicos(2389).cdhistor := 2393;
+		vr_tab_historicos(2389).dscritic := 'juros atualizacao';
+		vr_tab_historicos(2390).cdhistor := 2394;
+		vr_tab_historicos(2390).dscritic := 'multa atraso';
+		vr_tab_historicos(2475).cdhistor := 2476;
+		vr_tab_historicos(2475).dscritic := 'juros mora';
+		vr_tab_historicos(2391).cdhistor := 2394;
+		vr_tab_historicos(2391).dscritic := 'abono';
+		vr_tab_historicos(2701).cdhistor := 2702;
+		vr_tab_historicos(2701).dscritic := 'pagamento parcela';
 
     -- Buscar Calendário
         OPEN btch0001.cr_crapdat(pr_cdcooper);
@@ -639,23 +655,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                 END IF;
 							END IF;
             END IF;
-						
-						-- Monta tabela de históricos de pagamento e respectivo histórico de estorno
-						-- Reginaldo/AMcom - P450 - 07/12/2018
-						vr_tab_historicos(2388).cdhistor := 2392;
-						vr_tab_historicos(2388).dscritic := 'valor principal';
-						vr_tab_historicos(2473).cdhistor := 2474;
-						vr_tab_historicos(2473).dscritic := 'juros +60';
-						vr_tab_historicos(2389).cdhistor := 2393;
-						vr_tab_historicos(2389).dscritic := 'juros atualizacao';
-						vr_tab_historicos(2390).cdhistor := 2394;
-						vr_tab_historicos(2390).dscritic := 'multa atraso';
-						vr_tab_historicos(2475).cdhistor := 2476;
-						vr_tab_historicos(2475).dscritic := 'juros mora';
-						vr_tab_historicos(2391).cdhistor := 2394;
-						vr_tab_historicos(2391).dscritic := 'abono';
-						vr_tab_historicos(2701).cdhistor := 2702;
-						vr_tab_historicos(2701).dscritic := 'pagamento parcela';
 						
 						empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
 																						 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
