@@ -1080,6 +1080,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
      where edi.rowid = pr_rowid;
     rw_busca_edital_rowid cr_busca_edital_rowid%rowtype;
 
+    -- Para ativar edital mais recente
+    cursor cr_buscar_edital (pr_cdcooper in tbevento_exercicio.cdcooper%type) is
+    select edi.rowid
+      from tbevento_exercicio edi
+     where edi.cdcooper = pr_cdcooper
+     order
+        by edi.nrano_exercicio desc;
+    rw_buscar_edital cr_buscar_edital%rowtype;
+
   begin
       
     -- Incluir nome do módulo logado
@@ -1166,6 +1175,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao excluir período: ' || sqlerrm;
+        raise vr_exc_saida;
+
+    end;
+
+    -- Buscar edital
+    open cr_buscar_edital (vr_cdcooper);
+    fetch cr_buscar_edital into rw_buscar_edital;
+    close cr_buscar_edital;
+    
+    begin
+
+       update tbevento_exercicio c
+          set c.flgativo = 1
+        where c.rowid    = rw_buscar_edital.rowid;
+           
+    exception 
+      
+      when others then
+        
+        -- Montar mensagem de critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao ativar período: ' || sqlerrm;
         raise vr_exc_saida;
 
     end;
