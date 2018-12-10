@@ -484,61 +484,6 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
 
       PAUSE (2) NO-MESSAGE.
 
-	   msg_cdhiscxa = "".
-       msg_cdhisrep = "".
-       msg_cdhisdeb = "".
-       msg_msgcdhis = "".
-            
-          FOR EACH crapcop WHERE crapcop.flgativo = TRUE NO-LOCK BY crapcop.cdcooper:
-          
-            IF tel_cdhiscxa <> 0 AND tel_cdhiscxa <> ? THEN
-              DO:    
-              IF NOT CAN-FIND(craphis WHERE craphis.cdcooper = crapcop.cdcooper
-                          and craphis.cdhistor = tel_cdhiscxa NO-LOCK) THEN
-                 DO:
-   
-                     msg_cdhiscxa = msg_cdhiscxa + STRING(crapcop.cdcooper) + " - " + STRING(crapcop.nmrescop) + ", ".
-                 END.
-              END.
-              
-            IF tel_cdhisrep <> 0 AND tel_cdhisrep <> ? THEN
-              DO:    
-              IF NOT CAN-FIND(craphis WHERE craphis.cdcooper = crapcop.cdcooper
-                          and craphis.cdhistor = tel_cdhisrep NO-LOCK) THEN
-                 DO:
-   
-                     msg_cdhisrep = msg_cdhisrep + STRING(crapcop.cdcooper) + " - " + STRING(crapcop.nmrescop) + ", ".
-                 END.
-              END.
-              
-            IF tel_cdhisdeb <> 0 AND tel_cdhisdeb <> ? THEN
-              DO:    
-              IF NOT CAN-FIND(craphis WHERE craphis.cdcooper = crapcop.cdcooper
-                          and craphis.cdhistor = tel_cdhisdeb NO-LOCK) THEN
-                 DO:
-   
-                     msg_cdhisdeb = msg_cdhisdeb + STRING(crapcop.cdcooper) + " - " + STRING(crapcop.nmrescop) + ", ".
-                 END.
-              END.
-          END.
-       
-       
-          IF msg_cdhiscxa <> "" THEN
-             msg_msgcdhis = msg_msgcdhis + "Hist. Pagto " + STRING(tel_cdhiscxa) + " nao esta cadastrado para a(s) cooperativas: " + SUBSTRING(msg_cdhiscxa, 1, LENGTH(msg_cdhiscxa) - 2) + "\n".
-             
-          IF msg_cdhisrep <> "" THEN
-             msg_msgcdhis = msg_msgcdhis + "Hist. Repasse Ailos " + STRING(tel_cdhiscxa) + " nao esta cadastrado para a(s) cooperativas: " + SUBSTRING(msg_cdhisrep, 1, LENGTH(msg_cdhisrep) - 2) + "\n".           
- 
-          IF msg_cdhisdeb <> "" THEN
-             msg_msgcdhis = msg_msgcdhis + "Hist. Automatico " + STRING(tel_cdhiscxa) + " nao esta cadastrado para a(s) cooperativas: " + SUBSTRING(msg_cdhisdeb, 1, LENGTH(msg_cdhisdeb) - 2) + "\n". 
-          
-          
-          IF msg_msgcdhis <> "" THEN
-             DO:
-             MESSAGE msg_msgcdhis + " Favor solicitar a inclusao"
-             VIEW-AS ALERT-BOX.
-             LEAVE.
-             END.
 
       CREATE gnconve.
 
