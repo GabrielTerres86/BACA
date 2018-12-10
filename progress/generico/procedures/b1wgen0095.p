@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 26/10/2018
+    Data    : Junho/2011                         Ultima Atualizacao: 09/10/2017
 
     Dados referentes ao programa:
 
@@ -79,11 +79,6 @@
               
                09/10/2017 - Alterar a ordem da gravacao da variavel aux_flagprov dentro 
                             procedure inclui-contra (Lucas Ranghetti #744217)
-							
-				26/10/2018 - Correcao para permitir incluir uma contra ordem apenas para cheques
-				             com data de compensacao maior ou igual ao ultima dia util em relacao
-							 a data atual de movimento (d - 1)
-							 (Jonata - Mouts SCTASK0014736).
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -106,38 +101,6 @@ DEF VAR h-b1wgen9999 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0024 AS HANDLE                                         NO-UNDO.
 
 DEF STREAM str_1.
-
-/*Funcao para retornar o ultimo dia util anterior a data atual.*/
-FUNCTION fn_dia_util_anterior RETURN DATE
- (INPUT  p-cdcooper AS INTE,
-  INPUT  p-dtvencto AS DATE,
-  INPUT  p-qtdddias AS INTE).
-  
-    DEF VAR   aux_qtdddias  AS INTE.
-    DEF VAR   aux_dtvencto  AS DATE.
-
-    ASSIGN aux_qtdddias = p-qtdddias
-           aux_dtvencto = p-dtvencto.
-
-    DO WHILE aux_qtdddias > 0:
-
-      aux_dtvencto = aux_dtvencto - 1.
-
-      IF  CAN-DO("1,7",STRING(WEEKDAY(aux_dtvencto)))            OR
-          CAN-FIND(crapfer WHERE crapfer.cdcooper = p-cdcooper  AND
-                                 crapfer.dtferiad = aux_dtvencto)  THEN
-      DO:
-          NEXT.
-      END.
-
-      aux_qtdddias = aux_qtdddias - 1.
-	  
-   END. /** Fim do DO WHILE TRUE **/
-
-   RETURN aux_dtvencto.
-   
-END.
-
 
 /*............................ PROCEDURES EXTERNAS ..........................*/
 
@@ -3895,7 +3858,6 @@ PROCEDURE valida-contra:
     DEF VAR aux_nrchqsdv AS INTE                                       NO-UNDO.
     DEF VAR aux_flggerou AS LOGI                                       NO-UNDO.
     DEF VAR aux_cdcriti2 AS INTE                                       NO-UNDO.
-    DEF VAR aux_dtrefere AS DATE									   NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcriti2 = 0
@@ -3905,9 +3867,6 @@ PROCEDURE valida-contra:
     
     Valida: DO WHILE TRUE:
 
-		/* Buscar o ultimo dia útil baseado na quantidade de dias de Float */
-		ASSIGN aux_dtrefere = fn_dia_util_anterior(par_cdcooper, crapdat.dtmvtolt, 1).
-		
         /* Verifica se algum cheque necessita de senha */
         IF  aut_cdoperad = "" THEN
             DO:
@@ -4085,12 +4044,6 @@ PROCEDURE valida-contra:
                         ASSIGN aux_cdcriti2 = 111.
                     END.
                 ELSE
-                IF  par_cddopcao = "I"              AND 
-                    aux_dtrefere > crapfdc.dtliqchq THEN 
-                    DO:
-                        ASSIGN aux_dscritic = "Inclusao permitida apenas para cheques compensados a partir de " + String(aux_dtrefere,"99/99/9999") + " (D -1).".
-                    END.
-				ELSE
                 IF  crapfdc.incheque = 8  THEN
                     DO:
                         ASSIGN aux_cdcriti2 = 320.
