@@ -143,7 +143,7 @@ function formatarTabelaHistorico(){
     //$('#fsetFiltro').css({ 'padding': '0 10px 10px 195px' });
     var divRegistro = $('div.divRegistros', '#divCarga');
     divRegistro.css({'padding-bottom':'1px'}); // 370px
-    
+
     var tabela      = $('table', divRegistro );
     var linha       = $('table > tbody > tr', divRegistro );
 
@@ -151,7 +151,7 @@ function formatarTabelaHistorico(){
 
     var arrayLargura = new Array();
     var arrayAlinha = new Array();
-    
+
     arrayLargura[0] = '47px';   //Codigo
     arrayLargura[1] = '250px';  //Modelo Score
     arrayLargura[2] = '79px';   //Data Atualizacao
@@ -163,7 +163,7 @@ function formatarTabelaHistorico(){
     arrayLargura[8] = '78px';   //Quantidade Juridica
     arrayLargura[9] = '79px';   //Situacao
     arrayLargura[10] = '14px';   // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
-    
+
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
@@ -183,7 +183,7 @@ function formatarTabelaHistorico(){
         $('#divMotivo').css({ 'display': 'block' });
         $('table', '#divMotivo').find('#txtdsrejeicao').val(dsrejeicao);
     });
-	
+
 	$('#dtbase').setMask("STRING", "99/9999", "/", "");
 
 }
@@ -192,10 +192,10 @@ function initBotoesTabelaCarga(){
     $('#btAprovar', '#divBotoes').unbind('click').bind('click', function(){
         var linhaSel = $('table', '#divCarga').find('tr.corSelecao');
         var cdmodelo = $(linhaSel).attr('id');
-        var dsmodelo = $(linhaSel).find('td#dsmodelo').find('span').text();
-        var dtbase = $(linhaSel).find('td#dtbase').find('span').text();
+        var dsmodelo = $(linhaSel).find('td.dsmodelo').find('span').text();
+        var dtbase = $(linhaSel).find('td.dtbase').find('span').text();
 
-        if(linhaSel.length == 0 || cdmodelo == undefined){
+        if (linhaSel.length == 0 || cdmodelo == undefined) {
             showError("error", "Nenhum registro selecionado.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         } else {
             validaPermissao('A', cdmodelo, dsmodelo, dtbase);
@@ -208,7 +208,7 @@ function initBotoesTabelaCarga(){
         var dsmodelo = $(linhaSel).find('td.dsmodelo').find('span').text();
         var dtbase = $(linhaSel).find('td.dtbase').find('span').text();
 
-        if(linhaSel.length == 0 || cdmodelo == undefined){
+        if (linhaSel.length == 0 || cdmodelo == undefined) {
             showError("error", "Nenhum registro selecionado.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         } else {
             validaPermissao('R', cdmodelo, dsmodelo, dtbase);
@@ -234,7 +234,6 @@ function processarCarga(opcao, cdmodelo, dtbase, dsrejeicao){
             showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
-
             hideMsgAguardo();
             refreshCarga();
             try {
@@ -261,18 +260,17 @@ function validaPermissao(cddopcao, cdmodelo, dsmodelo, dtbase){
             showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
-
             hideMsgAguardo();
             try {
-                if (response ==''){
+                if (response =='') {
                     var tipoExec = cddopcao == 'A' ? 'aprovar' : 'rejeitar';
 
-                    if(cddopcao == 'A'){
+                    if (cddopcao == 'A') {
                         showConfirmacao('Deseja realmente ' + tipoExec + ' a carga do modelo ' + dsmodelo + ' com data base ' + dtbase + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'processarCarga("' + cddopcao + '", "' + cdmodelo + '", "' + dtbase + '", "");', '', 'sim.gif', 'nao.gif');
-                    } else{
+                    } else {
                         showConfirmacao('Deseja realmente ' + tipoExec + ' a carga do modelo ' + dsmodelo + ' com data base ' + dtbase + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostrarMotivo("' + cdmodelo + '", "' + dtbase + '");', '', 'sim.gif', 'nao.gif');
                     }
-                } else{
+                } else {
                     showError("error",response,'Alerta - Ayllos','',false);                         
                 }
             } catch (error) {
@@ -285,7 +283,7 @@ function validaPermissao(cddopcao, cdmodelo, dsmodelo, dtbase){
 
 function mostrarMotivo(cdmodelo, dtbase){
 	showMsgAguardo("Aguarde, processando carga ...");
-	
+
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -310,12 +308,12 @@ function mostrarMotivo(cdmodelo, dtbase){
 function formatarMotivo (cdmodelo, dtbase) {
     $('html, body').animate({scrollTop:0}, 'fast');
     $('#dsmotivo', '#frmMotivo').css({width:'500px', height:'100px'}).addClass('campo').focus().val('');
-    
+
     $('#btContinuarMotivo').unbind('click').bind('click', function () {
         processarCarga('R', cdmodelo, dtbase, $('#dsmotivo', '#frmMotivo').val());
         return false;
     });
-    
+
     $('#btVoltarMotivo').unbind('click').bind('click', function () {
         fechaRotina($('#divRotina'));
         return false;
@@ -325,14 +323,12 @@ function formatarMotivo (cdmodelo, dtbase) {
 //function deletarScore(operacao) {
 function exluirScore(operacao){
     showMsgAguardo("Aguarde, processando carga ...");
-	
+
 //	cdmodelo = $(".corSelecao .cdmodelo input").val();
 //	dtbase = $(".corSelecao .dtbase input").val();
 
 	if (operacao == "") {
-
 		showConfirmacao('Deseja continuar com a Exclus&atilde;o? Esta opera&ccedil;&atilde;o n&atilde;o poder&aacute ser desfeita!', 'Confirma&ccedil;&atilde;o - Aimaro', 'exluirScore(\'Confirma\')', 'hideMsgAguardo();', 'sim.gif', 'nao.gif');
-	
 	} else {
 		var linhaSel = $('table', '#divCarga').find('tr.corSelecao');
 		var cdmodelo = $(linhaSel).attr('id');
@@ -353,7 +349,6 @@ function exluirScore(operacao){
 				showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "");
 			},
 			success: function (response) {
-
 			   if (response.indexOf('showError("error"') == -1) {
 					hideMsgAguardo();
 					$('#divConteudoOpcao').html(response);
