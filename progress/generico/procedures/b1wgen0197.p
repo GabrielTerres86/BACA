@@ -14,8 +14,6 @@
    Alteracoes: 14/11/2017 - Auste para consulta dos produtos impeditivos (Jonata - RKAM P364).
 
                22/11/2017 - Corrigido consulta de seguros para encontrar somente os ativos (Jonata - RKAM p364).
-			   
-               30/11/2018 - Corrigido o cancelamento de PLano de Cotas (Andrey Formigari - Mouts).
    
 ............................................................................ */
 
@@ -600,9 +598,6 @@ PROCEDURE canc_auto_produtos:
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
-	DEF VAR aux_tpautori AS INTE                                    NO-UNDO.
-	
-	ASSIGN aux_tpautori = 0.
 
     FOR FIRST crapass FIELDS(dtdemiss)
                       WHERE crapass.cdcooper = par_cdcooper AND
@@ -627,7 +622,6 @@ PROCEDURE canc_auto_produtos:
                                                       INPUT par_idorigem,
                                                       INPUT par_nrdconta,
                                                       INPUT par_idseqttl,
-													  INPUT aux_tpautori, /* Tipo de Autorizacao (0 = Default, 1 = Senha, 2 = Assinatura) */
                                                       OUTPUT TABLE tt-erro,
                                                       OUTPUT TABLE tt-cancelamento).
             DELETE PROCEDURE h-b1wgen0021.

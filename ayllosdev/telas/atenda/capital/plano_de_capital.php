@@ -3,39 +3,39 @@
 	/************************************************************************
 	 Fonte: plano_de_capital.php                                      
 	 Autor: David                                                     
-	 Data : Outubro/2007                 Ultima Alteracao: 30/11/2018 
+	 Data : Outubro/2007                 Ultima Alteracao: 14/11/2017 
 	                                                                  
 	 Objetivo  : Mostrar opcao Plano de Capital o da rotina de        
 	             Capital da tela ATENDA                               
 	                                                                   
 	 Alteracoes: 04/09/2009 - Tratar tamanho do div (David).          
 	                                                                   
-	 			 18/05/2012 - Retirado attr. target="_blank" de form  
-							  frmTermoCancela.      				   
+	 			       18/05/2012 - Retirado attr. target="_blank" de form  
+							              frmTermoCancela.      				   
                             
-			     09/07/2012 - Retirado campo "redirect" popup.(Jorge) 
+			     	  09/07/2012 - Retirado campo "redirect" popup.(Jorge) 
               
-	             10/09/2013 - Alterado para sempre mostrar os botoes  
+	            10/09/2013 - Alterado para sempre mostrar os botoes  
 	                          'Imprimir Plano', 'Cancelar Plano Atual'
 	                          e 'Cadastrar Novo Plano'. (Fabricio)    
                             
-	             26/02/2014 - Adicionado campo                        
+	            26/02/2014 - Adicionado campo                        
 	                          'Atualizacao Automatica' e tratado para 
 	                          adicionar botao 'Alterar Plano' quando  
 	                          da existencia de um plano ativo.        
 	                          (Fabricio)            
                             
-	             17/06/2016 - M181 - Alterar o CDAGENCI para          
-                              passar o CDPACTRA (Rafael Maciel - RKAM) 
+	            17/06/2016 - M181 - Alterar o CDAGENCI para          
+                           passar o CDPACTRA (Rafael Maciel - RKAM) 
                            
-                 22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
-                              para coleta da assinatura (Jonata - RKAM / M294).   
+                22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
+                             para coleta da assinatura 
+                            (Jonata - RKAM / M294).   
                           
-			     14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando (Jonata - RKAM P364).
+			   14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando (Jonata - RKAM P364).
 			   
-			     14/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
-				 
-				 30/11/2017 - Ajuste para mostrar a data de pagamento no campo Data de Inicio (Andrey Formigari - Mouts).
+			   14/11/2017 - Ajuste para gravar o tipo de Autorizacao (Andrey Formigari - Mouts).
+
                           
 	***********************************************************************/
 	
@@ -204,7 +204,7 @@ $("#flgpagto","#frmNovoPlano").unbind("change");
 $("#flgpagto","#frmNovoPlano").bind("change",function() {
 	if ($(this).val() == "no") { // Se for d&eacute;bito em Conta
 		$("#dtdpagto","#frmNovoPlano").removeProp("disabled").removeClass("campoTelaSemBorda").attr("class","campo");; 
-		$("#dtdpagto","#frmNovoPlano").val("<?php echo $plano[3]->cdata; ?>");
+		$("#dtdpagto","#frmNovoPlano").val("<?php echo $glbvars["dtmvtolt"]; ?>");
 		$("#dtdpagto","#frmNovoPlano").bind("keydown",function(e) { return $(this).setMaskOnKeyDown("DATE","","",e); });
 		$("#dtdpagto","#frmNovoPlano").bind("keyup",function(e) { return $(this).setMaskOnKeyUp("DATE","","",e); });
 		$("#dtdpagto","#frmNovoPlano").bind("blur",function() { return $(this).setMaskOnBlur("DATE","","","divRotina"); });
