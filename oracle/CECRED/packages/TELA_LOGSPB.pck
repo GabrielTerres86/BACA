@@ -417,7 +417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       vr_nmcliedb := sspb0003.fn_busca_conteudo_campo(pr_dsxml_completo,'NomCliDebtd_Remet','S'); -- NomCliDebtd_Remet
     END IF;
     --
-    RETURN(vr_nmcliedb);
+    RETURN(Upper(vr_nmcliedb));
   END fn_define_nome_debito;
 
   FUNCTION fn_define_cnpj_cpf_credito (pr_dsxml_completo IN CLOB)
@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       vr_nmcliecr := sspb0003.fn_busca_conteudo_campo(pr_dsxml_completo,'NomDestinatario','S'); -- NomDestinatario
     END IF;
     --
-    RETURN(vr_nmcliecr);
+    RETURN(Upper(vr_nmcliecr));
   END fn_define_nome_credito;
 
   FUNCTION fn_busca_devolucao (pr_nrcontrole IN VARCHAR2
@@ -1202,6 +1202,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       --
       --Escrever no XML
       --
+      -- Tratar caracteres especiais vindos no xml (geram erro ao converter o clob no xml)
+      vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&AMP;','e')); 
+      vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&APOS;','''')); 
+      vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&AMP;','e')); 
+      vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&APOS;','''')); 
+      --        
       IF pr_dsendere IS NULL THEN
       IF vr_nrregist > 0 THEN
           vr_tab_txt(vr_contador+1).ds_txt :=
@@ -1218,12 +1224,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                   || '<agenciaremet>'   || TRIM(vr_AgDebtd)                                                          || '</agenciaremet>'
                   || '<contaremet>'     || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtDebtd))                   || '</contaremet>'
                   || '<cooperativa>'    || vr_nmrescop                                                               || '</cooperativa>'
-                  || '<nomeremet>'      || TRIM(vr_NomCliDebtd)                                                      || '</nomeremet>'
+                    || '<nomeremet>'      || vr_NomCliDebtd                                                            || '</nomeremet>'
                   || '<cpfcnpjremet>'   || TRIM(vr_CNPJ_CPFCliDebtd)                                                 || '</cpfcnpjremet>'
                   || '<bancodest>'      || TRIM(vr_bancodest)                                                        || '</bancodest>'
                   || '<agenciadest>'    || TRIM(vr_AgCredtd)                                                         || '</agenciadest>'
                   || '<contadest>'      || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))                  || '</contadest>'
-                  || '<nomedest>'       || TRIM(vr_NomCliCredtd)                                                     || '</nomedest>'
+                    || '<nomedest>'       || vr_NomCliCredtd                                                           || '</nomedest>'
                   || '<cpfcnpjdest>'    || vr_CNPJ_CPFCliCredtd                                                      || '</cpfcnpjdest>'
                     || '<motdev>'         || vr_dsdevolucao                                                            || '</motdev>'
                   || '<origem>'         || vr_dsorigem                                                               || '</origem>'
@@ -1255,12 +1261,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                   ||';'|| TRIM(Replace(vr_bancoremet,';',''))
                                   ||';'|| TRIM(vr_AgDebtd)
                                   ||';'|| TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtDebtd))
-                                  ||';'|| TRIM(Replace(vr_NomCliDebtd,';',''))
+                                  ||';'|| vr_NomCliDebtd
                                   ||';'|| TRIM(vr_CNPJ_CPFCliDebtd)
                                   ||';'|| TRIM(Replace(vr_bancodest,';',''))
                                   ||';'|| TRIM(vr_AgCredtd)
                                   ||';'|| TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))
-                                  ||';'|| TRIM(Replace(vr_NomCliCredtd,';',''))
+                                  ||';'|| vr_NomCliCredtd
                                   ||';'|| vr_CNPJ_CPFCliCredtd
                                   ||';'|| Replace(vr_dsdevolucao,';','')
                                   ||';'|| rw_craptvl.cdbccxlt
@@ -1990,7 +1996,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     SELECT b.cdfase
           ,b.nmmensagem
           ,b.dhmensagem
-          ,REPLACE(REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<'),' ','') dsxml_completo
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_2          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_3          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_4          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_5
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_6
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_7
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_8      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 36001),'><','>' || CHR(10) || '<') dsxml_completo_9      
           ,a.nrcontrole_str_pag_rec nrcontrole_dev
       FROM tbspb_msg_enviada a
           ,tbspb_msg_enviada_fase b
@@ -2003,7 +2017,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     SELECT b.cdfase
           ,b.nmmensagem
           ,b.dhmensagem
-          ,REPLACE(REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<'),' ','') dsxml_completo
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_2          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_3          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_4          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_5
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_6
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_7
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_8      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 36001),'><','>' || CHR(10) || '<') dsxml_completo_9      
           ,nrcontrole_if_env nrcontrole_dev
       FROM tbspb_msg_recebida a
           ,tbspb_msg_recebida_fase b
@@ -2022,6 +2044,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     vr_contador         NUMBER;
     vr_dhmensagem       VARCHAR2(100);
     vr_dsdevolucao       craptab.dstextab%TYPE:= NULL;
+    vr_xml_1            VARCHAR2(4000);
+    vr_xml_2            VARCHAR2(4000);
+    vr_xml_3            VARCHAR2(4000);
+    vr_xml_4            VARCHAR2(4000);
+    vr_xml_5            VARCHAR2(4000);
+    vr_xml_6            VARCHAR2(4000);
+    vr_xml_7            VARCHAR2(4000);
+    vr_xml_8            VARCHAR2(4000);
+    vr_xml_9            VARCHAR2(4000);    
+    
 
     vr_exc_erro       EXCEPTION;
   BEGIN  -- Inicio pc_buscar_detalhe_msg
@@ -2139,6 +2171,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         -- Fecha cursor
         CLOSE cr_crapban;
         --
+        -- Tratar caracteres especiais vindos no xml (geram erro ao converter o clob no xml)
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&AMP;','e')); 
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&APOS;','''')); 
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&AMP;','e')); 
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&APOS;','''')); 
       ELSE
         rw_layout_1.AgCredtd := null;
         rw_layout_1.CtCredtd:= null;
@@ -2245,14 +2282,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     vr_contador := 0;
     FOR rw_layout_2 IN cr_layout_2 (pr_nrseq_mensagem => vr_nrseq_mensagem_1
                                    ,pr_idorigem       => vr_idorigem_1) LOOP
+                                   
       vr_dhmensagem := TO_CHAR(rw_layout_2.dhmensagem,'dd-mm-yyyy hh24:mi:ss');
       --Escrever no XML
+      vr_xml_1 := rw_layout_2.dsxml_completo_1;
+      vr_xml_2 := rw_layout_2.dsxml_completo_2;
+      vr_xml_3 := rw_layout_2.dsxml_completo_3;
+      vr_xml_4 := rw_layout_2.dsxml_completo_4;
+      vr_xml_5 := rw_layout_2.dsxml_completo_5;
+      vr_xml_6 := rw_layout_2.dsxml_completo_6;
+      vr_xml_7 := rw_layout_2.dsxml_completo_7;
+      vr_xml_8 := rw_layout_2.dsxml_completo_8;
+      vr_xml_9 := rw_layout_2.dsxml_completo_9;
+      
       --
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'layout_2',pr_posicao => 0          ,pr_tag_nova => 'item'    ,pr_tag_cont => null                      ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'cdfase'  ,pr_tag_cont => rw_layout_2.cdfase        ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'nmfase'  ,pr_tag_cont => rw_layout_2.nmmensagem    ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'datafase',pr_tag_cont => vr_dhmensagem             ,pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'xmlfase' ,pr_tag_cont => rw_layout_2.dsxml_completo,pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'xmlfase' ,pr_tag_cont => vr_xml_1||vr_xml_2||vr_xml_3||vr_xml_4||vr_xml_5||vr_xml_6||vr_xml_7||vr_xml_8||vr_xml_9,pr_des_erro => vr_dscritic);
       vr_nrcontrole_dev := rw_layout_2.nrcontrole_dev;
       vr_contador       := vr_contador + 1;
     END LOOP;
