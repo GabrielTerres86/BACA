@@ -237,7 +237,7 @@ PROCEDURE carrega-convenios-ceb:
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
                             crapceb.nrdconta = par_nrdconta     AND
-                            (crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?) NO-LOCK,
+                            crapceb.dtinsori <= aux_dtcadast  NO-LOCK,
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,
