@@ -37,15 +37,15 @@
 				foreach($cargas as $carga){
 					?>
 					<tr id="<? echo getByTagName($carga->tags, 'cdmodelo'); ?>">
-						<td>
+						<td class="cdmodelo">
 							<span><? echo getByTagName($carga->tags,'cdmodelo'); ?></span>
 							<? echo getByTagName($carga->tags,'cdmodelo'); ?>
 						</td>
-						<td id="dsmodelo">
+						<td class="dsmodelo">
 							<span><? echo getByTagName($carga->tags,'dsmodelo'); ?></span>
 							<? echo getByTagName($carga->tags,'dsmodelo'); ?>
 						</td>
-						<td id="dtbase">
+						<td class="dtbase">
 							<span><? echo getByTagName($carga->tags,'dtbase'); ?></span>
 							<? echo getByTagName($carga->tags,'dtbase'); ?>
 						</td>
