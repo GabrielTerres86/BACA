@@ -4193,6 +4193,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             vr_flgconcil := TRUE;
             -- Processar todas as linhas do arquivo 
             FOR rw_cnt IN cr_conteudo(rw_arq.idarquivo) LOOP 
+              -- Limpar criticas
+              vr_dscritic := NULL;
               -- Cada linha será separada em vetor para facilitar o processamento 
               vr_txretorn := gene0002.fn_quebra_string(rw_cnt.dslinha, ';');
               -- Verifica se a quebra resultou em um array válido e com pelo menos 25 posições 
