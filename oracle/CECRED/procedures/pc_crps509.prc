@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008                        Ultima atualizacao: 27/11/2018
+   Data    : Abril/2008                        Ultima atualizacao: 03/07/2018
 
    Dados referentes ao programa:
 
@@ -63,9 +63,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             Melhora de performance (Fabiano Girardi - AMcom).         
 							
                03/07/2018 - Inclusão do pr_inpriori: Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos).
-                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)
-
-			   27/11/2018 - Melhoria nos logs para a cooperativa 16 #INC0026432 (Andrey Formigari - Mouts)
+                            Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)								
      ............................................................................. */
 
      
@@ -84,37 +82,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
      where crapage.cdcooper = pr_cdcooper
        AND crapage.cdagenci <> 999
        and crapage.cdagenci = decode(pr_cdagenci,0,crapage.cdagenci,pr_cdagenci)
-     order by crapage.cdagenci;
-	 
-	 --Informacoes dos lancamentos automaticos
-     CURSOR cr_craplau (pr_cdcooper IN crapcop.cdcooper%TYPE
-                       ,pr_dtmvtopg IN craplau.dtmvtopg%TYPE
-                       ,pr_dtmovini IN craplau.dtmvtopg%TYPE
-                       ,pr_cdprogra IN VARCHAR2) IS
-        SELECT COUNT(1) AS qtd
-        FROM craplau craplau
-            ,crapass crapass
-            ,craphis craphis 
-        WHERE craplau.cdcooper = crapass.cdcooper
-          AND craplau.nrdconta = crapass.nrdconta
-          AND craplau.cdcooper = craphis.cdcooper
-          AND craplau.cdhistor = craphis.cdhistor
-          AND crapass.cdcooper = pr_cdcooper  
-          AND ((pr_cdprogra = 'CRPS705' AND 
-                craplau.cdtiptra = 4)   OR
-               (pr_cdprogra <> 'CRPS705' AND 
-                craplau.cdtiptra <> 4 ))                           
-          AND ((    craplau.cdcooper = pr_cdcooper
-              AND   craplau.dtmvtopg = pr_dtmvtopg
-              AND   craplau.insitlau = 1
-              AND   craplau.dsorigem IN ('INTERNET','TAA')
-              AND    craplau.tpdvalor = 0)
-              OR
-             (    craplau.cdcooper  = pr_cdcooper
-              AND craplau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
-              AND craplau.insitlau  = 1
-              AND craplau.dsorigem  = 'DEBAUT'));
-     rw_craplau cr_craplau%ROWTYPE;
+     order by crapage.cdagenci; 
+       
        
        /* Tipos e registros da pc_crps509 */
 
@@ -175,7 +144,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
        vr_nm_procedure        varchar2(100);
        vr_flsgproc_char       varchar2(1);
        vr_sequencia_lote      number;
-	   vr_dtmovini            craplau.dtmvtopg%TYPE;
        
        --Variaveis de Excecao
        vr_exc_saida   EXCEPTION;
@@ -812,9 +780,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
 		 
          --Nao retirar este commit, nem para testar.
          COMMIT;
-
+/*
        /* Valido somente para InternetBank, por isto pac 90 */
-       /*PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
+       PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                              ,pr_nrdconta => 0             --Numero da Conta
                                              ,pr_cdagenci => 90            --Código da Agencia
                                              ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
@@ -825,8 +793,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
        IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
          --Levantar Excecao
          RAISE vr_exc_saida;
-       END IF;*/
-	   
+       END IF;
+*/
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 
                                                       ,pr_cdprogra => vr_cdprogra);
@@ -855,30 +823,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                           ,pr_dscritic    => vr_dscritic);       --Descricao da Critica
            
            vr_dslog := '[BATCH] Fim - pc_obtem_agend_debitos. AGENCIA: ['||cd_todas_agencias||']'||
-                       ' INPROCES: ['||rw_crapdat.inproces||']'||
-                       ' pr_idparale: ['||pr_idparale||']'||
-                       ' Qtde Registros: ['||vr_tab_agendto.count()||']'||
-                       ' pr_inpriori: ['|| pr_inpriori ||']'||
-                       ' vr_cdprogra: ['|| vr_cdprogra ||']';
-                     
-           IF pr_cdcooper = 16 THEN
-               vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                         (vr_dtmvtopg - 1),
-                                                         'A',
-                                                         TRUE,
-                                                         FALSE);
-
-              vr_dtmovini := vr_dtmovini + 1;
-              
-              OPEN cr_craplau (pr_cdcooper => pr_cdcooper
-                              ,pr_dtmvtopg => vr_dtmvtopg
-                              ,pr_dtmovini => vr_dtmovini
-                              ,pr_cdprogra => vr_cdprogra);
-              FETCH cr_craplau INTO rw_craplau;
-              CLOSE cr_craplau;
-                  
-              vr_dslog := vr_dslog || ' cr_craplau: ['|| rw_craplau.qtd ||']';
-          END IF;
+                     ' INPROCES: ['||rw_crapdat.inproces||']'||
+                     ' pr_idparale: ['||pr_idparale||']'||
+                     ' Qtde Registros: ['||vr_tab_agendto.count()||']';
          
           pc_log_programa(PR_DSTIPLOG     => 'O',
                           PR_CDPROGRAMA   => vr_cdprogra,
@@ -931,28 +878,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            vr_dslog := '[BATCH-NOP] Fim - pc_obtem_agend_debitos. AGENCIA: ['||cd_todas_agencias||']'||
                        ' INPROCES: ['||rw_crapdat.inproces||']'||
                        ' pr_idparale: ['||pr_idparale||']'||
-                       ' Qtde Registros: ['||vr_tab_agendto.count()||']'||
-                       ' pr_inpriori: ['|| pr_inpriori ||']'||
-                       ' vr_cdprogra: ['|| vr_cdprogra ||']';
-                     
-           IF pr_cdcooper = 16 THEN
-               vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                         (vr_dtmvtopg - 1),
-                                                         'A',
-                                                         TRUE,
-                                                         FALSE);
-
-              vr_dtmovini := vr_dtmovini + 1;
-              
-              OPEN cr_craplau (pr_cdcooper => pr_cdcooper
-                              ,pr_dtmvtopg => vr_dtmvtopg
-                              ,pr_dtmovini => vr_dtmovini
-                              ,pr_cdprogra => vr_cdprogra);
-              FETCH cr_craplau INTO rw_craplau;
-              CLOSE cr_craplau;
-                  
-              vr_dslog := vr_dslog || ' cr_craplau: ['|| rw_craplau.qtd ||']';
-          END IF;
+                       ' Qtde Registros: ['||vr_tab_agendto.count()||']';
          
            pc_log_programa(PR_DSTIPLOG     => 'O',
                            PR_CDPROGRAMA   => vr_cdprogra,
