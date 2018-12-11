@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0004 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Dionathan Henchel
-  --  Data     : Abril/2015.                   Ultima atualizacao: 28/11/2018
+  --  Data     : Abril/2015.                   Ultima atualizacao: 
   --
   -- Dados referentes ao programa:
   --
@@ -13,8 +13,6 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0004 IS
   -- Objetivo  : Rotinas de comunicação com webservice para transferencia de arquivos de cobrança.
   --
   --  Alteracoes: 
-  --  28/11/2018 -Foi adicionado a chamada da procedure   pc_processa_retorno na pc_ws_pg_upload, e foi relizado os tratamentos 
-  --              de exceções na  pc_processa_retorno_servico (Bruno Cardoso Mout'S):PRB0040355:
   ---------------------------------------------------------------------------------------------------------------
   --Procedure para segurar execucao de programa por determinados segundos
   PROCEDURE pc_espera_segundo(pr_qtsegund number);
@@ -220,29 +218,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     ELSE
       pr_respdado := vr_response.get('Data').to_char;
     END IF;
-	
-	 EXCEPTION
-    WHEN OTHERS THEN
-      vr_erroconver := 'N';
-      BEGIN
-        pr_resptipo := to_number(substr(to_char(vr_clob), 19, 2));
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_erroconver := 'S';
-      END;
-      IF NVL(pr_resptipo, -9999) < 0 THEN
-        pr_dscritic := CASE pr_resptipo
-                         WHEN -3 THEN
-                          'ABORTED - Serviço abortado pelo cliente'
-                         WHEN -2 THEN
-                          'UNAUTHORIZED - O token passado é inválido'
-                         ELSE
-                          'ERROR - STATUS CODE'
-                       END;
-      ELSIF vr_erroconver = 'S' THEN
-        pr_dscritic := 'ERRO CONTEUDO';
-      END IF;
- 
   END pc_processa_retorno_servico;
 
   --Autentica uma conexão com a PG
@@ -572,7 +547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-    pc_processa_retorno;
+  
   EXCEPTION
     WHEN OTHERS THEN
       --Se já possuir excessão das chamadas internas coloca
