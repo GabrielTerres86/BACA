@@ -1886,6 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,sco.nrscore_alinhado
               ,sco.dsclasse_score
               ,sco.flvigente
+              ,sco.dsexclusao_principal
               ,row_number() over (partition By sco.cdmodelo
                                       order by sco.flvigente DESC, sco.dtbase DESC) nrseqreg 
           FROM crapass     ass
@@ -3625,8 +3626,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3.put('cdModelo', rw_score.cdmodelo);
         vr_obj_generic3.put('dsModelo',rw_score.dsmodelo);
         vr_obj_generic3.put('dtBase ', to_char(rw_score.dtbase,'dd/mm/rrrr'));
-        vr_obj_generic3.put('dsClasseScore ', rw_score.dsclasse_score);
-        vr_obj_generic3.put('nrScoreAlinhado ', rw_score.nrscore_alinhado);
+        vr_obj_generic3.put('dsClasseScore', rw_score.dsclasse_score);
+        vr_obj_generic3.put('nrScoreAlinhado', rw_score.nrscore_alinhado);
+        vr_obj_generic3.put('dsExclusaoPrinc', rw_score.dsexclusao_principal);
         vr_obj_generic3.put('flSituacao ', rw_score.flvigente);
         -- Adicionar Score na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
@@ -3634,7 +3636,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Adicionar o array seguro no objeto informações adicionais
       vr_obj_generic2.put('scoreBehaviour', vr_lst_generic3);      
-        
+
+      -- Montar objeto para opCred
+      vr_lst_generic3 := json_list();
+    
       -- Efetuar laço para trazer todos os registros 
       FOR rw_crapepr IN cr_crapepr LOOP
       
