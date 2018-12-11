@@ -101,10 +101,10 @@ function controlaLayout(cddopcao) {
 		
 		nomeForm = 'frmDadosPortabilidade';		
 		if (glb_opcao == '0') {
-			altura = '435px';
+			altura = '465px';
         	largura = '555px';
 		} else {
-			altura = '215px';
+			altura = '305px';
         	largura = '555px';
 		}
         
@@ -154,13 +154,13 @@ function controlaLayout(cddopcao) {
 		var cDsmotivo = $('#dsmotivo', '#'+nomeForm);
 		
 		rNrcpfcgc.addClass('rotulo').css({ 'width': '98px' });
-		cNrcpfcgc.css({ 'width': '110px' });
+		cNrcpfcgc.css({ 'width': '112px' });
 		
 		rNmprimtl.css({ 'width': '50px' });
 		cNmprimtl.css({ 'width': '250px' });
 		
 		rNrtelefo.addClass('rotulo').css({ 'width': '98px' });
-		cNrtelefo.css({ 'width': '110px' });
+		cNrtelefo.css({ 'width': '112px' });
 		
 		rDsdemail.css({ 'width': '50px' });
 		cDsdemail.css({ 'width': '250px' });
@@ -172,19 +172,19 @@ function controlaLayout(cddopcao) {
 		cCdageban.css({ 'width': '80px' });
 		
 		rNrispbif_banco_folha.addClass('rotulo').css({ 'width': '98px' });
-		cNrispbif_banco_folha.css({ 'width': '110px' });
+		cNrispbif_banco_folha.css({ 'width': '112px' });
 		
 		rNrcnpjif.css({ 'width': '50px' });
 		cNrcnpjif.css({ 'width': '200px' });
 		
 		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '98px' });
-		cNrdocnpj_emp.css({ 'width': '110px' });
+		cNrdocnpj_emp.css({ 'width': '112px' });
 		
 		rNmprimtl_emp.css({ 'width': '50px' });
 		cNmprimtl_emp.css({ 'width': '250px' });
 		
 		rNrispbif.addClass('rotulo').css({ 'width': '98px' });
-		cNrispbif.css({ 'width': '110px' });
+		cNrispbif.css({ 'width': '112px' });
 		
 		rNrdocnpj.css({ 'width': '50px' });
 		cNrdocnpj.css({ 'width': '248px' });
@@ -192,17 +192,14 @@ function controlaLayout(cddopcao) {
 		rTpconta.addClass('rotulo').css({ 'width': '98px' });
 		cTpconta.css({ 'width': '110px' });
 		
-		rCdagectl.css({ 'width': '50px' });
-		cCdagectl.css({ 'width': '75px' });
-		
 		rNrdconta.css({ 'width': '60px' });
 		cNrdconta.css({ 'width': '110px' });
 		
 		rDscodigo.addClass('rotulo').css({ 'width': '98px' });
-		cDscodigo.css({ 'width': '110px' });
+		cDscodigo.css({ 'width': '112px' });
 		
 		rDtsolicitacao.addClass('rotulo').css({ 'width': '98px' });
-		cDtsolicitacao.css({ 'width': '110px' });
+		cDtsolicitacao.css({ 'width': '112px' });
 		
 		rDtretorno.css({ 'width': '98px' });
 		cDtretorno.css({ 'width': '200px' });

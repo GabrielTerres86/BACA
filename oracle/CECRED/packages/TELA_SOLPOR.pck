@@ -93,7 +93,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SOLPOR is
 																		 ,pr_dscritic          OUT VARCHAR2 --> Descrição da crítica
 																		 ,pr_retxml            IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
 																		 ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
-																		 ,pr_des_erro          OUT VARCHAR2); --> Erros do processo											 
+																		 ,pr_des_erro          OUT VARCHAR2); --> Erros do processo
+
+		PROCEDURE pc_busca_contas_devolucao(pr_dsrowid           IN VARCHAR2 --> Rowid da tabela
+																			 ,pr_xmllog            IN VARCHAR2 --> XML com informações de LOG                                           
+																			 ,pr_cdcritic          OUT PLS_INTEGER --> Código da crítica
+																			 ,pr_dscritic          OUT VARCHAR2 --> Descrição da crítica
+																			 ,pr_retxml            IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																			 ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
+																			 ,pr_des_erro          OUT VARCHAR2); --> Erros do processo																		 
 
 END TELA_SOLPOR;
 /
@@ -209,11 +217,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 																				 AND ass.cdagenci = nvl(pr_cdagenci, ass.cdagenci)
 																			) OR pr_cdagenci IS NULL
 																)
-                           AND tpr.dtsolicitacao BETWEEN nvl(pr_dtsolicitacao_ini, tpr.dtsolicitacao) AND
-                               nvl(pr_dtsolicitacao_fim, tpr.dtsolicitacao)
-                           AND nvl(tpr.dtretorno, trunc(SYSDATE)) BETWEEN
-                               nvl(pr_dtretorno_ini, nvl(tpr.dtretorno, trunc(SYSDATE))) AND
-                               nvl(pr_dtretorno_fim, nvl(tpr.dtretorno, trunc(SYSDATE)))
+                           AND trunc(tpr.dtsolicitacao) BETWEEN nvl(pr_dtsolicitacao_ini, trunc(tpr.dtsolicitacao)) AND
+                               nvl(pr_dtsolicitacao_fim, trunc(tpr.dtsolicitacao))
+                           AND nvl(trunc(tpr.dtretorno), trunc(SYSDATE)) BETWEEN
+                               nvl(pr_dtretorno_ini, nvl(trunc(tpr.dtretorno), trunc(SYSDATE))) AND
+                               nvl(pr_dtretorno_fim, nvl(trunc(tpr.dtretorno), trunc(SYSDATE)))
                            AND tpr.idsituacao = nvl(pr_idsituacao, tpr.idsituacao)
                            AND tpr.nrnu_portabilidade = nvl(pr_nuportabilidade, tpr.nrnu_portabilidade)
                            ORDER BY tpr.nrnu_portabilidade) a
@@ -482,12 +490,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                                AND tpe.cdcooper = nvl(pr_cdcooper, tpe.cdcooper)
                                AND tpe.nrdconta = nvl(pr_nrdconta, tpe.nrdconta)
                                AND ass.cdcooper = tpe.cdcooper
-                               AND ass.nrdconta = tpe.nrdconta
+                               AND ass.nrdconta = tpe.nrdconta 
                                AND ass.cdagenci = nvl(pr_cdagenci, ass.cdagenci)
-                               AND tpe.dtsolicitacao BETWEEN nvl(pr_dtsolicitacao_ini, tpe.dtsolicitacao) AND
-                                   nvl(pr_dtsolicitacao_fim, tpe.dtsolicitacao)
-                               AND nvl(tpe.dtretorno, TRUNC(SYSDATE)) BETWEEN nvl(pr_dtretorno_ini, nvl(tpe.dtretorno, TRUNC(SYSDATE))) AND
-                                   nvl(pr_dtretorno_fim, nvl(tpe.dtretorno, TRUNC(SYSDATE)))
+                               AND trunc(tpe.dtsolicitacao) BETWEEN nvl(pr_dtsolicitacao_ini, trunc(tpe.dtsolicitacao)) AND
+                                   nvl(pr_dtsolicitacao_fim, trunc(tpe.dtsolicitacao))
+                               AND nvl(trunc(tpe.dtretorno), TRUNC(SYSDATE)) BETWEEN nvl(pr_dtretorno_ini, nvl(trunc(tpe.dtretorno), TRUNC(SYSDATE))) AND
+                                   nvl(pr_dtretorno_fim, nvl(trunc(tpe.dtretorno), TRUNC(SYSDATE)))
                                AND tpe.idsituacao = nvl(pr_idsituacao, tpe.idsituacao)
                                AND nvl(tpe.nrnu_portabilidade,0) = nvl(pr_nuportabilidade, nvl(tpe.nrnu_portabilidade,0))
                                ORDER BY tpe.nrnu_portabilidade, tpe.nrsolicitacao) a
@@ -712,6 +720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,GENE0002.fn_mask_conta(tpr.nrdconta) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcpfcgc, 1) nrcpfcgc
 								,tpr.dstelefone telefone
+								,tpr.dsdemail email
 								,tpr.nmprimtl
 								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcnpj_empregador, 2) nrcnpj_empregador
 								,tpr.dsnome_empregador
@@ -784,11 +793,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 				CLOSE cr_solicitacao;
                                 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-          ,pr_tag_pai  => 'Solicitacao'
-          ,pr_posicao  => 0
-          ,pr_tag_nova => 'dtsolicitacao'
-          ,pr_tag_cont => to_char(rw_solicitacao.dtsolicitacao, 'DD/MM/RRRR')
-          ,pr_des_erro => vr_dscritic);
+															,pr_tag_pai  => 'Solicitacao'
+															,pr_posicao  => 0
+															,pr_tag_nova => 'dtsolicitacao'
+															,pr_tag_cont => to_char(rw_solicitacao.dtsolicitacao, 'DD/MM/RRRR')
+															,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 									,pr_tag_pai  => 'Solicitacao'
@@ -817,6 +826,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_posicao  => 0
 									,pr_tag_nova => 'telefone'
 									,pr_tag_cont => rw_solicitacao.telefone
+									,pr_des_erro => vr_dscritic);
+
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+									,pr_tag_pai  => 'Solicitacao'
+									,pr_posicao  => 0
+									,pr_tag_nova => 'email'
+									,pr_tag_cont => rw_solicitacao.email
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -887,7 +903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao => 0
 									,pr_tag_nova => 'motivo'
-									,pr_tag_cont => rw_solicitacao.motivo
+									,pr_tag_cont => gene0007.fn_convert_db_web(rw_solicitacao.motivo)
 									,pr_des_erro => vr_dscritic);
     
     EXCEPTION
@@ -959,14 +975,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         vr_idorigem VARCHAR2(100);
     
         -- Variaveis internas
+				vr_dsmotivo VARCHAR2(5000);
     
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpe.dtsolicitacao
 								,tpe.nrnu_portabilidade nusolicitacao
-								,GENE0002.fn_mask_conta(tpe.nrdconta) nrdconta
+								,tpe.nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
 								,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
 								,tpe.nmprimtl
+								,tpe.dsdemail email
 								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, 2) nrcnpj_empregador
 								,tpe.dsnome_empregador
 								,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
@@ -975,6 +993,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,dom.dscodigo situacao
 								,tpe.dtretorno
 								,dcp.dscodigo motivo
+								,tpe.cdmotivo
+								,tpe.nrsolicitacao
+								,tpe.cdcooper
 					FROM tbcc_portabilidade_envia tpe
 							,crapban                  ban
 							,tbcc_dominio_campo       dom
@@ -986,6 +1007,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 					 AND dcp.cddominio(+) = tpe.cdmotivo
 					 AND tpe.rowid = pr_dsrowid;
 				rw_solicitacao cr_solicitacao%ROWTYPE;
+				
+				CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
+				               ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE
+											 ,pr_nrsolici tbcc_portabilidade_envia.nrsolicitacao%TYPE) IS
+					SELECT dom.dscodigo
+					      ,dom.cddominio
+						FROM tbcc_portabilidade_env_erros tee
+								,tbcc_portabilidade_envia tpe
+								,tbcc_dominio_campo dom
+					 WHERE tpe.cdcooper = tee.cdcooper
+						 AND tpe.nrdconta = tee.nrdconta
+						 AND tpe.nrsolicitacao = tee.nrsolicitacao
+						 AND tee.cdmotivo = dom.cddominio
+						 AND tee.dsdominio_motivo = dom.nmdominio
+						 AND tee.cdcooper = pr_cdcooper
+						 AND tee.nrdconta = pr_nrdconta
+						 AND tee.nrsolicitacao = pr_nrsolici;
+	      rw_erros cr_erros%ROWTYPE;
     BEGIN
         pr_des_erro := 'OK';
         -- Extrai dados do xml
@@ -1037,11 +1076,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 				CLOSE cr_solicitacao;
                                 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-									,pr_tag_pai  => 'Solicitacao'
-									,pr_posicao  => 0
-									,pr_tag_nova => 'dtsolicitacao'
-									,pr_tag_cont => rw_solicitacao.dtsolicitacao
-									,pr_des_erro => vr_dscritic);
+															,pr_tag_pai  => 'Solicitacao'
+															,pr_posicao  => 0
+															,pr_tag_nova => 'dtsolicitacao'
+															,pr_tag_cont => to_char(rw_solicitacao.dtsolicitacao, 'DD/MM/RRRR')
+															,pr_des_erro => vr_dscritic);
 									
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 													,pr_tag_pai  => 'Solicitacao'
@@ -1054,7 +1093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_pai  => 'Solicitacao'
 													,pr_posicao  => 0
 													,pr_tag_nova => 'nrdconta'
-													,pr_tag_cont => rw_solicitacao.nrdconta
+													,pr_tag_cont => GENE0002.fn_mask_conta(rw_solicitacao.nrdconta)
 													,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1070,6 +1109,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_nova => 'telefone'
 													,pr_tag_cont => rw_solicitacao.telefone
 													,pr_des_erro => vr_dscritic);
+													
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+									,pr_tag_pai  => 'Solicitacao'
+									,pr_posicao  => 0
+									,pr_tag_nova => 'email'
+									,pr_tag_cont => rw_solicitacao.email
+									,pr_des_erro => vr_dscritic);													
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 													,pr_tag_pai  => 'Solicitacao'
@@ -1127,12 +1173,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_cont => to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI')
 													,pr_des_erro => vr_dscritic);
 
+        vr_dsmotivo := rw_solicitacao.motivo;
+				--
+				IF upper(rw_solicitacao.cdmotivo) = 'EGENPCPS' THEN
+					vr_dsmotivo := '';
+					FOR rw_erros IN cr_erros(pr_cdcooper => rw_solicitacao.cdcooper
+																	,pr_nrdconta => rw_solicitacao.nrdconta
+																	,pr_nrsolici => rw_solicitacao.nrsolicitacao) LOOP
+						--
+						vr_dsmotivo := vr_dsmotivo || chr(10) || rw_erros.cddominio || ' - ' || rw_erros.dscodigo;
+						--
+					END LOOP;
+					--
+					IF trim(vr_dsmotivo) IS NULL THEN
+						vr_dsmotivo := rw_solicitacao.motivo;
+					END IF;
+				END IF;
+				--
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-													,pr_tag_pai  => 'Solicitacao'
-													,pr_posicao  => 0
-													,pr_tag_nova => 'motivo'
-													,pr_tag_cont => rw_solicitacao.motivo
-													,pr_des_erro => vr_dscritic);
+															,pr_tag_pai  => 'Solicitacao'
+															,pr_posicao  => 0
+															,pr_tag_nova => 'motivo'
+															,pr_tag_cont => gene0007.fn_convert_db_web(vr_dsmotivo)
+															,pr_des_erro => vr_dscritic);
     
     EXCEPTION
         WHEN vr_exc_saida THEN
@@ -1398,19 +1461,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
     
         -- Variaveis internas
         vr_nrdrowid  ROWID;
-    
-        CURSOR cr_solicitacao(pr_dsrowid VARCHAR2
-				                     ,pr_cdcooper crapttl.cdcooper%TYPE
-				                     ,pr_nrdconta crapttl.nrdconta%TYPE) IS            
-					SELECT 1
+				vr_nrdconta  crapass.nrdconta%TYPE;
+				vr_dstransa  VARCHAR(100);
+				vr_cdcopant INTEGER;
+				vr_nrctaant  crapass.nrdconta%TYPE;
+				
+        CURSOR cr_conta_atual(pr_dsrowid VARCHAR2) IS
+					SELECT tpr.nrdconta
+  				      ,tpr.cdcooper
 						FROM tbcc_portabilidade_recebe tpr
-						    ,crapttl ttl
-					 WHERE ttl.nrcpfemp = tpr.nrcnpj_empregador
-					   AND ttl.cdcooper = pr_cdcooper
-						 AND ttl.nrdconta = pr_nrdconta
-						 AND ttl.idseqttl = 1
-					   AND tpr.rowid = pr_dsrowid;
-        rw_solicitacao cr_solicitacao%ROWTYPE;
+					 WHERE tpr.rowid = pr_dsrowid;
 				
     BEGIN
         pr_des_erro := 'OK';
@@ -1434,36 +1494,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
             RAISE vr_exc_saida;
         END IF;
 				
-        OPEN cr_solicitacao(pr_dsrowid => pr_dsrowid
-				                   ,pr_cdcooper => pr_cdcooper
-				                   ,pr_nrdconta => pr_nrdconta);
-				FETCH cr_solicitacao INTO rw_solicitacao;
+				OPEN cr_conta_atual(pr_dsrowid => pr_dsrowid);
+				FETCH cr_conta_atual INTO vr_nrctaant, vr_cdcopant;
+				CLOSE cr_conta_atual;
 				
-				IF cr_solicitacao%NOTFOUND THEN
-					CLOSE cr_solicitacao;
-					vr_dscritic := 'Divergencia no CNPJ do empregador.';
-					RAISE vr_exc_saida;
+				IF pr_cdcooper <> 3 THEN				
+					
+					vr_cdcooper := pr_cdcooper;
+					vr_nrdconta := pr_nrdconta;
+					vr_dstransa := 'Direcionamento de solicitacao de portabilidade';
+				
+				ELSE
+					vr_dstransa := 'Solicitacao de portabilidade remetida a central';
+					vr_cdcooper := vr_cdcopant;
+				  vr_nrdconta := vr_nrctaant;
 				END IF;
 				
-				CLOSE cr_solicitacao;
+				vr_cdcooper := nvl(vr_cdcooper,0);
+				vr_nrdconta := nvl(vr_nrdconta,0);
 				
 				UPDATE tbcc_portabilidade_recebe
-				   SET nrdconta = pr_nrdconta 
-					    ,cdcooper = pr_cdcooper
+				   SET nrdconta = nvl(pr_nrdconta,0)
+					    ,cdcooper = nvl(pr_cdcooper,0)
 				WHERE ROWID = pr_dsrowid;
 
-				GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-									,pr_cdoperad => vr_cdoperad
-									,pr_dscritic => NULL
-									,pr_dsorigem => 'AYLLOS'
-									,pr_dstransa => 'Direcionamento de solicitacao de portabilidade'
-									,pr_dttransa => TRUNC(SYSDATE)
-									,pr_flgtrans => 1
-									,pr_hrtransa => gene0002.fn_busca_time
-									,pr_idseqttl => 1
-									,pr_nmdatela => vr_nmdatela
-									,pr_nrdconta => pr_nrdconta
-									,pr_nrdrowid => vr_nrdrowid);
+				GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => NULL
+														,pr_dsorigem => 'AYLLOS'
+														,pr_dstransa => vr_dstransa
+														,pr_dttransa => TRUNC(SYSDATE)
+														,pr_flgtrans => 1
+														,pr_hrtransa => gene0002.fn_busca_time
+														,pr_idseqttl => 1
+														,pr_nmdatela => vr_nmdatela
+														,pr_nrdconta => vr_nrdconta
+														,pr_nrdrowid => vr_nrdrowid);
+				--
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Conta'
+																 ,pr_dsdadant => nvl(vr_nrctaant, 0)
+																 ,pr_dsdadatu => nvl(pr_nrdconta,0));
+				--
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Cooperativa'
+																 ,pr_dsdadant => nvl(vr_cdcopant, 0)
+																 ,pr_dsdadatu => nvl(pr_cdcooper,0));
         
         -- Criar cabecalho do XML
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados><Retorno>1</Retorno></Dados></Root>');
@@ -1560,6 +1636,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 						AND  tdc.cddominio = pr_cdmotivo;
         rw_dominio cr_dominio%ROWTYPE;
 
+        CURSOR cr_sol_emp(pr_dsrowid VARCHAR2
+				                 ,pr_cdcooper crapttl.cdcooper%TYPE
+				                 ,pr_nrdconta crapttl.nrdconta%TYPE) IS            
+					SELECT 1
+						FROM tbcc_portabilidade_recebe tpr
+						    ,crapttl ttl
+					 WHERE ttl.nrcpfemp = tpr.nrcnpj_empregador
+					   AND ttl.cdcooper = pr_cdcooper
+						 AND ttl.nrdconta = pr_nrdconta
+						 AND ttl.idseqttl = 1
+					   AND tpr.rowid = pr_dsrowid;
+        rw_sol_emp cr_sol_emp%ROWTYPE;				
+
     BEGIN
         pr_des_erro := 'OK';
         -- Extrai dados do xml
@@ -1612,7 +1701,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 														,pr_nrdrowid => vr_nrdrowid);
 
         -- aprovação
-        IF pr_idsituacao = 2 THEN					
+        IF pr_idsituacao = 2 THEN
+					--
+				  OPEN cr_sol_emp(pr_dsrowid => pr_dsrowid
+														 ,pr_cdcooper => rw_solicitacao.cdcooper
+														 ,pr_nrdconta => rw_solicitacao.nrdconta);
+					FETCH cr_sol_emp INTO rw_sol_emp;
+					
+					IF cr_sol_emp%NOTFOUND THEN
+						CLOSE cr_sol_emp;
+						vr_dscritic := 'Divergencia no CNPJ do empregador.';
+						RAISE vr_exc_saida;
+					END IF;
+          --
+					CLOSE cr_sol_emp;
+          --
 					UPDATE tbcc_portabilidade_recebe
 						 SET idsituacao = 2
 								,cdoperador = vr_cdoperad
@@ -1693,6 +1796,263 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
                                            pr_dscritic || '</Erro></Root>');
     END pc_avalia_portabilidade;
+		
+		PROCEDURE pc_busca_contas_devolucao(pr_dsrowid           IN VARCHAR2 --> Rowid da tabela
+																			 ,pr_xmllog            IN VARCHAR2 --> XML com informações de LOG                                           
+																			 ,pr_cdcritic          OUT PLS_INTEGER --> Código da crítica
+																			 ,pr_dscritic          OUT VARCHAR2 --> Descrição da crítica
+																			 ,pr_retxml            IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																			 ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
+																			 ,pr_des_erro          OUT VARCHAR2) IS --> Erros do processo
+        /* .............................................................................
+          Programa: pc_busca_contas_devolucao
+          Sistema : CECRED
+          Sigla   : SOLPOR
+          Autor   : Augusto (Supero)
+          Data    : Novembro/18.                    Ultima atualizacao: --/--/----
+        
+          Dados referentes ao programa:
+        
+          Frequencia: Sempre que houver um direcionamento de conta
+        
+          Objetivo  : Retornar as contas possíveis para devolução ou direcionamento interno
+					            de determinado CPF.
+        
+          Observacao: -----
+        
+          Alteracoes: 					
+          ..............................................................................*/
+    
+        -- Tratamento de erros
+        vr_cdcritic NUMBER := 0;
+
+        vr_dscritic VARCHAR2(4000);
+        vr_exc_saida EXCEPTION;
+    
+        -- Variaveis retornadas da gene0004.pc_extrai_dados
+        vr_cdcooper INTEGER;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+    
+        -- Variaveis internas
+        vr_cont_tag PLS_INTEGER := 0;
+    
+        CURSOR cr_lista_contas(pr_dsrowid VARCHAR2
+				                      ,pr_cdcooper crapcop.cdcooper%TYPE) IS            
+					SELECT cop.nmrescop
+					      ,cop.cdcooper
+								,GENE0002.fn_mask_conta(ass.nrdconta) nrdconta
+								,gene0002.fn_mask_cpf_cnpj(ass.nrcpfcgc, ass.inpessoa) nrcpfcgc
+								,ass.nmprimtl
+								,gene0002.fn_mask_cpf_cnpj(ttl.nrcpfemp, 2) nrcpfemp
+								,ttl.nmextttl
+						FROM tbcc_portabilidade_recebe tpr
+								,crapass                   ass
+								,crapcop                   cop
+								,crapttl                   ttl
+					 WHERE tpr.nrcpfcgc = ass.nrcpfcgc
+						 AND ass.dtdemiss IS NULL
+						 AND ass.cdcooper = cop.cdcooper
+						 AND ass.cdcooper = pr_cdcooper
+						 AND ttl.cdcooper = cop.cdcooper
+						 AND ttl.nrdconta = ass.nrdconta
+						 AND ttl.idseqttl = 1
+						 AND tpr.rowid = pr_dsrowid
+					  ORDER BY cop.cdcooper, ass.nrdconta;
+        rw_lista_contas cr_lista_contas%ROWTYPE;
+				
+				
+			  CURSOR cr_crapcop IS
+					SELECT c.nmrescop
+					      ,c.cdcooper
+						FROM crapcop c
+					 WHERE c.cdcooper = 3;
+			  rw_crapcop cr_crapcop%ROWTYPE;
+			  
+			  
+    BEGIN
+        pr_des_erro := 'OK';
+        -- Extrai dados do xml
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+                                
+        gene0001.pc_informa_acesso(pr_module => vr_nmdatela
+                                  ,pr_action => vr_nmeacao);
+    
+        -- Se retornou alguma crítica
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levanta exceção
+            RAISE vr_exc_saida;
+        END IF;
+				
+				OPEN cr_crapcop;
+				FETCH cr_crapcop INTO rw_crapcop;
+				
+				IF cr_crapcop%NOTFOUND THEN
+					CLOSE cr_crapcop;
+					vr_dscritic := 'Cooperativa nao localizada.';
+					vr_cdcritic := 0;
+					RAISE vr_exc_saida;
+				END IF;
+				CLOSE cr_crapcop;
+        
+        -- Criar cabecalho do XML
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Root'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'Dados'
+                              ,pr_tag_cont => NULL
+                              ,pr_des_erro => vr_dscritic);
+                              
+        GENE0007.pc_insere_tag(pr_xml  => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Contas'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+				
+				
+				-- Registro para devolucao										
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Contas'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'Conta'
+                              ,pr_tag_cont => NULL
+                              ,pr_des_erro => vr_dscritic);
+                            
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+															,pr_tag_pai  => 'Conta'
+															,pr_posicao  => vr_cont_tag
+															,pr_tag_nova => 'nmrescop'
+															,pr_tag_cont => rw_crapcop.nmrescop
+															,pr_des_erro => vr_dscritic);
+																
+			 GENE0007.pc_insere_tag(pr_xml       => pr_retxml
+														 ,pr_tag_pai  => 'Conta'
+														 ,pr_posicao  => vr_cont_tag
+														 ,pr_tag_nova => 'cdcooper'
+														 ,pr_tag_cont => rw_crapcop.cdcooper
+														 ,pr_des_erro => vr_dscritic);
+															
+			 GENE0007.pc_insere_tag(pr_xml       => pr_retxml
+														 ,pr_tag_pai  => 'Conta'
+														 ,pr_posicao  => vr_cont_tag
+														 ,pr_tag_nova => 'nrdconta'
+														 ,pr_tag_cont => 0
+														 ,pr_des_erro => vr_dscritic);
+
+       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+														 ,pr_tag_pai  => 'Conta'
+														 ,pr_posicao  => vr_cont_tag
+														 ,pr_tag_nova => 'nmprimtl'
+														 ,pr_tag_cont => 'REMETER A CENTRAL'
+														 ,pr_des_erro => vr_dscritic);
+															
+        -- Incrementa o contador de tags
+        vr_cont_tag := vr_cont_tag + 1;																							
+    
+        FOR rw_lista_contas IN cr_lista_contas(pr_dsrowid => pr_dsrowid
+					                                    ,pr_cdcooper => vr_cdcooper) LOOP
+          GENE0007.pc_insere_tag(pr_xml  => pr_retxml
+                            ,pr_tag_pai  => 'Contas'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Conta'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+                            
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nmrescop'
+                                ,pr_tag_cont => rw_lista_contas.nmrescop
+                                ,pr_des_erro => vr_dscritic);
+																
+         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'cdcooper'
+                                ,pr_tag_cont => rw_lista_contas.cdcooper
+                                ,pr_des_erro => vr_dscritic);																
+																
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nrdconta'
+                                ,pr_tag_cont => rw_lista_contas.nrdconta
+                                ,pr_des_erro => vr_dscritic);
+																
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nrcpfcgc'
+                                ,pr_tag_cont => rw_lista_contas.nrcpfcgc
+                                ,pr_des_erro => vr_dscritic);
+																
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nmprimtl'
+                                ,pr_tag_cont => rw_lista_contas.nmprimtl
+                                ,pr_des_erro => vr_dscritic);
+																
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nrcpfemp'
+                                ,pr_tag_cont => rw_lista_contas.nrcpfemp
+                                ,pr_des_erro => vr_dscritic);
+
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'Conta'
+                                ,pr_posicao  => vr_cont_tag
+                                ,pr_tag_nova => 'nmextttl'
+                                ,pr_tag_cont => rw_lista_contas.nmextttl
+                                ,pr_des_erro => vr_dscritic);
+
+          -- Incrementa o contador de tags
+          vr_cont_tag := vr_cont_tag + 1;
+        END LOOP;
+    
+    EXCEPTION
+        WHEN vr_exc_saida THEN
+        
+            IF vr_cdcritic <> 0 THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            ELSE
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+            END IF;
+        
+            pr_des_erro := 'NOK';
+            -- Carregar XML padrão para variável de retorno não utilizada.
+            -- Existe para satisfazer exigência da interface.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+        WHEN OTHERS THEN
+        
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := 'Erro geral na rotina na procedure TELA_SOLPOR.pc_busca_contas_devolucao. Erro: ' ||
+                           SQLERRM;
+            pr_des_erro := 'NOK';
+            -- Carregar XML padrão para variável de retorno não utilizada.
+            -- Existe para satisfazer exigência da interface.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+    END pc_busca_contas_devolucao;
 	  
 END TELA_SOLPOR;
 /

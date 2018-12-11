@@ -56,6 +56,7 @@ $nusolicitacao = getByTagName($solicitacao,"nusolicitacao");
 $nrdconta = getByTagName($solicitacao,"nrdconta");
 $nrcpfcgc = getByTagName($solicitacao,"nrcpfcgc");
 $telefone = getByTagName($solicitacao,"telefone");
+$email = getByTagName($solicitacao,"email");
 $nmprimtl = getByTagName($solicitacao,"nmprimtl");
 $nrcnpj_empregador = getByTagName($solicitacao,"nrcnpj_empregador");
 $dsnome_empregador = getByTagName($solicitacao,"dsnome_empregador");
@@ -127,6 +128,11 @@ $motivo = getByTagName($solicitacao,"motivo");
 
                                                 <br style="clear:both" />
 
+                                                <label style="margin-left: 15px;width: 105px;">E-mail:</label>
+                                                <input value="<?=$email?>" type="text" class="campoTelaSemBorda" style="width: 446px;" readonly disabled>
+                                                
+                                                <br style="clear:both" />
+
                                                 <label style="margin-left: 15px;width: 105px;">Nome:</label>
                                                 <input value="<?=$nmprimtl?>" type="text" class="campoTelaSemBorda" style="width: 446px;" readonly disabled>
                                             </fieldset>
@@ -189,8 +195,8 @@ $motivo = getByTagName($solicitacao,"motivo");
 
                                                 <br style="clear:both" />
 
-                                                <label style="margin-left: 15px;width: 70px;">Motivo:</label>
-                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 40px;margin-right: 19px;"><?=$motivo?></textarea>
+                                                <label style="margin-left: 15px;width: 70px;">Motivo(s):</label>
+                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 19px;"><?=utf8_decode($motivo)?></textarea>
 
 
                                             </fieldset>

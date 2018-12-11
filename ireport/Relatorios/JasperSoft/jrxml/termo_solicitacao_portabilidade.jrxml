@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-11-21T16:11:50 -->
+<!-- 2018-11-30T16:59:38 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -530,21 +530,18 @@
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<line>
-					<reportElement x="147" y="45" width="300" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
+					<reportElement x="147" y="40" width="300" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
 					<graphicElement>
 						<pen lineWidth="0.5"/>
 					</graphicElement>
 				</line>
 				<staticText>
-					<reportElement x="0" y="48" width="595" height="11" uuid="466f794e-1f08-459f-9942-c8476ab7ada4">
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Center" markup="none">
-						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
+					<reportElement x="0" y="28" width="595" height="42" uuid="5f87320e-4a99-4b0d-b9fc-16299722455d"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font isBold="false"/>
+						<paragraph lineSpacingSize="1.0" firstLineIndent="15"/>
 					</textElement>
 					<text><![CDATA[Assinatura do cooperado solicitante]]></text>
 				</staticText>

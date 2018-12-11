@@ -173,11 +173,11 @@
 		
 		<br style="clear:both"/>
 		
-		<label for="cdtipcta" class="clsCampos">Tipo de Conta:</label>
-		<input type="text" id="cdtipcta" name="cdtipcta" readonly="readonly" class="campo" value="Conta Corrente" />
+		<label for="cdtipcta" class="clsCampos" style="width: 98px;">Tipo de Conta:</label>
+		<input type="text" id="cdtipcta" name="cdtipcta" style="width: 112px;" readonly="readonly" class="campo" value="Conta Corrente" />
 		
-		<label for="cdagectl" class="clsCampos">Ag&ecirc;ncia:</label>
-		<input type="text" id="cdagectl" name="cdagectl" readonly="readonly" class="campo" value="<?php echo $cdagectl; ?>" />
+		<label for="cdagectl" class="clsCampos" style="width: 70px;">Ag&ecirc;ncia:</label>
+		<input type="text" id="cdagectl" name="cdagectl" style="width: 45px;" readonly="readonly" class="campo" value="<?php echo $cdagectl; ?>" />
 		
 		<label for="nrdconta" class="clsCampos">Conta:</label>
 		<input type="text" id="nrdconta" name="nrdconta" readonly="readonly" class="campo" value="<?php echo $nrdconta_formatada; ?>" />
@@ -201,8 +201,8 @@
 		
 		<br style="clear:both"/>
 		
-		<label for="dsmotivo" class="clsCampos">Motivo:</label>
-		<input type="text" id="dsmotivo" name="dsmotivo" readonly="readonly" rows="2" class="campo" value="<?php echo $dsmotivo; ?>" />
+		<label for="dsmotivo" class="clsCampos">Motivo(s):</label>
+		<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 19px;"><?=utf8_decode($dsmotivo)?></textarea>
 	</fieldset>
 	
 	</div>

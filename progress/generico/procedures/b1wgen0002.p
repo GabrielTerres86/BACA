@@ -3949,9 +3949,12 @@ PROCEDURE valida-dados-gerais:
 
     DEF   VAR        aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
     DEF   VAR        aux_fleprCDC AS LOG INIT FALSE                 NO-UNDO.
+    DEF   VAR        aux_cdmodali AS INTEGER                        NO-UNDO.
+    DEF   VAR        aux_flgconsignado_salario AS LOGI              NO-UNDO.
 		
     ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+           aux_dscritic = ""
+           aux_flgconsignado_salario = FALSE.
 
     /* Carregar flag de cessao de credito */
     IF par_nmdatela = "CRPS714" THEN
@@ -4063,11 +4066,45 @@ PROCEDURE valida-dados-gerais:
        END.
       END.
     
+    /* Buscamos a modalidade da conta */    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT crapass.inpessoa 
+                         ,INPUT crapass.cdtipcta
+                         ,OUTPUT 0
+                         ,OUTPUT ""
+                         ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic 
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    IF aux_dscritic <> "" THEN
+      DO:
+        LEAVE.
+      END.
+      
+    IF aux_cdmodali = 2 AND par_cdfinemp = 57 THEN
+      DO:
+        ASSIGN aux_flgconsignado_salario = TRUE.
+      END.
+    
     DO WHILE TRUE:
 
         IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) AND
             NOT CAN-DO("100,800,900,6901", STRING(par_cdlcremp)) AND /* CDC */
-            NOT CAN-DO("2,4", STRING(par_idquapro)) THEN
+            NOT CAN-DO("2,4", STRING(par_idquapro)) AND
+            aux_flgconsignado_salario = FALSE THEN /* Empréstimo consignado para contas salário */
             DO:
                 aux_valida_adesao = TRUE.
                 IF par_cddopcao = "A" THEN

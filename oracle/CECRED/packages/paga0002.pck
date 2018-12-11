@@ -1600,7 +1600,18 @@ create or replace package body cecred.PAGA0002 is
       vr_cdcritic := 0;
       vr_dscritic := 'Codigo identificador deve conter no maximo 25 caracteres.';
   	  RAISE vr_exc_erro;
-    END IF; 
+    END IF;
+		
+		PCPS0001.pc_valida_transf_conta_salario(pr_cdcooper => pr_cdcooper
+																					 ,pr_nrdconta => pr_nrdconta
+																					 ,pr_cdageban => pr_cdageban
+																					 ,pr_nrctatrf => pr_nrctatrf
+																					 ,pr_des_erro => vr_des_erro
+																					 ,pr_dscritic => vr_dscritic);
+																					 
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta

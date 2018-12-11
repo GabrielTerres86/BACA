@@ -192,10 +192,29 @@ function Filtro() {
             buttonText: "Aloha(rola)"
         });
         $(".data", '#' + frmFiltro).datepicker('enable');
+        $("#nrdconta", "#frmFiltro").bind("keyup", function (e) {
+            if (!$(this).setMaskOnKeyUp("INTEGER", "zzzz.zzz-z", "", e)) {
+                return false;
+            }
+        });
+        $("#nrdconta", "#frmFiltro").bind("blur", function () {
+            if ($(this).val() == "") {
+                return true;
+            }
+            if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
+                showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus()");
+                $("#nrdconta", "#frmFiltro").val("");
+                return false;
+            }
+
+            return true;
+        });
+        layoutPadrao();
     }
 
     this.carregar = function (cddopcao) {
         showMsgAguardo('Aguarde, carregando...');
+        $('#divFiltro').html('');
         $.ajax({
             type: "POST",
             dataType: 'html',
@@ -306,7 +325,8 @@ function Grid() {
         paginaAtual = pagina;
 
         showMsgAguardo('Aguarde, carregando...');
-
+        
+        $('#divListaSolicitacoes').html('');
         $.ajax({
             type: "POST",
             dataType: 'html',
@@ -425,6 +445,7 @@ function exibirDetalhe(dsrowid){
     exibeRotina($('#divUsoGenerico'));
 
     var cddopcao = cabecalho.getOpcaoSelecionada();
+    $('#divUsoGenerico').html('');
     $.ajax({
 		dataType: "html",
 		type: "POST",
@@ -490,9 +511,8 @@ function formatarGridContas() {
     var divRegistro = $('div.divRegistros', '#divContas');
     var tabela = $('table', divRegistro);
     divRegistro.css({
-        'height': '100px',
+        'height': '100px' 
     });
-
     var tabelaHeader = $('table > thead > tr > th', divRegistro);
     var fonteLinha = $('table > tbody > tr > td', divRegistro);
 
@@ -571,11 +591,44 @@ function validarDirecionamentoPortabilidade(dsrowid) {
     var nrdconta = $tr.find('input[name="nrdconta"]').val().replace('/./g', '');
     showConfirmacao('Confirma o direcionamento da portabilidade?', 'Confirma&ccedil;&atilde;o - Ayllos', 'direcionarPortabilidade("'+dsrowid+'", "'+cdcooper+'", "'+nrdconta+'")', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 }
+function exibirDevolucaoPortabilidade(dsrowid) {
+    showMsgAguardo("Aguarde, carregando ...");
+    exibeRotina($('#divUsoGenerico'));
+
+    var cddopcao = cabecalho.getOpcaoSelecionada();
+    $('#divUsoGenerico').html('');
+    $.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/solpor/form_devolve_solicitacao.php",
+		data: {
+            dsrowid: dsrowid,
+            cddopcao: cddopcao,
+			redirect: "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+            if (response.substr(0, 14) == 'hideMsgAguardo') {
+                eval(response);
+            } else {
+                $('#divUsoGenerico').html(response);
+                hideMsgAguardo();
+                bloqueiaFundo($('#divUsoGenerico'));
+                ajustarCentralizacao($('#divUsoGenerico'));
+                formatarGridContas();
+            }
+		}
+	});
+}
 function exibirDirecionanamentoPortabilidade(dsrowid) {
     showMsgAguardo("Aguarde, carregando ...");
     exibeRotina($('#divUsoGenerico'));
 
     var cddopcao = cabecalho.getOpcaoSelecionada();
+    $('#divUsoGenerico').html('');
     $.ajax({
 		dataType: "html",
 		type: "POST",
@@ -615,6 +668,7 @@ function exibirReprovacaoPortabilidade(dsrowid) {
     exibeRotina($('#divUsoGenerico'));
 
     var cddopcao = cabecalho.getOpcaoSelecionada();
+    $('#divUsoGenerico').html('');
     $.ajax({
 		dataType: "html",
 		type: "POST",

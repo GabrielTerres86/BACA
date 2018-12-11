@@ -24,14 +24,18 @@ $dsrowid = (!empty($_POST['dsrowid'])) ? $_POST['dsrowid'] : '';
 $cdmotivo = (!empty($_POST['cdmotivo'])) ? $_POST['cdmotivo'] : '';
 $idsituacao = (!empty($_POST['idsituacao'])) ? $_POST['idsituacao'] : '';
 
-function exibeErro($msgErro) {
+function exibeErro($msgErro, $flgfundo) {
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
+	if ($flgfundo) {
+		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
+	} else {
+		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","");';
+	}
 	exit();
 }
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-	exibeErro($msgError);
+	exibeErro($msgError, false);
 }
 
 if ($acao == 'direcionarPortabilidade') {
@@ -45,7 +49,7 @@ if ($acao == 'direcionarPortabilidade') {
 
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
-		exibeErro($msgErro);
+		exibeErro($msgErro, true);
 	}
 
 	if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == "RETORNO") {
@@ -64,7 +68,7 @@ if ($acao == 'direcionarPortabilidade') {
 
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
-		exibeErro($msgErro);
+		exibeErro($msgErro, false);
 	}
 
 	if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == "RETORNO") {
@@ -73,5 +77,5 @@ if ($acao == 'direcionarPortabilidade') {
 		}
 	}
 } else {
-	exibeErro('Ação inválida.');
+	exibeErro('Ação inválida.', false);
 }

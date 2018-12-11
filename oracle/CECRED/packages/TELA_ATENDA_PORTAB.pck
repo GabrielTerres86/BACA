@@ -190,6 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
               ,tpe.nrcnpj_empregador
               ,tpe.dsnome_empregador
               ,tpe.ROWID dsrowid
+							,tpe.nrsolicitacao
           FROM tbcc_portabilidade_envia tpe
               ,tbcc_dominio_campo       dom
               ,tbcc_dominio_campo       dcp
@@ -201,6 +202,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
            AND tpe.cdcooper = pr_cdcooper
          ORDER BY tpe.dtsolicitacao DESC;
       rw_portab_envia cr_portab_envia%ROWTYPE;
+			
+			CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
+										 ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE
+										 ,pr_nrsolici tbcc_portabilidade_envia.nrsolicitacao%TYPE) IS
+			  SELECT dom.dscodigo
+				      ,dom.cddominio
+					FROM tbcc_portabilidade_env_erros tee
+							,tbcc_portabilidade_envia tpe
+							,tbcc_dominio_campo dom
+				 WHERE tpe.cdcooper = tee.cdcooper
+					 AND tpe.nrdconta = tee.nrdconta
+					 AND tpe.nrsolicitacao = tee.nrsolicitacao
+					 AND tee.cdmotivo = dom.cddominio
+					 AND tee.dsdominio_motivo = dom.nmdominio
+					 AND tee.cdcooper = pr_cdcooper
+					 AND tee.nrdconta = pr_nrdconta
+					 AND tee.nrsolicitacao = pr_nrsolici;
+			rw_erros cr_erros%ROWTYPE;
     
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -234,6 +253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       vr_nrispbif_cop crapban.nrispbif%TYPE;
       vr_nrdocnpj_cop VARCHAR2(100);
       vr_cdagectl_cop crapcop.cdagectl%TYPE;
+			vr_dsmotivo VARCHAR2(5000);
     
     BEGIN
       -- Incluir Nome do Módulo Logado
@@ -360,7 +380,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_cont => vr_nmprimtl,
                              pr_des_erro => vr_dscritic);
     
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+      IF TRIM(NVL(vr_nrtelefo,'')) = '()' THEN
+				vr_nrtelefo := '';
+			END IF;
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrtelefo',
@@ -371,7 +394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'dsdemail',
-                             pr_tag_cont => vr_dsdemail,
+                             pr_tag_cont => NVL(vr_dsdemail, ''),
                              pr_des_erro => vr_dscritic);
     
       -- Banco folha
@@ -468,12 +491,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_nova => 'dtretorno',
                              pr_tag_cont => rw_portab_envia.dtretorno,
                              pr_des_erro => vr_dscritic);
-    
+											 
+			vr_dsmotivo := rw_portab_envia.motivo;
+			--
+			IF upper(rw_portab_envia.cdmotivo) = 'EGENPCPS' THEN
+				vr_dsmotivo := '';
+				FOR rw_erros IN cr_erros(pr_cdcooper => vr_cdcooper
+																,pr_nrdconta => pr_nrdconta
+																,pr_nrsolici => rw_portab_envia.nrsolicitacao) LOOP
+					--
+					vr_dsmotivo := vr_dsmotivo || chr(10) || rw_erros.cddominio || ' - ' || rw_erros.dscodigo;
+					--
+				END LOOP;
+				--
+				IF trim(vr_dsmotivo) IS NULL THEN
+					vr_dsmotivo := rw_portab_envia.motivo;
+				END IF;
+			END IF;
+			--														 
+
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'dsmotivo',
-                             pr_tag_cont => rw_portab_envia.motivo,
+                             pr_tag_cont => gene0007.fn_convert_db_web(vr_dsmotivo),
                              pr_des_erro => vr_dscritic);
     
       -- extras        
@@ -559,13 +600,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
               ,tpr.cdagencia_destinataria
               ,tpr.nrdconta_destinataria
               ,tpr.idsituacao
+							,dom.dscodigo situacao
+              ,dcp.dscodigo motivo
+							,dcp.cddominio cdmotivo
+							,to_char(tpr.dtavaliacao, 'DD/MM/RRRR HH24:MI:SS') dtavaliacao
           FROM tbcc_portabilidade_recebe tpr
               ,crapban                   ban
+              ,tbcc_dominio_campo        dom
+              ,tbcc_dominio_campo        dcp							
          WHERE ban.nrispbif(+) = tpr.nrispb_destinataria
+				   AND tpr.idsituacao = dom.cddominio
+           AND dom.nmdominio = 'SIT_PORTAB_SALARIO_RECEBE'
+           AND dcp.nmdominio(+) = tpr.dsdominio_motivo
+           AND dcp.cddominio(+) = to_char(tpr.cdmotivo)
            AND tpr.nrdconta = pr_nrdconta
            AND tpr.cdcooper = pr_cdcooper
          ORDER BY tpr.dtsolicitacao DESC;
       rw_portab_recebe cr_portab_recebe%ROWTYPE;
+			
+			CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
+										 ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE) IS
+
+				SELECT 'EGEN0008' AS cddominio
+				      ,'ISPB Destinatário Não Informado' AS dscodigo
+				  FROM dual
+				UNION ALL			  
+				SELECT 'EGEN0020' AS cddominio
+				      ,'Tipo ID Destinatário Ausente/Inválido' AS dscodigo
+				  FROM dual;
+			rw_erros cr_erros%ROWTYPE;			
     
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -585,6 +648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Variaveis internas
       vr_dscnpjbc VARCHAR2(100);
+			vr_dsmotivo VARCHAR2(5000);
     
     BEGIN
       -- Incluir Nome do Módulo Logado
@@ -670,8 +734,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrdconta_destinataria',
-                             pr_tag_cont => rw_portab_recebe.nrdconta_destinataria,
+                             pr_tag_cont => gene0002.fn_mask_conta(rw_portab_recebe.nrdconta_destinataria),
                              pr_des_erro => vr_dscritic);
+														 
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'dtavaliacao',
+                             pr_tag_cont => rw_portab_recebe.dtavaliacao,
+                             pr_des_erro => vr_dscritic);
+														 
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'dssituacao',
+                             pr_tag_cont => rw_portab_recebe.situacao,
+                             pr_des_erro => vr_dscritic);
+														 
+      vr_dsmotivo := rw_portab_recebe.motivo;
+			--
+			IF upper(rw_portab_recebe.cdmotivo) = 'EGENPCPS' THEN
+				vr_dsmotivo := '';
+				FOR rw_erros IN cr_erros(pr_cdcooper => vr_cdcooper
+																,pr_nrdconta => pr_nrdconta) LOOP
+					--
+					vr_dsmotivo := vr_dsmotivo || chr(10) || rw_erros.cddominio || ' - ' || rw_erros.dscodigo;
+					--
+				END LOOP;
+				--
+				IF trim(vr_dsmotivo) IS NULL THEN
+					vr_dsmotivo := rw_portab_recebe.motivo;
+				END IF;
+			END IF;
+			--														 
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'dsmotivo',
+                             pr_tag_cont => gene0007.fn_convert_db_web(vr_dsmotivo),
+                             pr_des_erro => vr_dscritic);											 														 
     
       -- extras        
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -954,7 +1056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       -- Seleciona a Instituicao Destinatario
       CURSOR cr_crapcop(pr_cdcooper IN crapenc.cdcooper%TYPE) IS
         SELECT b.nrispbif
-              ,c.nrdocnpj
+              ,b.nrcnpjif
               ,c.cdagectl
           FROM crapban b
               ,crapcop c
@@ -1123,7 +1225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         RAISE vr_exc_erro;
       END IF;
     
-      IF TRIM(rw_crapcop.nrdocnpj) IS NULL THEN
+      IF TRIM(rw_crapcop.nrcnpjif) IS NULL THEN
         vr_dscritic := 'CNPJ da Instituicao Financeira Destinataria nao encontrado.';
         RAISE vr_exc_erro;
       END IF;
@@ -1186,13 +1288,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           ,rw_craptfc.nrtelefo
           ,rw_crapcem.dsdemail
           ,pr_cdbccxlt
-          ,1
+          ,0
           ,rw_crapban.nrispbif
           ,rw_crapban.nrcnpjif
           ,rw_crapttl.nrcpfemp
           ,rw_crapttl.nmextemp
           ,rw_crapcop.nrispbif
-          ,rw_crapcop.nrdocnpj
+          ,rw_crapcop.nrcnpjif
           ,'CC' -- Conta Corrente
           ,rw_crapcop.cdagectl
           ,1 -- a solicitar
@@ -1298,7 +1400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'CNPJ Destinataria',
                                 pr_dsdadant => ' ',
-                                pr_dsdadatu => rw_crapcop.nrdocnpj);
+                                pr_dsdadatu => rw_crapcop.nrcnpjif);
       -- Gera o log para o Tipo Conta
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'Tipo Conta CIP',
@@ -1733,6 +1835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     vr_clob        CLOB;
     vr_qtde_dias   VARCHAR2(200);
     vr_dsqtde_dias VARCHAR2(200);
+		vr_nrtelefo    VARCHAR2(100);
   
     vr_nom_direto VARCHAR2(200); --> Diretório para gravação do arquivo
     vr_dsjasper   VARCHAR2(100); --> nome do jasper a ser usado
@@ -1842,8 +1945,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     gene0002.pc_escreve_xml(pr_xml            => vr_clob,
                             pr_texto_completo => vr_xml_temp,
                             pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><adesao>');
-  
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+    
+		vr_nrtelefo := rw_solicitacao.telefone;
+		IF TRIM(NVL(vr_nrtelefo,'')) = '()' THEN
+			 vr_nrtelefo := ' ';
+		END IF;
+		
+		gene0002.pc_escreve_xml(pr_xml            => vr_clob,
                             pr_texto_completo => vr_xml_temp,
                             pr_texto_novo     => '<qtde_dias>' || vr_qtde_dias || '</qtde_dias>' ||
                                                  '<dsqtde_dias>' || vr_dsqtde_dias ||
@@ -1853,7 +1961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                                                  rw_solicitacao.nrdconta || '</nrdconta>' ||
                                                  '<nrcpfcgc>' || rw_solicitacao.nrcpfcgc ||
                                                  '</nrcpfcgc>' || '<telefone>' ||
-                                                 rw_solicitacao.telefone || '</telefone>' ||
+                                                 vr_nrtelefo || '</telefone>' ||
                                                  '<nmprimtl>' || rw_solicitacao.nmprimtl ||
                                                  '</nmprimtl>' || '<nrcnpj_empregador>' ||
                                                  rw_solicitacao.nrcnpj_empregador ||
@@ -1867,7 +1975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                                                  rw_solicitacao.nrcnpj_banco_folha ||
                                                  '</nrcnpj_banco_folha>' || '<tipo_conta>' ||
                                                  rw_solicitacao.tipo_conta || '</tipo_conta>' ||
-                                                 '<dsdemail>' || rw_solicitacao.dsdemail ||
+                                                 '<dsdemail>' || NVL(rw_solicitacao.dsdemail, ' ') ||
                                                  '</dsdemail>' || '<nmoperad>' ||
                                                  rw_solicitacao.nmoperad || '</nmoperad>' || '<pa>' ||
                                                  rw_solicitacao.pa || '</pa>' || '<cdagencia>' ||
@@ -1894,7 +2002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                                 pr_dsjasper  => vr_dsjasper,
                                 pr_dsparams  => NULL,
                                 pr_dsarqsaid => vr_nom_direto || vr_nmarqim,
-                                pr_cdrelato  => 684,
+                                pr_cdrelato  => 733,
                                 pr_flg_gerar => 'S',
                                 pr_qtcoluna  => 80,
                                 pr_sqcabrel  => 1,

@@ -101,11 +101,11 @@ $dominios = $xmlObj->roottag->tags[0]->tags;
 			</select>
 			
 			<label for="cdagenci" style="width: 77px;">PA:</label>
-			<input style="width:50px" type="text" id="cdagenci" class="inteiro campo" name="cdagenci" />
+			<input style="width:50px" type="text" id="cdagenci" class="inteiro campo" name="cdagenci" maxlength="5" />
 			<a id="lupaPA" style="cursor: pointer;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 
 			<label for="nrdconta" style="width: 85px;">Conta/dv:</label>
-			<input type="text" id="nrdconta" class="inteiro" style="width:135px" name="nrdconta" />
+			<input type="text" id="nrdconta" class="inteiro" maxlength="10" style="width:135px" name="nrdconta" />
 			<a id="lupaAss" style="cursor: pointer;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 
 			<br style="clear:both" />

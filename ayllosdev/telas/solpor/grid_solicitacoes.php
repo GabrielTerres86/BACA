@@ -33,6 +33,15 @@ $nuPortabilidade = (!empty($_POST['nuPortabilidade'])) ? $_POST['nuPortabilidade
 $pagina = (!empty($_POST['pagina'])) ? $_POST['pagina'] : 1;
 $tamanho_pagina = 10;
 
+// Validação para garantir injeção de parametro
+// Caso não for Aillos
+if ($glbvars["cdcooper"] <> 3) {
+    // Caso o valor informado for diferente da cooperativa logada
+    if ($cdcooper <> $glbvars["cdcooper"]) {
+        $cdcooper = $glbvars["cdcooper"];
+    }
+}
+
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
@@ -114,17 +123,18 @@ $solicitacoes = $xmlObj->roottag->tags[0]->tags[0]->tags;
                 <td style="width: 67px;"><?=$dtretorno?></td>
                 <td style="width: 150px;"><?=$motivo?></td>
                 <td>
-                    <a onclick="exibirDetalhe('<?=$dsrowid?>'); return false;" style="cursor: pointer;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+                    <a title="Detalhar" onclick="exibirDetalhe('<?=$dsrowid?>'); return false;" style="cursor: pointer;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
                     <?php 
                     if ($cddopcao == 'M') {
                         if (!empty($nrdconta) && $nrdconta > 0) {
                             if ($idsituacao == 1 || $idsituacao == 4) {
-                                echo '<a onclick="validarAprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_APROVAR.png"></a>';
-                                echo '<a onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
+                                echo '<a title="Aprovar" onclick="validarAprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_APROVAR.png"></a>';
+                                echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
+                                echo '<a title="Devolver" onclick="exibirDevolucaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
                             }
                         } else {
-                            echo '<a onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
-                            echo '<a onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
+                            echo '<a title="Direcionar" onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
+                            echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
                         }
                     }
                     ?>

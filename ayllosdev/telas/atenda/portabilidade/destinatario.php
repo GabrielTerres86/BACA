@@ -54,6 +54,9 @@
 	$cdagencia_destinataria_r       = getByTagName($registro->tags,'cdagencia_destinataria');
 	$nrdconta_destinataria_r        = getByTagName($registro->tags,'nrdconta_destinataria');	
 	$cdsituacao 		            = getByTagName($registro->tags,'cdsituacao');
+	$dssituacao                     = getByTagName($registro->tags,'dssituacao');
+	$dtavaliacao                    = getByTagName($registro->tags,'dtavaliacao');
+	$dsmotivo                       = getByTagName($registro->tags,'dsmotivo');
 	
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
@@ -77,34 +80,47 @@
         <fieldset style="padding: 5px">
             <legend>Portabilidade</legend>
 
-            <label for="nrnu_portabilidade_r" class="clsCampos" style="width:98px">NU:</label>
-            <input type="text" id="nrnu_portabilidade_r" name="nrnu_portabilidade_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrnu_portabilidade_r; ?>" style="width:200px" />
+            <label for="nrnu_portabilidade_r" class="clsCampos" style="width:85px">NU:</label>
+            <input type="text" id="nrnu_portabilidade_r" name="nrnu_portabilidade_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrnu_portabilidade_r; ?>" style="width:140px" />
             
-            <label for="dtsolicitacao_r" class="clsCampos" style="width:50px">Data:</label>
-            <input type="text" id="dtsolicitacao_r" name="dtsolicitacao_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $dtsolicitacao_r; ?>" style="width:158px" />
+            <label for="dtsolicitacao_r" class="clsCampos" style="width:170px">Data Solicita&ccedil;&atilde;o:</label>
+            <input type="text" id="dtsolicitacao_r" name="dtsolicitacao_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $dtsolicitacao_r; ?>" style="width:113px" />
+
+			<br style="clear:both"/>
+
+			<label for="dtsolicitacao_r" class="clsCampos" style="width:85px">Situa&ccedil;&atilde;o:</label>
+            <input type="text" id="dtsolicitacao_r" name="dtsolicitacao_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?=$dssituacao?>" style="width:140px" />
+
+			<label for="dtsolicitacao_r" class="clsCampos" style="width:170px">Data Avalia&ccedil;&atilde;o:</label>
+            <input type="text" id="dtsolicitacao_r" name="dtsolicitacao_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?=$dtavaliacao?>" style="width:113px" />
+
+			<br style="clear:both"/>
+
+			<label for="dsmotivo" class="clsCampos" style="width:85px">Motivo(s):</label>
+			<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 425px;height: 60px;margin-right: 19px;"><?=utf8_decode($dsmotivo)?></textarea>
         </fieldset>
 
         <fieldset>
             <legend>Empregador</legend>
-            <label for="nrcnpj_empregador_r" class="clsCampos" style="width:98px">CNPJ:</label>
+            <label for="nrcnpj_empregador_r" class="clsCampos" style="width:85px">CNPJ:</label>
             <input name="nrcnpj_empregador_r" type="text" id="nrcnpj_empregador_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrcnpj_empregador_r; ?>" style="width:110px" />
 
-            <label for="dsnome_empregador_r" class="clsCampos" style="width:50px">Nome:</label>
+            <label for="dsnome_empregador_r" class="clsCampos" style="width:65px">Nome:</label>
             <input id="dsnome_empregador_r" name="dsnome_empregador_r" readonly="readonly" type="text" class="campo campoTelaSemBorda" value="<?php echo $dsnome_empregador_r; ?>" style="width:250px" />
         </fieldset>
 
         <fieldset style="padding: 5px">
             <legend>Institui&ccedil;&atilde;o Destinataria</legend>
-            <label for="banco" class="clsCampos" style="width:158px">Banco:</label>
+            <label for="banco" class="clsCampos" style="width:85px">Banco:</label>
             <input id="banco" name="banco" type="text" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $banco; ?>" style="width:278px"/>
             
             <br style="clear:both"/>
             
-            <label for="cdagencia_destinataria_r" class="clsCampos" style="width:158px">Ag&ecirc;ncia:</label>
-            <input type="text" id="cdagencia_destinataria_r" name="cdagencia_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $cdagencia_destinataria_r; ?>" style="width:75px" />
+            <label for="cdagencia_destinataria_r" class="clsCampos" style="width:85px">Ag&ecirc;ncia:</label>
+            <input type="text" id="cdagencia_destinataria_r" name="cdagencia_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $cdagencia_destinataria_r; ?>" style="width:45px" />
             
             <label for="nrdconta_destinataria_r" class="clsCampos" style="width:60px">Conta:</label>
-            <input type="text" id="nrdconta_destinataria_r" name="nrdconta_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrdconta_destinataria_r; ?>" style="width:140px" />
+            <input type="text" id="nrdconta_destinataria_r" name="nrdconta_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrdconta_destinataria_r; ?>" style="width:75px" />
         </fieldset>
 	
 	</div>
