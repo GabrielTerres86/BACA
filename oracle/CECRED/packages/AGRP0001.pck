@@ -482,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                 ,pr_idprglog      => vr_idprglog);
       end;
     
-      --commit;
+      commit;
 
     end loop;
     
