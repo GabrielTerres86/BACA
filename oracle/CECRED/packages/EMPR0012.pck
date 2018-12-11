@@ -5571,7 +5571,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         -- Tratamento de erro de retorno
         if coalesce(vr_dscritic,'OK') != 'OK'  then
-          --raise vr_exc_saida;
+
+          -- Gera Log
+          GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
+                              ,pr_cdoperad => 'AUTOCDC'
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => 'EFT_CDC'
+                              ,pr_dstransa => 'Efetivacao proposta CDC.'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 1 -- TRUE
+                              ,pr_hrtransa => GENE0002.fn_busca_time
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'AUTOCDC'
+                              ,pr_nrdconta => rw_rapassecdc.nrdconta
+                              ,pr_nrdrowid => vr_rowid); 
           
           pc_grava_pedencia_emprestimo (pr_cdcooper => rw_rapassecdc.cdcooper
                                        ,pr_nrdconta => rw_rapassecdc.nrdconta
@@ -5597,19 +5610,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                        ,pr_cdcritic  => vr_cdcritic      --> Código da crítica
                                        ,pr_dscritic  => vr_dscritic);   --> Descrição da crítica
 
-          -- Gera Log
-          GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                              ,pr_cdoperad => 'AUTOCDC'
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'EFT_CDC'
-                              ,pr_dstransa => 'Efetivacao proposta CDC.'
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 -- TRUE
-                              ,pr_hrtransa => GENE0002.fn_busca_time
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => 'AUTOCDC'
-                              ,pr_nrdconta => rw_rapassecdc.nrdconta
-                              ,pr_nrdrowid => vr_rowid); 
           continue;
         end if;
 
