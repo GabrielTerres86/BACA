@@ -27,7 +27,7 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","Parâmetros incorretos.","Alerta - Ayllos","");';
+		echo 'showError("error","Parâmetros incorretos.","Alerta - Aimaro","");';
 		echo '</script>';
 		exit();
 	}	

@@ -15,7 +15,7 @@ isPostMethod();
 	
 // Verifica permissões de acessa a tela
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C',false)) <> '') 
-	exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 $nrdconta = ( ( !empty($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0 );
 $cdmotivo = ( ( !empty($_POST['cdmotivo']) ) ? $_POST['cdmotivo'] : 0 );
@@ -36,7 +36,7 @@ $xmlObject = getObjectXML($xmlResult);
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 }
 
-exibirErro('inform','Portabilidade cancelada com sucesso.','Alerta - Ayllos','fechaRotina($(\"#divUsoGenerico\")); acessaOpcaoAba(2,0,\"0\"); exibeRotina($(\"#divRotina\"));',false);
+exibirErro('inform','Portabilidade cancelada com sucesso.','Alerta - Aimaro','fechaRotina($(\"#divUsoGenerico\")); acessaOpcaoAba(2,0,\"0\"); exibeRotina($(\"#divRotina\"));',false);

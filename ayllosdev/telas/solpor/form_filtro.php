@@ -22,7 +22,7 @@ $cddopcao = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","");';
+	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Aimaro","");';
 	echo '</script>';
 	exit();
 }

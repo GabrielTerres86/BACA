@@ -27,9 +27,9 @@ $idsituacao = (!empty($_POST['idsituacao'])) ? $_POST['idsituacao'] : '';
 function exibeErro($msgErro, $flgfundo) {
 	echo 'hideMsgAguardo();';
 	if ($flgfundo) {
-		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
+		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Aimaro","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
 	} else {
-		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","");';
+		echo 'showError("error","'.addslashes($msgErro).'","Alerta - Aimaro","");';
 	}
 	exit();
 }
@@ -54,7 +54,7 @@ if ($acao == 'direcionarPortabilidade') {
 
 	if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == "RETORNO") {
 		if ($xmlObj->roottag->tags[0]->tags[0]->cdata == "1") {
-			echo "showError('inform','Portabilidade direcionada com sucesso.','Alerta - Ayllos','fechaRotina($(\'#divUsoGenerico\'));grid.reload();',false);";
+			echo "showError('inform','Portabilidade direcionada com sucesso.','Alerta - Aimaro','fechaRotina($(\'#divUsoGenerico\'));grid.reload();',false);";
 		}
 	}
 } else if ($acao == 'avaliarPortabilidade') {
@@ -73,7 +73,7 @@ if ($acao == 'direcionarPortabilidade') {
 
 	if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == "RETORNO") {
 		if ($xmlObj->roottag->tags[0]->tags[0]->cdata == "1") {
-			echo "showError('inform','Portabilidade avaliada com sucesso.','Alerta - Ayllos','fechaRotina($(\'#divUsoGenerico\'));grid.reload();',false);";
+			echo "showError('inform','Portabilidade avaliada com sucesso.','Alerta - Aimaro','fechaRotina($(\'#divUsoGenerico\'));grid.reload();',false);";
 		}
 	}
 } else {

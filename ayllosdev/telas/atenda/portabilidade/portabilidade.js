@@ -18,14 +18,14 @@ var nomeForm = '';
 var vintegra = 0;
 
 
-// Fun??o para acessar op??es da rotina
+// Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 	glb_opcao = opcao;
 	
-	if (opcao == "0") {	// Op??o Principal
+	if (opcao == "0") {	// Opção Principal
 		var msg = ", carregando dados de portabilidade";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/envio_solicitacao.php";
-	} else if (opcao == "1") { // Op??o Subscri??o Inicial
+	} else if (opcao == "1") { // Opção Subscrição Inicial
 		var msg = ", carregando subscri&ccedil;&atilde;o inicial";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/destinatario.php";
 	}
@@ -34,9 +34,9 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		// Mostra mensagem de aguardo
 		showMsgAguardo("Aguarde" + msg + " ...");
 	
-    // Atribui cor de destaque para aba da op??o
+    // Atribui cor de destaque para aba da opção
 	for (var i = 0; i < nrOpcoes; i++) {
-	    if (id == i) { // Atribui estilos para foco da op??o
+	    if (id == i) { // Atribui estilos para foco da opção
             $("#linkAba" + id).attr("class", "txtBrancoBold");
             $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
             $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
@@ -50,8 +50,8 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
 	}
 
-	if (opcao != "") { // Demais Op??es		
-	    // Carrega conte?do da op??o atrav?s de ajax
+	if (opcao != "") { // Demais Opções		
+	    // Carrega conteúdo da opção através de ajax
 		$.ajax({		
 			type: "POST", 
 			dataType: "html",
@@ -63,7 +63,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 			},
             error: function (objAjax, responseError, objExcept) {
 				hideMsgAguardo();
-				showError("error", "N?o foi poss?vel concluir a requisi??o..", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error", "Não foi possível concluir a requisição.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
             success: function (response) {
 				if (response.substr(0, 14) == 'hideMsgAguardo') {
@@ -78,12 +78,12 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 }
 
 
-//Fun??o para controle de navega??o
+//Função para controle de navegação
 function controlaFoco(opcao) {
     var IdForm = '';
     var formid;
 
-    if (opcao == "@") { //Envio de Solicita??o
+    if (opcao == "@") { //Envio de Solicitação
         $('.FirstInput:first ').focus();
 	}
 
@@ -254,7 +254,7 @@ function controlaOperacao(cddopcao) {
 			var cDsdbanco = $('#dsdbanco', '#'+nomeForm);
 			var vCdbccxlt = cDsdbanco.val();
 			if (!vCdbccxlt) {
-				showError("error", "O campo Banco Folha deve ser selecionado", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error", "O campo Banco Folha deve ser selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				cDsdbanco.focus();
 				return;
 			}
@@ -271,7 +271,7 @@ function controlaOperacao(cddopcao) {
 
 function solicitaPortabilidade(skipConfirm) {
 	if (!skipConfirm) {
-		showConfirmacao('Confirma a solicita&ccedil;&atilde;o de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Ayllos', 'solicitaPortabilidade(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		showConfirmacao('Confirma a solicita&ccedil;&atilde;o de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Aimaro', 'solicitaPortabilidade(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 		return;
 	}
 
@@ -282,7 +282,7 @@ function solicitaPortabilidade(skipConfirm) {
 	var nrispbif_banco_folha = $('#nrispbif_banco_folha', '#'+nomeForm).val();
 	var nrcnpjif = $('#nrcnpjif', '#'+nomeForm).val();
 
-	// Carrega conte?do da op??o atrav?s de ajax
+	// Carrega conteúdo da opção através de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -295,7 +295,7 @@ function solicitaPortabilidade(skipConfirm) {
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			eval(response);
@@ -309,7 +309,7 @@ function exibeCancelamento() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, solicitando portabilidade...");
 
-	// Carrega conte?do da op??o atrav?s de ajax
+	// Carrega conteúdo da opção através de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -319,7 +319,7 @@ function exibeCancelamento() {
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			if (response.substr(0, 14) == 'hideMsgAguardo') {
@@ -334,7 +334,7 @@ function exibeCancelamento() {
 
 function confirmaCancelamento(skipConfirm) {
 	if (!skipConfirm) {
-		showConfirmacao('Confirma o cancelamento de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaCancelamento(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		showConfirmacao('Confirma o cancelamento de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaCancelamento(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 		return;
 	}
 
@@ -343,7 +343,7 @@ function confirmaCancelamento(skipConfirm) {
 
 	var cdmotivo = $('#cdmotivo', '#frmCancelaPortabilidade').val();
 
-	// Carrega conte?do da op??o atrav?s de ajax
+	// Carrega conteúdo da opção através de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -355,7 +355,7 @@ function confirmaCancelamento(skipConfirm) {
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			eval(response);

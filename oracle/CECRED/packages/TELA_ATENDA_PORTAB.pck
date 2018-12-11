@@ -202,7 +202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
            AND tpe.cdcooper = pr_cdcooper
          ORDER BY tpe.dtsolicitacao DESC;
       rw_portab_envia cr_portab_envia%ROWTYPE;
-			
+    
 			CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
 										 ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE
 										 ,pr_nrsolici tbcc_portabilidade_envia.nrsolicitacao%TYPE) IS
@@ -383,7 +383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       IF TRIM(NVL(vr_nrtelefo,'')) = '()' THEN
 				vr_nrtelefo := '';
 			END IF;
-			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrtelefo',
@@ -491,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_nova => 'dtretorno',
                              pr_tag_cont => rw_portab_envia.dtretorno,
                              pr_des_erro => vr_dscritic);
-											 
+    
 			vr_dsmotivo := rw_portab_envia.motivo;
 			--
 			IF upper(rw_portab_envia.cdmotivo) = 'EGENPCPS' THEN
@@ -617,7 +617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
            AND tpr.cdcooper = pr_cdcooper
          ORDER BY tpr.dtsolicitacao DESC;
       rw_portab_recebe cr_portab_recebe%ROWTYPE;
-			
+    
 			CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
 										 ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE) IS
 
@@ -773,7 +773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_posicao  => 0,
                              pr_tag_nova => 'dsmotivo',
                              pr_tag_cont => gene0007.fn_convert_db_web(vr_dsmotivo),
-                             pr_des_erro => vr_dscritic);											 														 
+                             pr_des_erro => vr_dscritic);
     
       -- extras        
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1945,13 +1945,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     gene0002.pc_escreve_xml(pr_xml            => vr_clob,
                             pr_texto_completo => vr_xml_temp,
                             pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><adesao>');
-    
+  
 		vr_nrtelefo := rw_solicitacao.telefone;
 		IF TRIM(NVL(vr_nrtelefo,'')) = '()' THEN
 			 vr_nrtelefo := ' ';
 		END IF;
 		
-		gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
                             pr_texto_completo => vr_xml_temp,
                             pr_texto_novo     => '<qtde_dias>' || vr_qtde_dias || '</qtde_dias>' ||
                                                  '<dsqtde_dias>' || vr_dsqtde_dias ||

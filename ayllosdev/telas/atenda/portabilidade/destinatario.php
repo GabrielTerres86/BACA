@@ -42,7 +42,7 @@
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
 	}
 
 	$registro                       = $xmlObject->roottag->tags[0];
@@ -95,7 +95,7 @@
             <input type="text" id="dtsolicitacao_r" name="dtsolicitacao_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?=$dtavaliacao?>" style="width:113px" />
 
 			<br style="clear:both"/>
-
+            
 			<label for="dsmotivo" class="clsCampos" style="width:85px">Motivo(s):</label>
 			<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 425px;height: 60px;margin-right: 19px;"><?=utf8_decode($dsmotivo)?></textarea>
         </fieldset>
@@ -110,7 +110,7 @@
         </fieldset>
 
         <fieldset style="padding: 5px">
-            <legend>Institui&ccedil;&atilde;o Destinataria</legend>
+            <legend>Institui&ccedil;&atilde;o Destinat&aacute;ria</legend>
             <label for="banco" class="clsCampos" style="width:85px">Banco:</label>
             <input id="banco" name="banco" type="text" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $banco; ?>" style="width:278px"/>
             

@@ -26,7 +26,7 @@ $dsrowid = (!empty($_POST['dsrowid'])) ? $_POST['dsrowid'] : '';
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
+	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Aimaro","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
 	echo '</script>';
 	exit();
 }

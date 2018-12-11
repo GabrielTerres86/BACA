@@ -42,12 +42,12 @@
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','acessaOpcaoAba(2,0,"0")', false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(2,0,"0")', false);
 	}
 
 	$registro           = $xmlObject->roottag->tags[0];
 	if (!empty($registro->name) && strtoupper($registro->name) == "INPESSOA_INVALIDO" && $registro->cdata == "1") {
-		exibirErro('error','Portabilidade indispon&iacute;vel para Pessoa Jur&iacute;dica.','Alerta - Ayllos','encerraRotina(true)', false);
+		exibirErro('error','Portabilidade indispon&iacute;vel para Pessoa Jur&iacute;dica.','Alerta - Aimaro','encerraRotina(true)', false);
 		exit();
 	}
 	
@@ -127,7 +127,7 @@
 
 			if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
 				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-				exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+				exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
 			}
 
 			$registros = $xmlObject->roottag->tags;

@@ -45,7 +45,7 @@ if ($glbvars["cdcooper"] <> 3) {
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","");';
+	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Aimaro","");';
 	echo '</script>';
 	exit();
 }

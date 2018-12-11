@@ -34,7 +34,7 @@
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
 	}
 
 	$registros = $xmlObject->roottag->tags;
@@ -94,7 +94,7 @@
 										</div>
 									</form>
 
-									<div id="divBotoes">	
+									<div id="divBotoes" style="padding: 5px">	
 										<a class="botao" id="btConfirmar" href="#" onclick="confirmaCancelamento(false)">Confirmar</a>
 										<a class="botao" id="btVoltar" href="#" onclick="fechaRotina($('#divUsoGenerico'));exibeRotina($('#divRotina')); return false;">Voltar</a>
 									</div>
