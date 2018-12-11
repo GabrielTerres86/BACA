@@ -2522,12 +2522,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_buscar_cooperado.cdagenci, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_buscar_cooperado.nrdconta, pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_buscar_cooperado.nrdconta), pr_des_erro => vr_dscritic);                           
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => rw_buscar_cooperado.dtadmiss, pr_des_erro => vr_dscritic);                           
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_buscar_cooperado.dtadmiss,'dd/mm/yyyy'), pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => rw_buscar_cooperado.nrdgrupo, pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => rw_buscar_cooperado.nrcpfcgc, pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => rw_buscar_cooperado.inpessoa, pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_buscar_cooperado.nmprimtl, pr_des_erro => vr_dscritic);                           
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtnasctl', pr_tag_cont => rw_buscar_cooperado.dtnasctl, pr_des_erro => vr_dscritic);                           
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtnasctl', pr_tag_cont => to_char(rw_buscar_cooperado.dtnasctl,'dd/mm/yyyy'), pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'tpvincul', pr_tag_cont => rw_buscar_cooperado.tpvincul, pr_des_erro => vr_dscritic);                           
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'listaContas', pr_tag_cont => null,                      pr_des_erro => vr_dscritic);
 
