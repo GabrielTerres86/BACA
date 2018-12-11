@@ -192,6 +192,8 @@
 	echo "$('#divImagem').html(strHTML);";	
 	echo "$('#divImagem').css({'display':'block'});";
 	echo "$('#btFechaImagem','#divBotoes').show();";
+	echo "setTimeout(function(){gerarPDF();},500);"; //ira gerar pdf apenas quando variavel flgerpdf = true, hack para ie
+	echo "setTimeout(function(){baixarArquivo('".mt_rand()."','".base64_encode($glbvars["sidlogin"])."','".$srcF."','".$srcV."');},500);";
 	echo 'hideMsgAguardo();'; 
 	
 	// Função para exibir erros na tela através de javascript
