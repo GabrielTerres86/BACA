@@ -209,12 +209,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 			  SELECT dom.dscodigo
 				      ,dom.cddominio
 					FROM tbcc_portabilidade_env_erros tee
-							,tbcc_portabilidade_envia tpe
 							,tbcc_dominio_campo dom
-				 WHERE tpe.cdcooper = tee.cdcooper
-					 AND tpe.nrdconta = tee.nrdconta
-					 AND tpe.nrsolicitacao = tee.nrsolicitacao
-					 AND tee.cdmotivo = dom.cddominio
+				 WHERE tee.cdmotivo         = dom.cddominio
 					 AND tee.dsdominio_motivo = dom.nmdominio
 					 AND tee.cdcooper = pr_cdcooper
 					 AND tee.nrdconta = pr_nrdconta
@@ -618,16 +614,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
          ORDER BY tpr.dtsolicitacao DESC;
       rw_portab_recebe cr_portab_recebe%ROWTYPE;
     
-			CURSOR cr_erros(pr_cdcooper tbcc_portabilidade_envia.cdcooper%TYPE
-										 ,pr_nrdconta tbcc_portabilidade_envia.nrdconta%TYPE) IS
-
-				SELECT 'EGEN0008' AS cddominio
-				      ,'ISPB Destinatário Não Informado' AS dscodigo
-				  FROM dual
-				UNION ALL			  
-				SELECT 'EGEN0020' AS cddominio
-				      ,'Tipo ID Destinatário Ausente/Inválido' AS dscodigo
-				  FROM dual;
+			CURSOR cr_erros(pr_nuportab tbcc_portabilidade_rcb_erros.nrnu_portabilidade%TYPE) IS
+					SELECT dom.dscodigo
+					      ,dom.cddominio
+						FROM tbcc_portabilidade_rcb_erros tee
+								,tbcc_dominio_campo           dom
+					 WHERE tee.cdmotivo           = dom.cddominio
+						 AND tee.dsdominio_motivo   = dom.nmdominio
+						 AND tee.nrnu_portabilidade = pr_nuportab;
 			rw_erros cr_erros%ROWTYPE;			
     
       -- Variavel de criticas
@@ -755,8 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 			--
 			IF upper(rw_portab_recebe.cdmotivo) = 'EGENPCPS' THEN
 				vr_dsmotivo := '';
-				FOR rw_erros IN cr_erros(pr_cdcooper => vr_cdcooper
-																,pr_nrdconta => pr_nrdconta) LOOP
+				FOR rw_erros IN cr_erros(rw_portab_recebe.nrnu_portabilidade) LOOP
 					--
 					vr_dsmotivo := vr_dsmotivo || chr(10) || rw_erros.cddominio || ' - ' || rw_erros.dscodigo;
 					--
