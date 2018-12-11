@@ -201,7 +201,8 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
     vr_excsaida EXCEPTION;
     -- Variáveis para criação de cursor dinâmico
     vr_nom_owner     VARCHAR2(100) := fn_get_owner_sas;
-    vr_nom_dblink    VARCHAR2(100);
+    vr_nom_dblink_ro VARCHAR2(100);
+    vr_nom_dblink_rw VARCHAR2(100);
     vr_skprocesso    VARCHAR2(100) := fn_get_skprocesso_behavi;
     
     -- Queries externas
@@ -264,15 +265,21 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
     END IF;        
     
     -- Buscar dblink
-    vr_nom_dblink := fn_get_dblink_sas('R');
-    IF vr_nom_dblink IS NULL THEN
-      vr_dscritic := 'Nao foi possivel retornar o DBLink do SAS, verifique!';
+    vr_nom_dblink_ro := fn_get_dblink_sas('R');
+    IF vr_nom_dblink_ro IS NULL THEN
+      vr_dscritic := 'Nao foi possivel retornar o DBLink(RO) do SAS, verifique!';
       RAISE vr_excsaida;
     END IF;
+    vr_nom_dblink_rw := fn_get_dblink_sas('W');
+    IF vr_nom_dblink_rw IS NULL THEN
+      vr_dscritic := 'Nao foi possivel retornar o DBLink(RW) do SAS, verifique!';
+      RAISE vr_excsaida;
+    END IF;    
+    
     
     -- Buscar FatorControleCarga
     vr_sql_cursor := 'SELECT car.skcarga '
-                  || '  FROM '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink||' car '
+                  || '  FROM '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_ro||' car '
                   || ' WHERE car.skdtbase   = '||to_char(pr_dtbase, 'yyyymmdd')
                   || '   AND car.skprocesso = '||vr_skprocesso
                   || '   AND car.qtregistroprocessado > 0 '
@@ -309,8 +316,8 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
         vr_sql_cursor_int := 'SELECT scm.dsmodelo '
                       || '      ,sco.tppessoa '
                       || '      ,COUNT(1) qtpessoa '
-                      || '  FROM '||vr_nom_owner||'sas_score_modelo@'||vr_nom_dblink||' scm '
-                      || '      ,'||vr_nom_owner||'sas_score@'||vr_nom_dblink||' sco '
+                      || '  FROM '||vr_nom_owner||'sas_score_modelo@'||vr_nom_dblink_ro||' scm '
+                      || '      ,'||vr_nom_owner||'sas_score@'||vr_nom_dblink_ro||' sco '
                       || ' WHERE scm.cdmodelo = sco.cdmodelo '
                       || '   AND sco.cdmodelo = '||pr_cdmodelo
                       || '   AND sco.dtbase   = to_date('''||to_char(pr_dtbase, 'ddmmyyyy')||''', ''ddmmyyyy'')'
@@ -362,7 +369,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
           
           -- Armazenar timestamp de inicio do processo nesse SKCarga
           BEGIN
-            vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink||' car '
+            vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_rw||' car '
                               || '   set car.dthorainicioprocesso = to_date('''||to_char(vr_dtinicio,'ddmmrrrrhh24miss')||''',''ddmmrrrrhh24miss'') '
                               || ' where car.skcarga = '||vr_skcarga;
             -- Cria cursor dinâmico
@@ -442,7 +449,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
                             || '                        ,sco.dsclassescore '
                             || '                        ,sco.dsexclusaoprincipal '
                             || '                        ,1 '
-                            || '                    FROM '||vr_nom_owner||'sas_score@'||vr_nom_dblink||' sco '
+                            || '                    FROM '||vr_nom_owner||'sas_score@'||vr_nom_dblink_ro||' sco '
                             || '                   WHERE sco.cdmodelo = '||pr_cdmodelo
                             || '                     AND sco.dtbase   = to_date('''||to_char(pr_dtbase, 'ddmmyyyy')||''', ''ddmmyyyy'')'
                             || '                     AND sco.skcarga = '||vr_skcarga;
@@ -484,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
                             || '                        ,sce.nrcpfcnpjbase '
                             || '                        ,sce.cdexclusao '
                             || '                        ,sce.dsexclusao '
-                            || '                    FROM '||vr_nom_owner||'sas_score_exclusao@'||vr_nom_dblink||' sce '
+                            || '                    FROM '||vr_nom_owner||'sas_score_exclusao@'||vr_nom_dblink_ro||' sce '
                             || '                   WHERE sce.cdmodelo = '||pr_cdmodelo
                             || '                     AND sce.dtbase   = to_date('''||to_char(pr_dtbase, 'ddmmyyyy')||''', ''ddmmyyyy'')'
                             || '                     AND sce.skcarga = '||vr_skcarga;
@@ -527,7 +534,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
             
             -- Atualizar FatorCarga com quantidade processada e fim da carga
             BEGIN
-              vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink||' car '
+              vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_rw||' car '
                                 || '   set car.dthorafimprocesso = to_date('''||to_char(vr_dtfinali,'ddmmrrrrhh24miss')||''',''ddmmrrrrhh24miss'') '
                                 || '      ,car.qtregistrook = '||to_char(vr_qtregis_fisica + vr_qtregis_juridi)
                                 || ' where car.skcarga = '||vr_skcarga;
@@ -554,7 +561,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
             
             -- Atualizar FatorCarga com quantidade de registros rejeitados e fim da carga
             BEGIN
-              vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink||' car '
+              vr_sql_cursor_int := 'update '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_rw||' car '
                                 || '   set car.dthorafimprocesso = to_date('''||to_char(vr_dtfinali,'ddmmrrrrhh24miss')||''',''ddmmrrrrhh24miss'') '
                                 || '      ,car.qtregistroerro = '||to_char(vr_qtregis_fisica + vr_qtregis_juridi)
                                 || ' where car.skcarga = '||vr_skcarga;
