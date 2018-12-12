@@ -4714,7 +4714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                      ,pr_dtultcnc => vr_dtultcnc --> Data Ultima Conciliação
                                      ,pr_dsdemail => vr_dsdemail --> Destinatários
                                      ,pr_dsjanexe => vr_dsjanexe --> Descrição horário execução
-                                     ,pr_dsdirbkp => vr_dsdirbkp --> Caminho de backup linux
+                                     ,pr_dsdirbkp => vr_dsdirbkp||'concilia' --> Caminho de backup linux
                                      ,pr_dsredbkp => vr_dsredbkp --> Caminho da rede de Backup
                                      ,pr_dsdaviso => vr_dsdaviso
                                      ,pr_idcritic => vr_idcritic
