@@ -1570,6 +1570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                         '<vlcredit>' || vr_tab_dados_antigo(0).vlcredit || '</vlcredit>' ||
                      '</antigo>'
                           );
+
+      IF vr_tab_dados_novo.count > 0 THEN
       pc_escreve_xml('<novo>'||
                         '<dtvencto>' || to_char(vr_tab_dados_novo(0).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                         '<qtsldant>' || vr_tab_dados_novo(0).qtsldant || '</qtsldant>' ||
@@ -1584,6 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                         '<vlcredit>' || vr_tab_dados_novo(0).vlcredit || '</vlcredit>' ||
                      '</novo>'
                           );
+      END IF;
                           
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
