@@ -2238,6 +2238,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         by dsc.qtd_membros;
     rw_busca_grupo_novo cr_busca_grupo_novo%rowtype;
     
+    -- Cooperativas com eventos assembleares ativos
+    cursor cr_crapcop (pr_cdcooper in crapcop.cdcooper%type) is
+    select cop.flgrupos
+      from crapcop cop
+     where cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%rowtype;
+
     vr_nrdgrupo number;
     vr_nrdrowid rowid;
     
@@ -2252,6 +2259,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       raise vr_exc_erro;
     end if;
     
+    -- Cooperativas ativas devem possuir o flag
+    open cr_crapcop (pr_cdcooper);
+    fetch cr_crapcop into rw_crapcop;
+    
+    -- Aborta caso nao encontre
+    if cr_crapcop%notfound then
+      close cr_crapcop;
+      vr_dscritic := 'Cooperativa não está ativa para eventos assembleares.';
+      raise vr_exc_erro;
+    end if;
+    
+    close cr_crapcop;
+
     -- Buscar cooperado na tabela de associados
     open cr_crapass (pr_cdcooper
                     ,pr_nrdconta);
@@ -2583,8 +2603,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     cursor cr_crapcop is
     select cop.cdcooper
       from crapcop cop
-     where cop.flgativo = 1
-       and cop.cdcooper = 9;
+     where cop.flgativo = 1  -- Cooperativa ativa
+       and cop.flgrupos = 1; -- Evento assemblear ativo
 
     -- Busca data de movimentacao da cooperativa
     cursor cr_crapdat (pr_cdcooper crapdat.cdcooper%type) is
