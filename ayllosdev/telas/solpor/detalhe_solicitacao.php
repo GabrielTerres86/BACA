@@ -109,10 +109,10 @@ $motivo = getByTagName($solicitacao,"motivo");
                                             <fieldset style="margin-top:10px">
                                                 <legend>Portabilidade</legend>
 
-                                                <label style="margin-left: 15px;width: 105px;">Solicita&ccedil;&atilde;o:</label>
+                                                <label style="margin-left: 15px;width: 105px;">Data Solicita&ccedil;&atilde;o:</label>
                                                 <input value="<?=$dtsolicitacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;">
 
-                                                <label style="margin-left: 15px;width: 121px;">NU Portabilidade:</label>
+                                                <label style="margin-left: 15px;width: 121px;">NU:</label>
                                                 <input value="<?=$nusolicitacao?>" type="text" class="campoTelaSemBorda" style="width: 160px;" readonly disabled>
 
                                                 <br style="clear:both" />
@@ -185,11 +185,11 @@ $motivo = getByTagName($solicitacao,"motivo");
                                                 <input value="<?=$situacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;">
 
                                                 <?php if ($cddopcao != 'E') { ?>
-                                                    <label style="margin-left: 15px;width: 60px;">Avalia&ccedil;&atilde;o:</label>
+                                                    <label style="margin-left: 15px;width: 60px;">Data Avalia&ccedil;&atilde;o:</label>
                                                     <input value="<?=$dtavaliacao?>" style="width: 110px;" type="text" class="campoTelaSemBorda" readonly disabled>
                                                 <?php } ?>
 
-                                                <label style="margin-left: 15px;">Retorno:</label>
+                                                <label style="margin-left: 15px;">Data Retorno:</label>
                                                 <input value="<?=$dtretorno?>" type="text" style="width: 110px;" class="campoTelaSemBorda" readonly disabled>
 
 
