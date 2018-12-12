@@ -4199,7 +4199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               -- Cada linha será separada em vetor para facilitar o processamento 
               vr_txretorn := gene0002.fn_quebra_string(rw_cnt.dslinha, ';');
               -- Verifica se a quebra resultou em um array válido e com pelo menos 27 posições 
-              IF vr_txretorn.count() = 0 OR vr_txretorn.count() <> 27 THEN 
+              IF vr_txretorn.count() = 0 OR vr_txretorn.count() < 27 THEN 
                 -- Invalidar a linha pois o Layout da mesma não confere
                 BEGIN 
                   UPDATE tbcapt_custodia_conteudo_arq cnt
