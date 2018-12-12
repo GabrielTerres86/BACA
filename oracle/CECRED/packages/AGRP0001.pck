@@ -2242,7 +2242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     cursor cr_crapcop (pr_cdcooper in crapcop.cdcooper%type) is
     select cop.flgrupos
       from crapcop cop
-     where cop.cdcooper = pr_cdcooper;
+     where cop.cdcooper = pr_cdcooper
+	   and cop.flgrupos = 1;  -- Evento assemblear ativo
     rw_crapcop cr_crapcop%rowtype;
 
     vr_nrdgrupo number;
