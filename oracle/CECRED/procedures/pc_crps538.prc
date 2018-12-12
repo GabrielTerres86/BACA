@@ -445,6 +445,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                03/10/2018 - Variavel idx modificada para idxErro
                             Para não entrar em conflito com a variavel idx do loop de arquivos.
                             (Belli - Envolti - Chamado INC0024883)
+
+               11/12/2018 - Alterado logica na validação do cooperado no paralelismo, caso a conta não exista, devemos devolver.
+                            Anteriormente, estava dando o Continue, isto fazia com que o boleto não saisse no crrl574.
+                            Alcemir Mout's - INC0020305.
                              
    .............................................................................*/
 
@@ -3435,7 +3439,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            SELECT ban.cdbccxlt
              FROM crapban ban
             WHERE ban.nrispbif = pr_nrispbif; 
+                  -- buscar registro de devolucao
          
+         CURSOR cr_devolucao (pr_cdcooper tbcobran_devolucao.cdcooper%TYPE
+                             ,pr_dtmvtolt tbcobran_devolucao.dtmvtolt%TYPE
+                             ,pr_dscodbar tbcobran_devolucao.dscodbar%TYPE
+                             ,pr_nrseqarq tbcobran_devolucao.nrseqarq%TYPE
+                             ,pr_nrispbif tbcobran_devolucao.nrispbif%TYPE) IS
+          SELECT 1 FROM tbcobran_devolucao d
+           WHERE d.cdcooper = pr_cdcooper
+            AND  d.dtmvtolt = pr_dtmvtolt 
+            AND  TRIM(d.dscodbar) = TRIM(pr_dscodbar)   
+            AND  d.nrseqarq = pr_nrseqarq
+            AND  d.nrispbif = pr_nrispbif;
+        rw_devolucao cr_devolucao%ROWTYPE;
+      
+       -- cursor para buscar apenas pela conta 
+       CURSOR cr_crapass_conta (pr_nrdconta IN crapass.cdcooper%TYPE) IS
+        SELECT 1 FROM crapass ass
+         WHERE ass.cdcooper <> 3
+         AND  ass.nrdconta = pr_nrdconta;
+       rw_crapass_conta cr_crapass_conta%ROWTYPE;
+       
          ---vr_flgproc_sing INTEGER;
 
          --Variaveis Locais
@@ -3458,6 +3483,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          vr_crapsab  BOOLEAN;
          vr_crapceb  BOOLEAN;
          vr_dstextab craptab.dstextab%type;
+         vr_cdagepar crapass.cdagenci%TYPE; -- agencia paralelismo
          --Excecoes
          vr_exc_proximo EXCEPTION;
          vr_exc_sair    EXCEPTION;
@@ -3698,6 +3724,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            --Criar savepoint para rollback
            -- SAVEPOINT save_trans;
            --Percorrer todas as linhas do arquivo
+           
+           
+           
+           -- verificar se é a primeira agencia que esta sendo executada
+           -- será usado prox. da linha 3853
+           OPEN cr_crapass_age (pr_cdcooper
+                               ,TO_DATE(vr_dtleiarq,'YYYYMMDD') 
+                               ,0
+                               ,vr_cdprogra);
+           FETCH cr_crapass_age INTO vr_cdagepar;
+           CLOSE cr_crapass_age;
+                       
+                       
            LOOP
              BEGIN
                BEGIN
@@ -3796,8 +3835,194 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                       CONTINUE; -- Passa para o processamento da Próxima linha do arquivo
                    END IF;  
                  ELSE
-                   CONTINUE; -- Passa para o processamento da Próxima linha do arquivo
-                 END IF;
+                   
+                   vr_index_crapcco:= lpad(rw_crapcop.cdcooper,10,'0')||
+                                      lpad(vr_nrcnvcob,10,'0');
+                                    
+                                                                   
+                   -- Se nao existir convenio na cooperativa singular ignora linha, 
+                   -- pois este convenio é de outra cooperativa singular.                   
+                   -- Validação do convenio que não existe no sistema é feito 
+                   -- por volta da linha 4130.
+                   IF NOT vr_tab_crapcco.EXISTS(vr_index_crapcco) THEN
+                     --Proxima linha
+                     RAISE vr_exc_proximo;
+                   ELSE                                             
+                       
+                       -- se a agencia vr_cdagepar for igual a primeira agencia encontrada no cursor
+                       -- cr_crapass_age, significa que e a primeira agencia a ser executada no paralelismo
+                       -- desta forma devemos prosguir para verificar possível devoluçao do boleto
+                       
+                       IF vr_cdagepar <> pr_cdagenci THEN
+                          -- pular para a próxima linha
+                          -- pois não é a primeira agencia a ser executada no paralelismo
+                          RAISE vr_exc_proximo;
+                       END IF;
+                            
+                         OPEN cr_crapass_conta(pr_nrdconta => vr_nrdconta);
+                         FETCH cr_crapass_conta INTO rw_crapass_conta;
+                           
+                         IF cr_crapass_conta%FOUND THEN
+                            CLOSE cr_crapass_conta;
+                            RAISE vr_exc_proximo;
+                         END IF;
+                         
+                         CLOSE cr_crapass_conta;
+                           
+                         --VALIDAR SE O BOLETO JÁ FOI REJEITADO
+                           
+                         OPEN cr_devolucao (pr_cdcooper => pr_cdcooper
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_dscodbar => vr_dscodbar_ori
+                                           ,pr_nrseqarq => vr_nrseqarq
+                                           ,pr_nrispbif => vr_nrispbif_rec);
+                         FETCH cr_devolucao INTO rw_devolucao;
+                           
+                         IF cr_devolucao%FOUND THEN
+                           CLOSE cr_devolucao;
+                           --Proxima linha
+                           RAISE vr_exc_proximo;
+                         END IF;
+                           
+                         CLOSE cr_devolucao;
+                           
+                         -- rejeitar boleto, pois significa que não é uma conta valida
+                         vr_flgrejei:= TRUE;
+
+                         --Escrever crítica no relatório
+                         vr_cdcritic:= 9;
+                                                  
+                         pc_insert_gncptit(pr_nrdispar => 14              -- Numero sequencial do dispare da prc 
+                                          ,pr_idx      => idx 
+                                          ,pr_cdtipreg => 3              /* Sua Remessa - Erro */
+                                          ,pr_flgconci => 1              /* registro conciliado */
+                                          ,pr_flgpcctl => 0              /* processou na central */
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_flgpgdda => NULL
+                                          ,pr_nrispbds => vr_nrispbif_rec
+                                          ,pr_cdcriret => vr_cdcrignc
+                                          ,pr_dscritic => vr_dscritic );
+                                    
+                         vr_cdcritic := vr_cdcrignc;
+                         IF NVL(vr_cdcritic,0) > 0 THEN
+                           RAISE vr_exc_sair;
+                         END IF;  
+                      
+                         /* create craprej */
+                         BEGIN
+                           INSERT INTO craprej
+                             (craprej.dtmvtolt
+                             ,craprej.cdagenci
+                             ,craprej.vllanmto
+                             ,craprej.nrseqdig
+                             ,craprej.cdpesqbb
+                             ,craprej.cdcritic
+                             ,craprej.cdcooper
+                             ,craprej.nrdconta
+                             ,craprej.cdbccxlt
+                             ,craprej.nrdocmto)
+                           VALUES
+                             (rw_crapdat.dtmvtolt
+                             ,vr_cdagepag
+                             ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
+                             ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
+                             ,vr_setlinha
+                             ,vr_cdcritic
+                             ,pr_cdcooper
+                             ,vr_nrdconta
+                             ,vr_cdbanpag
+                             ,vr_nrdocmto)
+                           RETURNING
+                              craprej.dtmvtolt
+                             ,craprej.cdagenci
+                             ,craprej.vllanmto
+                             ,craprej.nrseqdig
+                             ,craprej.cdpesqbb
+                             ,craprej.cdcritic
+                             ,craprej.cdcooper
+                             ,craprej.nrdconta
+                             ,craprej.cdbccxlt
+                             ,craprej.nrdocmto
+                           INTO
+                             rw_craprej.dtmvtolt
+                             ,rw_craprej.cdagenci
+                             ,rw_craprej.vllanmto
+                             ,rw_craprej.nrseqdig
+                             ,rw_craprej.cdpesqbb
+                             ,rw_craprej.cdcritic
+                             ,rw_craprej.cdcooper
+                             ,rw_craprej.nrdconta
+                             ,rw_craprej.cdbccxlt
+                             ,rw_craprej.nrdocmto;
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
+                             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+                             vr_cdcritic:= 0;
+                             vr_dscritic:= 'Erro ao inserir na tabela craprej. '||sqlerrm;
+                             --Levantar Excecao
+                             RAISE vr_exc_sair;
+                         END;
+
+                         --Atualizar tabela memoria cratrej
+                         pc_gera_cratrej (rw_craprej);
+
+                         --> Gerar Devolucao
+                         vr_cdmotdev := 99; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                           
+                         /*
+                           
+                               pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
+                                                   ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                                   ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
+                                                   ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
+                                                   ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
+                                                   ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
+                                                   ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
+                                                   ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
+                                                   ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
+                                                   ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
+                                                   ,pr_nrdocmto   => vr_nrdocmto          --> numero do boleto de cobranca
+                                                   ,pr_cdmotdev   => vr_cdmotdev          --> codigo do motivo da devolucao
+                                                   ,pr_tpcaptur   => vr_tpcaptur          --> tipo de captura (cob615)
+                                                   ,pr_tpdocmto   => vr_tpdocmto          --> codigo do tipo de documento (cob615)
+                                                   ,pr_cdagerem   => vr_cdagepag          --> codigo da agencia do remetente (cob615)
+                                                   ,pr_dslinarq   => vr_setlinha
+                                                   ,pr_cdcritic   => vr_cdcritic          -- Ajuste Mensagem e Log - 15/03/2018 - Chamado 801483 
+                                                   ,pr_dscritic   => vr_dscritic);  
+                                             
+                         */
+                         --> Procedimento para grava registro de devolucao
+                         pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
+                                             ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                             ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
+                                             ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
+                                             ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
+                                             ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
+                                             ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
+                                             ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
+                                             ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
+                                             ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
+                                             ,pr_nrdocmto   => vr_nrdocmto          --> numero do boleto de cobranca
+                                             ,pr_cdmotdev   => vr_cdmotdev          --> codigo do motivo da devolucao
+                                             ,pr_tpcaptur   => vr_tpcaptur          --> tipo de captura (cob615)
+                                             ,pr_tpdocmto   => vr_tpdocmto          --> codigo do tipo de documento (cob615)
+                                             ,pr_cdagerem   => vr_cdagepag          --> codigo da agencia do remetente (cob615)
+                                             ,pr_dslinarq   => vr_setlinha
+                                             ,pr_cdcritic   => vr_cdcritic
+                                             ,pr_dscritic   => vr_dscritic);
+                                                 
+                         IF TRIM(vr_dscritic) IS NOT NULL THEN
+                           RAISE vr_exc_sair;                       
+                         END IF;
+
+                         --Inicializar variavel erro
+                         vr_cdcritic:= 0;
+                         --Pular proxima linha arquivo
+                         RAISE vr_exc_proximo;
+                           
+                     END IF;                                                         
+                  END IF;
 
                -- Iniciar teste: Ativar a rotina para realizacao de testes Sem Paralelismo. 
                -- Selecionar somente PA's para processamento.      --aqui 
