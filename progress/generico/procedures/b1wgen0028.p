@@ -548,6 +548,10 @@
 
                 19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
                              conta cartão for zerada (Lucas Ranghetti INC0024543)
+
+				12/12/2018 - Adicionado campo flgprovi e criado Procedure para validar a assinatura da senha TA Online (Anderson-Alan Supero P432)
+
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -811,12 +815,17 @@ PROCEDURE lista_cartoes:
     DEF OUTPUT  PARAM  par_flgativo  AS  LOGI  NO-UNDO.
     DEF OUTPUT  PARAM  par_nrctrhcj  AS  INTE  NO-UNDO.
     DEF OUTPUT  PARAM  par_flgliber  AS  LOGI  NO-UNDO. /* Temporario: Transf. de Pac 5 da Coop.2*/
+    DEF OUTPUT  PARAM  par_dtassele  AS  DATE  NO-UNDO. /* Data assinatura eletronica */
+    DEF OUTPUT  PARAM  par_dsvlrprm  AS  CHAR  NO-UNDO. /* Data de corte */
+    DEF OUTPUT  PARAM  par_dtmvtolt  AS  DATE  NO-UNDO. /* Data do sistema */
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-cartoes.
     DEF OUTPUT PARAM TABLE FOR tt-lim_total.
 
     DEF VAR aux_vltotccr AS DECI NO-UNDO.
     DEF VAR aux_dssitcrd AS CHAR NO-UNDO.
+    
+    DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
         
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-cartoes.  
@@ -948,6 +957,34 @@ PROCEDURE lista_cartoes:
                                                 INPUT crawcrd.dtsol2vi,
                                                 INPUT crawcrd.cdadmcrd).
         
+        FIND crapcrd WHERE crapcrd.cdcooper = par_cdcooper      AND
+                           crapcrd.nrdconta = par_nrdconta      AND
+                           crapcrd.nrcrcard = crawcrd.nrcrcard  NO-LOCK NO-ERROR.
+        
+        IF   NOT AVAILABLE crapcrd THEN
+            ASSIGN aux_flgprovi = 0.
+            
+        ELSE
+        DO:
+            ASSIGN aux_flgprovi = crapcrd.flgprovi.
+            ASSIGN par_dtassele = crapcrd.dtassele.
+            
+        END.
+        
+        FIND crapprm WHERE crapprm.cdacesso = "ASS_ELET_CARTAO_TERMO".
+        
+        IF AVAILABLE crapprm THEN
+        DO:
+            ASSIGN par_dsvlrprm = crapprm.dsvlrprm.
+        END.
+        
+        FIND crapdat WHERE crapdat.cdcooper = par_cdcooper.
+        
+        IF AVAILABLE crapdat THEN
+        DO:
+            ASSIGN par_dtmvtolt = crapdat.dtmvtolt.
+        END.
+        
         CREATE tt-cartoes.
         ASSIGN tt-cartoes.nmtitcrd = STRING(crawcrd.nmtitcrd,"x(27)")
                tt-cartoes.nmresadm = STRING(crapadc.nmresadm,"x(30)")
@@ -956,7 +993,8 @@ PROCEDURE lista_cartoes:
                tt-cartoes.dssitcrd = aux_dssitcrd
                tt-cartoes.nrctrcrd = crawcrd.nrctrcrd
                tt-cartoes.cdadmcrd = crawcrd.cdadmcrd
-               tt-cartoes.flgcchip = crapadc.flgcchip.
+               tt-cartoes.flgcchip = crapadc.flgcchip
+               tt-cartoes.flgprovi = aux_flgprovi.
 
         /* Mascara número de cartão de for Bancoob */
         IF  f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
@@ -5088,6 +5126,7 @@ PROCEDURE consulta_dados_cartao:
     DEF VAR aux_inacetaa LIKE crapcrd.inacetaa NO-UNDO.
     DEF VAR aux_dtacetaa LIKE crapcrd.dtacetaa NO-UNDO.
     DEF VAR aux_cdopetaa LIKE crapcrd.cdopetaa NO-UNDO.
+    DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
     DEF VAR aux_nmopetaa AS CHAR               NO-UNDO.
     DEF VAR aux_dsacetaa AS CHAR               NO-UNDO.
     DEF VAR aux_dstitula AS CHAR               NO-UNDO.
@@ -5177,7 +5216,8 @@ PROCEDURE consulta_dados_cartao:
     IF   NOT AVAILABLE crapcrd THEN
          ASSIGN aux_dtanucrd = ?
                 aux_vlanucrd = 0
-                aux_inanucrd = 0.
+                aux_inanucrd = 0
+                aux_flgprovi = 0.
     ELSE
       DO:
           ASSIGN aux_dtanucrd = crapcrd.dtanucrd
@@ -5185,7 +5225,8 @@ PROCEDURE consulta_dados_cartao:
                  aux_inanucrd = crapcrd.inanucrd
                  aux_inacetaa = crapcrd.inacetaa
                  aux_dtacetaa = crapcrd.dtacetaa
-                 aux_cdopetaa = crapcrd.cdopetaa.
+                 aux_cdopetaa = crapcrd.cdopetaa
+                 aux_flgprovi = crapcrd.flgprovi.
                  
           IF aux_inacetaa = 0 THEN
              ASSIGN aux_dsacetaa = "BLOQUEADO".
@@ -5513,7 +5554,8 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.dtrejeit = crawcrd.dtrejeit
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
-           tt-dados_cartao.dsgraupr = aux_dstitula.
+           tt-dados_cartao.dsgraupr = aux_dstitula
+           tt-dados_cartao.flgprovi = aux_flgprovi.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,
@@ -25189,3 +25231,127 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
       END.
    
 END.
+
+
+PROCEDURE valida-senha-ta-online:
+    DEF INPUT PARAM par_cdcooper AS INTE                     NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE                     NO-UNDO.
+    DEF INPUT PARAM par_cddsenha AS CHAR                     NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                     NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                     NO-UNDO.
+    DEF INPUT PARAM par_nrcrcard AS DECI                     NO-UNDO.
+    /*DEF INPUT PARAM par_idseqttl AS INTE                     NO-UNDO.*/
+    
+    DEF OUTPUT PARAM aux_flgsenha AS LOGICAL.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+     
+    EMPTY TEMP-TABLE tt-erro.
+    
+    ASSIGN aux_flgsenha = TRUE.
+    
+    IF (LENGTH(par_cddsenha) = 6) THEN
+    DO:
+        FIND FIRST crapcrm WHERE crapcrm.cdcooper = par_cdcooper    AND
+                                 crapcrm.cdsitcar = 2               AND /* Cartao Ativo */
+                                 crapcrm.nrdconta = par_nrdconta    NO-LOCK NO-ERROR.
+                           
+        IF NOT AVAILABLE crapcrm OR ENCODE(par_cddsenha) <> crapcrm.dssencar THEN
+        DO:
+            ASSIGN aux_flgsenha = FALSE.
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "A senha digitada esta incorreta, tente novamente.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            
+        END.
+        
+    END.
+    ELSE IF (LENGTH(par_cddsenha) = 8) THEN
+    DO:
+        FIND FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper     AND
+                                 crapsnh.nrdconta = par_nrdconta     AND
+                                 /*crapsnh.idseqttl = par_idseqttl     AND*/
+                                 crapsnh.tpdsenha = 1                NO-LOCK NO-ERROR.
+                           
+        IF NOT AVAILABLE crapsnh OR ENCODE(par_cddsenha) <> crapsnh.cddsenha THEN
+        DO:
+            ASSIGN aux_flgsenha = FALSE.
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "A senha digitada esta incorreta, tente novamente.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            
+        END.
+        
+    END.
+    ELSE
+    DO:
+        ASSIGN aux_flgsenha = FALSE.
+        ASSIGN aux_cdcritic = 0.
+               aux_dscritic = "A senha digitada esta incorreta, tente novamente.".
+        
+        RUN gera_erro (INPUT par_cdcooper,
+                       INPUT par_cdagenci,
+                       INPUT par_nrdcaixa,
+                       INPUT 1,            /** Sequencia **/
+                       INPUT aux_cdcritic,
+                       INPUT-OUTPUT aux_dscritic).
+        
+    END.
+    
+    IF aux_flgsenha = TRUE THEN
+    DO:
+        /* Mantem relacionamento conta x conta cartao */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_salva_dtassele
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT STRING(par_nrcrcard),
+                                            OUTPUT "").
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_salva_dtassele
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dscritic = pc_salva_dtassele.pr_dscritic
+                         WHEN pc_salva_dtassele.pr_dscritic <> ?.       
+        
+        IF aux_dscritic <> ""  THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                           
+            RETURN "NOK".
+        END.
+        ELSE
+        DO:
+            RETURN "OK".
+        END.
+        
+    END.
+    ELSE
+    DO:
+        RETURN "NOK".
+    END.
+    
+END PROCEDURE.
+
+

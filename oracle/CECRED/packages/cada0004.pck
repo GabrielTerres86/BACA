@@ -62,6 +62,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  11/10/2018 - Incluido opção 6-Pagamento na tabela de log tbcrd_log_operacao.
 						      (Reinert)
 
+				 12/12/2018 - Criado Procedure para salvar a data da assinatura eletronica TA Online. (Anderson-Alan Supero P432)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------

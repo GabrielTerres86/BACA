@@ -94,6 +94,8 @@
                             aux_solcoord e sempre retornar a temp-table erro.
                             PRJ366 (Lombardi).
                
+			   12/12/2018 - Adicionado campo flgprovi e criado Procedure para validar a assinatura da senha TA Online (Anderson-Alan Supero P432)
+
 ............................................................................ */
 
 
@@ -214,6 +216,8 @@ DEF VAR aux_cdufava2 AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcpfav2 AS DECI                                           NO-UNDO.
 DEF VAR aux_cpfcjav2 AS DECI                                           NO-UNDO.
 DEF VAR aux_flgliber AS LOGI                                           NO-UNDO.
+DEF VAR aux_dtassele AS DATE                                           NO-UNDO.
+DEF VAR aux_dsvlrprm AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrender1 AS INTE                                           NO-UNDO.
 DEF VAR aux_complen1 AS CHAR                                           NO-UNDO.
@@ -244,6 +248,9 @@ DEF VAR aux_flgdebit AS LOG                                            NO-UNDO.
 DEF VAR aux_flpurcrd AS LOG                                            NO-UNDO.
 
 DEF VAR aux_solcoord AS INT                                            NO-UNDO.
+
+DEF VAR aux_cddsenha AS INT                                            NO-UNDO.
+DEF VAR aux_flgsenha AS LOGI                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0019tt.i }
 { sistema/generico/includes/b1wgen0028tt.i }
@@ -390,6 +397,7 @@ PROCEDURE valores_entrada:
             WHEN "dssencon"  THEN aux_dssencon  = tt-param.valorCampo.
             WHEN "dsrepres"  THEN aux_dsrepres  = tt-param.valorCampo.
             WHEN "flgdebit"  THEN aux_flgdebit  = LOGICAL(tt-param.valorCampo).
+            WHEN "cddsenha"  THEN aux_cddsenha  = INTE(tt-param.valorCampo).
             
         END CASE.
 
@@ -453,6 +461,9 @@ PROCEDURE lista_cartoes:
                              OUTPUT aux_flgativo,
                              OUTPUT aux_nrctrhcj,
                              OUTPUT aux_flgliber,
+                             OUTPUT aux_dtassele,
+                             OUTPUT aux_dsvlrprm,
+                             OUTPUT aux_dtmvtolt,
                              OUTPUT TABLE tt-erro,
                              OUTPUT TABLE tt-cartoes,
                              OUTPUT TABLE tt-lim_total).
@@ -480,6 +491,10 @@ PROCEDURE lista_cartoes:
             RUN piXmlAtributo (INPUT "flgativo",INPUT STRING(aux_flgativo)).
             RUN piXmlAtributo (INPUT "nrctrhcj",INPUT STRING(aux_nrctrhcj)).
             RUN piXmlAtributo (INPUT "flgliber",INPUT STRING(aux_flgliber)).
+            
+            RUN piXmlAtributo (INPUT "dtassele",INPUT STRING(aux_dtassele)).
+            RUN piXmlAtributo (INPUT "dsvlrprm",INPUT STRING(aux_dsvlrprm)).
+            RUN piXmlAtributo (INPUT "dtmvtolt",INPUT STRING(aux_dtmvtolt)).
 
             RUN piXmlExport (INPUT TEMP-TABLE tt-lim_total:HANDLE,
                              INPUT "Limite").                             
@@ -3940,4 +3955,38 @@ PROCEDURE grava_dados_senha_letras_taa:
           RUN piXmlSave.
       END.
        
+END PROCEDURE.
+
+PROCEDURE valida-senha-ta-online:
+
+   RUN valida-senha-ta-online IN hBO (INPUT aux_cdcooper,
+                                      INPUT aux_nrdconta,
+                                      INPUT aux_cddsenha,
+                                      INPUT aux_cdagenci,
+                                      INPUT aux_nrdcaixa,
+                                      INPUT aux_nrcrcard,
+                                      OUTPUT aux_flgsenha,
+                                      OUTPUT TABLE tt-erro).
+                                      
+    IF RETURN-VALUE = "NOK" THEN
+    DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+        
+        IF NOT AVAILABLE tt-erro THEN
+        DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                      "operacao.".
+        END.
+        
+        RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                        INPUT "Erro").     
+    END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlAtributo (INPUT "flgsenha",INPUT LOGICAL(aux_flgsenha)).
+        RUN piXmlSave.
+    END.
+    
 END PROCEDURE.

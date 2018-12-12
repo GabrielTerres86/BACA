@@ -39,7 +39,9 @@
 				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
 				  
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
-				  							   
+          
+          12/12/2018 - Adicionado flag cartão provisorio (Anderson-Alan P432).
+				  
 	************************************************************************/
 	
 	session_start();
@@ -115,6 +117,10 @@
 	$nrctrhcj = $inpessoa == "1" ? "0" : $xmlObjCCredito->roottag->tags[0]->attributes["NRCTRHCJ"];
 	$flgliber = $xmlObjCCredito->roottag->tags[0]->attributes["FLGLIBER"];
 
+	$dtassele = $xmlObjCCredito->roottag->tags[0]->attributes["DTASSELE"];
+	$dsvlrprm = $xmlObjCCredito->roottag->tags[0]->attributes["DSVLRPRM"];
+	$dtmvtolt = $xmlObjCCredito->roottag->tags[0]->attributes["DTMVTOLT"];
+
 	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
 	   Procedimento temporario ate que todas as cooperativas utilizem */
 	$adxml = "<Root>";
@@ -188,7 +194,7 @@ function voltarParaTelaPrincipal(){
 	<div id="divConteudoCartoes">
 		
 		<div class="divRegistros">
-			<table style="display: block;">
+			<table class="tituloRegistros">
 				<thead >
 					<tr>
 						<? if ($inpessoa <> "1") { ?>
@@ -196,19 +202,18 @@ function voltarParaTelaPrincipal(){
 						<? } ?>
 						<th>Titular</th>
 						<th >Administradora</th>
-	
 						<th>N&uacute;mero do cart&atilde;o</th>
 						<th>Situa&ccedil;&atilde;o cart&atilde;o</th>
+						<th>Cart&#227;o Provis&#243;rio</th>
 						<th>Situa&ccedil;&atilde;o  Motor/Esteira</th>
 						<th>Decis&atilde;o  Motor/Esteira</th>
-						
 					</tr>			
 				</thead>
 				<tbody>
 					<?  for ($i = 0; $i < count($ccredito); $i++) {
                             $motorResp = getDecisao($nrdconta, getByTagName($ccredito[$i]->tags,'NRCTRCRD'),$glbvars);
 							
-							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."');";							
+							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."','".getByTagName($ccredito[$i]->tags,"FLGPROVI")."','".$dtassele."','".$dtmvtolt."','".$dsvlrprm."');";
 					?>
 						<?;?>
 						<tr id="<?php echo $i; ?>" onFocus="<? echo $mtdClick;?>" onClick="<? echo $mtdClick;?>">
@@ -223,9 +228,9 @@ function voltarParaTelaPrincipal(){
 							?>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
 							<td ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
-							
 							<td><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
+							<td><?php echo getByTagName($ccredito[$i]->tags,"FLGPROVI") == 1 ? "Sim" : "N&#227;o"; ?></td>
 							<td><?php echo $motorResp[1]; ?></td>
 							<td id="decisao_motor_esteira"><?php echo $motorResp[0]; ?></td>					
 						</tr>				
