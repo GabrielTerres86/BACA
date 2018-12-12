@@ -4214,7 +4214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         OPEN cr_crapsli(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_dtrefere => last_day(pr_dtmvtolt));         
-
+        FETCH cr_crapsli INTO rw_crapsli;
         -- Verifica se consulta retornou registros
         IF cr_crapsli%NOTFOUND THEN
           CLOSE cr_crapsli;
