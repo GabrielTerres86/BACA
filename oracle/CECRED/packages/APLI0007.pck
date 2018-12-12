@@ -4001,7 +4001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --  Sistema  : Captação
     --  Sigla    : CRED
     --  Autor    : Marcos - Envolti
-    --  Data     : Março/2018.                   Ultima atualizacao: 06/12/2018
+    --  Data     : Março/2018.                   Ultima atualizacao: 12/12/2018
     --
     -- Dados referentes ao programa:
     --
@@ -4010,6 +4010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- Alteracoes:
     --             06/12/2018 - P411 - Remocao da conciliação por saldo, manter apenas por quantidade (Marcos-Envolti)
     -- 
+    --             12/12/2018 - P411 - Ajustes para o Layout para 15 posições (Marcos-Envolti)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -4197,8 +4198,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               vr_dscritic := NULL;
               -- Cada linha será separada em vetor para facilitar o processamento 
               vr_txretorn := gene0002.fn_quebra_string(rw_cnt.dslinha, ';');
-              -- Verifica se a quebra resultou em um array válido e com pelo menos 25 posições 
-              IF vr_txretorn.count() = 0 OR vr_txretorn.count() <> 25 THEN 
+              -- Verifica se a quebra resultou em um array válido e com pelo menos 27 posições 
+              IF vr_txretorn.count() = 0 OR vr_txretorn.count() <> 27 THEN 
                 -- Invalidar a linha pois o Layout da mesma não confere
                 BEGIN 
                   UPDATE tbcapt_custodia_conteudo_arq cnt
