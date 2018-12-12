@@ -16,12 +16,7 @@ BEGIN
                       nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
                       nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
                       
-  BEGIN
-    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBPCPS_AGENDA');
-  EXCEPTION
-    WHEN OTHERS THEN
-      NULL;
-  END;
+  sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBPCPS_AGENDA_JOBS');
   
   --Incluir o DROP sempre que houver alteração de configuração de um JOB já existente
   sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBPCPS_AGENDA_JOBS',
@@ -36,5 +31,4 @@ BEGIN
                                 auto_drop       => TRUE,
                                 comments        => '');
 END;
-/
 /
