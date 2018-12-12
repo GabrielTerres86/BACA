@@ -41,7 +41,8 @@ if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 	exit();
 }	
 
-$labelRot = $_POST['labelRot'];	
+$labelRot = $_POST['labelRot'];
+$nrdconta = $_POST['nrdconta'];
 
 // Carrega permiss&otilde;es do operador
 include("../../../includes/carrega_permissoes.php");	
