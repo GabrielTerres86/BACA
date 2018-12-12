@@ -1,7 +1,7 @@
 DECLARE
 /* ---------------------------------------------------------------------------------------------------------------
 
-		Programa : JB_PCPS_AGENDA
+		Programa : JBPCPS_AGENDA
 		Sistema  : CRED
 		Sigla    : PCPS
 		Autor    : Augusto - Supero
@@ -19,7 +19,7 @@ DECLARE
 PROCEDURE cria_agendamento IS
 BEGIN
 	sys.dbms_scheduler.create_job(
-          job_name        => 'cecred.JB_PCPS_AGENDA',
+          job_name        => 'cecred.JBPCPS_AGENDA',
           job_type        => 'PLSQL_BLOCK',
           job_action      => 
           'DECLARE
@@ -34,19 +34,19 @@ BEGIN
           job_class       => 'DEFAULT_JOB_CLASS',
 					enabled         => true,
 					auto_drop       => true,
-					comments        => 'Processar solicitação pc_crps730');
+					comments        => 'Processar solicitacoes PCPS');
 END;
 
 
 BEGIN
   BEGIN
-    sys.dbms_scheduler.drop_job(job_name => 'cecred.JB_PCPS_AGENDA');
-    dbms_output.put_line('Exclusão Ok JB_PCPS_AGENDA');
+    sys.dbms_scheduler.drop_job(job_name => 'cecred.JBPCPS_AGENDA');
+    dbms_output.put_line('Exclusão Ok JBPCPS_AGENDA');
     cria_agendamento;
   EXCEPTION 
     WHEN OTHERS THEN
       IF SQLCODE = -27475 THEN
-        dbms_output.put_line('Não existe JB_PCPS_AGENDA Ok !');
+        dbms_output.put_line('Não existe JBPCPS_AGENDA Ok !');
         cria_agendamento;
       ELSE
         -- No caso de erro de programa gravar tabela especifica de log  
