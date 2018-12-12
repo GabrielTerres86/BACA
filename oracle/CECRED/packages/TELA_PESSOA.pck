@@ -2250,6 +2250,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and pes.nrcpfcgc = ass.nrcpfcgc;
     rw_crapass cr_crapass%rowtype;
     
+    -- Cooperativas com eventos assembleares ativos
+    cursor cr_crapcop (pr_cdcooper in crapcop.cdcooper%type) is
+    select cop.flgrupos
+      from crapcop cop
+     where cop.cdcooper = pr_cdcooper
+	   and cop.flgrupos = 1; -- Evento assemblear ativo
+    rw_crapcop cr_crapcop%rowtype;
+
     -- Limpeza de registros nao enviados
     cursor cr_limpeza_registros (pr_cdcooper in crapass.cdcooper%type
                                 ,pr_idpessoa in tbcadast_pessoa.idpessoa%type) is
@@ -2294,6 +2302,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     
     close cr_crapass;
   
+    -- Cooperativas ativas devem possuir o flag
+    open cr_crapcop (pr_cdcooper);
+    fetch cr_crapcop into rw_crapcop;
+    
+    -- Aborta caso nao encontre
+    if cr_crapcop%notfound then
+      close cr_crapcop;
+      vr_dscritic := 'Cooperativa não está ativa para eventos assembleares.';
+      raise vr_exc_erro;
+    end if;
+    
+    close cr_crapcop;
+
     -- Rotina para retorno dos dados da matricula do cooperado
     cada0012.pc_retorna_matricula(pr_cdcooper => rw_crapass.cdcooper
                                  ,pr_idpessoa => rw_crapass.idpessoa
