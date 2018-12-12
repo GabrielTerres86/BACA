@@ -140,35 +140,35 @@ $motivo = getByTagName($solicitacao,"motivo");
                                             <fieldset style="margin-top:10px">
                                                 <legend>Empregador</legend>
 
-                                                <label style="margin-left: 15px;width:45px">CNPJ:</label>
-                                                <input value="<?=$nrcnpj_empregador?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width:130px">
+                                                <label style="margin-left: 15px;width:105px">CNPJ:</label>
+                                                <input value="<?=$nrcnpj_empregador?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width:120px">
 
                                                 <label style="margin-left: 15px;">Nome:</label>
-                                                <input value="<?=$dsnome_empregador?>" type="text" class="campoTelaSemBorda" style="width:340px" readonly disabled>
+                                                <input value="<?=$dsnome_empregador?>" type="text" class="campoTelaSemBorda" style="width:267px" readonly disabled>
                                             </fieldset>
 
                                             <fieldset style="margin-top:10px">
                                                 <legend>Banco</legend>
 
                                                 <?php if ($cddopcao == 'E') { ?>
-                                                    <label style="margin-left: 15px;width: 185px;">Banco Folha:</label>                                                
-                                                    <input value="<?=$banco?>" type="text" class="campoTelaSemBorda" style="width: 310px;" readonly disabled>
+                                                    <label style="margin-left: 15px;width: 105px;">Banco Folha:</label>                                                
+                                                    <input value="<?=$banco?>" type="text" class="campoTelaSemBorda" style="width: 446px;" readonly disabled>
 
                                                     <br style="clear:both" />
 
-                                                    <label style="margin-left: 15px;width: 185px;">ISPB:</label>
+                                                    <label style="margin-left: 15px;width: 105px;">ISPB:</label>
                                                     <input value="<?=$nrispb_banco_folha?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 80px;">
 
 
                                                     <label style="margin-left: 15px;">CNPJ:</label>
                                                     <input value="<?=$nrcnpj_banco_folha?>" type="text" class="campoTelaSemBorda" style="width: 130px;" readonly disabled>
                                                 <?php } else { ?>
-                                                    <label style="margin-left: 15px;width: 185px;">Banco Destino:</label>                                                
-                                                    <input value="<?=$banco?>" type="text" class="campoTelaSemBorda" style="width: 310px;" readonly disabled>
+                                                    <label style="margin-left: 15px;width: 105px;">Banco Destino:</label>                                                
+                                                    <input value="<?=$banco?>" type="text" class="campoTelaSemBorda" style="width: 446px;" readonly disabled>
 
                                                     <br style="clear:both" />
 
-                                                    <label style="margin-left: 15px;width: 185px;">Ag&ecirc;ncia:</label>
+                                                    <label style="margin-left: 15px;width: 105px;">Ag&ecirc;ncia:</label>
                                                     <input value="<?=$cdagencia_destinataria?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 50px;">
 
 
@@ -181,28 +181,32 @@ $motivo = getByTagName($solicitacao,"motivo");
                                             <fieldset style="margin-top:10px">
                                                 <legend>Status da Solicita&ccedil;&atilde;o</legend>
 
-                                                <label style="margin-left: 15px;width: 70px;">Situa&ccedil;&atilde;o:</label>
-                                                <input value="<?=$situacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;">
+                                                <label style="margin-left: 15px;width: 105px;">Situa&ccedil;&atilde;o:</label>
+                                                <input value="<?=$situacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 112px;">
 
                                                 <?php if ($cddopcao != 'E') { ?>
-                                                    <label style="margin-left: 15px;width: 60px;">Data Avalia&ccedil;&atilde;o:</label>
-                                                    <input value="<?=$dtavaliacao?>" style="width: 110px;" type="text" class="campoTelaSemBorda" readonly disabled>
+                                                    <br style="clear:both" />                                                
+                                                    
+                                                    <label style="margin-left: 15px;width: 105px;">Data Avalia&ccedil;&atilde;o:</label>
+                                                    <input value="<?=$dtavaliacao?>" style="width: 112px;" type="text" class="campoTelaSemBorda" readonly disabled>
+                                                    
+                                                    <label style="margin-left: 15px; width: 204px;">Data Retorno:</label>
+                                                    <input value="<?=$dtretorno?>" type="text" style="width: 112px;" class="campoTelaSemBorda" readonly disabled>
+                                                <?php } else { ?>
+                                                    <label style="margin-left: 15px; width: 199px;">Data Retorno:</label>
+                                                    <input value="<?=$dtretorno?>" type="text" style="width: 112px;" class="campoTelaSemBorda" readonly disabled>
                                                 <?php } ?>
-
-                                                <label style="margin-left: 15px;">Data Retorno:</label>
-                                                <input value="<?=$dtretorno?>" type="text" style="width: 110px;" class="campoTelaSemBorda" readonly disabled>
-
 
                                                 <br style="clear:both" />
 
-                                                <label style="margin-left: 15px;width: 70px;">Motivo(s):</label>
-                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 19px;"><?=utf8_decode($motivo)?></textarea>
+                                                <label style="margin-left: 15px;width: 105px;">Motivo(s):</label>
+                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 447px;height: 60px;margin-right: 52px;"><?=utf8_decode($motivo)?></textarea>
 
 
                                             </fieldset>
                                         </form>
                                     </div>
-                                    <div>
+                                    <div style="margin-top:8px">
                                         <table>
                                             <tr>
                                                 <td width="70px" align="center"> <a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico')); return false;">Voltar</a></td>
