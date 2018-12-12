@@ -25,6 +25,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+/**
+* Rotinas voltadas a Criptografia dos arquivos comunicados com a CIP
+* 
+* @author Renato Darosci - Supero
+*/
 public class CipRSAUtil {
 
 	private static final String ALGORITHM_CHAVE  = "RSA";

@@ -45,7 +45,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 $contas = $xmlObj->roottag->tags[0]->tags[0]->tags;
 
 ?>
-
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
         <td align="center">

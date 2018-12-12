@@ -6,7 +6,7 @@
  * OBJETIVO     : Cabeçalho para a tela SOLPOR
  * -------------- 
  * ALTERAÇÕES   : 
- *
+ * 
  * --------------
  */
 ?>

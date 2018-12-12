@@ -1,11 +1,11 @@
 create or replace and compile java source named CECRED."CipBase64" as
 import java.io.ByteArrayOutputStream;
+
 /**
- * 
- * @author Renato Darosci - Supero
- * 
  * Esta classe é adicionada para evitar qualquer dependência
  * com bibliotecas de terceiros em JDK8
+ *
+ * @author Renato Darosci - Supero
  */
 class CipBase64
 {

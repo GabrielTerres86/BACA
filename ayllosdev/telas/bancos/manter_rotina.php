@@ -5,7 +5,7 @@
  * DATA CRIAÇAO : 27/07/2015
  * OBJETIVO     : Rotina para alteração e inserção cadastral da tela BANCOS
  * --------------
- * ALTERA��ES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
+ * ALTERAÇÕES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                PRJ-312 (Reinert)
  * -------------- 
  */
@@ -87,4 +87,3 @@
 	}
 	
 ?>
-

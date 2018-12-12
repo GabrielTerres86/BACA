@@ -6,10 +6,10 @@
  * --------------
  * ALTERAÇÔES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                PRJ-312 (Reinert)
- * ALTERAÇÔES   : 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
-                               conforme solicitado no chamado 5044701. (Kelvin)
- * 
  *
+ * ALTERAÇÔES   : 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
+ *                             conforme solicitado no chamado 5044701. (Kelvin)
+ * 
  *
  * --------------
  */
@@ -511,7 +511,6 @@ function formataConsulta(){
 	
 	cTodosConsulta.desabilitaCampo();
 	cTodosEntrada.desabilitaCampo();
-					
 	
 	cCdbccxlt.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false;}		

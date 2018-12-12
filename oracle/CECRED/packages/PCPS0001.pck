@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
       Frequencia: -----
       Objetivo  : Rotinas genericas utilizadas na plataforma de portabilidade de salário
   ---------------------------------------------------------------------------------------------------------------*/
-
+   
     PROCEDURE pc_busca_dominio(pr_nmdominio IN tbcc_dominio_campo.nmdominio%TYPE --> Nr. da Conta
 														  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
 														  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica

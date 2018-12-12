@@ -6,7 +6,7 @@
 	//***                                                                                        ***//
 	//*** Objetivo  : Mostrar opcao Principal da rotina de Portabilidade Salarial da tela ATENDA ***//
 	//****			                                                                             ***//
-	//***                                                                                        ***//	 
+	//***                                                                                        ***//
 	//*** Alter.:                                                                                ***//
 	//***															   	                         ***//
 	//**********************************************************************************************//
@@ -74,17 +74,20 @@
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
      **
-	 ** 1 ? A Solicitar [C]onsulta
-	 ** 2 ? Solicitada  [C]onsulta
-	 ** 3 ? Aprovada    [C]onsulta
-	 ** 5 ? A Cancelar  [C]onsulta
+	 ** 1 ? A Solicitar            [C]onsulta
+	 ** 2 ? Solicitada             [C]onsulta
+	 ** 3 ? Aprovada               [C]onsulta
+	 ** 5 ? A Cancelar             [C]onsulta
 	 **
-	 ** 4 ? Reprovada   [A]lteracao
-	 ** 6 ? Cancelada   [A]lteracao
+	 ** 8 ? Rejeitada              [A]lteracao 
+	 ** 9 ? Cancelamento Rejeitado [A]lteracao
      **
+	 ** 4 ? Reprovada              [A]lteracao
+	 ** 6 ? Cancelada              [A]lteracao
+	 **
 	 **      N/A        [I]nclusao
 	***/
-	$cddopcao 			= ( ( in_array($cdsituacao, array(1,2,3,5)) ) ? 'C' : ( ( in_array($cdsituacao, array(4,6)) ) ? 'A' : 'I' ) );
+	$cddopcao 			= ( ( in_array($cdsituacao, array(1,2,3,5,6,9)) ) ? 'C' : ( ( in_array($cdsituacao, array(4,8)) ) ? 'A' : 'I' ) );
 ?>
 <form action="<?php echo $UrlSite; ?>telas/atenda/portabilidade/impressao_termo.php" name="frmTermo" class="formulario" id="frmTermo" method="post">
     <input type="hidden" id="dsrowid" name="dsrowid" value="">
@@ -164,7 +167,7 @@
 	</fieldset>
 	
 	<fieldset style="padding: 5px">
-		<legend>Institui&ccedil;&atilde;o Destinataria</legend>
+		<legend>Institui&ccedil;&atilde;o Destinat&aacute;ria</legend>
 		<label for="nrispbif" class="clsCampos">ISPB:</label>
 		<input id="nrispbif" name="nrispbif" type="text" readonly="readonly" class="campo" value="<?php echo $nrispbif; ?>" />
 		
@@ -220,7 +223,7 @@
 	<a class="botao"           id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
 	<?php } ?>
 
-	<?php if (in_array($cdsituacao, array(1,2,3))) { ?>
+	<?php if (in_array($cdsituacao, array(1,2,3,9))) { ?>
 	<a class="botao" id="btCancelar" href="#" onclick="controlaOperacao('E')">Cancelar Portabilidade</a>
 	<?php } else { ?>
 	<a class="botaoDesativado" id="btCancelar" href="#" onclick="return false;">Cancelar Portabilidade</a>

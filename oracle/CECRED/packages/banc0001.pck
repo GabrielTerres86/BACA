@@ -2793,7 +2793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
      Dados referentes ao programa:
 
      Frequencia: Diario (on-line)
-     Objetivo  : Processar a rotina de alteração de CNPJ da tela BANCOS.
+     Objetivo  : Rotina para alteração de CNPJ da tela BANCOS.
 
      Alteracoes: 
     ---------------------------------------------------------------------------------------------------------------*/

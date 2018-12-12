@@ -93,7 +93,6 @@ $dominios = $xmlObj->roottag->tags[0]->tags;
 					if ( getByTagName($cooperativa->tags, 'cdcooper') <> '' ) {
 				?>
 					<option <?=(getByTagName($cooperativa->tags, 'cdcooper') == $glbvars["cdcooper"] ? 'selected' : '')?> value="<?= getByTagName($cooperativa->tags, 'cdcooper'); ?>"><?= getByTagName($cooperativa->tags, 'nmrescop'); ?></option> 
-					
 				<?php
 					}
 				}

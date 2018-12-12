@@ -1,6 +1,6 @@
 /**********************************************************************
   Fonte: portabilidade.js                                                
-  Autor: Anderson-Alan													   
+  Autor: Anderson-Alan		 											   
   Data : Setembro/2018                 Ultima Alteracao: 24/09/2018
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Portabilidade da tela Atenda                                              
@@ -25,8 +25,8 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 	if (opcao == "0") {	// Opção Principal
 		var msg = ", carregando dados de portabilidade";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/envio_solicitacao.php";
-	} else if (opcao == "1") { // Opção Subscrição Inicial
-		var msg = ", carregando subscri&ccedil;&atilde;o inicial";
+	} else if (opcao == "1") { // Opção
+	    var msg = ", carregando dados de portabilidade";
 		var UrlOperacao = UrlSite + "telas/atenda/portabilidade/destinatario.php";
 	}
 	
@@ -307,7 +307,7 @@ function exibeCancelamento() {
 	exibeRotina($('#divUsoGenerico'));
 
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, solicitando portabilidade...");
+	showMsgAguardo("Aguarde, carregando motivos de cancelamento...");
 
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({

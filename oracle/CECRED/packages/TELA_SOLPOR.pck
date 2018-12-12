@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SOLPOR is
       Sistema  : Rotinas referentes a tela SOLPOR (PLATAFORMA CENTRALIZADA DE PORTABILIDADE DE SALÁRIO)
       Sigla    : SOLPOR
       Autor    : Augusto - Supero
-      Data     : Outubro/2018.
+      Data     : Outubro/2018
 
       Dados referentes ao programa:
 
@@ -902,14 +902,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao  => 0
 									,pr_tag_nova => 'dtavaliacao'
-									,pr_tag_cont => to_char(rw_solicitacao.dtavaliacao, 'DD/MM/RRRR HH24:MI')
+									,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtavaliacao, 'DD/MM/RRRR HH24:MI'),' 00:00', NULL)
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao  => 0
 									,pr_tag_nova => 'dtretorno'
-									,pr_tag_cont => to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI')
+									,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI'),' 00:00', NULL)
 									,pr_des_erro => vr_dscritic);
 
         vr_dsmotivo := gene0007.fn_convert_db_web(rw_solicitacao.motivo);
@@ -1194,7 +1194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_pai  => 'Solicitacao'
 													,pr_posicao  => 0
 													,pr_tag_nova => 'dtretorno'
-													,pr_tag_cont => to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI')
+													,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI'), ' 00:00', NULL)
 													,pr_des_erro => vr_dscritic);
 
         vr_dsmotivo := rw_solicitacao.motivo;

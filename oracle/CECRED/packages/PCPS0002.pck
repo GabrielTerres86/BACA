@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0002 is
   
   -- Comunicar pendencias de avaliação
   PROCEDURE pc_email_pa_portabilidade;
-	
+
   -- Agendar os jobs do processo, conforme parametrização
 	PROCEDURE pc_agenda_jobs;
   
@@ -263,7 +263,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     CLOSE cr_dados;                 
      
   END pc_extrai_dados_arq;
-
+  
+  -- Inserir a listagem de erros que causaram a recusa do registro
+  PROCEDURE pc_insere_erro(pr_cdcooper IN tbcc_portabilidade_envia.cdcooper%TYPE
+                          ,pr_nrdconta IN tbcc_portabilidade_envia.nrdconta%TYPE
+                          ,pr_nrsolici IN tbcc_portabilidade_envia.nrsolicitacao%TYPE
+                          ,pr_cddoerro IN VARCHAR2) IS
+      
+  BEGIN
+    -- Inserir os casos de erro registrados
+    INSERT INTO tbcc_portabilidade_env_erros(cdcooper
+                                            ,nrdconta
+                                            ,nrsolicitacao
+                                            ,dsdominio_motivo
+                                            ,cdmotivo)
+                                     VALUES (pr_cdcooper      -- cdcooper
+                                            ,pr_nrdconta      -- nrdconta
+                                            ,pr_nrsolici      -- nrsolicitacao
+                                            ,vr_dsdominioerro -- dsdominio_motivo
+                                            ,pr_cddoerro);    -- cdmotivo
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Não deve dar erro para na inclusão
+      NULL;
+  END pc_insere_erro;
+  
   
   PROCEDURE pc_gera_XML_APCS101(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
                                ,pr_dsxmlarq IN OUT XMLTYPE       --> Conteúdo do arquivo
@@ -664,30 +688,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_dsmsglog      VARCHAR2(1000);
     vr_nmarquiv      VARCHAR2(100);
     vr_dtarquiv      DATE;
-    
-    -- Inserir a listagem de erros que causaram a recusa do registro
-    PROCEDURE pc_insere_erro(pr_cdcooper IN tbcc_portabilidade_envia.cdcooper%TYPE
-                            ,pr_nrdconta IN tbcc_portabilidade_envia.nrdconta%TYPE
-                            ,pr_nrsolici IN tbcc_portabilidade_envia.nrsolicitacao%TYPE
-                            ,pr_cddoerro IN VARCHAR2) IS
-      
-    BEGIN
-      -- Inserir os casos de erro registrados
-      INSERT INTO tbcc_portabilidade_env_erros(cdcooper
-                                              ,nrdconta
-                                              ,nrsolicitacao
-                                              ,dsdominio_motivo
-                                              ,cdmotivo)
-                                       VALUES (pr_cdcooper      -- cdcooper
-                                              ,pr_nrdconta      -- nrdconta
-                                              ,pr_nrsolici      -- nrsolicitacao
-                                              ,vr_dsdominioerro -- dsdominio_motivo
-                                              ,pr_cddoerro);    -- cdmotivo
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Não deve dar erro para na inclusão
-        NULL;
-    END pc_insere_erro;
     
   BEGIN
     
@@ -2440,8 +2440,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
        SET t.idsituacao       = 5 -- A Cancelar
          , t.nmarquivo_envia  = NULL
          , t.dtretorno        = SYSDATE
-         , t.dsdominio_motivo = vr_dsdominioerro
-         , t.cdmotivo         = vr_cderrret
      WHERE t.nmarquivo_envia  = vr_nmarqenv;
     
   EXCEPTION
@@ -2478,7 +2476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
       SELECT nrportdpcs
         FROM DATA
-           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_CancelPortddCtSalrActo')
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_CanceltPortddCtSalrActo')
                       PASSING XMLTYPE(xml)
                       COLUMNS nrportdpcs  NUMBER       PATH 'NUPortddPCS' );
      
@@ -2487,16 +2485,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
       SELECT dscoderro
            , nrportdpcs
+           , erindpart 
+           , erctrlpart
+           , ernuportab
+           , erdsmotcan
+           , erdtcancel
         FROM DATA
-           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_CancelPortddCtSalrRecsd')
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_CanceltPortddCtSalrRecsd')
                       PASSING XMLTYPE(xml)
                       COLUMNS dscoderro  VARCHAR2(20) PATH '@CodErro'
-                            , nrportdpcs VARCHAR2(50) PATH 'NUPortddPCS');
+                            , nrportdpcs VARCHAR2(50) PATH 'NUPortddPCS'
+                            , erindpart  VARCHAR2(20) PATH 'IdentdPartAdmtd/@CodErro' 
+                            , erctrlpart VARCHAR2(20) PATH 'NumCtrlPart/@CodErro'
+                            , ernuportab VARCHAR2(20) PATH 'NUPortddPCS/@CodErro'
+                            , erdsmotcan VARCHAR2(20) PATH 'MotvCanceltPortddCtSalr/@CodErro'
+                            , erdtcancel VARCHAR2(20) PATH 'DtCanceltPortddCtSalr/@CodErro' );
              
     -- Retornar o registro correspondente enviado
     CURSOR cr_prtenvia(pr_nrnuport   tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
       SELECT ROWID dsdrowid
-        FROM tbcc_portabilidade_recebe t
+           , t.cdcooper
+           , t.nrdconta
+           , t.nrsolicitacao nrsolici
+        FROM tbcc_portabilidade_envia t
        WHERE t.nrnu_portabilidade = pr_nrnuport;
     rg_prtenvia   cr_prtenvia%ROWTYPE;
     
@@ -2553,16 +2564,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
        
       -- Fechar o cursor
       CLOSE cr_prtenvia;
-               
+              
       -- Atualizar a situação do registro para que seja reavaliado e reenviado
       UPDATE tbcc_portabilidade_envia t
          SET t.idsituacao         = 9 -- Rejeitado Cancelamento (dominio: SIT_PORTAB_SALARIO_RECEBE)
            , t.dtretorno          = SYSDATE
            , t.dsdominio_motivo   = vr_dsdominioerro -- Dominio dos erros da CIP
-           , t.cdmotivo           = rg_dados.dscoderro
+           , t.cdmotivo           = 'EGENPCPS' -- ERRO PADRÃO, SERÁ TRATADO CAMPO A CAMPO NA TABELA FILHA
            , t.nmarquivo_retorno  = vr_nmarquiv
        WHERE ROWID = rg_prtenvia.dsdrowid;
-    
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erdtcancel IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.erdtcancel);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.dscoderro IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.dscoderro);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erctrlpart IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.erctrlpart);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.ernuportab IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.ernuportab);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erdsmotcan IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.erdsmotcan);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erdtcancel IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => rg_prtenvia.cdcooper
+                      ,pr_nrdconta => rg_prtenvia.nrdconta
+                      ,pr_nrsolici => rg_prtenvia.nrsolici
+                      ,pr_cddoerro => rg_dados.erdtcancel);
+      END IF; 
+      
     END LOOP;
     
     -- Percorrer todos os aceites
@@ -2607,8 +2672,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
          SET t.idsituacao         = 7 -- Cancelada (dominio: SIT_PORTAB_SALARIO_RECEBE)
            , t.dtretorno          = SYSDATE
            , t.nmarquivo_retorno  = vr_nmarquiv
-           , t.dsdominio_motivo   = NULL -- Dominio dos erros da CIP
-           , t.cdmotivo           = NULL
        WHERE ROWID = rg_prtenvia.dsdrowid;
     
     END LOOP;
@@ -3162,10 +3225,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             -- Processar retorno do arquivo
             pc_proc_ERR_APCS103(pr_dsxmlarq => vr_dsarqLOB
                                ,pr_dscritic => vr_dscritic);
-          /*WHEN 'APCS105' THEN
+          WHEN 'APCS105' THEN
             -- Processar retorno do arquivo
-            pc_proc_ERR_APCS103(pr_dsxmlarq => vr_dsarqLOB
-                               ,pr_dscritic => vr_dscritic);*/
+            pc_proc_ERR_APCS105(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
           ELSE
             vr_dscritic := 'Rotina não especificada para processar arquivos: '||pr_dsdsigla;
             RAISE vr_exc_erro;

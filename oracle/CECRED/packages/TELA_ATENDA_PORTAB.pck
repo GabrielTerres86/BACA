@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Portabilidade de Salário
-  --
+  -- 
   -- Alteracoes:
   ---------------------------------------------------------------------------------------------------------------
 
@@ -161,14 +161,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
            AND crapttl.idseqttl = 1;
     
       -- Seleciona a Instituicao Destinatario
-      CURSOR cr_crapban_crapcop IS
+      CURSOR cr_crapban_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT b.nrispbif
-              ,c.nrdocnpj
+              ,b.nrcnpjif
               ,c.cdagectl
           FROM crapban b
               ,crapcop c
          WHERE b.cdbccxlt = c.cdbcoctl
-           AND c.cdcooper = 3;
+           AND c.cdcooper = pr_cdcooper;
     
       -- Seleciona Portab Envia
       CURSOR cr_portab_envia(pr_cdcooper IN crapenc.cdcooper%TYPE
@@ -300,7 +300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       CLOSE cr_portab_envia;
     
       -- Selecionar a instituicao destinataria
-      OPEN cr_crapban_crapcop;
+      OPEN cr_crapban_crapcop(pr_cdcooper => vr_cdcooper);
       FETCH cr_crapban_crapcop
         INTO vr_nrispbif_cop
             ,vr_nrdocnpj_cop
@@ -1693,8 +1693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       IF rw_portab_envia.cdsituacao = 1 THEN
         -- A solicitar
         vr_situacao := 7; -- Cancelada
-      ELSIF rw_portab_envia.cdsituacao = 2 OR
-            rw_portab_envia.cdsituacao = 3 THEN
+      ELSE 
         -- Solicitada OU Aprovada
         vr_situacao := 5; -- A cancelar
       END IF;

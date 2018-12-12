@@ -23,7 +23,7 @@
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
 		exibeErro($msgError);
-	}
+	}  
 
 	$xml  = "<Root>";
 	$xml .= " <Dados/>";

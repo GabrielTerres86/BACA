@@ -13,10 +13,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
    Objetivo  : Rotinas para buscar detalhes de cadastros
   
    Alteracoes:   
-
+  
   ---------------------------------------------------------------------------------------------------------------*/
-	
-  -- Validar transferencia de contas entre tipos de conta.
+  
+  -- Validar transferencia de contas entre tipos de conta
   PROCEDURE pc_valida_transferencia(pr_inpessoa   IN INTEGER --> Tipo de pessoa
                                    ,pr_cdcooper   IN INTEGER --> Código da cooperativa
                                    ,pr_tipcta_ori IN tbcc_tipo_conta.cdtipo_conta%TYPE --> Codigo tipo de conta de origem

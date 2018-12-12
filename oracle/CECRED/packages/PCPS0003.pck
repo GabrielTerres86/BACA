@@ -24,7 +24,7 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0003 IS
                                ,pr_dsarqcmp OUT CLOB
                                ,pr_dscritic OUT VARCHAR2);
                      
-  -- Rotina para realização de testes dos arquivos
+  -- Rotina para realização de testes dos arquivos - CRIPTOGRAFAR E DESCRIPTOGRAFAR
   PROCEDURE pc_testar_arquivo(pr_nmarquiv  IN VARCHAR2
                              ,pr_dsdirarq  IN VARCHAR2
                              ,pr_idfuncao  IN NUMBER );

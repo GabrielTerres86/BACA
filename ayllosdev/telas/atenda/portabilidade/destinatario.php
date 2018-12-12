@@ -30,7 +30,7 @@
 
 	$nrdconta        = (isset($_POST['nrdconta']))        ? $_POST['nrdconta']        : 0  ;
 	$inpessoa        = (isset($_POST['inpessoa']))        ? $_POST['inpessoa']        : 0  ;
-
+	 
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -112,14 +112,14 @@
         <fieldset style="padding: 5px">
             <legend>Institui&ccedil;&atilde;o Destinat&aacute;ria</legend>
             <label for="banco" class="clsCampos" style="width:85px">Banco:</label>
-            <input id="banco" name="banco" type="text" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $banco; ?>" style="width:278px"/>
+            <input id="banco" name="banco" type="text" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $banco; ?>" style="width:426px"/>
             
             <br style="clear:both"/>
             
             <label for="cdagencia_destinataria_r" class="clsCampos" style="width:85px">Ag&ecirc;ncia:</label>
             <input type="text" id="cdagencia_destinataria_r" name="cdagencia_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $cdagencia_destinataria_r; ?>" style="width:45px" />
             
-            <label for="nrdconta_destinataria_r" class="clsCampos" style="width:60px">Conta:</label>
+            <label for="nrdconta_destinataria_r" class="clsCampos" style="width:85px">Conta:</label>
             <input type="text" id="nrdconta_destinataria_r" name="nrdconta_destinataria_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrdconta_destinataria_r; ?>" style="width:75px" />
         </fieldset>
 	

@@ -7,7 +7,6 @@
  * --------------
  * ALTERAÇÕES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                PRJ-312 (Reinert)
- * -------------- 
  *
  * -------------- 
  */
@@ -103,5 +102,5 @@
 		echo "$('#nrcnpjif','#frmConsulta').habilitaCampo().focus();";
 		
 	}
-	
+
 ?>

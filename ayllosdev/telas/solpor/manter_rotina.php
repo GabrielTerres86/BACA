@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 17/10/2018
  * OBJETIVO     : Rotina para controlar as operações da tela SOLPOR
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * -------------- 
  */
 
@@ -14,6 +14,7 @@ require_once('../../includes/config.php');
 require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
+
 isPostMethod();
 
 $cddopcao = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';

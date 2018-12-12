@@ -51,7 +51,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 $dominios = $xmlObj->roottag->tags[0]->tags;
 $dominiosDesejados = array();
 ?>
-
+ 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
         <td align="center">

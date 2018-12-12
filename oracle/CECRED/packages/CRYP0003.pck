@@ -83,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRYP0003 IS
    Dados referentes ao programa:
 
    Frequencia: -----
-   Objetivo  : Package para conster as especificações para a chamada das rotinas java source
+   Objetivo  : Package para conter as especificações para a chamada das rotinas java source
 
     Alteracoes:
 

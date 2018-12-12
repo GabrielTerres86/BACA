@@ -6,19 +6,9 @@ import java.math.BigInteger;
 
 
 /**
- * A bare-minimum ASN.1 DER decoder, just having enough functions to 
- * decode PKCS#1 private keys. Especially, it doesn't handle explicitly
- * tagged types with an outer tag.
- * 
- * <p/>This parser can only handle one layer. To parse nested constructs,
- * get a new parser for each layer using <code>Asn1Object.getParser()</code>.
- * 
- * <p/>There are many DER decoders in JRE but using them will tie this
- * program to a specific JCE/JVM.
- * 
- * @author zhang
- *
- */
+* Classe dedicada a funções de parser de chaves PKCS#1
+* 
+*/
 public class CipDerParser {
 
   // Classes

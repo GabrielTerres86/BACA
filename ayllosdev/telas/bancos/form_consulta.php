@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulario de consulta da Tela BANCOS
  * --------------
  * ALTERAÇÕES   : 29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ * 
  *			  	  09/09/2016 - Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                			    PRJ-312 (Reinert)
  * --------------
@@ -65,5 +66,4 @@
 		<br style="clear:both" />
 		
 	</div>
-	
 </form>

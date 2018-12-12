@@ -9,10 +9,13 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.DatatypeConverter;
 
+/**
+* Classe dedicada a compressão de conteúdos em formato GZIP
+* 
+* @author Renato Darosci - Supero
+*/
 public class CipGZIPCompress {
 
-  
-  
   // Realizar a compressão da string retornando o array de bytes
   public static byte[] compress(final String str) throws IOException {
     if ((str == null) || (str.length() == 0)) {

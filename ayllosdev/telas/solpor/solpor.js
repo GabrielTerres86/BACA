@@ -5,7 +5,6 @@
  * OBJETIVO     : Biblioteca de funções da tela SOLPOR
  * --------------
  * ALTERAÇÕES   :
- *
  * --------------
  */
 

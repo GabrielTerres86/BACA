@@ -3,7 +3,7 @@
  * FONTE        : grid_solicitacoes.php
  * CRIAÇÃO      : Augusto - Supero
  * DATA CRIAÇÃO : 17/10/2018
- * OBJETIVO     : Grid das solicitações de portabilidade
+ * OBJETIVO     : Grid das solicitações de portabilidade de salário
  * --------------
  * ALTERAÇÕES   : 
  * --------------

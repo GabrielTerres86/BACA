@@ -2,7 +2,7 @@
 
 	//****************************************************************************************//
 	//*** Fonte: portabilidade.php                                                         ***//
-	//*** Autor: Anderson-Alan                                                                  ***//
+	//*** Autor: Anderson-Alan                                                             ***//
 	//*** Data : Setembro/2018        		        Ultima Alteracao 24/09/2018            ***//
 	//***                                                                                  ***//
 	//*** Objetivo  : Mostrar rotina de POrtabilidade de Salário da tela ATENDA            ***//

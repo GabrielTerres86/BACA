@@ -7,7 +7,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Autor    : Odirlei Busana - AMcom
     Data     : Agosto/2015.                   Ultima atualizacao: 23/05/2018
   
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
   
    Frequencia: -----
    Objetivo  : Rotinas para buscar detalhes de cadastros
