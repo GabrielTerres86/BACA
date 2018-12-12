@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_cdagedoc     IN crapage.cdagedoc%TYPE --> Codigo da agencia do DOC onde sera entregue a COMPE
                         ,pr_flgdsede     IN crapage.flgdsede%TYPE --> PA eh Sede da cooperativa
                         ,pr_cdagepac     IN crapage.cdagepac%TYPE --> Numero da agencia do PA na Central
-												,pr_flgutcrm     IN crapage.flgutcrm%TYPE --> Flag de controle de acesso ao CRM
+												,pr_flgutcrm     IN crapage.inutlcrm%TYPE --> Flag de controle de acesso ao CRM
                         ,pr_dsendcop     IN crapage.dsendcop%TYPE --> Endereco do PA
                         ,pr_nrendere     IN crapage.nrendere%TYPE --> Numero (ref. endereco) do PA
                         ,pr_nmbairro     IN crapage.nmbairro%TYPE --> Nome do bairro onde esta localizado o PA
@@ -184,7 +184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,cdagedoc crapage.cdagedoc%TYPE
          ,flgdsede crapage.flgdsede%TYPE
          ,cdagepac crapage.cdagepac%TYPE
-				 ,flgutcrm crapage.flgutcrm%TYPE
+				 ,flgutcrm crapage.inutlcrm%TYPE
          ,cdagefgt crapage.cdagefgt%TYPE
          ,dsendcop crapage.dsendcop%TYPE
          ,nrendere crapage.nrendere%TYPE
@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.cdagedoc
               ,crapage.flgdsede
               ,crapage.cdagepac
-							,crapage.flgutcrm
+							,crapage.inutlcrm
               ,crapage.cdagefgt
               ,crapage.dsendcop
               ,crapage.nrendere
@@ -581,7 +581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).cdagedoc := rw_crapage.cdagedoc;
         pr_tab_crapage(pr_cdagenci).flgdsede := rw_crapage.flgdsede;
         pr_tab_crapage(pr_cdagenci).cdagepac := rw_crapage.cdagepac;
-        pr_tab_crapage(pr_cdagenci).flgutcrm := rw_crapage.flgutcrm;				
+        pr_tab_crapage(pr_cdagenci).flgutcrm := rw_crapage.inutlcrm;				
         pr_tab_crapage(pr_cdagenci).cdagefgt := rw_crapage.cdagefgt;
         pr_tab_crapage(pr_cdagenci).dsendcop := rw_crapage.dsendcop;
         pr_tab_crapage(pr_cdagenci).nrendere := rw_crapage.nrendere;
@@ -1304,8 +1304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_nova => 'hrfimpaa'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrfimpaa
                               ,pr_des_erro => vr_dscritic);
-
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+															
+		    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'indspcxa'
@@ -1467,7 +1467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_cdagedoc     IN crapage.cdagedoc%TYPE --> Codigo da agencia do DOC onde sera entregue a COMPE
                         ,pr_flgdsede     IN crapage.flgdsede%TYPE --> PA eh Sede da cooperativa
                         ,pr_cdagepac     IN crapage.cdagepac%TYPE --> Numero da agencia do PA na Central
-												,pr_flgutcrm     IN crapage.flgutcrm%TYPE --> Flag de controle de acesso ao CRM
+												,pr_flgutcrm     IN crapage.inutlcrm%TYPE --> Flag de controle de acesso ao CRM
                         ,pr_dsendcop     IN crapage.dsendcop%TYPE --> Endereco do PA
                         ,pr_nrendere     IN crapage.nrendere%TYPE --> Numero (ref. endereco) do PA
                         ,pr_nmbairro     IN crapage.nmbairro%TYPE --> Nome do bairro onde esta localizado o PA
@@ -2785,7 +2785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.cdagedoc = pr_cdagedoc
                 ,crapage.flgdsede = pr_flgdsede
                 ,crapage.cdagepac = pr_cdagepac
-								,crapage.flgutcrm = pr_flgutcrm
+								,crapage.inutlcrm = pr_flgutcrm
                 ,crapage.cdagefgt = pr_cdagefgt
                 ,crapage.dsendcop = NVL(pr_dsendcop,' ')
                 ,crapage.nrendere = pr_nrendere
@@ -3022,7 +3022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,cdagedoc
                      ,flgdsede
                      ,cdagepac
-										 ,flgutcrm
+										 ,inutlcrm
                      ,dsendcop
                      ,nrendere
                      ,nmbairro
@@ -3500,7 +3500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'Horario limite canc. pagamentos bancoob'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).hhcan_bancoob ELSE '-' END)
                  ,pr_vldepois => pr_hhcan_bancoob);
-                 
+
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
@@ -4539,8 +4539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'inicio horario de atendimento'
                  ,pr_vldantes => vr_tab_crapage(pr_cdagenci).hrinipaa
                  ,pr_vldepois => NVL(vr_hrinipaa, ' '));
-
-      pc_item_log(pr_cdcooper => vr_cdcooper
+								 
+			pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => 'A'
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
@@ -4595,7 +4595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                     || '<b>Horário inicio atendimento:</b> de ''' || vr_tab_crapage(pr_cdagenci).hrinipaa
                     || ''' para ''' || vr_hrinipaa || '''<br>';
       END IF;
-
+			
 			IF NVL(vr_tab_crapage(pr_cdagenci).hrfimpaa, ' ') <> NVL(vr_hrfimpaa, ' ') THEN
 
         vr_dscnteml := vr_dscnteml
@@ -4710,7 +4710,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_dscritic  VARCHAR2(10000);
       vr_exc_saida EXCEPTION;
       
-      vr_qtregist  NUMBER;     
+      vr_qtregist  NUMBER; 
       
       -- Selecionar os dados
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -4735,7 +4735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                             ,pr_tag_cont => ''
                             ,pr_des_erro => vr_dscritic);
       
-      vr_qtregist := 0;      
+      vr_qtregist := 0;
       
       FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
                                   ,pr_flgpaaut => pr_flgpaaut) LOOP          

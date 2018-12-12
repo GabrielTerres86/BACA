@@ -15,8 +15,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PF_RESP_HST
       Objetivo  : Trigger para gravar Historico/Auditoria da tabela
 
      Alteração :
-
-
+                 27/06/2018 - Campo dsvalor_novo_original e PC_INSERE_COMUNIC_SOA. Alexandre Borgmann - Mout´s Tecnologia
   ............................................................................*/
 
 
@@ -24,7 +23,6 @@ DECLARE
 
   vr_nmdatela   CONSTANT VARCHAR2(50) := 'TBCADAST_PESSOA_FISICA_RESP';
   vr_dhaltera   CONSTANT DATE := SYSDATE;
-  vr_data       DATE := to_date('01/01/1500','DD/MM/RRRR');
   vr_tab_campos CADA0014.typ_tab_campos_hist;
   vr_idpessoa   tbcadast_pessoa_historico.idpessoa%TYPE;
   vr_nrsequen   tbcadast_pessoa_historico.nrsequencia%TYPE;
@@ -32,8 +30,9 @@ DECLARE
   vr_cdoperad   tbcadast_pessoa_historico.cdoperad_altera%TYPE;
 
   vr_exc_erro   EXCEPTION;
-  vr_cdcritic   INTEGER;
   vr_dscritic   VARCHAR2(2000);
+  -- Variável indicando que esta dentro da funçao insere_historico
+  vr_flginsere_historico   boolean :=FALSE;
 
   --> Retornar descrição do relacionamento
   FUNCTION fn_desc_relacionamento (pr_cdrelacionamento  IN tbcadast_relacion_resp_legal.cdrelacionamento%TYPE) 
@@ -50,14 +49,15 @@ DECLARE
                                                                       
   END;
 
-  
   --> Grava a tabela historico
   PROCEDURE Insere_Historico(pr_nmdcampo IN VARCHAR2,
                              pr_dsvalant IN tbcadast_pessoa_historico.dsvalor_anterior%TYPE,
-                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE) IS
-
-
+                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE,
+                             pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE                             
+                            ) IS
   BEGIN
+    -- Deve-se enviar o historico para o SOA
+    vr_flginsere_historico:=TRUE;
 
     CADA0014.pc_grava_hist_pessoa
                         ( pr_nmdatela    => vr_nmdatela   --> Nome da tela
@@ -69,6 +69,7 @@ DECLARE
                          ,pr_tpoperac    => vr_tpoperac   --> Tipo de operacao (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                          ,pr_dsvalant    => pr_dsvalant   --> Valor anterior
                          ,pr_dsvalnov    => pr_dsvalnov   --> Valor novo
+                         ,pr_dsvalor_novo_original => pr_dsvalor_novo_original --> Valor Original sem descrição
                          ,pr_cdoperad    => vr_cdoperad   --> Valor novo
                          ,pr_dscritic    => vr_dscritic);  --> Retornar Critica
 
@@ -131,39 +132,69 @@ BEGIN
     IF nvl(:new.IDPESSOA,0) <> nvl(:OLD.IDPESSOA,0) THEN
       Insere_Historico(pr_nmdcampo => 'IDPESSOA',
                        pr_dsvalant => :old.IDPESSOA,
-                       pr_dsvalnov => :new.IDPESSOA);
+                       pr_dsvalnov => :new.IDPESSOA,
+                       pr_dsvalor_novo_original => :new.IDPESSOA                       
+                      );
     END IF;
 
     --> NRSEQ_RESP_LEGAL
     IF nvl(:new.NRSEQ_RESP_LEGAL,0) <> nvl(:OLD.NRSEQ_RESP_LEGAL,0) THEN
       Insere_Historico(pr_nmdcampo => 'NRSEQ_RESP_LEGAL',
                        pr_dsvalant => :old.NRSEQ_RESP_LEGAL,
-                       pr_dsvalnov => :new.NRSEQ_RESP_LEGAL);
+                       pr_dsvalnov => :new.NRSEQ_RESP_LEGAL,
+                       pr_dsvalor_novo_original => :new.NRSEQ_RESP_LEGAL                       
+                      );
     END IF;
     
     --> IDPESSOA_RESP_LEGAL
     IF nvl(:new.IDPESSOA_RESP_LEGAL,0) <> nvl(:OLD.IDPESSOA_RESP_LEGAL,0) THEN
       Insere_Historico(pr_nmdcampo => 'IDPESSOA_RESP_LEGAL',
                        pr_dsvalant => :old.IDPESSOA_RESP_LEGAL,
-                       pr_dsvalnov => :new.IDPESSOA_RESP_LEGAL);
+                       pr_dsvalnov => :new.IDPESSOA_RESP_LEGAL,
+                       pr_dsvalor_novo_original => :new.IDPESSOA_RESP_LEGAL                       
+                      );
     END IF;
 
     --> CDRELACIONAMENTO
     IF nvl(:new.CDRELACIONAMENTO,0) <> nvl(:OLD.CDRELACIONAMENTO,0) THEN
       Insere_Historico(pr_nmdcampo => 'CDRELACIONAMENTO',
                        pr_dsvalant => fn_desc_relacionamento(:old.CDRELACIONAMENTO),
-                       pr_dsvalnov => fn_desc_relacionamento(:new.CDRELACIONAMENTO));
+                       pr_dsvalnov => fn_desc_relacionamento(:new.CDRELACIONAMENTO),
+                       pr_dsvalor_novo_original => :new.CDRELACIONAMENTO                                             
+                      );
     END IF;    
     
     --> CDOPERAD_ALTERA
     IF nvl(:new.CDOPERAD_ALTERA,' ') <> nvl(:OLD.CDOPERAD_ALTERA,' ') THEN
       Insere_Historico(pr_nmdcampo => 'CDOPERAD_ALTERA',
                        pr_dsvalant => :old.CDOPERAD_ALTERA,
-                       pr_dsvalnov => :new.CDOPERAD_ALTERA);
+                       pr_dsvalnov => :new.CDOPERAD_ALTERA,
+                       pr_dsvalor_novo_original => :new.CDOPERAD_ALTERA                                             
+                      );
     END IF;
     
-    
   END IF;
+  -- Se gerou historico, entao deve-se transmitir para o SOA
+  IF vr_flginsere_historico THEN 
+    
+     CADA0014.PC_INSERE_COMUNIC_SOA(vr_nmdatela, -- nmtabela_oracle 
+                                    vr_idpessoa, -- idpessoa 
+                                    vr_nrsequen, -- nrsequencia 
+                                    vr_dhaltera, --dhalteracao 
+                                    vr_tpoperac, --tpoperacao --Tipo de alteracao do registro (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
+                                    vr_dscritic    -- descrição do erro
+                                   );
+     
+     IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+  END IF;
+  END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      raise_application_error(-20100,vr_dscritic);
+    WHEN OTHERS THEN
+      raise_application_error(-20100,'Erro TRG_TBCADAST_PF_RESP_HST: '||SQLERRM);
 
 END TRG_TBCADAST_PF_RESP_HST;
 /

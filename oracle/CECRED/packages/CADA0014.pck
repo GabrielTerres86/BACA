@@ -14,19 +14,18 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0014 is
   --
   -- Alteracoes:   
   --  
+  --             27/06/2018 Nova procedure PC_INSERE_COMUNIC_SOA - Alexandre Borgmann - Mout´s Tecnologia
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   --TempTable para armazenar os campos
   TYPE typ_tab_campos_hist IS TABLE OF tbcadast_campo_historico%ROWTYPE
-    INDEX BY VARCHAR2(50);                
+    INDEX BY VARCHAR2(100);
                                                                 
   --> Variavel tipo de rendimento
   TYPE typ_tab_tpfixo_variavel IS TABLE OF VARCHAR2(100)
        INDEX BY PLS_INTEGER;
   vr_tab_tpfixo_variavel typ_tab_tpfixo_variavel; 
-  
-  
   
   --------->>>> PROCUDURES/FUNCTIONS <<<<----------
   
@@ -53,7 +52,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0014 is
                                  ,pr_tpoperac    IN tbcadast_pessoa_historico.tpoperacao%TYPE       --> Tipo de operacao (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                                  ,pr_dsvalant    IN tbcadast_pessoa_historico.dsvalor_anterior%TYPE --> Valor anterior
                                  ,pr_dsvalnov    IN tbcadast_pessoa_historico.dsvalor_novo%TYPE     --> Valor novo
-                                 ,pr_cdoperad    IN  tbcadast_pessoa_historico.cdoperad_altera%TYPE --> Valor novo
+                                 ,pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE DEFAULT NULL  -- Valor Original sem descrição
+                                 ,pr_cdoperad    IN  tbcadast_pessoa_historico.cdoperad_altera%TYPE --> Operador
                                  ,pr_dscritic   OUT VARCHAR2                                        --> Retornar Critica 
                                  ); 
                                  
@@ -294,6 +294,17 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0014 is
   FUNCTION fn_desc_tpregime_tributacao (pr_tpregime_tributacao  IN tbcadast_pessoa_juridica.tpregime_tributacao%TYPE,
                                         pr_dscritic OUT VARCHAR2) 
              RETURN VARCHAR2;             
+
+  /******************************************************************************/
+  /**     Procedure para inserir na tabela TBCADAST_PESSOA_COMUNIC_SOA         **/
+  /******************************************************************************/
+  PROCEDURE pc_insere_comunic_soa(pr_nmdatela in cecred.tbcadast_pessoa_comunic_soa.nmtabela_oracle%type,
+                                  pr_idpessoa in cecred.tbcadast_pessoa_comunic_soa.idpessoa%type,
+                                  pr_nrsequen in cecred.tbcadast_pessoa_comunic_soa.nrsequencia%type,
+                                  pr_dhaltera in cecred.tbcadast_pessoa_comunic_soa.dhalteracao%type,
+                                  pr_tpoperacao in cecred.tbcadast_pessoa_comunic_soa.tpoperacao%type,
+                                  pr_dscritic OUT VARCHAR2
+                                 );
 END CADA0014;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
@@ -312,10 +323,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
   --
   -- Alteracoes:   
   --  
+  --             27/06/2018 Nova procedure PC_INSERE_COMUNIC_SOA - Alexandre Borgmann - Mout´s Tecnologia
   ---------------------------------------------------------------------------------------------------------------*/
 
 
-  
   /*****************************************************************************/
   /**            Procedure para carregar os campos da tabela hist.            **/
   /*****************************************************************************/
@@ -500,7 +511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
                                  ,pr_tpoperac    IN tbcadast_pessoa_historico.tpoperacao%TYPE       --> Tipo de operacao (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                                  ,pr_dsvalant    IN tbcadast_pessoa_historico.dsvalor_anterior%TYPE --> Valor anterior
                                  ,pr_dsvalnov    IN tbcadast_pessoa_historico.dsvalor_novo%TYPE     --> Valor novo
-                                 ,pr_cdoperad    IN  tbcadast_pessoa_historico.cdoperad_altera%TYPE --> Valor novo
+                                 ,pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE DEFAULT NULL  -- Valor Original sem descrição
+                                 ,pr_cdoperad    IN  tbcadast_pessoa_historico.cdoperad_altera%TYPE --> operador
                                  ,pr_dscritic   OUT VARCHAR2                                        --> Retornar Critica 
                                  ) IS 
      
@@ -520,15 +532,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
     --  Alteração :
     --
     --
+    --              27/06/2018  Novo Campo pr_dsvalor_novo_original - Alexandre Borgmann - Mout´s Tecnologia
+
     -- ..........................................................................*/
     
-    ---------------> CURSORES <----------------- 
-    -- Buscar campo historico
-    CURSOR cr_campo_historico IS
-      SELECT *
-        FROM tbcadast_campo_historico cmp
-       WHERE cmp.nmtabela_oracle = pr_nmdatela;    
-       
     ---------------> VARIAVEIS <----------------- 
     vr_dscritic VARCHAR2(1000);
     vr_exc_erro EXCEPTION; 
@@ -561,7 +568,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
                     idcampo, 
                     dsvalor_anterior, 
                     dsvalor_novo, 
-                    cdoperad_altera)
+                    cdoperad_altera,
+                    dsvalor_novo_original
+                    )
            VALUES ( pr_idpessoa,          --> idpessoa
                     pr_nrsequen,          --> nrsequencia 
                     pr_dhaltera,          --> dhalteracao 
@@ -569,7 +578,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
                     vr_idcampo,           --> cdcampo 
                     pr_dsvalant,          --> dsvalor_anterior
                     pr_dsvalnov,          --> dsvalor_novo 
-                    pr_cdoperad);         --> cdoperad_altera  
+                    pr_cdoperad,           --> cdoperad_altera
+                    decode(pr_dsvalor_novo_original,null,pr_dsvalnov,pr_dsvalor_novo_original) --> dsvalor_novo_original
+                    );
     
     EXCEPTION 
       WHEN OTHERS THEN
@@ -2082,6 +2093,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
       RETURN NULL;
   END fn_desc_tpregime_tributacao;
   
+/******************************************************************************/
+/**     Procedure para inserir na tabela TBCADAST_PESSOA_COMUNIC_SOA         **/
+/******************************************************************************/
+  PROCEDURE pc_insere_comunic_soa(pr_nmdatela in cecred.tbcadast_pessoa_comunic_soa.nmtabela_oracle%type,
+                                  pr_idpessoa in cecred.tbcadast_pessoa_comunic_soa.idpessoa%type,
+                                  pr_nrsequen in cecred.tbcadast_pessoa_comunic_soa.nrsequencia%type,
+                                  pr_dhaltera in cecred.tbcadast_pessoa_comunic_soa.dhalteracao%type,
+                                  pr_tpoperacao in cecred.tbcadast_pessoa_comunic_soa.tpoperacao%type,
+                                  pr_dscritic OUT VARCHAR2
+                                 ) IS
+      vr_idalteracao CECRED.TBCADAST_PESSOA_COMUNIC_SOA.IDALTERACAO%TYPE;
+  BEGIN
+      vr_idalteracao:= fn_sequence(pr_nmtabela => 'TBCADAST_PESSOA_COMUNIC_SOA',
+                                   pr_nmdcampo => 'IDALTERACAO',
+                                   pr_dsdchave => '0)');
+                                   
+      INSERT INTO CECRED.TBCADAST_PESSOA_COMUNIC_SOA(idalteracao,
+                                                     nmtabela_oracle,
+                                                     idpessoa,
+                                                     nrsequencia,
+                                                     dhalteracao,
+                                                     tpoperacao
+                                                    )
+     VALUES (vr_idalteracao,
+             pr_nmdatela,
+             pr_idpessoa,
+             pr_nrsequen,
+             pr_dhaltera,
+             pr_tpoperacao
+            );
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Nao foi possivel inserir na TBCADAST_PESSOA_COMUNIC_SOA: '||SQLERRM;
+  END;
   
 BEGIN  
   

@@ -15,8 +15,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PES_RENDACOMP_HST
       Objetivo  : Trigger para gravar Historico/Auditoria da tabela
 
      Alteração :
-
-
+                 27/06/2018 - Campo dsvalor_novo_original e PC_INSERE_COMUNIC_SOA. Alexandre Borgmann - Mout´s Tecnologia
   ............................................................................*/
 
 
@@ -24,7 +23,6 @@ DECLARE
 
   vr_nmdatela   CONSTANT VARCHAR2(50) := 'TBCADAST_PESSOA_RENDACOMPL';
   vr_dhaltera   CONSTANT DATE := SYSDATE;
-  vr_data       DATE := to_date('01/01/1500','DD/MM/RRRR');
   vr_tab_campos CADA0014.typ_tab_campos_hist;
   vr_idpessoa   tbcadast_pessoa_historico.idpessoa%TYPE;
   vr_nrsequen   tbcadast_pessoa_historico.nrsequencia%TYPE;
@@ -34,6 +32,8 @@ DECLARE
   vr_exc_erro   EXCEPTION;
   vr_cdcritic   INTEGER;
   vr_dscritic   VARCHAR2(2000);
+  -- Variável indicando que esta dentro da funçao insere_historico
+  vr_flginsere_historico   boolean :=FALSE;
 
   --> Retornar descrição do turno
   FUNCTION fn_desc_turno (pr_cdturno  IN tbcadast_pessoa_renda.cdturno%TYPE)
@@ -106,10 +106,14 @@ DECLARE
   --> Grava a tabela historico
   PROCEDURE Insere_Historico(pr_nmdcampo IN VARCHAR2,
                              pr_dsvalant IN tbcadast_pessoa_historico.dsvalor_anterior%TYPE,
-                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE) IS
+                             pr_dsvalnov IN tbcadast_pessoa_historico.dsvalor_novo%TYPE,
+                             pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE
+                             ) IS
 
 
   BEGIN
+    -- Deve-se enviar o historico para o SOA
+    vr_flginsere_historico:=TRUE;
 
     CADA0014.pc_grava_hist_pessoa
                         ( pr_nmdatela    => vr_nmdatela   --> Nome da tela
@@ -121,6 +125,7 @@ DECLARE
                          ,pr_tpoperac    => vr_tpoperac   --> Tipo de operacao (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                          ,pr_dsvalant    => pr_dsvalant   --> Valor anterior
                          ,pr_dsvalnov    => pr_dsvalnov   --> Valor novo
+                         ,pr_dsvalor_novo_original => pr_dsvalor_novo_original --> Valor Original sem descrição
                          ,pr_cdoperad    => vr_cdoperad   --> Valor novo
                          ,pr_dscritic    => vr_dscritic);  --> Retornar Critica
 
@@ -181,45 +186,77 @@ BEGIN
     IF nvl(:new.IDPESSOA,0) <> nvl(:OLD.IDPESSOA,0) THEN
       Insere_Historico(pr_nmdcampo => 'IDPESSOA',
                        pr_dsvalant => :old.IDPESSOA,
-                       pr_dsvalnov => :new.IDPESSOA);
+                       pr_dsvalnov => :new.IDPESSOA,
+                       pr_dsvalor_novo_original => :new.IDPESSOA                       
+                       );
     END IF;
 
     --> NRSEQ_RENDA
     IF nvl(:new.NRSEQ_RENDA,0) <> nvl(:OLD.NRSEQ_RENDA,0) THEN
       Insere_Historico(pr_nmdcampo => 'NRSEQ_RENDA',
                        pr_dsvalant => :old.NRSEQ_RENDA,
-                       pr_dsvalnov => :new.NRSEQ_RENDA);
+                       pr_dsvalnov => :new.NRSEQ_RENDA,
+                       pr_dsvalor_novo_original => :new.NRSEQ_RENDA                       
+                      );
     END IF;
     
     --> TPRENDA
     IF nvl(:new.TPRENDA,0) <> nvl(:OLD.TPRENDA,0) THEN
       Insere_Historico(pr_nmdcampo => 'TPRENDA',
                        pr_dsvalant => fn_tprenda(:old.TPRENDA),
-                       pr_dsvalnov => fn_tprenda(:new.TPRENDA));
+                       pr_dsvalnov => fn_tprenda(:new.TPRENDA),
+                       pr_dsvalor_novo_original => :new.TPRENDA                       
+                       );
     END IF;
     
     --> VLRENDA
     IF nvl(:new.VLRENDA,0) <> nvl(:OLD.VLRENDA,0) THEN
       Insere_Historico(pr_nmdcampo => 'VLRENDA',
                        pr_dsvalant => CADA0014.fn_formata_valor(:old.VLRENDA),
-                       pr_dsvalnov => CADA0014.fn_formata_valor(:new.VLRENDA));
+                       pr_dsvalnov => CADA0014.fn_formata_valor(:new.VLRENDA),
+                       pr_dsvalor_novo_original => :new.VLRENDA                       
+                      );
     END IF;
 
     --> TPFIXO_VARIAVEL
     IF nvl(:new.TPFIXO_VARIAVEL,0) <> nvl(:OLD.TPFIXO_VARIAVEL,0) THEN
       Insere_Historico(pr_nmdcampo => 'TPFIXO_VARIAVEL',
                        pr_dsvalant => (:old.TPFIXO_VARIAVEL),
-                       pr_dsvalnov => (:new.TPFIXO_VARIAVEL));
+                       pr_dsvalnov => (:new.TPFIXO_VARIAVEL),
+                       pr_dsvalor_novo_original => :new.TPFIXO_VARIAVEL                      
+                      );
     END IF;
 
     --> CDOPERAD_ALTERA
     IF nvl(:new.CDOPERAD_ALTERA,' ') <> nvl(:OLD.CDOPERAD_ALTERA,' ') THEN
       Insere_Historico(pr_nmdcampo => 'CDOPERAD_ALTERA',
                        pr_dsvalant => :old.CDOPERAD_ALTERA,
-                       pr_dsvalnov => :new.CDOPERAD_ALTERA);
+                       pr_dsvalnov => :new.CDOPERAD_ALTERA,
+                       pr_dsvalor_novo_original => :new.CDOPERAD_ALTERA                      
+                      );
     END IF;
 
   END IF;
+  -- Se gerou historico, entao deve-se transmitir para o SOA
+  IF vr_flginsere_historico THEN 
 
+     CADA0014.PC_INSERE_COMUNIC_SOA(vr_nmdatela, -- nmtabela_oracle 
+                                    vr_idpessoa, -- idpessoa 
+                                    vr_nrsequen, -- nrsequencia 
+                                    vr_dhaltera, --dhalteracao 
+                                    vr_tpoperac, --tpoperacao --Tipo de alteracao do registro (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
+                                    vr_dscritic    -- descrição do erro
+                                   );
+
+     IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+     END IF;
+  END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      raise_application_error(-20100,vr_dscritic);
+    WHEN OTHERS THEN
+      raise_application_error(-20100,'Erro TRG_TBCADAST_PES_RENDACOMP_HST: '||SQLERRM);
 END TRG_TBCADAST_PES_RENDACOMP_HST;
 /

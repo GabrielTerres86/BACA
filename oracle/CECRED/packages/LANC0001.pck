@@ -41,8 +41,8 @@ CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
                        , pr_cdhistor craplcm.cdhistor%TYPE) RETURN BOOLEAN;
-											 
---> Rotina para verificar se pode realizar o debito - Versão Progress											 
+
+--> Rotina para verificar se pode realizar o debito - Versão Progress
 PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
                          , pr_nrdconta  IN craplcm.nrdconta%TYPE
                          , pr_cdhistor  IN craplcm.cdhistor%TYPE
@@ -100,7 +100,7 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
                                   , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
                                   , pr_nrdolote IN  craplcm.nrdolote%TYPE
                                   , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                   , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                   , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
                                   , pr_vllanmto IN  craplcm.vllanmto%TYPE
@@ -226,7 +226,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
-																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                 , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_nrdconta IN  craplcm.nrdconta%TYPE
@@ -246,14 +246,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --  Data     : Abril/2018.
   --
   -- Frequencia: -----
-  -- Objetivo  : Procedimentos para centralização de lançamentos na CRAPLCM e aplicação das respectivas 
+  -- Objetivo  : Procedimentos para centralização de lançamentos na CRAPLCM e aplicação das respectivas
 	--             regras de negócio.
   --
-  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote" 
+  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote"
   --                          a partir da package "EMPR0001".
   --                          (Reginaldo - AMcom - PRJ 450)
   --
-  --             23/10/2018 - Correção histórico 2738 ao excluir lançamentos conta transitória
+  -- Alterado  : 23/10/2018 - Correção histórico 2738 ao excluir lançamentos conta transitória
   --                          (Renato - AMcom - PRJ 450)
   ---------------------------------------------------------------------------------------------------------------
 
@@ -268,7 +268,7 @@ TYPE typ_reg_historico IS RECORD (
 TYPE typ_tab_historico IS TABLE OF typ_reg_historico INDEX BY VARCHAR2(8);
 
 -- Varíavel para armazenamento da tabela de dados dos históricos
-vr_tab_historico typ_tab_historico; 
+vr_tab_historico typ_tab_historico;
 
 -- Tabela para armazenar a informação de dias de atraso das contas para evitar consultas repetitivas
 TYPE typ_tab_atraso IS TABLE OF crapsld.qtddsdev%TYPE INDEX BY VARCHAR2(18);
@@ -378,13 +378,13 @@ FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
 
 BEGIN
 	vr_pode_debitar := TRUE;
-	
+
 	-- Se as regras de negócio do prejuízo já estão ativadas
 	IF PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 		vr_reg_historico := fn_obtem_dados_historico(pr_cdcooper, pr_cdhistor);
-		
+
 		-- Confere se o histórico em questão é de Débito
-		IF vr_reg_historico.indebcre = 'D' THEN	
+		IF vr_reg_historico.indebcre = 'D' THEN
 			-- Se a conta está em prejuízo e o histórico não permite aumentar o estouro da conta
 			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta)
 			AND vr_reg_historico.indebprj = 0 THEN
@@ -401,7 +401,7 @@ PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
                          , pr_nrdconta  IN craplcm.nrdconta%TYPE
                          , pr_cdhistor  IN craplcm.cdhistor%TYPE
                          , pr_flpoddeb OUT INTEGER )               --> Indica se pode debitat  0-Nao 1-Sim
-                         IS 
+                         IS
   /* ............................................................................
         Programa: pc_pode_debitar
         Sistema : Ayllos
@@ -424,7 +424,7 @@ BEGIN
                    , pr_cdhistor => pr_cdhistor) THEN
     pr_flpoddeb := 1; -- Sim, pode debitar
   ELSE
-    pr_flpoddeb := 0; -- Não pode debitar              
+    pr_flpoddeb := 0; -- Não pode debitar
   END IF;
 
 END pc_pode_debitar;
@@ -472,8 +472,8 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0 -- Campo para inclusão na CRAPLOT
 																	, pr_tab_retorno OUT typ_reg_retorno   -- Record com os dados retornados pela procedure
 																	, pr_incrineg  OUT INTEGER             -- Retorna o indicador de crítica de negócio (0 - Não, 1 - Sim)
-																	, pr_cdcritic  OUT PLS_INTEGER         
-                                  , pr_dscritic  OUT VARCHAR2) IS        
+																	, pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2) IS
 BEGIN
    /* ............................................................................
         Programa: pc_gerar_lancamento_conta
@@ -484,7 +484,7 @@ BEGIN
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
-        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM, 
+        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM,
 				            aplicando as respectivas regras de negócio.
         Observacao: -----
         Alteracoes:
@@ -646,11 +646,11 @@ BEGIN
     IF vr_reg_historico.indebcre = 'C' THEN
 			-- Identifica se a conta está em prejuízo
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
-			
+
 			IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1
 			AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
-				
+
 				vr_vltransf := pr_vllanmto;
 
 				-- Processar bloqueio BACENJUD
@@ -760,7 +760,7 @@ BEGIN
 			END IF;
 		WHEN DUP_VAL_ON_INDEX THEN
 			pr_cdcritic := 92; -- Lançamento já existe
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || 
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) ||
                      ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
@@ -774,7 +774,7 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
                                   , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
                                   , pr_nrdolote IN  craplcm.nrdolote%TYPE
                                   , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_nrdocmto IN  VARCHAR2 -- craplcm.nrdocmto%TYPE
                                   , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                   , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
                                   , pr_vllanmto IN  craplcm.vllanmto%TYPE
@@ -819,13 +819,15 @@ PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
         Sistema : Ayllos
         Sigla   : CRED
         Autor   : Reginaldo/AMcom
-        Data    : Abril/2018                 Ultima atualizacao:
+        Data    : Abril/2018                 Ultima atualizacao: 07/12/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
         Objetivo  : Versão adaptada da procedure para chamada em programas Progress
         Observacao: -----
-        Alteracoes:
+        
+        Alteracoes: 07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
+                                 que na comunicação com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)
     ..............................................................................*/
   --------------> VARIAVEIS <-----------------
   vr_cdcritic PLS_INTEGER;
@@ -883,7 +885,7 @@ BEGIN
      nvl(vr_cdcritic,0) > 0 THEN
     RAISE vr_exc_erro;
   END IF;
-	
+
   -- Criar documento XML
   dbms_lob.createtemporary(pr_dsretorn_xml, TRUE);
   dbms_lob.open(pr_dsretorn_xml, dbms_lob.lob_readwrite);
@@ -1496,7 +1498,7 @@ BEGIN
 		 	     AND prj.nrdconta = vr_nrdconta
   	 			 AND prj.dtmvtolt = vr_dtmvtolt
 	   			 AND prj.nrdocmto = vr_nrdocmto
-		   		 AND prj.cdhistor = 2738; 	
+		   		 AND prj.cdhistor = 2738;	
   	 END IF;
      -- le proxima linha
      fetch c_cursor into wlinha;
@@ -1513,7 +1515,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
-																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_nrdocmto IN  VARCHAR2 --craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
                                 , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_nrdconta IN  craplcm.nrdconta%TYPE
@@ -1521,6 +1523,25 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
+  /* .............................................................................
+
+    Programa: pc_estorna_lancto_prog
+    Sistema :
+    Sigla   : LANC
+    Autor   : 
+    Data    : Agosto/2018.                  Ultima atualizacao: 07/12/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina centralizada para estorno de lançamentos na conta corrente, com tratamento para 
+                contas transferidas para prejuízo - Chamada Progress
+
+    Alteracoes: 07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
+                             que na comunicação com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)
+
+    ..............................................................................*/
 begin
    pc_estorna_lancto_conta(pr_cdcooper => pr_cdcooper
 	                       , pr_dtmvtolt => pr_dtmvtolt

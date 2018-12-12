@@ -21,7 +21,8 @@ BEGIN
 
      Alteracoes:
                07/08/2018 - Alterado para paralelismo - Luis Fernando (GFT)
-
+               26/11/2018 - Correção para fazer raspaga de titulos vencido em feriados e pagos parcialmente no proximo dia util - Cássia de Oliveira (GFT)
+               30/11/2018 - Alterada regra para se a cobranca estiver paga (mesmo parcialmente) deverá fazer a raspada na conta do cooperado (Luis Fernando - GFT)
   ............................................................................ */
   DECLARE
 
@@ -91,8 +92,16 @@ BEGIN
              craptdb.vlpagmta,
              craptdb.vlmratit,
              craptdb.vlpagmra,
-             craptdb.vlliquid
-        FROM craptdb, crapbdt
+             craptdb.vlliquid,
+             cob.incobran
+        FROM crapbdt, craptdb
+  INNER JOIN crapcob cob
+          ON cob.cdbandoc = craptdb.cdbandoc
+         AND cob.nrdctabb = craptdb.nrdctabb
+         AND cob.nrcnvcob = craptdb.nrcnvcob
+         AND cob.nrdocmto = craptdb.nrdocmto   
+         AND cob.cdcooper = craptdb.cdcooper
+         AND cob.nrdconta = craptdb.nrdconta
        WHERE craptdb.cdcooper =  crapbdt.cdcooper
          AND craptdb.nrdconta =  crapbdt.nrdconta
          AND craptdb.nrborder =  crapbdt.nrborder
@@ -322,9 +331,12 @@ BEGIN
                                             ,pr_cdcritic          => vr_cdcritic
                                             ,pr_dscritic          => vr_dscritic);     
                                             
+        -- cobranca em aberto, entao faz o teste da carencia
         -- Caso a data de vencimento + carência seja maior que a data de movimentação, pula
-        IF ((rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c) >  rw_crapdat.dtmvtolt) THEN
-          CONTINUE;
+        IF (rw_craptdb.incobran = 0) THEN 
+          IF ((rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c) >  rw_crapdat.dtmvtolt) THEN
+            CONTINUE;
+          END IF;
         END IF;
         
         -- Condicao para verificar se permite incluir as linhas parametrizadas
@@ -332,8 +344,8 @@ BEGIN
           CONTINUE;
         END IF;
         
-        -- Caso o titulo venca num feriado ou fim de semana, pula pois sera pego no proximo dia util 
-        IF rw_craptdb.dtvencto > rw_crapdat.dtmvtoan AND rw_craptdb.dtvencto < rw_crapdat.dtmvtolt THEN
+        -- Caso o titulo venca num feriado ou fim de semana e não foi pago parcialmente, pula pois sera pego no proximo dia util 
+        IF rw_craptdb.dtvencto > rw_crapdat.dtmvtoan AND rw_craptdb.dtvencto < rw_crapdat.dtmvtolt AND rw_craptdb.incobran = 0 THEN
           CONTINUE;
         END IF;
         
@@ -351,12 +363,6 @@ BEGIN
            CONTINUE;
         END IF;
         -- #################################################################################################
-        
-        -- Os títulos que estão vencendo na data atual do sistema só podem ser raspados durante o batch norturno
-        IF rw_craptdb.dtvencto = rw_crapdat.dtmvtolt AND
-           rw_crapdat.inproces <> 3 THEN
-           CONTINUE;
-        END IF;
         
         /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
         /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
@@ -439,7 +445,7 @@ BEGIN
         DSCT0003.pc_pagar_titulo( pr_cdcooper => pr_cdcooper 
                                  ,pr_cdagenci => 1  
                                  ,pr_nrdcaixa => 100  
-                                 ,pr_idorigem => 1  
+                                 ,pr_idorigem => 7  
                                  ,pr_cdoperad => 1  
                                  ,pr_nrdconta => rw_craptdb.nrdconta    
                                  ,pr_nrborder => rw_craptdb.nrborder    

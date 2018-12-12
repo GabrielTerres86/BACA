@@ -409,10 +409,10 @@ PROCEDURE efetua_login:
           IF TRIM(crapprm.dsvlrprm) = "0" THEN
              DO:      
                 /* Se operador tiver acesso ao CRM */
-                IF  crapope.flgutcrm THEN
+                IF  crapope.inutlcrm = 1 THEN
                     DO:
                        ASSIGN aux_cdcritic = 0
-                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Aimaro. Utilize o CRM.".
+                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM.".
                         
                        RUN gera_erro (INPUT par_cdcooper,
                                       INPUT par_cdagenci,
@@ -424,15 +424,15 @@ PROCEDURE efetua_login:
                        RETURN "NOK".                    
                     END. /* IF  crapope.flgutcrm THEN */
                 /*Buscar registro do PA*/
-                FOR FIRST crapage FIELDS(flgutcrm)
+                FOR FIRST crapage FIELDS(inutlcrm)
                                    WHERE crapage.cdcooper = par_cdcooper
                                      AND crapage.cdagenci = par_cdagenci
                                      NO-LOCK:
-                  /* Se PA utiliza CRM */
-                  IF  crapage.flgutcrm THEN
+                  /* Se PA utiliza somente o CRM */
+                  IF  crapage.inutlcrm = 1 THEN
                       DO:
                          ASSIGN aux_cdcritic = 0
-                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Aimaro. Utilize o CRM".
+                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM".
                           
                          RUN gera_erro (INPUT par_cdcooper,
                                         INPUT par_cdagenci,

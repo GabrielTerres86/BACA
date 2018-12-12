@@ -1,6 +1,6 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPASS_ATLZ
   AFTER INSERT OR UPDATE OR DELETE 
-        OF nmttlrfb,dtcnsscr,dtcnsspc,inconrfb,cdsitcpf,cdclcnae 
+        OF nmttlrfb,dtcnsscr,dtcnsspc,inconrfb,cdsitcpf,cdclcnae,dtdemiss,cdmotdem
         ON CRAPASS
   FOR EACH ROW
   /* ..........................................................................
@@ -58,6 +58,13 @@ BEGIN
     -- ja eh feito na tabela CRAPTTL. Se chamar duas vezes da erro no CRM
     IF inserting AND :new.inpessoa <> 1 THEN
       vr_dschave := 'S';
+    END IF;
+    -- Se alterou data de demissao ou motivo, deve-se enviar para o CRM
+    IF updating AND 
+       (nvl(:old.dtdemiss,SYSDATE) <> nvl(:new.dtdemiss,SYSDATE) OR
+        nvl(:old.Cdmotdem,0)       <> nvl(:new.Cdmotdem,0) OR
+        :OLD.Cdagenci              <> :new.cdagenci) THEN
+       vr_dschave := nvl(vr_dschave,'N') ||';S';
     END IF;
   END IF;
 

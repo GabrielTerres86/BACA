@@ -6210,16 +6210,19 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             END IF;
         END IF;
         */
-    
-        /*cecred.tela_cadres.pc_envia_email_alcada(pr_cdcooper
-                                                ,vr_idcalculo_reciproci
-                                                ,vr_cdcritic
-                                                ,pr_des_erro);
+        IF vr_insitceb = 3 THEN
+            CECRED.TELA_CADRES.pc_envia_email_alcada(pr_cdcooper
+                                                    ,vr_idcalculo_reciproci
+                                                    ,vr_cdcritic
+                                                    ,pr_des_erro);
+                                                    
+            IF TRIM(pr_des_erro) IS NOT NULL THEN
+                RAISE vr_exc_saida;
+            END IF;
+        END IF;
+
         
-        IF TRIM(pr_des_erro) IS NOT NULL THEN
-            RAISE vr_exc_saida;
-        END IF;*/
-    
+
         -- Criar cabeçalho do XML
         pr_idcalculo_reciproci := vr_idcalculo_reciproci;
     
@@ -7840,7 +7843,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               FROM (SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
-						  ,crapceb.dtinsori
+						  ,TRUNC(crapceb.dtinsori) AS dtinsori
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2
@@ -7900,14 +7903,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                                    AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
                      GROUP BY crapceb.idrecipr
                              ,crapceb.dtcadast
-							 ,crapceb.dtinsori
+							 ,TRUNC(crapceb.dtinsori)
                              ,crapceb.nrdconta
                              ,crapceb.cdcooper
                     UNION
                     SELECT to_char(crapceb.nrconven)
                           ,crapceb.idrecipr
                           ,crapceb.dtcadast
-						  ,crapceb.dtinsori
+						  ,TRUNC(crapceb.dtinsori)
                           ,CASE
                                WHEN (SELECT COUNT(1)
                                        FROM crapceb crapceb2

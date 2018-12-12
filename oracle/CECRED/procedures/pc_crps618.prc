@@ -8,7 +8,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 10/10/2017
+    Data    : janeiro/2012.                     Ultima atualizacao: 30/11/2018
  
     Dados referentes ao programa:
  
@@ -125,6 +125,9 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                              (sysdate). Caso elas sejam diferentes, os titulos ficam na fila ate que a 
                              informacao de abertura chegue ao sistema.
                              Chamado SCTASK0015832 - Gabriel (Mouts).
+
+                30/11/2018 - Título deve ser enviado para a CIP independente da remessa para a PG.
+                             (INC0025924 - AJFink)
 
   ******************************************************************************/
 
@@ -591,7 +594,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis = 1 /*cobranca registrada*/
           and cob.incobran = 0 /*aberto*/
           and cob.dtdpagto is null /*sem data de pagamento*/
@@ -647,7 +650,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis = 1 /*cobranca registrada*/
           and cob.incobran = 0 /*aberto*/
           and cob.dtdpagto is null /*sem data de pagamento*/
@@ -906,7 +909,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
           and cco.nrconven = cob.nrcnvcob+0
           and cco.cdcooper = cob.cdcooper+0
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis+0 = 1 /*cobranca registrada*/
           and cob.incobran+0 = 0 /*aberto*/
           and trunc(cob.dtdpagto) is null /*sem data de pagamento*/
@@ -957,7 +960,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                      )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          --INC0025924 and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis+0 = 1 /*cobranca registrada*/
           and cob.incobran+0 = 0 /*aberto*/
           and trunc(cob.dtdpagto) is null /*sem data de pagamento*/
@@ -1233,7 +1236,7 @@ begin
     vr_qtlottit number(10);
     vr_jobname  varchar2(100);
     vr_dsplsql  varchar2(10000);
-    vr_currenttimestamp timestamp;
+    vr_currenttimestamp timestamp with time zone;
     --exceptions
     vr_exc_saida exception;
     --
@@ -1241,42 +1244,42 @@ begin
     --
     if to_date(ddda0001.fn_datamov,'yyyymmdd') = trunc(sysdate) then
       --
-	  --busca a data de processo da cooperativa
-      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
-      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      -- Verificar se existe informação, e gerar erro caso não exista
-      IF BTCH0001.cr_crapdat%NOTFOUND THEN
-        -- Fechar o cursor
-        CLOSE BTCH0001.cr_crapdat;
-        -- Gerar exceção
-        vr_cdcritic := 1;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        raise vr_exc_saida;
-      END IF;
-      -- Fechar 
+    --busca a data de processo da cooperativa
+    OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Verificar se existe informação, e gerar erro caso não exista
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
+      -- Gerar exceção
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      raise vr_exc_saida;
+    END IF;
+    -- Fechar 
+    CLOSE BTCH0001.cr_crapdat;
+    --
+    vr_tab_sab.delete;
+    --
+    ---------------------------------------
+    --chamada raiz, a partir do crps618.p--
+    ---------------------------------------
+    if nvl(pr_cdcooper,0) = 3 and nvl(pr_nrdconta,0) = 0 then
       --
-      vr_tab_sab.delete;
-      --
-      ---------------------------------------
-      --chamada raiz, a partir do crps618.p--
-      ---------------------------------------
-      if nvl(pr_cdcooper,0) = 3 and nvl(pr_nrdconta,0) = 0 then
-        --
         --iniciliza horario de execução dos jobs para iniciarem todos em paralelo
         vr_currenttimestamp := to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp)+(4/86400),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR');
         --
-        for r_cop in (
-                      select cop.cdcooper
-                      from crapcop cop
-                      where cop.cdcooper <> 3
-                        and cop.flgativo = 1
-                      order by cop.cdcooper
-                     )
-        loop
-          --chama o proprio crps618 para cada cooperativa singular
-          vr_jobname := 'JB618_COOP'||trim(to_char(r_cop.cdcooper,'00'))||'$';
-          vr_dsplsql := 
+      for r_cop in (
+                    select cop.cdcooper
+                    from crapcop cop
+                    where cop.cdcooper <> 3
+                      and cop.flgativo = 1
+                    order by cop.cdcooper
+                   )
+      loop
+        --chama o proprio crps618 para cada cooperativa singular
+        vr_jobname := 'JB618_COOP'||trim(to_char(r_cop.cdcooper,'00'))||'$';
+        vr_dsplsql := 
 'declare
   vr_cdcritic integer; 
   vr_dscritic varchar2(400);
@@ -1287,64 +1290,64 @@ begin
          ||',pr_dscritic  => vr_dscritic );
 end;';
         --
-          gene0001.pc_submit_job(pr_cdcooper => r_cop.cdcooper
-                                ,pr_cdprogra => ct_cdprogra
-                                ,pr_dsplsql  => vr_dsplsql
+        gene0001.pc_submit_job(pr_cdcooper => r_cop.cdcooper
+                              ,pr_cdprogra => ct_cdprogra
+                              ,pr_dsplsql  => vr_dsplsql
                                 ,pr_dthrexe  => vr_currenttimestamp
-                                ,pr_interva  => NULL
-                                ,pr_jobname  => vr_jobname
-                                ,pr_des_erro => vr_dscritic );
+                              ,pr_interva  => NULL
+                              ,pr_jobname  => vr_jobname
+                              ,pr_des_erro => vr_dscritic );
+        --
+        if trim(vr_dscritic) is not null then
           --
-          if trim(vr_dscritic) is not null then
-            --
-            raise vr_exc_saida;
-            --
-          end if;
+          raise vr_exc_saida;
           --
-        end loop;
+        end if;
         --
-      ----------------------------------------------------------
-      --chamada recursiva, a partir do próprio pc_crps618 raiz--
-      ----------------------------------------------------------
-      elsif nvl(pr_cdcooper,0) <> 3 and nvl(pr_nrdconta,0) = 0 then
-        --
-        vr_qtlottit := fn_qtd_reg_lote_jdnpc;
-        --
-        pc_carga_inic_npc(pr_cdcooper_in => pr_cdcooper
+      end loop;
+      --
+    ----------------------------------------------------------
+    --chamada recursiva, a partir do próprio pc_crps618 raiz--
+    ----------------------------------------------------------
+    elsif nvl(pr_cdcooper,0) <> 3 and nvl(pr_nrdconta,0) = 0 then
+      --
+      vr_qtlottit := fn_qtd_reg_lote_jdnpc;
+      --
+      pc_carga_inic_npc(pr_cdcooper_in => pr_cdcooper
+                       ,pr_rw_crapdat => rw_crapdat
+                       ,pr_qtlottit => vr_qtlottit
+                       ,pr_tab_sab => vr_tab_sab);
+      --
+      pc_carga_normal_npc(pr_cdcooper_in => pr_cdcooper
+                         ,pr_nrdconta_in => nvl(pr_nrdconta,0)
                          ,pr_rw_crapdat => rw_crapdat
                          ,pr_qtlottit => vr_qtlottit
                          ,pr_tab_sab => vr_tab_sab);
-        --
-        pc_carga_normal_npc(pr_cdcooper_in => pr_cdcooper
-                           ,pr_nrdconta_in => nvl(pr_nrdconta,0)
-                           ,pr_rw_crapdat => rw_crapdat
-                           ,pr_qtlottit => vr_qtlottit
-                           ,pr_tab_sab => vr_tab_sab);
-        --
-      ------------------------------
-      --chamada do registro online--
-      ------------------------------
-      elsif nvl(pr_nrdconta,0) <> 0 then
-        --
-        vr_qtlottit := fn_qtd_reg_lote_jdnpc;
-        --
-        pc_carga_normal_npc(pr_cdcooper_in => pr_cdcooper
-                           ,pr_nrdconta_in => nvl(pr_nrdconta,0)
-                           ,pr_rw_crapdat => rw_crapdat
-                           ,pr_qtlottit => vr_qtlottit
-                           ,pr_tab_sab => vr_tab_sab);
-        --
-      end if;
       --
-      vr_tab_sab.delete;
+    ------------------------------
+    --chamada do registro online--
+    ------------------------------
+    elsif nvl(pr_nrdconta,0) <> 0 then
       --
-      if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
-        --
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-        --
-      end if;
+      vr_qtlottit := fn_qtd_reg_lote_jdnpc;
       --
+      pc_carga_normal_npc(pr_cdcooper_in => pr_cdcooper
+                         ,pr_nrdconta_in => nvl(pr_nrdconta,0)
+                         ,pr_rw_crapdat => rw_crapdat
+                         ,pr_qtlottit => vr_qtlottit
+                         ,pr_tab_sab => vr_tab_sab);
+      --
+    end if;
+    --
+    vr_tab_sab.delete;
+    --
+    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+      --
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      --
+    end if;
+    --
     end if;
     --
   exception

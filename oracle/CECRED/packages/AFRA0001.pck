@@ -24,7 +24,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                    04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
                                 e alteracoes na rotina pc_crias_analise_antifraude             
                                 PRJ381 - Antifraude (Teobaldo J. - AMcom) 
-
+																
                    20/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
                                 Everton Souza - Mouts
 																
@@ -5320,15 +5320,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
-    -- Marcelo Telles Coelho - Projeto 475
-    CURSOR cr_craptvl_OFSAA IS
-      SELECT c.nrcontrole_if
-        FROM craptvl a,
-             tbspb_msg_enviada c
-       WHERE a.idanafrd = pr_idanalis
-         and a.idmsgenv = c.nrseq_mensagem;
+    --> Buscar informações da TED
+    CURSOR cr_craptvl (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT tvl.*
+        FROM craptvl tvl,
+             crapcop cop,
+             crapass ass,
+             crapban ban
+       WHERE tvl.cdcooper = cop.cdcooper
+         AND tvl.cdcooper = ass.cdcooper
+         AND tvl.nrdconta = ass.nrdconta 
+         AND tvl.cdbccrcb = ban.cdbccxlt
+         AND tvl.idanafrd = pr_idanalis
+         AND tvl.cdcooper = pr_cdcooper
+         AND tvl.nrdconta = pr_nrdconta;         
+    rw_craptvl cr_craptvl%ROWTYPE;
 
-    rw_craptvl_OFSAA cr_craptvl_OFSAA%ROWTYPE;
 
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -5451,19 +5460,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -- Marcelo Telles Coelho - Projeto 475
     -- Buscar número de controle da instuição financeira
-    OPEN cr_craptvl_OFSAA;
-    FETCH cr_craptvl_OFSAA INTO rw_craptvl_OFSAA;
+    OPEN cr_craptvl( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craptvl INTO rw_craptvl;
 
-    IF cr_craptvl_OFSAA%NOTFOUND THEN
-      CLOSE cr_craptvl_OFSAA;
-    ELSE
-      CLOSE cr_craptvl_OFSAA;
+    IF cr_craptvl%NOTFOUND THEN
+      CLOSE cr_craptvl;
+      vr_dscritic := 'Não foi possivel localizar craptvl';
+      RAISE vr_exc_erro;
+    END IF;
       --
-      --
+    CLOSE cr_craptvl;
       -- Fase 20 - controle mensagem SPB
       sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
                                  ,pr_nmmensagem             => 'Reprovada pelo OFSAA'
-                                 ,pr_nrcontrole             => rw_craptvl_OFSAA.nrcontrole_if
+                               ,pr_nrcontrole             => rw_craptvl.idopetrf
                                  ,pr_nrcontrole_str_pag     => NULL
                                  ,pr_nrcontrole_dev_or      => NULL
                                  ,pr_dhmensagem             => sysdate
@@ -5485,22 +5497,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         vr_cdcritic := 0;
         RAISE vr_exc_erro;
       END IF;
-      -- Acertar nome da mensagens na tabela tbspb_msg_enviada_fase
-      sspb0003.pc_acerta_nmmensagem(pr_nmmensagem         => 'Reprovada pelo OFSAA'
-                                   ,pr_nmmensagem_OLD     => 'MSG_TEMPORARIA'
-                                   ,pr_nrcontrole_if      => rw_craptvl_OFSAA.nrcontrole_if
-                                   ,pr_insituacao         => 'NOK'
-                                   ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml
-                                   ,pr_dscritic           => vr_dscritic
-                                   ,pr_des_erro           => vr_des_erro);
+    -- Projeto 475 Sprint C2 - Jose Dill
+    -- Procedimento para envio do TED para o SPB
+    -- Neste caso será invocada prc somente para gerar o arquivo xml e não será enviado para o SPB    
+    SSPB0001.pc_proc_envia_tec_ted 
+                          (pr_cdcooper =>  rw_craptvl.cdcooper       --> Cooperativa
+                          ,pr_cdagenci =>  rw_craptvl.cdagenci       --> Cod. Agencia  
+                          ,pr_nrdcaixa =>  900                       --> Numero  Caixa  
+                          ,pr_cdoperad =>  rw_craptvl.cdoperad       --> Operador     
+                          ,pr_titulari =>  (rw_craptvl.flgtitul = 1) --> Mesmo Titular.
+                          ,pr_vldocmto =>  rw_craptvl.vldocrcb       --> Vlr. DOCMTO    
+                          ,pr_nrctrlif =>  rw_craptvl.idopetrf       --> NumCtrlIF   
+                          ,pr_nrdconta =>  rw_craptvl.nrdconta       --> Nro Conta
+                          ,pr_cdbccxlt =>  rw_craptvl.cdbccrcb       --> Codigo Banco 
+                          ,pr_cdagenbc =>  rw_craptvl.cdagercb       --> Cod Agencia 
+                          ,pr_nrcctrcb =>  rw_craptvl.nrcctrcb       --> Nr.Ct.destino   
+                          ,pr_cdfinrcb =>  rw_craptvl.cdfinrcb       --> Finalidade     
+                          ,pr_tpdctadb =>  rw_craptvl.tpdctadb       --> Tp. conta deb 
+                          ,pr_tpdctacr =>  rw_craptvl.tpdctacr       --> Tp conta cred  
+                          ,pr_nmpesemi =>  rw_craptvl.nmpesemi       --> Nome Do titular 
+                          ,pr_nmpesde1 =>  NULL                      --> Nome De 2TTT 
+                          ,pr_cpfcgemi =>  rw_craptvl.cpfcgemi       --> CPF/CNPJ Do titular 
+                          ,pr_cpfcgdel =>  0                         --> CPF sec TTL
+                          ,pr_nmpesrcb =>  rw_craptvl.nmpesrcb       --> Nome Para 
+                          ,pr_nmstlrcb =>  NULL                      --> Nome Para 2TTL
+                          ,pr_cpfcgrcb =>  rw_craptvl.cpfcgrcb       --> CPF/CNPJ Para
+                          ,pr_cpstlrcb =>  0                         --> CPF Para 2TTL
+                          ,pr_tppesemi => (CASE rw_craptvl.flgpesdb 
+                                              WHEN 1 THEN 1 
+                                              ELSE 2
+                                           END)                      --> Tp. pessoa De  
+                          ,pr_tppesrec =>  (CASE rw_craptvl.flgpescr 
+                                              WHEN 1 THEN 1 
+                                              ELSE 2
+                                           END)                      --> Tp. pessoa Para 
+                          ,pr_flgctsal =>  FALSE                     --> CC Sal
+                          ,pr_cdidtran =>  ''                        --> tipo de transferencia
+                          ,pr_cdorigem =>  rw_craptvl.idorigem       --> Cod. Origem    
+                          ,pr_dtagendt =>  NULL                      --> data egendamento
+                          ,pr_nrseqarq =>  0                         --> nr. seq arq.
+                          ,pr_cdconven =>  0                         --> Cod. Convenio
+                          ,pr_dshistor =>  rw_craptvl.dshistor       --> Dsc do Hist.  
+                          ,pr_hrtransa =>  rw_craptvl.hrtransa       --> Hora transacao 
+                          ,pr_cdispbif =>  rw_craptvl.nrispbif       --> ISPB Banco
+                          ,pr_flvldhor =>  0 -- Nao valida           --> Flag para verificar se deve validar o horario permitido para TED
+                          ,pr_inenvio  =>  0 -- Não envia SPB        --> Flag para indicar se envia TEC/TED para SBP                          
+                          --------- SAIDA  --------
+                          ,pr_cdcritic =>  vr_cdcritic               --> Codigo do erro
+                          ,pr_dscritic =>  vr_dscritic );	           --> Descricao do erro
 
-      -- se retornou critica, abortar programa
-      IF nvl(vr_des_erro,'OK') <> 'OK' OR
+    IF nvl(vr_cdcritic,0) <> 0 OR
          TRIM(vr_dscritic) IS NOT NULL THEN
-        vr_cdcritic := 0;
         RAISE vr_exc_erro;
       END IF;
-    END IF;
+    
     -- Fim Projeto 475
 
   EXCEPTION

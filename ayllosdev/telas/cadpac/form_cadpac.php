@@ -9,6 +9,7 @@
  *				  08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
  *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
  *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
+ *                26/09/2018 - Adicionar opção no campo flgutcrm e alteração no nome do label - Bruno Luiz Katzjarowski - Mouts
  * --------------
  */	
 ?>
@@ -164,10 +165,11 @@
                             <option value="1">SIM</option>
                         </select>
 						
-						<label for="flgutcrm">Habilitar Acesso CRM:</label>
+						<label for="flgutcrm">Forma de Acesso:</label>
                         <select id="flgutcrm" name="flgutcrm">
-                            <option value="0">N&Atilde;O</option>
-                            <option value="1">SIM</option>
+                            <option value="0">Somente Aimaro</option>
+                            <option value="1">Somente CRM</option>
+                            <option value="2">Aimaro e CRM</option>
                         </select>
                         <br clear="all" />
                         <label for="cdagefgt">CAF/FGTS:</label>

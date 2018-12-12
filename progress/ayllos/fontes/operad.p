@@ -184,6 +184,8 @@
 			                para correcao do chamado PRB0040132 (André Bohn - MoutS)
 							
                01/09/2018 - PJ 438 - Agilidade nas contratações - Incluir campo tel_dsdemail - de e-mail do operador - (Márcio - Mouts)							
+               
+               23/10/2018 - Adicionar opçao no campo flgutcrm e alteraçao no nome do label - Andrino Souza - MoutS
 ............................................................................. */
 
 { includes/var_online.i }
@@ -215,7 +217,7 @@ DEF        VAR tel_insaqesp AS LOGICAL INITIAL FALSE FORMAT "Sim/Nao" NO-UNDO.
 
 DEF        VAR tel_dsdemail AS CHAR    FORMAT  "x(40)"              NO-UNDO.
 
-DEF        VAR tel_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
+DEF        VAR tel_flgutcrm AS INTE    FORMAT "9"                    NO-UNDO.
 DEF        VAR tel_flgcarta AS LOGICAL                               NO-UNDO.
 
 DEF        VAR tel_vlpagchq LIKE crapope.vlpagchq                    NO-UNDO.
@@ -240,7 +242,7 @@ DEF        VAR log_insaqesp AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgperac AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
-DEF        VAR log_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
+DEF        VAR log_flgutcrm AS INTE                                  NO-UNDO.
 DEF        VAR log_vlalccre AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vlalcest AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vlalcesp AS DECIMAL                               NO-UNDO.
@@ -367,7 +369,7 @@ FORM SKIP
      SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
-     tel_flgutcrm AT 46 LABEL "Habilitar acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
+     tel_flgutcrm AT 46 LABEL "Forma de Acesso" HELP "Forma de acesso do operador (0-Aimaro, 1-CRM, 2-Aimaro e CRM)."        
 	 SKIP
      tel_dsdemail AT 12 LABEL "Email do Operador"
          HELP "Email do operador."
@@ -673,7 +675,7 @@ DO WHILE TRUE:
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap
-                  tel_flgutcrm = crapope.flgutcrm
+                  tel_flgutcrm = crapope.inutlcrm
 
                   log_nmoperad = tel_nmoperad
                   log_nvoperad = tel_nvoperad
@@ -1004,7 +1006,7 @@ DO WHILE TRUE:
                ASSIGN crapope.flgdopgd = tel_flgdopgd
                       crapope.flgacres = tel_flgacres
                       crapope.vlapvcap = tel_vlapvcap
-                      crapope.flgutcrm = tel_flgutcrm.       
+                      crapope.inutlcrm = tel_flgutcrm.       
                       
                IF   log_flgdopgd <> tel_flgdopgd   THEN
                     RUN gera_log ("Acessar Sistema de Relacionamento",
@@ -1028,8 +1030,8 @@ DO WHILE TRUE:
 
                IF   log_flgutcrm <> tel_flgutcrm THEN
                     RUN gera_log ("Acesso CRM",
-                                   STRING(log_flgutcrm,"Sim/Nao"),
-                                   STRING(tel_flgutcrm,"Sim/Nao")).
+                                   STRING(log_flgutcrm),
+                                   STRING(tel_flgutcrm)).
 
                RUN limpa.
               
@@ -1092,7 +1094,7 @@ DO WHILE TRUE:
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap       
-                  tel_flgutcrm = crapope.flgutcrm.       
+                  tel_flgutcrm = crapope.inutlcrm.       
 
            RUN atualiza_dscomite.
            
@@ -1206,7 +1208,7 @@ DO WHILE TRUE:
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
-                   tel_flgutcrm = crapope.flgutcrm.
+                   tel_flgutcrm = crapope.inutlcrm.
                    
             RUN atualiza_dscomite.
             
@@ -1250,7 +1252,7 @@ DO WHILE TRUE:
                    tel_cddepart = 0
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
-                   tel_flgutcrm = FALSE
+                   tel_flgutcrm = 2
 				   tel_dsdemail = ""
                    aux_inposniv = 1
                    aux_inpostip = 1.
@@ -1490,7 +1492,7 @@ DO WHILE TRUE:
                          crapope.insaqesp = tel_insaqesp
                          crapope.cddepart = tel_cddepart
                          crapope.vlapvcap = tel_vlapvcap
-                         crapope.flgutcrm = tel_flgutcrm
+                         crapope.inutlcrm = tel_flgutcrm
 						 crapope.dsdemail = tel_dsdemail.
 
                   IF   CAN-DO("1,3",STRING(crapope.tpoperad))   THEN 
@@ -1841,7 +1843,7 @@ DO WHILE TRUE:
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
-                   tel_flgutcrm = crapope.flgutcrm.
+                   tel_flgutcrm = crapope.inutlcrm.
                    
             RUN atualiza_dscomite.
             
@@ -1956,7 +1958,7 @@ DO WHILE TRUE:
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
-                     tel_flgutcrm = crapope.flgutcrm.
+                     tel_flgutcrm = crapope.inutlcrm.
                
               RUN atualiza_dscomite.
               
@@ -2267,7 +2269,7 @@ DO WHILE TRUE:
                     tel_cdcomite = crapope.cdcomite
                     tel_vlalccre = crapope.vlapvcre
                     tel_vlapvcap = crapope.vlapvcap
-                    tel_flgutcrm = crapope.flgutcrm.
+                    tel_flgutcrm = crapope.inutlcrm.
                      
              RUN atualiza_dscomite.
              
@@ -2347,7 +2349,7 @@ DO WHILE TRUE:
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
-                     tel_flgutcrm = crapope.flgutcrm.
+                     tel_flgutcrm = crapope.inutlcrm.
                
               RUN atualiza_dscomite.
               

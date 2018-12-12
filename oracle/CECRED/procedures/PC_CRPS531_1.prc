@@ -322,6 +322,12 @@ end;
              12/09/2018 - Substituido insert na craplcm para utilizar rotina centralizadora LANC0001.
                           PRJ450 - Regulatorio (Odirlei-AMcom)    
                           
+	     29/10/2018 - Ajustes efetuados:
+                          > Passado o código da cooperativa, correto, na chamada da rotina pc_efetua_baixa_titulo;
+                          > Incluido a passagem do parâmetro pr_nrispbpg na chamada das rotinas paga0001.pc_processa_liquidacao,
+                            paga0001.pc_proc_liquid_apos_baixa.
+                          (Adriano - PRB0040386).
+
              01/11/2018 - Ignorar confirmação STR0008R1 para TEDs de protesto (P352 - Cechet)
                           
              17/10/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT C
@@ -1064,6 +1070,22 @@ end;
           END IF;
         END IF;
       END IF;
+      -- Marcelo Telles Coelho - Projeto 475 - Sprint C2
+      -- Atualizar a conta migrada na tabela de trace
+      IF pr_dscritic IS NULL AND pr_cdcritic IS NULL THEN
+        
+        IF vr_val_cdcooper <> NVL(rw_b_crapcop.cdcooper,rw_crapcop_mensag.cdcooper)
+        OR vr_val_nrdconta <> to_number(vr_aux_CtCredtd)
+        THEN
+          SSPB0003.pc_atualiza_conta_migrada(pr_nrcontrole_str_pag => vr_trace_nrcontrole_str_pag
+                                            ,pr_nrdconta           => vr_val_nrdconta
+                                            ,pr_cdcooper           => vr_val_cdcooper
+                                            ,pr_nrdconta_migrada   => to_number(vr_aux_CtCredtd)
+                                            ,pr_cdcooper_migrada   => NVL(rw_b_crapcop.cdcooper,rw_crapcop_mensag.cdcooper)
+                                            ,pr_dscritic           => pr_dscritic);
+        END IF;
+      END IF;
+      -- Fim Projeto 475
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 2; -- Conta invalida
@@ -5371,15 +5393,6 @@ END pc_trata_arquivo_ldl;
       
       
     BEGIN -- inicio pc_trata_lancamentos
-      -- Verificar se está rodando o processo
-      IF NOT fn_verifica_processo THEN
-        -- Marcelo Telles Coelho - Projeto 475
-        -- Se processo rodando deverá continuar executando utilizar DTMVTOCD na PC_TRATA_LANCAMENTOS
-        -- Retornar para que o arquivo não seja processado neste momento
-        -- RETURN;
-        NULL;
-        -- Fim Projeto 475
-      END IF;
       -- Para estado de crise
       IF vr_aux_flestcri = 0 THEN
         -- Marcelo Telles Coelho - Projeto 475
@@ -8069,6 +8082,10 @@ END pc_trata_arquivo_ldl;
               vr_aux_inestcri := vr_tab_estad_crise(rw_crapcob.cdcooper).inestcri;
             END IF;
           ELSE
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Escolher a data a ser utilizada no processo
+            -- Se TRUNC(SYSDATE) > DTMVTOLT ==> Utilizar DTMVTOCD senão Utilizar DTMVTOLT
+            -- Definido na FN_VERIFICA_PROCESSO
             vr_aux_dtintegr := vr_dtmovimento;
           END IF;
 
@@ -8174,6 +8191,7 @@ END pc_trata_arquivo_ldl;
             IF NOT vr_aux_liqaposb THEN
               paga0001.pc_processa_liquidacao(pr_idtabcob => rw_crapcob.rowid
                                              ,pr_nrnosnum => 0
+                                             ,pr_nrispbpg => vr_aux_ISPBIFDebtd
                                              ,pr_cdbanpag => vr_aux_cdbanpag
                                              ,pr_cdagepag => vr_aux_AgDebtd
                                              ,pr_vltitulo => rw_crapcob.vltitulo
@@ -8201,6 +8219,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               paga0001.pc_proc_liquid_apos_baixa(pr_idtabcob => rw_crapcob.rowid
                                                 ,pr_nrnosnum => 0
+                                                ,pr_nrispbpg => vr_aux_ISPBIFDebtd
                                                 ,pr_cdbanpag => vr_aux_cdbanpag
                                                 ,pr_cdagepag => vr_aux_AgDebtd
                                                 ,pr_vltitulo => rw_crapcob.vltitulo
@@ -8312,7 +8331,7 @@ END pc_trata_arquivo_ldl;
             IF vr_tab_descontar.next(vr_idx_descontar) IS NULL
             OR vr_tab_descontar(vr_idx_descontar).nrdconta <> vr_tab_descontar(vr_tab_descontar.next(vr_idx_descontar)).nrdconta THEN
               -- Efetuar a baixa do titulo
-              DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper     -- Codigo Cooperativa
+              DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => rw_crapcco.cdcooper -- Codigo Cooperativa
                                               ,pr_cdagenci    => 0               -- Codigo Agencia
                                               ,pr_nrdcaixa    => 0               -- Numero Caixa
                                               ,pr_cdoperad    => 0               -- Codigo operador
@@ -8567,11 +8586,6 @@ END pc_trata_arquivo_ldl;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
-
-            -- Se não validar processo
-            IF NOT fn_verifica_processo THEN
-              NULL;
-            END IF;
 
             vr_aux_dsdehist := NULL;
 

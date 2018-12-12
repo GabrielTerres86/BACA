@@ -201,8 +201,8 @@ PROCEDURE carrega-convenios-ceb:
     DEF OUTPUT PARAM TABLE FOR tt-titulares.       
     DEF OUTPUT PARAM TABLE FOR tt-emails-titular.
 
-	DEF VAR          aux_dtcadast AS DATE                            NO-UNDO.
-    DEF VAR          aux_qtregist AS INTE                            NO-UNDO.
+    DEF VAR          aux_dtcadast AS DATE                            NO-UNDO.
+	DEF VAR          aux_qtregist AS INTE                            NO-UNDO.
 
 
     IF   par_flgerlog   THEN
@@ -237,7 +237,7 @@ PROCEDURE carrega-convenios-ceb:
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
                             crapceb.nrdconta = par_nrdconta     AND
-                            crapceb.dtinsori <= aux_dtcadast  NO-LOCK,
+                            (crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?) NO-LOCK,
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,

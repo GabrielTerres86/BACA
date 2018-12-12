@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                              Marcelo Telles Coelho - Mouts
                 01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                              Marcelo Telles Coelho - Mouts
-							 
+
 				19/10/2018 - Ajuste na rotina para prever erro de alocamento de lote (Andrey Formigari - Mouts)
 
 ..............................................................................*/
@@ -310,6 +310,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                           ,pr_hrtransa IN INTEGER   --> Hora transacao 
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
                           ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED
+                          ,pr_inenvio  IN INTEGER DEFAULT 1 --> Flag para indicar se envia TEC/TED para SBP                          
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER   --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2);--> Descricao do erro 
@@ -2926,7 +2927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_nrseqarq   IN VARCHAR2        --> Sequencial arq
                         ,pr_cdconven   IN INTEGER         --> convenio
                         ,pr_hrtransa   IN INTEGER         --> Hora transacao
-
+                        ,pr_inenvio    IN INTEGER DEFAULT 1 --> Flag para indicar se envia TEC/TED para SBP (Projeto 475 - Sprint C2 Jose Dill)                         
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -3268,6 +3269,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       </SISMSG>');
     END IF;
 
+    -- descarregar buffer
+    pc_escreve_xml(' ',TRUE);
+    
+    -- Liberando a memoria alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+    
+    -- Projeto 475 - Sprint C2 
+    -- Quando pr_inenvio igual a zero, gera somente o arquivo xml para a fase de reprovação do OFSA
+    IF pr_inenvio = 1 THEN
     /* Cria registro de Debito */
     BEGIN
       INSERT INTO gnmvcen
@@ -3290,21 +3301,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         RAISE vr_exc_erro;
     END;
     
-    -- descarregar buffer
-    pc_escreve_xml(' ',TRUE);
-    -- Marcelo Telles Coelho - Projeto 475
-    -- Não gera/envia mais arquivo físico
-    -- O envio acontecera pelo SSPB0001.pc_grava_XML que ira inserir na tabela TB_CONSUMO_BARRAMENTO
-    -- O envio será efetivado pelo SOA
-    -- gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
-    --                              pr_caminho => vr_dsdircop||'/salvar/',
-    --                              pr_arquivo => vr_nmarquiv,
-    --                              pr_des_erro=> vr_dscritic);
-    -- IF TRIM(vr_dscritic) IS NOT NULL THEN
-    --   RAISE vr_exc_erro;
-    -- END IF;
-    -- Fim Projeto 475
-
     -- gravar log craplmt
     pc_grava_log_ted ( pr_cdcooper => pr_cdcooper    --> Codigo cooperativo
                       ,pr_dttransa => trunc(SYSDATE) --> Data transação
@@ -3336,40 +3332,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       --------- SAIDA --------
                       ,pr_cdcritic => vr_cdcritic   --> Codigo do erro
                       ,pr_dscritic => vr_dscritic); --> Descricao do erro
-    /* versão progress nao trata saida de erro
-    IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL
-      raise vr_exc_erro;
-    END IF;*/
 
-    -- Marcelo Telles Coelho - Projeto 475
-    -- Não gera/envia mais arquivo físico
-    -- O envio acontecera pelo SSPB0001.pc_grava_XML que ira inserir na tabela TB_CONSUMO_BARRAMENTO
-    -- O envio será efetivado pelo SOA
-    -- -- Montar comando
-    -- -- /usr/local/bin/exec_comando_oracle.sh mqcecred_envia (conforme solicitacao Tiago Wagner)
-    -- vr_comando:= '/usr/local/bin/exec_comando_oracle.sh mqcecred_envia ' || Chr(39) || vr_dsarqenv || Chr(39) || ' '
-    --                                                                      || Chr(39) || pr_cdcooper || Chr(39) || ' '
-    --                                                                      || Chr(39) || vr_nmarqxml || Chr(39);
-    -- --Executar Comando Unix
-    -- GENE0001.pc_OScommand(pr_typ_comando => 'S'
-    --                      ,pr_des_comando => vr_comando
-    --                      ,pr_typ_saida   => vr_typ_saida
-    --                      ,pr_des_saida   => vr_dscritic);
-    -- --Se ocorreu erro dar RAISE
-    -- IF vr_typ_saida = 'ERR' THEN
-    --   vr_cdcritic := 0;
-    --   vr_dscritic := 'Erro ao executar o comando ' || vr_comando || '. Saida ' || vr_typ_saida || ' . Erro '|| vr_dscritic;
-    --   RAISE vr_exc_erro;
-    -- END IF;
-    -- Fim Projeto 475
-    --
-    -- Uma vez executado o script não pode mais abortar o envio
-    -- por isso realizado o commit;
     COMMIT;
-
-    -- Liberando a memoria alocada pro CLOB
-    dbms_lob.close(vr_des_xml);
-    dbms_lob.freetemporary(vr_des_xml);
 
     /* Logar envio
     *****************************************************************
@@ -3400,6 +3364,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                pr_ind_tipo_log => 1, -- Normal
                                pr_des_log      => vr_des_log,
                                pr_nmarqlog     => vr_nmarqlog);
+
+    END IF;    
+                      
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3448,6 +3415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                           ,pr_hrtransa IN INTEGER   --> Hora transacao
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
                           ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida)
+                          ,pr_inenvio  IN INTEGER DEFAULT 1 --> Flag para indicar se envia TEC/TED para SBP                          
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER      --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
@@ -4001,6 +3969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_nrseqarq => 0                    --> Sequencial arq
                   ,pr_cdconven => 0                    --> convenio
                   ,pr_hrtransa => pr_hrtransa          --> Hora transacao
+                  ,pr_inenvio  => pr_inenvio
                   --------- SAIDA ---------
                   ,pr_cdcritic => vr_cdcritic
                   ,pr_dscritic => vr_dscritic );
@@ -4075,6 +4044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_nrseqarq => 0                    --> Sequencial arq
                   ,pr_cdconven => 0                    --> convenio
                   ,pr_hrtransa => pr_hrtransa          --> Hora transacao
+                  ,pr_inenvio  => pr_inenvio
                   --------- SAIDA ---------
                   ,pr_cdcritic => vr_cdcritic
                   ,pr_dscritic => vr_dscritic );
@@ -4151,6 +4121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_nrseqarq   => 0                  --> Sequencial arq
                   ,pr_cdconven   => 0                  --> convenio
                   ,pr_hrtransa   => pr_hrtransa        --> Hora transacao
+                  ,pr_inenvio    => pr_inenvio
                   --------- SAIDA ---------
                   ,pr_cdcritic => vr_cdcritic
                   ,pr_dscritic => vr_dscritic );
@@ -4219,6 +4190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_nrseqarq   => vr_nrseqarq        --> Sequencial arq
                   ,pr_cdconven   => pr_cdconven        --> convenio
                   ,pr_hrtransa   => pr_hrtransa        --> Hora transacao
+                  ,pr_inenvio    => pr_inenvio
                    --------- SAIDA ----------
                   ,pr_cdcritic => vr_cdcritic
                   ,pr_dscritic => vr_dscritic );
@@ -4280,6 +4252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_nrseqarq   => 0                  --> Sequencial arq
                   ,pr_cdconven   => 0                  --> convenio
                   ,pr_hrtransa   => pr_hrtransa        --> Hora transacao
+                  ,pr_inenvio    => pr_inenvio
                    --------- SAIDA ----------
                   ,pr_cdcritic => vr_cdcritic
                   ,pr_dscritic => vr_dscritic );
@@ -4299,7 +4272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          ,pr_dhmensagem         => SYSDATE
                          ,pr_dsxml_mensagem     => SUBSTR(vr_dsxml_mensagem,1,4000)
                          ,pr_dsxml_completo     => vr_dsxml_mensagem
-                         ,pr_inenvio            => 1 -- Mensagem ser enviada para o JD
+                         ,pr_inenvio            => pr_inenvio -- Mensagem ser enviada para o JD
                          ,pr_cdcooper           => pr_cdcooper
                          ,pr_nrdconta           => pr_nrdconta
                          ,pr_cdproduto          => 30 -- TED
@@ -5036,19 +5009,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   vr_idsitlct:= 'E';
                 end if;  
 				  
-                BEGIN
-                  UPDATE craplfp
+                  BEGIN
+                    UPDATE craplfp
                      SET idsitlct = vr_idsitlct,
                          dsobslct = 'Erro encontrado ' || vr_dscritic
-                   WHERE progress_recid = rw_crapccs.nrridlfp;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_cdcritic := 9999;
+                     WHERE progress_recid = rw_crapccs.nrridlfp;
+                   EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_cdcritic := 9999;
                     vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: ' ||
                                    SQLERRM;
-                    -- Executa a exceção
-                    RAISE vr_exc_erro;
-                END;
+                          -- Executa a exceção
+                          RAISE vr_exc_erro;
+                   END;
 
               END IF;
 

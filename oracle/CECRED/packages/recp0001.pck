@@ -204,6 +204,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --                          lancamentos na CRAPLOT e CRAPLCM (LANC0001.pc_gerar_lancamento_conta). 
   --                          (PRJ450 - Teobaldo J - AMcom)
 
+  --             
+  --             07/12/2018 - Ajuste na "pc_pagar_contrato_acordo" para não acrescentar o valor do IOF provisionado no total 
+  --                          a pagar quanto a conta corrente está em prejuízo.
+  --                          (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -771,7 +775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_tab_retorno => vr_tab_retorno ); -- Registro com dados do retorno
 
       -- Independente do erro deve parar o processo, pois utiliza dados da craplcm
-      IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+      IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
       
@@ -2458,7 +2462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 						-- Efetua o pagamento do prejuízo de conta corrente
 						PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => rw_acordo_contrato.cdcooper
 						                            , pr_nrdconta => rw_acordo_contrato.nrdconta
-																				, pr_vlrpagto => vr_vltotpag + nvl(rw_crapass.vliofmes, 0) -- Soma IOF provisionado desde a criação do acordo (Reginaldo/AMcom)
+													, pr_vlrpagto => vr_vltotpag 
 																				, pr_atsldlib => 0
 																				, pr_cdcritic => vr_cdcritic
 																				, pr_dscritic => vr_dscritic);
@@ -2482,7 +2486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 						-- Debita da conta transitória o valor utilizado para pagamento
 						PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
 						                              , pr_nrdconta => rw_acordo_contrato.nrdconta
-																					, pr_vlrlanc => pr_vltotpag + nvl(rw_crapass.vliofmes, 0)
+													 , pr_vlrlanc => pr_vltotpag 
 																					, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
 																					, pr_cdcritic => vr_cdcritic
 																					, pr_dscritic => vr_dscritic);
@@ -2517,7 +2521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                              , pr_nrdocmto => 999992733
                                              , pr_cdhistor => 2720
                                              , pr_nrseqdig => vr_nrseqdig
-                                             , pr_vllanmto => pr_vltotpag + nvl(rw_crapass.vliofmes, 0)
+                                                   , pr_vllanmto => pr_vltotpag 
                                              , pr_nrdctabb => rw_acordo_contrato.nrdconta
                                              , pr_cdpesqbb => 'PAGAMENTO DE PREJUÍZO DE C/C VIA ACORDO'
                                              , pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
@@ -2530,7 +2534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 																			       , pr_cdcritic => vr_cdcritic
 																			       , pr_dscritic => vr_dscritic);
 																						 
-						IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+						IF nvl(vr_cdcritic, 0) > 0 or trim(vr_dscritic) IS NOT NULL THEN
 							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
 							vr_flagerro := TRUE;
 
