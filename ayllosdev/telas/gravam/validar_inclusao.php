@@ -24,60 +24,119 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 
-   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
-   $nrctrpro = (isset($_POST["nrctrpro"])) ? $_POST["nrctrpro"] : 0;
-   $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
-   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
+	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
+	$nrctrpro = (isset($_POST["nrctrpro"])) ? $_POST["nrctrpro"] : 0;
+	$tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
+	$idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
+	$operacao = (isset($_POST["operacao"])) ? $_POST["operacao"] : 0;
 
-  // Monta o xml de requisição		
-	$xmlReq  		= "";
-	$xmlReq 	   .= "<Root>";
-	$xmlReq 	   .= "  <Dados>";
-	$xmlReq 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
-	$xmlReq 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-	$xmlReq 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
-	$xmlReq 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
-	$xmlReq 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
-	$xmlReq 	   .= "  </Dados>";
-	$xmlReq 	   .= "</Root>";
+//	if ($operacao !== 0) {
 
-	// Executa script para envio do XML	
-	$xmlResult = mensageria($xmlReq, "GRVM0001", "VALMANUALGRAVAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);
+		// Monta o xml de requisição		
+		$xml  		= "";
+		$xml 	   .= "	<Root>";
+		$xml 	   .= "		<Dados>";
+		$xml 	   .= "			<cddopcao>".$cddopcao."</cddopcao>";
+		$xml 	   .= "			<nrdconta>".$nrdconta."</nrdconta>";
+		$xml 	   .= "			<nrctrpro>".$nrctrpro."</nrctrpro>";
+		$xml 	   .= "			<tpctrpro>".$tpctrpro."</tpctrpro>";
+		$xml 	   .= "			<idseqbem>".$idseqbem."</idseqbem>";
+		$xml 	   .= "			<tpinclus>".$operacao."</tpinclus>";
+		$xml 	   .= "		</Dados>";
+		$xml 	   .= "	</Root>";
 
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		// Executa script para envio do XML	
+		$xmlResult = mensageria($xml
+					   ,"GRVM0001"
+					   ,"VALMANUALGRAVAM"
+					   ,$glbvars["cdcooper"]
+					   ,$glbvars["cdagenci"]
+					   ,$glbvars["nrdcaixa"]
+					   ,$glbvars["idorigem"]
+					   ,$glbvars["cdoperad"]
+					   ,"</Root>");
+		$xmlObj = getObjectXML($xmlResult);
 
-		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    	$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
-    	if(empty ($nmdcampo)){ 
-			$nmdcampo = "dtmvttel";
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];
+
+			if(empty ($nmdcampo)){ $nmdcampo = "dtmvttel"; }
+
+			exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+
+		} else {
+
+			parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
+			$xml = getXML( $xmlResult );
+			$url = $Url_SOA . getURL( $xml->gravameB3[0]->gravame[0] );
+			$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
+			$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA );
+
+			if ($operacao == "A") {
+				$cdoperac = getCdOperac($xml->gravameB3[0]->gravame[0]);
+				verificarRetornoAliena( $xmlStr, $cdoperac );
+			} else {
+				verificarRetornoConsulta( $xmlStr );
+			}
+
 		}
+/*
+	} else {
 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+	  // Monta o xml de requisição
+		$xmlReq  		= "";
+		$xmlReq 	   .= "<Root>";
+		$xmlReq 	   .= "  <Dados>";
+		$xmlReq 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
+		$xmlReq 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
+		$xmlReq 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
+		$xmlReq 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+		$xmlReq 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
+		$xmlReq 	   .= "  </Dados>";
+		$xmlReq 	   .= "</Root>";
 
-	}
+		// Executa script para envio do XML	
+		$xmlResult = mensageria($xmlReq, "GRVM0001", "VALMANUALGRAVAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
 
-	parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
-	$xml = getXML( $xmlResult );
-	$url = $Url_SOA.getURL( $xml->gravameB3[0]->gravame[0] );
-	$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
-	$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA );
-	verificarRetornoConsulta( $xmlStr );
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
-	function validaDados(){
-		IF($GLOBALS["dtmvttel"] == '' ){
-			exibirErro('error','Data do registro deve ser informada!.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
+
+			if(empty ($nmdcampo)){
+				$nmdcampo = "dtmvttel";
+			}
+
+			exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+
+		} else {
+
+			parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
+			$xml = getXML( $xmlResult );
+			$url = $Url_SOA.getURL( $xml->gravameB3[0]->gravame[0] );
+			$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
+			$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA );
+			verificarRetornoConsulta( $xmlStr );
+
+			function validaDados(){
+				IF($GLOBALS["dtmvttel"] == '' ){
+					exibirErro('error','Data do registro deve ser informada!.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
+				}
+
+				IF($GLOBALS["dsjustif"] == '' ){
+					exibirErro('error','Justificativa deve ser informada!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+				}
+
+				IF($GLOBALS["nrgravam"] == 0 ){
+					exibirErro('error','O n&uacute;mero do registro deve ser !','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
+				}
+
+			}
 		}
-
-		IF($GLOBALS["dsjustif"] == '' ){
-			exibirErro('error','Justificativa deve ser informada!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
-		}
-
-		IF($GLOBALS["nrgravam"] == 0 ){
-			exibirErro('error','O n&uacute;mero do registro deve ser !','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
-		}
-
 	}
  ?>

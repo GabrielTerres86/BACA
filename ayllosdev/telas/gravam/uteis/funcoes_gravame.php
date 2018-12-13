@@ -124,51 +124,53 @@
 			$identificador = $xmlRet->roottag->tags[0]->tags[1]->cdata;
 			$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[0]->cdata);
 			$idRegistro = $xmlRet->roottag->tags[0]->tags[2]->cdata;
-    		$result = true;
+    		//$result = true;
+			echo 'inclusaoAlienacao();';
     	} else {
-    		$result = 'showError("error","'.utf8ToHtml('Veículo não alienado - Verificar crítica.').'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
+    		echo 'showError("error","'.utf8ToHtml('N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG').'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
     	}
-		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], retornarMensagemErro($xmlRet), $dataInteracao, $idRegistro, 'N', $cdoperac,  $identificador); //$retGravame, $retContr, $identificador);
-		return $result;
+		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], retornarMensagemErro($xmlRet), $dataInteracao, $idRegistro, 'S', $cdoperac,  $identificador); //$retGravame, $retContr, $identificador);
     }
 
 	//Função para verificar o retorno do XML de alienação 
     function verificarRetornoConsulta($xmlStr) {
     	$cdoperac = 4;
     	$xmlRet = getObjectXML($xmlStr);
-		//echo $xmlStr; die;
     	if ( $GLOBALS["httpcode"] == 200 ) {
+			$msgErro = false;
     		$qtdOcorr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
     		$index = $qtdOcorr - 1;
     		if ($qtdOcorr <= 0) {
-				$interacaoGravame = $xmlRet->roottag->tags[1]->tags[0]->tags[0];
-				$dataInteracao = timestampParaDateTime($interacaoGravame->tags[0]->cdata);
-				$idRegistro = $interacaoGravame->tags[1]->cdata;
-				$errorMessage['msg'] = "Quantidade de ocorrência é 0";
-				$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';
+				$errorMessage['msg'] = "Quantidade de ocorrencia 0";
+				$msgErro = true;
 			} else {
 				$interacaoGravame = $xmlRet->roottag->tags[1]->tags[$index];
-				$dataInteracao = timestampParaDateTime($interacaoGravame->tags[3]->tags[0]->tags[0]->tags[0]->cdata);
-				$idRegistro = $interacaoGravame->tags[0]->tags[1]->cdata; //$xmlRet->roottag->tags[1]->tags[0]->tags[0]->tags[5]->cdata 
-				$contrato = $interacaoGravame->tags[2]->tags[0]->cdata;
-				$tipoInteracao = $interacaoGravame->tags[3]->tags[1]->tags[0]->tags[1]->tags[0]->cdata;
-
-				if ($tipoInteracao == 'PLEDGE-OUT') {
-					echo $contrato . " - " . $GLOBALS["nrctrpro"];die;
-					if ( $contrato == $GLOBALS["nrctrpro"] ) {
-						echo "atualizarDadosAlienacaoAuto('".$dataInteracao."', '".$idRegistro."');";
-						$funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');inclusaoManual(\'A\');';
-						echo "showConfirmacao('".utf8ToHtml('Confirmar gravação da alienação automática?')."', 'Confirma&ccedil;&atilde;o - Ayllos', ".$funcao.", '', 'sim.gif', 'nao.gif');";
+				$idRegistro = $interacaoGravame->tags[0]->tags[1]->cdata; //$xmlRet->roottag->tags[1]->tags[0]->tags[0]->tags[5]->cdata
+				if ($idRegistro) {
+					$contrato = $interacaoGravame->tags[2]->tags[0]->cdata;
+					$dataInteracao = timestampParaDateTime($interacaoGravame->tags[3]->tags[0]->tags[0]->tags[0]->cdata);
+					$tipoInteracao = $interacaoGravame->tags[3]->tags[1]->tags[0]->tags[1]->tags[0]->cdata;
+					if ($tipoInteracao == 'PLEDGE-OUT') {
+						if ( $contrato == $GLOBALS["nrctrpro"] ) {
+							echo "atualizarDadosAlienacaoAuto('".$dataInteracao."', '".$idRegistro."');";
+							//$funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');inclusaoManual(\'A\');';
+							//echo "showConfirmacao('".utf8ToHtml('Confirmar gravação da alienação automática?')."', 'Confirma&ccedil;&atilde;o - Ayllos', ".$funcao.", '', 'sim.gif', 'nao.gif');";
+							echo "showError('inform','Alienação confirmada no SNG','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+						} else {
+							$msgErro = true;
+						}
 					} else {
-						$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';		
+						$msgErro = true;
 					}
 				} else {
-					$msgErro = 'N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG';		
+					$msgErro = true;
 				}
 			}
 			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'N', $cdoperac, '');//, '', '');
 			if ($msgErro) {
-				exibirErro('error','N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG','Alerta - Ayllos','',false);
+				//exibirErro('error','N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG','Alerta - Ayllos','',false);
+				$funcao = '$("html, body").animate({scrollTop:0}, "fast");formatarInclusaoManual();';
+				echo "showConfirmacao('".utf8ToHtml('Não foi possível confirmar alienação no SNG, deseja informar alienação manual?')."', 'Confirma&ccedil;&atilde;o - Ayllos', '".$funcao."', \"$('#btVoltar').trigger('click');\", 'sim.gif', 'nao.gif');";
 			}
 		} else {
 			$errorMessage = retornarMensagemErro($xmlRet);
@@ -255,7 +257,6 @@
   		$xml      .= "     <nrgravam>".$identificador."</nrgravam>";
   		$xml      .= "     <idregist>".$idRegistro."</idregist>";
   		$xml      .= "     <dtregist>".$dataInteracao."</dtregist>";
-  		//$xml      .= "     <dserrcom>".$errorMessage."</dserrcom>";
   		$xml      .= "     <flsituac>".$flsituac."</flsituac>";
   		$xml      .= "  </Dados>";
 		$xml      .= "</Root>";

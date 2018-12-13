@@ -235,3 +235,11 @@
 
 
 </script>
+
+<style type="text/css">
+#frmBens label.rotulo-linha {
+    margin-left: 50px;
+    width: 105px;
+    text-align: left;
+}
+</style>
