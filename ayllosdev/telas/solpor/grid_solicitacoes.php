@@ -133,8 +133,10 @@ $solicitacoes = $xmlObj->roottag->tags[0]->tags[0]->tags;
                                 echo '<a title="Devolver" onclick="exibirDevolucaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
                             }
                         } else {
-                            echo '<a title="Direcionar" onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
-                            echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
+							if ($idsituacao == 1 || $idsituacao == 4) {
+                              echo '<a title="Direcionar" onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
+                              echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
+						    }
                         }
                     }
                     ?>
