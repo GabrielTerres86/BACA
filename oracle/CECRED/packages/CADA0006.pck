@@ -3246,8 +3246,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
       vr_possuipr  VARCHAR2(1);
-	  vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
-      vr_des_erro VARCHAR2(1000); 
       
       -- Busca pelos dados da conta
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -3255,8 +3253,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         SELECT ass.cdtipcta
               ,ass.inpessoa
               ,ass.cdsitdct
-			  ,ass.cdsitdtl
-              ,ass.inlbacen
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -3274,29 +3270,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       END IF;
       -- Fechar cursor
       CLOSE cr_crapass;
-	  
-	  CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_inimpede_talionario => vr_inimpede_talionario
-                                ,pr_des_erro => vr_des_erro
-                                ,pr_dscritic => vr_dscritic);
-        IF vr_des_erro = 'NOK' THEN-- vr_dscritic := 'vr_inimpede_talionario: ' || vr_inimpede_talionario || ' - rw_crapass.cdsitdtl: ' || rw_crapass.cdsitdtl || ' - rw_crapass.inlbacen: ' || rw_crapass.inlbacen;
-          RAISE vr_exc_saida;
-        END IF;
-                
-        IF vr_inimpede_talionario = 1 THEN -- Se nao houver impedimento para retirada de talionarios
-          vr_cdcritic := 18; --018 - Situacao da conta errada.
-        ELSIF rw_crapass.cdsitdtl IN (5,6,7,8) THEN --5=NORMAL C/PREJ., 6=NORMAL BLQ.PREJ, 7=DEMITIDO C/PREJ, 8=DEM. BLOQ.PREJ.
-          vr_cdcritic := 695; --695 - ATENCAO! Houve prejuizo nessa conta
-        ELSIF rw_crapass.cdsitdtl IN (2,4) THEN --2=NORMAL C/BLOQ., 4=DEMITIDO C/BLOQ
-          vr_cdcritic := 95; --095 - Titular da conta bloqueado.
-        ELSIF rw_crapass.inlbacen <> 0 THEN -- Indicador se o associado consta na lista do Banco Central
-          vr_cdcritic := 720; --720 - Associado esta no CCF.
-        END IF;
-      
-        IF nvl(vr_cdcritic,0) <> 0 THEN
-          RAISE vr_exc_saida;
-        END IF;
       
       -- Verifica se a situacao de conta permite a contratação do produto
       pc_permite_produto_situacao(pr_cdprodut => pr_cdprodut
