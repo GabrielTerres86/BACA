@@ -6,9 +6,11 @@
  * OBJETIVO     : Cabeçalho para a tela BANCOS
  * --------------
  * ALTERAÇÕES   : 29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
-                  09/09/2016 -  Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
- *                PRJ-312 (Reinert)
+ *
+ *                09/09/2016 - Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
+ *                             PRJ-312 (Reinert)
  * -------------- */
+
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
 	require_once('../../includes/controla_secao.php');
@@ -23,6 +25,7 @@
 		<option value="A" >A - Alterar os dados das IFs cadastradas</option>
 		<option value="C" selected>C - Consultar as IFs cadastradas</option>
 		<option value="I" >I - Incluir novo codigo de IF</option>	
+		<option value="M" >M - Manuten&ccedil;&atilde;o de IFs cadastrados</option>
 	</select>
 	<a href="#" class="botao" id="btnOK" >OK</a>
 	
@@ -42,7 +45,3 @@
 		
 	</div>
 </form>
-
-
-
-

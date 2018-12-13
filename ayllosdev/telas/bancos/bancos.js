@@ -6,10 +6,10 @@
  * --------------
  * ALTERAÇÔES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                PRJ-312 (Reinert)
- * ALTERAÇÔES   : 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
-                               conforme solicitado no chamado 5044701. (Kelvin)
- * 
  *
+ * ALTERAÇÔES   : 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
+ *                             conforme solicitado no chamado 5044701. (Kelvin)
+ * 
  *
  * --------------
  */
@@ -20,27 +20,28 @@ var frmConsulta = 'frmConsulta';
 var divEntrada  = 'divEntrada';
 
 var cddopcao, nmresbcc, cdbccxlt, nrispbif, flgdispb, dtinispb, nmextbcc, flgoppag, dtaltstr, dtaltpag,
-    cTodosCabecalho, btnOK, cTodosConsulta, cTodosEntrada;
+    cTodosCabecalho, btnOK, cTodosConsulta, cTodosEntrada, nrcnpjif;
 
-var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, rFlgoppag, rDtaltstr, rDtaltpag,
-    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc, cFlgoppag, cDtaltstr, cDtaltpag;
+var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, rFlgoppag, rDtaltstr, rDtaltpag, rNrcnpjif,
+    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc, cFlgoppag, cDtaltstr, cDtaltpag, cNrcnpjif;
 	
 $(document).ready(function() {
 	
 	estadoInicial();
-		
+	
 });
 
 function carregaDados(){
 
 	cddopcao = $('#cddopcao','#'+frmCab).val();
-	nmresbcc = $('#nmresbcc','#'+frmConsulta).val();  
-	cdbccxlt = $('#cdbccxlt','#'+divEntrada).val();                                             
+	nmresbcc = $('#nmresbcc','#'+frmConsulta).val();
+	cdbccxlt = $('#cdbccxlt','#'+divEntrada).val();
 	nrispbif = $('#nrispbif','#'+divEntrada).val();
-	flgdispb = $('#flgdispb','#'+frmConsulta).val();                                            
+	flgdispb = $('#flgdispb','#'+frmConsulta).val();
 	dtinispb = $('#dtinispb','#'+frmConsulta).val();
-	flgoppag = $('#flgoppag','#'+frmConsulta).val();                                            	
+	flgoppag = $('#flgoppag','#'+frmConsulta).val();
 	nmextbcc = $('#nmextbcc','#'+frmConsulta).val();
+	nrcnpjif = $('#nrcnpjif','#'+frmConsulta).val();
 					                                                 
 	return false;
 	
@@ -159,7 +160,8 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
-		cFlgoppag.desabilitaCampo();		
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();	
 		cCdbccxlt.focus();
 	
 	}else if(cCddopcao.val() == "A"){
@@ -178,9 +180,32 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
-		cFlgoppag.desabilitaCampo();		
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();
 		cCdbccxlt.focus();
-			
+
+	}else if(cCddopcao.val() == "M"){
+	
+		$('#frmConsulta').css('display','none');
+		$('#divEntrada').css('display','block');
+		
+		$('#btVoltar','#divBotoes').show();
+		$('#btSalvar','#divBotoes').show();
+		$('#btLupaBanco','#divEntrada').show();
+		$('#btLupaISPB','#divEntrada').show();
+		
+		cCdbccxlt.habilitaCampo();
+		cNrispbif.habilitaCampo();
+		cNmresbcc.desabilitaCampo();
+		cNmextbcc.desabilitaCampo();
+		cFlgdispb.desabilitaCampo();
+		cDtinispb.desabilitaCampo();
+		cFlgoppag.desabilitaCampo();
+		cNrcnpjif.desabilitaCampo();
+		cCdbccxlt.focus();
+
+		controlaPesquisas('divEntrada');
+
 	}
 					
 	return false;
@@ -222,6 +247,8 @@ function btnContinuar() {
 		if(cCddopcao.val() == "C"){
 	
 			buscaBanco();
+
+			cNrcnpjif.css({'text-align':'left'});
 									
 		}else if(cCddopcao.val() == "I"){
 						
@@ -232,8 +259,7 @@ function btnContinuar() {
 				cNmresbcc.focus();
 				
 				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
-												
-								
+                
 			}else {
 				
 				$('#frmConsulta').css('display','block');
@@ -248,8 +274,9 @@ function btnContinuar() {
 				
 				cNmresbcc.habilitaCampo();
 				cNmextbcc.habilitaCampo();
-				cFlgdispb.habilitaCampo();				
+				cFlgdispb.habilitaCampo();
 				cFlgoppag.habilitaCampo();
+				cNrcnpjif.desabilitaCampo().css({'text-align':'left'});
 				
 				if (cFlgdispb.val() == 1){
 					cDtinispb.habilitaCampo();
@@ -271,23 +298,58 @@ function btnContinuar() {
 				cNmresbcc.focus();
 				
 				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
-												
-								
+
 			}else {
 
 				buscaBanco();
-				
+
 				if (cFlgdispb.val() == 1){
 					cDtinispb.habilitaCampo();
 				}else{
 					cDtinispb.val('');
 					cDtinispb.desabilitaCampo();
 				}
+
+				cNrcnpjif.desabilitaCampo().css({'text-align':'left'});
+				nmresbcc.focus();
+			}
+
+			return false;
+
+		}else if(cCddopcao.val() == "M"){
+			
+			if ( cCdbccxlt.hasClass('campoTelaSemBorda')  ) {
+				
+				cNrcnpjif.focus();
+				$('#frmConsulta').css('display','block');
+				
+				showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
+                
+			}else {
+
+				buscaBanco();	
+
+				$('#frmConsulta').css('display','block');
+
+				rDtaltstr.hide();
+				cDtaltstr.hide();
+				rDtaltpag.hide();
+				cDtaltpag.hide();
+				
+				cCdbccxlt.desabilitaCampo();
+				cNrispbif.desabilitaCampo();
+				
+				cNmresbcc.desabilitaCampo();
+				cNmextbcc.desabilitaCampo();
+				cFlgdispb.desabilitaCampo();
+				cFlgoppag.desabilitaCampo();
+				cDtinispb.desabilitaCampo();
+				
+				cNrcnpjif.habilitaCampo().css({'text-align':'left'});
+				cNrcnpjif.focus();
 				
 			}
-						
-			return false;
-						
+
 		}
 		
 	}
@@ -326,7 +388,7 @@ function buscaBanco() {
 		url		: UrlSite + 'telas/bancos/busca_consulta_banco.php', 
 		data    :
 				{ 
-				  cddopcao   : cddopcao,	
+				  cddopcao   : cddopcao,
 				  cdbccxlt   : cdbccxlt,
 				  nrispbif   : nrispbif,
 				  redirect   : 'script_ajax'
@@ -339,7 +401,10 @@ function buscaBanco() {
 		success : function(response) { 				
 					hideMsgAguardo();
 					try {
-						eval( response );												
+						eval( response );
+						if(cCddopcao.val() == "M"){
+							cNrcnpjif.trigger("focusin");
+						}
 					} catch(error) {						
 						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
 					}
@@ -372,7 +437,8 @@ function manterRotina() {
 				  flgdispb   : flgdispb,
 				  dtinispb   : dtinispb,
 				  flgoppag   : flgoppag,
-				  nmextbcc   : nmextbcc,		
+				  nmextbcc   : nmextbcc,
+				  nrcnpjif   : normalizaNumero(nrcnpjif),
 				  redirect   : 'script_ajax'					  
 				  
 				},
@@ -408,6 +474,7 @@ function formataConsulta(){
 	rDtinispb = $('label[for="dtinispb"]','#frmConsulta');
 	rDtaltstr = $('label[for="dtaltstr"]','#frmConsulta');
 	rDtaltpag = $('label[for="dtaltpag"]','#frmConsulta');	
+	rNrcnpjif = $('label[for="nrcnpjif"]','#frmConsulta');
 	
 	cCdbccxlt = $('#cdbccxlt','#divEntrada');	
 	cNrispbif = $('#nrispbif','#divEntrada');
@@ -418,6 +485,7 @@ function formataConsulta(){
 	cDtinispb = $('#dtinispb','#frmConsulta');
 	cDtaltstr = $('#dtaltstr','#frmConsulta');
 	cDtaltpag = $('#dtaltpag','#frmConsulta');
+	cNrcnpjif = $('#nrcnpjif','#frmConsulta');
 		
 	rCdbccxlt.css({'width':'80px'}).addClass('rotulo');
 	rNrispbif.css({'width':'100px'}).addClass('rotulo-linha');
@@ -428,6 +496,7 @@ function formataConsulta(){
 	rDtinispb.css({'width':'87px'}).addClass('rotulo-linha');
 	rDtaltstr.css({'width':'110px'}).addClass('rotulo-linha');
 	rDtaltpag.css({'width':'275px'}).addClass('rotulo-linha');
+	rNrcnpjif.css({'width':'153px'}).addClass('rotulo');
 	
 	cCdbccxlt.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','3');
 	cNrispbif.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','8');
@@ -438,10 +507,10 @@ function formataConsulta(){
 	cDtinispb.css({'width':'72px'}).addClass('data').val('');
 	cDtaltstr.css({'width':'72px'}).addClass('data').val('');
 	cDtaltpag.css({'width':'72px'}).addClass('data').val('');
+	cNrcnpjif.css({'width':'250px'}).addClass('cnpj');
 	
 	cTodosConsulta.desabilitaCampo();
 	cTodosEntrada.desabilitaCampo();
-					
 	
 	cCdbccxlt.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false;}		

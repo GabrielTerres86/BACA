@@ -7,7 +7,6 @@
  * --------------
  * ALTERAÇÕES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
  *                PRJ-312 (Reinert)
- * -------------- 
  *
  * -------------- 
  */
@@ -37,14 +36,14 @@
 	$xmlBuscaBanco .= "	 <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlBuscaBanco .= "	 <cdbccxlt>".$cdbccxlt."</cdbccxlt>";
 	$xmlBuscaBanco .= "  <nrispbif>".$nrispbif."</nrispbif>";
-	$xmlBuscaBanco .= "  <cddopcao>".$cddopcao."</cddopcao>";	
+	$xmlBuscaBanco .= "  <cddopcao>".$cddopcao."</cddopcao>";
 	$xmlBuscaBanco .= " </Dados>";
 	$xmlBuscaBanco .= "</Root>";
 			
 	// Executa script para envio do XML	
 	$xmlResult = mensageria($xmlBuscaBanco, "BANCOS", "CONSULTABANCO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjBuscaBanco = getObjectXML($xmlResult);
-		
+    
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjBuscaBanco->roottag->tags[0]->name) == 'ERRO') {
 		
@@ -76,6 +75,7 @@
 	echo "$('#flgoppag','#frmConsulta').val('".getByTagName($registros,'flgoppag')."');";
 	echo "$('#dtaltstr','#frmConsulta').val('".getByTagName($registros,'dtaltstr')."');";
     echo "$('#dtaltpag','#frmConsulta').val('".getByTagName($registros,'dtaltpag')."');";
+    echo "$('#nrcnpjif','#frmConsulta').val('".getByTagName($registros,'nrcnpjif')."');";
 	
 	if($cddopcao == 'C'){
 		echo "$('#cdbccxlt','#divEntrada').desabilitaCampo();";
@@ -89,7 +89,18 @@
 		echo "$('#flgdispb','#frmConsulta').habilitaCampo();";
 		echo "$('#dtinispb','#frmConsulta').habilitaCampo();";
 		echo "$('#flgoppag','#frmConsulta').habilitaCampo();";
+		echo "$('#nrcnpjif','#frmConsulta').desabilitaCampo();";
+		
+	}else if($cddopcao == 'M'){
+		echo "$('#cdbccxlt','#divEntrada').desabilitaCampo();";
+		echo "$('#nrispbif','#divEntrada').desabilitaCampo();";
+		echo "$('#nmresbcc','#frmConsulta').desabilitaCampo();";
+		echo "$('#nmextbcc','#frmConsulta').desabilitaCampo();";
+		echo "$('#flgdispb','#frmConsulta').desabilitaCampo();";
+		echo "$('#dtinispb','#frmConsulta').desabilitaCampo();";
+		echo "$('#flgoppag','#frmConsulta').desabilitaCampo();";
+		echo "$('#nrcnpjif','#frmConsulta').habilitaCampo().focus();";
 		
 	}
-	
+
 ?>
