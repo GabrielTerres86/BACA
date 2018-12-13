@@ -166,6 +166,7 @@
     $nrsacbcb = (isset($_POST["nrsacbcb"])) ? $_POST["nrsacbcb"] : '';
     $nrouvbcb = (isset($_POST["nrouvbcb"])) ? $_POST["nrouvbcb"] : '';
 	$hrinicxa = (isset($_POST["hrinicxa"])) ? $_POST["hrinicxa"] : '';
+    $flgrupos = (isset($_POST["flgrupos"])) ? $_POST["flgrupos"] : '';
 
     validaDados();
 
@@ -308,6 +309,7 @@
 	$xml     .="       <flintcdc>".$flintcdc."</flintcdc>";
     $xml     .="       <tpcdccop>".$tpcdccop."</tpcdccop>";
 	$xml     .="       <hrinicxa>".$hrinicxa."</hrinicxa>";
+    $xml     .="       <flgrupos>".$flgrupos."</flgrupos>";
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

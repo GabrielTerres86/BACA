@@ -806,6 +806,24 @@
 
     </fieldset>
 
+    <fieldset id="fsetAssembleias" name="fsetAssembleias" style="padding:0px; margin:0px; padding-bottom:10px;">
+
+        <legend>Novo Modelo de Representa&ccedil;&atilde;o do Quadro Social</legend>
+
+      <label for="flgrupos">
+        <?php echo utf8ToHtml("Situa&ccedil;&atilde;o:"); ?>
+      </label>
+      <select  id="flgrupos" name="flgrupos" value=""
+        <?php echo getByTagName($cooperativa->tags,'flgrupos'); ?>">
+        <option value="0"
+          <?php if (getByTagName($cooperativa->tags,'flgrupos') == "0") { ?> selected <?php } ?> >INATIVO
+        </option>
+        <option value="1"
+          <?php if (getByTagName($cooperativa->tags,'flgrupos') == "1") { ?> selected <?php } ?> >ATIVO
+        </option>
+      </select>
+
+    </fieldset>
 
 </form>
 

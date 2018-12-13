@@ -14,7 +14,6 @@
 			   22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
 			   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
                16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
-               23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 	
   ************************************************************************************/
 ?>
@@ -81,8 +80,10 @@
   <label for="dssitdct">Situa&ccedil;&atilde;o:</label>
   <input name="dssitdct" type="text" id="dssitdct" />
 	<br />
-  <label for="indnivel">N&iacute;vel:</label>
-  <input name="indnivel" type="text" id="indnivel" />
+  <!--<label for="indnivel">N&iacute;vel:</label>
+  <input name="indnivel" type="text" id="indnivel" />-->
+  <label for="nrdgrupo">Grupo:</label>
+  <input name="nrdgrupo" type="text" id="nrdgrupo" />
   <label for="cdempres">Empresa:</label>
   <input name="cdempres" type="text" id="cdempres" />
   <!--<label for="cdsecext">Se&ccedil;&atilde;o:</label>

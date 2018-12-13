@@ -87,6 +87,8 @@
                   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
 				   
                   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+				   
+                  08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484. Gabriel Marcos (Mouts).
 
                   23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 				   
@@ -622,7 +624,8 @@ function formataCabecalho() {
     rNrcpfcgc = $('label[for="nrcpfcgc"]', '#frmCabAtenda');
     rDstipcta = $('label[for="dstipcta"]', '#frmCabAtenda');
     rDssitdct = $('label[for="dssitdct"]', '#frmCabAtenda');
-    rIndnivel = $('label[for="indnivel"]', '#frmCabAtenda');
+    //rIndnivel = $('label[for="indnivel"]', '#frmCabAtenda');
+    rNrdgrupo = $('label[for="nrdgrupo"]', '#frmCabAtenda');
     rCdempres = $('label[for="cdempres"]', '#frmCabAtenda');
     //rCdsecext = $('label[for="cdsecext"]', '#frmCabAtenda');
     //rCdturnos = $('label[for="cdturnos"]', '#frmCabAtenda');
@@ -653,7 +656,8 @@ function formataCabecalho() {
     rNrcpfcgc.addClass('rotulo-linha').css({ 'width': '55px' });
     rDstipcta.addClass('rotulo').css({ 'width': '111px' });
     rDssitdct.addClass('rotulo-linha').css({ 'width': '55px' });
-    rIndnivel.addClass('rotulo').css({ 'width': '111px' });
+    //rIndnivel.addClass('rotulo').css({ 'width': '111px' });
+    rNrdgrupo.addClass('rotulo').css({ 'width': '111px' });
     rCdempres.addClass('rotulo-linha').css({ 'width': '56px' });
     //rCdsecext.addClass('rotulo-linha').css({ 'width': '39px' });
     //rCdturnos.addClass('rotulo-linha').css({ 'width': '39px' });
@@ -685,7 +689,8 @@ function formataCabecalho() {
     cNrcpfcgc = $('#nrcpfcgc', '#frmCabAtenda');
     cDstipcta = $('#dstipcta', '#frmCabAtenda');
     cDssitdct = $('#dssitdct', '#frmCabAtenda');
-    cIndnivel = $('#indnivel', '#frmCabAtenda');
+    //cIndnivel = $('#indnivel', '#frmCabAtenda');
+    cNrdgrupo = $('#nrdgrupo', '#frmCabAtenda');
     cCdempres = $('#cdempres', '#frmCabAtenda');
     //cCdsecext = $('#cdsecext', '#frmCabAtenda');
     //cCdturnos = $('#cdturnos', '#frmCabAtenda');
@@ -716,7 +721,9 @@ function formataCabecalho() {
     cNrcpfcgc.css({ 'width': '170px' });
     cDstipcta.css({ 'width': '194px' });
     cDssitdct.css({ 'width': '170px' });
-    cIndnivel.css({ 'width': '38px' });;
+    //cIndnivel.css({ 'width': '38px' });;
+    cNrdgrupo.css({ 'width': '43px' });
+    cCdempres.css({ 'width': '40px' });
     cCdempres.css({ 'width': '45px' });
     //cCdsecext.css({ 'width': '45px' });
     //cCdturnos.css({ 'width': '38px' });
@@ -745,7 +752,7 @@ function formataCabecalho() {
         rNrcpfcgc.css({ 'width': '58px' });
         rDssitdct.css({ 'width': '58px' });
 
-        rCdempres.css({ 'width': '59px' });
+        rCdempres.css({ 'width': '40px' });
         //rCdsecext.css({ 'width': '42px' });
         //rCdturnos.css({ 'width': '42px' });
         //rCdtipsfx.css({ 'width': '74px' });
