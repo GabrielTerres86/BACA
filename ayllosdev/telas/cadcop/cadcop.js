@@ -3583,6 +3583,7 @@ function alterarCooperativa() {
     var vltarsic = isNaN(parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vltardrf = isNaN(parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var hrinicxa = $("#hrinicxa", "#frmConsulta5").val();
+    var flgrupos = $("#flgrupos", "#frmConsulta5").val();
 
     //Bancoob
     var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
@@ -3737,6 +3738,7 @@ function alterarCooperativa() {
             nrsacbcb: nrsacbcb,
             nrouvbcb: nrouvbcb,
             hrinicxa: hrinicxa,
+            flgrupos: flgrupos,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
