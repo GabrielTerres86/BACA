@@ -2326,7 +2326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapass.cdagenci,      pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_crapass.nrdconta,      pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);                           
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => rw_crapass.dtadmiss,      pr_des_erro => vr_dscritic);                           
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'dd/mm/yyyy'), pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => null,                     pr_des_erro => vr_dscritic);                           
 
     -- cr_buscar_cooperado%notfound: pessoa nova deve ser locada em grupo
@@ -2434,7 +2434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapass.cdagenci,      pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_crapass.nrdconta,      pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);                           
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => rw_crapass.dtadmiss,      pr_des_erro => vr_dscritic);                           
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'dd/mm/yyyy'),      pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => vr_nrdgrupo,              pr_des_erro => vr_dscritic);                           
 
     end if;
