@@ -724,7 +724,6 @@ function formataCabecalho() {
     //cIndnivel.css({ 'width': '38px' });;
     cNrdgrupo.css({ 'width': '43px' });
     cCdempres.css({ 'width': '40px' });
-    cCdempres.css({ 'width': '45px' });
     //cCdsecext.css({ 'width': '45px' });
     //cCdturnos.css({ 'width': '38px' });
     //cCdtipsfx.css({ 'width': '30px' });

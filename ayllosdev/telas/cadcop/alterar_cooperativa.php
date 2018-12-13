@@ -12,6 +12,8 @@
  *				   21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
  *
  *                 26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
+ *                08/11/2018 - Inclusao de informacoes na tela devido ao projeto de delegados. P484 Gabriel Marcos (Mouts). 
+ *                         
  */
 ?>
 
