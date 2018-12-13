@@ -4796,41 +4796,7 @@ PROCEDURE grava_efetivacao_proposta:
 
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
-         
-        /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
-        IF crapass.inpessoa = 1 THEN
-        DO:
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-          RUN STORED-PROCEDURE pc_efetiva_proposta_sp
-                               aux_handproc = PROC-HANDLE NO-ERROR
-                        (INPUT par_cdcooper,      /* Cooperativa */
-                         INPUT par_nrdconta,      /* Número da conta */
-                         INPUT par_nrctremp,      /* Número emrepstimo */
-                         INPUT par_cdagenci,      /* Agencia */
-                         INPUT par_nrdcaixa,      /* Caixa */
-                         INPUT par_cdoperad,      /* Operador   */
-                         INPUT par_nmdatela,      /* Tabela   */
-                         INPUT par_idorigem,      /* Origem  */
-                        OUTPUT 0,
-                        OUTPUT "").
-            
-          CLOSE STORED-PROC pc_efetiva_proposta_sp 
-             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-          
-          ASSIGN aux_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
-                                   WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
-                 aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
-                                   WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
-          IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-            DO:
-              CREATE tt-erro.
-              ASSIGN tt-erro.cdcritic = aux_cdcritic
-                     tt-erro.dscritic = aux_dscritic.
-              UNDO EFETIVACAO, LEAVE EFETIVACAO.
-            END.
-        END.
-        
+       
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
@@ -4857,7 +4823,12 @@ PROCEDURE grava_efetivacao_proposta:
                  aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                                    WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
           IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+            DO:
+              CREATE tt-erro.
+              ASSIGN tt-erro.cdcritic = aux_cdcritic
+                     tt-erro.dscritic = aux_dscritic.
             UNDO EFETIVACAO, LEAVE EFETIVACAO.
+        END.
         END.
        
        ASSIGN aux_flgtrans = TRUE.
