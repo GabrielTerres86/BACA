@@ -2346,14 +2346,19 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
                                       
-    IF VALID-HANDLE(h-b1wgen0002) THEN
-       DELETE PROCEDURE h-b1wgen0002.
-
-    IF VALID-HANDLE(h-b1wgen0153) THEN
-       DELETE PROCEDURE h-b1wgen0153.
-
+    
     IF RETURN-VALUE <> "OK"  THEN
-       RETURN "NOK".
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
     
     /* Busca a tarifa especial */
     RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
@@ -2371,14 +2376,18 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
                                       
-    IF VALID-HANDLE(h-b1wgen0002) THEN
-       DELETE PROCEDURE h-b1wgen0002.
-
-    IF VALID-HANDLE(h-b1wgen0153) THEN
-       DELETE PROCEDURE h-b1wgen0153.
-                                      
     IF RETURN-VALUE <> "OK"  THEN
-       RETURN "NOK".
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
     
     /* Valor da tarifa */
     ASSIGN par_vlrtarif = aux_vlrtarif + aux_vltrfesp.
@@ -2411,15 +2420,18 @@ PROCEDURE calcula_taxa_emprestimo:
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
                                           
-    IF VALID-HANDLE(h-b1wgen0002) THEN
-       DELETE PROCEDURE h-b1wgen0002.
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
 
-    IF VALID-HANDLE(h-b1wgen0153) THEN
-       DELETE PROCEDURE h-b1wgen0153.
-                                          
-
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
 
     /* Calcula o IOF */
     RUN calcula_iof (INPUT par_cdcooper,
@@ -2441,15 +2453,18 @@ PROCEDURE calcula_taxa_emprestimo:
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
                      
-    IF VALID-HANDLE(h-b1wgen0002) THEN
-       DELETE PROCEDURE h-b1wgen0002.
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
 
-    IF VALID-HANDLE(h-b1wgen0153) THEN
-       DELETE PROCEDURE h-b1wgen0153.
-                 
-                     
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.
     
