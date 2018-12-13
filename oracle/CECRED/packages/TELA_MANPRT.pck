@@ -293,12 +293,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
   
-  /*																	  
+  /*
      24/09/2018 - Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
   
      26/09/2018 - inc0024348 Passagem do nome do programa para a execução da rotina 
-                  pc_gera_conciliacao_auto para não criticar validações para o job (Carlos)	
-    
+                  pc_gera_conciliacao_auto para não criticar validações para o job (Carlos)
+
      28/09/2018 - Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
       
      04/10/2018 - Alterado validação de data da conciliação. Realizando somente para a automatica.. (Fabio Stein - Supero)
@@ -306,7 +306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 - Ajustado banco.flgdispb para 1 na query de conciliações.
     
      23/10/2018 - Alterado consulta de tarifas e custas para incluir o cdcartorio. (Fabio Stein - Supero)
-  ---------------------------------------------------------------------------*/
+   ---------------------------------------------------------------------------*/
     
     
     CURSOR cr_tbcobran_conciliacao_ieptb(pr_dtinicial    IN VARCHAR2
@@ -1617,7 +1617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : André Clemer (Supero)
-    Data     : Abril/2018                           Ultima atualizacao:
+    Data     : Abril/2018                           Ultima atualizacao: 12/12/2018
 
     Dados referentes ao programa:
 
@@ -1625,6 +1625,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     Objetivo   : Pesquisa de títulos não conciliados do retorno do IEPTB
 
     Alterações :
+    
+    12/12/2018 - Filtrar apenas titulos pagos em cartório no processo de 
+                 conciliação (tpocorre=1) (Cechet/Fabio Supero)
     -------------------------------------------------------------------------------------------------------------*/
     
     CURSOR cr_titulos(pr_dtinicial     IN VARCHAR2
@@ -1645,6 +1648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
            INNER JOIN tbcobran_cartorio_protesto cart ON cart.idcidade = mun.idcidade AND ret.cdcartorio = cart.cdcartorio
            INNER JOIN crapcop cop ON cop.cdcooper = ret.cdcooper
      WHERE ret.dtconciliacao IS NULL
+       AND ret.tpocorre = 1 -- titulo pago em cartorio
        AND (
                (pr_dtinicial IS NOT NULL AND ret.dtocorre >= to_date(pr_dtinicial,'DD/MM/RRRR'))
            OR
