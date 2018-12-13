@@ -1840,7 +1840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
          , tbevento_pessoa_grupos gru
      where gru.rowid = pr_rowid
        and ass.cdcooper = gru.cdcooper
-       and ass.nrcpfcgc = gru.nrcpfcgc;
+       and ass.nrdconta = gru.nrdconta;
     rw_grupo_assembleia cr_grupo_assembleia%rowtype;
       
     -- Buscar grupos
