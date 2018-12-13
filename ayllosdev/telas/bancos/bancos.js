@@ -329,7 +329,7 @@ function btnContinuar() {
 
 				buscaBanco();	
 
-				$('#frmConsulta').css('display','block');
+				//$('#frmConsulta').css('display','block');
 
 				rDtaltstr.hide();
 				cDtaltstr.hide();

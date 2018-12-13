@@ -25,7 +25,7 @@
 		<option value="A" >A - Alterar os dados das IFs cadastradas</option>
 		<option value="C" selected>C - Consultar as IFs cadastradas</option>
 		<option value="I" >I - Incluir novo codigo de IF</option>	
-		<option value="M" >M - Manuten&ccedil;&atilde;o de IFs cadastrados</option>
+		<option value="M" >M - Manuten&ccedil;&atilde;o de IFs cadastradas</option>
 	</select>
 	<a href="#" class="botao" id="btnOK" >OK</a>
 	
