@@ -2793,7 +2793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
      Dados referentes ao programa:
 
      Frequencia: Diario (on-line)
-     Objetivo  : Rotina para alteração de CNPJ da tela BANCOS.
+     Objetivo  : Processar a rotina de alteração de CNPJ da tela BANCOS.
 
      Alteracoes: 
     ---------------------------------------------------------------------------------------------------------------*/
@@ -2811,15 +2811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     rw_crapcop cr_crapcop%ROWTYPE;
 
     -- Cursor para buscar o nome do banco
-    CURSOR cr_crapban(pr_cdbccxlt IN crapban.cdbccxlt%TYPE) IS
-    SELECT substr(nmresbcc,1,15) nmresbcc
-          ,crapban.cdbccxlt
-          ,crapban.nmextbcc
-          ,crapban.nrispbif
-          ,crapban.flgdispb
-          ,crapban.dtinispb
-          ,crapban.flgoppag
-          ,crapban.nrcnpjif
+    CURSOR cr_crapban IS
+    SELECT crapban.nrcnpjif
       FROM crapban
      WHERE crapban.cdbccxlt = pr_cdbccxlt;
     rw_crapban cr_crapban%ROWTYPE;
@@ -2839,9 +2832,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-    vr_nrcnpjif INTEGER;
-    vr_log_nrispbif INTEGER;
-    vr_log_nrcnpjif INTEGER;
+    vr_dscnpjde VARCHAR2(100);
+    vr_dscnpjpr VARCHAR2(100);
+
     vr_retornvl  VARCHAR2(3):= 'NOK';
 
     --Variaveis de Excecoes    
@@ -2859,11 +2852,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
       
       --limpar tabela erros
       vr_tab_erro.DELETE;
-                  
+             
       --Inicializar Variaveis
       vr_cdcritic:= 0;                         
       vr_dscritic:= null;
-      vr_nrcnpjif := pr_nrcnpjif;
       
       -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2881,7 +2873,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         RAISE vr_exc_erro;
       END IF;
 
+      -- Buscar informações do banco
+      OPEN  cr_crapban;
+      FETCH cr_crapban INTO rw_crapban;
+      
+      -- Se não encontrar o banco
+      IF cr_crapban%NOTFOUND THEN
+        -- fechar o cursor
+        CLOSE cr_crapban;
+      
+        vr_dscritic := 'Banco nao encontrado!';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- fechar o cursor
+      CLOSE cr_crapban;
+      
+      
       BEGIN
+        
        UPDATE crapban 
           SET crapban.nrcnpjif = NVL(pr_nrcnpjif,0)
        WHERE crapban.nrispbif = pr_nrispbif;
@@ -2896,8 +2906,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
       --Retorno
       pr_des_erro:= 'OK';
       COMMIT;
-
-      IF pr_nrcnpjif <> vr_log_nrcnpjif   THEN
+      
+      IF pr_nrcnpjif <> rw_crapban.nrcnpjif   THEN
+        
+        vr_dscnpjde := GENE0002.fn_mask_cpf_cnpj(rw_crapban.nrcnpjif,2);
+        vr_dscnpjpr := GENE0002.fn_mask_cpf_cnpj(pr_nrcnpjif,2);
+        
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                    pr_ind_tipo_log => 1, -- Somente mensagem
@@ -2905,8 +2919,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                                    || 'Operador: ' || vr_cdoperad || ' | '
                                                    || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
                                                    || ' Alterou o numero CNPJ do banco de '
-                                                   || to_char(vr_log_nrcnpjif) || ' para '
-                                                   || to_char(pr_nrcnpjif),
+                                                   || vr_dscnpjde || ' para '
+                                                   || vr_dscnpjpr,
                                    pr_nmarqlog     => 'bancos.log' );
 
       END IF;
