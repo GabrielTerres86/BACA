@@ -118,6 +118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
   --
   -- Alteracoes: 
   --
+  --             13/12/2018 - Retirado Commit e Rollback Procedures prestamista chamados via progress - Paulo Martins
   ---------------------------------------------------------------------------
   
   -- Função que retorna o saldo devedor para utilização no seguro de vida prestamista
@@ -1060,13 +1061,13 @@ EXCEPTION
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
-      ROLLBACK;
+      -- ROLLBACK;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
-      ROLLBACK;  
+      -- ROLLBACK;  
   END pc_validar_prestamista; 
 
   PROCEDURE pc_cria_proposta_sp(pr_cdcooper in crapcop.cdcooper%type,
@@ -1162,13 +1163,13 @@ EXCEPTION
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
-      ROLLBACK;
+      -- ROLLBACK;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
-      ROLLBACK;  
+      -- ROLLBACK;  
   END pc_cria_proposta_sp;   
                                                                        
   PROCEDURE pc_efetiva_proposta_sp(pr_cdcooper in crapcop.cdcooper%type,
@@ -1311,13 +1312,13 @@ EXCEPTION
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
-      ROLLBACK;
+      -- ROLLBACK;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
-      ROLLBACK;  
+      -- ROLLBACK;  
   END pc_efetiva_proposta_sp; 
     
   PROCEDURE pc_valida_contrato( pr_nrctrato IN crawseg.nrctrato%TYPE --Número do contrato
@@ -1496,6 +1497,7 @@ EXCEPTION
          WHERE 
               e.cdcooper = p_cdcooper
           AND e.nrdconta = pr_nrdconta
+		  AND e.inliquid = 0
           AND NOT EXISTS (SELECT 
                                 1 
                             FROM 

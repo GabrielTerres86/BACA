@@ -577,6 +577,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                            ,pr_cdempres  IN crapemp.cdempres%type -- Codigo Empresa
                            ,pr_dtnascsg  IN crapdat.dtmvtolt%type -- Data Nascimento
                            ,pr_complend  IN crawseg.complend%type -- Complemento Endereco
+                           ,pr_nrctremp  IN crawepr.nrctremp%type default 0-- Número do Contrato de Empréstimo associado ao seguro Prestamista
                            ,pr_flgsegur  OUT BOOLEAN              -- Seguro Criado
                            ,pr_crawseg   OUT ROWID                -- Registro Crawseg
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
@@ -608,6 +609,26 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                              ,pr_indierro OUT NUMBER            -- Indica se o erro retornado é para o log ou arquivo especifico
                              ,pr_des_erro OUT VARCHAR2          -- Retorno Erro OK/NOK
                              ,pr_tab_erro OUT gene0001.typ_tab_erro);  --Tabela Erros
+
+ 
+  PROCEDURE pc_cria_proposta_seguro_p(pr_cdcooper in crapcop.cdcooper%type,
+                                      pr_nrdconta in crapass.nrdconta%type,
+                                      pr_vlseguro in crawseg.vlseguro%type,
+                                      pr_nrctrato in crawseg.nrctrato%type,
+                                      pr_cdoperad in crapope.cdoperad%type,
+                                      pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                      pr_dscritic out crapcri.dscritic%type);      
+
+  PROCEDURE pc_efetiva_proposta_seguro_p(pr_cdcooper in crapcop.cdcooper%type,
+                                         pr_nrdconta in crapass.nrdconta%type,
+                                         pr_nrctrato in crawseg.nrctrato%type,
+                                         pr_cdoperad in crapope.cdoperad%type,
+                                         pr_cdagenci in crapseg.cdagenci%type,
+                                         pr_vlslddev in crapseg.vlslddev%type,
+                                         pr_idimpdps in varchar2,
+                                         pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                         pr_dscritic out crapcri.dscritic%type);   --> Descricao da critica                                    
+
 END SEGU0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
@@ -618,7 +639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 17/05/2018
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -645,6 +666,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 	--             17/05/2018 - Inclusão do novo motivo "Insuf. saldo e/ou Inadimplencia (autom.)" na
 	--                          procedure "pc_buscar_motivo_can".
 	--                          (Reginaldo - AMcom - PRJ450)
+  --	         31/08/2018 - Inclusão procedures criação e efetivação seguro prestamista - PRJ438 - Paulo Martins
+  --          
+  --             20/09/2018 - Validar se automovel existe antes de inserir
+  --                          (Lucas Eduardo Ranghetti INC0023969)
+  --             13/12/2018 - Retirado Commit e Rollback Procedures prestamista chamados via progress - Paulo Martins
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -4057,6 +4083,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                            ,pr_cdempres  IN crapemp.cdempres%type -- Codigo Empresa
                            ,pr_dtnascsg  IN crapdat.dtmvtolt%type -- Data Nascimento
                            ,pr_complend  IN crawseg.complend%type -- Complemento Endereco
+                           ,pr_nrctremp  IN crawepr.nrctremp%type default 0-- Número do Contrato de Empréstimo associado ao seguro Prestamista                           
                            ,pr_flgsegur  OUT BOOLEAN              -- Seguro Criado
                            ,pr_crawseg   OUT ROWID                -- Registro Crawseg
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
@@ -4078,7 +4105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   -- Alterações:
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
-  -- 
+  --             04/09/2018 - PJ 438 - Sprint 3 - Gravar o número do contrato de emprestimo
+  --                          na proposta de seguro quando a mesma for prestamista. Márcio(Mouts)
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -4832,7 +4860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                               ,crawseg.vlappinv = 0
                               ,crawseg.flgcurso = 0 /*FALSE*/
                               ,crawseg.flgrepgr = 0 /*FALSE*/
-                              ,crawseg.nrctrato = 0
+                              ,crawseg.nrctrato = decode(pr_tpseguro,4,pr_nrctremp,0)  --PJ438 - Sprint3
                               ,crawseg.flgvisto = 0 /*FALSE*/
                               ,crawseg.vlfrqobr = 0
                               ,crawseg.qtparcel = 0
@@ -7086,7 +7114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
+  --  Data     : Maio/2016.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -7097,7 +7125,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
   -- 
-
+  --             20/09/2018 - Validar se automovel existe antes de inserir
+  --                          (Lucas Eduardo Ranghetti INC0023969)
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -7123,6 +7152,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      SELECT NVL(MAX(idveiculo),0) + 1
        FROM tbseg_auto_veiculos auto
       WHERE auto.idcontrato = p_idcontrato;
+
+    CURSOR cr_tbseg_auto_veiculos(p_idcontrato IN tbseg_auto_veiculos.idcontrato%TYPE
+                                 ,pr_dschassi  IN tbseg_auto_veiculos.dschassi%TYPE
+                                 ,pr_dsplaca   IN tbseg_auto_veiculos.dsplaca%TYPE) IS
+     SELECT 1 
+       FROM tbseg_auto_veiculos veiculo
+      WHERE veiculo.idcontrato = p_idcontrato
+        AND nvl(veiculo.dschassi, ' ') = nvl(pr_dschassi, ' ')
+        AND nvl(veiculo.dsplaca, ' ')  = nvl(pr_dsplaca, ' ');
+      rw_tbseg_auto_veiculos cr_tbseg_auto_veiculos%ROWTYPE;        
 
     BEGIN
 
@@ -7358,6 +7397,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             FOR vr_idx_auto IN pr_auto.FIRST..pr_auto.LAST LOOP
               IF pr_tipatu.tp_auto = 'I' THEN -- Incluir o Veiculo no Seguro
 
+                OPEN cr_tbseg_auto_veiculos(p_idcontrato => vr_idcontrato(vr_indice)
+                                           ,pr_dschassi  => pr_auto(vr_idx_auto).dschassi
+                                           ,pr_dsplaca   => pr_auto(vr_idx_auto).dsplaca);
+                FETCH cr_tbseg_auto_veiculos INTO rw_tbseg_auto_veiculos;
+                
+                IF cr_tbseg_auto_veiculos%NOTFOUND THEN
+                  
+                  CLOSE cr_tbseg_auto_veiculos;
+                  
                 OPEN cr_max_veiculo(p_idcontrato => vr_idcontrato(vr_indice));
                 FETCH cr_max_veiculo INTO vr_idveiculo;
 
@@ -7390,6 +7438,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     vr_dscritic := 'Erro ao inserir Veículo do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
+                ELSE
+                  CLOSE cr_tbseg_auto_veiculos;
+                END IF;
               ELSIF pr_tipatu.tp_auto = 'A' THEN -- Atualizar o Veiculo existente
                 BEGIN
                   UPDATE tbseg_auto_veiculos auto
@@ -7563,5 +7614,975 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     END;
 
   END pc_insere_seguro;
+  
+  PROCEDURE pc_cria_proposta_seguro_p(pr_cdcooper in crapcop.cdcooper%type,
+                                      pr_nrdconta in crapass.nrdconta%type,
+                                      pr_vlseguro in crawseg.vlseguro%type,
+                                      pr_nrctrato in crawseg.nrctrato%type,
+                                      pr_cdoperad in crapope.cdoperad%type,
+                                      pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                      pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica
+                                      
+    /* .............................................................................
+
+    Programa:  pc_cria_proposta_seguro_p
+    Sistema : Ayllos Web
+    Autor   : Paulo Martins(Mouts)
+    Data    : Agosto/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Criação proposta do seguro prestamista
+
+    Alteracoes: -----
+    ..............................................................................*/         
+                                          
+                                    
+      -- Tratamento de erros
+      vr_exc_saida  EXCEPTION;
+      vr_exc_fimprg EXCEPTION;
+      vr_cdcritic   PLS_INTEGER;
+      vr_dscritic   VARCHAR2(4000);
+
+      -- Busca dos dados da cooperativa
+      CURSOR cr_crapcop IS
+      SELECT cop.nmrescop
+            ,cop.nmextcop
+            ,cop.cdagectl
+            ,cop.cdbcoctl
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+     
+      CURSOR cr_crapenc is
+       SELECT e.dsendere,e.nrendere,e.nmbairro,e.nmcidade,e.cdufende,e.nrcepend,e.complend
+         from crapenc e
+        WHERE cdcooper = pr_cdcooper  
+          and nrdconta = pr_nrdconta
+          and idseqttl = 1 -- 1 Titular
+          and dsendere is not null
+          and tpendass = 10;  /* Residencial */ 
+      r_crapenc cr_crapenc%rowtype;
+
+
+      -- Validar proposta Existentes
+      CURSOR c_proposta IS
+      select s.rowid
+        from crawseg s
+       where s.tpseguro = 4
+         and s.cdcooper = pr_cdcooper
+         and s.nrdconta = pr_nrdconta
+         and s.nrctrato = pr_nrctrato
+         and not exists (select 1 
+                           from crapseg p
+                          where s.cdcooper = p.cdcooper
+                            and s.nrdconta = p.nrdconta
+                            and s.tpseguro = p.tpseguro
+                            and s.nrctrseg = p.nrctrseg);   
+         r_proposta c_proposta%rowtype;    
+      
+      -- Variaveis auxiliares
+      vr_tab_erro gene0001.typ_tab_erro;
+      vr_cdprogra varchar2(10) := 'SEGU0001';
+                                          
+    
+     PROCEDURE pc_cria_proposta(pr_cdcooper  IN crapcop.cdcooper%type -- Cooperativa
+                               ,pr_nrctrato  IN crawseg.nrctrato%type -- Número da proposta de emprestimo
+                               ,pr_cdagenci  IN crapage.cdagenci%type -- Agencia
+                               ,pr_nrdcaixa  IN INTEGER               -- Numero Caixa
+                               ,pr_cdoperad  IN crapope.cdoperad%type -- Operador
+                               ,pr_dtmvtolt  IN crapdat.dtmvtolt%type -- Data Movimento
+                               ,pr_nrdconta  IN crapass.nrdconta%type -- Numero Conta
+                               ,pr_idseqttl  IN crapttl.idseqttl%type -- Sequencial Titular
+                               ,pr_idorigem  IN INTEGER               -- Origem Informacao
+                               ,pr_nmdatela  IN VARCHAR2              -- Programa Chamador
+                               ,pr_flgerlog  IN BOOLEAN               -- Escrever Erro Log
+                               ,pr_cdsegura  IN crapseg.cdsegura%type -- Codigo Seguradora
+                               ,pr_dtfimvig  IN crapseg.dtfimvig%type -- Data Fim Vigencia
+                               ,pr_dtinivig  IN crapseg.dtinivig%type -- Data Inicio Vigencia
+                               ,pr_flgunica  IN crapseg.flgunica%type -- Flag Parcela Unica
+                               ,pr_tpplaseg  IN crapseg.tpplaseg%type -- Tipo Plano Seguro
+                               ,pr_tpseguro  IN crapseg.tpseguro%type -- Tipo Seguro
+                               ,pr_vlpreseg  IN crapseg.vlpreseg%type -- Valor Prestacao Seguro
+                               ,pr_cdcalcul  IN crawseg.cdcalcul%type -- Codigo Calculo
+                               ,pr_vlseguro  IN crawseg.vlseguro%type -- Valor Seguro
+                               ,pr_dsendres  IN crawseg.dsendres%type -- Descricao Endereco
+                               ,pr_nrendres  IN crawseg.nrendres%type -- Numero Endereco
+                               ,pr_nmbairro  IN crawseg.nmbairro%type -- Nome Bairro
+                               ,pr_nmcidade  IN crawseg.nmcidade%type -- Nome Cidade
+                               ,pr_cdufresd  IN crawseg.cdufresd%type -- Estado Residencia
+                               ,pr_nrcepend  IN crawseg.nrcepend%type -- CEP Endereco
+                               ,pr_cdempres  IN crapemp.cdempres%type -- Codigo Empresa
+                               ,pr_dtnascsg  IN crapdat.dtmvtolt%type -- Data Nascimento
+                               ,pr_complend  IN crawseg.complend%type -- Complemento Endereco
+                               ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
+                               ,pr_tab_erro  OUT gene0001.typ_tab_erro) IS --Tabela Erros
+  BEGIN
+  ---------------------------------------------------------------------------------------------------------------
+  -- Criar a proposta do seguro conforme as necessidades do projeto PRJ438
+  ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+
+     --Tabelas de Dados
+      vr_tab_associado  SEGU0001.typ_tab_associado;
+      vr_tab_seguradora SEGU0001.typ_tab_seguradora;
+      vr_tab_plano_seg  SEGU0001.typ_tab_plano_seg;
+
+      --Registros de Dados
+      vr_reg_crapttl crapttl%rowtype;
+      vr_reg_crapemp crapemp%rowtype;
+      vr_reg_crapmat crapmat%rowtype;
+      rw_crawseg     crawseg%rowtype;
+
+      --Variaveis Locais
+      vr_nrcpfcgc crawseg.nrcpfcgc%type;
+      vr_cdempres crapttl.cdempres%type;
+      vr_nrctrseg crapmat.nrctrseg%type;
+      vr_nmempres crapemp.nmextemp%type;
+      vr_tpsegvid crawseg.tpsegvid%type;
+      vr_nmbenefi crawseg.nmbenefi%type;
+      vr_cdsexosg crawseg.cdsexosg%type;
+      vr_dsorigem VARCHAR2(1000);
+      vr_dstransa VARCHAR2(1000);
+      vr_nmdsegur VARCHAR2(1000);
+      vr_nrdrowid ROWID;
+      vr_qtregist INTEGER;
+      vr_dtfimvig DATE;
+      vr_dtprideb DATE;
+      vr_dtdebito DATE;
+      vr_dtmvtolt DATE;
+      vr_vlpremio NUMBER;
+      vr_rowid_crawseg ROWID;
+      vr_dtnascsg crawseg.dtnascsg%type;
+
+      --Variaveis Indice
+      vr_index_seguradora PLS_INTEGER;
+      vr_index_plano      PLS_INTEGER;
+
+      --Variaveis de Erro
+      vr_cdcritic integer;
+      vr_dscritic varchar2(4000);
+      vr_des_erro varchar2(3);
+
+      vr_exc_sair EXCEPTION;
+      vr_exc_erro EXCEPTION;
+
+      vr_plano crapseg.tpplaseg%type;
+
+       --Cursor para retornor próximo plano
+       cursor c_plano is
+       select nvl(max(s.tpplaseg)+1,1) tpplaseg  
+         from crapseg s
+        where s.nrdconta = pr_nrdconta
+          and s.cdcooper = pr_cdcooper
+          and s.tpseguro = 4
+          and s.cdsitseg = 1; -- Somente ativos
+
+
+    BEGIN
+
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_cria_seguro');
+
+      --Inicializar Variaveis
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+
+      --Limpar tabela erros
+      pr_tab_erro.DELETE;
+
+        /* Copiar valores dos parametros para variaveis pois alguns
+           parametros que são de entrada sofrem alteracao!! */
+        vr_dtmvtolt:= pr_dtmvtolt;
+        vr_dtdebito:= pr_dtmvtolt;
+        vr_dtprideb:= pr_dtmvtolt;
+
+        --Buscar Associados
+        pc_buscar_associados (pr_cdcooper  => pr_cdcooper        -- Cooperativa
+                             ,pr_cdagenci  => pr_cdagenci        -- Agencia
+                             ,pr_nrdcaixa  => pr_nrdcaixa        -- Numero Caixa
+                             ,pr_cdoperad  => pr_cdoperad        -- Operador
+                             ,pr_dtmvtolt  => pr_dtmvtolt        -- Data Movimento
+                             ,pr_nrdconta  => pr_nrdconta        -- Numero Conta
+                             ,pr_idseqttl  => pr_idseqttl        -- Sequencial Titular
+                             ,pr_idorigem  => pr_idorigem        -- Origem Informacao
+                             ,pr_nmdatela  => pr_nmdatela        -- Programa Chamador
+                             ,pr_flgerlog  => pr_flgerlog        -- Escrever Erro Log
+                             ,pr_tab_associado => vr_tab_associado -- Registro do Associado
+                             ,pr_des_erro => vr_des_erro         -- Descricao Erro
+                             ,pr_tab_erro => pr_tab_erro);       -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao buscar associado.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        END IF;
+        
+        --CPF/CNPJ 
+        vr_nrcpfcgc:= vr_tab_associado(1).nrcpfcgc;
+        
+        --Codigo da Empresa
+        vr_cdempres:= pr_cdempres;
+
+        --Buscar Titular
+        pc_buscar_titular (pr_cdcooper  => pr_cdcooper        -- Cooperativa
+                          ,pr_cdagenci  => pr_cdagenci        -- Agencia
+                          ,pr_nrdcaixa  => pr_nrdcaixa        -- Numero Caixa
+                          ,pr_cdoperad  => pr_cdoperad        -- Operador
+                          ,pr_dtmvtolt  => pr_dtmvtolt        -- Data Movimento
+                          ,pr_nrdconta  => pr_nrdconta        -- Numero Conta
+                          ,pr_idseqttl  => pr_idseqttl        -- Sequencial Titular
+                          ,pr_idorigem  => pr_idorigem        -- Origem Informacao
+                          ,pr_nmdatela  => pr_nmdatela        -- Programa Chamador
+                          ,pr_flgerlog  => pr_flgerlog        -- Escrever Erro Log
+                          ,pr_reg_crapttl => vr_reg_crapttl   -- Registro do Titular
+                          ,pr_des_erro => vr_des_erro         -- Descricao Erro
+                          ,pr_tab_erro => pr_tab_erro);       -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao buscar titular.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        END IF;
+        
+        --Buscar endereço
+        open cr_crapenc;
+         fetch cr_crapenc into r_crapenc;
+          if cr_crapenc%notfound then
+            close cr_crapenc;
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Não encontrado endereço do titular.';
+            RAISE vr_exc_sair;
+          end if;
+        close cr_crapenc;
+
+        /* Pessoa Fisica e Sem Empresa */
+        IF vr_tab_associado(1).inpessoa = 1 AND nvl(pr_cdempres,0) = 0 THEN
+          vr_cdempres:= vr_reg_crapttl.cdempres;
+        END IF;
+
+        --Buscar Empresa
+        pc_buscar_empresa (pr_cdcooper  => pr_cdcooper        -- Cooperativa
+                          ,pr_cdagenci  => pr_cdagenci        -- Agencia
+                          ,pr_nrdcaixa  => pr_nrdcaixa        -- Numero Caixa
+                          ,pr_cdoperad  => pr_cdoperad        -- Operador
+                          ,pr_dtmvtolt  => pr_dtmvtolt        -- Data Movimento
+                          ,pr_nrdconta  => pr_nrdconta        -- Numero Conta
+                          ,pr_idseqttl  => pr_idseqttl        -- Sequencial Titular
+                          ,pr_idorigem  => pr_idorigem        -- Origem Informacao
+                          ,pr_nmdatela  => pr_nmdatela        -- Programa Chamador
+                          ,pr_flgerlog  => pr_flgerlog        -- Escrever Erro Log
+                          ,pr_cdempres  => vr_cdempres        -- Codigo Empresa
+                          ,pr_reg_crapemp => vr_reg_crapemp   -- Registro da Empresa
+                          ,pr_des_erro => vr_des_erro         -- Descricao Erro
+                          ,pr_tab_erro => pr_tab_erro);       -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao buscar empresa.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        END IF;
+
+        --Buscar Dados Seguradora
+        pc_buscar_seguradora (pr_cdcooper  => pr_cdcooper        -- Cooperativa
+                             ,pr_cdagenci  => pr_cdagenci        -- Agencia
+                             ,pr_nrdcaixa  => pr_nrdcaixa        -- Numero Caixa
+                             ,pr_cdoperad  => pr_cdoperad        -- Operador
+                             ,pr_dtmvtolt  => pr_dtmvtolt        -- Data Movimento
+                             ,pr_nrdconta  => pr_nrdconta        -- Numero Conta
+                             ,pr_idseqttl  => pr_idseqttl        -- Sequencial Titular
+                             ,pr_idorigem  => pr_idorigem        -- Origem Informacao
+                             ,pr_nmdatela  => pr_nmdatela        -- Programa Chamador
+                             ,pr_flgerlog  => pr_flgerlog        -- Escrever Erro Log
+                             ,pr_tpseguro  => pr_tpseguro        -- Tipo Seguro
+                             ,pr_cdsitpsg  => 1                  -- Situacao Seguro
+                             ,pr_cdsegura  => pr_cdsegura        -- Codigo Seguradora
+                             ,pr_nmsegura  => NULL               -- Nome Seguradora
+                             ,pr_qtregist  => vr_qtregist        -- Quantidade Registros
+                             ,pr_tab_seguradora => vr_tab_seguradora  -- Tabela da Seguradora
+                             ,pr_des_erro => vr_des_erro         -- Descricao Erro
+                             ,pr_tab_erro => pr_tab_erro);       -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao buscar seguros.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        END IF;
+
+        --Buscar Primeira Seguradora
+        vr_index_seguradora:= vr_tab_seguradora.FIRST;
+        WHILE vr_index_seguradora IS NOT NULL LOOP
+          IF vr_tab_seguradora(vr_index_seguradora).cdcooper = pr_cdcooper AND
+            (nvl(pr_cdsegura,0) = 0 OR vr_tab_seguradora(vr_index_seguradora).cdsegura = pr_cdsegura) THEN
+            EXIT;
+          END IF;
+          --Proximo Registro
+          vr_index_seguradora:= vr_tab_seguradora.NEXT(vr_index_seguradora);
+        END LOOP;
+
+        --Atualizar Matricula
+        pc_atualizar_matricula (pr_cdcooper  => pr_cdcooper        -- Cooperativa
+                               ,pr_cdagenci  => pr_cdagenci        -- Agencia
+                               ,pr_nrdcaixa  => pr_nrdcaixa        -- Numero Caixa
+                               ,pr_cdoperad  => pr_cdoperad        -- Operador
+                               ,pr_dtmvtolt  => pr_dtmvtolt        -- Data Movimento
+                               ,pr_nrdconta  => pr_nrdconta        -- Numero Conta
+                               ,pr_idseqttl  => pr_idseqttl        -- Sequencial Titular
+                               ,pr_idorigem  => pr_idorigem        -- Origem Informacao
+                               ,pr_nmdatela  => pr_nmdatela        -- Programa Chamador
+                               ,pr_flgerlog  => pr_flgerlog        -- Escrever Erro Log
+                               ,pr_reg_crapmat => vr_reg_crapmat   -- Registro de Matriculas
+                               ,pr_des_erro => vr_des_erro         -- Descricao Erro
+                               ,pr_tab_erro => pr_tab_erro);       -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao atualizar matricula.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        ELSE
+          --Numero Contrato
+          vr_nrctrseg:= vr_reg_crapmat.nrctrseg;
+        END IF;
+
+        --Buscar Plano Seguro
+        pc_buscar_plano_seguro (pr_cdcooper => pr_cdcooper        -- Cooperativa
+                               ,pr_cdagenci => pr_cdagenci        -- Agencia
+                               ,pr_nrdcaixa => pr_nrdcaixa        -- Numero Caixa
+                               ,pr_cdoperad => pr_cdoperad        -- Operador
+                               ,pr_dtmvtolt => pr_dtmvtolt        -- Data Movimento
+                               ,pr_nrdconta => pr_nrdconta        -- Numero Conta
+                               ,pr_idseqttl => pr_idseqttl        -- Sequencial Titular
+                               ,pr_idorigem => pr_idorigem        -- Origem Informacao
+                               ,pr_nmdatela => pr_nmdatela        -- Programa Chamador
+                               ,pr_flgerlog => pr_flgerlog        -- Escrever Erro Log
+                               ,pr_cdsegura => pr_cdsegura        -- Codigo Seguradora
+                               ,pr_tpseguro => pr_tpseguro        -- Tipo Seguro
+                               ,pr_tpplaseg => pr_tpplaseg        -- Tipo Plano Seguro
+                               ,pr_tab_plano_seg => vr_tab_plano_seg   -- Tabela Plano Seguros
+                               ,pr_des_erro => vr_des_erro        -- Descricao Erro
+                               ,pr_tab_erro => pr_tab_erro);      -- Tabela Erros
+        --Se ocorreu erro
+        IF vr_des_erro = 'NOK' THEN
+          IF pr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao buscar plano seguro.';
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+        END IF;
+
+        --Encontrar o Primeiro Plano
+        vr_index_plano:= vr_tab_plano_seg.FIRST;
+        WHILE vr_index_plano IS NOT NULL LOOP
+          IF vr_tab_plano_seg(vr_index_plano).cdcooper = pr_cdcooper AND
+             vr_tab_plano_seg(vr_index_plano).cdsegura = pr_cdsegura AND
+             vr_tab_plano_seg(vr_index_plano).tpseguro = pr_tpseguro AND
+             vr_tab_plano_seg(vr_index_plano).tpplaseg = pr_tpplaseg THEN
+            EXIT;
+          END IF;
+          --Proximo Registro
+          vr_index_plano:= vr_tab_plano_seg.NEXT(vr_index_plano);
+        END LOOP;
+
+        --Nome Segurado
+        IF vr_nmdsegur IS NULL THEN
+          IF vr_tab_associado.EXISTS(1) THEN
+            vr_nmdsegur:= vr_tab_associado(1).nmprimtl;
+          END IF;
+        END IF;
+
+        --Fim Vigencia
+        vr_dtfimvig:= NULL;
+
+        --Valor Premio
+        vr_vlpremio:= 0;
+        
+        IF vr_reg_crapemp.nmextemp IS NOT NULL THEN
+          vr_nmempres:= vr_reg_crapemp.nmextemp;
+        ELSE
+          vr_nmempres:= NULL;
+        END IF;
+        IF upper(vr_nmdsegur) = upper(vr_tab_associado(1).nmprimtl) THEN
+          vr_tpsegvid:= 1;
+        ELSE
+          vr_tpsegvid:= 2;
+        END IF;
+        IF pr_tpseguro IN (3,4) THEN
+          vr_nmbenefi:= NULL;
+        ELSE
+          vr_nmbenefi:= upper(vr_nmdsegur);
+        END IF;
+        --Sexo
+        vr_cdsexosg:= vr_tab_associado(1).cdsexotl;       
+        
+        IF pr_dtnascsg is null then
+          vr_dtnascsg := vr_tab_associado(1).dtnasctl;
+        ELSE
+          vr_dtnascsg := pr_dtnascsg;
+        END IF;
+
+        -- Próximo Plano
+        OPEN c_plano;
+         FETCH c_plano INTO vr_plano;
+        CLOSE c_plano; 
+
+        BEGIN
+          INSERT INTO crawseg
+            (crawseg.dtmvtolt
+            ,crawseg.dtdebito
+            ,crawseg.nrdconta
+            ,crawseg.tpseguro
+            ,crawseg.cdsegura
+            ,crawseg.nrcpfcgc
+            ,crawseg.nmdsegur
+            ,crawseg.dtinivig
+            ,crawseg.dtiniseg
+            ,crawseg.dtfimvig
+            ,crawseg.vlpremio
+            ,crawseg.vlpreseg
+            ,crawseg.cdcalcul
+            ,crawseg.tpplaseg
+            ,crawseg.vlseguro
+            ,crawseg.dtprideb
+            ,crawseg.flgunica
+            ,crawseg.dsendres
+            ,crawseg.nrendres
+            ,crawseg.nmbairro
+            ,crawseg.nmcidade
+            ,crawseg.cdufresd
+            ,crawseg.nrcepend
+            ,crawseg.cdcooper
+            ,crawseg.complend
+            ,crawseg.dtnascsg
+            ,crawseg.vlbenefi             
+            ,crawseg.nrcadast
+            ,crawseg.nrfonemp
+            ,crawseg.nrfonres
+            ,crawseg.dsmarvei
+            ,crawseg.dstipvei
+            ,crawseg.nranovei
+            ,crawseg.nrmodvei
+            ,crawseg.nrdplaca
+            ,crawseg.qtpasvei
+            ,crawseg.dschassi
+            ,crawseg.ppdbonus
+            ,crawseg.flgdnovo
+            ,crawseg.flgrenov
+            ,crawseg.cdapoant
+            ,crawseg.nmsegant
+            ,crawseg.flgdutil
+            ,crawseg.flgnotaf
+            ,crawseg.flgapant
+            ,crawseg.vldfranq
+            ,crawseg.vldcasco
+            ,crawseg.vlverbae
+            ,crawseg.flgassis
+            ,crawseg.vldanmat
+            ,crawseg.vldanpes
+            ,crawseg.vldanmor
+            ,crawseg.vlappmor
+            ,crawseg.vlappinv
+            ,crawseg.flgcurso
+            ,crawseg.flgrepgr
+            ,crawseg.nrctrato
+            ,crawseg.flgvisto
+            ,crawseg.vlfrqobr
+            ,crawseg.qtparcel
+            ,crawseg.nmempres
+            ,crawseg.tpsegvid
+            ,crawseg.nmbenefi
+            ,crawseg.cdsexosg
+            ,crawseg.nrctrseg)
+          VALUES
+            (vr_dtmvtolt --dtmvtolt
+            ,vr_dtdebito --dtdebito
+            ,pr_nrdconta --nrdconta
+            ,pr_tpseguro --tpseguro
+            ,pr_cdsegura --cdsegura
+            ,vr_nrcpfcgc --nrcpfcgc
+            ,UPPER(vr_nmdsegur) --nmdsegur
+            ,pr_dtinivig --dtinivig
+            ,pr_dtinivig --dtiniseg
+            ,vr_dtfimvig --dtfimvig
+            ,vr_vlpremio --vlpremio
+            ,pr_vlpreseg --vlpreseg
+            ,pr_cdcalcul --cdcalcul
+            ,vr_plano    --tpplaseg Será calculado (Paulo Martins) 12/09
+            ,pr_vlseguro --vlseguro
+            ,vr_dtprideb --dtprideb
+            ,pr_flgunica --flgunica
+            ,UPPER(pr_dsendres) --dsendres
+            ,pr_nrendres --nrendres
+            ,UPPER(pr_nmbairro) --nmbairro
+            ,UPPER(pr_nmcidade) --nmcidade
+            ,pr_cdufresd --cdufresd
+            ,pr_nrcepend --nrcepend
+            ,pr_cdcooper --cdcooper
+            ,UPPER(pr_complend) --complend
+            ,vr_dtnascsg 
+            ,0 --vlbenefi
+            ,vr_tab_associado(1).nrcadast --nrcadast
+            ,vr_tab_associado(1).nrfonemp --nrfonemp
+            ,vr_tab_associado(1).nrfonres --nrfonres
+            ,NULL --dsmarvei
+            ,NULL --dstipvei
+            ,0 --nranovei
+            ,0 --nrmodvei
+            ,NULL --nrdplaca
+            ,0 --qtpasvei
+            ,NULL --dschassi
+            ,0 --ppdbonus
+            ,0 /*FALSE*/ --flgdnovo
+            ,0 /*FALSE*/ --flgrenov
+            ,NULL --cdapoant
+            ,NULL --nmsegant
+            ,1 /*TRUE*/ --flgdutil
+            ,0 /*FALSE*/ --flgnotaf
+            ,0 /*FALSE*/ --flgapant
+            ,0 --vldfranq
+            ,0 --vldcasco
+            ,0 --vlverbae
+            ,0 /*FALSE*/ --flgassis
+            ,0 --vldanmat
+            ,0 --vldanpes
+            ,0 --vldanmor
+            ,0 --vlappmor
+            ,0 --vlappinv
+            ,0 /*FALSE*/ --flgcurso
+            ,0 /*FALSE*/ --flgrepgr
+            ,pr_nrctrato --nrctrato
+            ,0 /*FALSE*/ --flgvisto
+            ,0 --vlfrqobr
+            ,0 --qtparcel
+            ,upper(vr_nmempres) --nmempres
+            ,vr_tpsegvid --tpsegvid
+            ,upper(vr_nmbenefi) --nmbenefi
+            ,vr_cdsexosg --cdsexosg
+            ,vr_nrctrseg)--nrctrseg
+          RETURNING rowid
+                   ,crawseg.dtinivig
+                   ,crawseg.dtfimvig
+                   ,crawseg.vlpremio
+          INTO vr_rowid_crawseg
+              ,rw_crawseg.dtinivig
+              ,rw_crawseg.dtfimvig
+              ,rw_crawseg.vlpremio;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+            vr_dscritic:= 'Erro ao inserir registro na crawseg. '||sqlerrm;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END;
+
+      --Limpar tabela erros
+      pr_tab_erro.DELETE;
+
+
+
+      --Se for para gerar log
+      IF pr_flgerlog THEN
+        --Executar rotina geracao log
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1 /*TRUE*/
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+      END IF;
+      
+      --Retorno OK
+      pr_des_erro:= 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_des_erro:= 'NOK';
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+        pr_des_erro:= 'NOK';
+        --Mensagem Erro
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Erro na rotina SEGU0001.pc_cria_seguro. '||sqlerrm;
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+    END;
+  END pc_cria_proposta;
+  
+  /*INICIO*/
+  BEGIN
+      
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_cria_seguros_seguro');   
+
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop;
+      FETCH cr_crapcop
+       INTO rw_crapcop;
+      -- Se não encontrar
+      IF cr_crapcop%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE cr_crapcop;
+        -- Montar mensagem de critica
+        vr_cdcritic := 651;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      open cr_crapenc;
+       fetch cr_crapenc into r_crapenc;
+        if cr_crapenc%notfound then
+          close cr_crapenc;
+           vr_cdcritic := 0;
+           vr_dscritic := 'Endereço não econtrado na geração da proposta seguro prestamista.';
+           RAISE vr_exc_saida;
+        end if;
+      close cr_crapenc;
+      
+     -- Validar se existe proposta prestamista para este contrato se encontrar deleta
+     open c_proposta;
+      fetch c_proposta into r_proposta;
+       if c_proposta%found then
+         begin
+          delete from crawseg s where s.rowid = r_proposta.rowid;
+          --commit;
+         exception
+           when others then
+            close c_proposta;
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao deletar proposta: '||sqlerrm;
+         end;
+       end if;
+      close c_proposta;      
+         
+      -- Finalmente, cria o registro de seguro
+      pc_cria_proposta(pr_cdcooper => pr_cdcooper
+                      ,pr_nrctrato => pr_nrctrato
+                      ,pr_cdagenci => 0
+                      ,pr_nrdcaixa => 0
+                      ,pr_cdoperad => pr_cdoperad 
+                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_idseqttl => 1
+                      ,pr_idorigem => 1
+                      ,pr_nmdatela => NULL
+                      ,pr_flgerlog => FALSE
+                      ,pr_cdsegura => 5011 -- Chubb
+                      ,pr_dtfimvig => NULL
+                      ,pr_dtinivig => rw_crapdat.dtmvtolt
+                      ,pr_flgunica => 0
+                      ,pr_tpplaseg => 1 -- Fixo igual tela
+                      ,pr_tpseguro => 4 -- Fixo igual tela
+                      ,pr_vlpreseg => 0 
+                      ,pr_cdcalcul => 0 
+                      ,pr_vlseguro => pr_vlseguro
+                      ,pr_dsendres => r_crapenc.dsendere
+                      ,pr_nrendres => r_crapenc.nrendere
+                      ,pr_nmbairro => r_crapenc.nmbairro
+                      ,pr_nmcidade => r_crapenc.nmcidade
+                      ,pr_cdufresd => r_crapenc.cdufende
+                      ,pr_nrcepend => r_crapenc.nrcepend
+                      ,pr_cdempres => 0
+                      ,pr_dtnascsg => NULL -- é validado dentro da procedure
+                      ,pr_complend => r_crapenc.complend
+                      ,pr_des_erro => vr_dscritic
+                      ,pr_tab_erro => vr_tab_erro);
+
+    -- Testar saida da rotina
+    IF vr_dscritic <> 'OK' THEN
+      -- Se houver tab_erro
+    IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Erro nao tratado.';
+      END IF;
+      -- Incrementar a critica
+      vr_dscritic := 'Nao foi possivel criar o registro da CRAWSEG. '
+                  || ' Tipo seguro: 4.'
+                  || ' Conta: ' ||pr_nrdconta ||'. Critica: '||vr_dscritic;
+      -- Gerar  LOG          
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                 || vr_cdprogra || ' --> '
+                                                 || vr_dscritic );          
+    END IF;
+    -- Salvar informações atualizadas
+    -- COMMIT;
+    EXCEPTION
+      WHEN vr_exc_fimprg THEN
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic );
+
+        -- Efetuar commit
+        -- COMMIT;
+      WHEN vr_exc_saida THEN
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        -- Devolvemos código e critica encontradas das variaveis locais
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := vr_dscritic;
+        -- Efetuar rollback
+        -- ROLLBACK;
+      WHEN OTHERS THEN
+        -- Efetuar retorno do erro não tratado
+        pr_cdcritic := 0;
+        pr_dscritic := sqlerrm;
+        -- Efetuar rollback
+        -- ROLLBACK;
+    END pc_cria_proposta_seguro_p;    
+    
+    PROCEDURE pc_efetiva_proposta_seguro_p(pr_cdcooper in crapcop.cdcooper%type,
+                                           pr_nrdconta in crapass.nrdconta%type,
+                                           pr_nrctrato in crawseg.nrctrato%type,
+                                           pr_cdoperad in crapope.cdoperad%type,
+                                           pr_cdagenci in crapseg.cdagenci%type,
+                                           pr_vlslddev in crapseg.vlslddev%type,
+                                           pr_idimpdps in varchar2,
+                                           pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                           pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica
+
+    /* .............................................................................
+
+    Programa:  pc_efetiva_proposta_seguro_p
+    Sistema : Ayllos Web
+    Autor   : Paulo Martins(Mouts)
+    Data    : Agosto/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Efetivação proposta do seguro prestamista
+
+    Alteracoes: -----
+    ..............................................................................*/                                        
+
+                                                                                          
+    cursor c_crawseg is
+    select s.*
+      from crawseg s
+     where s.tpseguro = 4
+       and s.cdcooper = pr_cdcooper
+       and s.nrdconta = pr_nrdconta
+       and s.nrctrato = pr_nrctrato
+       and not exists (select 1 
+                         from crapseg p
+                        where s.cdcooper = p.cdcooper
+                          and s.nrdconta = p.nrdconta
+                          and s.tpseguro = p.tpseguro
+                          and s.nrctrseg = p.nrctrseg);   
+    r_crawseg c_crawseg%rowtype;
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;       
+    
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_exc_fimprg EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);      
+                                           
+    BEGIN 
+      
+     open c_crawseg;
+      fetch c_crawseg into r_crawseg;
+     close c_crawseg;
+     
+     -- Leitura do calendário da cooperativa
+     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+    
+     begin
+       insert into crapseg(crapseg.cdcooper,
+                           crapseg.cdoperad,
+                           crapseg.dtmvtolt,
+                           crapseg.nrseqdig,
+                           crapseg.nrctrseg,
+                           crapseg.cdagenci,
+                           crapseg.cdsitseg,
+                           crapseg.dtdebito,
+                           crapseg.dtinivig,
+                           crapseg.dtfimvig,
+                           crapseg.cdsegura,
+                           crapseg.nrdconta,
+                           crapseg.dtultpag,
+                           crapseg.dtiniseg,
+                           crapseg.qtparcel,
+                           crapseg.dtprideb,
+                           crapseg.vldifseg,
+                           crapseg.flgunica,
+                           crapseg.tpseguro,
+                           crapseg.tpplaseg,
+                           crapseg.vlpreseg,
+                           crapseg.lsctrant,
+                           crapseg.nrctratu,
+                           crapseg.tpendcor,
+                           crapseg.flgconve,
+                           crapseg.tpdpagto,
+                           crapseg.vlpremio,
+                           crapseg.cdopeori,
+                           crapseg.cdageori,
+                           crapseg.dtinsori,
+                           crapseg.vlslddev,
+                           crapseg.idimpdps) values (pr_cdcooper
+                                                    ,pr_cdoperad
+                                                    ,rw_crapdat.dtmvtolt
+                                                    ,r_crawseg.nrctrseg
+                                                    ,r_crawseg.nrctrseg
+                                                    ,pr_cdagenci
+                                                    ,1 -- Ativo
+                                                    ,r_crawseg.dtdebito
+                                                    ,r_crawseg.dtinivig
+                                                    ,r_crawseg.dtfimvig
+                                                    ,r_crawseg.cdsegura
+                                                    ,r_crawseg.nrdconta
+                                                    ,r_crawseg.dtmvtolt
+                                                    ,r_crawseg.dtiniseg
+                                                    ,r_crawseg.qtparcel
+                                                    ,r_crawseg.dtprideb
+                                                    ,r_crawseg.vldifseg
+                                                    ,r_crawseg.flgunica
+                                                    ,r_crawseg.tpseguro
+                                                    ,r_crawseg.tpplaseg
+                                                    ,r_crawseg.vlpreseg
+                                                    ,r_crawseg.lsctrant
+                                                    ,r_crawseg.nrctratu
+                                                    ,1 -- tpendcor -- Residencial
+                                                    ,r_crawseg.flgconve
+                                                    ,r_crawseg.tpdpagto
+                                                    ,r_crawseg.vlpremio
+                                                    ,pr_cdoperad
+                                                    ,pr_cdagenci
+                                                    ,sysdate
+                                                    ,pr_vlslddev
+                                                    ,decode(pr_idimpdps,'S',1,'N',0));
+     exception
+       when others then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao inserir crapseg: '||sqlerrm;
+        RAISE vr_exc_saida;
+     end;
+     
+      -- Efetuar commit
+      -- COMMIT;
+    EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      -- ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      -- ROLLBACK;     
+    END pc_efetiva_proposta_seguro_p;                                
+  
 END SEGU0001;
 /
