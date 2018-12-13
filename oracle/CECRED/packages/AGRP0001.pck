@@ -2631,7 +2631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                         where his.cdcooper = crd.cdcooper
                           and his.nrdconta = crd.nrdconta
                           and his.nrcrcard = crd.nrcrcard
-                          and his.tpsituacao = 2);
+                          and his.tpsituacao = 1);
 
     vr_idprglog number := 0;
     vr_cdcooper crapass.cdcooper%type;
