@@ -2,23 +2,13 @@
 
 /***************************************************************
 
-  Fonte: cobranca.php
-  Autor: Gabriel
-  Data : Dezembro/2010            Ultima atualizacao: 28/04/2016
+  Fonte: reciprocidade.php
+  Autor: Andre Clemer (Supero)
+  Data : Novembro/2018            Ultima atualizacao: --/--/----
   
-  Objetivo: Mostrar a rotina de Cobranca na ATENDA.
+  Objetivo: Mostrar a rotina de Reciprocidade na ATENDA.
   
-  Alteracoes: 14/07/2011 - Alterado para layout padrão 
-*						   (Gabriel Capoia - DB1)
-*		   
-*	          26/07/2011 - Incluir frame com as testemunhas
-*						   (Gabriel)
-*
-*			  09/07/2012 - Retirado campo "redirect" popup. (Jorge)
-*
-*             28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
-*
-*			  25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM)
+  Alteracoes: 
 ****************************************************************/
 
 session_start();
@@ -31,16 +21,19 @@ require_once("../../../includes/controla_secao.php");
 // Verifica se tela foi chamada pelo m&eacute;todo POST
 isPostMethod();	
 		
+$_POST['nmrotina'] = 'COBRANCA';
+		
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");
 	
 // Se par&acirc;metros necess&aacute;rios n&atilde;o foram informados
 if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
+	echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Aimaro","");';
 	exit();
 }	
 
+$nrdconta = $_POST['nrdconta']; 
 $labelRot = $_POST['labelRot'];	
 
 // Carrega permiss&otilde;es do operador
