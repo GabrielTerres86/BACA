@@ -1065,11 +1065,14 @@ function buscaParametrosGerais(){
 		
 	showMsgAguardo( "Aguarde, carregando os parâmetros gerais..." );
 	
+	var cddopcao = $('#cddopcao','#frmCabConjob').val();
+	
     //Requisição para processar a opção que foi selecionada
 	$.ajax({
         type: "POST",
         url: UrlSite + "telas/conjob/form_parametros_gerais.php", 
         data: {
+        	cddopcao: cddopcao,
 			redirect: "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
