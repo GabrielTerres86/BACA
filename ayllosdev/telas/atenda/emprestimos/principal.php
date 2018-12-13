@@ -166,6 +166,33 @@
 			}
 		}
 		
+		if ($operacao == "TC") {
+			// Montar o xml de Requisicao
+			$xmlCarregaDados  = "";
+			$xmlCarregaDados .= "<Root>";
+			$xmlCarregaDados .= " <Dados/>";
+			$xmlCarregaDados .= " </Dados>";
+			$xmlCarregaDados .= "</Root>";
+
+			$xmlResult = mensageria($xmlCarregaDados
+								   ,"GRVM0001"
+								   ,"GRAVAME_ONLINE_HABILITADO"
+								   ,$glbvars["cdcooper"]
+								   ,$glbvars["cdagenci"]
+								   ,$glbvars["nrdcaixa"]
+								   ,$glbvars["idorigem"]
+								   ,$glbvars["cdoperad"]
+								   ,"</Root>");
+			$xmlObject = getObjectXML($xmlResult);
+				
+			if (!strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+				// Buscar a flag
+				if (strtoupper($xmlObject->roottag->tags[0]->name) == "grvonline") {
+					$flgGrvOnline = $xmlObject->roottag->tags[0]->cdata;
+				}
+			}
+		}
+		
 		if (in_array($operacao,array(''))){
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
@@ -1098,11 +1125,10 @@
 
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
     if (executandoProdutos && operacao == '' ) {
-	  
+
 		controlaOperacao('I');
-		
+
     }
-	  
 
 </script>
 
