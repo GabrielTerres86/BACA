@@ -718,7 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpr.dtsolicitacao
 								,tpr.nrnu_portabilidade nusolicitacao
-								,GENE0002.fn_mask_conta(tpr.nrdconta) nrdconta
+								,GENE0002.fn_mask_conta(DECODE(tpr.nrdconta,0, NULL,tpr.nrdconta)) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcpfcgc, 1) nrcpfcgc
 								,tpr.dstelefone telefone
 								,tpr.dsdemail email
@@ -1008,7 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpe.dtsolicitacao
 								,tpe.nrnu_portabilidade nusolicitacao
-								,tpe.nrdconta
+								,decode(tpe.nrdconta, 0, NULL, tpe.nrdconta) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
 								,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
 								,tpe.nmprimtl
