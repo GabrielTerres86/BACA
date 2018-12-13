@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 15/06/2018
+    Data      : Julho/2014                Ultima Atualizacao: 13/12/2018
     
     Dados referentes ao programa:
 
@@ -116,6 +116,8 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+        
+        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
                 
 ..............................................................................*/
 
@@ -2290,6 +2292,13 @@ PROCEDURE calcula_taxa_emprestimo:
                            INPUT 1,
                            INPUT aux_cdcritic,
                            INPUT-OUTPUT aux_dscritic).
+                           
+            IF VALID-HANDLE(h-b1wgen0002) THEN
+               DELETE PROCEDURE h-b1wgen0002.
+
+            IF VALID-HANDLE(h-b1wgen0153) THEN
+               DELETE PROCEDURE h-b1wgen0153.
+                           
             RETURN "NOK".
         END.
 
@@ -2312,6 +2321,13 @@ PROCEDURE calcula_taxa_emprestimo:
                           INPUT 1,
                           INPUT aux_cdcritic,
                           INPUT-OUTPUT aux_dscritic).
+                          
+           IF VALID-HANDLE(h-b1wgen0002) THEN
+              DELETE PROCEDURE h-b1wgen0002.
+
+           IF VALID-HANDLE(h-b1wgen0153) THEN
+              DELETE PROCEDURE h-b1wgen0153.
+                          
            RETURN "NOK".
        END.
     /* Busca a tarifa do emprestimo */
@@ -2329,6 +2345,12 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
+                                      
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
 
     IF RETURN-VALUE <> "OK"  THEN
        RETURN "NOK".
@@ -2348,6 +2370,13 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
+                                      
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
+                                      
     IF RETURN-VALUE <> "OK"  THEN
        RETURN "NOK".
     
@@ -2381,6 +2410,13 @@ PROCEDURE calcula_taxa_emprestimo:
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
+                                          
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
+                                          
 
     IF RETURN-VALUE <> "OK" THEN
        RETURN "NOK".
@@ -2404,11 +2440,24 @@ PROCEDURE calcula_taxa_emprestimo:
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
-    
+                     
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
+                 
+                     
     IF RETURN-VALUE <> "OK" THEN
        RETURN "NOK".
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.
+    
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
     
     RETURN "OK".
 
@@ -2700,9 +2749,8 @@ PROCEDURE imprime_previa_demonstrativo:
                                        OUTPUT aux_dsestcvl,
                                        OUTPUT aux_dscritic).
 
-                      IF NOT VALID-HANDLE(h-b1wgen0060)  THEN
-                         RUN sistema/generico/procedures/b1wgen0060.p 
-                             PERSISTENT SET h-b1wgen0060.
+                      IF VALID-HANDLE(h-b1wgen0060) THEN
+                         DELETE PROCEDURE h-b1wgen0060.
 
                   END. /* END IF IF AVAIL crapttl THEN */
 
