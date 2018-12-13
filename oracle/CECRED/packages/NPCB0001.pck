@@ -285,7 +285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotinas GERAIS referentes a Nova Plataforma de Cobrança de Boletos
 
       Alteracoes:
-                   
+
       15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
                    caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
                          
@@ -876,7 +876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para gerar log das rotinas NPC
       Alteração : 
-      
+        
       16/10/2018 - Eliminar arquivo texto BTCH0001.pc_gera_log_batch por tabela oracle pc_log_programa
                    ( Belli - Envolti - Chd INC0025460 ) 
         
@@ -914,7 +914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                    );      
   END pc_gera_log_npc;
   
---> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
+  --> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
   PROCEDURE pc_valid_titulo_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                  ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data de movimento
                                  ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
@@ -939,7 +939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       
       04/09/2017 - Verificar se a data do pagamento excedeu ao próximo dia util
                    da data limite de pagamento. (SD#747481 - Rafael).
-                   
+        
       15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
                    caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
         
@@ -950,7 +950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       SELECT con.dsxml
              ,con.vltitulo 
              ,con.dscodbar
-             ,con.flgcontingencia
+             ,con.flgcontingencia 
              ,con.cdagenci 
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
@@ -1045,7 +1045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                              ,pr_dtvencto => vr_dtvencto
                              ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
                              ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
-
+      
       -- Limpar a tabela de erros
       vr_tab_erro.DELETE;
 
@@ -1078,7 +1078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         vr_dscritic := 'Atenção boleto vencido: Sistema temporariamente indisponível para esta operação.';
         RAISE vr_exc_erro;
       END IF;
-
+      
       --> Não precisa realizar demais validações
       RETURN;
     
@@ -1130,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel validar titulo NPC: '||SQLERRM;  
-  END pc_valid_titulo_npc; 
+  END pc_valid_titulo_npc;  
   
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
@@ -1263,7 +1263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+      Data     : Janeiro/2017.                   Ultima atualizacao: 30/11/2018
     
       Dados referentes ao programa:
     
@@ -1271,6 +1271,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotina para retornar os valores do titulo calculado pela NPC
       Alteração : 
         
+      30/11/2018 - Validar a data de validade do cálculo comparando com trunc(sysdate)
+                   e não com dtmvtolt. Isso porque em feriados e finais de semana
+                   dtmvtolt já está como o próximo dia útil. Ex.: sysdate=15/11 dtmvtolt=16/11.
+                   Com isso não calculava o desconto do título ao incluir o pagamento
+                   em um final de semana. (AJFink INC0026043)
+
     ..........................................................................*/
     
     vr_VlrTotCobrar  NUMBER;
@@ -1278,17 +1284,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_VlrCalcdMulta NUMBER;
     vr_VlrCalcdDesct NUMBER;
     vr_dtValiddCalc  DATE := to_date('25/04/2049','DD/MM/RRRR'); -- RC7
-    vr_data DATE;
+
   BEGIN    
     
     IF pr_tbtitulo.TabCalcTit.count <> 0 THEN
       FOR idx IN pr_tbtitulo.TabCalcTit.first..pr_tbtitulo.TabCalcTit.last LOOP
         
-      vr_data := pr_tbtitulo.TabCalcTit(idx).dtValiddCalc;
-      
-        --> utilizar o valor se a data do movimento for menor que a dta de validade
+        --> utilizar o valor se a data for menor ou igual a dta de validade
         --> e se for a menor data encontrada.. caso a temptable nao esteja ordenada
-        IF pr_dtmvtolt <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
+        --> isso acontecia porque a JD enviada data de validade incoerente
+        --INC0026043 IF pr_dtmvtolt <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
+        IF trunc(sysdate) <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
            pr_tbtitulo.TabCalcTit(idx).dtValiddCalc < vr_dtValiddCalc THEN 
           vr_VlrTotCobrar  := pr_tbtitulo.TabCalcTit(idx).VlrTotCobrar;
           vr_dtValiddCalc  := pr_tbtitulo.TabCalcTit(idx).dtValiddCalc; 
