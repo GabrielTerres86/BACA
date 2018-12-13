@@ -119,7 +119,7 @@
 </div>
 
 <div id="divBotoes" style="margin-top: 5px; margin-bottom: 10px; text-align: center;">
-	<a href="#" class="botao" id="btExclusao"><? echo utf8ToHtml('Exclusão'); ?></a>
+	<a href="#" class="botao" id="btExclusao"><? echo utf8ToHtml('Exclusões'); ?></a>
 	<a href="#" class="botao" id="btVoltar" onClick="encerraRotina(true); return false;">Voltar</a>																				
 </div>
 
