@@ -5415,9 +5415,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
       
       --> IDENTIFICADOR
-      IF vr_cdempcon IN ( '0239','0451') THEN
+      IF vr_cdempcon IN ( '0239') THEN
+        vr_nrrecolh := SUBSTR(pr_cdbarras, 28, 17);
+      ELSIF vr_cdempcon IN ('0451') THEN
         vr_nrrecolh := SUBSTR(pr_cdbarras, 30, 15);
-      
       ELSIF vr_cdempcon IN ( '0178','0240') THEN
         --> SEQUENCIAL DA GRDE 
         vr_nrsqgrde := SUBSTR(pr_cdbarras, 26, 3);
@@ -5701,7 +5702,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       IF trim(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+
+	  IF vr_dsempcon = '0239' THEN
+         vr_nrrecolh := lpad(vr_nrrecolh,17,'0');
+      ELSE
+         vr_nrrecolh := lpad(vr_nrrecolh,15,'0');
+      END IF;
 
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
@@ -5717,7 +5723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
                      '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
-                     '<identificador>'   || lpad(vr_nrrecolh,15,'0')          ||'</identificador>'  ||   
+                     '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||      
                      '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
                      '<vlrtotal>'        || to_char(vr_vldocmto,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vlrtotal>';
                      
