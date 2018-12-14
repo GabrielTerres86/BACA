@@ -77,7 +77,12 @@ if ($tpinclus == "M") {
 		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);
 
 	} else {
-		echo "showError('inform','".utf8ToHtml('Alienação confirmada junto ao SNG')."','Notifica&ccedil;&atilde;o - Ayllos','');";
+		if ($tpinclus == "M") {
+			$msgReturn = utf8ToHtml('Inclus&atilde;o manual do registro efetuada com sucesso! Ao efetuar uma aliena&ccedil;&atilde;o manual, &eacute; necess&aacute;rio efetuar a aliena&ccedil;&atilde;o manual no sistema CETIP');
+		} else {
+			$msgReturn = utf8ToHtml('Alienação confirmada junto ao SNG');
+		}
+		echo "showError('inform','".$msgReturn."','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
 	}
 
 	function validaDados() {
