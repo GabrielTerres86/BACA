@@ -670,6 +670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --          
   --             20/09/2018 - Validar se automovel existe antes de inserir
   --                          (Lucas Eduardo Ranghetti INC0023969)
+  --             13/12/2018 - Retirado Commit e Rollback Procedures prestamista chamados via progress - Paulo Martins
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -8319,7 +8320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
        if c_proposta%found then
          begin
           delete from crawseg s where s.rowid = r_proposta.rowid;
-          commit;
+          --commit;
          exception
            when others then
             close c_proposta;
@@ -8382,7 +8383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                                  || vr_dscritic );          
     END IF;
     -- Salvar informações atualizadas
-    COMMIT;
+    -- COMMIT;
     EXCEPTION
       WHEN vr_exc_fimprg THEN
         -- Se foi retornado apenas código
@@ -8398,7 +8399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                                    || vr_dscritic );
 
         -- Efetuar commit
-        COMMIT;
+        -- COMMIT;
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -8409,13 +8410,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         -- Efetuar rollback
-        ROLLBACK;
+        -- ROLLBACK;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
         -- Efetuar rollback
-        ROLLBACK;
+        -- ROLLBACK;
     END pc_cria_proposta_seguro_p;    
     
     PROCEDURE pc_efetiva_proposta_seguro_p(pr_cdcooper in crapcop.cdcooper%type,
@@ -8562,7 +8563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      end;
      
       -- Efetuar commit
-      COMMIT;
+      -- COMMIT;
     EXCEPTION
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
@@ -8574,13 +8575,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
-      ROLLBACK;
+      -- ROLLBACK;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
-      ROLLBACK;     
+      -- ROLLBACK;     
     END pc_efetiva_proposta_seguro_p;                                
   
 END SEGU0001;

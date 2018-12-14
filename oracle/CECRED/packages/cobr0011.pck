@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 01/11/2018
+  --  Data     : Março/2018.                   Ultima atualização: 10/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -291,6 +291,8 @@ create or replace package body cecred.cobr0011 IS
   --             31/10/2018 - Alterado conta de centralização da cooperativa para conta de compensação (P352 - Cechet).
   --
   --             01/11/2018 - Incluido rotina de trace na chamada SPB para envio de TED (P352 - Cechet)
+  --
+  --             10/12/2018 - Ajuste na sequence de lançamento na conta de recurso financeiro (P352 - Cechet).
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -348,16 +350,22 @@ create or replace package body cecred.cobr0011 IS
                                        ) RETURN VARCHAR2 IS
     --
     vr_nome_arquivo VARCHAR2(400);
+	vr_sequencial INTEGER;
     --
   BEGIN
     --
+	-- controlar o arquivo sequencial do dia
+    vr_sequencial := fn_sequence(pr_nmtabela => 'IEPTB'
+                                ,pr_nmdcampo => 'NRSEQUENCIAL'
+                                ,pr_dsdchave => to_char(pr_dtmvtolt,'YYYYMMDD'));
+
     vr_nome_arquivo := 'B'                        -- Arquivo gerado pelo portador -- Fixo
                     || lpad(pr_cdbandoc, 3, '0')  -- Código de compensação do banco/portador
                     || to_char(pr_dtmvtolt, 'DD') -- Dia do envio do arquivo
                     || to_char(pr_dtmvtolt, 'MM') -- Mês do envio do arquivo
                     || '.'                        
                     || to_char(pr_dtmvtolt, 'YY') -- Ano do envio do arquivo
-                    || '1'                        -- Número sequencial da remessa -- REVISAR
+                    || to_char(vr_sequencial)     -- Número sequencial da remessa 
                     ;
     --
     RETURN vr_nome_arquivo;
@@ -2802,8 +2810,8 @@ create or replace package body cecred.cobr0011 IS
 																);
 			--
 			vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
-																		 'nrseqdig',''||3
-																		 ||';'||rw_crapcop.nrctacmp||';'||to_char(rw_craplot.dtmvtolt,'dd/mm/yyyy')||'');
+										   'nrseqdig',''||3
+													 ||';'||rw_crapcop.nrctacmp||';'||to_char(rw_craplot.dtmvtolt,'dd/mm/yyyy')||'');
 			--
 			INSERT INTO tbfin_recursos_movimento(cdcooper
 																					,nrdconta
@@ -2833,7 +2841,7 @@ create or replace package body cecred.cobr0011 IS
 																									,rw_crapcop.nrctacmp        -- nrdconta
 																									,rw_craplot.dtmvtolt        -- dtmvtolt
 																									,vr_sqdoclan                -- nrdocmto
-																									,nvl(rw_craplot.nrseqdig,0) -- nrseqdig
+																									,vr_aux_nrseqdig            -- nrseqdig
 																									,2640                       -- cdhistor -- Fixo
 																									,rw_craphis.indebcre        -- dsdebcre
 																									,pr_vllanmto                -- vllanmto
@@ -3094,7 +3102,7 @@ create or replace package body cecred.cobr0011 IS
 																									,pr_nrdconta                -- nrdconta conta recurso movimento
 																									,pr_craplot.dtmvtolt        -- dtmvtolt
 																									,vr_sqdoclan                -- nrdocmto
-																									,nvl(pr_craplot.nrseqdig,0) -- nrseqdig
+																									,vr_aux_nrseqdig            -- nrseqdig
 																									,vr_cdhistor                -- cdhistor
 																									,rw_craphis.indebcre        -- dsdebcre
 																									,pr_vllanmto                -- vllanmto

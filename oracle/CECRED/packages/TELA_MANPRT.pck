@@ -1617,7 +1617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : André Clemer (Supero)
-    Data     : Abril/2018                           Ultima atualizacao:
+    Data     : Abril/2018                           Ultima atualizacao: 12/12/2018
 
     Dados referentes ao programa:
 
@@ -1625,6 +1625,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     Objetivo   : Pesquisa de títulos não conciliados do retorno do IEPTB
 
     Alterações :
+    
+    12/12/2018 - Filtrar apenas titulos pagos em cartório no processo de 
+                 conciliação (tpocorre=1) (Cechet/Fabio Supero)
     -------------------------------------------------------------------------------------------------------------*/
     
     CURSOR cr_titulos(pr_dtinicial     IN VARCHAR2
@@ -1645,6 +1648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
            INNER JOIN tbcobran_cartorio_protesto cart ON cart.idcidade = mun.idcidade AND ret.cdcartorio = cart.cdcartorio
            INNER JOIN crapcop cop ON cop.cdcooper = ret.cdcooper
      WHERE ret.dtconciliacao IS NULL
+       AND ret.tpocorre = 1 -- titulo pago em cartorio
        AND (
                (pr_dtinicial IS NOT NULL AND ret.dtocorre >= to_date(pr_dtinicial,'DD/MM/RRRR'))
            OR

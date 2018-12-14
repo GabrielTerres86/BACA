@@ -33,6 +33,7 @@ if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 	exit();
 }	
 
+$nrdconta = $_POST['nrdconta']; 
 $labelRot = $_POST['labelRot'];	
 
 // Carrega permiss&otilde;es do operador

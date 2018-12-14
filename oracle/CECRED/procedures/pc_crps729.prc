@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 10/10/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 13/12/2018
 
    Dados referentes ao programa:
 
@@ -15,7 +15,12 @@
 
    Alteracoes: 
    
-   10/10/12018 - Ajustado campo t06 para informar o CPF/CNPJ do cooperado (Cechet).   
+   10/10/2018 - Ajustado campo t06 para informar o CPF/CNPJ do cooperado (Cechet).
+
+   12/12/2018 - Adicionado numero do endereço do beneficiario e pagador na remessa (Cechet).
+   
+   13/12/2018 - Ajuste na passagem de parametros do header dos arquivos de desistencia 
+                e cancelamento de protesto (Fábio/Supero).
    
   ............................................................................. */
   
@@ -490,7 +495,8 @@
             ,lpad(crapcop.cdagectl, 5, '0') || ' ' || lpad(crapcob.nrdconta, 9, '0') nrdconta             -- Campo 03 - Transação
             ,rpad(crapass.nmprimtl, 45, ' ') nmprimtl                                                     -- Campo 04/05 - Transação
             ,lpad(to_char(crapass.nrcpfcgc), 14, '0') nrcpfcgc                                            -- Campo 06 - Transação
-            ,rpad(crapenc.dsendere, 45, ' ') dsendere                                                     -- Campo 07 - Transação
+            ,rpad(crapenc.dsendere || CASE WHEN nvl(crapenc.nrendere,0) > 0 THEN ' ' || to_char(crapenc.nrendere) END
+                                  , 45, ' ') dsendere                                                     -- Campo 07 - Transação
             ,lpad(crapenc.nrcepend, 8, '0') nrcepend                                                      -- Campo 08 - Transação
             ,rpad(crapenc.nmcidade, 20, ' ') nmcidade                                                     -- Campo 09 - Transação
             ,rpad(crapenc.cdufende, 2, ' ') cdufende                                                      -- Campo 10 - Transação
@@ -506,7 +512,8 @@
             ,rpad(substr(crapsab.nmdsacad, 0, 45), 45, ' ') nmdsacad                                      -- Campo 23 - Transação
             ,lpad(decode(crapsab.cdtpinsc, 1, 2, 2, 1, 0), 3, '0') cdtpinsc                               -- Campo 24 - Transação
             ,lpad(crapsab.nrinssac, 14, '0') nrinssac                                                     -- Campo 25 - Transação
-            ,rpad(substr(crapsab.dsendsac, 0, 45), 45, ' ') dsendsac                                      -- Campo 27 - Transação
+            ,rpad(substr(crapsab.dsendsac || CASE WHEN NVL(crapsab.nrendsac,0) > 0 THEN ' ' || to_char(crapsab.nrendsac) END
+                                         , 0, 45), 45, ' ') dsendsac                                      -- Campo 27 - Transação
             ,lpad(crapsab.nrcepsac, 8, '0') nrcepsac                                                      -- Campo 28 - Transação
             ,rpad(substr(crapsab.nmcidsac, 0, 20), 20, ' ') nmcidsac                                      -- Campo 29 - Transação
             ,crapsab.cdufsaca                                                                             -- Campo 30 - Transação
@@ -584,7 +591,7 @@
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtocd);
     --
     LOOP
       --
@@ -784,31 +791,13 @@
     pc_controla_log_batch(1, 'Início crps729.pc_gera_arquivo_remessa');
     --
     IF vr_tab_arquivo.count > 0 THEN
-      --
-      BEGIN
-        --
-        SELECT crapdat.dtmvtolt
-          INTO vr_dtmvtolt
-          FROM crapdat
-         WHERE crapdat.cdcooper = 3;
-        --
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Incluído controle de Log
-          pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> Erro ao buscar a data de movimento: ' || SQLERRM);
-          RAISE vr_exc_erro;
-      END;
+
+      vr_dtmvtolt := TRUNC(SYSDATE);
+
       -- Busca o nome do arquivo
       vr_nmarqtxt := cobr0011.fn_gera_nome_arquivo_remessa(pr_cdbandoc => 85          -- IN
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                           );
-
-      -- Controlar sequencial de remessa no dia, caso seja necessario enviar mais de um arquivo                                                  
-      vr_aux := fn_sequence(pr_nmtabela => 'IEPTB'
-                           ,pr_nmdcampo => 'NRSEQUENCIAL'
-                           ,pr_dsdchave => '1;' || to_char(SYSDATE,'YYYYMMDD'));
-                           
-      vr_nmarqtxt := REPLACE(vr_nmarqtxt,'181','18' || to_char(vr_aux,'fm0'));                           
                                                                 
       -- Diretório onde deverá gerar o arquivo de remessa
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
@@ -976,7 +965,7 @@
   -- Gera o header do arquivo de desistência
   PROCEDURE pc_gera_header_arq_desist(pr_cdaprese IN  NUMBER
                                      ,pr_nmaprese IN  VARCHAR2
-                                     ,pr_dtmvtolt IN  crapcob.dtmvtolt%TYPE
+                                     ,pr_dtmvtolt IN  VARCHAR2
                                      ,pr_qtdesist IN  NUMBER
                                      ,pr_qtregtp2 IN  NUMBER
                                      ,pr_nrseqreg IN  NUMBER
@@ -988,7 +977,7 @@
     pr_dsheader := '0'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do arquivo de desistência
                 || lpad(pr_cdaprese, 3, '0')                 -- 02 -- Código do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ') -- 03 -- Nome do apresentante -- REVISAR
-                || to_char(pr_dtmvtolt, 'ddmmyyyy')          -- 04 -- Data do movimento
+                || pr_dtmvtolt                                -- 04 -- Data do movimento
                 || lpad(pr_qtdesist, 5, '0')                 -- 05 -- Quantidade de desistências -- REVISAR
                 || lpad(pr_qtregtp2, 5, '0')                 -- 06 -- Quantidade de registros tipo 2 no arquivo
                 || rpad(' ', 55, ' ')                        -- 07 -- Reservado
@@ -1238,7 +1227,8 @@
                                ) IS
     --
     CURSOR cr_craprem (pr_dtmvtolt IN date) IS
-      SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
+      SELECT DISTINCT 
+             lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header Arquivo
             ,lpad(tbcobran_confirmacao_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header Cartório
@@ -1291,7 +1281,7 @@
          AND crapcob.cdbandoc                    = 85 -- REVISAR
          AND crapcob.insrvprt                    = 1  -- REVISAR
          AND craprem.cdocorre                    IN(10, 11)
-       ORDER BY tbcobran_confirmacao_ieptb.cdcomarc, tbcobran_confirmacao_ieptb.cdcartorio;
+       ORDER BY 5, 4;
     --
     rw_craprem cr_craprem%ROWTYPE;
     --
@@ -1327,7 +1317,7 @@
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);    
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtocd);    
     --
     LOOP
       --
@@ -1584,24 +1574,12 @@
     --
     IF vr_tab_arquivo.count > 0 THEN
       --
-      BEGIN
-        --
-        SELECT crapdat.dtmvtolt
-          INTO vr_dtmvtolt
-          FROM crapdat
-         WHERE crapdat.cdcooper = 3;
-        --
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Incluído controle de Log
-          pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> Erro ao buscar a data de movimento: ' || SQLERRM);
-          RAISE vr_exc_erro;
-      END;
+      vr_dtmvtolt := TRUNC(SYSDATE);
+
       -- Busca o nome do arquivo
       vr_nmarqtxt := cobr0011.fn_gera_nome_arq_desistencia(pr_cdbandoc => '85'        -- IN
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
-                                                          );
-                                                          
+                                                          );                                                          
                                                           
       -- Diretório onde deverá gerar o arquivo de desistência
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
@@ -1803,7 +1781,7 @@
   -- Gera o header do arquivo de cancelamento
   PROCEDURE pc_gera_header_arq_cancel(pr_cdaprese IN  NUMBER
                                      ,pr_nmaprese IN  VARCHAR2
-                                     ,pr_dtmvtolt IN  crapcob.dtmvtolt%TYPE
+                                     ,pr_dtmvtolt IN  VARCHAR2
                                      ,pr_qtdesist IN  NUMBER
                                      ,pr_qtregtp2 IN  NUMBER
                                      ,pr_nrseqreg IN  NUMBER
@@ -1815,7 +1793,7 @@
     pr_dsheader := '0'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do arquivo de cancelamento
                 || lpad(pr_cdaprese, 3, '0')                 -- 02 -- Código do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ') -- 03 -- Nome do apresentante -- REVISAR
-                || to_char(pr_dtmvtolt, 'ddmmyyyy')          -- 04 -- Data do movimento
+                || pr_dtmvtolt                               -- 04 -- Data do movimento
                 || lpad(pr_qtdesist, 5, '0')                 -- 05 -- Quantidade de cancelamentos -- REVISAR
                 || lpad(pr_qtregtp2, 5, '0')                 -- 06 -- Quantidade de registros tipo 2 no arquivo
                 || rpad(' ', 55, ' ')                        -- 07 -- Reservado
@@ -2151,7 +2129,7 @@
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtocd);
     --
     LOOP
       --
@@ -2397,19 +2375,8 @@
     --
     IF vr_tab_arquivo.count > 0 THEN
       --
-      BEGIN
-        --
-        SELECT crapdat.dtmvtolt
-          INTO vr_dtmvtolt
-          FROM crapdat
-         WHERE crapdat.cdcooper = 3;
-        --
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Incluído controle de Log
-          pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> Erro ao buscar a data de movimento: ' || SQLERRM);
-          RAISE vr_exc_erro;
-      END;
+	    vr_dtmvtolt := TRUNC(SYSDATE);
+
       -- Busca o nome do arquivo
       vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
                                                            ,pr_dtmvtolt => vr_dtmvtolt -- IN
@@ -2706,7 +2673,7 @@
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtocd);
     --
     LOOP
       --
@@ -2762,77 +2729,69 @@
     END LOOP;
     --
     CLOSE cr_craprem;
+    
     -- Verifica se finaliza o arquivo
     IF vr_qtregist > 1 THEN
 			--
 			vr_arquivo := vr_arquivo || '</cartorio></comarca></cancelamento>' ;
-			--
-		END IF;
-		-- Grava o arquivo
-		BEGIN
-			--
-			SELECT crapdat.dtmvtolt
-				INTO vr_dtmvtolt
-				FROM crapdat
-			 WHERE crapdat.cdcooper = 3;
-			--
-		EXCEPTION
-			WHEN OTHERS THEN
-				-- Incluído controle de Log
-				pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> Erro ao buscar a data de movimento: ' || SQLERRM);
-				RAISE vr_exc_erro;
-		END;
-		-- Busca o nome do arquivo
-		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
-			 											     ,pr_dtmvtolt => vr_dtmvtolt -- IN
-															  );
+
+      -- utilizar a data do dia da Central
+      vr_dtmvtolt := rw_crapdat.dtmvtocd;
+      
+      -- Busca o nome do arquivo
+      vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
+                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
+                                                            );
+      
+      -- Faz o envelopamento SOAP
+      vr_arquivo := '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:protesto_brIntf-Iprotesto_br">'
+                 || '<soapenv:Header/>'
+                 || '<soapenv:Body>'
+                 || '<urn:Cancelamento soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+                 || '<user_arq xsi:type="xsd:string">' || vr_nmarqtxt || '</user_arq>'
+                 || '<user_dados xsi:type="xsd:string">' || htf.escape_sc(vr_arquivo) || '</user_dados>'
+                 || '</urn:Cancelamento>'
+                 || '</soapenv:Body>'
+                 || '</soapenv:Envelope>';
+  		
+      -- Diretório onde deverá gerar o arquivo de cancelamento
+      --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
+      vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
+                                              ,pr_cdcooper => 3                   -- IN
+                                              ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
+                                              );
+      -- Abre o arquivo de dados em modo de gravação
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diretório do arquivo
+                              ,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
+                              ,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
+                              ,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
+                              ,pr_des_erro => pr_dscritic   -- IN -- Erro
+                              );
+      --
+      IF pr_dscritic IS NOT NULL THEN
+        --
+        RAISE vr_exc_erro;
+        --
+      END IF;
+      -- Escrever o registro no arquivo
+      gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file            -- Handle do arquivo aberto
+                                    ,pr_des_text  => vr_arquivo -- Texto para escrita
+                                    );
+      -- Fechar Arquivo dados
+      BEGIN
+        --
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+        --
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := 'Problema ao fechar o arquivo: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      -- Escrever o log no arquivo
+      pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> Finalizado o processamento dos cancelamentos.'); -- Texto para escrita
+      
+    END IF;
     
-		-- Faz o envelopamento SOAP
-		vr_arquivo := '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:protesto_brIntf-Iprotesto_br">'
-               || '<soapenv:Header/>'
-               || '<soapenv:Body>'
-               || '<urn:Cancelamento soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
-							 || '<user_arq xsi:type="xsd:string">' || vr_nmarqtxt || '</user_arq>'
-							 || '<user_dados xsi:type="xsd:string">' || htf.escape_sc(vr_arquivo) || '</user_dados>'
-							 || '</urn:Cancelamento>'
-               || '</soapenv:Body>'
-               || '</soapenv:Envelope>';
-		
-		-- Diretório onde deverá gerar o arquivo de cancelamento
-		--vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
-		vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
-																						,pr_cdcooper => 3                   -- IN
-																						,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
-																						);
-		-- Abre o arquivo de dados em modo de gravação
-		gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diretório do arquivo
-														,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
-														,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
-														,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
-														,pr_des_erro => pr_dscritic   -- IN -- Erro
-														);
-		--
-		IF pr_dscritic IS NOT NULL THEN
-			--
-			RAISE vr_exc_erro;
-			--
-		END IF;
-		-- Escrever o registro no arquivo
-		gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file            -- Handle do arquivo aberto
-																	,pr_des_text  => vr_arquivo -- Texto para escrita
-																	);
-		-- Fechar Arquivo dados
-		BEGIN
-			--
-			gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
-			--
-		EXCEPTION
-			WHEN OTHERS THEN
-				pr_dscritic := 'Problema ao fechar o arquivo: ' || SQLERRM;
-				RAISE vr_exc_erro;
-		END;
-		-- Escrever o log no arquivo
-    pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> Finalizado o processamento dos cancelamentos.'); -- Texto para escrita
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -2884,25 +2843,7 @@ BEGIN
     RAISE vr_exc_erro;
     --
   END IF;
-	/* -- Comentado devido a alteracao do layout do arquivo de cancelamento por parte do IEPTB
-	pc_gera_cancelamento(pr_dscritic => pr_dscritic -- OUT
-	                    );
-  --
-	IF pr_dscritic IS NOT NULL THEN
-    --
-    RAISE vr_exc_erro;
-    --
-  END IF;
-	--
-	pc_gera_arquivo_cancelamento(pr_dscritic => pr_dscritic -- OUT
-	                            );
-  --
-	IF pr_dscritic IS NOT NULL THEN
-    --
-    RAISE vr_exc_erro;
-    --
-  END IF;
-	*/
+
 	-- Geracao do novo layout do arquivo de cancelamento
 	pc_gera_cancelamento_ieptb(pr_dscritic => pr_dscritic -- OUT
                             );
@@ -2916,14 +2857,7 @@ BEGIN
 	wprt0001.pc_enviar_remessa(pr_cdcooper => 3           -- IN -- Fixo Central
 	                          ,pr_dscritic => pr_dscritic -- OUT
 														);
-  --
-	/*
-	IF pr_dscritic IS NOT NULL THEN
-    --
-    RAISE vr_exc_erro;
-    --
-  END IF;
-	*/
+                            
 	-- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> Finalizado o processamento das remessas.'); -- Texto para escrita
   --
