@@ -107,7 +107,7 @@
 									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)                                                                  
+                             (Reinert)						                  
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
@@ -116,6 +116,8 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+        
+        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
                 
 ..............................................................................*/
 
@@ -1642,7 +1644,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa                                                
+                                                ,INPUT crapass.inpessoa
                                                 ,INPUT par_cdlcremp
                                                 ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
@@ -2112,14 +2114,14 @@ PROCEDURE calcula_parcelas_emprestimo:
            ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Parametros pre-aprovado nao cadastrado".
         
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
 
     /* Buscar pre-aprovado da conta */
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -2290,6 +2292,13 @@ PROCEDURE calcula_taxa_emprestimo:
                            INPUT 1,
                            INPUT aux_cdcritic,
                            INPUT-OUTPUT aux_dscritic).
+                           
+            IF VALID-HANDLE(h-b1wgen0002) THEN
+               DELETE PROCEDURE h-b1wgen0002.
+
+            IF VALID-HANDLE(h-b1wgen0153) THEN
+               DELETE PROCEDURE h-b1wgen0153.
+                           
             RETURN "NOK".
         END.
 
@@ -2312,6 +2321,13 @@ PROCEDURE calcula_taxa_emprestimo:
                           INPUT 1,
                           INPUT aux_cdcritic,
                           INPUT-OUTPUT aux_dscritic).
+                          
+           IF VALID-HANDLE(h-b1wgen0002) THEN
+              DELETE PROCEDURE h-b1wgen0002.
+
+           IF VALID-HANDLE(h-b1wgen0153) THEN
+              DELETE PROCEDURE h-b1wgen0153.
+                          
            RETURN "NOK".
        END.
     /* Busca a tarifa do emprestimo */
@@ -2329,9 +2345,20 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
-
+                                      
+    
     IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
        RETURN "NOK".
+    
+       END.
     
     /* Busca a tarifa especial */
     RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
@@ -2348,8 +2375,19 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
+                                      
     IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
        RETURN "NOK".
+    
+       END.
     
     /* Valor da tarifa */
     ASSIGN par_vlrtarif = aux_vlrtarif + aux_vltrfesp.
@@ -2381,9 +2419,19 @@ PROCEDURE calcula_taxa_emprestimo:
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
+                                          
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
 
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
 
     /* Calcula o IOF */
     RUN calcula_iof (INPUT par_cdcooper,
@@ -2404,11 +2452,27 @@ PROCEDURE calcula_taxa_emprestimo:
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
-    
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
+                     
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+         RETURN "NOK".
+       
+       END.
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.
+    
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF VALID-HANDLE(h-b1wgen0153) THEN
+       DELETE PROCEDURE h-b1wgen0153.
     
     RETURN "OK".
 
@@ -2700,9 +2764,8 @@ PROCEDURE imprime_previa_demonstrativo:
                                        OUTPUT aux_dsestcvl,
                                        OUTPUT aux_dscritic).
 
-                      IF NOT VALID-HANDLE(h-b1wgen0060)  THEN
-                         RUN sistema/generico/procedures/b1wgen0060.p 
-                             PERSISTENT SET h-b1wgen0060.
+                      IF VALID-HANDLE(h-b1wgen0060) THEN
+                         DELETE PROCEDURE h-b1wgen0060.
 
                   END. /* END IF IF AVAIL crapttl THEN */
 

@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 14/11/2018
+    Data    : Fevereiro/2013                Ultima Atualizacao: 13/12/2018
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -165,6 +165,8 @@
 
 				14/11/2018  Correcao da implementacao anterior do projeto PRJ450.
                             Wagner. Sustentacao. INC0027169.
+
+        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
 
 ............................................................................*/
 
@@ -5454,6 +5456,10 @@ PROCEDURE geralog_cadpar:
                                   INPUT par_cdoperad,
                                  OUTPUT aux_nmoperad,
                                  OUTPUT aux_dscritic).
+    
+    IF VALID-HANDLE(h-b1wgen0060) THEN
+       DELETE PROCEDURE h-b1wgen0060. 
+                             
     
     UNIX SILENT VALUE
         ("echo " + STRING(TODAY,"99/99/9999")          +

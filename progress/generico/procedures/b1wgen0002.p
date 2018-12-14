@@ -32,7 +32,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 19/10/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 13/12/2018
 
    Dados referentes ao programa:
 
@@ -805,7 +805,7 @@
           29/08/2018 - Adicionado retorno do 'insitest' na PROC 'obtem-propostas-emprestimo' PRJ 438 (Mateus Z - Mouts)
 
          31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts          
-
+          
           10/09/2018 - P442 - Tradução das chamadas da validacao, gravacao de bem e interveniente
                        para rotinas convertidas, Inclusao de novos campos nas tabelas de bens alienados, 
                        remocao de tratamento e parametros de bens e intervenientes na verifica-outras-propostas
@@ -815,6 +815,8 @@
           19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)             
 
 		  23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
+          
+      13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
           
  ..............................................................................*/
 
@@ -4994,7 +4996,7 @@ PROCEDURE proc_qualif_operacao:
     /* Se ocorrer critica, abortar e gerar erro.*/
     IF aux_cdcritic <> 0   OR
        aux_dscritic <> ""  THEN
-                    DO:
+					DO:
          RUN gera_erro (INPUT par_cdcooper,
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
@@ -5003,14 +5005,14 @@ PROCEDURE proc_qualif_operacao:
                         INPUT-OUTPUT aux_dscritic).
 
          RETURN "NOK".
-            END.
-	    ELSE 
-					DO:
+             END.
+    ELSE
+			DO:
          ASSIGN par_idquapro = aux_idquapro
                 par_dsquapro = aux_dsquapro.
 
     RETURN "OK".
-            END.
+       END.
 
 END PROCEDURE.
 
@@ -7327,7 +7329,7 @@ PROCEDURE grava-proposta-completa:
 
                   IF aux_cdcritic <> 0 OR aux_dscritic <> ""   THEN
                  DO:
-                        UNDO Grava, LEAVE Grava.
+               UNDO Grava, LEAVE Grava.
 
                  END.
 
@@ -7626,7 +7628,7 @@ PROCEDURE grava-proposta-completa:
         END.                   
         END.                   
     
-
+     
     RETURN "OK".
 
 END PROCEDURE.  /* grava proposta completa */
@@ -8094,7 +8096,7 @@ PROCEDURE altera-valor-proposta:
                                                      INPUT par_cdoperad, /*Codigo Operador*/
                                                      INPUT 90, /*Tipo Contrato Rating*/
                                                      INPUT 0,   /*pr_flgcriar Indicado se deve criar o rating*/
-                                                       INPUT 1, /*pr_flgcalcu Indicador de calculo*/
+                                                     INPUT 1, /*pr_flgcalcu Indicador de calculo*/
                                                      INPUT par_idseqttl, /*Sequencial do Titular*/
                                                      INPUT par_idorigem, /*Identificador Origem*/
                                                      INPUT par_nmdatela, /*Nome da tela*/
@@ -8110,7 +8112,7 @@ PROCEDURE altera-valor-proposta:
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                       
               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+                      
                 ASSIGN aux_idpeapro = pc_processa_perda_aprov.pr_idpeapro
                   WHEN pc_processa_perda_aprov.pr_idpeapro <> ?
                        aux_dserro = pc_processa_perda_aprov.pr_dserro
@@ -8141,7 +8143,7 @@ PROCEDURE altera-valor-proposta:
                        crawepr.hraprova = 0
                        crawepr.insitest = 0
                        crawepr.cdopealt = par_cdoperad.
-                
+                       
                 CREATE tt-msg-confirma.
                 ASSIGN tt-msg-confirma.inconfir = 1
                        tt-msg-confirma.dsmensag =
@@ -8164,9 +8166,9 @@ PROCEDURE altera-valor-proposta:
                              crawepr.cdopeapr = ""
                              crawepr.dtaprova = ?
                                                   crawepr.hraprova = 0
-                         crawepr.insitest = 0
-                         crawepr.cdopealt = par_cdoperad.
-
+                             crawepr.insitest = 0
+                             crawepr.cdopealt = par_cdoperad.
+                   
                   /*Salvar operador da alteraçao*/
                   ASSIGN crawepr.cdopealt = par_cdoperad.
 
@@ -8254,13 +8256,13 @@ PROCEDURE altera-valor-proposta:
             ASSIGN crawepr.dtvencto = par_dtdpagto
                    crawepr.dtdpagto = par_dtdpagto.
         END.       
- /*Inicio M438*/
+      /*Inicio M438*/
       IF par_dsdopcao = "TP" THEN /*Inclusao Proposta*/
       DO:
         IF  NOT VALID-HANDLE(h-b1wgen0043) THEN
             RUN sistema/generico/procedures/b1wgen0043.p
                 PERSISTENT SET h-b1wgen0043.
-
+        
         IF  NOT VALID-HANDLE(h-b1wgen0043)  THEN
         DO:
                 MESSAGE "Handle invalido para BO b1wgen0043.".
@@ -11090,7 +11092,7 @@ PROCEDURE obtem-dados-conta-contrato:
             /* IOF */
             ASSIGN tt-dados-epr.vltiofpr = crapepr.vltiofpr
                    tt-dados-epr.vlpiofpr = crapepr.vlpiofpr.                 
-
+            
             /* Daniel */
             ASSIGN  aux_flpgmujm          = FALSE
                     tt-dados-epr.vlsdprej = crapepr.vlsdprej +
@@ -12963,6 +12965,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                                         INPUT 1,
                                         INPUT aux_cdcritic,
                                         INPUT-OUTPUT aux_dscritic).
+                         
+                         IF VALID-HANDLE(h-b1wgen0059) THEN
+                            DELETE PROCEDURE h-b1wgen0059.               
+                         
                          RETURN "NOK".
                      END.
 
@@ -13063,6 +13069,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                                         INPUT 1,
                                         INPUT aux_cdcritic,
                                         INPUT-OUTPUT aux_dscritic).
+                        
+                        IF VALID-HANDLE(h-b1wgen0059) THEN
+                           DELETE PROCEDURE h-b1wgen0059.              
+                                        
                          RETURN "NOK".
                      END.
 
