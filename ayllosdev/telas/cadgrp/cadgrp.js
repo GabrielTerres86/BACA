@@ -919,80 +919,6 @@ function isIE() {
 	return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
 }
 
-function download(csvContent, fileName) {
-	if (isIE()) {
-		
-		var D = document;
-		var a = D.createElement('a');
-		var strMimeType = 'application/octet-stream;charset=utf-8';
-
-		if (!fileName) {
-			var currentDate = new Date();
-			fileName = "CWS Export - " + currentDate.getFullYear() + (currentDate.getMonth() + 1) +
-			currentDate.getDate() + currentDate.getHours() +
-			currentDate.getMinutes() + currentDate.getSeconds() + ".csv";
-		}
-		
-		var frame = D.createElement('iframe');
-		document.body.appendChild(frame);
-
-		frame.contentWindow.document.open("text/html", "replace");
-		frame.contentWindow.document.write(csvContent);
-		frame.contentWindow.document.close();
-		frame.contentWindow.focus();
-		frame.contentWindow.document.execCommand('SaveAs', true, fileName);
-
-		document.body.removeChild(frame);
-		return true;
-	}else{
-		var a = document.createElement('a');
-		var mimeType = 'text/csv;unicode:utf-8';
-		if (navigator.msSaveBlob) {
-			navigator.msSaveBlob(new Blob([csvContent], {type: mimeType}), fileName);
-		} else if (URL && 'download' in a) {
-			a.href = URL.createObjectURL(new Blob([csvContent], {type: mimeType}));
-			a.setAttribute('download', fileName);
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-		} else {
-			location.href = 'data:application/octet-stream,' + encodeURIComponent(csvContent); 
-		}
-		return true;
-	}
-}
-
-function exportaCSV(qtdRegistros){
-	
-	var cddopcao = $('#cddopcao','#frmCabCadgrp').val(); 
-	var cdagenci = $('#cdagenci','#frmFiltroConsultaDetalhada').val(); 
-	var nrdgrupo = $('#nrdgrupo','#frmFiltroConsultaDetalhada').val();
-
-	//Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, exportando ...');
-
-	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: 'POST', 
-		url: UrlSite + 'telas/cadgrp/export_csv.php',
-		data: {
-			cddopcao: cddopcao,
-			cdagenci: cdagenci,
-			nrdgrupo: nrdgrupo,
-			nrregist: qtdRegistros,
-			redirect: 'html_ajax' // Tipo de retorno do ajax
-		},		
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","estadoInicial();");							
-		},
-		success: function(csv) {			
-			hideMsgAguardo();
-			download(csv.split('|').join("\n"), 'cadgrp_export.csv');
-		}				
-	});
-}
-
 function alterarParametrosFracoesGrupo() {
 
     var cddopcao = $('#cddopcao', '#frmCabCadgrp').val();
@@ -1849,4 +1775,58 @@ function distribuiContaGrupo(listaCdagenci, listaQtdgrupo){
     });
 
     return false;
+}
+
+function exportar_csv() {
+
+    var cddopcao = $('#cddopcao', '#frmCabCadgrp').val();
+    var cdagenci = $('#cdagenci', '#frmFiltroConsultaDetalhada').val();
+    var nrdgrupo = $('#nrdgrupo', '#frmFiltroConsultaDetalhada').val();
+
+    //Mostra mensagem de aguardo
+    showMsgAguardo('Aguarde, exportando ...');
+
+    $.ajax({
+        url: UrlSite + 'telas/cadgrp/exportar_csv.php',
+        type: 'POST',
+        data: {
+            cddopcao: cddopcao,
+            cdagenci: cdagenci,
+            nrdgrupo: nrdgrupo,
+            redirect: "html_ajax" // Tipo de retorno do ajax
+        },
+        cache: false,
+        // contentType: false,
+        // processData: false,
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Nao foi possivel concluir a operacao.', 'Alerta - Aimaro', 'estadoInicial();');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
+            }
+        }
+    });
+
+    return false;
+
+}
+
+function Gera_Impressao(nmarquiv, callback) {
+
+    hideMsgAguardo();
+
+    var action = UrlSite + 'telas/cadgrp/download_arquivo.php';
+
+    $('#nmarquiv', '#frmCabCadgrp').remove();
+    $('#sidlogin', '#frmCabCadgrp').remove();
+    $('#frmCabCadgrp').append('<input type="hidden" id="nmarquiv" name="nmarquiv" value="' + nmarquiv + '" />');
+    $('#frmCabCadgrp').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+
+    carregaImpressaoAyllos("frmCabCadgrp", action, callback);
+
 }
