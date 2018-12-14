@@ -71,8 +71,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                               ,pr_dscritic  out varchar2
                               ,pr_retxml in out nocopy XMLType
                               ,pr_nmdcampo  out varchar2    
-                              ,pr_des_erro  out varchar2);
-                              
+                              ,pr_des_erro  out varchar2);        
+
+  procedure pc_exportar_opcao_c (pr_cdagenci   in tbevento_pessoa_grupos.cdagenci%type
+                                ,pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type    
+                                ,pr_xmllog     in varchar2
+                                ,pr_cdcritic  out pls_integer
+                                ,pr_dscritic  out varchar2
+                                ,pr_retxml in out nocopy XMLType
+                                ,pr_nmdcampo  out varchar2    
+                                ,pr_des_erro  out varchar2);	  
+			                  
   procedure pc_grupo_disponivel(pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type
                                ,pr_cdagenci   in tbevento_pessoa_grupos.cdagenci%type
                                ,pr_nrregist   in integer                       
@@ -1416,7 +1425,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Apresenta informacoes do grupo para a agencia (Opcao C).
-  --             Tambem utilizado para exportar infos em csv
   --
   -- Alteracoes:
   --
