@@ -104,6 +104,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             13/12/2018 - Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo 
   --                          arquivo CCB3 (Lucas Ranghetti INC0027563)
+  --
+  --             14/12/2018 - Adicionar dup_val_on_index ao inserir registro na crapdcb, caso 
+  --                          utilize o dup_val será adicionado + 1 segundo na hrgmt para evitar
+  --                          problemas referente uk de tarifas (Lucas Ranghetti PRB0040489)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -2535,7 +2539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                      ,pr_nrseqarq in number                --> Sequencia do arquivo
                                      ,pr_nrseqexe in number                --> Sequencia da execucao
                                      ,pr_idparale IN NUMBER                --> Indicador de processo paralelo
-                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
   BEGIN
     /* .............................................................................
@@ -2544,7 +2548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Andreatta - Mouts
-    Data    : Agosto/18.                    Ultima atualizacao: 
+    Data    : Agosto/18.                    Ultima atualizacao: 14/12/2018
                 
     Dados referentes ao programa:
                 
@@ -2556,7 +2560,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
     Observacao: -----
                              
-    Alteracoes:               
+    Alteracoes: 14/12/2018 - Adicionar dup_val_on_index ao inserir registro na crapdcb, caso 
+                             utilize o dup_val será adicionado + 1 segundo na hrgmt para evitar
+                             problemas referente uk (Lucas Ranghetti PRB0040489)
             	 
     ....................................................................................................*/
     DECLARE
@@ -4262,11 +4268,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       ,vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt
                      );
                   EXCEPTION
+                    WHEN dup_val_on_index THEN
+                       -- tentar inserir novamente porém com hrgmt + 1 segundo
+                       BEGIN
+                        INSERT INTO crapdcb
+                           (tpmensag
+                           ,nrnsucap
+                           ,dtdtrgmt
+                           ,hrdtrgmt
+                           ,cdcooper
+                           ,nrdconta
+                           ,nrseqarq
+                           ,nrinstit
+                           ,cdprodut
+                           ,nrcrcard
+                           ,tpdtrans
+                           ,cddtrans
+                           ,cdhistor
+                           ,dtdtrans
+                           ,dtpostag
+                           ,dtcnvvlr
+                           ,vldtrans
+                           ,vldtruss
+                           ,cdautori
+                           ,dsdtrans
+                           ,cdcatest
+                           ,cddmoeda
+                           ,vlmoeori
+                           ,cddreftr
+                           ,cdagenci
+                           ,nridvisa
+                           ,cdtrresp
+                           ,incoopon
+                           ,txcnvuss
+                           ,cdautban
+                           ,idtrterm
+                           ,tpautori
+                           ,cdproces
+                           ,dstrorig
+                           ,nrnsuori
+                           ,dtmvtolt
+                           )
+                        VALUES
+                          (vr_tab_crapdcb(vr_idxdcb).det.tpmensag
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt
+                          ,to_number(to_char(to_date(trim(to_char(vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt,'000000')),'hh24miss')+(1/86400),'hh24miss'))
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrdconta
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrseqarq
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrinstit
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdprodut
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrcrcard
+                          ,vr_tab_crapdcb(vr_idxdcb).det.tpdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdhistor
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtpostag
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtcnvvlr
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vldtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vldtruss
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dsdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdcatest
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddmoeda
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vlmoeori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddreftr
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdagenci
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nridvisa
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdtrresp
+                          ,vr_tab_crapdcb(vr_idxdcb).det.incoopon
+                          ,vr_tab_crapdcb(vr_idxdcb).det.txcnvuss
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdautban
+                          ,vr_tab_crapdcb(vr_idxdcb).det.idtrterm
+                          ,vr_tab_crapdcb(vr_idxdcb).det.tpautori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdproces
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dstrorig
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrnsuori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt
+                         );
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_dscritic := 'Erro ao inserir crapdcb dup_val: '||SQLERRM 
+                          || 'nsu: '|| vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
+                          || 'aut: '|| vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                          || 'cop: '|| vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                          || 'con: '|| vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
+                          RAISE vr_exc_saida;
+                      END;  -- fim dup_val
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro ao inserir crapdcb: '||SQLERRM 
                       || 'nsu: '|| vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
-                      || 'cop: '||vr_tab_crapdcb(vr_idxdcb).det.cdcooper
-                      || 'con: ' ||vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
+                      || 'aut: '|| vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                      || 'cop: '|| vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                      || 'con: '|| vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
                       RAISE vr_exc_saida;
                   END;
                 ELSE
