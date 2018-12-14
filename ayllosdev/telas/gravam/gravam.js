@@ -966,6 +966,7 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idse
 
         showConfirmacao('Selecione a op&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'tpdopcao = \'M\';', 
             'tpdopcao = \'A\';', 'manual.gif', 'automatica.gif');
+		$("div#divConfirm table tr:nth-child(3) td table tr").append('<td width="25"></td><td><input type="image" id="btnSairModal" name="btnSairModal" onclick="divConfirm.escondeMensagem();controlaVoltar(\'5\');return false;"" src="'+UrlSite+'imagens/botoes/sair.gif"></td>');
         return false;
 
 	} else if (optButton == 'X') {
@@ -984,12 +985,13 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idse
 
         showConfirmacao('Selecione a op&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'tpdopcao = \'M\';', 
             'tpdopcao = \'A\';', 'manual.gif', 'automatica.gif');
+		$("div#divConfirm table tr:nth-child(3) td table tr").append('<td width="25"></td><td><input type="image" id="btnSairModal" name="btnSairModal" onclick="divConfirm.escondeMensagem();controlaVoltar(\'5\');return false;"" src="'+UrlSite+'imagens/botoes/sair.gif"></td>');
         return false;
 
     } else if (optButton == 'M') {
         //funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');formatarInclusaoManual();'; //funcao, 'validarIncluir(' + idseqbem + ',' + tpctrpro + ');'
         showConfirmacao('Selecione a op&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluirGravam("M",' + idseqbem + ',' + tpctrpro + ');', 'incluirGravam("A",' + idseqbem + ',' + tpctrpro + ');', 'manual.gif', 'automatica.gif');
-
+		$("div#divConfirm table tr:nth-child(3) td table tr").append('<td width="25"></td><td><input type="image" id="btnSairModal" name="btnSairModal" onclick="divConfirm.escondeMensagem();controlaVoltar(\'5\');return false;"" src="'+UrlSite+'imagens/botoes/sair.gif"></td>');
         return false;
 
     } else if (optButton == 'J' || optButton == 'L') {
@@ -2144,7 +2146,7 @@ function gerarHistoricoGravames(){
 						nrctrpro: nrctrpro,
 						dschassi: dschassi,
 						redirect: 'html_ajax'
-						},
+					},
 					error: function(objAjax,responseError,objExcept) {
 						hideMsgAguardo();
 						showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
