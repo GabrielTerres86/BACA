@@ -1,8 +1,8 @@
 <?php
 /* 
  * FONTE        : tabela_detalhada_grupo.php
- * CRIAÇÃO      : Jonata - Mouts
- * DATA CRIAÇÃO : Setembro/2018
+ * CRIAÃ‡ÃƒO      : Jonata - Mouts
+ * DATA CRIAÃ‡ÃƒO : Setembro/2018
  * OBJETIVO     : Tabela da opcao "C"
  */
  
@@ -79,9 +79,9 @@
 
 <div id="divBotoesDetalhadaGrupo" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:block;' >
 																			
-	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('5'); return false;">Voltar</a>																																							
-	<a href="#" class="botao" id="btExportar" onClick="exportaCSV(<?=$qtregist?>); return false;">Exportar</a>																																							
-		   																			
+	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('5'); return false;">Voltar</a>
+  <a href="#" class="botao" id="btExportarCSV" onClick="exportar_csv(); return false;">Exportar</a>
+
 </div>
 
 <script type="text/javascript">

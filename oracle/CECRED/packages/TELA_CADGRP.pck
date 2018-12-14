@@ -1571,6 +1571,215 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper);
 
   end pc_cursor_opcao_c;
+  
+  procedure pc_exportar_opcao_c (pr_cdagenci   in tbevento_pessoa_grupos.cdagenci%type
+                                ,pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type    
+                                ,pr_xmllog     in varchar2
+                                ,pr_cdcritic  out pls_integer
+                                ,pr_dscritic  out varchar2
+                                ,pr_retxml in out nocopy XMLType
+                                ,pr_nmdcampo  out varchar2    
+                                ,pr_des_erro  out varchar2) is
+   
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_exportar_opcao_c
+  --  Sistema  : Ayllos Web
+  --  Autor    : Gabriel Marcos
+  --  Data     : Dezembro/2018                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Exporta grupos em arquivo csv
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+        
+    -- Buscar cooperados para apresentar na opcao c
+    cursor cr_busca_cooperados (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
+                               ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type
+                               ,pr_nrdgrupo in tbevento_pessoa_grupos.nrdgrupo%type) is
+    select distinct
+           pes.dsfuncao
+         , gru.cdagenci
+         , gru.nrdconta
+         , gru.nrcpfcgc
+         , gru.nrdgrupo
+         , ass.nmprimtl
+         , ass.inpessoa
+      from tbevento_pessoa_grupos gru
+         , crapass                ass
+         , tbcadast_funcao_pessoa pes
+     where gru.cdcooper = pr_cdcooper
+       and gru.cdagenci = pr_cdagenci
+       and gru.nrdgrupo = decode(pr_nrdgrupo,0,gru.nrdgrupo,pr_nrdgrupo)
+       and ass.cdcooper = gru.cdcooper
+       and ass.nrdconta = gru.nrdconta
+       and pes.cdfuncao = decode(length(trim(ass.tpvincul)),2,ass.tpvincul,' ');
+           
+    -- Tabela temporaria do bulk collect
+    type typ_dados_cursor is table of cr_busca_cooperados%rowtype;
+    vr_dados_cursor typ_dados_cursor;
+    vr_idx varchar2(10);
+       
+    vr_des_reto VARCHAR2(3);
+    --Tabelas de Memoria
+    vr_tab_erro    gene0001.typ_tab_erro;
+    vr_nmdireto  varchar2(100);
+    vr_nmarquiv  varchar2(100) := 'exportar-csv-'||to_char(sysdate,'SSSSS')||'.csv';
+    vr_utlfile   utl_file.file_type;
+    
+  begin
+
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'CADGRP'
+                              ,pr_action => null); 
+                                
+    -- Extrai cooperativa do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Retorna critica em caso de erro
+    if trim(vr_dscritic) is not null then
+      raise vr_exc_saida;
+    end if;
+    
+    -- Verifica se foram passados parametros
+    if nvl(pr_cdagenci,0) = 0 then
+      vr_dscritic := 'A agência não foi informada.';
+      raise vr_exc_saida;
+    end if;
+    
+    begin
+      -- Busca do diretorio base da cooperativa
+      vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                          ,pr_cdcooper => vr_cdcooper
+                                          ,pr_nmsubdir => 'upload');
+      -- Abre arquivo para registro de logs
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
+                              ,pr_nmarquiv => vr_nmarquiv
+                              ,pr_tipabert => 'W'
+                              ,pr_utlfileh => vr_utlfile
+                              ,pr_des_erro => vr_dscritic);
+    exception
+      when others then
+        gene0001.pc_fecha_arquivo(vr_utlfile);
+        vr_dscritic := 'Erro ao manipular arquivo csv: '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+    
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',   pr_posicao => 0, pr_tag_nova => 'Dados',   pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param',    pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+
+    -- Escrever cabecalho
+    gene0001.pc_escr_linha_arquivo(vr_utlfile,'CDAGENCI;GRUPO;CARGO;CONTA;CPF/CNPJ;NOME COMPLETO'); 
+
+    -- Abrir cursor do bulk collect 
+    open cr_busca_cooperados(vr_cdcooper
+                            ,pr_cdagenci
+                            ,nvl(pr_nrdgrupo,0));
+
+    loop
+      
+      -- Loop principal de retorno de dados
+      fetch cr_busca_cooperados bulk collect into vr_dados_cursor limit 200;
+      exit when vr_dados_cursor.count = 0;
+
+      for vr_idx in 1 .. vr_dados_cursor.count loop
+
+        -- Popula as informacoes
+        gene0001.pc_escr_linha_arquivo(vr_utlfile,vr_dados_cursor(vr_idx).cdagenci||';'||
+                                                  vr_dados_cursor(vr_idx).nrdgrupo||';'||
+                                                  vr_dados_cursor(vr_idx).dsfuncao||';'||
+                                                  TRIM(gene0002.fn_mask_conta(vr_dados_cursor(vr_idx).nrdconta))||';'||
+                                                  gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_dados_cursor(vr_idx).nrcpfcgc,
+                                                                            pr_inpessoa => vr_dados_cursor(vr_idx).inpessoa)||';'||
+                                                  vr_dados_cursor(vr_idx).nmprimtl);
+
+      end loop; 
+      
+    end loop; 
+
+    -- Fecha arquivo e retorna o nome do mesmo
+    gene0001.pc_fecha_arquivo(vr_utlfile);
+
+    --Efetuar Copia do PDF
+    gene0002.pc_efetua_copia_pdf (pr_cdcooper => vr_cdcooper     --> Cooperativa conectada
+                                 ,pr_cdagenci => 1--vr_cdagenci     --> Codigo da agencia para erros
+                                 ,pr_nrdcaixa => 1--vr_nrdcaixa     --> Codigo do caixa para erros
+                                 ,pr_nmarqpdf => vr_nmdireto||'/'||vr_nmarquiv     --> Arquivo PDF  a ser gerado                                 
+                                 ,pr_des_reto => vr_des_reto     --> Saída com erro
+                                 ,pr_tab_erro => vr_tab_erro);   --> tabela de erros 
+                                   
+    --Se ocorreu erro
+    IF vr_des_reto <> 'OK' THEN
+        
+      --Se possui erro
+      IF vr_tab_erro.COUNT > 0 THEN
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+      ELSE
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Não foi possível efetuar a copia do arquivo para Intranet.';
+      END IF;
+        
+      --Levantar Excecao  
+      RAISE vr_exc_saida;
+        
+    END IF;  
+      
+    vr_nmarquiv:= SUBSTR(vr_nmarquiv,instr(vr_nmarquiv,'/',-1)+1);
+      
+    -- Insere as tags dos campos da PLTABLE de aplicações
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarquiv, pr_des_erro => vr_dscritic);
+
+    pr_des_erro := 'OK';
+      
+  exception
+      
+    when vr_exc_saida then
+
+      if vr_cdcritic <> 0 then
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      else
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      end if;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      rollback;
+        
+    when others then
+
+      gene0001.pc_fecha_arquivo(vr_utlfile);
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela TELA_CADGRP.pc_exportar_opcao_c: ' || sqlerrm;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      rollback;
+        
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper);
+
+  end pc_exportar_opcao_c;
 
   procedure pc_cursor_opcao_b (pr_nrdconta   in crapass.nrdconta%type
                               ,pr_nrcpfcgc   in crapass.nrcpfcgc%type
