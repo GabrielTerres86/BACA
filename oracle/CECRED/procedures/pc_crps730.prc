@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 09/11/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 16/12/2018
 
    Dados referentes ao programa:
 
@@ -28,7 +28,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
               - Não parar o processo.
               - Padronizar as mensagens.
               (Envolti - Belli - SCTASK0034650)
-   
+
+   16/12/2018 - Ajuste nos blocos de exceções, pois nem toda crítica deve abortar
+                o processo. (P352 - Cechet)   
+
   ............................................................................. */
   
   -- Declarações
@@ -2077,6 +2080,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 					vr_vlgraele := to_number(substr(vr_tab_arquivo(vr_index_reg).campot42, 0, 8) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot42, 9, 2));
 					vr_vlsaldot := to_number(substr(vr_tab_arquivo(vr_index_reg).campot18, 0, 12) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot18, 13, 2));
 					vr_vltitulo := to_number(substr(vr_tab_arquivo(vr_index_reg).campot17, 0, 12) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot17, 13, 2));
+          
+          BEGIN
 					-- Verifica a ocorrência
 					CASE
 						-- 1: Pago (6)
@@ -2210,7 +2215,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																		,pr_dscritic            => vr_dscritic            -- OUT
 																		);
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2228,7 +2237,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																										,pr_dscritic            => vr_dscritic            -- OUT
 																										);
 								IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-									RAISE vr_exc_erro;
+                    -- gerar log da crítica mas não deve abortar o processo
+                    pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                    vr_cdcritic := 0;
+                    vr_dscritic := NULL;
 								END IF;
                 -- Retorna módulo e ação logado
                 GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2251,7 +2264,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 								vr_cdcritic := 1400; -- Não encontrado Movimento de Retorno de Titulos Bancarios
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' (1)' ||
                                  ' vr_nmarquiv:' || vr_nmarquiv ;
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 								--
 							END IF;
 							--
@@ -2333,7 +2350,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																								,pr_dscritic            => vr_dscritic            -- OUT
 																								);
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2351,7 +2372,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																										,pr_dscritic            => vr_dscritic            -- OUT
 																										);
 								IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-									RAISE vr_exc_erro;
+                    -- gerar log da crítica mas não deve abortar o processo
+                    pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                    vr_cdcritic := 0;
+                    vr_dscritic := NULL;
 								END IF;
                 -- Retorna módulo e ação logado
                 GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2506,7 +2531,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																				,pr_dscritic     => vr_dscritic                           -- OUT
 																				);
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                    -- gerar log da crítica mas não deve abortar o processo
+                    pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                    vr_cdcritic := 0;
+                    vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2526,7 +2555,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 								vr_cdcritic := 1400; -- Não encontrado Movimento de Retorno de Titulos Bancarios
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' (3)' ||
                                ' vr_nmarquiv:' || vr_nmarquiv ;
-								RAISE vr_exc_erro;
+                                 
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 								--
 							END IF;
 							--
@@ -2619,7 +2653,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																				,pr_dscritic     => vr_dscritic                           -- OUT
 																				);
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2639,7 +2677,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 								vr_cdcritic := 1400; -- Não encontrado Movimento de Retorno de Titulos Bancarios
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' (4)' ||
                                ' vr_nmarquiv:' || vr_nmarquiv ;
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 								--
 							END IF;
 							--
@@ -2729,7 +2771,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2785,7 +2831,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2840,7 +2890,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2895,7 +2949,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -2950,7 +3008,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3005,7 +3067,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3060,7 +3126,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3115,7 +3185,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3170,7 +3244,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3225,7 +3303,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3280,7 +3362,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3335,7 +3421,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3390,7 +3480,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																	 ,pr_dscritic          	 => vr_dscritic                           -- OUT
 																	 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3445,8 +3539,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                                        ,pr_dscritic            => vr_dscritic                             -- OUT
 																			 );
               IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                -- Trata erro
-								RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);              
@@ -3520,7 +3617,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 																							 );
 							IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 								-- Este log fica registrado por essa rorina cobr0011.pc_gera_log - 09/11/2018 - SCTASK0034650
-							  RAISE vr_exc_erro;
+                  -- gerar log da crítica mas não deve abortar o processo
+                  pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
+
 							END IF;
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3548,6 +3650,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 						END IF;
 						--
 					END CASE;
+            --
+          EXCEPTION
+            WHEN vr_exc_erro THEN
+                pc_controla_log_batch(pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                vr_cdcritic := 0;
+                vr_dscritic := NULL;
+
+            WHEN OTHERS THEN
+                pc_controla_log_batch(pr_cdcritic => 9999
+                                     ,pr_dscritic => SQLERRM);
+                vr_cdcritic := 0;
+                vr_dscritic := NULL;                                     
+          END;
 					--
 					IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele) > 0 THEN
 						-- Somatório de Custas por CRA
