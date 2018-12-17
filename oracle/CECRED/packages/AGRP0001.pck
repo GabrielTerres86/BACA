@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           elsif rw_busca_travamento_grupos.dtinicio_grupo < rw_crapdat.dtmvtolt and
                 rw_busca_travamento_grupos.dtfim_grupo > rw_crapdat.dtmvtolt then
             close cr_busca_travamento_grupos;
-            vr_dscritic := 'Periodo nao permite criacao de novos grupos.';
+            vr_dscritic := 'Período não permite criação de novos grupos.';
             raise vr_exc_saida;
           end if;
           
@@ -469,6 +469,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         
         when vr_exc_saida then
           
+          -- Retorno para tela cadgrp
+		  pr_dsretorn := vr_dscritic;
+
           vr_idprglog := 0;  
         
           cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
@@ -1928,7 +1931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
        
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_crapass.cdcooper,          pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'idpessoa', pr_tag_cont => rw_tabela_de_grupos.idpessoa, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapass.cdagenci,          pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => null,                         pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_crapass.nrdconta,          pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_crapass.nrdconta),     pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => null,                         pr_des_erro => vr_dscritic);                           
@@ -1986,7 +1989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_tabela_de_grupos.cdcooper,      pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'idpessoa', pr_tag_cont => rw_tabela_de_grupos.idpessoa,      pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_tabela_de_grupos.cdagenci,      pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => null,                              pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_tabela_de_grupos.nrdconta,      pr_des_erro => vr_dscritic);                           
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_tabela_de_grupos.nrdconta), pr_des_erro => vr_dscritic);                           
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => null,                              pr_des_erro => vr_dscritic);                           
