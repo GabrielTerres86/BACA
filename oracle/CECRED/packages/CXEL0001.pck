@@ -159,14 +159,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXEL0001 IS
     --
     --  Programa : pc_cria_autenticacao_cartao
     --  Autor    : Everton Souza(Mouts)
-    --  Data     : Abril/2018.                   Ultima atualizacao:
+    --  Data     : Abril/2018.                   Ultima atualizacao: 17/12/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para buscar TOKEN de autenticação do cartão TAA
     --
-    --  Alteração :
+    --  Alteração : 17/12/2018 - Ajuste na consulta ao TOKEN para que seja tratado como 
+    --                           busca unica ao invés de LOOP, e adicionado tratamento
+    --                           para fechar o cursor (Douglas - Prj 363 Novo Caixa Eletronico)
     --
     --
     -- ..........................................................................*/
@@ -180,45 +182,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXEL0001 IS
              rowid
         FROM tbtaa_autenticacao_cartao 
        WHERE rowid = pr_token;    
+    rw_token cr_token%ROWTYPE;
        
     ---------------> VARIAVEIS <-----------------
     vr_dscritic    VARCHAR2(1000);
     vr_exc_erro    EXCEPTION;
     vr_existe      VARCHAR2(1):='N';
+    vr_found       BOOLEAN;
 
   BEGIN
-    FOR rw_token IN cr_token LOOP
-       -- Validar se o TOKEN é valido
-       IF rw_token.flagativo <> 1 THEN
-          vr_dscritic := 'Senha inválida';
-          RAISE vr_exc_erro;
-       ELSIF rw_token.cdcooper <> pr_cdcooper then
-          vr_dscritic := 'Senha inválida';
-          RAISE vr_exc_erro;         
-       ELSIF rw_token.nrdconta <> pr_nrdconta then
-          vr_dscritic := 'Senha inválida';
-          RAISE vr_exc_erro;  
-       END IF;
-       --
-       vr_existe := 'S';
+    -- Pesquisa o token
+    OPEN cr_token;
+    FETCH cr_token INTO rw_token;
+    
+    -- Verificar se encontrou o registro do token
+    vr_found := cr_token%FOUND;
+    
+    -- Fechar o cursor
+    CLOSE cr_token;
+    
+    IF vr_found THEN
+      -- Validar se o TOKEN é valido
+      IF rw_token.flagativo <> 1 THEN
+        vr_dscritic := 'Senha invalida';
+        RAISE vr_exc_erro;
+      ELSIF rw_token.cdcooper <> pr_cdcooper then
+        vr_dscritic := 'Senha invalida';
+        RAISE vr_exc_erro;         
+      ELSIF rw_token.nrdconta <> pr_nrdconta then
+        vr_dscritic := 'Senha invalida';
+        RAISE vr_exc_erro;  
+      END IF;
+      --
+      vr_existe := 'S';
 
-       -- Inativar o TOKEN para que não seja utilizado novamente
-       UPDATE tbtaa_autenticacao_cartao
-          SET tbtaa_autenticacao_cartao.flagativo = 0,
-              tbtaa_autenticacao_cartao.dtencerramento = SYSDATE
+      -- Inativar o TOKEN para que não seja utilizado novamente
+      UPDATE tbtaa_autenticacao_cartao
+         SET tbtaa_autenticacao_cartao.flagativo = 0,
+             tbtaa_autenticacao_cartao.dtencerramento = SYSDATE
         WHERE tbtaa_autenticacao_cartao.rowid = rw_token.rowid; 
-    END LOOP;
+    END IF;
     --
     IF vr_existe = 'N' THEN
-       vr_dscritic := 'Senha inválida';
+       vr_dscritic := 'Senha invalida';
        RAISE vr_exc_erro;       
     END IF; 
     --
+    -- Validar se o cursor ficou aberto
+    IF cr_token%ISOPEN THEN
+      CLOSE cr_token;
+    END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN
+      -- Validar se o cursor ficou aberto
+      IF cr_token%ISOPEN THEN
+        CLOSE cr_token;
+      END IF;
+      
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Senha inválida';
+      -- Validar se o cursor ficou aberto
+      IF cr_token%ISOPEN THEN
+        CLOSE cr_token;
+      END IF;
+
+      pr_dscritic := 'Senha invalida';
+      
   END pc_busca_autenticacao_cartao;
 
 END CXEL0001;
