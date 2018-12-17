@@ -1779,6 +1779,12 @@ function distribuiContaGrupo(listaCdagenci, listaQtdgrupo){
 
 function exportar_csv() {
 
+    showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'geraArquivoCSV();', '', 'sim.gif', 'nao.gif');
+
+}
+
+function geraArquivoCSV() {
+
     var cddopcao = $('#cddopcao', '#frmCabCadgrp').val();
     var cdagenci = $('#cdagenci', '#frmFiltroConsultaDetalhada').val();
     var nrdgrupo = $('#nrdgrupo', '#frmFiltroConsultaDetalhada').val();
@@ -1787,7 +1793,7 @@ function exportar_csv() {
     showMsgAguardo('Aguarde, exportando ...');
 
     $.ajax({
-        url: UrlSite + 'telas/cadgrp/exportar_csv.php',
+        url: UrlSite + 'telas/cadgrp/export_csv.php',
         type: 'POST',
         data: {
             cddopcao: cddopcao,

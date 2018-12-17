@@ -1949,7 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       pc_inserir_cargos (pr_cdcooper          => pr_cdcooper
                         ,pr_nrcpfcgc          => rw_crapass.nrcpfcgc
                         ,pr_cdfuncao          => pr_cdfuncao
-                        ,pr_dtinicio_vigencia => to_date(sysdate,'dd/mm/yyyy')
+                        ,pr_dtinicio_vigencia => rw_crapdat.dtmvtolt
                         ,pr_cdoperad          => pr_cdoperad
                         ,pr_cdcritic          => vr_cdcritic
                         ,pr_dscritic          => vr_dscritic);

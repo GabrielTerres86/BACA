@@ -335,8 +335,8 @@ if ( isset($cabecalho[28]->cdata) ) {
 		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
 	}
 }
-if ( isset($cabecalho[29]->cdata) ) {
-  echo '$("#nrdgrupo","#frmCabAtenda").val("' . $cabecalho[29]->cdata . '");';
+if ( isset($cabecalho[31]->cdata) ) {
+  echo '$("#nrdgrupo","#frmCabAtenda").val("' . $cabecalho[31]->cdata . '");';
 }
 	
 	// Dados complementares da conta/dv	
