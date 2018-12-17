@@ -1640,6 +1640,7 @@ function formataTabelaListaAgencias(){
 	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,'');
 
 	$('input[type=text]', '#frmListaAgencias').addClass('inteiro').habilitaCampo();
+    $('#qtdgrupo', '#frmListaAgencias').addClass('inteiro').attr('maxlength', '2');
 
 	// Ao pressionar do campo nrdgrupo
 	$('input[type=text]', '#frmListaAgencias').each(function(){

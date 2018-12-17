@@ -83,7 +83,7 @@
 	<br />
   <!--<label for="indnivel">N&iacute;vel:</label>
   <input name="indnivel" type="text" id="indnivel" />-->
-  <label for="nrdgrupo">Grupo:</label>
+  <label for="nrdgrupo">PA/Grupo:</label>
   <input name="nrdgrupo" type="text" id="nrdgrupo" />
   <label for="cdempres">Empresa:</label>
   <input name="cdempres" type="text" id="cdempres" />
