@@ -1742,6 +1742,7 @@ END pc_renova_limdesctit;
       vr_desprazo    VARCHAR2(10);                   --> Descricao da quantidade de dias para o vencimento
       vr_dstipcob    VARCHAR2(10);                   --> Tipo de cobranca
       vr_email_tarif VARCHAR2(300);                  --> Email da area de taifa.
+      vr_flvencid    BOOLEAN;                        --> Verificar se o contrato está vencido pela data final da vigencia
       
       --------------------------- SUBROTINAS INTERNAS --------------------------
       -- Retorna a data anterior a data de ontem que seja dia util
@@ -2062,9 +2063,14 @@ END pc_renova_limdesctit;
       FOR rw_craplim IN cr_craplim LOOP
         vr_qtborati := 0;
         vr_flgregis := TRUE;
+        vr_flvencid := FALSE;
+        
+        IF (rw_craplim.dtfimvig + 60) < rw_crapdat.dtmvtolt THEN
+          vr_flvencid := TRUE;
+        END IF;
     
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
-        IF  rw_craplim.qtrenova < rw_craplim.qtmaxren AND rw_craplim.insitlim = 2  THEN
+        IF  rw_craplim.qtrenova < rw_craplim.qtmaxren AND rw_craplim.insitlim = 2 AND vr_flvencid = FALSE THEN
           
           pc_renova_limdesctit(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => rw_craplim.nrdconta
