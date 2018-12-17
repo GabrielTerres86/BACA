@@ -8,7 +8,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
   --  Autor    : Odirlei Busana - AMcom
   --  Data     : Julho/2016.                   Ultima atualizacao:
   --
-  -- Dados referentes ao programa: LALALALALALALAALALALALALALALALALA
+  -- Dados referentes ao programa: 
   --
   -- Frequencia: -----
   --
