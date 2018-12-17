@@ -2312,7 +2312,7 @@ END pc_inserir_lancamento_bordero;
       --Buscar o lote
       OPEN cr_craplot(pr_cdcooper         
                      ,pr_dtmvtolt
-                     ,1
+                     ,pr_cdagenci
                      ,100
                      ,vr_nrdolote);
         
@@ -2334,7 +2334,7 @@ END pc_inserir_lancamento_bordero;
                       ,cdoperad)
                VALUES(pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,pr_cdagenci
                       ,100
                       ,vr_nrdolote
                       ,1
@@ -2369,7 +2369,9 @@ END pc_inserir_lancamento_bordero;
              RAISE vr_exc_erro;
              
          END;                            
-         
+      ELSE
+         -- Apenas fechar o cursor
+         CLOSE cr_craplot;
          BEGIN
           UPDATE craplot
              SET craplot.nrseqdig = craplot.nrseqdig + 1
@@ -2407,6 +2409,7 @@ END pc_inserir_lancamento_bordero;
             -- Gera exceção
             RAISE vr_exc_erro;
         END;
+      END IF;
         
         -- Criar registro na lcm
         BEGIN
@@ -2463,14 +2466,8 @@ END pc_inserir_lancamento_bordero;
             
             -- Gera exceção
             RAISE vr_exc_erro;
-            
         END;
          
-      ELSE
-         -- Apenas fechar o cursor
-         CLOSE cr_craplot;
-      END IF; 
-      
       TIOF0001.pc_insere_iof (pr_cdcooper       => pr_cdcooper 
                              ,pr_nrdconta       => pr_nrdconta
                              ,pr_dtmvtolt       => pr_dtmvtolt
