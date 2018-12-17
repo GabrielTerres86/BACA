@@ -3,11 +3,11 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados.php                                             
 	  Autor: Guilherme                                                         
-	  Data : Maio/2008                   Última Alteração: 12/07/2012         
+	  Data : Maio/2008                   ï¿½ltima Alteraï¿½ï¿½o: 12/07/2012         
 																			
-	  Objetivo  : Carregar dados para impressões de cartão de crédito       
+	  Objetivo  : Carregar dados para impressï¿½es de cartï¿½o de crï¿½dito       
 																			 
-	  Alterações: 03/11/2010 - Adaptações para cartão PJ (David).
+	  Alteraï¿½ï¿½es: 03/11/2010 - Adaptaï¿½ï¿½es para cartï¿½o PJ (David).
 
 				  23/03/2011 - Adicionado condicao de $idimpres 16, 
 							   cancelamento de cartao de credito de PJ(Jorge).
@@ -23,24 +23,24 @@
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variï¿½veis globais de controle, e biblioteca de funï¿½ï¿½es	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mï¿½todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 	
-	// Verifica permissão
+	// Verifica permissï¿½o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
 
-	// Verifica se o número da conta foi informado
+	// Verifica se o nï¿½mero da conta foi informado
 	if (!isset($_POST["nrdconta"]) || 		
 		!isset($_POST["nrctrcrd"]) || 
 		!isset($_POST["idimpres"]) || 
@@ -54,25 +54,25 @@
 	$idimpres = $_POST["idimpres"];
 	$cdmotivo = $_POST["cdmotivo"];
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nï¿½mero da conta ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($nrdconta)) {
 		?><script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
 		exit();
 	}
 	
-	// Verifica se número do contrato é um inteiro válido
+	// Verifica se nï¿½mero do contrato ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($nrctrcrd)) {
 		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
 		exit();
 	}
 	
-	// Verifica se identificador de impressão é um inteiro válido
+	// Verifica se identificador de impressï¿½o ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($idimpres)) {
 		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}		
 	
-	// Verifica se código do motivo da solicitação de segunda via é um inteiro válido
+	// Verifica se cï¿½digo do motivo da solicitaï¿½ï¿½o de segunda via ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($cdmotivo)) {
 		?><script language="javascript">alert('C&oacute;digo da solicita&ccedil;&atilde;o de segunda via inv&aacute;lido.');</script><?php
 		exit();
@@ -80,7 +80,7 @@
 
 	if ($idimpres == 1  || $idimpres == 2  || $idimpres == 3  || $idimpres == 7  || $idimpres == 8  || $idimpres == 9  || 
 	    $idimpres == 10 || $idimpres == 11 || $idimpres == 12 || $idimpres == 13 || $idimpres == 14 || $idimpres == 15 || 
-		$idimpres == 16 || $idimpres == 18){
+		$idimpres == 16){
 		switch ($idimpres) { 
 		    case  1: $nmproced = "imprimi_limite_pf";              		  break;
 			case  2: $nmproced = "gera_impressao_contrato_cartao"; 		  break;
@@ -95,11 +95,10 @@
 			case 14: $nmproced = "altera_limite_pj";               		  break;
 			case 15: $nmproced = "imprime_Alt_data_PJ";            		  break;
 			case 16: $nmproced = "termo_encerra_cartao";		   		  break;	//encerramento cartao credito de PJ,quase identico ao 13
-			case 18: $nmproced = "gera_impressao_entrega_cartao_bancoob"; break;
 			default: exit();
 		}
 		
-		// Monta o xml de requisição
+		// Monta o xml de requisiï¿½ï¿½o
 		$xmlDadosImpres  = "";
 		$xmlDadosImpres .= "<Root>";
 		$xmlDadosImpres .= "	<Cabecalho>";
@@ -133,20 +132,108 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjDadosImpres = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crï¿½tica
 		if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 			exit();
 		}
 		
-		// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+		// Obtï¿½m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 		$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
 		
-		// Chama função para mostrar PDF do impresso gerado no browser
+		// Chama funï¿½ï¿½o para mostrar PDF do impresso gerado no browser
 		visualizaPDF($nmarqpdf);
+	} else if ($idimpres == 18) {
+
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+	
+		$validaresult = mensageria($xml, "ATENDA_CRD", "VALIDA_DTCORTE_PROTOCOLO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$validaxmlObj = getObjectXML($validaresult);
+
+		if (strtoupper($validaxmlObj->roottag->tags[0]->name) == "ERRO") {
+			$msg = $validaxmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			exit();
+		}
+		$layout = $validaxmlObj->roottag->cdata;
+		if ($layout == 0) {
+
+			// Monta o xml de requisiï¿½ï¿½o
+			$xmlDadosImpres  = "";
+			$xmlDadosImpres .= "<Root>";
+			$xmlDadosImpres .= "	<Cabecalho>";
+			$xmlDadosImpres .= "		<Bo>b1wgen0028.p</Bo>";
+			$xmlDadosImpres .= "		<Proc>gera_impressao_entrega_cartao_bancoob</Proc>";
+			$xmlDadosImpres .= "	</Cabecalho>";
+			$xmlDadosImpres .= "	<Dados>";
+			$xmlDadosImpres .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+			$xmlDadosImpres .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+			$xmlDadosImpres .= "		<nrdcaixa>0</nrdcaixa>";
+			$xmlDadosImpres .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";		
+			$xmlDadosImpres .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+			$xmlDadosImpres .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
+			$xmlDadosImpres .= "		<nrdconta>".$nrdconta."</nrdconta>";
+			$xmlDadosImpres .= "		<idseqttl>1</idseqttl>";
+			$xmlDadosImpres .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+			$xmlDadosImpres .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+			$xmlDadosImpres .= "		<inproces>".$glbvars["inproces"]."</inproces>";		
+			$xmlDadosImpres .= "		<nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+			$xmlDadosImpres .= "		<flgimpnp>no</flgimpnp>";
+			$xmlDadosImpres .= "		<nmendter>".session_id().getmypid()."</nmendter>";
+			$xmlDadosImpres .= "		<flgimp2v>no</flgimp2v>";
+			$xmlDadosImpres .= "		<flgerlog>no</flgerlog>";
+			$xmlDadosImpres .= "		<cdmotivo>0</cdmotivo>";		
+			$xmlDadosImpres .= "	</Dados>";
+			$xmlDadosImpres .= "</Root>";
+
+			// Executa script para envio do XML
+			$xmlResult = getDataXML($xmlDadosImpres);
+
+			// Cria objeto para classe de tratamento de XML
+			$xmlObjDadosImpres = getObjectXML($xmlResult);
+			
+			// Se ocorrer um erro, mostra crï¿½tica
+			if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
+				$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
+				?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+				exit();
+			}
+			
+			// Obtï¿½m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+			$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
+
+		} else {
+			$xml = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+		
+			$impresult = mensageria($xml, "ATENDA_CRD", "IMPRIMIR_PROTOCOLO_CARTAO_CREDITO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$impxmlObj = getObjectXML($impresult);
+
+			// Se ocorrer um erro, mostra crï¿½tica
+			if ($impxmlObj->roottag->tags[0]->name == "ERRO") {
+				$msg = $impxmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+				?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+				exit();
+			}
+
+			//Obtï¿½m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+			$nmarqpdf = $impxmlObj->roottag->cdata;
+		}
+
+		// Chama funï¿½ï¿½o para mostrar PDF do impresso gerado no browser
+		visualizaPDF($nmarqpdf);
+
+
 	} else {
-		// Monta o xml de requisição
+		// Monta o xml de requisiï¿½ï¿½o
 		$xmlDadosImpres  = "";
 		$xmlDadosImpres .= "<Root>";
 		$xmlDadosImpres .= "	<Cabecalho>";
@@ -179,7 +266,7 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjDadosImpres = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crï¿½tica
 		if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			?>
@@ -191,13 +278,13 @@
 			exit();
 		} 
 
-		// Armazena dados para impressões
+		// Armazena dados para impressï¿½es
 		$xmlTagsProposta = $xmlObjDadosImpres->roottag->tags[0]->tags; // Dados para Proposta
 		$xmlTagsOCartoes = $xmlObjDadosImpres->roottag->tags[1]->tags; // Dados de outros cartoes
 		$xmlTagsCancBloq = $xmlObjDadosImpres->roottag->tags[2]->tags; // Dados do termo de cancelamento
 		$xmlTagsCtrCredi = $xmlObjDadosImpres->roottag->tags[3]->tags; // Dados para Contrato Credicard
 		$xmlTagsBdnCeVis = $xmlObjDadosImpres->roottag->tags[4]->tags; // Dados para Contrato Cecred/Visa e Bradesco/Visa
-		$xmlTags2viaCart = $xmlObjDadosImpres->roottag->tags[5]->tags; // Dados para termo de solicitação de segunda via
+		$xmlTags2viaCart = $xmlObjDadosImpres->roottag->tags[5]->tags; // Dados para termo de solicitaï¿½ï¿½o de segunda via
 		$xmlTagsAvalista = $xmlObjDadosImpres->roottag->tags[6]->tags; // Dados dos Avalistas
 		$xmlTagsCtrBBras = $xmlObjDadosImpres->roottag->tags[7]->tags; // Dados dos contratos para ADM BB
 		$xmlTagsDtVctCrd = $xmlObjDadosImpres->roottag->tags[8]->tags; // Dados dos contratos para ADM BB
@@ -260,7 +347,7 @@
 			$dadosImpressos["BDNCEVIS"] = $dadosBdnCeVis;
 		}	
 		
-		// Armazena dados do termo de solicitação de segunda via em array
+		// Armazena dados do termo de solicitaï¿½ï¿½o de segunda via em array
 		if (count($xmlTags2viaCart) > 0) {	
 			$xmlTags = $xmlTags2viaCart[0]->tags;
 			
@@ -306,19 +393,19 @@
 			$dadosImpressos["DTVCTCRD"] = $dadosDtVctCrd;
 		}	
 
-		// Classe para geração dos impressos em PDF
+		// Classe para geraï¿½ï¿½o dos impressos em PDF
 		require_once("imprimir_pdf.php");
 
 		// Instancia Objeto para gerar arquivo PDF
 		$pdf = new PDF("P","cm","A4");
 		
-		// Inicia geração do impresso
+		// Inicia geraï¿½ï¿½o do impresso
 		$pdf->geraImpresso($dadosImpressos,$idimpres);
 		
 		$navegador = CheckNavigator();
 		$tipo = $navegador['navegador'] == 'chrome' ? "I" : "D";
 		
-		// Gera saída do PDF para o Browser
+		// Gera saï¿½da do PDF para o Browser
 		$pdf->Output("cartao_credito.pdf",$tipo);	
 	}
 	
