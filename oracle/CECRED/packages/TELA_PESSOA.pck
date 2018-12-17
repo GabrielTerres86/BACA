@@ -742,6 +742,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and ass.dtdemiss is null;
     rw_busca_cooperado cr_busca_cooperado%rowtype;
       
+    -- Buscar dado para data de fim de vigencia
+    cursor cr_crapdat (pr_cdcooper crapdat.cdcooper%type) is
+    select dat.dtmvtolt
+      from crapdat dat
+     where dat.cdcooper = pr_cdcooper;
+    rw_crapdat cr_crapdat%rowtype;
+
     vr_dtinicio_vigencia date;
     vr_cdfuncao varchar2(2) := pr_cdfuncao;
     
@@ -798,12 +805,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       
     close cr_funcao;
       
+    -- Busca data de movimentacao
+    -- para fazer validacao do fim de vigencia
+    open cr_crapdat (pr_cdcooper);
+    fetch cr_crapdat into rw_crapdat;
+    
+    -- Aborta se nao encontrar
+    if cr_crapdat%notfound then
+      
+      close cr_crapdat;
+      vr_dscritic := 'Data da cooperativa não cadastrada.';
+      raise vr_exc_erro;
+
+    end if;
+
+    close cr_crapdat;
+      
     -- Cargos que exigem data de inicio de vigencia
     if rw_funcao.flgvigencia = 1 and vr_dtinicio_vigencia is null then
       vr_dscritic := 'Data de inicio de vigência não preenchida.';
       raise vr_exc_erro;
     elsif rw_funcao.flgvigencia = 0 then
       vr_dtinicio_vigencia := null;
+    elsif vr_dtinicio_vigencia > rw_crapdat.dtmvtolt then
+      vr_dscritic := 'Data de inicio de vigência não pode ser maior que a data de referência.';
+      raise vr_exc_erro;
     end if;
     
     -- Verifica se operador foi informado
@@ -1638,8 +1664,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     elsif pr_dtfim_vigencia is null then
       vr_dscritic := 'Data de fim de vigência não preenchida.';
       raise vr_exc_erro;
-    elsif pr_dtfim_vigencia <> rw_crapdat.dtmvtolt then
+    elsif to_char(pr_dtfim_vigencia,'dd/mm/rrrr') <> to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy') then
       vr_dscritic := 'Data de fim de vigência deve ser igual a data de movimentação.';
+      raise vr_exc_erro;
+    elsif pr_dtinicio_vigencia > pr_dtfim_vigencia then
+      vr_dscritic := 'Data de fim de vigência deve ser maior que a data de início.';
       raise vr_exc_erro;
     end if;
 
@@ -1949,7 +1978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       pc_inserir_cargos (pr_cdcooper          => pr_cdcooper
                         ,pr_nrcpfcgc          => rw_crapass.nrcpfcgc
                         ,pr_cdfuncao          => pr_cdfuncao
-                        ,pr_dtinicio_vigencia => rw_crapdat.dtmvtolt
+                        ,pr_dtinicio_vigencia => to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy')
                         ,pr_cdoperad          => pr_cdoperad
                         ,pr_cdcritic          => vr_cdcritic
                         ,pr_dscritic          => vr_dscritic);
