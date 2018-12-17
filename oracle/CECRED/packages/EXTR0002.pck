@@ -5134,6 +5134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                         pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
       SELECT tdb.dtvencto,
              tdb.vlsldtit,
+             tdb.vltitulo,
              tdb.cdcooper,
              tdb.cdbandoc,
              tdb.nrdctabb,
@@ -7135,11 +7136,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).dshistor:= rw_craphis.dshistor;
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char( to_number( SUBSTR( rw_crapcob.nrnosnum , LENGTH(rw_crapcob.nrnosnum) - 8, 9 ) ), 'fm999g999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= rw_craphis.indebcre;
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vlsldtit;
-          --Acumular valor automatico
-          vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vlsldtit;
-          --Acumular valor Credito
-          vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vlsldtit;
+           
+          IF rw_craptdb.flverbor = 1 THEN
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vlsldtit;
+            --Acumular valor automatico
+            vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vlsldtit;
+            --Acumular valor Credito
+            vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vlsldtit;
+          ELSE
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vltitulo;
+            --Acumular valor automatico
+            vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vltitulo;
+            --Acumular valor Credito
+            vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vltitulo;
+          
+          END IF;  
 
           IF rw_craptdb.flverbor = 1 THEN
             IF rw_craptdb.sdmtatit > 0 THEN

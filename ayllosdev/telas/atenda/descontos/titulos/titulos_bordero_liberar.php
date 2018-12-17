@@ -61,7 +61,7 @@
 	$xml .= "</Root>";
 	
 	
-	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'LIBERAR_BORDERO',  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'LIBERAR_BORDERO',  $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObj = getClassXML($xmlResult);
     $root = $xmlObj->roottag;
