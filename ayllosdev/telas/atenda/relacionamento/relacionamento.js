@@ -1031,7 +1031,6 @@ function validaGrupo(){
 				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function (response) {
-				console.log(response);
 				if(response.erro != ""){
 					showError("error", response.erro, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				}else{
