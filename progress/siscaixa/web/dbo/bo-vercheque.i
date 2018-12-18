@@ -2,7 +2,7 @@
 
     Arquivo           : bo-vercheque.i
 
-    Ultima Atualizacao: 09/09/2014
+    Ultima Atualizacao: 17/12/2018
 
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -24,6 +24,8 @@
 
                 06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
+                17/12/2018 - Alterada critica generica 999 por 95 na procedure ver_associado
+                             INC0029153 (Tiago)
 ------------------------------------------------------------------------------*/
 
 PROCEDURE ver_cheque:
@@ -442,7 +444,7 @@ PROCEDURE ver_associado.
 
                        IF   NOT AVAIL craptrf   THEN
                             DO:
-                                ASSIGN  i-codigo-erro = 999.
+                                ASSIGN  i-codigo-erro = 95. /*095 - Titular da conta bloqueado.*/
                                 RETURN.
                             END.
 
