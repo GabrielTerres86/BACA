@@ -83,6 +83,7 @@
 { sistema/generico/includes/gera_erro.i    }
 { sistema/generico/includes/gera_log.i     }
 { sistema/ayllos/includes/var_online.i NEW }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -334,6 +335,7 @@ PROCEDURE obtem-eventos-andamento:
     DEF  VAR    aux_dsrestri       AS CHAR                           NO-UNDO.
     DEF  VAR    aux_dsexclus       AS CHAR                           NO-UNDO. 
     DEF  VAR    aux_qthispar       AS INTE                           NO-UNDO.
+    DEF  VAR    aux_cdagenci2      AS INTE                           NO-UNDO. /*Voto por Grupo */
     
     DEF BUFFER crabadp FOR crapadp.
     
@@ -379,9 +381,31 @@ PROCEDURE obtem-eventos-andamento:
              RETURN "NOK".
          END.
 
+    /* Buscar PA associado a pessoa*/
+    DO:
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_retorna_pa_pessoa
+                         aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT par_cdcooper,      /* Cooperativa */
+                   INPUT crapass.nrcpfcgc,      /* Número do cpf/cgc */
+                   OUTPUT 0,                   
+                   OUTPUT 0,
+                   OUTPUT "").
+         
+    CLOSE STORED-PROC pc_retorna_pa_pessoa 
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+    ASSIGN aux_cdcritic     = pc_retorna_pa_pessoa.pr_cdcritic
+                             WHEN pc_retorna_pa_pessoa.pr_cdcritic <> ?
+           aux_dscritic     = pc_retorna_pa_pessoa.pr_dscritic
+                             WHEN pc_retorna_pa_pessoa.pr_dscritic <> ?
+           aux_cdagenci2    = pc_retorna_pa_pessoa.pr_cdagenci
+                             WHEN pc_retorna_pa_pessoa.pr_cdagenci <> ?.
+    END.
+
     /* Agrupamento de PACS, usado para aqueles PAC que dependem e usam a
        agenda de outros  - idevento = 1 - PROGRID */
-   
     RUN obtem-agrupador (INPUT  1,
                          INPUT  par_cdcooper,
                          INPUT  par_dtanoage,
@@ -395,9 +419,18 @@ PROCEDURE obtem-eventos-andamento:
                              crapadp.dtanoage = par_dtanoage       AND
                              crapadp.idevento = 1)   OR
                                
+                             /* Eventos sem Grupo */  
                             (crapadp.cdcooper = par_cdcooper       AND
                              crapadp.cdagenci = crapass.cdagenci   AND
                              crapadp.dtanoage = par_dtanoage       AND
+                             crapadp.nmdgrupo = " "                AND
+                             crapadp.idevento = 2)   OR 
+
+                             /* Eventos com Grupo */                               
+                            (crapadp.cdcooper = par_cdcooper       AND
+                             crapadp.cdagenci = aux_cdagenci2      AND
+                             crapadp.dtanoage = par_dtanoage       AND
+                             crapadp.nmdgrupo <> " "               AND                             
                              crapadp.idevento = 2)   OR 
                               
                               /* Assembleia */
@@ -411,7 +444,8 @@ PROCEDURE obtem-eventos-andamento:
         FIRST crapedp WHERE crapedp.cdcooper = par_cdcooper       AND
                             crapedp.dtanoage = par_dtanoage       AND
                             crapedp.idevento = crapadp.idevento   AND
-                            crapedp.cdevento = crapadp.cdevento   NO-LOCK
+                            crapedp.cdevento = crapadp.cdevento   
+							NO-LOCK
                             BREAK BY crapadp.nrmeseve
                                      BY crapadp.dtinieve:
                 
@@ -572,7 +606,8 @@ PROCEDURE obtem-eventos-andamento:
                tt-eventos-andamento.flgcompr = crapedp.flgcompr
                tt-eventos-andamento.dsrestri = aux_dsrestri
                tt-eventos-andamento.rowidedp = ROWID(crapedp)
-               tt-eventos-andamento.rowidadp = ROWID(crapadp).
+               tt-eventos-andamento.rowidadp = ROWID(crapadp)
+               tt-eventos-andamento.nmdgrupo = crapadp.nmdgrupo.
 
     END.
     

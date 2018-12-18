@@ -359,7 +359,8 @@ PROCEDURE CriaListaEventos :
                              crapedp.tpevento = 13 OR
                              crapedp.tpevento = 14 OR
                              crapedp.tpevento = 15 OR
-                             crapedp.tpevento = 16) NO-LOCK NO-ERROR.                                 
+                             crapedp.tpevento = 16 OR
+							 crapedp.tpevento = 17) NO-LOCK NO-ERROR.                                 
         
     IF NOT AVAIL crapeap THEN NEXT.
     
@@ -731,7 +732,8 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
 																			 crapedp.tpevento = 13 OR
 																			 crapedp.tpevento = 14 OR
 																			 crapedp.tpevento = 15 OR
-																			 crapedp.tpevento = 16) NO-LOCK NO-ERROR.                                                 
+																			 crapedp.tpevento = 16 OR
+																			 crapedp.tpevento = 17) NO-LOCK NO-ERROR.                                                 
 							
 							IF AVAILABLE crapedp THEN
 							DO:           

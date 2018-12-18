@@ -43,6 +43,9 @@ DEFINE TEMP-TABLE ab_unmap
   FIELD aux_idexclui AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nmevento AS CHARACTER FORMAT "X(256)":U 
+  
+  FIELD aux_recid AS CHARACTER FORMAT "X(256)":U 
+  
   FIELD aux_cdoperad AS CHARACTER FORMAT "X(256)":U
   FIELD tel_cdoperad AS CHARACTER FORMAT "X(256)":U
   FIELD aux_nmpagina AS CHARACTER FORMAT "X(256)":U 
@@ -155,7 +158,7 @@ DEFINE BUFFER crabadp FOR crapadp.
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-FIELDS crapadp.idstaeve crapadp.qtdiaeve crapadp.qtparpre ~
 crapadp.nrseqfea crapadp.cdlocali crapadp.cdcooper crapadp.cdagenci ~
-crapadp.dshroeve crapadp.dtfineve crapadp.dtinieve crapadp.nrseqdig ~
+crapadp.dshroeve crapadp.nrdgrupo crapadp.nmdgrupo crapadp.dtfineve crapadp.dtinieve crapadp.nrseqdig ~
 crapadp.dsjustif
 &Scoped-define ENABLED-TABLES ab_unmap crapadp
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
@@ -164,7 +167,7 @@ crapadp.dsjustif
 ab_unmap.aux_nrseqfea ab_unmap.aux_cdlocali ab_unmap.aux_nmresage ~
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_idexclui ab_unmap.aux_lspermis ~
-ab_unmap.aux_nmevento ab_unmap.aux_nmpagina ab_unmap.aux_nrdrowid ~
+ab_unmap.aux_nmevento ab_unmap.aux_recid    ab_unmap.aux_nmpagina ab_unmap.aux_nrdrowid ~
 ab_unmap.aux_nrmeseve ab_unmap.aux_stdopcao ab_unmap.aux_idinseve ~
 ab_unmap.aux_dsjustif ab_unmap.aux_cdoperad ab_unmap.aux_dsdiaeve ~
 ab_unmap.aux_idfernac ab_unmap.aux_idfermun ab_unmap.aux_idfimsem ~
@@ -177,7 +180,7 @@ ab_unmap.aux_verfimes ab_unmap.aux_cdcopope ab_unmap.tel_cdoperad ~
 ab_unmap.tel_dsdiaeve ab_unmap.aux_mesevent ab_unmap.aux_alteraca ab_unmap.aux_idstagen
 &Scoped-Define DISPLAYED-FIELDS crapadp.idstaeve crapadp.qtdiaeve crapadp.qtparpre ~
 crapadp.nrseqfea crapadp.cdlocali crapadp.cdcooper crapadp.cdagenci ~
-crapadp.dshroeve crapadp.dtfineve crapadp.dtinieve crapadp.nrseqdig ~
+crapadp.dshroeve crapadp.nrdgrupo crapadp.nmdgrupo crapadp.dtfineve crapadp.dtinieve crapadp.nrseqdig ~
 crapadp.dsjustif
 &Scoped-define DISPLAYED-TABLES ab_unmap crapadp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
@@ -186,7 +189,7 @@ crapadp.dsjustif
 ab_unmap.aux_nrseqfea ab_unmap.aux_cdlocali ab_unmap.aux_nmresage ~
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_idexclui ab_unmap.aux_lspermis ~
-ab_unmap.aux_nmevento ab_unmap.aux_nmpagina ab_unmap.aux_nrdrowid ~
+ab_unmap.aux_nmevento ab_unmap.aux_recid    ab_unmap.aux_nmpagina ab_unmap.aux_nrdrowid ~
 ab_unmap.aux_nrmeseve ab_unmap.aux_stdopcao ab_unmap.aux_idinseve ~
 ab_unmap.aux_dsjustif ab_unmap.aux_cdoperad ab_unmap.aux_dsdiaeve ~
 ab_unmap.aux_idfernac ab_unmap.aux_idfermun ab_unmap.aux_idfimsem ~
@@ -357,6 +360,12 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+		  
+     ab_unmap.aux_recid AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+		  
      ab_unmap.aux_nmpagina AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -383,6 +392,14 @@ DEFINE FRAME Web-Frame
      crapadp.dshroeve AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+
+     crapadp.nrdgrupo AT ROW 1 COL 2 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     crapadp.nmdgrupo AT ROW 1 COL 3 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+
      crapadp.dtfineve AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -508,6 +525,10 @@ DEFINE FRAME Web-Frame
    EXP-LABEL EXP-FORMAT EXP-HELP                                        */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_nmevento IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+   
+/* SETTINGS FOR FILL-IN ab_unmap.aux_recid IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+   
 /* SETTINGS FOR FILL-IN ab_unmap.aux_cdoperad IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.tel_cdoperad IN FRAME Web-Frame
@@ -536,6 +557,12 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL                                                    */
 /* SETTINGS FOR FILL-IN crapadp.dshroeve IN FRAME Web-Frame
    ALIGN-L EXP-LABEL                                                    */
+   
+/* SETTINGS FOR FILL-IN crapadp.nrdgrupo IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL                                                    */
+/* SETTINGS FOR FILL-IN crapadp.nmdgrupo IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL                                                    */
+   
 /* SETTINGS FOR FILL-IN crapadp.dtfineve IN FRAME Web-Frame
    ALIGN-L EXP-LABEL                                                    */
 /* SETTINGS FOR FILL-IN crapadp.nrseqdig IN FRAME Web-Frame
@@ -586,6 +613,9 @@ DEF VAR aux_meses AS CHAR EXTENT 12 INIT ["JANEIRO","FEVEREIRO","MARÇO","ABRIL",
 		
     ab_unmap.aux_nrmeseve =  aux_meses[{&SECOND-ENABLED-TABLE}.nrmeseve].
 
+
+ ab_unmap.aux_recid    = STRING(RECID({&SECOND-ENABLED-TABLE})).
+					 
   FIND FIRST crapedp WHERE crapedp.idevento = {&SECOND-ENABLED-TABLE}.idevento
                        AND crapedp.cdcooper = {&SECOND-ENABLED-TABLE}.cdcooper
                        AND crapedp.dtanoage = {&SECOND-ENABLED-TABLE}.dtanoage
@@ -711,6 +741,15 @@ PROCEDURE htmOffsets :
     ("cdlocali":U,"crapadp.cdlocali":U,crapadp.cdlocali:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("dshroeve":U,"crapadp.dshroeve":U,crapadp.dshroeve:HANDLE IN FRAME {&FRAME-NAME}).
+
+  RUN htmAssociate
+    ("nrdgrupo":U,"crapadp.nrdgrupo":U,crapadp.nrdgrupo:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("nmdgrupo":U,"crapadp.nmdgrupo":U,crapadp.nmdgrupo:HANDLE IN FRAME {&FRAME-NAME}).	
+  RUN htmAssociate
+    ("aux_recid":U,"ab_unmap.aux_recid":U,ab_unmap.aux_recid:HANDLE IN FRAME {&FRAME-NAME}).
+
+	
   RUN htmAssociate
     ("dtfineve":U,"crapadp.dtfineve":U,crapadp.dtfineve:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -927,6 +966,10 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
                    cratadp.dtinieve = INPUT crapadp.dtinieve        
                    cratadp.dtfineve = INPUT crapadp.dtfineve         
                    cratadp.dshroeve = INPUT crapadp.dshroeve            
+
+                   cratadp.nrdgrupo = INPUT crapadp.nrdgrupo  
+                   cratadp.nmdgrupo = INPUT crapadp.nmdgrupo  				   
+				   
                    cratadp.dsdiaeve = GET-VALUE("aux_dsdiaeve")
                    cratadp.qtdiaeve = INPUT crapadp.qtdiaeve
                    cratadp.idstaeve = INPUT crapadp.idstaeve

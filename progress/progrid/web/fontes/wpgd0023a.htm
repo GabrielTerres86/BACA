@@ -121,7 +121,9 @@
 				<table width="600" align="left" cellpadding="0" cellspacing="1" bgColor="#FFFFFF">
         <tr>
 						<td height="24" align="right" class="NomeCampo">Evento:</td>
-						<td height="24"><input name="aux_nmevento" type="text" class="Campo" size="40" maxlength="40" readOnly VALUE=""></td>
+						<td height="24"><input name="aux_nmevento" type="text" class="Campo" size="40" maxlength="40" readOnly VALUE="">
+                                        Integração BRC:<input name="aux_recid" type="text" class="Campo" size="8" maxlength="8" readOnly VALUE="">						
+						</td>
                 </tr>                                    
               <tr>
 						<td height="24" align="right" class="NomeCampo">PA:</td>
@@ -160,13 +162,22 @@
 						<td height="24" class="NomeCampo"><input id="qtdiaeve" name="qtdiaeve" type="text" class="Campo inteiro" style="width:40px; text-align:right;" value="0" readOnly></td>
            </tr>  
 				<tr>
-						<td height="24" class="NomeCampo" align="right">Qtde Participantes:</td>
-						<td height="24" class="NomeCampo"><input id="qtparpre" name="qtparpre" type="text" class="Campo inteiro" style="width:40px; text-align:right;" onchange="resetaJustificativa();" value="0" readOnly></td>
+						<td height="24" class="NomeCampo" align="right">Qtde. Participantes:</td>
+						<td height="24" class="NomeCampo"><input id="qtparpre" name="qtparpre" type="text" class="Campo inteiro" style="width:20px; text-align:right;" onchange="resetaJustificativa();" value="0" readOnly>
+                                                          Número do Grupo:<input id="nrdgrupo" name="nrdgrupo" type="text" class="Campo inteiro" style="width:30px; text-align:right;" maxlength="4" value="0" >						
+						                                  Nome do Grupo:<input name="nmdgrupo" id="nmdgrupo" type="text" class="Campo" maxlength="12" value="" >
 				</tr>
            <tr>
 						<td height="24" class="NomeCampo" align="right">Horário:</td>
 						<td height="24"><input name="dshroeve" id="dshroeve" type="text" class="Campo" maxlength="20" value="" ></td>
                  </tr>
+           <tr>
+
+
+           </tr>
+           <tr>
+           </tr>
+		   
                  <tr>
 						<td height="24" class="NomeCampo" align="right">Local:</td>
 						<td height="24"><select name="aux_cdlocali" style="width: 370px;" class="Campo" onchange="resetaJustificativa();"></select></td>

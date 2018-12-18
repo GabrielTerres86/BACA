@@ -277,11 +277,11 @@
                                                                                     <td id="separador4" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																					<td id="tbevento_col5" width="2%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Obs.</td>
 																					<td id="separador5" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-																					<td id="tbevento_col6" width="6%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Recurso</td>
+																					<td id="tbevento_col6" width="5%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Recurso</td>
 																					<td id="separador6" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																					<td id="tbevento_col7" width="16%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Facilitador / Mesa de Autoridades</td>
                                                                                     <td id="separador7" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col8" width="6%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Horário</td>
+                                                                                    <td id="tbevento_col8" width="7%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Hora/Grupo</td>
                                                                                     <td id="separador8" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
                                                                                     <td id="tbevento_col9" width="6%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Max. Partic.</td>
                                                                                     <td id="separador9" width="1%" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
@@ -538,7 +538,7 @@
                 cell.align = 'left';
                 if(mevento[i].tpevento == 7 || mevento[i].tpevento == 12){
                   cell.innerHTML = '<a href="#" onclick="AddMesa(' + mevento[i].cdevento + ',' + mevento[i].nrseqeve + ',' + mevento[i].cdagenci + ');">' + mevento[i].mesafaci + '</a>'; /* AGO/AGE */
-                }else if(mevento[i].tpevento == 8 || mevento[i].tpevento == 13 || mevento[i].tpevento == 14 || mevento[i].tpevento == 15 || mevento[i].tpevento == 16){ /* PRE ASSEMBLEIA */
+                }else if(mevento[i].tpevento == 8 || mevento[i].tpevento == 13 || mevento[i].tpevento == 14 || mevento[i].tpevento == 15 || mevento[i].tpevento == 16 || mevento[i].tpevento == 17){ /* PRE ASSEMBLEIA */
                   cell.innerHTML = '<a href="#" onclick="AddFacilitador(' + mevento[i].cdevento + ',' + mevento[i].nrseqeve + ',' + mevento[i].nrseqfea + ',' + mevento[i].cdagenci + ');">' + mevento[i].mesafaci + '</a>';
                 }
                 

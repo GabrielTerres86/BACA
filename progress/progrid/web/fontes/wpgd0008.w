@@ -796,7 +796,8 @@ PROCEDURE CriaLista :
                     ENTRY(i * 2, aux_tpevento) = "13" OR 
                     ENTRY(i * 2, aux_tpevento) = "14" OR 
                     ENTRY(i * 2, aux_tpevento) = "15" OR 
-                    ENTRY(i * 2, aux_tpevento) = "16" THEN                      
+                    ENTRY(i * 2, aux_tpevento) = "16" OR
+					ENTRY(i * 2, aux_tpevento) = "17" THEN                      
                       DO:
                           ab_unmap.aux_tpevento:DELETE(ENTRY(i * 2, aux_tpevento))
                                IN FRAME {&FRAME-NAME}.
@@ -813,7 +814,8 @@ PROCEDURE CriaLista :
                     ENTRY(i * 2, aux_tpevento) <> "13" AND
                     ENTRY(i * 2, aux_tpevento) <> "14" AND
                     ENTRY(i * 2, aux_tpevento) <> "15" AND 
-                    ENTRY(i * 2, aux_tpevento) <> "16" THEN
+                    ENTRY(i * 2, aux_tpevento) <> "16" AND
+					ENTRY(i * 2, aux_tpevento) <> "17" THEN
                      DO:
                            ab_unmap.aux_tpevento:DELETE(ENTRY(i * 2, aux_tpevento)).
                      END.

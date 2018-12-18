@@ -18,6 +18,9 @@
 
 { sistema/generico/includes/var_log_progrid.i }
 
+DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
+DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 
@@ -42,6 +45,7 @@ DEFINE TEMP-TABLE ab_unmap
   FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_lsseqdig AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nminseve AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nmdgrupo AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nrconfir AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nrcompar AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
@@ -49,6 +53,7 @@ DEFINE TEMP-TABLE ab_unmap
   FIELD aux_nrinscri AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_nrseqeve AS CHARACTER 
   FIELD aux_qtmaxtur AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nmdgrupoeve AS CHARACTER FORMAT "X(256)":U   
   FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_tpinseve AS CHARACTER FORMAT "X(256)":U 
   FIELD aux_tppartic AS CHARACTER FORMAT "X(256)":U 
@@ -91,6 +96,7 @@ DEFINE TEMP-TABLE tt-status
 /* Temp-Table and Buffer definitions */
 DEFINE TEMP-TABLE tt-inscritos
   FIELD nminseve AS CHARACTER
+  FIELD nmdgrupo AS CHARACTER
   FIELD nmextttl AS CHARACTER
   FIELD idseqttl AS CHARACTER 
   FIELD nrdconta AS CHARACTER
@@ -187,10 +193,10 @@ crapidp.nrtelins crapidp.tpinseve crapidp.dsobsins crapidp.nrficpre
 &Scoped-define ENABLED-TABLES ab_unmap crapidp
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
 &Scoped-define SECOND-ENABLED-TABLE crapidp
-&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nminseve ~
+&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nminseve ab_unmap.aux_nmdgrupo ~
 ab_unmap.aux_tpinseve ab_unmap.aux_nrseqeve ab_unmap.aux_nrconfir ab_unmap.aux_nrcompar ~
 ab_unmap.aux_nrinscri ab_unmap.aux_flgcompr ab_unmap.aux_flgrest ab_unmap.aux_qtmaxtur ~
-ab_unmap.aux_idstaeve ab_unmap.origem ab_unmap.aux_cdagenci ~
+ab_unmap.aux_idstaeve ab_unmap.origem ab_unmap.aux_cdagenci ab_unmap.aux_nmdgrupoeve ~
 ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_cdgraupr ~
 ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ~
 ab_unmap.aux_idevento ab_unmap.aux_lscoment ab_unmap.aux_lsconfir ab_unmap.aux_lsfaleve ~
@@ -212,10 +218,10 @@ crapidp.nrtelins crapidp.tpinseve crapidp.dsobsins crapidp.nrficpre
 &Scoped-define DISPLAYED-TABLES ab_unmap crapidp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
 &Scoped-define SECOND-DISPLAYED-TABLE crapidp
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nminseve ~
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nminseve ab_unmap.aux_nmdgrupo ~
 ab_unmap.aux_tpinseve ab_unmap.aux_nrseqeve ~
 ab_unmap.aux_nrconfir ab_unmap.aux_nrinscri ab_unmap.aux_flgcompr ab_unmap.aux_flgrest ~
-ab_unmap.aux_nrcompar ab_unmap.aux_qtmaxtur ab_unmap.aux_idstaeve ab_unmap.origem ~
+ab_unmap.aux_nrcompar ab_unmap.aux_qtmaxtur ab_unmap.aux_nmdgrupoeve ab_unmap.aux_idstaeve ab_unmap.origem ~
 ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ~
 ab_unmap.aux_cdgraupr ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lscoment ab_unmap.aux_lsfaleve ~
@@ -246,6 +252,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.aux_nminseve AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_nmdgrupo AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -284,6 +294,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.aux_nmdgrupoeve AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1		  
      ab_unmap.aux_idstaeve AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -544,11 +558,13 @@ DEFINE FRAME Web-Frame
           FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_lsseqdig AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nminseve AS CHARACTER FORMAT "X(256)":U 
+		  FIELD aux_nmdgrupo AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrconfir AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrinscri AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrseqeve AS CHARACTER 
           FIELD aux_qtmaxtur AS CHARACTER FORMAT "X(256)":U 
+          FIELD aux_nmdgrupoeve AS CHARACTER FORMAT "X(256)":U 		  
           FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_tpinseve AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_idademin AS CHARACTER FORMAT "X(256)":U 
@@ -623,6 +639,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_nminseve IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.aux_nmdgrupo IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_nrconfir IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_nrdrowid IN FRAME Web-Frame
@@ -633,6 +651,9 @@ DEFINE FRAME Web-Frame
    EXP-LABEL EXP-FORMAT EXP-HELP                                        */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_qtmaxtur IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.aux_nmdgrupoeve IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+
 /* SETTINGS FOR FILL-IN ab_unmap.aux_stdopcao IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.aux_tpinseve IN FRAME Web-Frame
@@ -821,6 +842,7 @@ PROCEDURE CriaListaEventos:
     DEFINE VARIABLE aux_flgcompr AS CHAR NO-UNDO.
     DEFINE VARIABLE aux_flgrest  AS CHAR NO-UNDO.
     DEFINE VARIABLE aux_qtmaxtur AS CHAR NO-UNDO.
+    DEFINE VARIABLE aux_nmdgrupoeve AS CHAR NO-UNDO.	
     DEFINE VARIABLE aux_nrinscri AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nrconfir AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nrfaltan AS INT  NO-UNDO.
@@ -883,7 +905,8 @@ PROCEDURE CriaListaEventos:
                                    BY crapedp.nmevento
                                    BY crapadp.nrseqdig:
 
-				ASSIGN aux_qtmaxtur = STRING(crapadp.qtparpre).
+				ASSIGN aux_qtmaxtur = STRING(crapadp.qtparpre)
+				       aux_nmdgrupoeve = STRING(crapadp.nmdgrupo).
 				
         /*
         IF crapeap.qtmaxtur > 0 THEN
@@ -1014,6 +1037,8 @@ PROCEDURE CriaListaEventos:
        IF  crapadp.dshroeve <> ""   THEN
            aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
        
+		   aux_nmevento = aux_nmevento + " - " + crapadp.nmdgrupo.
+       
        aux_fechamen = "Não".  
        DO  aux_contador = 1 TO NUM-ENTRIES(gnpapgd.lsmesctb):
 
@@ -1042,6 +1067,7 @@ PROCEDURE CriaListaEventos:
 																		 + "',flgcompr:'" +  STRING(aux_flgcompr)     
 																		 + "',flgrest:'"  +  STRING(aux_flgrest)      
 																		 + "',qtmaxtur:'" +  STRING(aux_qtmaxtur)     
+																		 + "',nmdgrupoeve:'" +  STRING(aux_nmdgrupoeve)     																		 
 																		 + "',nrinscri:'" +  STRING(aux_nrinscri)     
 																		 + "',nrconfir:'" +  STRING(aux_nrconfir)     
 																		 + "',nrcompar:'" +  STRING(aux_nrcompar)     
@@ -1634,6 +1660,8 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("aux_nminseve":U,"ab_unmap.aux_nminseve":U,ab_unmap.aux_nminseve:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
+    ("nmdgrupo":U,"ab_unmap.aux_nmdgrupo":U,ab_unmap.aux_nmdgrupo:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
     ("aux_nrconfir":U,"ab_unmap.aux_nrconfir":U,ab_unmap.aux_nrconfir:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_nrcompar":U,"ab_unmap.aux_nrcompar":U,ab_unmap.aux_nrcompar:HANDLE IN FRAME {&FRAME-NAME}).  
@@ -1648,6 +1676,9 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("aux_qtmaxtur":U,"ab_unmap.aux_qtmaxtur":U,ab_unmap.aux_qtmaxtur:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
+    ("aux_nmdgrupoeve":U,"ab_unmap.aux_nmdgrupoeve":U,ab_unmap.aux_nmdgrupoeve:HANDLE IN FRAME {&FRAME-NAME}).
+
+	RUN htmAssociate
     ("aux_stdopcao":U,"ab_unmap.aux_stdopcao":U,ab_unmap.aux_stdopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_tpinseve":U,"ab_unmap.aux_tpinseve":U,ab_unmap.aux_tpinseve:HANDLE IN FRAME {&FRAME-NAME}).
@@ -2057,6 +2088,7 @@ PROCEDURE NomeCooperado :
     DEF VAR aux_nrtelefo AS CHAR NO-UNDO.
     DEF VAR aux_nrdddtfc AS CHAR NO-UNDO.
     DEF VAR aux_dsdemail AS CHAR NO-UNDO.
+    DEF VAR aux_nmdgrupo AS CHAR NO-UNDO.	
     DEF VAR aux_nmprimtl AS CHAR NO-UNDO.
     DEF VAR aux_nmresage AS CHAR NO-UNDO.
             
@@ -2119,6 +2151,32 @@ PROCEDURE NomeCooperado :
           
           END.
       
+          ASSIGN aux_nmdgrupo = "".
+		  
+          /* Buscar Grupo associado a pessoa*/
+          DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          RUN STORED-PROCEDURE pc_retorna_grupo_coop
+                               aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT INTEGER(ab_unmap.aux_cdcooper),      /* Cooperativa */
+                         INPUT crapttl.nrcpfcgc,      /* Número do cpf/cgc */
+                         OUTPUT "",                   
+                         OUTPUT 0,
+                         OUTPUT "").
+         
+          CLOSE STORED-PROC pc_retorna_grupo_coop 
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+          ASSIGN aux_cdcritic     = pc_retorna_grupo_coop.pr_cdcritic
+                                   WHEN pc_retorna_grupo_coop.pr_cdcritic <> ?
+                 aux_dscritic     = pc_retorna_grupo_coop.pr_dscritic
+                                   WHEN pc_retorna_grupo_coop.pr_dscritic <> ?
+                 aux_nmdgrupo     = pc_retorna_grupo_coop.pr_nmdgrupo
+                                   WHEN pc_retorna_grupo_coop.pr_nmdgrupo <> ?.
+          END.
+		  
+		  
           ASSIGN aux_nrtelefo = ""
                  aux_dsdemail = "".
           
@@ -2179,6 +2237,7 @@ PROCEDURE NomeCooperado :
                                            + "',nrdddtfc:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrdddtfc))
                                            + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrtelefo)) 
                                            + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(TRIM(STRING(aux_dsdemail)))
+                                           + "',nmdgrupo:" + "'" + FUN_FORMATA_VALOR(TRIM(STRING(aux_nmdgrupo)))										   
                                            + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
                                            + "',tppessoa:" + "'F" 
                                            + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                          
@@ -2232,6 +2291,31 @@ PROCEDURE NomeCooperado :
                 
               END.								  
 	  
+              ASSIGN aux_nmdgrupo = "".
+
+              /* Buscar Grupo associado a pessoa*/
+              DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              RUN STORED-PROCEDURE pc_retorna_grupo_coop
+                                   aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT INTEGER(ab_unmap.aux_cdcooper),      /* Cooperativa */
+                             INPUT crapttl.nrcpfcgc,      /* Número do cpf/cgc */
+                             OUTPUT "",                   
+                             OUTPUT 0,
+                             OUTPUT "").
+         
+              CLOSE STORED-PROC pc_retorna_grupo_coop 
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+              ASSIGN aux_cdcritic     = pc_retorna_grupo_coop.pr_cdcritic
+                                       WHEN pc_retorna_grupo_coop.pr_cdcritic <> ?
+                     aux_dscritic     = pc_retorna_grupo_coop.pr_dscritic
+                                       WHEN pc_retorna_grupo_coop.pr_dscritic <> ?
+                     aux_nmdgrupo     = pc_retorna_grupo_coop.pr_nmdgrupo
+                                       WHEN pc_retorna_grupo_coop.pr_nmdgrupo <> ?.
+              END.
+				
                 ASSIGN aux_nrtelefo = ""
                        aux_dsdemail = "".
                 
@@ -2291,6 +2375,7 @@ PROCEDURE NomeCooperado :
                                                  + "',nrdddtfc:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrdddtfc))
                                                  + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrtelefo))
                                                  + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(STRING(aux_dsdemail))
+                                                 + "',nmdgrupo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmdgrupo))												 
                                                  + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
                                                  + "',tppessoa:" + "'J" 
                                                  + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                                 
@@ -2328,6 +2413,7 @@ PROCEDURE NomeCooperado :
 												 + "',nrdddtfc:" + "'"  
 												 + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(crapavt.nrfonres))
 												 + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(STRING(crapavt.dsdemail))
+												 + "',nmdgrupo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmdgrupo))												 
 												 + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
 												 + "',tppessoa:" + "'J" 
 												 + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                             
@@ -2659,6 +2745,7 @@ PROCEDURE process-web-request :
          ab_unmap.origem          = GET-VALUE("origem")
          ab_unmap.aux_tpinseve    = GET-VALUE("aux_tpinseve")
          ab_unmap.aux_nminseve    = GET-VALUE("aux_nminseve")
+		 ab_unmap.aux_nmdgrupo    = GET-VALUE("aux_nmdgrupo")
          ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
          ab_unmap.cdageins        = GET-VALUE("cdageins")
          ab_unmap.nrseqeve        = GET-VALUE("nrseqeve")

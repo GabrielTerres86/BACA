@@ -5,7 +5,7 @@
 		 		        cópia da tela WPGD0023, Prj. 322 (Andrei)..
           
            01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
+		   
 		   18/07/2018 - Ajuste realizado para que o sequencial NRSEQDIG nunca seja inserido zerado. (INC0017391 - Kelvin)
                              
 -------------------------------------------------------------------------------------->
@@ -237,7 +237,7 @@
           document.all.cdagenci.remove(i); 
         }
         
-        if(tpevento != 7 && tpevento != 12){
+        if(tpevento != 7 && tpevento != 12 && tpevento != 17){
           for(i=0;i<mpac.length;i++){
             if (mpac[i].cdcooper == document.form.aux_cdcooper.value){
               oOption = document.createElement("OPTION");
@@ -1161,7 +1161,7 @@
                                                  AND cratedp.tpevento = 13 NO-LOCK
                                                   BY cratedp.flgordem
                                                   BY cratedp.nmevento:
-                                IF cratedp.tpevento <> 2 AND cratedp.tpevento <> 10 THEN
+                                IF cratedp.tpevento <> 2 AND cratedp.tpevento <> 10 AND cratedp.tpevento <> 17 THEN
                                   DO:  /* nao for integracao de novos associados e eventos EAD */
                                     FIND FIRST crapeap WHERE crapeap.idevento = cratedp.idevento
                                                          AND crapeap.cdcooper = cratedp.cdcooper

@@ -367,7 +367,8 @@ PROCEDURE CriaListaPacs :
 											OR	crapedp.tpevento = 13	                               
 											OR	crapedp.tpevento = 14	                               
 											OR	crapedp.tpevento = 15	                               
-											OR  crapedp.tpevento = 16) NO-LOCK NO-ERROR.
+											OR  crapedp.tpevento = 16
+											OR  crapedp.tpevento = 17) NO-LOCK NO-ERROR.
 
     /* cabeçalho */
     If available crapedp Then
@@ -559,7 +560,8 @@ PROCEDURE local-assign-record :
 																		 		 OR	crapedp.tpevento = 13	                               
 																			 	 OR	crapedp.tpevento = 14	                               
 																				 OR	crapedp.tpevento = 15	                               
-																				 OR crapedp.tpevento = 16) NO-LOCK NO-ERROR. 
+																				 OR crapedp.tpevento = 16
+																				 OR crapedp.tpevento = 17) NO-LOCK NO-ERROR. 
 												 
 												 FIND FIRST crapadp WHERE crapadp.cdagenci = INTEGER(ENTRY(i,ab_unmap.aux_lsagenci,";"))
 																							AND crapadp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
