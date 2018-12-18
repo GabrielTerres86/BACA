@@ -2314,7 +2314,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                              , pr_cdbccxlt => 100
                                              , pr_nrdolote => 650011
                                              , pr_cdhistor => 2718 -- juros remunaratorio do prejuizo
-                                             , pr_dtmvtolt => rw_crapdat.dtultdma
+                                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
                                              , pr_nrdconta => rw_contas.nrdconta
                                              , pr_nrdctabb => rw_contas.nrdconta
                                              , pr_nrdctitg => GENE0002.FN_MASK(rw_contas.nrdconta, '99999999')
