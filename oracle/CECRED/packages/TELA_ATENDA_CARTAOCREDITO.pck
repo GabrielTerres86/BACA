@@ -320,7 +320,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2) ;         --> Erros do processo
 
-   PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE
+   PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
 																					 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
 																					 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
 																					 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -4889,13 +4889,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
   END pc_valida_alt_nome_empr;
 	
-	PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE
-																				  ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
-																				  ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-																				  ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-																				  ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-																				  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-																				  ,pr_des_erro OUT VARCHAR2) IS
+	PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
+																				 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																				 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																				 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2) IS
     /* .............................................................................
     
     Programa: pc_valida_dtcorte_prot_entrega
@@ -4937,10 +4937,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 		vr_layout   INTEGER;
 		
 		
-		CURSOR cr_proposta(pr_cdcooper crapcrd.cdcooper%TYPE
-		                  ,pr_nrctrcrd crapcrd.nrctrcrd%TYPE) IS
+		CURSOR cr_proposta(pr_cdcooper crawcrd.cdcooper%TYPE
+		                  ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE) IS
       SELECT crd.dtinsori
-			  FROM crapcrd crd
+			  FROM crawcrd crd
 			 WHERE crd.nrctrcrd = pr_nrctrcrd
 			   AND crd.cdcooper = pr_cdcooper;
 				 
@@ -4981,10 +4981,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 		END IF;		
 		
 		vr_layout := 0; -- 0: antigo; 1: novo
-		IF vr_dtinsori >= vr_dtcorte THEN
-			vr_layout := 1;
+		IF vr_dtinsori IS NOT NULL THEN
+			IF vr_dtinsori >= vr_dtcorte THEN
+				vr_layout := 1;
+			END IF;
 		END IF;
-		
 		
 		-- Criar XML de retorno
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><layout>' || vr_layout || '</layout>');
@@ -5003,7 +5004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_valida_dtcorte_prot_entrega;														 
-	
+
 	PROCEDURE pc_imprimir_protocolo_entrega(pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE
 																				 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
 																				 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
