@@ -9,7 +9,8 @@
 				 de observa&ccedil;&atilde;o
 
 				 Altera&ccedil;&otilde;es: 
-						14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+						14/07/2011 - Alterado para layout padr?o (Rogerius - DB1). 
+						12/12/2018 - Alterada chamada do botão de pré-inscricao (Bruno Luiz Katzjarowski - Mout's)
 				 
 	************************************************************************/
 	session_start();
@@ -64,6 +65,36 @@
 	
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosEventosAndamento = getObjectXML($xmlResult);
+
+	//bruno - relacionamentos
+	// $xmlLimites = new SimpleXMLElement($xmlResult);
+
+	// foreach($xmlLimites->{'Eventos_Andamento'}->{'Registro'} as $evento){
+	// 	echo 'Evento 1:'.$evento->{'cdevento'}.'<br>';
+	// 	echo $evento->{'nmdgrupo'}."<br>";
+	// 	var_dump($evento);
+	// }
+
+	// exit();
+	/*  
+	xmlObjDadosEventosAndamento =>
+		public 'cdevento' => string '6080' (length=4)
+		public 'idevento' => string '1' (length=1)
+		public 'nmevento' => string 'FINANÃƒâ€¡AS, VALORIZE SEU DINHEIRO! 1H30' (length=38)
+		public 'qtmaxtur' => string '50' (length=2)
+		public 'qtpenden' => string '27' (length=2)
+		public 'qtconfir' => string '24' (length=2)
+		public 'dtinieve' => string '10/10/18' (length=8)
+		public 'dtfineve' => string '10/10/18' (length=8)
+		public 'nrmeseve' => string '10' (length=2)
+		public 'dsobserv' => string ''
+		public 'dsrestri' => string '14 ANOS/ABERTO A COMUNIDADE' (length=27)
+		public 'nridamin' => string '14' (length=2)
+		public 'flgcompr' => string 'no' (length=2)
+		public 'rowidedp' => string '0x0214002c3139393634000000000000000000000000000000' (length=50)
+		public 'rowidadp' => string '0x0214001a3731303236000000000000000000000000000000' (length=50)
+		public 'nmdgrupo' => string ''
+	*/
 	
 	$eventosAndamento = $xmlObjDadosEventosAndamento->roottag->tags[0]->tags;
 	$qtEAndamento = count($eventosAndamento);
@@ -77,7 +108,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}	
@@ -91,6 +122,7 @@
 				<thead>
 					<tr>
 						<th><? echo utf8ToHtml('Evento'); ?></th>
+						<th><? echo utf8ToHtml('Grupo'); ?></th>
 						<th><? echo utf8ToHtml('Turma');  ?></th>
 						<th><? echo utf8ToHtml('Pr&eacute;-Ins');  ?></th>
 						<th><? echo utf8ToHtml('Conf');  ?></th>
@@ -100,14 +132,22 @@
 					</tr>
 				</thead>
 				<tbody>
-					<? 
+					<?
+					//bruno - relacionamentos
 					for ($i = 0; $i < $qtEAndamento; $i++) { 
 					$aux = $i + 1;
 					$seleciona = "selecionaEventoAndamento('". $aux ."','". $qtEAndamento ."','". $eventosAndamento[$i]->tags[1]->cdata ."','". $eventosAndamento[$i]->tags[0]->cdata ."','". $eventosAndamento[$i]->tags[13]->cdata ."','". $eventosAndamento[$i]->tags[14]->cdata ."','". $eventosAndamento[$i]->tags[9]->cdata ."','". $eventosAndamento[$i]->tags[12]->cdata ."','". $eventosAndamento[$i]->tags[2]->cdata ."','". $eventosAndamento[$i]->tags[10]->cdata ."');";		
 					?>
-						<tr id="trEvento<?php echo $i + 1; ?>" onFocus="<? echo $seleciona ?>" onClick="<? echo $seleciona ?>">
+						<!-- bruno - pre-inscricao -->
+						<tr id="trEvento<?php echo $i + 1; ?>" onFocus="<? echo $seleciona ?>" onClick="<? echo $seleciona ?>"
+						 data-nmdgrupo='<?php echo $eventosAndamento[$i]->tags[15]->cdata; ?>' 
+						 data-idevento='<?php echo $eventosAndamento[$i]->tags[0]->cdata; ?>'
+						>
 							<td><span><?php echo $eventosAndamento[$i]->tags[2]->cdata; ?></span>
 									<?php echo stringTabela($eventosAndamento[$i]->tags[2]->cdata, 32, 'palavra'); ?>
+							</td>
+							<td><span><?php echo $eventosAndamento[$i]->tags[15]->cdata; ?></span>
+									<?php echo $eventosAndamento[$i]->tags[15]->cdata; ?>
 							</td>
 							<td><span><?php echo $eventosAndamento[$i]->tags[3]->cdata; ?></span>
 									<?php echo $eventosAndamento[$i]->tags[3]->cdata; ?>
@@ -140,7 +180,8 @@
 <div id="divBotoes">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="acessaOpcaoPrincipal();return false;">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/detalhes_do_evento.gif" onClick="mostraDetalhesEvento();return false;">
-<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre_inscricao.gif" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="mostraPreInscricao();return false;"'; } ?>>
+<!-- bruno - pre inscricao - mout's -->
+<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre_inscricao.gif" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="validaGrupo();return false;"'; } ?>>
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/situacao_da_inscricao.gif" onClick="mostraSituacaoDaInscricaoEvento();return false;">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/historico.gif" onClick="mostraHistoricoEvento();return false;">
 </div>
