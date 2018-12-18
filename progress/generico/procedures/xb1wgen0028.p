@@ -463,7 +463,6 @@ PROCEDURE lista_cartoes:
                              OUTPUT aux_flgliber,
                              OUTPUT aux_dtassele,
                              OUTPUT aux_dsvlrprm,
-                             OUTPUT aux_dtmvtolt,
                              OUTPUT TABLE tt-erro,
                              OUTPUT TABLE tt-cartoes,
                              OUTPUT TABLE tt-lim_total).
@@ -491,10 +490,8 @@ PROCEDURE lista_cartoes:
             RUN piXmlAtributo (INPUT "flgativo",INPUT STRING(aux_flgativo)).
             RUN piXmlAtributo (INPUT "nrctrhcj",INPUT STRING(aux_nrctrhcj)).
             RUN piXmlAtributo (INPUT "flgliber",INPUT STRING(aux_flgliber)).
-            
             RUN piXmlAtributo (INPUT "dtassele",INPUT STRING(aux_dtassele)).
             RUN piXmlAtributo (INPUT "dsvlrprm",INPUT STRING(aux_dsvlrprm)).
-            RUN piXmlAtributo (INPUT "dtmvtolt",INPUT STRING(aux_dtmvtolt)).
 
             RUN piXmlExport (INPUT TEMP-TABLE tt-lim_total:HANDLE,
                              INPUT "Limite").                             

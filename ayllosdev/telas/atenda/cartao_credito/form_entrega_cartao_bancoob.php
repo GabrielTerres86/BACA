@@ -52,11 +52,12 @@
 </div>
 <script>
 
-	if (dtassele != null && dtassele != '') {
+	if (dtassele instanceof Date && ! isNaN(dtassele.getTime())) {
 		tipoAssinatura = 'impressa';
 
-	} else if (dtmvtolt != null && dtmvtolt != '' && dsvlrprm != null && dsvlrprm != '') {
-		if (dsvlrprm >= dtmvtolt) {
+	} else if (dtinsori instanceof Date && ! isNaN(dtinsori.getTime()) &&
+			   dsvlrprm instanceof Date && ! isNaN(dsvlrprm.getTime())) {
+		if (dsvlrprm <= dtinsori) { /*Data da solicitação maior que a de corte*/
 			tipoAssinatura = 'eletronica';
 
 		} else {
@@ -66,7 +67,7 @@
 		
 	} else {
 		tipoAssinatura = 'impressa';
-
+		
 	}
 
 </script>

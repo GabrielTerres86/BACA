@@ -817,7 +817,6 @@ PROCEDURE lista_cartoes:
     DEF OUTPUT  PARAM  par_flgliber  AS  LOGI  NO-UNDO. /* Temporario: Transf. de Pac 5 da Coop.2*/
     DEF OUTPUT  PARAM  par_dtassele  AS  DATE  NO-UNDO. /* Data assinatura eletronica */
     DEF OUTPUT  PARAM  par_dsvlrprm  AS  CHAR  NO-UNDO. /* Data de corte */
-    DEF OUTPUT  PARAM  par_dtmvtolt  AS  DATE  NO-UNDO. /* Data do sistema */
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-cartoes.
     DEF OUTPUT PARAM TABLE FOR tt-lim_total.
@@ -885,9 +884,9 @@ PROCEDURE lista_cartoes:
            aux_dstransa = "Listar cartoes de credito.".    
            
     FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd  
-                               dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
-                         WHERE crawcrd.cdcooper = par_cdcooper    AND
-                           crawcrd.nrdconta = par_nrdconta    NO-LOCK:
+                            dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
+                      WHERE crawcrd.cdcooper = par_cdcooper    AND
+                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
                                                                       
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper      AND
                            crapadc.cdadmcrd = crawcrd.cdadmcrd  
@@ -978,21 +977,14 @@ PROCEDURE lista_cartoes:
             ASSIGN par_dsvlrprm = crapprm.dsvlrprm.
         END.
         
-        FIND crapdat WHERE crapdat.cdcooper = par_cdcooper.
-        
-        IF AVAILABLE crapdat THEN
-        DO:
-            ASSIGN par_dtmvtolt = crapdat.dtmvtolt.
-        END.
-        
         CREATE tt-cartoes.
         ASSIGN tt-cartoes.nmtitcrd = STRING(crawcrd.nmtitcrd,"x(27)")
                tt-cartoes.nmresadm = STRING(crapadc.nmresadm,"x(30)")
-               tt-cartoes.nrcrcard = 
-                                STRING(crawcrd.nrcrcard,"9999,9999,9999,9999")               
+               tt-cartoes.nrcrcard = STRING(crawcrd.nrcrcard,"9999,9999,9999,9999")               
                tt-cartoes.dssitcrd = aux_dssitcrd
                tt-cartoes.nrctrcrd = crawcrd.nrctrcrd
                tt-cartoes.cdadmcrd = crawcrd.cdadmcrd
+               tt-cartoes.dtinsori = crawcrd.dtinsori
                tt-cartoes.flgcchip = crapadc.flgcchip
                tt-cartoes.flgprovi = aux_flgprovi.
 

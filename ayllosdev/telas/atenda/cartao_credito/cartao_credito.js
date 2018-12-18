@@ -80,8 +80,8 @@ var nrcrcard = 0;   // Variável para guardar o código número do cartão de cr
 var flgcchip = 0;  // Variável para guardar se o cartão eh com Chip ou não.
 var flgprovi = 0;
 var dtassele;
-var dtmvtolt;
 var dsvlrprm;
+var dtinsori;
 var callafterCartaoCredito = '';
 var metOpcaoAba = '';
 var nomeacao = '';
@@ -194,9 +194,9 @@ function controlaFoco() {
     $(".FirstInputModal").focus();
 }
 
-function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira, flgproviCartao, dataAssAle, dataMvtolt, dsVlrprm) {
+function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira, flgproviCartao, dataAssAle, dsVlrprm, dtinSolic) {
     
-	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"', '"+decisaoMotorEsteira+"', '"+flgproviCartao+"', '"+dataAssAle+"', '"+dataMvtolt+"', '"+dsVlrprm+"'); }, 600);";
+	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"', '"+decisaoMotorEsteira+"', '"+flgproviCartao+"', '"+dataAssAle+"', '"+dsVlrprm+"', '"+dtinSolic+"'); }, 600);";
     if (id != idAnt) {
         // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
         nrctrcrd = nrCtrCartao;
@@ -204,9 +204,9 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
         cdadmcrd = cdAdmCartao;
         flgcchip = ((FlgcChip == "yes") ? 1 : 0);
         flgprovi = flgproviCartao;
-        dtassele = dataAssAle;
-        dtmvtolt = dataMvtolt;
-        dsvlrprm = dsVlrprm;
+        dtassele = new Date(dataAssAle.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
+        dsvlrprm = new Date(dsVlrprm.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
+        dtinsori = new Date(dtinSolic.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
         idAnt = id;
         corAnt = cor;
         situacao = situacao.toUpperCase();
@@ -5038,15 +5038,15 @@ function imprimirTermoEntrega(flegMsg) {
 function assinar(tipo) {
     if (tipo != 'eletronica' && tipo != 'impressa') {
         tipo = tipoAssinatura;
+
     }
 
     if (tipo == 'eletronica') {
-
-        solicitaSenhaTAOnline("imprimirTermoEntrega(true);fechaRotina($('#divUsoGenerico'));", nrdconta, nrcrcard);
+        solicitaSenhaTAOnline("tipoAssinatura = 'impressa'; imprimirTermoEntrega(true); fechaRotina($('#divUsoGenerico'));", nrdconta, nrcrcard);
 
     } else if (tipo == 'impressa') {
-        
         imprimirTermoEntrega();
+
     }
 }
 

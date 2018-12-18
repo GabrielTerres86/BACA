@@ -119,7 +119,6 @@
 
 	$dtassele = $xmlObjCCredito->roottag->tags[0]->attributes["DTASSELE"];
 	$dsvlrprm = $xmlObjCCredito->roottag->tags[0]->attributes["DSVLRPRM"];
-	$dtmvtolt = $xmlObjCCredito->roottag->tags[0]->attributes["DTMVTOLT"];
 
 	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
 	   Procedimento temporario ate que todas as cooperativas utilizem */
@@ -169,9 +168,7 @@
 			$admxmlObj = simplexml_load_string($result);
 			$returnVal = array($admxmlObj->Dados->cartoes->sitdec,$admxmlObj->Dados->cartoes->sitest);
 			return $returnVal;
-		
-
-
+			
 	}
 	
 
@@ -213,7 +210,7 @@ function voltarParaTelaPrincipal(){
 					<?  for ($i = 0; $i < count($ccredito); $i++) {
                             $motorResp = getDecisao($nrdconta, getByTagName($ccredito[$i]->tags,'NRCTRCRD'),$glbvars);
 							
-							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."','".getByTagName($ccredito[$i]->tags,"FLGPROVI")."','".$dtassele."','".$dtmvtolt."','".$dsvlrprm."');";
+							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."','".getByTagName($ccredito[$i]->tags,"FLGPROVI")."','".$dtassele."','".$dsvlrprm."','".getByTagName($ccredito[$i]->tags,"DTINSORI")."');";
 					?>
 						<?;?>
 						<tr id="<?php echo $i; ?>" onFocus="<? echo $mtdClick;?>" onClick="<? echo $mtdClick;?>">
