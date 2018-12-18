@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 10/12/2018
+  --  Data     : Março/2018.                   Ultima atualização: 16/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -293,6 +293,8 @@ create or replace package body cecred.cobr0011 IS
   --             01/11/2018 - Incluido rotina de trace na chamada SPB para envio de TED (P352 - Cechet)
   --
   --             10/12/2018 - Ajuste na sequence de lançamento na conta de recurso financeiro (P352 - Cechet).
+  --
+  --             16/12/2018 - Ao chamar as instruções da cobrança, deve-se utilizar as procedures da COBR0007 (P352 - Cechet).
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -1225,6 +1227,7 @@ create or replace package body cecred.cobr0011 IS
     --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
     vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;   
+    
   BEGIN
     -- Inicializar variaveis retorno
     pr_cdcritic := NULL;
@@ -1417,6 +1420,8 @@ create or replace package body cecred.cobr0011 IS
     --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
     vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;       
+    -- Variavel para armazenar tarifa de instrucao
+    vr_tab_lat_consolidada  PAGA0001.typ_tab_lat_consolidada;        
   BEGIN
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -1533,14 +1538,6 @@ create or replace package body cecred.cobr0011 IS
       RAISE vr_exc_erro;
     END IF;
 
-		-- verificar se existe alguma instrucao de baixa 
-    OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
-                    ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                    ,pr_nrdconta => rw_crapcob.nrdconta
-                    ,pr_nrdocmto => rw_crapcob.nrdocmto
-                    ,pr_dtmvtolt => pr_crapdat.dtmvtolt);
-    FETCH cr_craprem INTO rw_craprem;
-
 		-- Criar Log Cobranca 
 		vr_dsmotivo:= 'Retirado de cartório';
 		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
@@ -1555,22 +1552,27 @@ create or replace package body cecred.cobr0011 IS
 			RAISE vr_exc_erro;
 		END IF;
 		
+		-- verificar se existe alguma instrucao de baixa 
+    OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
+                    ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                    ,pr_nrdconta => rw_crapcob.nrdconta
+                    ,pr_nrdocmto => rw_crapcob.nrdocmto
+                    ,pr_dtmvtolt => pr_crapdat.dtmvtolt);
+    FETCH cr_craprem INTO rw_craprem;    
+		
 		-- Verifica se precisa realizar a baixa.
 		IF cr_craprem%FOUND THEN
 			--
-			cobr0010.pc_grava_instr_boleto(pr_cdcooper => rw_crapcob.cdcooper
-			                              ,pr_dtmvtolt => pr_crapdat.dtmvtolt
-																		,pr_cdoperad => pr_cdoperad
-																		,pr_cdinstru => 2 -- Instrução de baixa
-																		,pr_nrdconta => rw_crapcob.nrdconta
-																		,pr_nrcnvcob => rw_crapcob.nrcnvcob
-																		,pr_nrdocmto => rw_crapcob.nrdocmto
-																		,pr_vlabatim => 0
-																		,pr_dtvencto => NULL
-																		,pr_qtdiaprt => NULL
-																		,pr_cdcritic => vr_cdcritic
-																		,pr_dscritic => vr_dscritic
-																		);
+      -- Executa a instrucao de baixa
+      COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
+                                   ,pr_cdocorre => 2 -- pedido de baixa
+                                   ,pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_nrremass => 0 -- remessa por arquivo (nesse caso zero)
+                                   ,pr_tab_lat_consolidada => vr_tab_lat_consolidada
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+                                   
 			-- Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
