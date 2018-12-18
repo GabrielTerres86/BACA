@@ -1277,6 +1277,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                    Com isso não calculava o desconto do título ao incluir o pagamento
                    em um final de semana. (AJFink INC0026043)
 
+      30/11/2018 - No caso de agendamentos a data de movimento vem como a data 
+                   do agendamento. (AJFink INC0029111)
+
     ..........................................................................*/
     
     vr_VlrTotCobrar  NUMBER;
@@ -1294,7 +1297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> e se for a menor data encontrada.. caso a temptable nao esteja ordenada
         --> isso acontecia porque a JD enviada data de validade incoerente
         --INC0026043 IF pr_dtmvtolt <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
-        IF trunc(sysdate) <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
+        IF pr_dtmvtolt-4 <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
            pr_tbtitulo.TabCalcTit(idx).dtValiddCalc < vr_dtValiddCalc THEN 
           vr_VlrTotCobrar  := pr_tbtitulo.TabCalcTit(idx).VlrTotCobrar;
           vr_dtValiddCalc  := pr_tbtitulo.TabCalcTit(idx).dtValiddCalc; 
