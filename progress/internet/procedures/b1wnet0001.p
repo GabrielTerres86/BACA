@@ -1442,7 +1442,19 @@ PROCEDURE gravar-boleto:
             
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
-
+         
+        IF par_tpemitir = 2 THEN /* 1-Boleto/2-Carne */            
+           DO:
+           
+             IF ((par_vltitulo / par_qttitulo) < 0.01) THEN
+                DO:            
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Valor das parcelas nao pode ser menor que R$0,01".
+              
+                  UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+           END.
+            
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 
         IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
