@@ -53,14 +53,14 @@ BEGIN
       vr_nrdconta := :old.nrdconta;
       vr_idseqttl := 1;
       vr_dschave  := :old.CDCOOPER||';'||:old.TPCTRATO||';'||:old.NRDCONTA||';'||
-                     :old.NRCTREMP||';'||:old.NRCPFCGC;
+                     :old.NRCTREMP||';'||:old.NRCPFCGC||';'||:old.Dsproftl;
       
     ELSE
       vr_cdcooper := :new.cdcooper;
       vr_nrdconta := :new.nrdconta;
       vr_idseqttl := 1;
       vr_dschave  := :new.CDCOOPER||';'||:new.TPCTRATO||';'||:new.NRDCONTA||';'||
-                     :new.NRCTREMP||';'||:new.NRCPFCGC;
+                     :new.NRCTREMP||';'||:new.NRCPFCGC||';'||:new.Dsproftl;
     END IF;
 
     -- Incluir registro que o cadastro de pessoa foi atualizado no sistema legado
