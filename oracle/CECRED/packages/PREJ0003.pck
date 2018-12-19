@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Rangel Decker - AMCom
-   Data    : Maio/2018                      Ultima atualizacao: 25/09/2018
+   Data    : Maio/2018                      Ultima atualizacao: 18/12/2018
 
    Dados referentes ao programa:
 
@@ -23,6 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             PJ 450 - Diego Simas (AMcom)
 			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
 							PJ 450 - Diego Simas (AMcom).
+			   18/12/2018 - Correção na pc_debita_juros60_prj para zerar os campos de juros+60 na CRAPSLD.
+                            P450 - Reginaldo/AMcom
 
 ..............................................................................*/
 
@@ -1016,7 +1018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao cancelar produtos/serviços para a conta ' || pr_nrdconta;
 
@@ -1032,7 +1034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                          , pr_cdcritic => vr_cdcritic
                          , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao debitar valores provisionados de juros +60 para conta ' || pr_nrdconta;
 
@@ -1049,7 +1051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                    , pr_cdcritic => vr_cdcritic
                                                    , pr_dscritic => vr_dscritic);
 
-     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic <> NULL THEN
+     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) is not NULL THEN
        vr_cdcritic:= 0;
        vr_dscritic:= 'Erro ao recuperar saldo devedor da conta corrente ' || pr_nrdconta;
 
@@ -2314,7 +2316,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                              , pr_cdbccxlt => 100
                                              , pr_nrdolote => 650011
                                              , pr_cdhistor => 2718 -- juros remunaratorio do prejuizo
-                                             , pr_dtmvtolt => rw_crapdat.dtultdma
+                                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
                                              , pr_nrdconta => rw_contas.nrdconta
                                              , pr_nrdctabb => rw_contas.nrdconta
                                              , pr_nrdctitg => GENE0002.FN_MASK(rw_contas.nrdconta, '99999999')
@@ -3636,6 +3638,25 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                  ,pr_vlhist38 OUT NUMBER                 --> Valor debitador para o histórico 38
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                  ,pr_dscritic OUT VARCHAR2) IS
+	/* .............................................................................
+
+   Programa: pc_debita_juros60_prj
+   Sistema : Aimaro
+   Sigla   : PREJ
+   Autor   : Reginaldo (AMcom)
+   Data    : Setembro/2018.                    Ultima atualizacao: 18/12/2018
+
+   Dados referentes ao programa:
+
+   Frequencia: Srmpre que chamado
+
+   Objetivo  : Debita juros +60 (Hist. 37, 38 e 57) provisionados para a conta corrente
+	             que será transferida para prejuízo.
+
+   Observacao:
+   Alteracoes: 18/12/2018 - Correção para zerar os campos de juros+60 na CRAPSLD.
+                            P450 - Reginaldo/AMcom
+   ..............................................................................*/
 
      -- Busca valores para cálculo dos juros +60
      CURSOR cr_crapsld IS
@@ -3893,9 +3914,9 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
          SET vlsmnmes = 0
            , vlsmnesp = 0
            , vlsmnblq = 0
-           , vljurmes = pr_vlhist37
-           , vljuresp = pr_vlhist38
-           , vljursaq = pr_vlhist57
+           , vljurmes = 0
+           , vljuresp = 0
+           , vljursaq = 0
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta;
     END IF;

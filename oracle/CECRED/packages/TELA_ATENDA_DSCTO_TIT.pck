@@ -4153,7 +4153,7 @@ END pc_obtem_proposta_aciona_web;
          
        close cr_craptdb;
       END LOOP;
-      pr_qtregist := nvl(vr_idtabtitulo,0);
+      pr_qtregist := nvl(vr_countpag,0);
 
     EXCEPTION
       WHEN vr_exc_erro THEN

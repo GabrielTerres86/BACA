@@ -12,6 +12,8 @@
  *				   21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
  *
  *                 26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
+ *                08/11/2018 - Inclusao de informacoes na tela devido ao projeto de delegados. P484 Gabriel Marcos (Mouts). 
+ *                         
  */
 ?>
 
@@ -166,6 +168,7 @@
     $nrsacbcb = (isset($_POST["nrsacbcb"])) ? $_POST["nrsacbcb"] : '';
     $nrouvbcb = (isset($_POST["nrouvbcb"])) ? $_POST["nrouvbcb"] : '';
 	$hrinicxa = (isset($_POST["hrinicxa"])) ? $_POST["hrinicxa"] : '';
+    $flgrupos = (isset($_POST["flgrupos"])) ? $_POST["flgrupos"] : '';
 
     validaDados();
 
@@ -308,6 +311,7 @@
 	$xml     .="       <flintcdc>".$flintcdc."</flintcdc>";
     $xml     .="       <tpcdccop>".$tpcdccop."</tpcdccop>";
 	$xml     .="       <hrinicxa>".$hrinicxa."</hrinicxa>";
+    $xml     .="       <flgrupos>".$flgrupos."</flgrupos>";
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

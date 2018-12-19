@@ -118,6 +118,11 @@
 
                  16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
+				 27/09/2018 - Novo link no menu, Portabilidade.
+		 
+                 08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484.
+                              Gabriel Marcos (Mouts).
+
 				 15/11/2018 - Validacao e mudança do link de cobrança caso seja cooperativa piloto (Andre Clemer - Supero).
 
                  23/11/2018 - P442 - Inclusao de campos do Score + Remoção de campos de empresa (Thaise - Envolti)
@@ -330,7 +335,9 @@ if ( isset($cabecalho[28]->cdata) ) {
 		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
 	}
 }
-	
+if ( isset($cabecalho[31]->cdata) ) {
+  echo '$("#nrdgrupo","#frmCabAtenda").val("' . $cabecalho[31]->cdata . '");';
+}
 	
 	// Dados complementares da conta/dv	
 if ( isset($compCabecalho[0]->cdata) ) {
@@ -739,6 +746,14 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$urlRotina = "score_comportamental";
 				$strValue = "";
 				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+
+			case "PORTABILIDADE": {
+				$nomeRotina = "Portabilidade";
+				$urlRotina = "portabilidade";
+				$strValue = (isset($valores[23]->cdata) ? (($valores[23]->cdata == "1")  ? "SIM" : "NAO") : "NAO");
+				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			default: {

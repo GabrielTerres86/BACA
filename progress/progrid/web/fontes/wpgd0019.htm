@@ -52,6 +52,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             21/09/2018 - sctask0029112 Melhoria de performance, computando apenas o evento selecionado na tela (Carlos)
 
+			18/12/2018 - Ajuste na inclusão de historicos para utilizar a informação do PA, qe não um sequencial. (Wagner - #INC0029304).
+
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -669,7 +671,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 														
 														CREATE craphep.
 														ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
-																	 craphep.cdagenci  = crapadp.nrseqdig     
+																	 craphep.cdagenci  = crapadp.cdagenci     
 																	 craphep.dshiseve  = "Evento transferido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
 																	 craphep.dtmvtolt  = TODAY. 
 														
@@ -748,7 +750,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 														CREATE craphep.
 														ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
-																	 craphep.cdagenci  = crapadp.nrseqdig     
+																	 craphep.cdagenci  = crapadp.cdagenci     
 																	 craphep.dshiseve  = "Evento acrescido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
 																	 craphep.dtmvtolt  = TODAY. 
 

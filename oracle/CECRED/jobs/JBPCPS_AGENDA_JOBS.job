@@ -1,0 +1,39 @@
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET
+                      nls_calendar = ''GREGORIAN''
+                      nls_comp = ''BINARY''
+                      nls_date_format = ''DD-MON-RR''
+                      nls_date_language = ''AMERICAN''
+                      nls_iso_currency = ''AMERICA''
+                      nls_language = ''AMERICAN''
+                      nls_length_semantics = ''BYTE''
+                      nls_nchar_conv_excp = ''FALSE''
+                      nls_numeric_characters = ''.,''
+                      nls_sort = ''BINARY''
+                      nls_territory = ''AMERICA''
+                      nls_time_format = ''HH.MI.SSXFF AM''
+                      nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+                      nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+                      nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+                      
+  BEGIN
+    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBPCPS_AGENDA_JOBS');
+  EXCEPTION
+    WHEN OTHERS THEN
+	  NULL;
+  END;
+  
+  --Incluir o DROP sempre que houver alteração de configuração de um JOB já existente
+  sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBPCPS_AGENDA_JOBS',
+                                job_type        => 'PLSQL_BLOCK',
+                                job_action      => 'BEGIN PCPS0002.pc_agenda_jobs(); END;',
+                                start_date      => to_date(to_char(SYSDATE+1,'dd-mm-yyyy')||' 03:00:00',
+                                                           'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval => 'Freq=DAILY;ByDay=MON,TUE,WED,THU,FRI;ByHour=3;ByMinute=0;BySecond=0',
+                                end_date        => to_date(NULL),
+                                job_class       => 'DEFAULT_JOB_CLASS',
+                                enabled         => TRUE,
+                                auto_drop       => TRUE,
+                                comments        => '');
+END;
+/

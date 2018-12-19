@@ -54,11 +54,11 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
                               pc_carrega_dados_atenda (Claudio CIS Corporate)	 	   
                  
-                 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
-
+                 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)	 	   
+                 
 				 04/09/2018 - Atualizar DTINICIO_CREDITO ao atualizar TBCOTAS_DEVOLUCAO.
 				              (Alcemir - Mout's : SM 364)
-
+                 
                  11/10/2018 - Incluido opção 6-Pagamento na tabela de log tbcrd_log_operacao.
 						      (Reinert)
 
@@ -96,7 +96,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 vllimite_saque tbtaa_limite_saque.vllimite_saque%TYPE,
                 pacote_tarifa BOOLEAN,
                 vldevolver NUMBER(32,8),
-                insituacprvd tbprevidencia_conta.insituac%TYPE);
+                insituacprvd tbprevidencia_conta.insituac%TYPE,
+                idportab NUMBER);
   TYPE typ_tab_valores_conta IS TABLE OF typ_rec_valores_conta
     INDEX BY PLS_INTEGER;
   
@@ -254,7 +255,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                cdsitdct  crapass.cdsitdct%TYPE,
 			   nmsocial  crapttl.nmsocial%TYPE,
                cdscobeh  VARCHAR2(100),
-			   reciproc  INTEGER);
+			   reciproc  INTEGER,			   
+               nrdgrupo  tbevento_grupos.nmdgrupo%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
@@ -4422,7 +4424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              
 	--              26/07/2018 - Melhoria na apresentacao de mensagem de atraso de pagamento de emprestimo.
 	--                           Inserido regra para verificar se o acordo esta ativo. Caso esteja, pula
-	--                           para proximo registro.
+	--                           para proximo registro.              
 	--                           Chamado INC0016984 (Gabriel - Mouts).
 	--
     --              25/20/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
@@ -4797,7 +4799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapalt.nrdconta = pr_nrdconta;
          
     --> Buscar cobrancas em aberto ou pago
-    CURSOR cr_tbrecup_cobranca IS
+    CURSOR cr_tbrecup_cobranca IS     
       SELECT tbrecup_cobranca.cdcooper
             ,tbrecup_cobranca.nrdconta_cob
             ,tbrecup_cobranca.nrcnvcob
@@ -4812,7 +4814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             ,crapcob.dtdpagto
         FROM tbrecup_cobranca
             ,crapcob
-       WHERE
+       WHERE 
          tbrecup_cobranca.cdcooper = pr_cdcooper
          AND tbrecup_cobranca.nrdconta = pr_nrdconta
          AND crapcob.cdcooper = tbrecup_cobranca.cdcooper
@@ -5461,7 +5463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
         vr_flgativo := NULL;
-
+        
         -- Verifica contratos de acordos
         RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -5474,7 +5476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-
+        
         -- Caso contrato esteja ativo pula para proximo registro
         IF vr_flgativo = 1  THEN
           RAISE vr_exc_next;
@@ -5546,7 +5548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => vr_epr_portabilidade,
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
-    
+
     IF vr_tab_dados_epr.count > 0 THEN
       -- Gerar mensagens de emprestimos migrados
       FOR vr_contador IN vr_tab_dados_epr.first..vr_tab_dados_epr.LAST LOOP
@@ -5561,12 +5563,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
           pc_cria_registro_msg(pr_dsmensag             => vr_tbepr_migracao_empr,
                                pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-        END IF;
+    END IF;
         CLOSE cr_tbepr_migracao_empr;
 
       END LOOP;
     END IF;
-
+    
     --> Buscar emprestimos onde a conta é avalista
     FOR rw_crapavl IN cr_crapavl (pr_cdcooper => pr_cdcooper,
                                   pr_nrdconta => pr_nrdconta) LOOP
@@ -5646,7 +5648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-
+      
       -- Caso contrato esteja ativo pula para proximo registro
       IF vr_flgativo = 1 THEN
         continue;
@@ -6031,70 +6033,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> buscar boletos de contratos em aberto
     FOR rw_tbrecup_cobranca IN cr_tbrecup_cobranca LOOP
       --COBEMP
-      IF (rw_tbrecup_cobranca.tpproduto=0) THEN
+      IF (rw_tbrecup_cobranca.tpproduto=0) THEN 
       -- Em aberto
       IF rw_tbrecup_cobranca.incobran = 0 THEN
         vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
                        ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
                        ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
-
-        --> Incluir na temptable
-        pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-      -- Pago
-      ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
-        -- Verificar se ret ainda nao foi processado
-        OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
-                         pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
-                         pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
-                         pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
-                         pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto);
-        FETCH cr_crapret INTO rw_crapret;
-
-        -- Se encontrar apresentar critica
-        IF cr_crapret%FOUND THEN
-          vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp||
-                         ' esta pago pendente de processamento.'||
-                         ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
-                         ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
-
-          --> Incluir na temptable
-          pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-
-        END IF;
-        CLOSE cr_crapret;
-
-
-      END IF;
-      ELSE
-        --COBTIT
-        IF (rw_tbrecup_cobranca.tpproduto=3) THEN
-      -- Em aberto
-          IF rw_tbrecup_cobranca.incobran = 0 THEN
-            vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
-                           ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
-                           ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
       
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
       -- Pago
-          ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
+      ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
         -- Verificar se ret ainda nao foi processado     
-            OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
-                             pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
-                             pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
-                             pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
-                             pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto);
+        OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
+                         pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
+                         pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
+                         pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
+                         pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
         FETCH cr_crapret INTO rw_crapret; 
                
         -- Se encontrar apresentar critica
         IF cr_crapret%FOUND THEN
-              vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp||
+          vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| 
                          ' esta pago pendente de processamento.'||
-                             ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
-                             ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+                         ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                         ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
         
           --> Incluir na temptable
           pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
@@ -6105,8 +6069,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
       
       END IF;                       
+      ELSE 
+        --COBTIT
+        IF (rw_tbrecup_cobranca.tpproduto=3) THEN 
+          -- Em aberto
+          IF rw_tbrecup_cobranca.incobran = 0 THEN
+            vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
+                           ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                           ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+            
+            --> Incluir na temptable
+            pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                                 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+          -- Pago
+          ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
+            -- Verificar se ret ainda nao foi processado     
+            OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
+                             pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
+                             pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
+                             pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
+                             pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
+            FETCH cr_crapret INTO rw_crapret; 
+                     
+            -- Se encontrar apresentar critica
+            IF cr_crapret%FOUND THEN
+              vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp|| 
+                             ' esta pago pendente de processamento.'||
+                             ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                             ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+              
+              --> Incluir na temptable
+              pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                                   pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+                                       
+            END IF;
+            CLOSE cr_crapret;
+              
+            
+          END IF;                       
         END IF;
-      END IF;
+      END IF;                       
     END LOOP;
     
     --> Apresentar alerta caso o cooperado possuir proposta de cartao rejeitada
@@ -6332,6 +6334,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              
     --				16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
     --           26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)    
+	--
+    --              08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484.
+    --                           Gabriel Marcos (Mouts).
+	--              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6361,9 +6367,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                WHEN 3 THEN 'Inativa'
                ELSE decode(TRIM(crapass.nrdctitg),NULL,NULL,'Em Proc') 
              END  dsdctitg,
-			 (SELECT ttl.nmsocial
-                FROM crapttl ttl
-               WHERE ttl.cdcooper = pr_cdcooper
+			 (SELECT ttl.nmsocial 
+                FROM crapttl ttl 
+               WHERE ttl.cdcooper = pr_cdcooper 
                  AND ttl.nrdconta = pr_nrdconta
                  AND ttl.idseqttl = 1) AS nmsocial
         FROM crapass 
@@ -6389,6 +6395,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	   AND crapttl.idseqttl = 2;
     rw_crapttl cr_crapttl%ROWTYPE;
     
+    /* Projeto 484 - Delegados */
+    -- Cursor para buscar numero do grupo
+    cursor cr_nrgrupo (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
+                      ,pr_nrcpfcgc in tbevento_pessoa_grupos.nrcpfcgc%type) is
+    select substr(dsc.nmdgrupo,3) nrdgrupo
+      from tbevento_pessoa_grupos grp
+         , tbevento_grupos        dsc
+     where grp.cdcooper = pr_cdcooper
+       and grp.nrcpfcgc = pr_nrcpfcgc
+       and dsc.cdcooper = grp.cdcooper
+       and dsc.cdagenci = grp.cdagenci
+       and dsc.nrdgrupo = grp.nrdgrupo;
+    rw_nrgrupo cr_nrgrupo%rowtype;
+
     --------------> VARIAVEIS <----------------
     vr_cdcritic   INTEGER;
     vr_dscritic   VARCHAR2(1000);
@@ -6446,6 +6466,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       vr_qttitula := 1;
     END IF;
     
+    /* Projeto 484 - Delegados */
+    -- Buscar grupo do cooperado
+    open cr_nrgrupo (pr_cdcooper
+                    ,rw_crapass.nrcpfcgc);
+    fetch cr_nrgrupo into rw_nrgrupo;
+    close cr_nrgrupo;
+
     --> Carregar temptable de retorno
     vr_idxcab := pr_tab_cabec.count + 1;
     pr_tab_cabec(vr_idxcab).nrmatric := rw_crapass.nrmatric;
@@ -6498,6 +6525,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).reciproc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                                   pr_cdcooper => pr_cdcooper,
                                                                   pr_cdacesso => 'RECIPROCIDADE_PILOTO');
+
+    -- P484 - Numero do grupo do cooperado
+    pr_tab_cabec(vr_idxcab).nrdgrupo := rw_nrgrupo.nrdgrupo;
     
     pr_des_reto := 'OK';
     
@@ -6643,6 +6673,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND tbprevidencia_conta.nrdconta = pr_nrdconta;
     rw_tbprevidencia_conta cr_tbprevidencia_conta%ROWTYPE; 
     
+    --> Busca informação Portabilidade de salario
+    CURSOR cr_tbcc_portabilidade_envia IS
+      SELECT 1
+      FROM tbcc_portabilidade_envia
+      WHERE tbcc_portabilidade_envia.cdcooper = pr_cdcooper
+        AND tbcc_portabilidade_envia.nrdconta = pr_nrdconta
+        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5);
+    
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
     vr_tab_libera_epr         EXTR0001.typ_tab_libera_epr;
@@ -6718,6 +6756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_tab_cpt      CLOB;
     vr_idxval       PLS_INTEGER;
     vr_valor_deposito_vista NUMBER := 0;
+    vr_permportab   NUMBER  := 0;
     
     
     BEGIN
@@ -7158,6 +7197,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     CLOSE cr_tbprevidencia_conta;
     
+    -- Portabilidade de salario
+    OPEN cr_tbcc_portabilidade_envia;
+    FETCH cr_tbcc_portabilidade_envia INTO vr_permportab;
+    CLOSE cr_tbcc_portabilidade_envia;
+    
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
@@ -7432,6 +7476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).vllimite_saque := nvl(vr_vllimite_saque,0);
     pr_tab_valores_conta(vr_idxval).vldevolver := nvl(vr_vldevolver,0);
     pr_tab_valores_conta(vr_idxval).insituacprvd := vr_insituacprvd;
+    pr_tab_valores_conta(vr_idxval).idportab := vr_permportab;
     
     /* Busca o pacote tarifas */
     OPEN cr_pacotes_tarifas;
@@ -7592,7 +7637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   				                "Desligamento por determinação do BACEN" 
 							   ( Jonata - RKAM P364).	
 
-				   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+				   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  
                  26/10/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
                  
 
@@ -7743,9 +7788,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
                         '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
-						'<nmsocial>'|| vr_tab_cabec(i).nmsocial      ||'</nmsocial>'||
+						'<nmsocial>'|| vr_tab_cabec(i).nmsocial      ||'</nmsocial>'||                        
                         '<cdscobeh>'|| vr_tab_cabec(i).cdscobeh      ||'</cdscobeh>'||
 						'<reciproc>'|| vr_tab_cabec(i).reciproc      ||'</reciproc>'||                        
+                        '<nrdgrupo>'|| vr_tab_cabec(i).nrdgrupo      ||'</nrdgrupo>'||
                         '</Registro>');
       
       END LOOP;
@@ -7813,6 +7859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '<insituacprvd>'|| vr_tab_valores_conta(i).insituacprvd ||'</insituacprvd>'||
+                        '<idportab>'||  vr_tab_valores_conta(i).idportab ||'</idportab>'||
                         '</Registro>');                                               
                                                                      
                                                                      
@@ -13015,7 +13062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     update TBCOTAS_DEVOLUCAO
        set VLPAGO      = VLPAGO + nvl(pr_vlpago,0),
-	       DTINICIO_CREDITO = trunc(SYSDATE)
+	       DTINICIO_CREDITO = trunc(SYSDATE) 
      where CDCOOPER    = pr_cdcooper
        and NRDCONTA    = pr_nrdconta
        and TPDEVOLUCAO = pr_tpdevolucao;

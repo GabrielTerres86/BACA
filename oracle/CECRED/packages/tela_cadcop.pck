@@ -179,6 +179,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
                                   ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
 								  ,pr_hrinicxa IN crapcop.nrouvbcb%TYPE --> Horario minimo de login caixa online
+                                  ,pr_flgrupos IN crapcop.flgrupos%TYPE --> Situacao de grupos (eventos assembleares)
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -222,6 +223,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
   --
   --             04/10/2018 - Incluido campo hrinicxa (Mateus Z / MoutS)
+  --
+  --             13/12/2018 - Novo campo de grupos flgrupos - P484 (Gabriel/Mouts).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Funcao para validacao dos caracteres */
@@ -655,6 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flintcdc
           ,crapcop.tpcdccop
 		  ,crapcop.hrinicxa
+          ,crapcop.flgrupos
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -1003,6 +1008,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hriniouv', pr_tag_cont => to_char(to_date(rw_crapcop.hriniouv,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrfimouv', pr_tag_cont => to_char(to_date(rw_crapcop.hrfimouv,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
 	gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrinicxa', pr_tag_cont => to_char(to_date(rw_crapcop.hrinicxa,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
+    -- Projeto 484
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'flgrupos', pr_tag_cont => rw_crapcop.flgrupos, pr_des_erro => vr_dscritic);
 
     pr_des_erro := 'OK';
 
@@ -1168,6 +1175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
                                   ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
 								  ,pr_hrinicxa IN crapcop.nrouvbcb%TYPE --> Horario minimo de login caixa online
+                                  ,pr_flgrupos IN crapcop.flgrupos%TYPE --> Situacao de grupos (eventos assembleares)
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -1273,6 +1281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flintcdc
           ,crapcop.tpcdccop
 		  ,crapcop.hrinicxa
+		  ,crapcop.flgrupos
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -2481,6 +2490,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     END IF;
 
+    IF pr_flgrupos not in (0,1) THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Situação de grupo não permitida.';
+      pr_nmdcampo := 'flgrupos';
+
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF;
+
     -- Atualiza valor das tabelas craptab
     pc_atualiza_tab (pr_cdcooper => vr_cdcooper    -- Código da cooperativa
                     ,pr_cdacesso => 'GPSCXASCOD'   -- Código de acesso
@@ -2688,6 +2709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.flintcdc = pr_flintcdc
             ,crapcop.tpcdccop = pr_tpcdccop
 			,crapcop.hrinicxa = CASE WHEN pr_cddepart = 20 THEN to_number(to_char(to_date(pr_hrinicxa,'hh24:mi'),'sssss')) ELSE crapcop.hrinicxa END
+            ,crapcop.flgrupos = pr_flgrupos
        WHERE crapcop.cdcooper = vr_cdcooper;
 
     EXCEPTION

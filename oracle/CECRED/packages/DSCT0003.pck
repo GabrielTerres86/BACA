@@ -2305,14 +2305,14 @@ END pc_inserir_lancamento_bordero;
       vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                 ,pr_nmdcampo => 'NRDOLOTE'
                                 ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-                                             || pr_dtmvtolt || ';'
+                                             || TO_CHAR(pr_dtmvtolt, 'DD/MM/RRRR') || ';'
                                              || TO_CHAR(pr_cdagenci)|| ';'
                                              || '100'); 
     
       --Buscar o lote
       OPEN cr_craplot(pr_cdcooper         
                      ,pr_dtmvtolt
-                     ,1
+                     ,pr_cdagenci
                      ,100
                      ,vr_nrdolote);
         
@@ -2334,7 +2334,7 @@ END pc_inserir_lancamento_bordero;
                       ,cdoperad)
                VALUES(pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,pr_cdagenci
                       ,100
                       ,vr_nrdolote
                       ,1
@@ -2369,7 +2369,12 @@ END pc_inserir_lancamento_bordero;
              RAISE vr_exc_erro;
              
          END;                            
-         
+      ELSE
+         -- Apenas fechar o cursor
+         CLOSE cr_craplot;
+
+      END IF;
+
          BEGIN
           UPDATE craplot
              SET craplot.nrseqdig = craplot.nrseqdig + 1
@@ -2463,14 +2468,8 @@ END pc_inserir_lancamento_bordero;
             
             -- Gera exceção
             RAISE vr_exc_erro;
-            
         END;
          
-      ELSE
-         -- Apenas fechar o cursor
-         CLOSE cr_craplot;
-      END IF; 
-      
       TIOF0001.pc_insere_iof (pr_cdcooper       => pr_cdcooper 
                              ,pr_nrdconta       => pr_nrdconta
                              ,pr_dtmvtolt       => pr_dtmvtolt
@@ -5259,13 +5258,13 @@ END pc_inserir_lancamento_bordero;
         vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                   ,pr_nmdcampo => 'NRDOLOTE'
                                   ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-                                               || pr_dtmvtolt || ';'
+                                               || TO_CHAR(pr_dtmvtolt, 'DD/MM/RRRR') || ';'
                                                || TO_CHAR(pr_cdagenci)|| ';'
                                                || '100');
         --Buscar o lote
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                        ,pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => vr_nrdolote);
 
@@ -5287,7 +5286,7 @@ END pc_inserir_lancamento_bordero;
                         ,cdhistor)
                  VALUES(pr_cdcooper
                         ,pr_dtmvtolt
-                        ,1
+                        ,pr_cdagenci
                         ,100
                         ,vr_nrdolote
                         ,1
@@ -5372,6 +5371,7 @@ END pc_inserir_lancamento_bordero;
                        ,craplcm.nrdconta
                        ,craplcm.nrdocmto
                        ,craplcm.vllanmto
+                       ,craplcm.nrseqdig
                   INTO  vr_rowid
                        ,rw_craplcm.cdhistor
                        ,rw_craplcm.cdcooper
@@ -5379,7 +5379,8 @@ END pc_inserir_lancamento_bordero;
                        ,rw_craplcm.hrtransa
                        ,rw_craplcm.nrdconta
                        ,rw_craplcm.nrdocmto
-                       ,rw_craplcm.vllanmto;
+                       ,rw_craplcm.vllanmto
+                       ,rw_craplcm.nrseqdig;
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica

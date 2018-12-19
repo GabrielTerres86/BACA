@@ -5458,6 +5458,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro;
     END IF;
     
+    --> TED
+    IF rw_fraude.cdproduto = 30 THEN
     -- Marcelo Telles Coelho - Projeto 475
     -- Buscar número de controle da instuição financeira
     OPEN cr_craptvl( pr_idanalis => pr_idanalis,
@@ -5467,9 +5469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
 
     IF cr_craptvl%NOTFOUND THEN
       CLOSE cr_craptvl;
-      vr_dscritic := 'Não foi possivel localizar craptvl';
-      RAISE vr_exc_erro;
-    END IF;
+    ELSE
       --
     CLOSE cr_craptvl;
       -- Fase 20 - controle mensagem SPB
@@ -5550,8 +5550,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-    
+    END IF;
     -- Fim Projeto 475
+    END IF;
+    
 
   EXCEPTION
     WHEN vr_exc_erro THEN
