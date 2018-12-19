@@ -1028,7 +1028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                       ,vr_table_insert(vr_idx).idpessoa
                                       ,vr_table_insert(vr_idx).nrdconta
                                       ,sysdate
-                                      ,0
+                                      ,1 -- Primeira execucao sera como "Enviado"
                                       ,null
                                       ,null
                                       ,null
