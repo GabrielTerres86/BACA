@@ -170,6 +170,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
   vr_exc_saida EXCEPTION;
 
+  -- Rotina para criar registro na tbhistor_conta_comunic_soa
+  FUNCTION cria_conta_comunic_soa(pr_cdcooper tbhistor_conta_comunic_soa.cdcooper%TYPE,
+                                  pr_nrdconta tbhistor_conta_comunic_soa.nrdconta%TYPE,
+                                  pr_nmtabela tbhistor_conta_comunic_soa.nmtabela_oracle%TYPE) 
+    RETURN NUMBER IS
+    
+    vr_idalteracao tbhistor_conta_comunic_soa.idalteracao%TYPE;
+    
+  BEGIN
+    -- Busca o sequencial
+    vr_idalteracao := fn_sequence(pr_nmtabela => 'TBHISTOR_CONTA_COMUNIC_SOA'
+                                 ,pr_nmdcampo => 'IDALTERACAO'
+                                 ,pr_dsdchave => '0');
+    BEGIN
+      INSERT INTO tbhistor_conta_comunic_soa  
+        (idalteracao, 
+         nmtabela_oracle, 
+         cdcooper, 
+         nrdconta, 
+         dhalteracao, 
+         tpsituacao)
+       VALUES
+        (vr_idalteracao,
+         pr_nmtabela,
+         pr_cdcooper,
+         pr_nrdconta,
+         SYSDATE,
+         0);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN 0;
+    END;
+    
+    RETURN vr_idalteracao;
+    
+  END;    
+
   -- Rotina para gerar alerta de inconsistencia de cadastro de pessoa
   -- que não precisam ser enviados aos usuarios
   PROCEDURE pc_gerar_alerta_pessoa(pr_cdcooper    IN NUMBER                    --> Codigo da cooperativa
@@ -463,6 +500,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapenc: '||SQLERRM;
   END;
+
+
+  -- Rotina para atualizacao da tabela de operadores de Internet (CRAPOPI)
+  PROCEDURE pc_crapopi(pr_crapopi     IN crapopi%ROWTYPE  --> Tabela de operadores de internet
+                      ,pr_tpoperacao  IN INTEGER          --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
+                      ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
+                      ,pr_cdoperad    IN crapope.cdoperad%TYPE --> Operador que esta efetuando a operacao
+                      ,pr_dscritic   OUT VARCHAR2) IS     --> Retorno de Erro
+
+    -- Tratamento de erros
+    vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+		vr_exc_erro EXCEPTION;
+
+    -- Variaveis auxiliares
+    vr_idalteracao tbhistor_conta_comunic_soa.idalteracao%TYPE; -- Identificador de pessoa
+  BEGIN
+    -- Insere na tabela de capa
+    vr_idalteracao := cria_conta_comunic_soa(pr_crapopi.cdcooper,
+                                             pr_crapopi.nrdconta,
+                                             'CRAPOPI');
+
+    -- Insere na tabela de detalhes
+    BEGIN
+      INSERT INTO tbhistor_crapopi
+        (idalteracao, 
+         dhalteracao, 
+         tpoperacao, 
+         cdcooper, 
+         nrdconta, 
+         nrcpfope, 
+         dsdcargo,
+         nmoperad,
+         flgsitop) 
+       VALUES
+        (vr_idalteracao, 
+         SYSDATE, 
+         pr_tpoperacao, 
+         pr_crapopi.cdcooper, 
+         pr_crapopi.nrdconta, 
+         pr_crapopi.nrcpfope,
+         nvl(pr_crapopi.dsdcargo,' '),
+         pr_crapopi.nmoperad,
+         pr_crapopi.flgsitop);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir na tbhistor_crapopi: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+	EXCEPTION
+    WHEN vr_exc_saida THEN
+      --> Apenas gerar alerta
+      pc_gerar_alerta_pessoa(pr_cdcooper => pr_crapopi.cdcooper
+                            ,pr_nrdconta => pr_crapopi.nrdconta
+                            ,pr_idseqttl => 1
+                            ,pr_nmtabela => 'CRAPOPI'
+                            ,pr_dsalerta => vr_dscritic);
+
+    WHEN vr_exc_erro THEN
+      --Variavel de erro recebe erro ocorrido
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro nao tratado na pc_crapopi: '||SQLERRM;
+  END;
+
 
   -- Rotina para atualizacao da tabela de emails (CRAPCEM)
   PROCEDURE pc_crapcem(pr_crapcem     IN crapcem%ROWTYPE            --> Tabela de email atual
@@ -1654,14 +1757,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 06/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para cadastrar/atualizar pessoa conjuge
     --
-    --  Alteração :
+    --  Alteração : 06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+    --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -1827,7 +1931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
             ELSE -- Se encontrou a pessoa juridica
               --> se o nome estiver diferente, é necessario atualizar pessoa
-              IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) THEN
+              IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) AND 
+                 NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
                 vr_flcria_empresa := TRUE;
               END IF;
               -- Atualiza o ID da pessoa juridica
@@ -1842,7 +1947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             FETCH cr_pessoa_id INTO rw_pessoa;
             CLOSE cr_pessoa_id;
 
-            IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+            IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+               NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
               -- Atualiza o indicador para criar o CNPJ
               vr_flcria_empresa := TRUE;
             END IF;
@@ -2939,6 +3045,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE pes.idpessoa = pr_idpessoa;
     rw_pessoa_id cr_pessoa_id%ROWTYPE;    
 
+    -- Cursor para verificar se existe registro da crapavt duplicado
+    CURSOR cr_crapavt_duplicado(pr_cdcooper crapavt.cdcooper%TYPE,
+                                pr_nrdconta crapavt.nrdconta%TYPE,
+                                pr_idseqttl tbhistor_crapavt.idseqttl%TYPE,
+                                pr_idpessoa tbhistor_crapavt.idpessoa_relacao%TYPE,
+                                pr_nrcpfcgc tbhistor_crapavt.nrcpfcgc%TYPE) IS
+      SELECT 1
+        FROM tbhistor_crapavt a
+       WHERE a.dhalteracao >= TRUNC(SYSDATE,'MI')
+         AND a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.idseqttl = pr_idseqttl
+         AND ((pr_idpessoa IS NOT NULL 
+         AND   a.idpessoa_relacao = pr_idpessoa)                           
+          OR  (pr_idpessoa IS NULL
+         AND   a.nrcpfcgc = pr_nrcpfcgc));
+    rw_crapavt_duplicado cr_crapavt_duplicado%ROWTYPE;
+
     ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2948,6 +3072,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     -- Variaveis auxiliares
     vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_idpessoa_avt    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa avt
+    vr_idalteracao      tbhistor_conta_comunic_soa.idalteracao%TYPE;
+    vr_idpessoa_relacao tbhistor_crapavt.idpessoa_relacao%TYPE;
+    vr_idseqttl         tbhistor_crapavt.idseqttl%TYPE;
 
   BEGIN
 
@@ -2965,6 +3092,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_idpessoa := pr_idpessoa;
     END IF;
 
+    --> Buscar pessoa pelo ID
+    OPEN cr_pessoa_id(pr_idpessoa => vr_idpessoa);
+    FETCH cr_pessoa_id INTO rw_pessoa_id;
+    CLOSE cr_pessoa_id;
+
     -- pessoa de referencia
     IF pr_crapavt.tpctrato = 5 THEN
       IF nvl(pr_crapavt.nrdctato,0) > 0 THEN
@@ -2981,9 +3113,177 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         CLOSE cr_pessoa_ref_nome;
       END IF;
 
-    --> se for representante
+    --> Se for um procurador
     ELSIF pr_crapavt.tpctrato = 6 AND
-          nvl(pr_crapavt.dsproftl,' ') <> 'PROCURADOR' THEN -- Nao sera levado procuradores
+       (nvl(pr_crapavt.dsproftl,' ') = 'PROCURADOR' OR
+        pr_crapavt.dsproftl IS NULL OR -- Se for uma exclusao
+        rw_pessoa_id.tppessoa = 1) THEN
+      -- verificacao para buscar pessoa de contato
+      IF pr_crapavt.nrdctato <> 0 AND pr_tpoperacao <> 3 THEN
+        -- Busca o idpessoa da conta de contato
+        vr_idpessoa_relacao := fn_busca_pessoa(pr_cdcooper => pr_crapavt.cdcooper,
+                                               pr_nrdconta => pr_crapavt.nrdctato,
+                                               pr_idseqttl => 1);
+        IF vr_idpessoa IS NULL THEN
+          vr_dscritic := 'Nao encontrado PESSOA DE CONTATO para alteracao do procurador';
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE
+        vr_idpessoa_relacao := NULL;
+      END IF;
+        
+      IF rw_pessoa_id.tppessoa = 2 THEN
+        vr_idseqttl := 1;
+      ELSE
+        vr_idseqttl := pr_crapavt.nrctremp;
+      END IF;
+      
+      -- Verifica se ja foi inserido o registro no ultimo minuto
+      OPEN cr_crapavt_duplicado(pr_cdcooper => pr_crapavt.cdcooper,
+                                pr_nrdconta => pr_crapavt.nrdconta,
+                                pr_idseqttl => vr_idseqttl,
+                                pr_idpessoa => vr_idpessoa_relacao,
+                                pr_nrcpfcgc => pr_crapavt.nrcpfcgc);
+      FETCH cr_crapavt_duplicado INTO rw_crapavt_duplicado;
+      
+      -- Se nao encontrou, entao pode inserir novo
+      IF cr_crapavt_duplicado%NOTFOUND THEN
+        CLOSE cr_crapavt_duplicado;
+        -- Cria o cabecalho da comunicacao
+      vr_idalteracao := cria_conta_comunic_soa(pr_crapavt.cdcooper,
+                                               pr_crapavt.nrdconta,
+                                               'CRAPAVT');
+
+      -- Se for uma exclusao
+      IF pr_tpoperacao = 3 THEN
+        BEGIN
+          INSERT INTO tbhistor_crapavt 
+            (idalteracao, 
+             dhalteracao, 
+             tpoperacao, 
+             cdcooper, 
+             nrdconta, 
+             idseqttl, 
+             nrcpfcgc) 
+           VALUES
+            (vr_idalteracao, 
+             SYSDATE, 
+             pr_tpoperacao, 
+             pr_crapavt.cdcooper, 
+             pr_crapavt.nrdconta, 
+               vr_idseqttl,
+             pr_crapavt.nrcpfcgc);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir na tbhistor_crapavt: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      ELSE
+        -- Se nao tiver conta de contato, utiliza os dados existentes na tabela
+        IF pr_crapavt.nrdctato = 0 THEN
+          BEGIN
+            INSERT INTO tbhistor_crapavt 
+              (idalteracao, 
+               dhalteracao, 
+               tpoperacao, 
+               cdcooper, 
+               nrdconta, 
+               idseqttl, 
+               nrcpfcgc,
+               nmdavali, 
+               tpdocava, 
+               nrdocava, 
+               dsendres##1, 
+               nrcepend, 
+               nmcidade, 
+               cdufresd, 
+               nrendere, 
+               dscomplend, 
+               nmbairro, 
+               dsproftl, 
+               dtemddoc, 
+               cdufddoc, 
+               dtvalida, 
+               nmmaecto, 
+               nmpaicto, 
+               dtnascto, 
+               dsnatura, 
+               cdsexcto, 
+               cdestcvl, 
+               dtadmsoc, 
+               idhabmen, 
+               dthabmen, 
+               cdnacion, 
+               idorgexp)
+             VALUES
+              (vr_idalteracao, 
+               SYSDATE, 
+               pr_tpoperacao, 
+               pr_crapavt.cdcooper, 
+               pr_crapavt.nrdconta, 
+                 vr_idseqttl,
+               pr_crapavt.nrcpfcgc,
+               pr_crapavt.nmdavali, 
+               pr_crapavt.tpdocava, 
+               pr_crapavt.nrdocava, 
+               pr_crapavt.dsendres##1, 
+               pr_crapavt.nrcepend, 
+               pr_crapavt.nmcidade, 
+               pr_crapavt.cdufresd, 
+               pr_crapavt.nrendere, 
+               pr_crapavt.complend, 
+               pr_crapavt.nmbairro, 
+               pr_crapavt.dsproftl, 
+               pr_crapavt.dtemddoc, 
+               pr_crapavt.cdufddoc, 
+               pr_crapavt.dtvalida, 
+               pr_crapavt.nmmaecto, 
+               pr_crapavt.nmpaicto, 
+               pr_crapavt.dtnascto, 
+               pr_crapavt.dsnatura, 
+               pr_crapavt.cdsexcto, 
+               pr_crapavt.cdestcvl, 
+               pr_crapavt.dtadmsoc, 
+               pr_crapavt.inhabmen, 
+               pr_crapavt.dthabmen, 
+               pr_crapavt.cdnacion, 
+               pr_crapavt.idorgexp);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao inserir tbhistor_crapavt: '||SQLERRM;
+              RAISE vr_exc_erro;
+          END;          
+        ELSE -- Tem conta de contato
+          -- Insere o procurador com a pessoa de contato
+          BEGIN
+            INSERT INTO tbhistor_crapavt 
+              (idalteracao, 
+               dhalteracao, 
+               tpoperacao, 
+               cdcooper, 
+               nrdconta, 
+               idseqttl,
+               idpessoa_relacao)
+             VALUES
+              (vr_idalteracao, 
+               SYSDATE, 
+               pr_tpoperacao, 
+               pr_crapavt.cdcooper, 
+               pr_crapavt.nrdconta, 
+                 vr_idseqttl,
+               vr_idpessoa_relacao);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro inserir tbhistor_crapavt: '||SQLERRM;
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+      END IF;
+      ELSE
+        CLOSE cr_crapavt_duplicado;
+      END IF;
+    --> se for representante
+    ELSIF pr_crapavt.tpctrato = 6  THEN -- Nao sera levado procuradores
       -- Busca o ID PESSOA do avalista
       vr_idpessoa_avt := fn_busca_pessoa(pr_cdcooper => pr_crapavt.cdcooper,
                                          pr_nrdconta => pr_crapavt.nrdctato,
@@ -3004,12 +3304,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --> se for pessoa de referencia
     IF pr_crapavt.tpctrato = 5 THEN
     
-      --> Buscar pessoa pelo ID
-      OPEN cr_pessoa_id(pr_idpessoa => vr_idpessoa);
-      FETCH cr_pessoa_id INTO rw_pessoa_id;
-      CLOSE cr_pessoa_id;
-            
-      
       -- Buscar dados de pesso de referencia
       rw_pessoa_referencia := NULL;
       OPEN cr_pessoa_referencia ( pr_idpessoa         => vr_idpessoa,
@@ -3077,6 +3371,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
       END IF;
 
+    --> Se for um procurador
+    ELSIF pr_crapavt.tpctrato = 6 AND
+       (nvl(pr_crapavt.dsproftl,' ') = 'PROCURADOR' OR
+        rw_pessoa_id.tppessoa = 1) THEN
+      NULL; -- Ja fez no passo acima
     --> se for pessoa representante
     ELSIF pr_crapavt.tpctrato = 6 AND
           nvl(pr_crapavt.dsproftl,' ') <> 'PROCURADOR' THEN -- Nao sera levado procuradores
@@ -4038,14 +4337,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 06/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para atualizacao da tabela renda do titular (CRAPTTL)
     --
-    --  Alteração :
+    --  Alteração : 	06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+		--						                 corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -4119,7 +4419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
       ELSE -- Se encontrou a pessoa juridica
         --> se o nome estiver diferente, é necessario atualizar pessoa
-        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+           NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
           vr_flcria_empresa := TRUE;
         END IF;
         -- Atualiza o ID da pessoa juridica
@@ -4135,7 +4436,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       CLOSE cr_pessoa_id;
 
       -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
-      IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+      IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+         NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
         -- Atualiza o indicador para criar o CNPJ
         vr_flcria_empresa := TRUE;
       END IF;
@@ -4368,6 +4670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
     -- Variaveis auxiliares
     vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+    vr_idalteracao     tbhistor_conta_comunic_soa.idalteracao%TYPE;
 
   BEGIN
 
@@ -4398,6 +4701,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       ELSE
         CLOSE cr_existe_crapttl;
       END IF;
+      
+      -- gera comunicacao de exclusao de titular no SOA
+      -- Insere na tabela de capa
+      vr_idalteracao := cria_conta_comunic_soa(pr_crapttl.cdcooper,
+                                               pr_crapttl.nrdconta,
+                                               'CRAPTTL');
+                                               
+      -- Insere na capa
+      BEGIN
+        INSERT INTO tbhistor_crapttl
+          (idalteracao, 
+           dhalteracao, 
+           tpoperacao, 
+           cdcooper, 
+           nrdconta, 
+           idseqttl,
+           idpessoa)
+         VALUES
+          (vr_idalteracao, 
+           SYSDATE, 
+           pr_tpoperacao, 
+           pr_crapttl.cdcooper, 
+           pr_crapttl.nrdconta, 
+           pr_crapttl.idseqttl,
+           0);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na tbhistor_crapttl: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
     ELSE -- Se for alteracao ou inclusao
 
       -- Se nao for informado o IDPESSOA, deve-se buscar
@@ -5196,6 +5530,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 			   AND ass.nrdconta = pr_nrdconta;
 		rw_crapass cr_crapass%ROWTYPE;
 
+		CURSOR cr_crapass_2( pr_cdcooper crapass.cdcooper%TYPE
+		                    ,pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT a.cdagenci,
+             a.dtdemiss, b.dsmotivo, c.inblqexc, DECODE(a.dtdemiss,NULL,1, -- Ativa
+                   DECODE(nvl(b.tpmotivo,0),1,4,  -- Demissao
+                          DECODE(c.inblqexc,1,2,  -- Excluída
+                                 3))) tpsituacao_matricula -- Reativacao Permitida
+        FROM crapcop c,
+             TBCOTAS_MOTIVO_DESLIGAMENTO b,
+             crapass a
+       WHERE a.cdcooper     = pr_cdcooper
+         AND a.nrdconta     = pr_nrdconta
+         AND b.cdmotivo (+) = a.cdmotdem
+         AND c.cdcooper     = a.cdcooper;
+    rw_crapass_2 cr_crapass_2%ROWTYPE;
 		--> Buscar conta PJ
 		CURSOR cr_crapjur( pr_cdcooper crapjur.cdcooper%TYPE
 		                  ,pr_nrdconta crapjur.nrdconta%TYPE) IS
@@ -5214,6 +5563,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 			   AND jfn.nrdconta = pr_nrdconta;
 		rw_crapjfn cr_crapjfn%ROWTYPE;
 
+		--> Buscar dados de operadores de internet
+		CURSOR cr_crapopi ( pr_cdcooper crapopi.cdcooper%TYPE
+		                   ,pr_nrdconta crapopi.nrdconta%TYPE
+                       ,pr_nrcpfope crapopi.nrcpfope%TYPE) IS
+		  SELECT *
+			  FROM crapopi opi
+			 WHERE opi.cdcooper = pr_cdcooper
+			   AND opi.nrdconta = pr_nrdconta
+         AND opi.nrcpfope = pr_nrcpfope;
+		rw_crapopi cr_crapopi%ROWTYPE;
+
+    -- Cursor 
+    CURSOR cr_conta_comunic_soa(pr_cdcooper crapass.cdcooper%TYPE,
+                                pr_nrdconta crapass.nrdconta%TYPE) IS
+       SELECT 1
+         FROM tbhistor_conta_comunic_soa
+        WHERE cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta
+--          AND dhalteracao = SYSDATE
+          AND to_char(dhalteracao,'ddmmrrrr hh24mi') = to_char(sysdate,'ddmmrrrr hh24mi');
+    rw_conta_comunic_soa cr_conta_comunic_soa%ROWTYPE;
+
     ---------------> VARIAVEIS <-----------------
 
     -- Tratamento de erros
@@ -5227,6 +5598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     vr_nmtabela   VARCHAR2(80);
     vr_tab_campos gene0002.typ_split;
     vr_insit_atualiza INTEGER;
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;
+    vr_idalteracao     tbhistor_conta_comunic_soa.idalteracao%TYPE;
 
   BEGIN
 
@@ -5598,6 +5971,94 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Se for um cadastro novo, deve-se enviar para o CRM
           IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
             pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapttl.nrcpfcgc);
+            
+            -- Busca o ID PESSOA do email
+            vr_idpessoa := fn_busca_pessoa(pr_cdcooper => rw_crapttl.cdcooper,
+                                           pr_nrdconta => rw_crapttl.nrdconta,
+                                           pr_idseqttl => rw_crapttl.idseqttl);
+
+            -- Processo da CRAPASS
+            -- Busca o ID PESSOA do email
+            IF rw_crapttl.idseqttl = 1 THEN
+              -- Verifica se ja existe registro com a mesma data para a mesma conta
+              OPEN cr_conta_comunic_soa(rw_crapttl.cdcooper, rw_crapttl.nrdconta);
+              FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
+              IF cr_conta_comunic_soa%NOTFOUND THEN
+                CLOSE cr_conta_comunic_soa;
+                  
+                -- Buscar conta do cooperado
+                OPEN cr_crapass( pr_cdcooper => rw_crapttl.cdcooper
+                                ,pr_nrdconta => rw_crapttl.nrdconta);
+                FETCH cr_crapass INTO rw_crapass;
+                CLOSE cr_crapass;
+                  
+                -- Insere na tabela de capa
+                vr_idalteracao := cria_conta_comunic_soa(rw_crapass.cdcooper,
+                                                         rw_crapass.nrdconta,
+                                                         'CRAPASS');
+                                                             
+                -- Insere na capa
+                BEGIN
+                  INSERT INTO tbhistor_crapass
+                    (idalteracao, 
+                     dhalteracao, 
+                     tpoperacao, 
+                     cdcooper, 
+                     nrdconta, 
+                     idpessoa,
+                     nrmatric, 
+                     tpsituacao_matricula, 
+                     cdagenci,
+                     dtdemiss)
+                   VALUES
+                    (vr_idalteracao, 
+                     SYSDATE, 
+                     1,  -- Inclusao
+                     rw_crapass.cdcooper, 
+                     rw_crapass.nrdconta, 
+                     vr_idpessoa,
+                     rw_crapass.nrmatric, 
+                     1, 
+                     rw_crapass.cdagenci,
+                     rw_crapass.dtdemiss);
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir tbhistor_crapass: '||SQLERRM;
+                    RAISE vr_exc_erro;
+                END;
+              ELSE
+                CLOSE cr_conta_comunic_soa;
+              END IF;
+            END IF;
+                
+            -- Insere na tabela de capa
+            vr_idalteracao := cria_conta_comunic_soa(rw_crapttl.cdcooper,
+                                                     rw_crapttl.nrdconta,
+                                                     'CRAPTTL');
+                                                         
+            -- Insere na capa
+            BEGIN
+              INSERT INTO tbhistor_crapttl
+                (idalteracao, 
+                 dhalteracao, 
+                 tpoperacao, 
+                 cdcooper, 
+                 nrdconta, 
+                 idseqttl,
+                 idpessoa)
+               VALUES
+                (vr_idalteracao, 
+                 SYSDATE, 
+                 1,  -- Inclusao
+                 rw_crapttl.cdcooper, 
+                 rw_crapttl.nrdconta, 
+                 rw_crapttl.idseqttl,
+                 vr_idpessoa);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir tbhistor_crapttl: '||SQLERRM;
+                RAISE vr_exc_erro;
+            END;
           END IF;
 
 				WHEN 'CRAPENC' THEN
@@ -5665,8 +6126,110 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
           -- Se for um cadastro novo, deve-se enviar para o CRM
-          IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
+          IF substr(nvl(rw_pessoa_atlz.dschave,' '),1,1) = 'S' THEN
             pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+
+            -- Verifica se ja existe registro com a mesma data para a mesma conta
+            OPEN cr_conta_comunic_soa(rw_crapass.cdcooper, rw_crapass.nrdconta);
+            FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
+            IF cr_conta_comunic_soa%NOTFOUND THEN
+              CLOSE cr_conta_comunic_soa;
+              -- Busca o ID PESSOA do email
+              vr_idpessoa := fn_busca_pessoa(pr_cdcooper => rw_crapass.cdcooper,
+                                             pr_nrdconta => rw_crapass.nrdconta,
+                                             pr_idseqttl => 1);
+
+              -- Insere na tabela de capa
+              vr_idalteracao := cria_conta_comunic_soa(rw_crapass.cdcooper,
+                                                       rw_crapass.nrdconta,
+                                                       'CRAPASS');
+                                                       
+              -- Insere na capa
+              BEGIN
+                INSERT INTO tbhistor_crapass
+                  (idalteracao, 
+                   dhalteracao, 
+                   tpoperacao, 
+                   cdcooper, 
+                   nrdconta, 
+                   idpessoa,
+                   nrmatric, 
+                   tpsituacao_matricula, 
+                   cdagenci,
+                   dtdemiss)
+                 VALUES
+                  (vr_idalteracao, 
+                   SYSDATE, 
+                   1,  -- Inclusao
+                   rw_crapass.cdcooper, 
+                   rw_crapass.nrdconta, 
+                   vr_idpessoa,
+                   rw_crapass.nrmatric, 
+                   1, 
+                   rw_crapass.cdagenci,
+                   rw_crapass.dtdemiss);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir tbhistor_crapass: '||SQLERRM;
+                  RAISE vr_exc_erro;
+              END;
+            ELSE
+              CLOSE cr_conta_comunic_soa;
+            END IF;
+          -- Se teve alteracao da data da demissao ou 
+          ELSIF substr(nvl(rw_pessoa_atlz.dschave,'   '),3,1) = 'S' THEN
+            -- Verifica se ja existe registro com a mesma data para a mesma conta
+            OPEN cr_conta_comunic_soa(rw_crapass.cdcooper, rw_crapass.nrdconta);
+            FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
+            IF cr_conta_comunic_soa%NOTFOUND THEN
+              CLOSE cr_conta_comunic_soa;
+              -- Busca o ID PESSOA do email
+              vr_idpessoa := fn_busca_pessoa(pr_cdcooper => rw_crapass.cdcooper,
+                                             pr_nrdconta => rw_crapass.nrdconta,
+                                             pr_idseqttl => 1);
+
+              -- Buscar conta do cooperado
+              OPEN cr_crapass_2( pr_cdcooper => rw_crapass.cdcooper
+                                ,pr_nrdconta => rw_crapass.nrdconta);
+              FETCH cr_crapass_2 INTO rw_crapass_2;
+              CLOSE cr_crapass_2;
+              
+              -- Insere na tabela de capa
+              vr_idalteracao := cria_conta_comunic_soa(rw_crapass.cdcooper,
+                                                       rw_crapass.nrdconta,
+                                                       'CRAPASS');
+                                                         
+              -- Insere na capa
+              BEGIN
+                INSERT INTO tbhistor_crapass
+                  (idalteracao, 
+                   dhalteracao, 
+                   tpoperacao, 
+                   cdcooper, 
+                   nrdconta, 
+                   idpessoa,
+                   nrmatric, 
+                   tpsituacao_matricula, 
+                   cdagenci,
+                   dtdemiss)
+                 VALUES
+                  (vr_idalteracao, 
+                   SYSDATE, 
+                   1,
+                   rw_crapass.cdcooper, 
+                   rw_crapass.nrdconta, 
+                   vr_idpessoa,
+                   rw_crapass.nrmatric, 
+                   rw_crapass_2.tpsituacao_matricula, 
+                   rw_crapass.cdagenci,
+                   rw_crapass.dtdemiss);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir na tbhistor_crapass: '||SQLERRM;
+                  RAISE vr_exc_erro;
+              END;
+            END IF;
+
           END IF;
 
 			  WHEN 'CRAPJUR' THEN
@@ -5725,6 +6288,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
+				WHEN 'CRAPOPI' THEN
+          -- Quebrar chave da tabela
+          vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
+
+          -- Buscar registro de avalista terceiro, contato (PF) ou referencia comercial/bancaria (PJ)
+          OPEN cr_crapopi( pr_cdcooper => rw_pessoa_atlz.cdcooper,
+													 pr_nrdconta => rw_pessoa_atlz.nrdconta,
+													 pr_nrcpfope => vr_tab_campos(1));
+
+          FETCH cr_crapopi INTO rw_crapopi;
+					-- Se não encontrou registro
+          IF cr_crapopi%NOTFOUND THEN
+						-- Fechar cursor
+            CLOSE cr_crapopi;
+            vr_tpoperac := 3; --> exclusao
+						-- Atribuir registro da tabela de pessoa a atualizar
+            rw_crapopi.cdcooper := rw_pessoa_atlz.cdcooper;
+            rw_crapopi.nrdconta := rw_pessoa_atlz.nrdconta;
+            rw_crapopi.nrcpfope := vr_tab_campos(1);
+
+          ELSE
+						-- Fechar cursor
+            CLOSE cr_crapopi;
+            vr_tpoperac := 1; --> inserção/alteração
+          END IF;
+
+					-- Rotina para atualização da tabela de operadores de internet
+					cada0015.pc_crapopi( pr_crapopi => rw_crapopi                --> Tabela de operadores
+                              ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
+                              ,pr_idpessoa => NULL                     --> Identificador de pessoa
+                              ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
+                              ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
         ELSE
           vr_dscritic := 'Tabela nao configurada.';
 
