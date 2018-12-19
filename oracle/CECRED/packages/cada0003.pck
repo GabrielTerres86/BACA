@@ -702,6 +702,15 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                          ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
                                          ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo                                                                       
                                                                                                            
+  PROCEDURE pc_retorna_grupo_cpf(pr_nrcpfcgc in  crapass.nrcpfcgc%type
+                                 ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2); --> Descricao da critica   
+                                                                                                                                                           
+
 END CADA0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
@@ -14177,7 +14186,112 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                                                       
   END pc_atualiza_cta_ant_demitidas; 
    
+  PROCEDURE pc_retorna_grupo_cpf(pr_nrcpfcgc in  crapass.nrcpfcgc%type
+                              ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                              ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
+                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2) IS --> Descricao da critica  
+    /* .............................................................................
+
+    Programa:  pc_retorna_grupo_cpf
+    Sistema : Progrid
+    Autor   : Márcio(Mouts)
+    Data    : Dezembro/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Retornar o grupo da qual o cpf está associado
+
+    Alteracoes: -----
+    ..............................................................................*/                                     
+   cursor grupo(pr_cdcooper in number) is
+    select trim(tg.nmdgrupo) nmdgrupo
+    from tbevento_pessoa_grupos tp,
+         tbevento_grupos tg
+   where tp.cdcooper = pr_cdcooper
+     and tp.nrcpfcgc = pr_nrcpfcgc
+     and tg.cdcooper = tp.cdcooper
+     and tg.cdagenci = tp.cdagenci
+     and tg.nrdgrupo = tp.nrdgrupo;
+
+
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000); 
+    vr_nmeacao  VARCHAR2(100);    
+    -- 
+   
+    -- Variáveis locais
+    vr_contador INTEGER := 0;
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_dsorigem VARCHAR2(1000);
   
+  
+  BEGIN
+  gene0001.pc_informa_acesso(pr_module => 'CADA0003');
+
+  -- Extrai os dados vindos do XML
+  GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                           pr_cdcooper => vr_cdcooper,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nmeacao  => vr_nmeacao,
+                           pr_cdagenci => vr_cdagenci,
+                           pr_nrdcaixa => vr_nrdcaixa,
+                           pr_idorigem => vr_idorigem,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic);
+
+  vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);
+  
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+  FOR c1 in grupo(vr_cdcooper) LOOP
+    GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);              
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmdgrupo', pr_tag_cont => c1.nmdgrupo, pr_des_erro => vr_dscritic);
+    vr_contador := vr_contador + 1;        
+  END LOOP;        
+ 
+  pr_des_erro := 'OK';
+
+exception
+  when vr_exc_saida then
+    IF vr_cdcritic <> 0 THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    ELSE
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    END IF;
+  
+    pr_des_erro := 'NOK';
+  
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+  when others then
+    cecred.pc_internal_exception(3);
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := 'Erro geral em CADA0003.pc_busca_dados_cjg_ass.';
+    pr_des_erro := 'NOK';
+  
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+  END pc_retorna_grupo_cpf;   
   
 END CADA0003;
 /

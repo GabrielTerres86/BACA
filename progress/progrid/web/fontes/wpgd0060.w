@@ -1045,7 +1045,7 @@ PROCEDURE CriaListaEventos :
                         END.
                       ELSE IF INT(aux_tpevento) = 8 OR INT(aux_tpevento) = 13 OR
                               INT(aux_tpevento) = 14 OR INT(aux_tpevento) = 15 OR 
-                              INT(aux_tpevento) = 16 THEN
+                              INT(aux_tpevento) = 16 OR INT(aux_tpevento) = 17 THEN
                         DO:
                       
                           FIND FIRST crapfea WHERE crapfea.nrseqfea = crapadp.nrseqfea NO-LOCK NO-ERROR NO-WAIT.
@@ -1070,7 +1070,7 @@ PROCEDURE CriaListaEventos :
 																										+ "',idpropos:'" + TRIM(STRING(aux_idpropos))    
 																										+ "',dtevento:'" + TRIM(STRING(aux_dtevento))    
 																										+ "',dslocali:'" + TRIM(STRING(aux_dslocali))    
-																										+ "',dshroeve:'" + TRIM(STRING(crapadp.dshroeve))
+																										+ "',dshroeve:'" + TRIM(STRING(crapadp.dshroeve)) + " / " + TRIM(STRING(crapadp.nmdgrupo))
 																										+ "',qtmaxtur:'" + TRIM(STRING(crapadp.qtparpre))																			
 																										+ "',nrinscri:'" + TRIM(STRING(aux_nrinscri))    
 																										+ "',idstaeve:'" + TRIM(STRING(aux_idstaeve))    

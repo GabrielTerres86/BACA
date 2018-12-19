@@ -46,7 +46,8 @@ DEF TEMP-TABLE tt-eventos-andamento  NO-UNDO
     FIELD nridamin AS INTE
     FIELD flgcompr AS LOGI
     FIELD rowidedp AS ROWID
-    FIELD rowidadp AS ROWID.
+    FIELD rowidadp AS ROWID
+	FIELD nmdgrupo AS CHAR.
 
 DEF TEMP-TABLE tt-detalhe-evento     NO-UNDO
     FIELD nmevento AS CHAR
