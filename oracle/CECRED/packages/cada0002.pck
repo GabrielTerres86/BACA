@@ -4335,7 +4335,7 @@ END CADA0002;
      Programa: pc_bloqueia_operadores
      Sistema : Rotina acessada através de job
      Autor   : Kelvin Ott       
-     Data    : Novembro/2017.                  Ultima atualizacao: 
+     Data    : Novembro/2017.                  Ultima atualizacao: 19/11/2018
 
      Dados referentes ao programa:
 
@@ -4344,7 +4344,7 @@ END CADA0002;
      Objetivo  : Rotina chamada por job para bloquiar os operadores na tabela crapope que nao 
                  constam na tabela tbcadast_colaborador
 
-     Alteracoes:                 
+     Alteracoes: 19/11/2018 - Alterando o local onde era gerado log de inativação. (SCTASK0034898 - Kelvin)                
     ..............................................................................*/ 
     CURSOR cr_crapope IS        
       SELECT cdoperad
@@ -4413,23 +4413,6 @@ END CADA0002;
                SET ope.cdsitope = 2
              WHERE ope.cdcooper = rw_crapope.cdcooper
                AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-          EXCEPTION
-            WHEN OTHERS THEN
-              RAISE vr_exc_error;
-          END;
-        --E CECRED
-        ELSE
-          CLOSE cr_valida_cecred;  
-            --Inativa operador
-          BEGIN 
-            UPDATE crapope ope
-               SET ope.cdsitope = 1
-             WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-          EXCEPTION
-            WHEN OTHERS THEN
-              RAISE vr_exc_error;
-          END;
-        END IF;
 
           -- Log de sucesso.
           CECRED.pc_log_programa(pr_dstiplog => 'O'
@@ -4441,7 +4424,25 @@ END CADA0002;
                                                   ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
                                                   rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
                                , pr_idprglog => vr_idprglog);                      
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        --E CECRED
+        ELSE
+          CLOSE cr_valida_cecred;  
+            --Ativa operador
+            BEGIN 
+              UPDATE crapope ope
+                 SET ope.cdsitope = 1
+               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad)
+                 AND ope.cdcooper = rw_crapope.cdcooper;
 
+            EXCEPTION
+              WHEN OTHERS THEN
+                RAISE vr_exc_error;
+            END;
+        END IF;
 
       ELSE
         CLOSE cr_tbcadast_colaborador;
