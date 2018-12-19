@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-12-17T13:57:06 -->
+<!-- 2018-12-19T14:17:55 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -46,14 +46,26 @@
 	<field name="hora" class="java.lang.String">
 		<fieldDescription><![CDATA[hora]]></fieldDescription>
 	</field>
-	<field name="nmprimtl" class="java.lang.String">
-		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
-	</field>
 	<field name="dataass" class="java.lang.String">
 		<fieldDescription><![CDATA[dataass]]></fieldDescription>
 	</field>
 	<field name="horaass" class="java.lang.String">
 		<fieldDescription><![CDATA[horaass]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="titular" class="java.lang.String">
+		<fieldDescription><![CDATA[titular]]></fieldDescription>
+	</field>
+	<field name="adicional" class="java.lang.String">
+		<fieldDescription><![CDATA[adicional]]></fieldDescription>
+	</field>
+	<field name="provisorio" class="java.lang.String">
+		<fieldDescription><![CDATA[provisorio]]></fieldDescription>
+	</field>
+	<field name="definitivo" class="java.lang.String">
+		<fieldDescription><![CDATA[definitivo]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -105,8 +117,8 @@
 					</box>
 					<textField>
 						<reportElement x="0" y="0" width="465" height="30" uuid="9864ed6b-492e-4822-8a2b-6e5583b7be9a"/>
-						<textElement verticalAlignment="Top" markup="html">
-							<paragraph leftIndent="5"/>
+						<textElement verticalAlignment="Top" markup="styled">
+							<paragraph leftIndent="5" spacingBefore="2"/>
 						</textElement>
 						<textFieldExpression><![CDATA["1. " + $F{nmprimtl} + ", inscrito no CPF/CNPJ sob o nº " + $F{nrcpfcnpj} + ", <b>DECLARA</b> que recebeu, nesta data, o cartão identificado abaixo."]]></textFieldExpression>
 					</textField>
@@ -160,27 +172,25 @@
 							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 						</reportElement>
 						<textElement>
-							<paragraph firstLineIndent="5"/>
+							<paragraph firstLineIndent="5" spacingBefore="2"/>
 						</textElement>
 						<textFieldExpression><![CDATA["a. " + $F{nrcrcard}]]></textFieldExpression>
 					</textField>
-					<staticText>
-						<reportElement mode="Transparent" x="232" y="0" width="185" height="45" forecolor="#000000" uuid="3d882ac5-cf3d-4c1d-af22-6f3081917ef3">
-							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<textField>
+						<reportElement x="232" y="0" width="185" height="45" uuid="587d4f7c-94de-44e0-93ff-9e1c4284dfd3">
 							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						</reportElement>
 						<box>
-							<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-							<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-							<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-							<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+							<leftPen lineWidth="1.0"/>
 						</box>
-						<textElement verticalAlignment="Middle">
-							<paragraph lineSpacing="Double" lineSpacingSize="1.0" firstLineIndent="5"/>
+						<textElement>
+							<paragraph lineSpacing="Double" lineSpacingSize="1.0" leftIndent="5" spacingBefore="2"/>
 						</textElement>
-						<text><![CDATA[(   ) Titular          (   ) Adicional
-(   ) Provisório    (   ) Definitivo]]></text>
-					</staticText>
+						<textFieldExpression><![CDATA["( "+$F{titular}+") Titular          ( "+$F{adicional}+") Adicional\n"+
+"( "+$F{provisorio}+") Provisório    ( "+$F{definitivo}+") Definitivo"]]></textFieldExpression>
+					</textField>
 				</frame>
 				<frame>
 					<reportElement mode="Transparent" x="0" y="90" width="465" height="15" forecolor="#000000" backcolor="#FFFFFF" uuid="a0d1f99b-b29a-4d30-8271-e93872afbcfb">
@@ -243,7 +253,7 @@
 					</box>
 					<textField>
 						<reportElement x="0" y="0" width="465" height="30" uuid="a7d5b64c-43ba-4359-8623-74311ee19479"/>
-						<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+						<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
 							<paragraph leftIndent="5"/>
 						</textElement>
 						<textFieldExpression><![CDATA["Assinado eletronicamente pelo <b>COOPERADO</b> " + $F{nmprimtl} + ", no dia " + $F{dataass} + ", às " + $F{horaass} + ", mediante aposição de senha numérica."]]></textFieldExpression>

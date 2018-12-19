@@ -5058,6 +5058,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 		vr_horaass     VARCHAR(50)     := '';
 		vr_local       VARCHAR(300)    := '';
 		vr_nrcrcard    VARCHAR(50);
+		
+		-- Variaveis para flag do tipo
+		vr_flgprovi    VARCHAR(3)      := '  ';
+		vr_flgdefin    VARCHAR(3)      := '  ';
+		vr_flgtitul    VARCHAR(3)      := '  ';
+		vr_flgadici    VARCHAR(3)      := '  ';
   
     vr_nom_direto VARCHAR2(200); --> Diretório para gravação do arquivo
     vr_dsjasper   VARCHAR2(100); --> nome do jasper a ser usado
@@ -5071,8 +5077,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 						,crd.nmtitcrd
 						,crd.dtassele
 						,crd.nrdconta
+						,crd.flgprovi
+						,wrd.flgprcrd
 			 FROM crapcrd crd
-			WHERE crd.nrctrcrd = pr_nrctrcrd
+			     ,crawcrd wrd
+			WHERE crd.nrctrcrd = wrd.nrctrcrd
+		    AND crd.cdcooper = wrd.cdcooper
+			  AND crd.nrctrcrd = pr_nrctrcrd
 			  AND crd.cdcooper = pr_cdcooper;
     rw_protocolo cr_protocolo%ROWTYPE;
 		
@@ -5178,7 +5189,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                             pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><protocolo>');
 
   
-	
+    IF nvl(rw_protocolo.flgprovi, 0) = 1 THEN
+			vr_flgprovi := 'X';
+		ELSE
+			vr_flgdefin := 'X';
+		END IF;
+    
+		IF nvl(rw_protocolo.flgprcrd, 0) = 1 THEN
+			vr_flgtitul := 'X';
+		ELSE
+			vr_flgadici := 'X';
+		END IF;		
 
 		gene0002.pc_escreve_xml(pr_xml            => vr_clob,
                             pr_texto_completo => vr_xml_temp,
@@ -5189,6 +5210,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 																							|| '<data>' || rw_protocolo.data ||' </data>'
 																							|| '<dataass>' || vr_dataass ||' </dataass>'
 																							|| '<horaass>' || vr_horaass ||' </horaass>'
+																							|| '<titular>' || vr_flgtitul ||' </titular>'
+																							|| '<adicional>' || vr_flgadici ||' </adicional>'
+																							|| '<provisorio>' || vr_flgprovi ||' </provisorio>'
+																							|| '<definitivo>' || vr_flgdefin ||' </definitivo>'
 																							|| '<nmprimtl>' || rw_protocolo.nmtitcrd ||' </nmprimtl>');
 
 	
