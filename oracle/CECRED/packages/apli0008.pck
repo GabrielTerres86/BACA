@@ -1751,7 +1751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   -- Frequencia: ----
   -- Objetivo  : Procedure para calcular diversos valores de uma aplicacao programada a partir da RPP
   --             Ela é invocada a partir de outras procs. então não revalida cooperativa, cooperado, etc.
-  -- Alteracoes:
+  -- Alteracoes: 20/12/2018 - Correcao no tratamento de erro (Anderson).
   -- 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -1883,7 +1883,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                                        ,pr_cdcritic => vr_cdcritic          -- Codigo de Critica
                                                        ,pr_dscritic => vr_dscritic);        -- Descricao de Critica
             END IF;
-            IF pr_des_erro is not null THEN
+            IF vr_dscritic IS NOT NULL THEN
+               pr_des_erro := vr_dscritic;
                EXIT;
             END IF;
             pr_vlbascal := pr_vlbascal + vr_vlbascal;  -- Base de Cálculo
@@ -1917,7 +1918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                  ,pr_vldoirrf => vr_vlrdirrf
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
-      IF pr_des_erro is null THEN
+      IF pr_des_erro is null and vr_dscritic is null THEN
           IF vr_tab_extrato.count >0 THEN
             FOR vr_idx_extrato in vr_tab_extrato.first .. vr_tab_extrato.last LOOP
                 IF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsprap,rw_crapcpc.cdhsrdap) THEN -- Provisao do mês e rendimento
@@ -2476,7 +2477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 20/12/2018 - Adequação do ROLLBACK no tratamento de excecao (Anderson)
     ..............................................................................*/                
       
       DECLARE
@@ -2861,10 +2862,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                  -- Alimenta parametros com a crítica ocorrida
                  pr_cdcritic := vr_cdcritic;
                  pr_dscritic := vr_dscritic;
-                 ROLLBACK;
 
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
+				    ROLLBACK;
                     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                         ,pr_cdoperad => pr_cdoperad
                                         ,pr_dscritic => vr_dscritic
@@ -2881,10 +2882,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                  END IF;
             WHEN OTHERS THEN
                  pr_cdcritic := vr_cdcritic;
-                 pr_dscritic := 'Erro nao tratado APLI0008.pc_buscar_extrato_apl_prog: ' || SQLERRM;
-                 ROLLBACK; 
+                 pr_dscritic := 'Erro nao tratado APLI0008.pc_buscar_extrato_apl_prog: ' || SQLERRM;                 
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
+				    ROLLBACK;
                     GENE0001.pc_gera_log (pr_cdcooper => pr_cdcooper
                                          ,pr_cdoperad => pr_cdoperad
                                          ,pr_dscritic => vr_dscritic
