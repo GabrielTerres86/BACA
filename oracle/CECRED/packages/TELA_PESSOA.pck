@@ -2296,7 +2296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and vin.idpessoa   = pr_idpessoa
        and vin.tpsituacao = 0;
     rw_limpeza_registros cr_limpeza_registros%rowtype;
-    
+
+    vr_exc_saida            exception;    
     vr_retorno              xmltype;
     vr_nrmatric             tbhistor_vinculo_coop.nrmatric%type;
     vr_tpvincul             crapass.tpvincul%type := pr_tpvincul;
@@ -2339,7 +2340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     if cr_crapcop%notfound then
       close cr_crapcop;
       vr_dscritic := 'Cooperativa não está ativa para eventos assembleares.';
-      raise vr_exc_erro;
+      raise vr_exc_saida;
     end if;
     
     close cr_crapcop;
@@ -2420,6 +2421,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
   exception
     
+    when vr_exc_saida then
+      
+      -- Nao deve fazer nada pois o objetivo da 
+      -- exception eh apenas nao inserir na tabela
+      null;
+
     when others then
       
       pr_dscritic := vr_dscritic;  
