@@ -3127,7 +3127,13 @@ PROCEDURE permissoes-menu-mobile:
     DEF VAR aux_flgresga AS LOGI                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
-    DEF VAR aux_possuipr AS CHAR NO-UNDO.
+    DEF VAR aux_possuipr AS CHAR                                    NO-UNDO.
+    
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
+    DEF VAR aux_dscctsal AS CHAR                                    NO-UNDO.
+
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
@@ -3286,7 +3292,61 @@ PROCEDURE permissoes-menu-mobile:
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 603. /* RESGATE APLICACAO*/
            tt-itens-menu-mobile.flcreate = aux_flgresga.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,                /* Modalidade */
+                                        OUTPUT "",               /* Flag Erro */
+                                        OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdmodali = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                          WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT 0,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+
     
+    /*
+    1) modalidade é 2? se sim goto 2 senao goto -1
+    2) inativa todos os itens da temp-table
+    3) ativa somente os itens retornados no select
+    */
+    IF aux_cdmodali = 2 THEN
+      DO:
+      
+        ASSIGN aux_dscctsal = "10,20,103,104,30,300,301,302,400,401,402,500,804,40,1001".
+
+        FOR EACH tt-itens-menu-mobile NO-LOCK:
+          IF NOT CAN-DO(aux_dscctsal, STRING(tt-itens-menu-mobile.cditemmn)) THEN
+          DO:
+            ASSIGN tt-itens-menu-mobile.flcreate = FALSE.
+          END.
+        END.
+      END.
+
   RETURN "OK".
     
 END PROCEDURE.
