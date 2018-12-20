@@ -432,8 +432,8 @@ atualizacaoDesconto = false;
 	<table width="100%" class="tabelaDesconto">
 		<tr class="corPar">
 			<td>
-				<textarea name="txtjustificativa_old" id="txtjustificativa_old" style="display:none"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
-				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
+				<textarea name="txtjustificativa_old" id="txtjustificativa_old" style="display:none"><?php echo $vr_dsjustificativa_desc_adic; ?></textarea>
+				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo $vr_dsjustificativa_desc_adic; ?></textarea>
 			</td>
 		</tr>
 	</table>
