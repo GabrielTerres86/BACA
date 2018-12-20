@@ -1290,41 +1290,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
           raise vr_exc_erro;
 
       end;
+      
+	  if rw_busca_cargos.dtfim_vigencia is null then
+        
+		begin
 
-      begin
-          
-        if rw_busca_cargos.dtfim_vigencia is null then
-          
           update crapass c
              set c.tpvincul = vr_cdfuncao
            where c.cdcooper = pr_cdcooper
              and c.nrcpfcgc = pr_nrcpfcgc;
+        
+        exception
           
-        end if;
-               
-      exception
+          when others then
           
-        when others then
-          
-          -- Montar mensagem de critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
-          raise vr_exc_erro;
+            -- Montar mensagem de critica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
+            raise vr_exc_erro;
 
-      end;
+        end;
+
+        -- Controle de historico de vinculos
+        pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
+                               ,pr_nrcpfcgc => pr_nrcpfcgc
+                               ,pr_tpvincul => vr_cdfuncao
+                               ,pr_dscritic => vr_dscritic);
+                     
+        -- Aborta em caso de erro
+        if trim(vr_dscritic) is not null then
+          raise vr_exc_erro;
+        end if;
+
+      end if;
         
     end if;  
-
-    -- Controle de historico de vinculos
-    pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
-                           ,pr_nrcpfcgc => pr_nrcpfcgc
-                           ,pr_tpvincul => vr_cdfuncao
-                           ,pr_dscritic => vr_dscritic);
-                     
-    -- Aborta em caso de erro
-    if trim(vr_dscritic) is not null then
-      raise vr_exc_erro;
-    end if;
 
     -- Busca contas do cooperado para gerar log
     for rw_busca_cooperado in cr_busca_cooperado (pr_cdcooper
