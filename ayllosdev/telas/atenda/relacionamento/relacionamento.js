@@ -43,7 +43,7 @@ var cdgraupr = new Array(); // grau de parentesco quando selecionado opcao outra
 var idseqttl = 1;           // Titular que estara fazendo a preinscricao
 var titular = new Array(); // Array que guardara os dados de cada titular que esta fazendo a inscricao
 var nrcpfcgc = ""; //pre-inscricao
-	
+
 	
 // Função para carregar dados da opção principal
 function acessaOpcaoPrincipal() {
