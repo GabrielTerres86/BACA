@@ -5633,6 +5633,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         ORDER BY a.dhalteracao DESC;
     rw_conta_comunic_soa cr_conta_comunic_soa%ROWTYPE;
 
+    CURSOR cr_atualiza(pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT 1
+        FROM tbcadast_pessoa_atualiza a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND a.nmtabela = 'CRAPTTL'
+         AND substr(a.dschave,1,1) = 'S'
+         AND a.insit_atualiza IN (1,4);
+
+
     ---------------> VARIAVEIS <-----------------
 
     -- Tratamento de erros
@@ -6093,8 +6104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                               wp_idpessoa    => vr_idpessoa);
 */
               END IF;
-          END IF;
-
+            END IF;
+                
             -- Insere na tabela de capa
             vr_idalteracao := cria_conta_comunic_soa(rw_crapttl.cdcooper,
                                                      rw_crapttl.nrdconta,
@@ -6253,18 +6264,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                             wp_intabela    => 1,
                                             wp_idpessoa    => vr_idpessoa);
 */
-          END IF;
+            END IF;
           -- Se teve alteracao da data da demissao ou 
           ELSIF substr(nvl(rw_pessoa_atlz.dschave,'   '),3,1) = 'S' THEN
 
             vr_idinclusao := FALSE;
-            vr_tpalteracao := 2;
             -- Busca os dados da ultima inclusao do historico
             OPEN cr_conta_comunic_soa(rw_crapass.cdcooper, rw_crapass.nrdconta);
             FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
             IF cr_conta_comunic_soa%NOTFOUND THEN
               vr_idinclusao := TRUE;
-              vr_tpalteracao := 1; -- Inclusao
             -- Se possuir alguma informacao diferente
             ELSIF rw_conta_comunic_soa.tpsituacao_matricula <> rw_crapass_2.tpsituacao_matricula OR
                   rw_conta_comunic_soa.cdagenci <> rw_crapass.cdagenci OR
@@ -6290,6 +6299,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                        rw_crapass.nrdconta,
                                                        'CRAPASS');
                                                          
+              -- Verifica se existe registro pendente de inclusao na CRAPTTL
+              OPEN cr_atualiza(rw_crapass.cdcooper,
+                               rw_crapass.nrdconta);
+              FETCH cr_atualiza INTO vr_tpalteracao;
+              IF cr_atualiza%NOTFOUND THEN
+                vr_tpalteracao := 2;
+              END IF;
+              CLOSE cr_atualiza;
+              
               -- Insere na capa
               BEGIN
                 INSERT INTO tbhistor_crapass
