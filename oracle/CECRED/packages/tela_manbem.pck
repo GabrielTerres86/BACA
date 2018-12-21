@@ -143,7 +143,7 @@ create or replace package cecred.tela_manbem is
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                           ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
-                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhão ou Outros Veiculos)
+                          ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto, Caminhao ou Outros Veiculos)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
                           ,pr_nrmodbem in varchar2 --> Ano Modelo
                           ,pr_nranobem in varchar2 --> Ano Fabricação
@@ -257,7 +257,7 @@ create or replace package cecred.tela_manbem is
   
   /* Acionamento via tela das informações de Gravação dos Bens */
   procedure pc_grava_alienac_hipotec_web(par_nrdconta in crapbpr.nrdconta%TYPE --> Conta
-                                        ,par_dtmvtolt VARCHAR2 --> Data
+                                        ,par_dtmvtolt in VARCHAR2 --> Data
                                         ,par_tpctrato in crapbpr.tpctrpro%TYPE --> Tp Contrato
                                         ,par_nrctrato in crapbpr.nrctrpro%TYPE --> Contrato
                                         ,par_cddopcao IN VARCHAR2         --> Tipo da Ação
@@ -2003,8 +2003,26 @@ create or replace package body cecred.tela_manbem is
         -- Se retornou critica é pq ele não tem acesso e prosseguiremos com o processo
         -- de checagem de inclusão da mensagem de perca de aprovação
         IF v_dscritic IS NOT NULL OR v_cdcritic <> 0 THEN
-          -- Verificar regras de perca de aprovação
-          IF par_dstipbem = 'ZERO KM' THEN
+          -- Buscar dados do bem anterior
+            open cr_crapbpr2;
+              fetch cr_crapbpr2 into v_crapbpr2;
+              if cr_crapbpr2%notfound then
+                v_cdcritic := 0;
+                v_dscritic := 'Bem nao cadastrado!';
+                par_nmdcampo := 'dsbemfin';
+                close cr_crapbpr2;
+                raise vr_exc_erro;
+              end if;
+            close cr_crapbpr2;
+          -- Se mudamos de ZERO KM para Usado ou Diminuimos Ano Modelo
+          IF par_dstipbem = 'USADO' AND v_crapbpr2.dstipbem = 'ZERO KM' THEN
+            -- Perca aprovação
+            v_flperapr := 'S';  
+          ELSIF par_nrmodbem < v_crapbpr2.nrmodbem THEN
+            -- Perca aprovação
+            v_flperapr := 'S';  
+          -- Verificar outras regras de perca de aprovação
+          ELSIF par_dstipbem = 'ZERO KM' THEN
             -- Se alterar o chassi a proposta deve perder a aprovação visto que não temos a informação de placa e renavam;
             IF par_dschassi <> v_crapbpr2.dschassi THEN
               v_flperapr := 'S';
@@ -2013,14 +2031,18 @@ create or replace package body cecred.tela_manbem is
             -- Se alterar o chassi a proposta NÃO deve perder aprovação;
             -- Se for alterado a placa, ano modelo ou renavam, a proposta deve perder aprovação
             IF par_ufdplaca <> v_crapbpr2.ufdplaca OR par_nrdplaca <> v_crapbpr2.nrdplaca
-            OR par_nrrenava <> v_crapbpr2.nrrenava OR par_nrmodbem <> v_crapbpr2.nranobem THEN
+            OR par_nrrenava <> v_crapbpr2.nrrenava OR par_nrmodbem <> v_crapbpr2.nrmodbem THEN
               v_flperapr := 'S';
             END IF;
           END IF;
           -- Se deverá perder a aprovação
           IF v_flperapr = 'S' THEN
+            -- Se já existir algo na mensagem
+            IF par_dsmensag IS NOT NULL THEN
+              par_dsmensag := par_dsmensag ||'<br>';
+            END IF;            
             -- Adicionar a mensagem
-            par_dsmensag := par_dsmensag ||'<br>'||'A alteração do chassi, placa ou ano  irá retirar a aprovação da proposta.';
+            par_dsmensag := par_dsmensag || 'A alteracao do tipo, chassi, placa ou ano ira retirar a aprovacao da proposta.';
           END IF;
         END IF;
       END IF;
@@ -2427,6 +2449,7 @@ create or replace package body cecred.tela_manbem is
             ,crapbpr.ufdplaca
             ,crapbpr.nrrenava
             ,crapbpr.nranobem
+            ,crapbpr.nrmodbem
             ,crapbpr.dschassi
             ,crapbpr.dstipbem
             --PRJ438
@@ -2563,8 +2586,15 @@ create or replace package body cecred.tela_manbem is
           RAISE vr_exc_erro;
       END;   
       
-      -- Veículos zero KM
-      IF rw_crapbpr.dstipbem = 'ZERO KM' THEN
+      -- Se mudamos de ZERO KM para Usado ou Diminuimos Ano Modelo
+      IF par_dstipbem = 'USADO' AND rw_crapbpr.dstipbem = 'ZERO KM' THEN
+        -- Perca aprovação
+        par_flperapr := 'S';  
+      ELSIF par_nrmodbem < rw_crapbpr.nrmodbem THEN
+        -- Perca aprovação
+        par_flperapr := 'S';  
+      -- Verificar outras regras de perca de aprovação
+      ELSIF rw_crapbpr.dstipbem = 'ZERO KM' THEN
         -- Se alterar o chassi a proposta deve perder a aprovação visto que não temos a informação de placa e renavam;
         IF par_dschassi <> rw_crapbpr.dschassi THEN
           par_flperapr := 'S';
@@ -2573,7 +2603,7 @@ create or replace package body cecred.tela_manbem is
         -- Se alterar o chassi a proposta NÃO deve perder aprovação;
         -- Se for alterado a placa, ano modelo ou renavam, a proposta deve perder aprovação
         IF v_ufdplaca <> rw_crapbpr.ufdplaca OR v_nrdplaca <> rw_crapbpr.nrdplaca
-        OR v_nrrenava <> rw_crapbpr.nrrenava OR par_nrmodbem <> rw_crapbpr.nranobem THEN
+        OR v_nrrenava <> rw_crapbpr.nrrenava OR par_nrmodbem <> rw_crapbpr.nrmodbem THEN
           par_flperapr := 'S';
         END IF;
 	    END IF;
@@ -3176,6 +3206,11 @@ create or replace package body cecred.tela_manbem is
            AND nrctrpro = par_nrctrato
            AND flgalien = 1
            AND vr_aux_listabem||',' NOT LIKE ('%,'||idseqbem||',%');  -- Somente os que não estão na lista   
+        -- Se deletar algum registro
+        IF SQL%ROWCOUNT > 0 THEN   
+          -- Indica que deverá perder a aprovação
+          par_flperapr := 'S'; 
+        END IF;   
       EXCEPTION
         WHEN OTHERS THEN
           par_dscritic := 'Erro ao limpar Bens Alienados: '||SQLERRM;
@@ -3724,24 +3759,24 @@ END IF;*/
       -- Se já existir
       IF vr_rowid IS NOT NULL THEN
         UPDATE crapavt
-           SET nmdavali = par_nmdavali
+           SET nmdavali = upper(par_nmdavali)
               ,inpessoa = par_inpessoa
               ,nrcpfcjg = par_nrcpfcjg
-              ,nmconjug = par_nmconjug
+              ,nmconjug = upper(par_nmconjug)
               ,tpdoccjg = par_tpdoccjg
               ,nrdoccjg = par_nrdoccjg
               ,tpdocava = par_tpdocava
               ,nrdocava = par_nrdocava
-              ,dsendres##1 = par_dsendres1
-              ,dsendres##2 = par_dsendres2
+              ,dsendres##1 = upper(par_dsendres1)
+              ,dsendres##2 = upper(par_dsendres2)
               ,nrfonres = par_nrfonres
-              ,dsdemail = par_dsdemail
-              ,nmcidade = par_nmcidade
-              ,cdufresd = par_cdufresd
+              ,dsdemail = upper(par_dsdemail)
+              ,nmcidade = upper(par_nmcidade)
+              ,cdufresd = upper(par_cdufresd)
               ,nrcepend = par_nrcepend
               ,cdnacion = par_cdnacion
               ,nrendere = par_nrendere
-              ,complend = par_complend
+              ,complend = upper(par_complend)
               ,nrcxapst = par_nrcxapst
          WHERE ROWID = vr_rowid;
       ELSE
@@ -3775,24 +3810,24 @@ END IF;*/
            9,
            par_nrctremp,
            par_nrcpfcgc,
-           par_nmdavali,
+           upper(par_nmdavali),
            par_inpessoa,
            par_nrcpfcjg,
-           par_nmconjug,
+           upper(par_nmconjug),
            par_tpdoccjg,
            par_nrdoccjg,
            par_tpdocava,
            par_nrdocava,
-           par_dsendres1,
-           par_dsendres2,
+           upper(par_dsendres1),
+           upper(par_dsendres2),
            par_nrfonres,
-           par_dsdemail,
-           par_nmcidade,
-           par_cdufresd,
+           upper(par_dsdemail),
+           upper(par_nmcidade),
+           upper(par_cdufresd),
            par_nrcepend,
            par_cdnacion,
            par_nrendere,
-           par_complend,
+           upper(par_complend),
            par_nrcxapst);
       END IF;
     END;

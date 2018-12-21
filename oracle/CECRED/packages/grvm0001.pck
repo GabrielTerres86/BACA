@@ -91,6 +91,11 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                               /* Credor Cooperativa */
                               ,nrdddenc VARCHAR2(10)           -- DDD do Telefone do Credor
                               ,nrtelenc VARCHAR2(10)           -- Telefone do Credor
+                              ,dsendcre crapenc.dsendere%TYPE  -- Endereço Credor
+                              ,nrendcre crapenc.nrendere%TYPE  -- Numero Credor
+                              ,nmbaicre crapenc.nmbairro%TYPE  -- Bairro Credor
+                              ,cdufecre crapenc.cdufende%TYPE  -- UF Credor
+                              ,nrcepcre crapenc.nrcepend%TYPE  -- CETP Credor
                               ,cdcidcre crapmun.cdcidade%TYPE  -- Municipio do Credor
                               /* Operacao de Credito */
                               ,permulta NUMBER(8,2)            -- Percentual de Multa
@@ -102,6 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                               ,dtdpagto crawepr.dtmvtolt%TYPE  -- Data da primeira parcela
                               ,cdfinemp crawepr.cdfinemp%TYPE  -- Finalidade da Operação
                               ,dtvencto crawepr.dtmvtolt%TYPE  -- Data da ultima parcela
+                              ,tpemprst crawepr.tpemprst%TYPE  -- Tipo Emprestimo
                               ,vtctrliq gene0002.typ_split);   -- Lista de contratos liquidados pela proposta);
                               
   
@@ -212,7 +218,8 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                    );
   
   -- Função simples comparativa de codigos de retorno de gravames para definir se houve sucesso ou não
-  FUNCTION fn_flag_sucesso_gravame(pr_dtretgrv crapgrv.dtretgrv%TYPE  -- Retorno GRavames
+  FUNCTION fn_flag_sucesso_gravame(pr_nrseqlot crapgrv.nrseqlot%TYPE  -- Lote
+                                  ,pr_dtretgrv crapgrv.dtretgrv%TYPE  -- Retorno GRavames
                                   ,pr_cdretlot crapgrv.cdretlot%TYPE  -- Retorno Lote
                                   ,pr_cdretgrv crapgrv.cdretgrv%TYPE  -- Retorno Gravame
                                   ,pr_cdretctr crapgrv.cdretctr%TYPE  -- Retorno Contrato
@@ -314,12 +321,15 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                          
                                        ,pr_dtenvgrv IN VARCHAR2               -- Data envio GRAVAME
                                        ,pr_dtretgrv IN VARCHAR2               -- Data retorno GRAVAME      
-                                       ,pr_cdretgrv IN crapgrv.cdretgrv%TYPE  -- Codigo retorno Gravame
-                                       ,pr_cdretctr IN crapgrv.cdretctr%TYPE  -- Codigo retorno Contrato
+                                       ,pr_chttpsoa IN VARCHAR2               -- HTTP Code da request
+                                       ,pr_dsmsgsoa IN VARCHAR2               -- Tah MSG SOA
+                                       ,pr_nrcodsoa IN VARCHAR2               -- Tag Code SOA
+                                       ,pr_cdtypsoa IN VARCHAR2               -- Tag Type SOA
+                                       ,pr_cdlegsoa IN VARCHAR2               -- Tag LegacyCode SOA
+
                                        ,pr_nrgravam IN crapbpr.nrgravam%TYPE  -- Numero gravame gerado                                   
                                        ,pr_idregist IN crapgrv.idregist%TYPE  -- Numero do GRAVAME/Registro gerado
                                        ,pr_dtregist IN VARCHAR2               -- Data do GRAVAME/Registro gerado
-                                       ,pr_dserrcom IN crapgrv.dscritic%TYPE  -- Descricao de critica encontrada durante processo de comunicacao.
                                        ,pr_flsituac IN varchar2               -- Indica se deve atualizar situação (S ou N)
   
                                        -- Mensageria
@@ -450,6 +460,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                        ,pr_nrctrpro IN crawepr.nrctremp%TYPE --Número do contrato 
                                        ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
                                        ,pr_idseqbem IN crapbpr.idseqbem%TYPE --Identificador do bem
+                                       ,pr_tpinclus IN crapbpr.tpinclus%TYPE --Tipo da Inclusão 
                                        ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                                        ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                                        ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -531,12 +542,13 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                     ,pr_dscritic OUT VARCHAR2);
 
   -- Efetuar o registro do Gravames somente CDC 
-  PROCEDURE pc_registrar_gravame_CDC(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
-                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
-                                    ,pr_nrctrpro IN crapbpr.nrctrpro%type -- Numero do contrato       
-                                    ,pr_cdoperad IN crapope.cdoperad%TYPE -- Codigo do Operador                        
-                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE -- Critica de saida
-                                    ,pr_dscritic OUT VARCHAR2);            -- Descricao de saida
+  PROCEDURE pc_busca_xml_gravame_CDC(pr_cdcooper IN crapcop.cdcooper%TYPE         -- Numero da cooperativa
+                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE         -- Numero da conta do associado
+                                    ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE         -- Numero do contrato                               
+                                    ,pr_nrcpfven IN tbepr_cdc_vendedor.nrcpf%TYPE -- CPF do Vendedor
+                                    ,pr_cdoperad IN crapope.cdoperad%TYPE         -- Codigo do Operador
+                                    ,pr_dsxmlali OUT VARCHAR2                     -- XML de saida para alienação/desalienação
+                                    ,pr_dscritic OUT VARCHAR2);                   -- Descricao de saida
                                                                                                                                                       
 END GRVM0001;
 /
@@ -959,24 +971,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   END pc_horarios_lote_online; 
   
   
--- Função simples comparativa de codigos de retorno de gravames para definir se houve sucesso ou não
-  FUNCTION fn_flag_sucesso_gravame(pr_dtretgrv crapgrv.dtretgrv%TYPE  -- Retorno GRavames
+  -- Função simples comparativa de codigos de retorno de gravames para definir se houve sucesso ou não
+  FUNCTION fn_flag_sucesso_gravame(pr_nrseqlot crapgrv.nrseqlot%TYPE  -- Lote
+                                  ,pr_dtretgrv crapgrv.dtretgrv%TYPE  -- Retorno GRavames
                                   ,pr_cdretlot crapgrv.cdretlot%TYPE  -- Retorno Lote
                                   ,pr_cdretgrv crapgrv.cdretgrv%TYPE  -- Retorno Gravame
                                   ,pr_cdretctr crapgrv.cdretctr%TYPE  -- Retorno Contrato
                                   ,pr_dscritic crapgrv.dscritic%TYPE) -- Critica generica comunicacao
                                   RETURN VARCHAR2 IS
   BEGIN
-    -- Se não houve retorno ainda 
-    IF pr_dtretgrv IS NULL THEN
-      -- Volta vazio
-      RETURN ' ';
+    -- Para envio de lote
+    IF pr_nrseqlot <> 0 THEN
+      -- Se não houve retorno ainda 
+      IF pr_dtretgrv IS NULL THEN
+        -- Volta vazio
+        RETURN ' ';
+      ELSE
+        -- Validação de sucesso nos lotes, contrato e grv
+        IF pr_cdretlot = 0 
+        AND pr_cdretgrv IN(0,30,300)
+        AND pr_cdretctr IN(0,90,900) THEN
+          RETURN 'S';
+        ELSE
+          RETURN 'N';  
+        END IF;  
+      END IF;  
     ELSE
-      -- Validação de sucesso nos lotes, contrato e grv
+      -- Envio online
       IF trim(pr_dscritic) IS NULL 
-      AND pr_cdretlot = 0 
       AND pr_cdretgrv IN(0,30,300)
-      AND pr_cdretctr IN(0,90,900) THEN
+      AND pr_cdretctr IN(0,100,900) THEN
         RETURN 'S';
       ELSE
         RETURN 'N';  
@@ -1185,6 +1209,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,nrtelvoz
               ,cdufdcop
               ,nmcidade
+              ,nmbairro
+              ,dsendcop
+              ,nrendcop
+              ,nrcepend
           FROM crapcop
          WHERE crapcop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%rowtype;
@@ -1209,17 +1237,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,wpr.dtlibera
               ,wpr.dtmvtolt
               ,wpr.qtpreemp
-              ,wpr.txmensal
+              ,decode(wpr.txmensal,0,lcr.txmensal,wpr.txmensal) txmensal
               ,wpr.vlemprst
               ,wpr.dtdpagto
               ,wpr.cdfinemp
+              ,wpr.tpemprst
               ,to_char(wpr.nrctrliq##1) || ',' || to_char(wpr.nrctrliq##2) || ',' ||
                to_char(wpr.nrctrliq##3) || ',' || to_char(wpr.nrctrliq##4) || ',' ||
                to_char(wpr.nrctrliq##5) || ',' || to_char(wpr.nrctrliq##6) || ',' ||
                to_char(wpr.nrctrliq##7) || ',' || to_char(wpr.nrctrliq##8) || ',' ||
                to_char(wpr.nrctrliq##9) || ',' || to_char(wpr.nrctrliq##10) dsliquid
           FROM crawepr wpr
-         WHERE wpr.cdcooper = pr_cdcooper
+              ,craplcr lcr
+         WHERE wpr.cdcooper = lcr.cdcooper
+           AND wpr.cdlcremp = lcr.cdlcremp
+           AND wpr.cdcooper = pr_cdcooper
            AND wpr.nrdconta = pr_nrdconta
            AND wpr.nrctremp = pr_nrctrpro;
       rw_crawepr cr_crawepr%rowtype;
@@ -1345,6 +1377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_vet_dados.vlemprst := rw_crawepr.vlemprst;
       pr_vet_dados.dtdpagto := rw_crawepr.dtdpagto;
       pr_vet_dados.cdfinemp := rw_crawepr.cdfinemp;
+      pr_vet_dados.tpemprst := rw_crawepr.tpemprst;
 
       -- Se solicitado para buscar informações completas do cooperado e Coop
       IF pr_flgcompl = 'S' THEN
@@ -1363,6 +1396,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         CLOSE cr_crapmun; 
         -- Usar Blumenau caso não encontrado
         pr_vet_dados.cdcidcre := nvl(pr_vet_dados.cdcidcre,8047);
+        -- Preencher dados do credot
+        pr_vet_dados.dsendcre := GENE0007.fn_caract_acento(rw_crapcop.dsendcop,1); -- Logradouro Emitente
+        pr_vet_dados.nrendcre := rw_crapcop.nrendcop; -- Numero Emitente
+        pr_vet_dados.nmbaicre := GENE0007.fn_caract_acento(rw_crapcop.nmbairro,1); -- Nome Bairro Emitente
+        pr_vet_dados.cdufecre := rw_crapcop.cdufdcop; -- UF Emitente
+        pr_vet_dados.nrcepcre := rw_crapcop.nrcepend; -- CEP Emitente 
+      
       
         -- BUscar o endereço do cliente
         rw_enc := NULL;
@@ -1933,6 +1973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                  ,pr_qtpreemp in crawepr.qtpreemp%type -- Quantidade parcelas
                                  ,pr_permulta in craplcr.txmensal%type -- Percentual de Multa
                                  ,pr_txmensal in craplcr.txmensal%type -- Taxa mensal
+                                 ,pr_tpemprst IN crapepr.tpemprst%TYPE -- Tipo Emprestimo
                                  ,pr_vlemprst in crawepr.vlemprst%type -- Valor Empréstimo
                                  ,pr_dtdpagto in crawepr.dtdpagto%type -- Data da primeira parcela
                                  ,pr_dtpagfim in crawepr.dtdpagto%type -- Data da ultima parcela
@@ -1944,6 +1985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                  ,pr_nmbairro IN crapenc.nmbairro%TYPE -- Nome Bairro Emitente
                                  ,pr_cdufende IN crapenc.cdufende%TYPE -- UF Emitente
                                  ,pr_nrcepend IN crapenc.nrcepend%TYPE -- CEP Emitente
+                                 ,pr_cdcidade IN crapmun.cdcidade%TYPE -- Municipio do Cliente
                                  ,pr_nrdddtfc IN craptfc.nrdddtfc%TYPE -- DDD Emitente
                                  ,pr_nrtelefo IN craptfc.nrtelefo%TYPE -- Telefone Emitente
                                   /* Credor */
@@ -1951,6 +1993,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                  ,pr_cdufdopa IN crapage.cdufdcop%TYPE -- UF do PA
                                  ,pr_inpescre IN crapass.inpessoa%TYPE -- Tipo pessoa Credor
                                  ,pr_nrcpfcre IN crapass.nrcpfcgc%TYPE -- CPF/CNPJ Credor
+                                 ,pr_dsendcre IN crapenc.dsendere%TYPE -- Logradouro Credor
+                                 ,pr_nrendcre IN crapenc.nrendere%TYPE -- Numero Credor
+                                 ,pr_nmbaicre IN crapenc.nmbairro%TYPE -- Nome Bairro Credor
+                                 ,pr_cdufecre IN crapenc.cdufende%TYPE -- UF Credor
+                                 ,pr_nrcepcre IN crapenc.nrcepend%TYPE -- CEP Credor
+                                 ,pr_cdcidcre IN crapmun.cdcidade%TYPE -- Municipio do Credor
                                  ,pr_nrdddcre IN craptfc.nrdddtfc%TYPE -- DDD Credor
                                  ,pr_nrtelcre IN craptfc.nrtelefo%TYPE -- Telefone Credor
                                  /* Dados do Vendedor */
@@ -1975,8 +2023,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Alteracoes: 
   ............................................................................ */   
   
+    -- Trasnformacao do numero endereço
+    vr_dsendere VARCHAR2(10);
+    vr_dsendcre VARCHAR2(10);
+    vr_dstpempt VARCHAR2(20);
   BEGIN
-
+    
+    -- Tratar S/N
+    IF nvl(pr_nrendere,0) = 0 THEN
+      vr_dsendere := 'S/N';
+    ELSE
+      vr_dsendere := pr_nrendere;
+    END IF;
+    IF nvl(pr_nrendcre,0) = 0 THEN
+      vr_dsendcre := 'S/N';
+    ELSE
+      vr_dsendcre := pr_nrendcre;
+    END IF;
+  
     -- Escrever no arquivo XML a raiz da listagem do bem
     pr_xmlalien := '<gravame '
                 || 'iduriservico="'||vr_urialien||'" '
@@ -1988,13 +2052,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 || 'idseqbem="'||pr_idseqbem||'" '
                 || 'flaborta="'||pr_flaborta||'" flgobrig="'||pr_flgobrig||'">';
                           
+    -- Enviar a Cooperativa
+    pr_xmlalien := pr_xmlalien 
+                ||'<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>';
+    
     -- Enviar informações do SistemaNacionalGravames
     pr_xmlalien := pr_xmlalien 
                 ||'<sistemaNacionalGravames>'
                   ||'<tipoInteracao><codigo>'||vr_tpaliena||'</codigo></tipoInteracao>'      
                   ||'<UFRegistro>'||pr_uflicenc||'</UFRegistro>'
                   ||'<tipoRegistro><codigo>'||pr_tpaliena||'</codigo></tipoRegistro>'
-                  ||'<dataInteracao>'||to_char(pr_dtlibera,'YYYY-MM-DD"T"hh24:mi:ss')||'</dataInteracao>'
+                  ||'<dataInteracao>'||to_char(nvl(pr_dtlibera,SYSDATE),'YYYY-MM-DD"T"hh24:mi:ss')||'</dataInteracao>'
                 ||'</sistemaNacionalGravames>';
     
     -- Enviar informações do ObjetoContratoCredito
@@ -2002,12 +2070,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 ||'<objetoContratoCredito>'
                   ||'<veiculoChassi>'||pr_dschassi||'</veiculoChassi>'
                   ||'<veiculoChassiRemarcado>'||fn_des_tpchassi(pr_tpchassi)||'</veiculoChassiRemarcado>'
-                  ||'<veiculoPlacaUF>'||pr_ufdplaca||'</veiculoPlacaUF>'
-                  ||'<veiculoPlaca>'||pr_nrdplaca||'</veiculoPlaca>'
+                  ||'<veiculoPlacaUF>'||nvl(pr_ufdplaca,' ')||'</veiculoPlacaUF>'
+                  ||'<veiculoPlaca>'||nvl(pr_nrdplaca,' ')||'</veiculoPlaca>'
                   ||'<veiculoRenavam>'||pr_nrrenava||'</veiculoRenavam>'
                   ||'<anoFabricacao>'||pr_nranobem||'</anoFabricacao>'
                   ||'<anoModelo>'||pr_nrmodbem||'</anoModelo>'
                 ||'</objetoContratoCredito>';                          
+    
+    -- Traduzir tp emprestimos
+    IF pr_tpemprst = 0 THEN
+      vr_dstpempt := 'TR';
+    ELSIF pr_tpemprst = 1 THEN
+      vr_dstpempt := 'PREFIXADO';
+    ELSE
+      vr_dstpempt := 'POSFIXADO';
+    END IF;
     
     -- Enviar informações do propostaContratoCredito
     pr_xmlalien := pr_xmlalien 
@@ -2017,6 +2094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 ||'<quantidadeParcelas>'||pr_qtpreemp||'</quantidadeParcelas>'
                 ||'<multa>'||pr_permulta||'</multa>'
                 ||'<valorJurosMoratorios>'||pr_txmensal||'</valorJurosMoratorios>'
+                ||'<tipoCalculoJuros><descricao>'||vr_dstpempt||'</descricao></tipoCalculoJuros>'
                 ||'<valor>'||pr_vlemprst||'</valor>'
                 ||'<dataPrimeiraParcela>'||to_char(pr_dtdpagto,'YYYY-MM-DD')||'</dataPrimeiraParcela>'
                 ||'<dataUltimaParcela>'||to_char(pr_dtpagfim,'YYYY-MM-DD')||'</dataUltimaParcela>';
@@ -2028,11 +2106,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 ||'<razaoSocialOuNome>'||pr_nmemiten||'</razaoSocialOuNome>'
                   ||'<pessoaContatoEndereco>'
                     ||'<tipoENomeLogradouro>'||pr_dsendere||'</tipoENomeLogradouro>'
-                    ||'<numeroLogradouro>'||pr_nrendere||'</numeroLogradouro>'
+                    ||'<numeroLogradouro>'||vr_dsendere||'</numeroLogradouro>'
                     ||'<nomeBairro>'||pr_nmbairro||'</nomeBairro>'
                     ||'<UF>'||pr_cdufende||'</UF>'
                     ||'<CEP>'||pr_nrcepend||'</CEP>'
                   ||'</pessoaContatoEndereco>'
+                  ||'<cidade><codigoMunicipioCETIP>'||pr_cdcidade||'</codigoMunicipioCETIP></cidade>'
                   ||'<pessoaContatoTelefone>'
                     ||'<DDD>'||pr_nrdddtfc||'</DDD>'
                     ||'<numero>'||pr_nrtelefo||'</numero>'
@@ -2048,6 +2127,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 ||'</postoAtendimento></contaCorrente>'
                 ||'<tipo><codigo>'||pr_inpescre||'</codigo></tipo>'
                 ||'<identificadorReceitaFederal>'||pr_nrcpfcre||'</identificadorReceitaFederal>'
+                ||'<pessoaContatoEndereco>'
+                    ||'<tipoENomeLogradouro>'||pr_dsendcre||'</tipoENomeLogradouro>'
+                    ||'<numeroLogradouro>'||vr_dsendcre||'</numeroLogradouro>'
+                    ||'<nomeBairro>'||pr_nmbaicre||'</nomeBairro>'
+                    ||'<UF>'||pr_cdufecre||'</UF>'
+                    ||'<CEP>'||pr_nrcepcre||'</CEP>'
+                  ||'</pessoaContatoEndereco>'
+                  ||'<cidade><codigoMunicipioCETIP>'||pr_cdcidade||'</codigoMunicipioCETIP></cidade>'
                   ||'<pessoaContatoTelefone>'
                     ||'<DDD>'||pr_nrdddcre||'</DDD>'
                     ||'<numero>'||pr_nrtelcre||'</numero>'
@@ -2059,20 +2146,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 ||'</propostaContratoCredito>';     
     
     -- Enviar as informações do Vendedor
-    pr_xmlalien := pr_xmlalien 
-                ||'<representanteVendas>'
-                   ||'<identificadorReceitaFederal>'||pr_nrcpfven||'</identificadorReceitaFederal>'
-                ||'</representanteVendas>';
+    --IF nvl(pr_nrcpfven,0) <> 0 THEN
+      pr_xmlalien := pr_xmlalien 
+                  ||'<representanteVendas>'
+                     ||'<identificadorReceitaFederal>'||pr_nrcpfven||'</identificadorReceitaFederal>'
+                  ||'</representanteVendas>';
+    --END IF;              
     
     -- Enviar as informações do Recebedor
-    pr_xmlalien := pr_xmlalien 
-                ||'<estabelecimentoComercial>'
-                   ||'<lojista>'
-                      ||'<tipo><codigo>'||pr_inpesrec||'</codigo></tipo>'
-                      ||'<identificadorReceitaFederal>'||pr_nrcpfrec||'</identificadorReceitaFederal>'
-                   ||'</lojista>'
-                ||'</estabelecimentoComercial>';
-    
+    --IF nvl(pr_inpesrec,0) <> 0 THEN
+      pr_xmlalien := pr_xmlalien 
+                  ||'<estabelecimentoComercial>'
+                     ||'<lojista>'
+                        ||'<tipo><codigo>'||pr_inpesrec||'</codigo></tipo>'
+                        ||'<identificadorReceitaFederal>'||pr_nrcpfrec||'</identificadorReceitaFederal>'
+                     ||'</lojista>'
+                  ||'</estabelecimentoComercial>';
+    --END IF;
+      
     -- Finalizar o XML
     pr_xmlalien := pr_xmlalien 
                 ||'</gravame>';
@@ -2145,6 +2236,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 || 'idseqbem="'||pr_idseqbem||'" '
                 || 'flaborta="'||pr_flaborta||'" flgobrig="'||pr_flgobrig||'">';
                           
+    -- Enviar a Cooperativa
+    pr_xmldesal := pr_xmldesal 
+                ||'<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>';
+    
     -- Enviar informações do SistemaNacionalGravames
     pr_xmldesal := pr_xmldesal 
                 ||'<sistemaNacionalGravames>'
@@ -2215,6 +2310,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 || 'idseqbem="'||pr_idseqbem||'" '
                 || 'idpriori="5" flgobrig="N">';
 
+    -- Enviar a Cooperativa
+    pr_xmlconsu := pr_xmlconsu 
+                ||'<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>';
+    
     -- Enviar informações do SistemaNacionalGravames
     pr_xmlconsu := pr_xmlconsu 
                 ||'<sistemaNacionalGravames>'
@@ -2329,39 +2428,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
          AND bpr.tpctrpro = pr_tpctrato
          AND bpr.idseqbem = pr_idseqbem;
     rw_crapbpr cr_crapbpr%ROWTYPE;
-    
-    -- Codigos de retorno
-    vr_cdretgrv crapgrv.cdretgrv%TYPE;
-    vr_cdretctr crapgrv.cdretctr%TYPE;
      
   begin
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => 'GRVM0001', pr_action => 'GRVM0001.pc_grava_aciona_gravame');
     
-    -- Quando acionamento oriundo do SOA, os códigos de sucesso são suprimidos, portando
-    -- fazemos o tratamento abaixo para garantir que gravemos cdretgrv = 30 e cdretctr = 90
-    IF TRIM(pr_dserrcom) IS NULL THEN
-      IF nvl(pr_cdretgrv,0) <> 30 THEN
-        vr_cdretgrv := 30;
-      ELSE
-        vr_cdretgrv := pr_cdretgrv;
-      END IF;  
-      IF nvl(pr_cdretctr,0) NOT IN(0,90) THEN
-        vr_cdretctr := 90;
-      ELSE
-        vr_cdretctr := pr_cdretctr;
-      END IF; 
-    END IF;
-    
-    
     -- Caso tenha sido solicitado a gravação da situação
     IF pr_flsituac = 'S' THEN
       -- Em caso de sucesso em ambos
-      IF (vr_cdretgrv = 30 AND vr_cdretctr = 90) 
+      IF (pr_cdretgrv = 30 AND pr_cdretctr = 100) 
       -- Sucesso GRV - nada CTR  
-      OR (vr_cdretgrv = 30 AND vr_cdretctr = 0) 
+      OR (pr_cdretgrv = 30 AND pr_cdretctr = 0) 
       -- Nada GRV - Sucesso CTR
-      OR (vr_cdretgrv = 0 AND vr_cdretctr = 90) THEN 
+      OR (pr_cdretgrv = 0 AND pr_cdretctr = 100) THEN 
         
         -- Data de atualização, caso venha zerada, receberá sysdate
         IF pr_dtregist IS NULL THEN              
@@ -2392,6 +2471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                   ,bpr.nrgravam = pr_nrgravam
                   ,bpr.flgalfid = 1 -- Alienado
                   ,bpr.flginclu = 0 -- Baixa da pendencia de inclusão
+                  ,bpr.dsjstinc = NULL -- Limpar alguma justificativa manual anterior
              WHERE bpr.cdcooper = pr_cdcooper
                AND bpr.nrdconta = pr_nrdconta
                AND bpr.tpctrpro = pr_tpctrato
@@ -2433,6 +2513,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                   ,bpr.flgbaixa = 0   -- Baixa da pendente de baixa
                   ,bpr.flcancel = 0   -- Baixa de possivel pendencia de Cancelamento
                   ,bpr.flginclu = 0   -- Baixa da pendencia de inclusao                  
+                  ,bpr.dsjstbxa = NULL -- Limpar alguma justificativa manual anterior
+                  ,bpr.dsjuscnc = NULL -- Limpar alguma justificativa manual anterior
              WHERE bpr.cdcooper = pr_cdcooper
                AND bpr.nrdconta = pr_nrdconta
                AND bpr.tpctrpro = pr_tpctrato
@@ -2452,6 +2534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                   ,bpr.dtcancel = vr_dtatugrv -- Data do cancelamento
                   ,bpr.flcancel = 0           -- Baixa da pendencia de cancelamento
                   ,bpr.flginclu = 0           -- Baixa da pendencia de inclusão
+                  ,bpr.dsjstbxa = NULL -- Limpar alguma justificativa manual e anterior
+                  ,bpr.dsjuscnc = NULL -- Limpar alguma justificativa manual anterior                  
              WHERE bpr.cdcooper = pr_cdcooper
                AND bpr.nrdconta = pr_nrdconta
                AND bpr.tpctrpro = pr_tpctrato
@@ -2543,8 +2627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                  ,pr_dtregist   --dtregist
                  ,pr_cdoperac   --cdoperac
                  ,0             --cdretlot
-                 ,vr_cdretgrv   --cdretgrv 
-                 ,vr_cdretctr   --cdretctr
+                 ,pr_cdretgrv   --cdretgrv 
+                 ,pr_cdretctr   --cdretctr
                  ,pr_dtenvgrv   --dtenvgrv
                  ,pr_dtretgrv   --dtretgrv  
                  ,vr_dscatbem   --dscatbem
@@ -2559,7 +2643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                  ,vr_ufdplaca   --ufdplaca
                  ,vr_nrdplaca   --nrdplaca
                  ,vr_nrrenava   --nrrenava
-                 ,NVL(pr_dserrcom,' ') --dscritic
+                 ,NVL(gene0007.fn_caract_acento(pr_dserrcom),' ') --dscritic
                  );
     EXCEPTION
       WHEN OTHERS THEN
@@ -2622,16 +2706,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                        ,pr_nrmodbem IN VARCHAR2              -- Modelo do bem financiado.
                                        ,pr_ufdplaca IN crapbpr.ufdplaca%type -- Unidade da Federacao (ESTADO) da placa do veiculo.
                                        ,pr_nrdplaca IN crapbpr.nrdplaca%type -- Numero da placa do bem financiado.
-                                       ,pr_nrrenava IN crapbpr.nrrenava%type -- Numero do RENAVAN do veiculo.
-                                         
+                                       ,pr_nrrenava IN crapbpr.nrrenava%type -- Numero do RENAVAN do veiculo.                                         
+
                                        ,pr_dtenvgrv IN VARCHAR2               -- Data envio GRAVAME
-                                       ,pr_dtretgrv IN VARCHAR2               -- Data retorno GRAVAME      
-                                       ,pr_cdretgrv IN crapgrv.cdretgrv%TYPE  -- Codigo retorno Gravame
-                                       ,pr_cdretctr IN crapgrv.cdretctr%TYPE  -- Codigo retorno Contrato
+                                       ,pr_dtretgrv IN VARCHAR2               -- Data retorno GRAVAME
+                                       ,pr_chttpsoa IN VARCHAR2               -- HTTP Code da request
+                                       ,pr_dsmsgsoa IN VARCHAR2               -- Tah MSG SOA
+                                       ,pr_nrcodsoa IN VARCHAR2               -- Tag Code SOA
+                                       ,pr_cdtypsoa IN VARCHAR2               -- Tag Type SOA
+                                       ,pr_cdlegsoa IN VARCHAR2               -- Tag LegacyCode SOA
+                                       
                                        ,pr_nrgravam IN crapbpr.nrgravam%TYPE  -- Numero gravame gerado                                   
                                        ,pr_idregist IN crapgrv.idregist%TYPE  -- Numero do GRAVAME/Registro gerado
                                        ,pr_dtregist IN VARCHAR2               -- Data do GRAVAME/Registro gerado
-                                       ,pr_dserrcom IN crapgrv.dscritic%TYPE  -- Descricao de critica encontrada durante processo de comunicacao.
                                        ,pr_flsituac IN varchar2               -- Indica se deve atualizar situação (S ou N)
   
                                        -- Mensageria
@@ -2671,6 +2758,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);    
     
+    -- Separação retornos SOA
+    vr_cdretgrv crapgrv.cdretgrv%TYPE;
+    vr_cdretctr crapgrv.cdretctr%TYPE;
+    vr_dserrcom crapgrv.dscritic%TYPE;
+    
+    
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
@@ -2697,6 +2790,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;    
+    
+    -- Inicializar as variáveis :
+    vr_dserrcom := '';
+    vr_cdretgrv := 0;
+    vr_cdretctr := 0;
+    
+    -- Se sucesso
+    IF pr_chttpsoa = '200' THEN
+      vr_cdretgrv := 30;
+      -- Se é operação de inclusão
+      IF pr_cdoperac = 1 THEN
+        vr_cdretctr := 100;
+      -- Se é operação de Consulta
+      ELSIF pr_cdoperac = 4 THEN
+        -- Testar se houve alienação
+        IF nvl(pr_nrgravam,0) = 0 OR pr_flsituac = 'N' THEN
+          -- Iremos usar um código que indica que houve erro na consulta
+          -- para não confundir o operador 
+          vr_cdretgrv := 500;
+        END IF;
+      END IF;
+    ELSE
+      -- Houve erro 
+      vr_dserrcom := pr_cdtypsoa||pr_nrcodsoa||'-'||pr_dsmsgsoa;
+      IF vr_dserrcom = '-' THEN
+        vr_dserrcom := 'Erro nao tratado - nao recebido mensagem de erro corretamente pelo Aimaro';
+      END IF;
+      -- Tratamento conforme tipo erro (Em bloco para em caso de erro, não parar o processo)
+      BEGIN
+        IF pr_cdtypsoa = 'B' THEN
+          -- Se “code” retornado do SOA = 2003 Então
+          IF pr_nrcodsoa = '2003' THEN
+            vr_cdretctr := pr_cdlegsoa;
+          ELSE  
+            -- Tratar “LegacyCode” retorno do SOA:
+            IF instr(pr_cdlegsoa,'|') > 0 THEN
+              -- GRV é a primeira posiçaõ e CTR a segunda
+              vr_cdretgrv := gene0002.fn_busca_entrada(1,pr_cdlegsoa,'|');
+              vr_cdretctr := gene0002.fn_busca_entrada(2,pr_cdlegsoa,'|');
+            ELSE
+              -- Existirá apenas GRV
+              vr_cdretgrv := pr_cdlegsoa;
+            END IF;  
+          END IF;
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dserrcom := vr_dserrcom || ' + Erro no tratamento do legacyCode: '||pr_cdlegsoa;
+      END;  
+    END IF;
        
     -- Direcionar para a chamada da rotina de gravação
     pc_grava_aciona_gravame(pr_cdcooper => vr_cdcooper -- Cód. cooperativa
@@ -2720,14 +2863,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            ,pr_nrdplaca => pr_nrdplaca -- Numero da placa do bem financiado.
                            ,pr_nrrenava => pr_nrrenava -- Numero do RENAVAN do veiculo.
                            
-                           ,pr_cdretgrv => pr_cdretgrv -- Codigo retorno Gravame
-                           ,pr_cdretctr => pr_cdretctr -- Codigo retorno Contrato
+                           ,pr_cdretgrv => vr_cdretgrv -- Codigo retorno Gravame
+                           ,pr_cdretctr => vr_cdretctr -- Codigo retorno Contrato
                            ,pr_nrgravam => pr_nrgravam -- Numero Gravame                           
                            ,pr_dtenvgrv => TO_DATE(pr_dtenvgrv,'DD/MM/RRRR HH24:MI:SS') -- Data envio GRAVAME
                            ,pr_dtretgrv => TO_DATE(pr_dtretgrv,'DD/MM/RRRR HH24:MI:SS') -- Data retorno GRAVAME      
-                           ,pr_idregist => pr_idregist -- Numero do GRAVAME/Registro gerado
+                           ,pr_idregist => nvl(pr_idregist,0) -- Numero do GRAVAME/Registro gerado
                            ,pr_dtregist => TO_DATE(pr_dtregist,'DD/MM/RRRR HH24:MI:SS') -- Data do GRAVAME/Registro gerado   
-                           ,pr_dserrcom => pr_dserrcom -- Descricao de critica encontrada durante processo de comunicacao.
+                           ,pr_dserrcom => vr_dserrcom -- Descricao de critica encontrada durante processo de comunicacao.
                            ,pr_flsituac => pr_flsituac -- Indica se deve atualizar situação (S ou N)
                            
                            ,pr_dscritic => vr_dscritic);          -- Critica encontrada durante execução desta rotina);
@@ -3813,7 +3956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
 
         -- Para baixa com mudança no veiculo
-        IF vr_tparquiv = 'BAIXA'AND rw_bpr.ufplnovo <> ' ' AND rw_bpr.nrplnovo <> ' ' AND rw_bpr.nrrenovo > 0 THEN
+        IF vr_tparquiv = 'BAIXA' AND rw_bpr.ufplnovo <> ' ' AND rw_bpr.nrplnovo <> ' ' AND rw_bpr.nrrenovo > 0 THEN
           vr_tab_dados_arquivo(vr_dsdchave).ufdplaca := rw_bpr.ufplnovo;
           vr_tab_dados_arquivo(vr_dsdchave).nrdplaca := rw_bpr.nrplnovo;
           vr_tab_dados_arquivo(vr_dsdchave).nrrenava := rw_bpr.nrrenovo;
@@ -5157,11 +5300,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.nrdplaca
               ,bpr.nrrenava
               ,ass.nrcpfcgc
+              ,epr.tpemprst
               ,epr.inliquid 
               ,lcr.flgcobmu
+              ,fin.tpfinali
+              ,wpr.cdfinemp
           FROM crapass ass
               ,crawepr wpr
               ,craplcr lcr
+              ,crapfin fin 
               ,crapbpr bpr
          full outer join crapepr epr on (epr.cdcooper = bpr.cdcooper and epr.nrdconta = bpr.nrdconta and epr.nrctremp = bpr.nrctrpro)
          WHERE bpr.cdcooper = pr_cdcooper
@@ -5172,13 +5319,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND wpr.insitapr IN(1,3) -- Aprovados
            AND wpr.cdcooper   = lcr.cdcooper
            AND wpr.cdlcremp   = lcr.cdlcremp
+           AND wpr.cdcooper   = fin.cdcooper
+           AND wpr.cdfinemp   = fin.cdfinemp
            AND ass.cdcooper   = bpr.cdcooper
            AND ass.nrdconta   = bpr.nrdconta
            AND (  -- Bloco INCLUSAO
                  ( pr_tparquiv IN ('INCLUSAO','TODAS')
                  AND  bpr.tpctrpro   = 90
-                 AND  wpr.flgokgrv   = 1
-                 AND  bpr.flgbaixa   = 0      -- APENAS NÃO BAIXADOS
+                 AND  bpr.flgbaixa   = 0      -- Não baixados
+                 AND  bpr.flcancel   = 0      -- Não cancelados
                  AND  nvl(epr.inliquid,0) = 0 -- APENAS NÃO LIQUIDADO, CASO NULO TRATAR COMO "0 - NÃO LIQUIDADO"
                  AND  bpr.flginclu   = 1      -- INCLUSAO SOLICITADA
                  AND ( -- Inclusão Automática com situação Nao Enviada ou Proces. com Erro
@@ -5186,7 +5335,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                       OR
                        -- OU, Inclusão manual com situação Alienado      
                        (bpr.cdsitgrv = 2 AND bpr.tpinclus = 'M')
-                       
                      )
                   )   
                   -- Bloco BAIXA --
@@ -5224,7 +5372,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,dscidade
               ,cdestado
           FROM crapmun;
-
+      
+      -- Busca CNPJ lojista
+      CURSOR cr_craploj(pr_cdcooper crapcop.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE
+                       ,pr_nrctremp crawepr.nrctremp%TYPE) IS
+        SELECT tve.nrcpf
+          FROM tbepr_cdc_emprestimo tce 
+              ,tbepr_cdc_vendedor   tve               
+         WHERE tce.cdcooper = pr_cdcooper
+           AND tce.nrdconta = pr_nrdconta
+           AND tce.nrctremp = pr_nrctremp
+           AND tce.idvendedor = tve.idvendedor;
+      
       -- Tipo e tabela para armazenar as cidades e ufs
       -- dos operadores observando a agencia do mesmo
       TYPE typ_reg_endere_ageope IS
@@ -5251,6 +5411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       vr_cdoperac PLS_INTEGER;           -- Codigo da operação
       vr_nmprimtl crapass.nmprimtl%TYPE; -- Nome do proprietario do bem
       vr_nrcpfbem crapass.nrcpfcgc%TYPE; -- Cpf do proprietário do bem
+      vr_nrcpfven crapass.nrcpfcgc%TYPE; -- CPF do vendedor (Lojista)
       vr_dtvencto DATE;                  -- Data do ultimo vencimento
       vr_nrdddenc VARCHAR2(10);          -- DDD do Telefone do Credor
       vr_nrtelenc VARCHAR2(10);          -- Telefone do Credor
@@ -5337,17 +5498,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Quando escolhido todas, temos que avaliar o registro atual pra definir sua operação
         IF pr_tparquiv = 'TODAS' THEN
           -- Inclusão
-          IF rw_bpr.flgokgrv = 1 AND rw_bpr.flginclu = 1 AND rw_bpr.cdsitgrv in(0,3) AND rw_bpr.tpinclus = 'A' AND 
-             rw_bpr.flgbaixa = 0 AND nvl(rw_bpr.inliquid,0) = 0 THEN
+          IF rw_bpr.flginclu = 1 AND rw_bpr.flgbaixa = 0 AND rw_bpr.flcancel = 0  AND rw_bpr.cdsitgrv in(0,3) AND rw_bpr.tpinclus = 'A' THEN
             vr_tparquiv := 'INCLUSAO';
-          -- Consulta Situação
-          ELSIF rw_bpr.flgokgrv = 1 AND rw_bpr.flginclu = 1 AND rw_bpr.cdsitgrv = 2 AND rw_bpr.tpinclus = 'M' AND nvl(rw_bpr.inliquid,0) = 0 THEN
+          -- Consulta
+          ELSIF rw_bpr.flginclu = 1 AND rw_bpr.flgbaixa = 0 AND rw_bpr.flcancel = 0  AND rw_bpr.cdsitgrv = 2 AND rw_bpr.tpinclus = 'M' THEN
             vr_tparquiv := 'CONSULTA';
           -- Cancelamento
-          ELSIF rw_bpr.flcancel = 1 AND rw_bpr.tpcancel = 'A' AND rw_bpr.tpctrpro IN(90,99) THEN
+          ELSIF rw_bpr.flcancel = 1 AND rw_bpr.tpcancel = 'A' THEN
             vr_tparquiv := 'CANCELAMENTO';
           -- Baixa
-          ELSIF rw_bpr.flgbaixa = 1 AND rw_bpr.tpdbaixa = 'A' THEN
+          ELSIF rw_bpr.flgbaixa = 1 AND rw_bpr.tpdbaixa = 'A' AND rw_bpr.tpctrpro IN(90,99) THEN
             vr_tparquiv := 'BAIXA';
           END IF;
         ELSE
@@ -5492,15 +5652,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_tpctrato => rw_bpr.tpctrpro -- Tp. contrato
                                   ,pr_nrctrpro => rw_bpr.nrctrpro -- Nr. contrato
                                   ,pr_idseqbem => rw_bpr.idseqbem -- Sequencial do bem
-                                   /* SistemaNacionalGravames */
-                                  ,pr_uflicenc => rw_bpr.uflicenc     -- UF                                 
-                                  /* ObjetoContratoCredito */
+                                   -- SistemaNacionalGravames 
+                                  ,pr_uflicenc => rw_bpr.uflicenc     -- UF                               
+                                  -- ObjetoContratoCredito 
                                   ,pr_dschassi => rw_bpr.dschassi -- Chassi
                                   ,pr_tpchassi => rw_bpr.tpchassi -- Tipo Chassi
-                                  /* Saida */
+                                  -- Saida 
                                   ,pr_xmlconsu => vr_xmltemp    -- XML da Consulta de alienação
                                   ,pr_dscritic => pr_dscritic); -- Descrição de critica encontrada
         ELSE
+          -- Verificar se é uma inclusão CDC que ficou no lote
+          IF rw_bpr.tpfinali = 3 AND rw_bpr.cdfinemp = 59 THEN
+            -- Buscar CNPJ lojista
+            OPEN cr_craploj(rw_cop.cdcooper
+                           ,rw_bpr.nrdconta
+                           ,rw_bpr.nrctrpro);
+            FETCH cr_craploj
+             INTO vr_nrcpfven;
+            CLOSE cr_craploj;
+          ELSE
+            -- Não há
+            vr_nrcpfven := 0;
+          END IF;        
+        
           -- Inclusão
           pc_gera_xml_alienacao(pr_cdcooper => rw_cop.cdcooper -- Cod. Cooperativa
                                ,pr_nrdconta => rw_bpr.nrdconta -- Nr. da conta
@@ -5527,6 +5701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_qtpreemp => rw_bpr.qtpreemp -- Quantidade parcelas
                                ,pr_permulta => vr_prmulta      -- Percentual de Multa
                                ,pr_txmensal => rw_bpr.txmensal -- Taxa mensal
+                               ,pr_tpemprst => rw_bpr.tpemprst -- Tipo Emprestimo
                                ,pr_vlemprst => rw_bpr.vlemprst -- Valor Empréstimo
                                ,pr_dtdpagto => rw_bpr.dtdpagto -- Data da primeira parcela
                                ,pr_dtpagfim => vr_dtvencto     -- Data da ultima parcela
@@ -5537,6 +5712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_nrendere => rw_enc.nrendere -- Numero Emitente
                                ,pr_nmbairro => GENE0007.fn_caract_acento(rw_enc.nmbairro,1) -- Nome Bairro Emitente
                                ,pr_cdufende => rw_enc.cdufende -- UF Emitente
+                               ,pr_cdcidade => vr_cdcidcli     -- Cidade
                                ,pr_nrcepend => rw_enc.nrcepend -- CEP Emitente
                                ,pr_nrdddtfc => vr_nrdddass     -- DDD Emitente
                                ,pr_nrtelefo => vr_nrtelass     -- Telefone Emitente
@@ -5545,13 +5721,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_cdufdopa => vr_tab_endere_ageope(lpad(rw_cop.cdcooper,5,'0')||rpad(rw_bpr.cdoperad,10,' ')).cdufdcop -- UF do PA
                                ,pr_inpescre => 2                -- Tipo pessoa Credor
                                ,pr_nrcpfcre => rw_cop.nrdocnpj  -- CPF/CNPJ Credor
+                               ,pr_dsendcre => GENE0007.fn_caract_acento(rw_cop.dsendcop,1) -- Logradouro Credor
+                               ,pr_nrendcre => rw_cop.nrendcop  -- Numero Credor
+                               ,pr_nmbaicre => GENE0007.fn_caract_acento(rw_cop.nmbairro,1) -- Nome Bairro Credor
+                               ,pr_cdufecre => rw_cop.cdufdcop  -- UF Credor
+                               ,pr_cdcidcre => vr_cdcidcre      -- Cidade Credor
+                               ,pr_nrcepcre => rw_cop.nrcepend  -- CEP Credor
                                ,pr_nrdddcre => vr_nrdddenc      -- DDD Credor
                                ,pr_nrtelcre => vr_nrtelenc      -- Telefone Credor
                                /* Dados do Vendedor */
-                               ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                               ,pr_nrcpfven => vr_nrcpfven      -- CPF/CNPJ Vendedor
                                /* Recebedor do pagamento */
-                               ,pr_inpesrec => 0 /*crapass.inpessoa*/ -- Tipo Pessoa Vendedor
-                               ,pr_nrcpfrec => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                               ,pr_inpesrec => 2                -- Tipo Pessoa Vendedor
+                               ,pr_nrcpfrec => rw_cop.nrdocnpj  -- CPF/CNPJ Vendedor
                                /* Saida */
                                ,pr_xmlalien => vr_xmltemp    -- XML da alienação
                                ,pr_dscritic => pr_dscritic); -- Descrição de critica encontrada
@@ -6412,8 +6594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                   pr_nmdcampo => 'Ano Mod.', 
-                                  pr_dsdadant => TO_CHAR(rw_crapbpr.nrrenovo), 
-                                  pr_dsdadatu => TO_CHAR(rw_crapbpr.nrmodbem));
+                                  pr_dsdadant => TO_CHAR(rw_crapbpr.nrmodbem), 
+                                  pr_dsdadatu => TO_CHAR(pr_nrmodbem));
       
       END IF;
       
@@ -6722,26 +6904,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF;
     
-    -- Atualizar a situação do Gravames - Quando Arquivo ainda não 
-    -- mudará a situação, somente quando receber ok do serviço ou do 
-    -- processamento do retorno
-    BEGIN
-        
-      UPDATE crapbpr
-         SET crapbpr.tpcancel = pr_tpcancel,
-             crapbpr.flcancel = 1,
-             crapbpr.dtcancel = rw_crapdat.dtmvtolt,
-             crapbpr.cdsitgrv = decode(pr_tpcancel,'M',5,crapbpr.cdsitgrv),
-             crapbpr.dsjuscnc = pr_dsjuscnc
-      WHERE ROWID = rw_crapbpr.rowid_bpr;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel alterar o bem.';
-          
-        --Levantar Excecao  
-        RAISE vr_exc_erro; 
-    END;
+    -- Atualizar a situação do Gravames quando manual
+    IF pr_tpcancel = 'M' THEN
+      BEGIN
+        UPDATE crapbpr
+           SET crapbpr.tpcancel = pr_tpcancel
+              ,crapbpr.flcancel = 1
+              ,crapbpr.flginclu = 0              
+              ,crapbpr.dtcancel = rw_crapdat.dtmvtolt
+              ,crapbpr.cdsitgrv = 5
+              ,crapbpr.dsjuscnc = pr_dsjuscnc
+              ,crapbpr.dsjstbxa = NULL -- Limpar alguma justificativa de baixa manual anterior
+        WHERE ROWID = rw_crapbpr.rowid_bpr;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao foi possivel alterar o bem.';
+            
+          --Levantar Excecao  
+          RAISE vr_exc_erro; 
+      END;
+    END IF;  
     
     -- GEração de LOG 
     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -6794,7 +6977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       close cr_crapope;
     end if;
     
-    -- CAso Gravames ONLINE e foi solicitado Cancelamento AUtomático
+    -- Caso Gravames ONLINE e foi solicitado Cancelamento AUtomático
     IF pr_tpcancel = 'A' AND fn_tem_gravame_online(pr_cdcooper => vr_cdcooper) = 'S' THEN
       
       /* Procedimento para busca do emitente (Inverveniente, se houver) */
@@ -6870,8 +7053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                    ,nrrenava)
              VALUES(vr_cdcooper           --cdcooper
                    ,pr_nrdconta           --nrdconta
-                   ,pr_nrctrpro           --tpctrpro
-                   ,pr_tpctrpro           --nrctrpro
+                   ,pr_tpctrpro           --tpctrpro
+                   ,pr_nrctrpro           --nrctrpro
                    ,rw_crapbpr.dschassi   --dschassi
                    ,pr_idseqbem           --idseqbem
                    ,0                     --nrseqlot
@@ -7492,23 +7675,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF;  
     
-    -- Atualizar o contrato      
-    BEGIN
-      UPDATE crapbpr
-         SET crapbpr.cdsitgrv = decode(pr_tpdbaixa,'M',4,crapbpr.cdsitgrv)
-            ,crapbpr.flgbaixa = 1
-            ,crapbpr.flginclu = 0
-            ,crapbpr.dtdbaixa = rw_crapdat.dtmvtolt
-            ,crapbpr.dsjstbxa = pr_dsjstbxa
-            ,crapbpr.tpdbaixa = pr_tpdbaixa    
-      WHERE ROWID = rw_crapbpr.rowid_bpr;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel alterar o bem.';
-        --Levantar Excecao  
-        RAISE vr_exc_erro; 
-    END;
+    -- Atualizar o contrato quando envio Manual
+    IF pr_tpdbaixa = 'M' THEN
+      BEGIN
+        UPDATE crapbpr
+           SET crapbpr.cdsitgrv = 4
+              ,crapbpr.flgbaixa = 1
+              ,crapbpr.flginclu = 0
+              ,crapbpr.dtdbaixa = rw_crapdat.dtmvtolt
+              ,crapbpr.dsjstbxa = pr_dsjstbxa
+              ,crapbpr.tpdbaixa = pr_tpdbaixa    
+              ,crapbpr.dsjuscnc = NULL -- Limpar alguma justificativa de cancelamento manual anterior
+        WHERE ROWID = rw_crapbpr.rowid_bpr;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao foi possivel alterar o bem.';
+          --Levantar Excecao  
+          RAISE vr_exc_erro; 
+      END;
+    END IF;  
     
     -- Gerar LOG
     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -7634,8 +7820,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                    ,nrrenava)
              VALUES(vr_cdcooper           --cdcooper
                    ,pr_nrdconta           --nrdconta
-                   ,pr_nrctrpro           --tpctrpro
-                   ,pr_tpctrpro           --nrctrpro
+                   ,pr_tpctrpro           --tpctrpro
+                   ,pr_nrctrpro           --nrctrpro
                    ,rw_crapbpr.dschassi   --dschassi
                    ,pr_idseqbem           --idseqbem
                    ,0                     --nrseqlot
@@ -7730,6 +7916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                        ,pr_nrctrpro IN crawepr.nrctremp%TYPE --Número do contrato 
                                        ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
                                        ,pr_idseqbem IN crapbpr.idseqbem%TYPE --Identificador do bem
+                                       ,pr_tpinclus IN crapbpr.tpinclus%TYPE --Tipo da Inclusão 
                                        ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                                        ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                                        ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -7773,7 +7960,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     SELECT crapbpr.cdsitgrv
           ,crapbpr.dschassi
           ,crapbpr.tpchassi  
-          ,crapbpr.uflicenc              
+          ,crapbpr.uflicenc 
+          ,crapbpr.dscatbem
+          ,crapbpr.dstipbem
+          ,crapbpr.dsmarbem
+          ,crapbpr.dsbemfin
+          ,crapbpr.nrcpfbem
+          ,crapbpr.nranobem
+          ,crapbpr.nrmodbem
+          ,decode(crapbpr.ufplnovo,' ',crapbpr.ufdplaca,crapbpr.ufplnovo) ufdplaca
+          ,decode(crapbpr.nrplnovo,' ',crapbpr.nrdplaca,crapbpr.nrplnovo) nrdplaca
+          ,decode(crapbpr.nrrenovo,0,crapbpr.nrrenava,crapbpr.nrrenovo) nrrenava                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
        AND crapbpr.nrdconta = pr_nrdconta
@@ -7791,6 +7988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crawepr.nrdconta
           ,crawepr.nrctremp
           ,crawepr.cdlcremp
+          ,crawepr.insitapr 
           ,crawepr.rowid rowid_epr
       FROM crawepr
      WHERE crawepr.cdcooper = pr_cdcooper
@@ -7815,11 +8013,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_idorigem VARCHAR2(100);
     vr_dsmensag VARCHAR2(100);
     
+    -- Temporario para interveniente
+    vr_nmprimtl crapass.nmprimtl%TYPE; -- Nome do proprietario do bem
+    vr_nrcpfbem crapass.nrcpfcgc%TYPE; -- Cpf do proprietário do bem    
+    
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
     
     -- XML
-    vr_xmlconsul VARCHAR2(32767);
+    vr_dsxmltemp VARCHAR2(32767);
   
   BEGIN
     --Incluir nome do módulo logado - Chamado 660394
@@ -7845,6 +8047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
                                    ,pr_nrdconta => pr_nrdconta  -- Numero da conta do associado
                                    ,pr_nrctrpro => pr_nrctrpro  -- Numero do contrato
+                                   ,pr_flgcompl => 'S'          -- Trazer todos os dados
                                    ,pr_des_reto => vr_des_reto  -- Retorno Ok ou NOK do procedimento
                                    ,pr_vet_dados => vr_vet_dados -- Vetor com dados para auxiliar alienação
                                    ,pr_dscritic => vr_dscritic  -- Retorno da descricao da critica do erro
@@ -7901,6 +8104,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       CLOSE cr_crawepr;
     END IF;
     
+    -- Somente prosseguir para propostas aprovadas
+    IF rw_crawepr.insitapr <> 1 THEN
+      vr_dscritic := 'A proposta deve estar aprovada.'; 
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Somente prosseguir em determinadas situações
     IF rw_crapbpr.cdsitgrv <> 0 AND rw_crapbpr.cdsitgrv <> 3 THEN  
       vr_cdcritic := 0;
@@ -7920,28 +8129,117 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     -- Caso o GRAVAMES online esteja ativo
     IF fn_tem_gravame_online(vr_cdcooper) = 'S' THEN
       
-      -- Acionaremos a rotina que irá gerar um XML com os dados do Bem para Consulta de Situação na B3  
-      pc_gera_xml_cons_alienac(pr_cdcooper => vr_cdcooper -- Cod. Cooperativa
-                              ,pr_nrdconta => pr_nrdconta -- Nr. da conta
-                              ,pr_tpctrato => pr_tpctrpro -- Tp. contrato
-                              ,pr_nrctrpro => pr_nrctrpro -- Nr. contrato
-                              ,pr_idseqbem => pr_idseqbem -- Sequencial do bem
-                               /* SistemaNacionalGravames */
-                              ,pr_uflicenc => rw_crapbpr.uflicenc     -- UF                                 
-                              /* ObjetoContratoCredito */
-                              ,pr_dschassi => rw_crapbpr.dschassi -- Chassi
-                              ,pr_tpchassi => rw_crapbpr.tpchassi -- Tipo Chassi
-                              /* Saida */
-                              ,pr_xmlconsu => vr_xmlconsul    -- XML da Consulta de alienação
-                              ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
+      -- PAra alienação automática
+      IF pr_tpinclus = 'A' THEN
+        -- Buscar operador
+        OPEN cr_crapope(vr_cdcooper,vr_cdoperad);
+        FETCH cr_crapope INTO rw_crapope;
+        CLOSE cr_crapope;
+        -- Default é as informações do cooperado
+        vr_nmprimtl := vr_vet_dados.nmprimtl;
+        vr_nrcpfbem := vr_vet_dados.nrcpfemi;
+        /* Procedimento para busca do emitente (Inverveniente, se houver) */
+        pc_busca_emitente(pr_cdcooper => vr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrctrpro
+                         ,pr_nrcpfbem => rw_crapbpr.nrcpfbem
+                         ,pr_nrcpfemi => vr_nrcpfbem
+                         ,pr_nmprimtl => vr_nmprimtl);            
+        -- Gerar o XML de alienação
+        pc_gera_xml_alienacao(pr_cdcooper => vr_cdcooper -- Cod. Cooperativa
+                             ,pr_nrdconta => pr_nrdconta -- Nr. da conta
+                             ,pr_tpctrato => 90          -- Tp. contrato
+                             ,pr_nrctrpro => pr_nrctrpro -- Nr. contrato
+                             ,pr_idseqbem => pr_idseqbem -- Sequencial do bem
+                             ,pr_flaborta => 'S'             -- Flag S/N se a operação aborta outras na sequencia em caso de erro
+                             ,pr_flgobrig => 'S'             -- Flag S/N se a operação é obrigatória para prosseguir para próximo fluxo
+                             /* SistemaNacionalGravames */
+                             ,pr_uflicenc => rw_crapbpr.uflicenc -- UF de Licenciamento
+                             ,pr_tpaliena => '03'            -- Tipo da Alienação
+                             ,pr_dtlibera => vr_vet_dados.dtlibera -- Data da Liberação
+                             /* ObjetoContratoCredito */
+                             ,pr_dschassi => rw_crapbpr.dschassi -- Chassi
+                             ,pr_tpchassi => rw_crapbpr.tpchassi -- Tipo Chassi
+                             ,pr_ufdplaca => rw_crapbpr.ufdplaca -- UF
+                             ,pr_nrdplaca => rw_crapbpr.nrdplaca -- PLaca
+                             ,pr_nrrenava => rw_crapbpr.nrrenava -- Renavam
+                             ,pr_nranobem => rw_crapbpr.nranobem -- Ano Fabricacao
+                             ,pr_nrmodbem => rw_crapbpr.nrmodbem -- Ano modelo                               
+                             /* propostaContratoCredito */
+                             ,pr_nrctremp => pr_nrctrpro           -- Contrato
+                             ,pr_dtmvtolt => vr_vet_dados.dtmvtolt -- Data digitação
+                             ,pr_qtpreemp => vr_vet_dados.qtpreemp -- Quantidade parcelas
+                             ,pr_permulta => vr_vet_dados.permulta -- Percentual de Multa
+                             ,pr_txmensal => vr_vet_dados.txmensal -- Taxa mensal
+                             ,pr_vlemprst => vr_vet_dados.vlemprst -- Valor Empréstimo
+                             ,pr_tpemprst => vr_vet_dados.tpemprst -- Tipo Emprestimo
+                             ,pr_dtdpagto => vr_vet_dados.dtdpagto -- Data da primeira parcela
+                             ,pr_dtpagfim => vr_vet_dados.dtvencto -- Data da ultima parcela
+                             /* Emitente */
+                             ,pr_nrcpfemi => vr_nrcpfbem           -- CPF/CNPJ Emitente
+                             ,pr_nmemiten => vr_nmprimtl           -- Nome/Razão Social Emitente
+                             ,pr_dsendere => vr_vet_dados.dsendere -- Logradouro Emitente
+                             ,pr_nrendere => vr_vet_dados.nrendere -- Numero Emitente
+                             ,pr_nmbairro => vr_vet_dados.nmbairro -- Nome Bairro Emitente
+                             ,pr_cdufende => vr_vet_dados.cdufende -- UF Emitente
+                             ,pr_nrcepend => vr_vet_dados.nrcepend -- CEP Emitente
+                             ,pr_cdcidade => vr_vet_dados.cdcidcli -- Cidade
+                             ,pr_nrdddtfc => vr_vet_dados.nrdddass -- DDD Emitente
+                             ,pr_nrtelefo => vr_vet_dados.nrtelass -- Telefone Emitente
+                              /* Credor Eh a Coop */
+                             ,pr_nmcddopa => GENE0007.fn_caract_acento(rw_crapope.nmcidade,1) -- Nome da cidade do PA
+                             ,pr_cdufdopa => rw_crapope.cdufdcop    -- UF do PA
+                             ,pr_inpescre => 2                      -- Tipo pessoa Credor
+                             ,pr_nrcpfcre => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Credor
+                             ,pr_dsendcre => GENE0007.fn_caract_acento(vr_vet_dados.dsendcre) -- Logradouro Credor
+                             ,pr_nrendcre => vr_vet_dados.nrendcre -- Numero Credor
+                             ,pr_nmbaicre => GENE0007.fn_caract_acento(vr_vet_dados.nmbaicre,1) -- Nome Bairro Credor
+                             ,pr_cdufecre => vr_vet_dados.cdufecre -- UF Credor
+                             ,pr_cdcidcre => vr_vet_dados.cdcidcre     -- Cidade Credor
+                             ,pr_nrcepcre => vr_vet_dados.nrcepcre -- CEP Credor
+                             ,pr_nrdddcre => vr_vet_dados.nrdddenc  -- DDD Credor
+                             ,pr_nrtelcre => vr_vet_dados.nrtelenc  -- Telefone Credor
+                             /* Dados do Vendedor */
+                             ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                             /* Recebedor do pagamento */
+                             ,pr_inpesrec => 2                      -- Tipo Pessoa Recebedor (Cooperativa)
+                             ,pr_nrcpfrec => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Vendedor
+                             /* Saida */
+                             ,pr_xmlalien => vr_dsxmltemp  -- XML da alienação
+                             ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
+              
+      ELSE
+        -- Acionaremos a rotina que irá gerar um XML com os dados do Bem para Consulta de Situação na B3  
+        pc_gera_xml_cons_alienac(pr_cdcooper => vr_cdcooper -- Cod. Cooperativa
+                                ,pr_nrdconta => pr_nrdconta -- Nr. da conta
+                                ,pr_tpctrato => pr_tpctrpro -- Tp. contrato
+                                ,pr_nrctrpro => pr_nrctrpro -- Nr. contrato
+                                ,pr_idseqbem => pr_idseqbem -- Sequencial do bem
+                                 /* SistemaNacionalGravames */
+                                ,pr_uflicenc => rw_crapbpr.uflicenc     -- UF                                 
+                                /* ObjetoContratoCredito */
+                                ,pr_dschassi => rw_crapbpr.dschassi -- Chassi
+                                ,pr_tpchassi => rw_crapbpr.tpchassi -- Tipo Chassi
+                                /* Saida */
+                                ,pr_xmlconsu => vr_dsxmltemp  -- XML da Consulta de alienação
+                                ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
+      END IF;
+        
       -- Em caso de erro
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+        
       -- Adicionaremos ao retorno o XML montado para consulta de alienação
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><gravameB3>'||vr_xmlconsul||'</gravameB3></Root>'); 
-
+                                     '<Root><gravameB3>'||vr_dsxmltemp||'</gravameB3></Root>'); 
+   
+    -- Se não tem GRavames Online e está tentando fazer uma inclusão automática
+    ELSIF pr_tpinclus = 'A' THEN
+      -- Gerar erro
+      vr_dscritic := 'Nao e possivel alienar automatica pois o Gravames Online nao esta ativado!';
+      RAISE vr_exc_erro;
+    
     END IF;
     --              
     pr_des_erro := 'OK';
@@ -8190,7 +8488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
     
     -- Validar o tipo de Inclusão    
-    IF pr_tpinclus NOT IN ('A','M') THEN          
+    IF pr_tpinclus NOT IN ('A','MC','M') THEN          
       vr_cdcritic:= 0;
       vr_dscritic:= 'Tipo de inclusão invalida.';          
       --Levantar Excecao  
@@ -8280,27 +8578,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;    
     END IF;
     
-    -- Atualizar situação do registro
-    BEGIN
-        
-      UPDATE crapbpr
-         SET crapbpr.flginclu = 1
-            ,crapbpr.dtdinclu = rw_crapdat.dtmvtolt
-            ,crapbpr.dsjstinc = pr_dsjustif
-            ,crapbpr.tpinclus = nvl(pr_tpinclus,'M')
-            ,crapbpr.cdsitgrv = decode(pr_tpinclus,'M',2,crapbpr.cdsitgrv) -- Soh muda se veio requisição manual
-            ,crapbpr.nrgravam = pr_nrgravam
-            ,crapbpr.dtatugrv = vr_dtmvttel
-            ,crapbpr.flgalfid = decode(pr_tpinclus,'M',1,crapbpr.flgalfid) -- Soh muda se veio requisição manual       
-      WHERE ROWID = rw_crapbpr.rowid_bpr;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel alterar o bem.';
-          
-        --Levantar Excecao  
-        RAISE vr_exc_erro; 
-    END;
+    -- Quando requisição Manual
+    IF pr_tpinclus = 'M' THEN 
+      BEGIN
+        UPDATE crapbpr
+           SET crapbpr.flginclu = decode(pr_cdopeapr,null,0,1) -- Se veio operador, é pq não consegui consultar, então mantém a pendência 
+              ,crapbpr.dtdinclu = rw_crapdat.dtmvtolt
+              ,crapbpr.dsjstinc = pr_dsjustif
+              ,crapbpr.tpinclus = pr_tpinclus                                
+              ,crapbpr.cdsitgrv = 2 
+              ,crapbpr.nrgravam = pr_nrgravam
+              ,crapbpr.dtatugrv = vr_dtmvttel
+              ,crapbpr.flgalfid = 1
+        WHERE ROWID = rw_crapbpr.rowid_bpr;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao foi possivel alterar o bem.';
+            
+          --Levantar Excecao  
+          RAISE vr_exc_erro; 
+      END;
+    END IF;
     
     -- Setar no Contrato que o GRAVAMES está OK caso não haja outro bem não alieando
     BEGIN        
@@ -8414,8 +8713,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                    ,nrrenava)
              VALUES(vr_cdcooper           --cdcooper
                    ,pr_nrdconta           --nrdconta
-                   ,pr_nrctrpro           --tpctrpro
-                   ,pr_tpctrpro           --nrctrpro
+                   ,pr_tpctrpro           --tpctrpro
+                   ,pr_nrctrpro           --nrctrpro
                    ,rw_crapbpr.dschassi   --dschassi
                    ,pr_idseqbem           --idseqbem
                    ,0                     --nrseqlot
@@ -8557,8 +8856,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             ,decode(bpr.ufplnovo,' ',bpr.ufdplaca,bpr.ufplnovo) ufdplaca
             ,decode(bpr.nrplnovo,' ',bpr.nrdplaca,bpr.nrplnovo) nrdplaca
             ,decode(bpr.nrrenovo,0,bpr.nrrenava,bpr.nrrenovo) nrrenava
+            ,fin.tpfinali
+            ,wpr.cdfinemp
         from crapbpr bpr
-       where bpr.cdcooper = pr_cdcooper
+            ,crawepr wpr
+            ,crapfin fin
+       where bpr.cdcooper = wpr.cdcooper
+         AND bpr.nrdconta = wpr.nrdconta
+         AND bpr.nrctrpro = wpr.nrctremp
+         AND wpr.cdcooper = fin.cdcooper
+         AND wpr.cdfinemp = fin.cdfinemp
+         AND bpr.cdcooper = pr_cdcooper
          and bpr.nrdconta = pr_nrdconta
          and bpr.tpctrpro = 90
          and bpr.nrctrpro = pr_nrctremp
@@ -8572,6 +8880,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrcpfcgc = pr_nrcpfcgc;
+         
+    -- Busca CNPJ lojista
+    CURSOR cr_craploj(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_nrdconta crapass.nrdconta%TYPE
+                     ,pr_nrctremp crawepr.nrctremp%TYPE) IS
+      SELECT tve.nrcpf
+        FROM tbepr_cdc_emprestimo tce 
+            ,tbepr_cdc_vendedor   tve               
+       WHERE tce.cdcooper = pr_cdcooper
+         AND tce.nrdconta = pr_nrdconta
+         AND tce.nrctremp = pr_nrctremp
+         AND tce.idvendedor = tve.idvendedor;
+      
     
     -- Erros
     vr_des_reto     VARCHAR2(3);
@@ -8585,6 +8906,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_nmprimtl crapass.nmprimtl%TYPE; -- Nome do proprietario do bem
     vr_nrcpfbem crapass.nrcpfcgc%TYPE; -- Cpf do proprietário do bem    
              
+    -- Lojista
+    vr_nrcpfven crapass.nrcpfcgc%TYPE; -- Cpf do proprietário do bem    
+    
     -- XML de Envio das Informações
     vr_xmlalien VARCHAR2(32767);
     vr_xmldesal VARCHAR2(32767);
@@ -8641,6 +8965,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       END IF;
     END IF;
     
+    -- Verificar se é uma inclusão CDC que ficou no lote
+    IF rw_bpr.tpfinali = 3 AND rw_bpr.cdfinemp = 59 THEN
+      -- Buscar CNPJ lojista
+      OPEN cr_craploj(pr_cdcooper
+                     ,pr_nrdconta
+                     ,pr_nrctremp);
+      FETCH cr_craploj
+       INTO vr_nrcpfven;
+      CLOSE cr_craploj;
+    ELSE
+      -- Não há
+      vr_nrcpfven := 0;
+    END IF;        
+    
+    
     -- Inclusão
     pc_gera_xml_alienacao(pr_cdcooper => pr_cdcooper -- Cod. Cooperativa
                          ,pr_nrdconta => pr_nrdconta -- Nr. da conta
@@ -8667,6 +9006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                          ,pr_qtpreemp => vr_vet_dados.qtpreemp -- Quantidade parcelas
                          ,pr_permulta => vr_vet_dados.permulta -- Percentual de Multa
                          ,pr_txmensal => vr_vet_dados.txmensal -- Taxa mensal
+                         ,pr_tpemprst => vr_vet_dados.tpemprst -- Tipo Emprestimo
                          ,pr_vlemprst => vr_vet_dados.vlemprst -- Valor Empréstimo
                          ,pr_dtdpagto => vr_vet_dados.dtdpagto -- Data da primeira parcela
                          ,pr_dtpagfim => vr_vet_dados.dtvencto     -- Data da ultima parcela
@@ -8678,6 +9018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                          ,pr_nmbairro => vr_vet_dados.nmbairro -- Nome Bairro Emitente
                          ,pr_cdufende => vr_vet_dados.cdufende -- UF Emitente
                          ,pr_nrcepend => vr_vet_dados.nrcepend -- CEP Emitente
+                         ,pr_cdcidade => vr_vet_dados.cdcidcli -- Cidade
                          ,pr_nrdddtfc => vr_vet_dados.nrdddass -- DDD Emitente
                          ,pr_nrtelefo => vr_vet_dados.nrtelass -- Telefone Emitente
                           /* Credor Eh a Coop */
@@ -8685,13 +9026,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                          ,pr_cdufdopa => rw_crapope.cdufdcop    -- UF do PA
                          ,pr_inpescre => 2                      -- Tipo pessoa Credor
                          ,pr_nrcpfcre => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Credor
+                         ,pr_dsendcre => GENE0007.fn_caract_acento(vr_vet_dados.dsendcre) -- Logradouro Credor
+                         ,pr_nrendcre => vr_vet_dados.nrendcre -- Numero Credor
+                         ,pr_nmbaicre => GENE0007.fn_caract_acento(vr_vet_dados.nmbaicre,1) -- Nome Bairro Credor
+                         ,pr_cdufecre => vr_vet_dados.cdufecre -- UF Credor
+                         ,pr_cdcidcre => vr_vet_dados.cdcidcre     -- Cidade Credor
+                         ,pr_nrcepcre => vr_vet_dados.nrcepcre -- CEP Credor
                          ,pr_nrdddcre => vr_vet_dados.nrdddenc  -- DDD Credor
                          ,pr_nrtelcre => vr_vet_dados.nrtelenc  -- Telefone Credor
                          /* Dados do Vendedor */
-                         ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                         ,pr_nrcpfven => vr_nrcpfven            -- CPF/CNPJ Vendedor (Só há em CDC)
                          /* Recebedor do pagamento */
-                         ,pr_inpesrec => 0 /*crapass.inpessoa*/ -- Tipo Pessoa Vendedor
-                         ,pr_nrcpfrec => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                         ,pr_inpesrec => 2                      -- Tipo Pessoa Vendedor
+                         ,pr_nrcpfrec => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Vendedor
                          /* Saida */
                          ,pr_xmlalien => vr_xmlalien   -- XML da alienação
                          ,pr_dscritic => pr_dscritic); -- Descrição de critica encontrada
@@ -8811,6 +9158,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_clobxml CLOB;                   -- CLOB para armazenamento das informações do arquivo
     vr_clobaux VARCHAR2(32767);        -- Var auxiliar para montagem do arquivo
     
+    
+    -- Cursor para validar a linha de credito da alienacao
+    CURSOR cr_craplcr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+      SELECT craplcr.tpctrato
+        FROM craplcr
+            ,crawepr 
+       WHERE crawepr.cdcooper = craplcr.cdcooper
+         AND crawepr.cdlcremp = craplcr.cdlcremp
+         AND crawepr.cdcooper = pr_cdcooper
+         AND crawepr.nrdconta = pr_nrdconta
+         AND crawepr.nrctremp = pr_nrctremp;
+    rw_craplcr cr_craplcr%rowtype;
+    
     -- Buscar bens de contrato enviado
     cursor cr_crapbpr(pr_cdcooper crapepr.cdcooper%TYPE
                      ,pr_nrctremp crapepr.nrctremp%TYPE) is
@@ -8896,302 +9258,319 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            ,vr_clobaux
                            ,'<?xml version="1.0" encoding="UTF-8"?><Root>');
     
-    -- Valida se eh alienacao fiduciaria
-    pc_valida_alienacao_fiduciaria( pr_cdcooper => vr_cdcooper   -- Código da cooperativa
-                                   ,pr_nrdconta => pr_nrdconta   -- Numero da conta do associado
-                                   ,pr_nrctrpro => pr_nrctremp   -- Numero do contrato
-                                   ,pr_flgcompl => 'S'           -- Busca completa
-                                   ,pr_des_reto => vr_des_reto   -- Retorno Ok ou NOK do procedimento
-                                   ,pr_vet_dados => vr_vet_dados -- Vetor com dados para auxiliar alienação
-                                   ,pr_dscritic => vr_dscritic); -- Retorno da descricao da critica do erro
-    IF vr_des_reto <> 'OK' THEN
-      RAISE vr_exc_erro;
-    END IF;
-
-    -- Caso houver Gravames Online e sem Portabilidade
-    IF grvm0001.fn_tem_gravame_online(vr_cdcooper) = 'S' and empr0001.fn_tipo_finalidade(vr_cdcooper,vr_vet_dados.cdfinemp) <> 2 THEN
     
-      -- Buscar operador
-      OPEN cr_crapope(vr_cdcooper,vr_cdoperad);
-      FETCH cr_crapope INTO rw_crapope;
-      CLOSE cr_crapope;
-      
-      -- Verificar lista de contratos a liquidar
-      IF vr_vet_dados.vtctrliq is not NULL AND vr_vet_dados.vtctrliq.count() > 0 THEN
-        -- Varrer todos os contratos a liquidar
-        FOR idx IN vr_vet_dados.vtctrliq.first..vr_vet_dados.vtctrliq.last LOOP
-          -- Se tem contrato
-          IF vr_vet_dados.vtctrliq(idx) <> '0' THEN
-            -- Buscar bens alienados dos contratos liquidados
-            FOR rw_bpr IN cr_crapbpr(vr_cdcooper,vr_vet_dados.vtctrliq(idx)) LOOP
-              -- Para cada bem encontrado, vamos checar suas situações
-              -- e somente solicitar baixa caso a situação seja:
-              -- 0 - Nao enviados
-              -- 2 - Alienado
-              -- 3 - Processado com critica
-              IF rw_bpr.cdsitgrv IN(0,2,3) THEN
-                -- Default é as informações do cooperado
-                vr_nmprimtl := vr_vet_dados.nmprimtl;
-                vr_nrcpfbem := vr_vet_dados.nrcpfemi;
-                /* Procedimento para busca do emitente (Inverveniente, se houver) */
-                pc_busca_emitente(pr_cdcooper => vr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_nrctremp => vr_vet_dados.vtctrliq(idx)
-                                 ,pr_nrcpfbem => rw_bpr.nrcpfbem
-                                 ,pr_nrcpfemi => vr_nrcpfbem
-                                 ,pr_nmprimtl => vr_nmprimtl); 
-                -- Cursor para testar se o Chassi enviado está na lista de bens alienáveis do contrato em efetivação
-                vr_tem_refin := 0;
-                OPEN cr_bprrefin(vr_cdcooper,rw_bpr.dschassi);
-                FETCH cr_bprrefin
-                 INTO vr_tem_refin;
-                CLOSE cr_bprrefin; 
-                -- Se tem refin do mesmo chassi
-                IF vr_tem_refin = 1 THEN
-                  -- É obrigatório e Abortamos em caso de erro 
-                  vr_flaborta := 'S';
-                  vr_flgobrig := 'S';
-                ELSE
-                  -- Não é obrigatório e não Abortamos em caso de erro 
-                  vr_flaborta := 'N';
-                  vr_flgobrig := 'N';
-                END IF;
-                -- Montagem das informações para desalienação do bem anterior
-                pc_gera_xml_desalienacao(pr_cdcooper => vr_cdcooper     -- Cod. Cooperativa
-                                        ,pr_nrdconta => pr_nrdconta     -- Nr. da conta
-                                        ,pr_tpctrato => 90              -- Tp. contrato
-                                        ,pr_nrctrpro => rw_bpr.nrctrpro -- Nr. contrato
-                                        ,pr_idseqbem => rw_bpr.idseqbem -- Sequencial do bem
-                                        ,pr_tpdesali => 'B'             -- Tipo [C]ancelamento ou [B]aixa
-                                        ,pr_flaborta => vr_flaborta     -- Flag S/N se a operação aborta outras na sequencia em caso de erro
-                                        ,pr_flgobrig => vr_flgobrig     -- Flag S/N se a desalienação é obrigatória para prosseguir                                     
-                                         /* SistemaNacionalGravames */
-                                        ,pr_uflicenc => rw_bpr.uflicenc       -- UF                                 
-                                        /* ObjetoContratoCredito */
-                                        ,pr_dschassi => rw_bpr.dschassi       -- Chassi
-                                        ,pr_tpchassi => rw_bpr.tpchassi       -- Tipo Chassi
-                                        ,pr_nrrenava => rw_bpr.nrrenava       -- Renavam
-                                        /* Emitente */
-                                        ,pr_nrcpfemi => vr_nrcpfbem           -- CPF/CNPJ Emitente                                 
-                                        /* Saida */
-                                        ,pr_xmldesal => vr_dsxmltemp          -- XML do Cancelamento de alienação
-                                        ,pr_dscritic => vr_dscritic);         -- Descrição de critica encontrada
-                -- Em caso de erro
-                IF vr_dscritic IS NOT NULL THEN
-                  RAISE vr_exc_erro;
-                END IF;
-                
-                -- Caso seja refin
-                IF vr_tem_refin = 1 THEN
-                  -- Enviar para a lista 01 - Desalienações de Mesmos Veículos
-                  vr_tab_xml_01(rw_bpr.dschassi) := vr_dsxmltemp;
-                ELSE
-                  -- Enviar para a lista 02 - Desalienações de Veículos Diferentes
-                  vr_tab_xml_02(rw_bpr.dschassi) := vr_dsxmltemp;
-                END IF;
-              END IF;
-            END LOOP;
-          END IF;
-        END LOOP;
+    -- Verifica a linha de credito
+    OPEN cr_craplcr(vr_cdcooper,pr_nrdconta,pr_nrctremp);
+    FETCH cr_craplcr
+     INTO rw_craplcr;
+    CLOSE cr_craplcr;
+    IF rw_craplcr.tpctrato = 2 THEN
+      -- Valida se eh alienacao fiduciaria
+      pc_valida_alienacao_fiduciaria( pr_cdcooper => vr_cdcooper   -- Código da cooperativa
+                                     ,pr_nrdconta => pr_nrdconta   -- Numero da conta do associado
+                                     ,pr_nrctrpro => pr_nrctremp   -- Numero do contrato
+                                     ,pr_flgcompl => 'S'           -- Busca completa
+                                     ,pr_des_reto => vr_des_reto   -- Retorno Ok ou NOK do procedimento
+                                     ,pr_vet_dados => vr_vet_dados -- Vetor com dados para auxiliar alienação
+                                     ,pr_dscritic => vr_dscritic); -- Retorno da descricao da critica do erro
+      IF vr_des_reto <> 'OK' THEN
+        RAISE vr_exc_erro;
       END IF;
-      
-      -- Tratar mensagem de desalienação de mesmo veículo
-      IF vr_tab_xml_01.count() = 1 THEN
-        vr_dsmensag := gene0007.fn_convert_web_db('O veiculo antigo sera automaticamente baixado do contrato antigo e alienado no novo contrato. Foi verificado se este veiculo nao possui restricoes para alienacao?');    
-      ELSIF vr_tab_xml_01.count() > 1 THEN
-        vr_dsmensag := gene0007.fn_convert_web_db('Os veiculos antigos serao automaticamente baixados do contrato antigo e alienado no novo contrato. Foi verificado se estes veiculos não possuem restricoes para alienacao?');    
-      END IF;  
-      
-      -- Buscar todos os bens do emprestimos em efetivação
-      FOR rw_bpr IN cr_crapbpr(vr_cdcooper,pr_nrctremp) LOOP
-        -- Para cada bem encontrado, vamos checar suas situações
-        -- e somente solicitar alienação caso a situação seja:
-        -- 0 - Nao enviados
-        -- 3 - Processado com critica
-        IF rw_bpr.cdsitgrv IN(0,2,3) THEN
-          -- Default é as informações do cooperado
-          vr_nmprimtl := vr_vet_dados.nmprimtl;
-          vr_nrcpfbem := vr_vet_dados.nrcpfemi;
-          /* Procedimento para busca do emitente (Inverveniente, se houver) */
-          pc_busca_emitente(pr_cdcooper => vr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_nrctremp => pr_nrctremp
-                           ,pr_nrcpfbem => rw_bpr.nrcpfbem
-                           ,pr_nrcpfemi => vr_nrcpfbem
-                           ,pr_nmprimtl => vr_nmprimtl);            
-          -- Inclusão
-          pc_gera_xml_alienacao(pr_cdcooper => vr_cdcooper -- Cod. Cooperativa
-                               ,pr_nrdconta => pr_nrdconta -- Nr. da conta
-                               ,pr_tpctrato => 90          -- Tp. contrato
-                               ,pr_nrctrpro => pr_nrctremp -- Nr. contrato
-                               ,pr_idseqbem => rw_bpr.idseqbem -- Sequencial do bem
-                               ,pr_flaborta => 'N'             -- Flag S/N se a operação aborta outras na sequencia em caso de erro
-                               ,pr_flgobrig => 'S'             -- Flag S/N se a operação é obrigatória para prosseguir para próximo fluxo
-                               /* SistemaNacionalGravames */
-                               ,pr_uflicenc => rw_bpr.uflicenc -- UF de Licenciamento
-                               ,pr_tpaliena => '03'            -- Tipo da Alienação
-                               ,pr_dtlibera => vr_vet_dados.dtlibera -- Data da Liberação
-                               /* ObjetoContratoCredito */
-                               ,pr_dschassi => rw_bpr.dschassi -- Chassi
-                               ,pr_tpchassi => rw_bpr.tpchassi -- Tipo Chassi
-                               ,pr_ufdplaca => rw_bpr.ufdplaca -- UF
-                               ,pr_nrdplaca => rw_bpr.nrdplaca -- PLaca
-                               ,pr_nrrenava => rw_bpr.nrrenava -- Renavam
-                               ,pr_nranobem => rw_bpr.nranobem -- Ano Fabricacao
-                               ,pr_nrmodbem => rw_bpr.nrmodbem -- Ano modelo                               
-                               /* propostaContratoCredito */
-                               ,pr_nrctremp => pr_nrctremp           -- Contrato
-                               ,pr_dtmvtolt => vr_vet_dados.dtmvtolt -- Data digitação
-                               ,pr_qtpreemp => vr_vet_dados.qtpreemp -- Quantidade parcelas
-                               ,pr_permulta => vr_vet_dados.permulta -- Percentual de Multa
-                               ,pr_txmensal => vr_vet_dados.txmensal -- Taxa mensal
-                               ,pr_vlemprst => vr_vet_dados.vlemprst -- Valor Empréstimo
-                               ,pr_dtdpagto => vr_vet_dados.dtdpagto -- Data da primeira parcela
-                               ,pr_dtpagfim => vr_vet_dados.dtvencto -- Data da ultima parcela
-                               /* Emitente */
-                               ,pr_nrcpfemi => vr_nrcpfbem           -- CPF/CNPJ Emitente
-                               ,pr_nmemiten => vr_nmprimtl           -- Nome/Razão Social Emitente
-                               ,pr_dsendere => vr_vet_dados.dsendere -- Logradouro Emitente
-                               ,pr_nrendere => vr_vet_dados.nrendere -- Numero Emitente
-                               ,pr_nmbairro => vr_vet_dados.nmbairro -- Nome Bairro Emitente
-                               ,pr_cdufende => vr_vet_dados.cdufende -- UF Emitente
-                               ,pr_nrcepend => vr_vet_dados.nrcepend -- CEP Emitente
-                               ,pr_nrdddtfc => vr_vet_dados.nrdddass -- DDD Emitente
-                               ,pr_nrtelefo => vr_vet_dados.nrtelass -- Telefone Emitente
-                                /* Credor Eh a Coop */
-                               ,pr_nmcddopa => GENE0007.fn_caract_acento(rw_crapope.nmcidade,1) -- Nome da cidade do PA
-                               ,pr_cdufdopa => rw_crapope.cdufdcop    -- UF do PA
-                               ,pr_inpescre => 2                      -- Tipo pessoa Credor
-                               ,pr_nrcpfcre => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Credor
-                               ,pr_nrdddcre => vr_vet_dados.nrdddenc  -- DDD Credor
-                               ,pr_nrtelcre => vr_vet_dados.nrtelenc  -- Telefone Credor
-                               /* Dados do Vendedor */
-                               ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
-                               /* Recebedor do pagamento */
-                               ,pr_inpesrec => 0 /*crapass.inpessoa*/ -- Tipo Pessoa Vendedor
-                               ,pr_nrcpfrec => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
-                               /* Saida */
-                               ,pr_xmlalien => vr_dsxmltemp  -- XML da alienação
-                               ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
-          -- Em caso de erro
-          IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;       
-          
-          -- Caso o veículo em alienação já existe em contrato refinanciado
-          IF vr_tab_xml_01.exists(rw_bpr.dschassi) THEN
-            -- Enviar na lista de Alienações de Mesmos Veículos
-            vr_tab_xml_03(rw_bpr.dschassi) := vr_dsxmltemp;
-          ELSE
-            -- Enviar na lista de Alienações de Novos Veículos
-            vr_tab_xml_04(rw_bpr.dschassi) := vr_dsxmltemp;                        
-          END IF;
-               
-        ELSE
-          -- Se encontramos algum bem com situação Em processamento, Baixado ou Cancelado
-          IF rw_bpr.cdsitgrv IN(1,4,5) THEN
-            -- Gerar critica
-            vr_dscritic := 'Chassi '||rw_bpr.dschassi||' com situacao invalida! Nao sera possivel efetivar a proposta!';
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;                         
-      END LOOP;
-      
-      -- Adicionar ao XML a tag raiz as mensagens, aprovação e raiz das alienações
-      gene0002.pc_escreve_xml(vr_clobxml
-                             ,vr_clobaux
-                             , '<mensagem>'||vr_dsmensag||'</mensagem>');
-      
-      -- Primeiro vamos alienar somente os veículos novos
-      IF vr_tab_xml_04.count() > 0 THEN
-        -- Enviar grupo Alienações Novas
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'<gravameB3 nomgrupo="Alienacao de novos veiculos" flgobrig="S">');
-        vr_idx_xml := vr_tab_xml_04.first;
-        LOOP
-          EXIT WHEN vr_idx_xml IS NULL;
-          -- Enviar o mesmo ao CLOB
-          gene0002.pc_escreve_xml(vr_clobxml
-                                   ,vr_clobaux
-                                   ,vr_tab_xml_04(vr_idx_xml)); 
-          -- Buscar o próximo
-          vr_idx_xml := vr_tab_xml_04.next(vr_idx_xml);
-        END LOOP;
-        -- Finalizar grupo Alienações Novas
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'</gravameB3>');
-      END IF;  
-      
-      -- Depois vamos enviar desalienações de mesmos veículos
-      IF vr_tab_xml_01.count() > 0 THEN
-        -- Enviar grupo Alienações Novas
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'<gravameB3 nomgrupo="Baixa de veiculos refinanciados" flgobrig="S">');
-        vr_idx_xml := vr_tab_xml_01.first;
-        LOOP
-          EXIT WHEN vr_idx_xml IS NULL;
-          -- Enviar o mesmo ao CLOB
-          gene0002.pc_escreve_xml(vr_clobxml
-                                   ,vr_clobaux
-                                   ,vr_tab_xml_01(vr_idx_xml)); 
-          -- Buscar o próximo
-          vr_idx_xml := vr_tab_xml_01.next(vr_idx_xml);
-        END LOOP;
-        -- Finalizar grupo Desalienações mesmos veículos
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'</gravameB3>');
-      END IF;             
-      
-      -- Depois vamos alienar mesmos veículos
-      IF vr_tab_xml_03.count() > 0 THEN
-        -- Enviar grupo Alienações Novas
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'<gravameB3 nomgrupo="Alienacao de veiculos refianciados" flgobrig="S">');
-        vr_idx_xml := vr_tab_xml_03.first;
-        LOOP
-          EXIT WHEN vr_idx_xml IS NULL;
-          -- Enviar o mesmo ao CLOB
-          gene0002.pc_escreve_xml(vr_clobxml
-                                   ,vr_clobaux
-                                   ,vr_tab_xml_03(vr_idx_xml)); 
-          -- Buscar o próximo
-          vr_idx_xml := vr_tab_xml_03.next(vr_idx_xml);
-        END LOOP;
-        -- Finalizar grupo Alienações Refin
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'</gravameB3>');
-      END IF;    
-       
-      -- Por fim, vamos baixar veículos diferentes
-      IF vr_tab_xml_02.count() > 0 THEN
-        -- Enviar grupo Alienações Novas
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'<gravameB3 nomgrupo="Baixa de veiculos antigos" flgobrig="S">');
-        vr_idx_xml := vr_tab_xml_02.first;
-        LOOP
-          EXIT WHEN vr_idx_xml IS NULL;
-          -- Enviar o mesmo ao CLOB
-          gene0002.pc_escreve_xml(vr_clobxml
-                                   ,vr_clobaux
-                                   ,vr_tab_xml_02(vr_idx_xml)); 
-          -- Buscar o próximo
-          vr_idx_xml := vr_tab_xml_02.next(vr_idx_xml);
-        END LOOP;
-        -- Finalizar grupo Desalienações 
-        gene0002.pc_escreve_xml(vr_clobxml
-                               ,vr_clobaux
-                               ,'</gravameB3>');
-      END IF;               
-                    
-    END IF; 
 
+      -- Caso houver Gravames Online e sem Portabilidade
+      IF grvm0001.fn_tem_gravame_online(vr_cdcooper) = 'S' and empr0001.fn_tipo_finalidade(vr_cdcooper,vr_vet_dados.cdfinemp) <> 2 THEN
+      
+        -- Buscar operador
+        OPEN cr_crapope(vr_cdcooper,vr_cdoperad);
+        FETCH cr_crapope INTO rw_crapope;
+        CLOSE cr_crapope;
+        
+        -- Verificar lista de contratos a liquidar
+        IF vr_vet_dados.vtctrliq is not NULL AND vr_vet_dados.vtctrliq.count() > 0 THEN
+          -- Varrer todos os contratos a liquidar
+          FOR idx IN vr_vet_dados.vtctrliq.first..vr_vet_dados.vtctrliq.last LOOP
+            -- Se tem contrato
+            IF vr_vet_dados.vtctrliq(idx) <> '0' THEN
+              -- Buscar bens alienados dos contratos liquidados
+              FOR rw_bpr IN cr_crapbpr(vr_cdcooper,vr_vet_dados.vtctrliq(idx)) LOOP
+                -- Para cada bem encontrado, vamos checar suas situações
+                -- e somente solicitar baixa caso a situação seja:
+                -- 0 - Nao enviados
+                -- 2 - Alienado
+                -- 3 - Processado com critica
+                IF rw_bpr.cdsitgrv IN(0,2,3) THEN
+                  -- Default é as informações do cooperado
+                  vr_nmprimtl := vr_vet_dados.nmprimtl;
+                  vr_nrcpfbem := vr_vet_dados.nrcpfemi;
+                  /* Procedimento para busca do emitente (Inverveniente, se houver) */
+                  pc_busca_emitente(pr_cdcooper => vr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrctremp => vr_vet_dados.vtctrliq(idx)
+                                   ,pr_nrcpfbem => rw_bpr.nrcpfbem
+                                   ,pr_nrcpfemi => vr_nrcpfbem
+                                   ,pr_nmprimtl => vr_nmprimtl); 
+                  -- Cursor para testar se o Chassi enviado está na lista de bens alienáveis do contrato em efetivação
+                  vr_tem_refin := 0;
+                  OPEN cr_bprrefin(vr_cdcooper,rw_bpr.dschassi);
+                  FETCH cr_bprrefin
+                   INTO vr_tem_refin;
+                  CLOSE cr_bprrefin; 
+                  -- Se tem refin do mesmo chassi
+                  IF vr_tem_refin = 1 THEN
+                    -- É obrigatório e Abortamos em caso de erro 
+                    vr_flaborta := 'S';
+                    vr_flgobrig := 'S';
+                  ELSE
+                    -- Não é obrigatório e não Abortamos em caso de erro 
+                    vr_flaborta := 'N';
+                    vr_flgobrig := 'N';
+                  END IF;
+                  -- Montagem das informações para desalienação do bem anterior
+                  pc_gera_xml_desalienacao(pr_cdcooper => vr_cdcooper     -- Cod. Cooperativa
+                                          ,pr_nrdconta => pr_nrdconta     -- Nr. da conta
+                                          ,pr_tpctrato => 90              -- Tp. contrato
+                                          ,pr_nrctrpro => rw_bpr.nrctrpro -- Nr. contrato
+                                          ,pr_idseqbem => rw_bpr.idseqbem -- Sequencial do bem
+                                          ,pr_tpdesali => 'B'             -- Tipo [C]ancelamento ou [B]aixa
+                                          ,pr_flaborta => vr_flaborta     -- Flag S/N se a operação aborta outras na sequencia em caso de erro
+                                          ,pr_flgobrig => vr_flgobrig     -- Flag S/N se a desalienação é obrigatória para prosseguir                                     
+                                           /* SistemaNacionalGravames */
+                                          ,pr_uflicenc => rw_bpr.uflicenc       -- UF                                 
+                                          /* ObjetoContratoCredito */
+                                          ,pr_dschassi => rw_bpr.dschassi       -- Chassi
+                                          ,pr_tpchassi => rw_bpr.tpchassi       -- Tipo Chassi
+                                          ,pr_nrrenava => rw_bpr.nrrenava       -- Renavam
+                                          /* Emitente */
+                                          ,pr_nrcpfemi => vr_nrcpfbem           -- CPF/CNPJ Emitente                                 
+                                          /* Saida */
+                                          ,pr_xmldesal => vr_dsxmltemp          -- XML do Cancelamento de alienação
+                                          ,pr_dscritic => vr_dscritic);         -- Descrição de critica encontrada
+                  -- Em caso de erro
+                  IF vr_dscritic IS NOT NULL THEN
+                    RAISE vr_exc_erro;
+                  END IF;
+                  
+                  -- Caso seja refin
+                  IF vr_tem_refin = 1 THEN
+                    -- Enviar para a lista 01 - Desalienações de Mesmos Veículos
+                    vr_tab_xml_01(rw_bpr.dschassi) := vr_dsxmltemp;
+                  ELSE
+                    -- Enviar para a lista 02 - Desalienações de Veículos Diferentes
+                    vr_tab_xml_02(rw_bpr.dschassi) := vr_dsxmltemp;
+                  END IF;
+                END IF;
+              END LOOP;
+            END IF;
+          END LOOP;
+        END IF;
+        
+        -- Tratar mensagem de desalienação de mesmo veículo
+        IF vr_tab_xml_01.count() = 1 THEN
+          vr_dsmensag := gene0007.fn_convert_web_db('O veiculo antigo sera automaticamente baixado do contrato antigo e alienado no novo contrato. Foi verificado se este veiculo nao possui restricoes para alienacao?');    
+        ELSIF vr_tab_xml_01.count() > 1 THEN
+          vr_dsmensag := gene0007.fn_convert_web_db('Os veiculos antigos serao automaticamente baixados do contrato antigo e alienado no novo contrato. Foi verificado se estes veiculos não possuem restricoes para alienacao?');    
+        END IF;  
+        
+        -- Buscar todos os bens do emprestimos em efetivação
+        FOR rw_bpr IN cr_crapbpr(vr_cdcooper,pr_nrctremp) LOOP
+          -- Para cada bem encontrado, vamos checar suas situações
+          -- e somente solicitar alienação caso a situação seja:
+          -- 0 - Nao enviados
+          -- 1 - Em processamento
+          -- 3 - Processado com critica
+          IF rw_bpr.cdsitgrv IN(0,1,3) THEN
+            -- Default é as informações do cooperado
+            vr_nmprimtl := vr_vet_dados.nmprimtl;
+            vr_nrcpfbem := vr_vet_dados.nrcpfemi;
+            /* Procedimento para busca do emitente (Inverveniente, se houver) */
+            pc_busca_emitente(pr_cdcooper => vr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => pr_nrctremp
+                             ,pr_nrcpfbem => rw_bpr.nrcpfbem
+                             ,pr_nrcpfemi => vr_nrcpfbem
+                             ,pr_nmprimtl => vr_nmprimtl);            
+            -- Inclusão
+            pc_gera_xml_alienacao(pr_cdcooper => vr_cdcooper -- Cod. Cooperativa
+                                 ,pr_nrdconta => pr_nrdconta -- Nr. da conta
+                                 ,pr_tpctrato => 90          -- Tp. contrato
+                                 ,pr_nrctrpro => pr_nrctremp -- Nr. contrato
+                                 ,pr_idseqbem => rw_bpr.idseqbem -- Sequencial do bem
+                                 ,pr_flaborta => 'N'             -- Flag S/N se a operação aborta outras na sequencia em caso de erro
+                                 ,pr_flgobrig => 'S'             -- Flag S/N se a operação é obrigatória para prosseguir para próximo fluxo
+                                 /* SistemaNacionalGravames */
+                                 ,pr_uflicenc => rw_bpr.uflicenc -- UF de Licenciamento
+                                 ,pr_tpaliena => '03'            -- Tipo da Alienação
+                                 ,pr_dtlibera => vr_vet_dados.dtlibera -- Data da Liberação
+                                 /* ObjetoContratoCredito */
+                                 ,pr_dschassi => rw_bpr.dschassi -- Chassi
+                                 ,pr_tpchassi => rw_bpr.tpchassi -- Tipo Chassi
+                                 ,pr_ufdplaca => rw_bpr.ufdplaca -- UF
+                                 ,pr_nrdplaca => rw_bpr.nrdplaca -- PLaca
+                                 ,pr_nrrenava => rw_bpr.nrrenava -- Renavam
+                                 ,pr_nranobem => rw_bpr.nranobem -- Ano Fabricacao
+                                 ,pr_nrmodbem => rw_bpr.nrmodbem -- Ano modelo                               
+                                 /* propostaContratoCredito */
+                                 ,pr_nrctremp => pr_nrctremp           -- Contrato
+                                 ,pr_dtmvtolt => vr_vet_dados.dtmvtolt -- Data digitação
+                                 ,pr_qtpreemp => vr_vet_dados.qtpreemp -- Quantidade parcelas
+                                 ,pr_permulta => vr_vet_dados.permulta -- Percentual de Multa
+                                 ,pr_txmensal => vr_vet_dados.txmensal -- Taxa mensal
+                                 ,pr_vlemprst => vr_vet_dados.vlemprst -- Valor Empréstimo
+                                 ,pr_tpemprst => vr_vet_dados.tpemprst -- Tipo Emprestimo
+                                 ,pr_dtdpagto => vr_vet_dados.dtdpagto -- Data da primeira parcela
+                                 ,pr_dtpagfim => vr_vet_dados.dtvencto -- Data da ultima parcela
+                                 /* Emitente */
+                                 ,pr_nrcpfemi => vr_nrcpfbem           -- CPF/CNPJ Emitente
+                                 ,pr_nmemiten => vr_nmprimtl           -- Nome/Razão Social Emitente
+                                 ,pr_dsendere => vr_vet_dados.dsendere -- Logradouro Emitente
+                                 ,pr_nrendere => vr_vet_dados.nrendere -- Numero Emitente
+                                 ,pr_nmbairro => vr_vet_dados.nmbairro -- Nome Bairro Emitente
+                                 ,pr_cdufende => vr_vet_dados.cdufende -- UF Emitente
+                                 ,pr_nrcepend => vr_vet_dados.nrcepend -- CEP Emitente
+                                 ,pr_cdcidade => vr_vet_dados.cdcidcli -- Cidade
+                                 ,pr_nrdddtfc => vr_vet_dados.nrdddass -- DDD Emitente
+                                 ,pr_nrtelefo => vr_vet_dados.nrtelass -- Telefone Emitente
+                                  /* Credor Eh a Coop */
+                                 ,pr_nmcddopa => GENE0007.fn_caract_acento(rw_crapope.nmcidade,1) -- Nome da cidade do PA
+                                 ,pr_cdufdopa => rw_crapope.cdufdcop    -- UF do PA
+                                 ,pr_inpescre => 2                      -- Tipo pessoa Credor
+                                 ,pr_nrcpfcre => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Credor
+                                 ,pr_dsendcre => GENE0007.fn_caract_acento(vr_vet_dados.dsendcre) -- Logradouro Credor
+                                 ,pr_nrendcre => vr_vet_dados.nrendcre -- Numero Credor
+                                 ,pr_nmbaicre => GENE0007.fn_caract_acento(vr_vet_dados.nmbaicre,1) -- Nome Bairro Credor
+                                 ,pr_cdufecre => vr_vet_dados.cdufecre -- UF Credor
+                                 ,pr_cdcidcre => vr_vet_dados.cdcidcre     -- Cidade Credor
+                                 ,pr_nrcepcre => vr_vet_dados.nrcepcre -- CEP Credor
+                                 ,pr_nrdddcre => vr_vet_dados.nrdddenc  -- DDD Credor
+                                 ,pr_nrtelcre => vr_vet_dados.nrtelenc  -- Telefone Credor
+                                 /* Dados do Vendedor */
+                                 ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                                 /* Recebedor do pagamento */
+                                 ,pr_inpesrec => 2                      -- Tipo Pessoa Recebedor (Cooperativa)
+                                 ,pr_nrcpfrec => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Vendedor
+                                 /* Saida */
+                                 ,pr_xmlalien => vr_dsxmltemp  -- XML da alienação
+                                 ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
+            -- Em caso de erro
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;       
+            
+            -- Caso o veículo em alienação já existe em contrato refinanciado
+            IF vr_tab_xml_01.exists(rw_bpr.dschassi) THEN
+              -- Enviar na lista de Alienações de Mesmos Veículos
+              vr_tab_xml_03(rw_bpr.dschassi) := vr_dsxmltemp;
+            ELSE
+              -- Enviar na lista de Alienações de Novos Veículos
+              vr_tab_xml_04(rw_bpr.dschassi) := vr_dsxmltemp;                        
+            END IF;
+                 
+          ELSE
+            -- Se encontramos algum bem com situação Em processamento, Baixado ou Cancelado
+            IF rw_bpr.cdsitgrv IN(1,4,5) THEN
+              -- Gerar critica
+              vr_dscritic := 'Chassi '||rw_bpr.dschassi||' com situacao invalida! Nao sera possivel efetivar a proposta!';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;                         
+        END LOOP;
+        
+        -- Adicionar ao XML a tag raiz as mensagens, aprovação e raiz das alienações
+        gene0002.pc_escreve_xml(vr_clobxml
+                               ,vr_clobaux
+                               , '<mensagem>'||vr_dsmensag||'</mensagem>');
+        
+        -- Primeiro vamos alienar somente os veículos novos
+        IF vr_tab_xml_04.count() > 0 THEN
+          -- Enviar grupo Alienações Novas
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'<gravameB3 nomgrupo="Alienacao de novos veiculos" flgobrig="S">');
+          vr_idx_xml := vr_tab_xml_04.first;
+          LOOP
+            EXIT WHEN vr_idx_xml IS NULL;
+            -- Enviar o mesmo ao CLOB
+            gene0002.pc_escreve_xml(vr_clobxml
+                                     ,vr_clobaux
+                                     ,vr_tab_xml_04(vr_idx_xml)); 
+            -- Buscar o próximo
+            vr_idx_xml := vr_tab_xml_04.next(vr_idx_xml);
+          END LOOP;
+          -- Finalizar grupo Alienações Novas
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'</gravameB3>');
+        END IF;  
+        
+        -- Depois vamos enviar desalienações de mesmos veículos
+        IF vr_tab_xml_01.count() > 0 THEN
+          -- Enviar grupo Alienações Novas
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'<gravameB3 nomgrupo="Baixa de veiculos refinanciados" flgobrig="S">');
+          vr_idx_xml := vr_tab_xml_01.first;
+          LOOP
+            EXIT WHEN vr_idx_xml IS NULL;
+            -- Enviar o mesmo ao CLOB
+            gene0002.pc_escreve_xml(vr_clobxml
+                                     ,vr_clobaux
+                                     ,vr_tab_xml_01(vr_idx_xml)); 
+            -- Buscar o próximo
+            vr_idx_xml := vr_tab_xml_01.next(vr_idx_xml);
+          END LOOP;
+          -- Finalizar grupo Desalienações mesmos veículos
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'</gravameB3>');
+        END IF;             
+        
+        -- Depois vamos alienar mesmos veículos
+        IF vr_tab_xml_03.count() > 0 THEN
+          -- Enviar grupo Alienações Novas
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'<gravameB3 nomgrupo="Alienacao de veiculos refianciados" flgobrig="S">');
+          vr_idx_xml := vr_tab_xml_03.first;
+          LOOP
+            EXIT WHEN vr_idx_xml IS NULL;
+            -- Enviar o mesmo ao CLOB
+            gene0002.pc_escreve_xml(vr_clobxml
+                                     ,vr_clobaux
+                                     ,vr_tab_xml_03(vr_idx_xml)); 
+            -- Buscar o próximo
+            vr_idx_xml := vr_tab_xml_03.next(vr_idx_xml);
+          END LOOP;
+          -- Finalizar grupo Alienações Refin
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'</gravameB3>');
+        END IF;    
+         
+        -- Por fim, vamos baixar veículos diferentes
+        IF vr_tab_xml_02.count() > 0 THEN
+          -- Enviar grupo Alienações Novas
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'<gravameB3 nomgrupo="Baixa de veiculos antigos" flgobrig="S">');
+          vr_idx_xml := vr_tab_xml_02.first;
+          LOOP
+            EXIT WHEN vr_idx_xml IS NULL;
+            -- Enviar o mesmo ao CLOB
+            gene0002.pc_escreve_xml(vr_clobxml
+                                     ,vr_clobaux
+                                     ,vr_tab_xml_02(vr_idx_xml)); 
+            -- Buscar o próximo
+            vr_idx_xml := vr_tab_xml_02.next(vr_idx_xml);
+          END LOOP;
+          -- Finalizar grupo Desalienações 
+          gene0002.pc_escreve_xml(vr_clobxml
+                                 ,vr_clobaux
+                                 ,'</gravameB3>');
+        END IF;               
+                      
+      END IF; 
+    END IF;
+    
     -- Finalizar o XML
     gene0002.pc_escreve_xml(vr_clobxml
                            ,vr_clobaux
@@ -9316,7 +9695,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
          and bpr.cdcooper = epr.cdcooper
          and bpr.nrdconta = epr.nrdconta
          and bpr.nrctrpro = epr.nrctremp
-         and bpr.cdsitgrv <> 0
          and bpr.flgalien = 1
          and bpr.flgalfid = 1
          and bpr.flginclu = 0
@@ -9854,18 +10232,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     END;
   END pc_registrar_baixa_refin;
   
-  -- Efetuar o registro do Gravames somente CDC 
-  PROCEDURE pc_registrar_gravame_CDC(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
-                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
-                                    ,pr_nrctrpro IN crapbpr.nrctrpro%type -- Numero do contrato                               
-                                    ,pr_cdoperad IN crapope.cdoperad%TYPE -- Codigo do Operador
-                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE -- Critica de saida
-                                    ,pr_dscritic OUT VARCHAR2)             -- Descricao de saida
+  -- Montar o XML para registro do Gravames somente CDC 
+  PROCEDURE pc_busca_xml_gravame_CDC(pr_cdcooper IN crapcop.cdcooper%TYPE         -- Numero da cooperativa
+                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE         -- Numero da conta do associado
+                                    ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE         -- Numero do contrato                               
+                                    ,pr_nrcpfven IN tbepr_cdc_vendedor.nrcpf%TYPE -- CPF do Vendedor
+                                    ,pr_cdoperad IN crapope.cdoperad%TYPE         -- Codigo do Operador
+                                    ,pr_dsxmlali OUT VARCHAR2                     -- XML de saida para alienação/desalienação
+                                    ,pr_dscritic OUT VARCHAR2)                    -- Descricao de saida
                                      IS
   BEGIN
   /* .............................................................................
 
-   Procedure: pc_registrar_gravame_CDC            
+   Procedure: pc_busca_xml_gravame_CDC            
    Sistema : Conta-Corrente - Cooperativa de Crédito
    Sigla   : CRED
    Autor   : Marcos Martini (Envolti)
@@ -10013,6 +10392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_permulta => vr_vet_dados.permulta -- Percentual de Multa
                                ,pr_txmensal => vr_vet_dados.txmensal -- Taxa mensal
                                ,pr_vlemprst => vr_vet_dados.vlemprst -- Valor Empréstimo
+                               ,pr_tpemprst => vr_vet_dados.tpemprst -- Tipo Emprestimo
                                ,pr_dtdpagto => vr_vet_dados.dtdpagto -- Data da primeira parcela
                                ,pr_dtpagfim => vr_vet_dados.dtvencto -- Data da ultima parcela
                                /* Emitente */
@@ -10023,6 +10403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_nmbairro => vr_vet_dados.nmbairro -- Nome Bairro Emitente
                                ,pr_cdufende => vr_vet_dados.cdufende -- UF Emitente
                                ,pr_nrcepend => vr_vet_dados.nrcepend -- CEP Emitente
+                               ,pr_cdcidade => vr_vet_dados.cdcidcli -- Cidade
                                ,pr_nrdddtfc => vr_vet_dados.nrdddass -- DDD Emitente
                                ,pr_nrtelefo => vr_vet_dados.nrtelass -- Telefone Emitente
                                 /* Credor Eh a Coop */
@@ -10030,13 +10411,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ,pr_cdufdopa => rw_crapope.cdufdcop    -- UF do PA
                                ,pr_inpescre => 2                      -- Tipo pessoa Credor
                                ,pr_nrcpfcre => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Credor
+                               ,pr_dsendcre => GENE0007.fn_caract_acento(vr_vet_dados.dsendcre) -- Logradouro Credor
+                               ,pr_nrendcre => vr_vet_dados.nrendcre -- Numero Credor
+                               ,pr_nmbaicre => GENE0007.fn_caract_acento(vr_vet_dados.nmbaicre,1) -- Nome Bairro Credor
+                               ,pr_cdufecre => vr_vet_dados.cdufecre  -- UF Credor
+                               ,pr_cdcidcre => vr_vet_dados.cdcidcre  -- Cidade Credor
+                               ,pr_nrcepcre => vr_vet_dados.nrcepcre  -- CEP Credor
                                ,pr_nrdddcre => vr_vet_dados.nrdddenc  -- DDD Credor
                                ,pr_nrtelcre => vr_vet_dados.nrtelenc  -- Telefone Credor
                                /* Dados do Vendedor */
-                               ,pr_nrcpfven => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                               ,pr_nrcpfven => pr_nrcpfven            -- CPF/CNPJ Vendedor
                                /* Recebedor do pagamento */
-                               ,pr_inpesrec => 0 /*crapass.inpessoa*/ -- Tipo Pessoa Vendedor
-                               ,pr_nrcpfrec => 0 /*crapass.nrcpfcgc*/ -- CPF/CNPJ Vendedor
+                               ,pr_inpesrec => 2                      -- Tipo Pessoa Vendedor
+                               ,pr_nrcpfrec => vr_vet_dados.nrdocnpj  -- CPF/CNPJ Vendedor
                                /* Saida */
                                ,pr_xmlalien => vr_dsxmltemp  -- XML da alienação
                                ,pr_dscritic => vr_dscritic); -- Descrição de critica encontrada
@@ -10064,7 +10451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                              ,'</Root>'
                              ,TRUE);      
       -- E converter o CLOB para o XMLType de retorno
-      --pr_retxml := xmltype.createXML(vr_clobxml);
+      pr_dsxmlali := vr_clobxml;
       
       --Fechar Clob e Liberar Memoria  
       dbms_lob.close(vr_clobxml);
@@ -10078,7 +10465,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
         -- Devolvemos código e critica encontradas
-        pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         
         -- Enviar ao log
@@ -10087,14 +10473,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' - '||vr_cdprogra||' --> '|| 
-                                                      'ERRO [registrar_gravame_CDC]: '|| pr_cdcritic || ' - ' || pr_dscritic ||
+                                                      'ERRO [registrar_gravame_CDC]: '|| pr_dscritic ||
                                                       ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||',Nrctrpro:'||pr_nrctrpro);
         
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
-        pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
         
         -- Enviar ao log
@@ -10103,13 +10488,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' - '||vr_cdprogra||' --> '|| 
-                                                      'ERRO [registrar_gravame_CDC]: '|| pr_cdcritic || ' - ' || pr_dscritic ||
+                                                      'ERRO [pc_busca_xml_gravame_CDC]: '|| pr_dscritic ||
                                                       ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||',Nrctrpro:'||pr_nrctrpro);        
         
         -- Efetuar rollback
         ROLLBACK;
     END;
-  END pc_registrar_gravame_CDC;
+  END pc_busca_xml_gravame_CDC;
   
   
 END GRVM0001;
