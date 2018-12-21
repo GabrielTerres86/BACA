@@ -12,6 +12,8 @@
               02/07/2015 - Incluido novos tratamentos e campo para inclusão de EVENTOS,
                            PRJ 229 (Jean Michel).
 
+              07/07/2016 - Ajuste na validação de Data no Cancelamento e reativação (Vanessa).
+
 *****************************************************************************/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1246,6 +1248,7 @@ ELSE
 
 END PROCEDURE.
 
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE valida-facilitador w-html 
 PROCEDURE valida-facilitador:
   
@@ -1258,6 +1261,7 @@ PROCEDURE valida-facilitador:
   DEF VAR aux_datcontr AS DATE NO-UNDO.
   DEF VAR aux_datinite AS DATE NO-UNDO.
   DEF VAR aux_datachou AS DATE NO-UNDO.
+  DEF VAR aux_cdagenci AS INTEGER NO-UNDO.
   
   DEF VAR aux_flgachou AS LOGICAL NO-UNDO INIT FALSE.
     
@@ -1339,10 +1343,11 @@ PROCEDURE valida-facilitador:
           IF aux_flgachou = FALSE THEN
             DO:
 
-              IF aux_datinite = aux_datcontr then
+              IF aux_datinite = aux_datcontr THEN
                 DO:
                   ASSIGN aux_flgachou = TRUE
-                         aux_datachou = aux_datcontr.
+                         aux_datachou = aux_datcontr
+                         aux_cdagenci = crabadp.cdagenci.
                 END.
             END.          
           ASSIGN aux_datcontr = aux_datcontr + 1.        
@@ -1364,9 +1369,12 @@ PROCEDURE valida-facilitador:
                                AND crapcdp.cdevento = crabadp.cdevento
                                AND crapcdp.dtanoage = crabadp.dtanoage
                                AND crapcdp.cdcuseve = 1 /* Honorários */
+                               AND crapcdp.cdagenci = aux_cdagenci
                                AND crapcdp.nrcpfcgc = aux_nrcpfcgc
                                AND crapcdp.nrpropos = aux_nrpropos NO-LOCK NO-ERROR.
         
+          IF AVAILABLE crapcdp THEN
+            DO:
           /* Busca o facilitador associado a proposta */
           FIND gnfacep WHERE gnfacep.idevento = INT(ab_unmap.aux_idevento)
                          AND gnfacep.cdcooper = 0
@@ -1375,7 +1383,8 @@ PROCEDURE valida-facilitador:
         
           IF AVAILABLE gnfacep THEN
             DO: 
-              IF aux_cdfacili = gnfacep.cdfacili THEN
+                  IF aux_cdfacili = gnfacep.cdfacili AND
+                     crabadp.nrseqdig <> crapadp.nrseqdig THEN
                 DO: 
                   
                   DO aux_contador = 1 TO NUM-ENTRIES(aux_dsdiaeve,","):
@@ -1383,7 +1392,7 @@ PROCEDURE valida-facilitador:
                       DO: 
                         FOR FIRST crapcop FIELDS(nmrescop) WHERE crapcop.cdcooper = crabadp.cdcooper NO-LOCK. END.
                         FOR FIRST crapedp FIELDS(nmevento) WHERE crapedp.idevento = crabadp.idevento AND crapedp.cdcooper = 0 AND crapedp.dtanoage = 0 AND crapedp.cdevento = crabadp.cdevento NO-LOCK. END.
-                        FOR FIRST crapage FIELDS(nmresage) WHERE crapage.cdcooper = crabadp.cdcooper AND crapage.cdagenci = crabadp.cdagenci NO-LOCK. END.
+                            FOR FIRST crapage FIELDS(nmresage) WHERE crapage.cdcooper = crabadp.cdcooper AND crapage.cdagenci = aux_cdagenci NO-LOCK. END.
                         ASSIGN vr_errfacil = "Facilitador com evento já cadastrado para esta data, confirma inclusão? Cooperativa: " + STRING(crapcop.nmrescop) + ", Evento: " + STRING(crapedp.nmevento) + ", PA: " + STRING(crapage.nmresage) + 
                         ", Data: " + STRING(aux_datachou) + ".".  
                         /*ASSIGN msg-erro = "Facilitador já cadastrado em outro evento.".*/
@@ -1394,6 +1403,7 @@ PROCEDURE valida-facilitador:
                 END.          
             END.
       END.
+  END.
   END.
   
 END PROCEDURE.
