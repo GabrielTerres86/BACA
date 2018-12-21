@@ -240,7 +240,7 @@ PROCEDURE pc_realiza_provisao(pr_cdcooper             IN tbcc_provisao_especie.c
         Sistema : CECRED
         Sigla   :
         Autor   : Marcelo Telles Coelho
-        Data    : Jun/17.                    Ultima atualizacao:
+        Data    : Jun/17.                    Ultima atualizacao: 14/12/2018 
 
         Dados referentes ao programa:
 
@@ -250,7 +250,9 @@ PROCEDURE pc_realiza_provisao(pr_cdcooper             IN tbcc_provisao_especie.c
 
         Observacao: -----
 
-        Alteracoes:
+        Alteracoes: 14/12/2018 - Andreatta - Mouts : Ajustar para utilizar fn_Sequence e 
+                    não mais max na busca no nrsequen para tbcc_operacoes_diarias
+                    
     ..............................................................................*/
 
     -- Variável de críticas
@@ -290,18 +292,6 @@ PROCEDURE pc_realiza_provisao(pr_cdcooper             IN tbcc_provisao_especie.c
         FROM crapdat
        WHERE cdcooper = pr_cdcooper;
     rw_crapdat cr_crapdat%ROWTYPE;
-
-    -- gera nrsequencia
-    CURSOR cr_nrseq_oper_diaria(pr_cdcooper IN tbcc_operacoes_diarias.cdcooper%TYPE
-                               ,pr_nrdconta IN tbcc_operacoes_diarias.nrdconta%TYPE
-                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE)IS
-    SELECT NVL(MAX(d.nrsequen),0)+1 as nrseq
-    FROM tbcc_operacoes_diarias d
-    WHERE d.cdcooper   = pr_cdcooper
-      AND d.nrdconta   = pr_nrdconta
-      AND d.cdoperacao = 22
-      AND d.dtoperacao = pr_dtmvtolt;
-    rw_nrseq_oper_diaria cr_nrseq_oper_diaria%ROWTYPE;
 
   BEGIN -- Inicio pc_realiza_provisao
     
@@ -368,14 +358,7 @@ PROCEDURE pc_realiza_provisao(pr_cdcooper             IN tbcc_provisao_especie.c
         RAISE vr_exc_saida;
       END;
     END IF;
-    -- Leitura do nrseq do tbcc_operacoes_diarias
-    OPEN cr_nrseq_oper_diaria(pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => pr_nrdconta
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
-    FETCH cr_nrseq_oper_diaria
-      INTO rw_nrseq_oper_diaria;
-    -- Fechar o cursor
-    CLOSE cr_nrseq_oper_diaria;
+    
     --
     BEGIN 
           
@@ -391,7 +374,7 @@ PROCEDURE pc_realiza_provisao(pr_cdcooper             IN tbcc_provisao_especie.c
              ,pr_nrdconta
              ,22
              ,rw_crapdat.dtmvtolt
-             ,rw_nrseq_oper_diaria.nrseq
+             ,fn_sequence('TBCC_OPERACOES_DIARIAS','NRSEQUEN',to_char(pr_cdcooper)||';'||to_char(pr_nrdconta)||';22;'||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr'))
              ,0
              ,pr_vloperacao);
     EXCEPTION

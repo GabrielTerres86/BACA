@@ -6729,7 +6729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jean Michel
-     Data    : Setembro/2015                     Ultima atualizacao: 04/04/2016
+     Data    : Setembro/2015                     Ultima atualizacao: 14/12/2018
 
      Dados referentes ao programa:
 
@@ -6744,7 +6744,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 				 10/02/2016 - Alteracao de parametro Fato Geradorde, rw_crapdat.dtmvtolt para
 							  pr_dtmvtolt, SD 397975 (Jean Michel).
 
-                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel).             
+                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel). 
+                 
+                 14/12/2018 - Andreatta - Mouts : Ajustar para utilizar fn_Sequence e 
+                             não mais max na busca no nrsequen para tbcc_operacoes_diarias            
 
   ............................................................................ */
 
@@ -6769,7 +6772,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       SELECT
         nvl(sum(tbc2.soma),0)       AS numregis
-        ,NVL(MAX(tbc2.nrsequen),0) AS nrsequen
       from
       (select tbc.fldescontapacote, tbc.nrsequen,
               (CASE WHEN (tbc.cdoperacao = 1 and tbc.fldescontapacote = 1)
@@ -7241,7 +7243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
             CLOSE cr_tbcc_operacoes_diarias;
             
-            vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
+            vr_nrsequen := fn_sequence('TBCC_OPERACOES_DIARIAS','NRSEQUEN',to_char(pr_cdcooper)||';'||to_char(pr_nrdconta)||';'||to_char(pr_tipotari)||';'||to_char(pr_dtmvtolt,'dd/mm/rrrr'));
             vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
             IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes
@@ -7363,8 +7365,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
           FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
           CLOSE cr_tbcc_operacoes_diarias;
-            
-          vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
+          
+          vr_nrsequen := fn_sequence('TBCC_OPERACOES_DIARIAS','NRSEQUEN',to_char(pr_cdcooper)||';'||to_char(pr_nrdconta)||';'||to_char(pr_tipotari)||';'||to_char(pr_dtmvtolt,'dd/mm/rrrr'));
           vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
           IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes
@@ -7484,7 +7486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
     CLOSE cr_tbcc_operacoes_diarias;
   
-    vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
+    vr_nrsequen := fn_sequence('TBCC_OPERACOES_DIARIAS','NRSEQUEN',to_char(pr_cdcooper)||';'||to_char(pr_nrdconta)||';'||to_char(pr_tipotari)||';'||to_char(pr_dtmvtolt,'dd/mm/rrrr'));
 
     -- Se nao possui servico de saque no pacote, verifica parametros de insencao da cooperativa
     IF NOT vr_saqativo THEN
