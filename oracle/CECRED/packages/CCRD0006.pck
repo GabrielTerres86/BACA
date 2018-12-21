@@ -482,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao: 
+  --  Data    : Junho/2017                     Ultima Atualizacao: 21/12/2018
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -498,6 +498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                > PRB0040361: Não efetuar o envio do arquivo ASLC033 (quando possuir qualquer movimentação
                                              da CABAL) enquanto não for recebido todo o valor finaneiciro para demais bandeiras.
                                              (Adriano).
+                                             
+                  21/12/2018 - Ajustes para tratar estouro de variável 
+                               (Adriano - INC0029689).
  
 */
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -7699,7 +7702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
-    vr_nrdconta      crapass.nrdconta%TYPE;
+    vr_nrdconta      NUMBER(25);
     vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
@@ -8147,7 +8150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
-    vr_nrdconta      crapass.nrdconta%TYPE;
+    vr_nrdconta      NUMBER(25);
     vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
