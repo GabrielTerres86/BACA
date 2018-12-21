@@ -1,4 +1,3 @@
-	
 <?
 /*!
  * FONTE        : substitui_bem.php
@@ -18,10 +17,10 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
+
     $nrdconta		= (isset($_POST['nrdconta']))   ? $_POST['nrdconta']   : 0  ;
 	$nrctremp		= (isset($_POST['nrctremp']))   ? $_POST['nrctremp']   : 0  ;
 	$tpctrato		= (isset($_POST['tpctrato']))   ? $_POST['tpctrato']   : 0  ;
-
 
     $dscatbem 		= (isset($_POST['dscatbem']))   ? $_POST['dscatbem']   : 0  ;
 	$dstipbem 		= (isset($_POST['dstipbem']))   ? $_POST['dstipbem']   : 0  ;
@@ -80,7 +79,6 @@
                         ,$glbvars["idorigem"]
                         ,$glbvars["cdoperad"]
                         ,"</Root>");
-
     $xmlObjectAlteracao = getObjectXML($xmlResultAlteracao);
 
     if (strtoupper($xmlObjectAlteracao->roottag->tags[0]->name) == 'ERRO') {
@@ -88,14 +86,14 @@
         $mtdErro = 'bloqueiaFundo(divRotina);';
         if ($msgErro != "") {
             echo 'intervenienteValidado=false;';
-            echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';            
+            echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
         }
     }
     else{
         echo 'hideMsgAguardo();';
         echo "$('#dtmvtolt', '#frmTipo').val('".$glbvars['dtmvtolt']."');";
         $nraditiv = $xmlObjectAlteracao->roottag->tags[0]->attributes['NRADITIV'];
-        
+
         echo "nraditiv ='".$nraditiv."';";
         echo "$('select, input', '#frmTipo').desabilitaCampo();";
 

@@ -66,8 +66,8 @@
 									  <? echo getByTagName($detalhesGrav[$i]->tags,'nrcpfcgc'); ?>
 							</td */ ?>
 							<td><span><? echo getByTagName($detalhesGrav[$i]->tags,'nrctrpro'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'nrctrpro'); ?></td>
-							<td><span><? echo getByTagName($detalhesGrav[$i]->tags,'dschassi'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dschassi'); ?></td>
-							<td><span><? echo getByTagName($detalhesGrav[$i]->tags,'dsbemfin'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dsbemfin'); ?></td>
+							<td class="uppercase"><span><? echo getByTagName($detalhesGrav[$i]->tags,'dschassi'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dschassi'); ?></td>
+							<td class="uppercase"><span><? echo getByTagName($detalhesGrav[$i]->tags,'dsbemfin'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dsbemfin'); ?></td>
 							<td class="dtenvgrv"><span><? echo getByTagName($detalhesGrav[$i]->tags,'dtenvgrv'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dtenvgrv'); ?></td>
 							<td class="dtretgrv"><span><? echo getByTagName($detalhesGrav[$i]->tags,'dtretgrv'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dtretgrv'); ?></td>
 							<td><span><? echo getByTagName($detalhesGrav[$i]->tags,'dssituac'); ?></span><? echo getByTagName($detalhesGrav[$i]->tags,'dssituac'); ?></td>
@@ -79,12 +79,12 @@
 		</table>
 	</div>
 </div>
-<? if ($qtregist > 0) { ?>
+<? if ($qtregist > 0) { /*
 	<div style="height:50px;">
 		<table width="100%">
 			<tbody>
 				<tr>
-					<td width="100px" class="txtNormalBold" style="text-align:right;">
+					<td class="txtNormalBold" style="text-align:left; width: 50px;">
 						<label for="dsdregio" align="right" style="width:100%;">Retorno:</label>	
 					</td>
 					<td>
@@ -93,7 +93,27 @@
 				</tr>
 			</tbody>
 		</table>
+	</div> */
+	?>
+	<div id="divObservacao" style="height:50px;">
+		<table style="border-collapse: collapse; width: 100%; margin-top: 3%;">
+			<thead>
+				<tr style="border-bottom: 1px dotted #999;">
+					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #f7d3ce; text-align: center;" ><? echo utf8ToHtml('Retorno');  ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="linObs" id="dsretorLinha" style="height: 16px; background-color: #ffbaad;">
+					<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333; text-align: left;" >
+					<? if ($qtregist > 0) {
+						echo getByTagName($detalhesGrav[0]->tags,'desretor');
+					} ?>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
+
     <div id="divPesquisaRodape" class="divPesquisaRodape">
       <table>
         <tr>
@@ -131,9 +151,11 @@
 
 		$('table > tbody > tr', divRegistro).click( function() {
             num = $(this).attr('id').replace('linObsClick_','');
-			$('#dsretorLinha').val( $('#dsretorLinha' + num).val() );
+			$('#dsretorLinha td').html( $('#dsretorLinha' + num).val() );
 		});
 
+		$('.uppercase').each(function(){ $(this).css({'text-transform':'uppercase'}); });
+		$('div.divRegistros table tr td:nth-of-type(8)').css({'max-width':'190px'});
 		//formataFormularioBens();
 		//formataTabelaBens();
 

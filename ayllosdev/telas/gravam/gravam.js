@@ -2,11 +2,11 @@
  Fonte: gravam.js                                                  
  Autor: Andrei - RKAM
  Data : Maio/2016                Última Alteração: 11/04/2017
-                                                                   
+
  Objetivo  : Cadastro de servicos ofertados na tela GRAVAM
-                                                                   	 
+
  Alterações: 14/07/2016 - Ajustes para validar o chassi (Andrei - RKAM).
-                
+
 			 10/08/2016 - Ajuste para aumentar tamanho dos campos apresentados
                           na tela para que seja possível visualizar toda sua informação
                           (Adriano).
@@ -14,13 +14,13 @@
 			 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES.
 						  Adicionada validações com a senha do coordenador para 
 						  as opções 'M', 'A' e 'B'. Projeto 369 (Lombardi).
-						  
+
              11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
-			 
+
 			 12/09/2018 - Unificação das opções 'C', 'A', 'B' e 'M'.
 						  Unificação das opções 'L' e 'J'.
 						  Unificação das opções 'G' e 'R'.(Diogo - Envolti)
-						  
+
 			 12/09/2018 - Unificação das opções 'H' e 'I'. (Thaise - Envolti)
 ************************************************************************/
 
@@ -441,24 +441,24 @@ function formataFiltroImpressao() {
 
 	//Remover caracteres especiais
 	$('#dschassi', '#divFiltroImpressao').unbind('keyup').bind('keyup', function(e){
-			var re = /[^\w\s]/gi;
-			
-			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
-				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
-			}			
-			
-			re = /[\Q\q\I\i\O\o\_]/g;
-			
-			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
-				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
-			}			
-			
-			re = / /g;
-			
-			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
-				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
-			}						
-		});
+		var re = /[^\w\s]/gi;
+		
+		if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+			$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+		}			
+		
+		re = /[\Q\q\I\i\O\o\_]/g;
+		
+		if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+			$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+		}			
+		
+		re = / /g;
+		
+		if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+			$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+		}						
+	});
 		
 	$('#dschassi', '#divFiltroImpressao').unbind('blur').bind('blur', function(){
 		$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(/[^\w\s]/gi, ''));
@@ -562,7 +562,7 @@ function formataFiltroArquivo() {
     });
 
     if ($('#cddopcao', '#frmCab').val() == 'G') {
-    
+
         //Define ação para CLICK no botão de Concluir
         //$("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
@@ -589,7 +589,7 @@ function formataFiltroArquivo() {
         });
 
     }
-    
+
     //Define ação para CLICK no botão de Voltar
     $("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
 
@@ -626,15 +626,15 @@ function formataFormularioBens() {
     $('label[for="ufdplaca"]', "#frmBens").addClass("rotulo").css({ "margin-right": "63px" });
     $('label[for="nrdplaca"]', "#frmBens").addClass("rotulo-linha").css({ "width": "15px", "margin-left": "0" });
 	$('label[for="nrmodbem"]', "#frmBens").addClass("rotulo-linha");//.css({ "padding-left": "54px", "margin-right": "31px" });
-	$('label[for="nranobem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "22px", "width": "110px", "margin-left": "0" });
+	$('label[for="nranobem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "20px", "width": "112px", "margin-left": "0" });
 	$('label[for="uflicenc"]', "#frmBens").addClass("rotulo").css({ "margin-right": "11px" });
-    $('label[for="dscpfbem"]', "#frmBens").addClass("rotulo-linha").css({ "margin-left": "190px" });
+    $('label[for="dscpfbem"]', "#frmBens").addClass("rotulo-linha").css({ "margin-left": "182px" });
     $('label[for="vlctrgrv"]', "#frmBens").addClass("rotulo").css({ "margin-right": "62px" });
     $('label[for="dtoperac"]', "#frmBens").addClass("rotulo-linha");//.css({ "padding-left": "51px" });
     $('label[for="dsjustif"]', "#frmBens").addClass("rotulo").css({ "margin-right": "45px" });
     
     // campo
-	$('#ddl_descrbem', '#frmBens').css({ 'width': '588px', 'text-align': 'left' });
+	$('#ddl_descrbem', '#frmBens').css({ 'width': '582px', 'text-align': 'left' });
     $('#dtmvttel', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo(); //.addClass('data');
 	$("#dssitgrv", "#frmBens").css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $("#dsseqbem", "#frmBens").css({ 'width': '410px', 'text-align': 'left' }).desabilitaCampo();
@@ -847,7 +847,7 @@ function formataFormularioBens() {
 function carregarBotoesIniciais(possuictr, cdsitgrv, idseqbem, tpctrpro, tpjustif, dsjustif){
 	displayNoneButton();
 	
-	if(tpjustif == "2"){
+	if (tpjustif == "2") {
         $('label[for="dsjustif"]', "#frmBens").text('Justificativa da baixa:');
     } else {
         $('label[for="dsjustif"]', "#frmBens").text('Justificativa:');
@@ -952,8 +952,11 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idse
         $("#dschassi", "#divBens").focus();
 
 	} else if (optButton == 'B') {
-		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });  
-		$('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
+
+		var justi = retornaJustificativa( $('#dsjustif', '#divJustificativa').val() , "BAI");
+
+		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#dsjustif', '#divJustificativa').val(justi).habilitaCampo().focus();
 
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
             if(tpdopcao == 'M'){
@@ -970,8 +973,11 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idse
         return false;
 
 	} else if (optButton == 'X') {
-        $('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });  
-        $('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
+
+		var justi = retornaJustificativa($('#dsjustif', '#divJustificativa').val(), "CAN");
+
+        $('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
+        $('#dsjustif', '#divJustificativa').val(justi).habilitaCampo().focus();
 
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
             if(tpdopcao == 'M'){
@@ -2139,8 +2145,8 @@ function gerarHistoricoGravames(){
 				$.ajax({
 					type: 'POST',
 					dataType: 'html',
-					//url: UrlSite + 'telas/manbem/historico_gravames.php',
-					url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+					url: UrlSite + 'telas/manbem/historico_gravames.php',
+					//url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 					data: {
 						nrdconta: nrdconta,
 						nrctrpro: nrctrpro,
@@ -2334,8 +2340,7 @@ function baixaManual(idseqbem,tpctrpro) {
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
     var nrgravam = $("#nrgravam", "#frmBens").val();
     var dsjustif = $("#dsjustif", "#frmBens").val().replace(/\r\n/g, ' ');
-
-    idseqbem = $('#ddl_descrbem', '#frmBens').val();
+    var idseqbem = $('#ddl_descrbem', '#frmBens').val();
     
     $('input,select,textarea', '#frmBens').removeClass('campoErro');
 
@@ -2361,17 +2366,15 @@ function baixaManual(idseqbem,tpctrpro) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
-
             hideMsgAguardo();
             try {
                 eval(response);
                 if(response.indexOf('nrdconta') > -1 || response.indexOf('nrctrpro') > -1 || response.indexOf('nrgravam') > -1 || response.indexOf('tpctrpro') > -1 || response.indexOf('idseqbem') > -1 || response.indexOf('dsjustif') > -1){ 
                     var id = $('#ddl_descrbem', '#frmBens').val();
                     var tr = $('.divRegistros table').find('tr#' + id);
-                    controlaCampos('B', $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
+                    //controlaCampos('B', $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
                 } else {
-                    $('#btVoltar').trigger('click');
-                }
+                    
             } catch (error) {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
             }
@@ -2540,6 +2543,7 @@ function inclusaoAlienacao( ) {
             dtmvttel: dtmvttel,
             nrgravam: nrgravam,
             idseqbem: idseqbem,
+			tpinclus: "A",
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2563,4 +2567,28 @@ function inclusaoAlienacao( ) {
     });
 
     return false;
+}
+
+function retornaJustificativa(dsjustif, tpjustif) {
+	
+	var lines = dsjustif.split('\n');
+	var arrjustif = [];
+	var txtjustif = "";
+
+	for (var i = 0; i < lines.length; i++) {
+		var texto = lines[i].split(': ');
+		switch ( texto[0] ) {
+			case "Inclusao Manual":
+				arrjustif["INC"] = texto[1];
+				break;
+			case "Baixa Manual":
+				arrjustif["BAI"] = texto[1];
+				break;
+			case "Canc. Manual":
+				arrjustif["CAN"] = texto[1];
+				break;
+		}
+	}
+
+	return arrjustif[tpjustif];
 }

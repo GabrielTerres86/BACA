@@ -7,33 +7,33 @@ var idElementValor = "vlfipbem";
 $(function(){
 
     $("#"+idElementTpVeiulo).change(function(){
-        trataCamposFipe($(this));       
+        trataCamposFipe($(this));
         if(validaValorCombo($(this)))
         {
             var urlPagina= "telas/manbem/fipe/busca_marcas.php";
-            var tipoVeiculo = trataTipoVeiculo($(this).val());
-            var data = jQuery.param({ idelhtml:idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
-            buscaFipeServico(urlPagina,data);				
+            var tipoVeiculo = trataTipoVeiculo( $(this).val() );
+            var data = jQuery.param({ idelhtml:idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax' });
+            buscaFipeServico(urlPagina,data);
         }
     });
     $("#"+idElementMarca).change(function(){
-        trataCamposFipe($(this)); 
+        trataCamposFipe($(this));
         if(validaValorCombo($(this)))
         {
             var urlPagina= "telas/manbem/fipe/busca_modelos.php";
 			var cdTipoVeiculo = trataTipoVeiculo($('#'+idElementTpVeiulo).val());
             var cdMarcaFipe = $(this).val();
             var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax'});
-            buscaFipeServico(urlPagina,data);	
+            buscaFipeServico(urlPagina,data);
         }		
     });
     $("#"+idElementModelo).change(function(){
-        trataCamposFipe($(this)); 
+        trataCamposFipe($(this));
         if(validaValorCombo($(this)))
         {
             var urlPagina= "telas/manbem/fipe/busca_anos.php";
-            var cdMarcaFipe = $("#"+idElementMarca).val();	
-            var cdModeloFipe = $(this).val();        
+            var cdMarcaFipe = $("#"+idElementMarca).val();
+            var cdModeloFipe = $(this).val();
             var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax'});
             buscaFipeServico(urlPagina,data);	
         }
@@ -48,12 +48,12 @@ $(function(){
             var cdAnoFipe;
 			if(modeloBem == '') {
 				//cdAnoFipe = $(this).val();
-				arrPart = $(this).text().split(" ");
+				arrPart = $("option:selected", this).text().split(" ");
 				cdAnoFipe = arrPart[0];
 			} else { 
 				cdAnoFipe = modeloBem; 
 			}
-            var data = jQuery.param({idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax'});
+            var data = jQuery.param({idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, cdcooper:glbCdCooper, redirect: 'script_ajax'});
             buscaFipeServico(urlPagina,data);
         }
     });

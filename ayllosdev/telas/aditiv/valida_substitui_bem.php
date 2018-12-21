@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : manter_rotina.php
+ * FONTE        : valida_substitui_bem.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 28/07/2011
  * OBJETIVO     : Rotina para manter as operações da tela EXTPPR
@@ -38,12 +38,12 @@
 	$dscorbem		= (isset($_POST['dscorbem']))   ? $_POST['dscorbem']   : '' ;
 	$ufdplaca		= (isset($_POST['ufdplaca']))   ? $_POST['ufdplaca']   : '' ;
 	$nrdplaca		= (isset($_POST['nrdplaca']))   ? str_replace('-','',$_POST['nrdplaca']) : '' ;
-	$nrrenava		= (isset($_POST['nrrenava']))   ? $_POST['nrrenava']   : 0  ;
+	$nrrenava		= (isset($_POST['nrrenava']))   ? $_POST['nrrenava']   : 0 ;
 	$uflicenc		= (isset($_POST['uflicenc']))   ? $_POST['uflicenc']   : '' ;
 	$nrcpfcgc       = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0 ;
-	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
-	$dsmarbem 		= (isset($_POST['dsmarbem']))   ? $_POST['dsmarbem']   : 0  ;
-	$vlfipbem 		= (isset($_POST['vlfipbem']))   ? $_POST['vlfipbem']   : 0  ;
+	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0 ;
+	$dsmarbem 		= (isset($_POST['dsmarbem']))   ? $_POST['dsmarbem']   : 0 ;
+	$vlfipbem 		= (isset($_POST['vlfipbem']))   ? $_POST['vlfipbem']   : 0 ;
 
 	// Montar o xml de Requisicao
 	$xmlCarregaDados  = "";
@@ -82,7 +82,7 @@
 						,$glbvars["cdoperad"]
 						,"</Root>");
 	$xmlObject = getObjectXML($xmlResult);
-	echo 'hideMsgAguardo();';
+	//echo 'hideMsgAguardo();';
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
@@ -116,7 +116,7 @@
     	if ($aprovacao == 1) {
 			$funcaoSim = 'SenhaCoordenador();';
     	} else {
-      		$funcaoSim = 'SubstituiBem("PROCALIENA");showMsgAguardo("Aguarde, gerando impress&atilde;o ...");';
+      		$funcaoSim = 'SubstituiBem("PROCALIENA");showMsgAguardo("Aguarde, gerando requisi&ccedil;&atilde;o ...");';
     	}
 
     	//echo ("console.log('aprovacao: $aprovacao');");

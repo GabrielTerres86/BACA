@@ -6,7 +6,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 	$('#divUsoGenerico').css('width','1075px');
 	exibeRotina($('#divUsoGenerico'));
 
-	var dschassi = $("#dschassi","#frmTipo").val();
+	var dschassi = $("#dschassi","#frmTipo").val().toUpperCase();
 	var cdcoptel = cdcooper;
 	var nrctrpro = nrctremp;
 
@@ -14,8 +14,8 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		//url: UrlSite + 'telas/manbem/historico_gravames.php',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		url: UrlSite + 'telas/manbem/historico_gravames.php',
+		//url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 		data: {
 			operacao: operacao,
 			nrdconta: nrdconta,
@@ -45,7 +45,6 @@ function controlaLayoutHistoricoGravames() {
 	var linha       = $('table > tbody > tr', divRegistro);
 	divRegistro.css({'height':'250px'});
 	$('div.divRegistros').css({'height':'200px'});
-	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
 	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
 	$('div.divRegistros .dtretgrv').css({'width':'25px'});
 

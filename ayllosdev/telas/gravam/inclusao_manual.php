@@ -84,14 +84,15 @@ if ($tpinclus == "M") {
 		}
 		echo "showError('inform','".$msgReturn."','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
 	}
+	echo '$(\'#ddl_descrbem', '#frmBens\').change();';
 
-	function validaDados() {
+	function validaDados($tpinclus) {
 
 		IF($GLOBALS["dtmvttel"] == '' ) {
 			exibirErro('error','Data do registro deve ser informada!.','Alerta - Ayllos','focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
 		}
 
-		IF($GLOBALS["dsjustif"] == '' ) {
+		IF($GLOBALS["dsjustif"] == '' && $tpinclus != "A") {
 			exibirErro('error','Justificativa deve ser informada!','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
 

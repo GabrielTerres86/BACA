@@ -71,12 +71,14 @@
 		parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
 		processarBaixaCancel($xmlResult, 2, $Url_SOA, $Auth_SOA);
 	} else {
-		if($tpcancel == "1"){ 
+		/* if($tpcancel == "1"){
     		echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
   		} else{
     		echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
-  		}
+  		}*/
+		echo "showError('inform','Registro de cancelamento manual efetuada com sucesso! Ao efetuar o cancelamento manual, &eacute; necess&aacute;rio efetuar o cancelamento manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
 	}
+	echo '$(\'#ddl_descrbem', '#frmBens\').change();';
 	  
   
   function validaDados(){
@@ -102,7 +104,7 @@
 		}
 		
 		IF($GLOBALS["dsjustif"] == '' ){ 
-			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','$(\'#dsjustif\', \'#divJustificativa\').habilitaCampo();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}		
 	}	
   

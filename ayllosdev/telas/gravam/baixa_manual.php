@@ -74,7 +74,7 @@
 	} else {
 		echo "showError('inform','Registro de baixa manual efetuada com sucesso! Ao efetuar a baixa manual, &eacute; necess&aacute;rio efetuar a baixa manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
 	}
-	
+	echo '$(\'#ddl_descrbem', '#frmBens\').change();';
 	  
   
   	function validaDados(){
@@ -100,7 +100,7 @@
 		}
     
     	IF($GLOBALS["dsjstbxa"] == '' ){ 
-			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Ayllos','$(\'#dsjustif\', \'#divJustificativa\').habilitaCampo();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
 				
 	}	

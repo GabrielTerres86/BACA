@@ -2456,7 +2456,8 @@ $('#divUsoGenerico').css({ 'width': '90em', 'left': '19em' });
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		url: UrlSite + 'telas/manbem/historico_gravames.php',
+		//url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 		data: {
 			operacao: operacao,
 			nrdconta: nrdconta,

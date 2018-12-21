@@ -55,11 +55,18 @@
 		return $coop;
 	}
 
-	//Função para pegar a URL que vem nos atributos do XML
+	//Função para pegar a codigo operacao que vem nos atributos do XML
 	function getCdOperac($xml) {
 		$att = $xml->attributes();
 		$operac = $att['cdoperac'];
 		return $operac;
+	}
+
+	//Função para pegar a idseqbem que vem nos atributos do XML
+	function getCdIdseqbem($xml) {
+		$att = $xml->attributes();
+		$idseqbem = $att['idseqbem'];
+		return $idseqbem;
 	}
 
 	function convertXMLtoJSONAliena($xml) {
@@ -100,6 +107,9 @@
     		$xmlReturn = ChamaServico($url, "POST", $arrayHeader, $data);
 			$GLOBALS["getDate"] = date("d/m/Y H:i:s");
 		}
+		if ($xmlReturn == "null") {
+			echo "hideMsgAguardo();showError('error','Erro de comunica&ccedil;&atilde;o com CETIP.','Notifica&ccedil;&atilde;o - Ayllos','');"; die;
+		}
 		return $xmlReturn;
 	}
 
@@ -115,7 +125,7 @@
         return $resultXml;
     }
 
-    function verificarRetornoAliena($xmlStr, $cdoperac) {
+    function verificarRetornoAliena($xmlStr, $cdoperac, $cdidseqbem) {
     	$xmlRet = getObjectXML($xmlStr);
     	//$GLOBALS["identificador"] = $xmlRet->roottag->tags[0]->tags[3]->cdata;
     	//$dataInteracao = ($xmlRet->roottag->tags[0]->tags[2]->cdata) ? timestampParaDateTime($xmlRet->roottag->tags[0]->tags[2]->cdata) : "";
@@ -129,12 +139,20 @@
     	} else {
     		echo 'showError("error","'.utf8ToHtml('N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG').'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
     	}
-		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], retornarMensagemErro($xmlRet), $dataInteracao, $idRegistro, 'S', $cdoperac,  $identificador); //$retGravame, $retContr, $identificador);
+		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], retornarMensagemErro($xmlRet), $dataInteracao, $idRegistro, 'S', $cdoperac,  $identificador, $cdidseqbem); //$retGravame, $retContr, $identificador);
     }
 
-	//Função para verificar o retorno do XML de alienação 
+	//Função para verificar o retorno do XML de alienação
+	/*
+	1 - Gravar o acionamento da consulta somente antes de chamar a gravação da inclusão manual, e quando a passagem de parâmetros:
+	1.1 - Caso a consulta retornou que houve alienação, enviar na tag nrgravam o numero do gravame encontrado, é o mesmo que foi copiado pro campo numero de registro e flsituac = 'S';
+	1.2 - Caso a consulta retornou que não houve alienação, enviar 0 na tag nrgravam e flsituac = 'N';
+	Com isso eu altero internamento para mudar a situação para sucesso ou critica, dependendo do valor que vier neste campo, ok?
+	*/
     function verificarRetornoConsulta($xmlStr) {
     	$cdoperac = 4;
+		$flsituac = 'S';
+		$idRegistro = 0;
     	$xmlRet = getObjectXML($xmlStr);
     	if ( $GLOBALS["httpcode"] == 200 ) {
 			$msgErro = false;
@@ -155,7 +173,7 @@
 							echo "atualizarDadosAlienacaoAuto('".$dataInteracao."', '".$idRegistro."');";
 							//$funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');inclusaoManual(\'A\');';
 							//echo "showConfirmacao('".utf8ToHtml('Confirmar gravação da alienação automática?')."', 'Confirma&ccedil;&atilde;o - Ayllos', ".$funcao.", '', 'sim.gif', 'nao.gif');";
-							echo "showError('inform','Alienação confirmada no SNG','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+							echo "showError('inform','".utf8ToHtml('Alienação confirmada no SNG')."','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
 						} else {
 							$msgErro = true;
 						}
@@ -166,25 +184,26 @@
 					$msgErro = true;
 				}
 			}
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'N', $cdoperac, '');//, '', '');
 			if ($msgErro) {
 				//exibirErro('error','N&atilde;o foi poss&iacute;vel confirmar aliena&ccedil;&atilde;o no SNG','Alerta - Ayllos','',false);
 				$funcao = '$("html, body").animate({scrollTop:0}, "fast");formatarInclusaoManual();';
 				echo "showConfirmacao('".utf8ToHtml('Não foi possível confirmar alienação no SNG, deseja informar alienação manual?')."', 'Confirma&ccedil;&atilde;o - Ayllos', '".$funcao."', \"$('#btVoltar').trigger('click');\", 'sim.gif', 'nao.gif');";
+				$flsituac = 'N';
 			}
+			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $idRegistro);//, '', '');
 		} else {
 			$errorMessage = retornarMensagemErro($xmlRet);
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'N', $cdoperac, '');//, '', '');
+			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'N', $cdoperac, $idRegistro);//, '', '');
 			exibirErro('error',$msgErro,'Alerta - Ayllos','formatarInclusaoManual();',false);
 		}
     }
 
     function verificarRetornoBaixaCancel($xmlStr, $cdoperac, $tela) {
+		$errorMessage = $dataInteracao = $idRegistro = '';
     	$xmlRet = getObjectXML($xmlStr);
     	if ($GLOBALS["httpcode"] == 200) {
     		$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[0]->cdata);
     		$idRegistro = $xmlRet->roottag->tags[0]->tags[1]->cdata;
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], '', $dataInteracao, $idRegistro, 'S', $cdoperac, '');//, '', '');
 			if ($cdoperac == 2 && $tela != 'ADITIV') {
 				echo "showError('inform','Cancelamento autom&aacute;tico da aliena&ccedil;&atilde;o efetuada com sucesso no SNG.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
     		} else if($cdoperac == 3 && $tela != 'ADITIV') {
@@ -194,20 +213,20 @@
     		}
     	} else {
     		$errorMessage = retornarMensagemErro($xmlRet);
-			gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, '', '', 'S', $cdoperac, '');//, '', '');
 			if ($cdoperac == 2 && $tela != 'ADITIV') {
-				echo "showError('error','Cancelamento autom&aacute;tico da aliena&ccedil;&atilde;o n&atilde;o confirmada junto ao SNG.','Notifica&ccedil;&atilde;o - Ayllos','');";	
+				echo "showError('error','Cancelamento autom&aacute;tico processada com cr&iacute;tica - verifique','Notifica&ccedil;&atilde;o - Ayllos','');";	
 			} else if ($cdoperac == 3 && $tela != 'ADITIV') {
-				echo "showError('error','Baixa autom&aacute;tica da aliena&ccedil;&atilde;o n&atilde;o confirmada junto ao SNG.','Notifica&ccedil;&atilde;o - Ayllos','');";	
+				echo "showError('error','Baixa autom&aacute;tica processada com cr&iacute;tica - verifique','Notifica&ccedil;&atilde;o - Ayllos','');";	
 			} else {
-				echo "showError('error','".utf8ToHtml('Houve crítica na baixa do veículo substituído, porém o aditivo contratual será gerado e a baixa será efetuada no processo automático assim que possível.')."','Notifica&ccedil;&atilde;o - Ayllos','SubstituiBem(\"FINAL\")');";	
+				echo "showError('inform','".utf8ToHtml('Houve crítica na baixa do veículo substituído, porém o aditivo contratual será gerado e a baixa será efetuada no processo automático assim que possível.')."','Notifica&ccedil;&atilde;o - Ayllos','SubstituiBem(\"FINAL\")');";	
     		}
     	}
+		gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, '');//, '', '');
     }
 
 	//Função para gravar os dados na auditoria
-    function gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $identificador){ //, $retGravame, $retContr, $identificador) {
-    	$dschassi = $cdoperac == 1 ? $GLOBALS["dschassi"] : '';
+    function gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $identificador, $idseqbem = '', $nrctremp = ''){ //, $retGravame, $retContr, $identificador) {
+		$dschassi = $cdoperac == 1 ? $GLOBALS["dschassi"] : '';
     	$dscatbem = $cdoperac == 1 ? $GLOBALS["dscatbem"] : '';
     	$dstipbem = $cdoperac == 1 ? $GLOBALS["dstipbem"] : '';
     	$dsmarbem = $cdoperac == 1 ? $GLOBALS["dsmarbem"] : '';
@@ -220,9 +239,10 @@
     	$ufdplaca = $cdoperac == 1 ? $GLOBALS["ufdplaca"] : '';
     	$nrdplaca = $cdoperac == 1 ? $GLOBALS["nrdplaca"] : '';
     	$nrrenava = $cdoperac == 1 ? $GLOBALS["nrrenava"] : '';
+    	$idseqbem = $cdoperac == 1 ? $idseqbem : $GLOBALS["idseqbem"];
 
 		$tpctrpro = (isset($GLOBALS["tpctrato"])) ? $GLOBALS["tpctrato"] : $GLOBALS["tpctrpro"];
-		$nrctrpro = (isset($GLOBALS["nrctremp"])) ? $GLOBALS["nrctremp"] : $GLOBALS["nrctrpro"];
+		$nrctrpro = ($nrctremp == '') ? ( (isset($GLOBALS["nrctremp"])) ? $GLOBALS["nrctremp"] : $GLOBALS["nrctrpro"] ) : $nrctremp;
 
     	$xml      = "";
 		$xml      .= "<Root>";
@@ -230,7 +250,7 @@
 		$xml      .= "     <nrdconta>".$GLOBALS["nrdconta"]."</nrdconta>";
 		$xml      .= "     <tpctrato>".$tpctrpro."</tpctrato>";
 		$xml      .= "     <nrctrpro>".$nrctrpro."</nrctrpro>";
-		$xml      .= "     <idseqbem>".$GLOBALS["idseqbem"]."</idseqbem>";
+		$xml      .= "     <idseqbem>".$idseqbem."</idseqbem>";
 		$xml      .= "     <cdoperac>".$cdoperac."</cdoperac>";
 		$xml      .= "     <dschassi>".$dschassi."</dschassi>";
 		$xml      .= "     <dscatbem>".$dscatbem."</dscatbem>";
@@ -265,6 +285,8 @@
   		$xmlResult = mensageria($xml,"GRVM0001","AUDITGRAVAM",$GLOBALS['cdcooper'],$GLOBALS["cdagenci"],$GLOBALS["nrdcaixa"],$GLOBALS["idorigem"],$GLOBALS["cdoperad"],"</Root>");  		
   		$xmlObj = getObjectXML($xmlResult);
 
+		echo $xmlResult; die;
+		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -286,8 +308,9 @@
 		$url = $UrlSOA.getURL($xml->gravameB3[0]->gravame[0]);
 		$data = convertXMLtoJSONAliena($xml->gravameB3[0]->gravame[0]);
 		$cdoperac = getCdOperac($xml->gravameB3[0]->gravame[0]);
+		$cdidseqbem = getCdIdseqbem($xml->gravameB3[0]->gravame[0]);
 		$xmlStr = postGravame($xml, $data, $url, $AuthSOA);
-		return verificarRetornoAliena($xmlStr, $cdoperac);
+		return verificarRetornoAliena($xmlStr, $cdoperac, $cdidseqbem);
     }
 
     function processarBaixaCancel($xmlResult, $cdoperac, $UrlSOA, $AuthSOA) {

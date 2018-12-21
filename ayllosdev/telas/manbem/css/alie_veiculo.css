@@ -56,7 +56,7 @@
        text-align: center;
     }
     #frmTipo #nrmodbem, #frmTipo #nrmodbemC {
-        width:90px;
+        width:87px;
     }
     select[readonly] {
         background: #eee;
@@ -136,3 +136,4 @@
 	#frmTipo input#nranobem.menor {
 		width: 30px;
 	}
+	#frmTipo #nrmodbem.errorInput, #frmTipo #nrmodbemC.errorInput { width: 80px; }

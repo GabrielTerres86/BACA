@@ -84,7 +84,7 @@ function validaCamposAditiv() {
     if (!validaCampo('dscatbem', '#frmTipo')) {
         invalidos = invalidos + 1;
     }
-    if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+    if ($('#dsmarbem', '#frmTipo').val() == '-1' || $('#dsmarbem option:selected', '#frmTipo').text() == "") {
         if (!validaCampo('dsmarbemC', '#frmTipo')) {
             invalidos = invalidos + 1;
         }
@@ -192,6 +192,8 @@ function bloqueiaCamposVeiculoZero(valor)
 function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
         ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem)
 {
+	showMsgAguardo('Aguarde, processando requisi&ccedil;&atilde;o...');
+		
     $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/aditiv/valida_substitui_bem.php',
@@ -233,7 +235,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 function SenhaCoordenador() {
     //console.log('senha');
 
-    pedeSenhaCoordenador(2, 'SubstituiBem("PROCALIENA");showMsgAguardo("Aguarde, gerando impress&atilde;o ...");', 'divRotina');
+    pedeSenhaCoordenador(2, 'SubstituiBem("PROCALIENA");showMsgAguardo("Aguarde, processando requisi&ccedil;&atilde;o ...");', 'divRotina');
 }
 
 function CancelaSubstituicao() {

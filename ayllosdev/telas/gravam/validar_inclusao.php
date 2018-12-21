@@ -72,7 +72,11 @@
 			parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
 			$xml = getXML( $xmlResult );
 			$url = $Url_SOA . getURL( $xml->gravameB3[0]->gravame[0] );
-			$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
+			if ($operacao == "A") {
+				$data = convertXMLtoJSONAliena( $xml->gravameB3[0]->gravame[0] );
+			} else {
+				$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
+			}
 			$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA );
 
 			if ($operacao == "A") {

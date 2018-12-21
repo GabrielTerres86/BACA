@@ -14,6 +14,7 @@
          17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
  * 002: [05/03/2018] Reinert: Incluido validacao de bloqueio de garantia de emprestimo.
+ * 003: [10/11/2018] Grauppe: implementado comunicação SOA / Gravames.
  */
 
 ?>
@@ -23,11 +24,11 @@
 	$msg['inicio'] = "O(s) ve&iacute;culo(s) ser&aacute;(&atilde;o) automaticamente baixado(s) do contrato antigo e alienado(s) no novo contrato.<br/><br/>Foi verificado se este(s) ve&iacute;culo(s) n&atilde;o possui(em) restri&ccedil&otilde;es para aliena&ccedil&atilde;o?";
 	$msg['erro_baixa_vi'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na baixa de gravame do contrato sendo liquidado";
 	$msg['erro_inclusao_vi'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na inclus&atilde;o do gravame";
-	$msg['erro_baixa_vd'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na inclus&atilde;o do gravame";
 	$msg['erro_inclusao_vd'] = "Proposta efetivada, mas houve cr&iacute;tica na baixa do gravame do contrato sendo liquidado - verifique";
-	$msg['erro_inclusao_vi'] = "Proposta n&atilde;o efetivada, houve cr&iacute;tica na inclus&atilde;o do gravame";
-	$msg['efetivar_proposta'] = "Deseja efetivar proposta?";
+	$msg['efetivar_proposta'] = "Deseja efetivar a proposta?";
 	$msg['veiculos_alienados'] = "Ve&iacute;culo(s) alienado(s). ";
+	$msg['veiculos_alienados'] = "Alienações e baixas efetuadas com sucesso. ";
+	$msg['erro_baixa'] = "Alienações efetivadas com sucesso - houve crítica na baixa do veículo do contrato a ser liquidado. ";
 
 	/*
 	*				Obrigatorio 	Abortivo
@@ -161,7 +162,7 @@
 			}
 			$exibeErro = "";
 
-			$qtdGravameB3 = 0;
+			$countBaixa = $countAlienacao = $qtdGravameB3 = 0;
 			foreach ($xmlObj->roottag->tags AS $t) {
 				if (strtoupper($t->name) == 'GRAVAMEB3') {
 					$gravamesb3 = $t->attributes;
@@ -206,25 +207,20 @@
 									"propostaContratoCredito": '.$propostaContratoCredito.'}';
 
 						}
-						//echo($data); die;
 
 						$xmlStr = postGravame('', $data, $Url_SOA.$iduriservico, $Auth_SOA);
-						//var_dump( $GLOBALS["httpcode"] );die;
+						var_dump($xmlStr); die;
 						$xmlRet = getObjectXML($xmlStr);
 						$errorMessage = $dataInteracao = $idRegistro = $retGravame = $retContr = $identificador = '';
 
 						$code = $xmlRet->roottag->tags[1]->cdata; //código retorno
 						if ( $GLOBALS["httpcode"] == 200 ) {
-							//$retContr = $xmlRet->roottag->tags[0]->tags[0]->cdata;
-							//$retGravame = $xmlRet->roottag->tags[0]->tags[1]->cdata;
 							$identificador = $xmlRet->roottag->tags[0]->tags[1]->cdata;
 							$dataInteracao = timestampParaDateTime($xmlRet->roottag->tags[0]->tags[0]->cdata);
 							$idRegistro = $xmlRet->roottag->tags[0]->tags[2]->cdata;
 						} else {
 							$errorMessage = retornarMensagemErro($xmlRet);
 							$errorQtd++;
-
-							//echo $GLOBALS["httpcode"].$xmlStr; die;
 
 							if ( $flgobrig == "S" && $flaborta == "S" ) {
 								exibirErro('error',$msg['erro_baixa_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
@@ -233,19 +229,18 @@
 								$exibeErro = 'grupo';
 							}
 
+							if ($cdoperac == 1) { $countAlienacao++; }
+							if ($cdoperac == 3) { $countBaixa++; }
 						}
-						//echo $GLOBALS["postDate"] . " - " . $GLOBALS["getDate"] . " - " . $errorMessage . " - " . $dataInteracao . " - " . $idRegistro . " - S - " . $cdoperac . " - " . $retGravame . " - " . $retContr . " - " . $identificador; die;
 
-						//echo $data . " " . $xmlStr;
-						
-						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador);// $retGravame, $retContr, $identificador);
-						//gravarAuditoria($postDate, $getDate, $errorMessage, $dataInteracao, $idRegistro, $flsituac, $cdoperac, $retGravame, $retContr, $identificador)
-						//die;
+						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador, '', $nrctremp);// $retGravame, $retContr, $identificador);
+
 						$qtdGravame++;
 					}
 
 					if ( $exibeErro == 'grupo' ) {
-						exibirErro('error',$msg['erro_inclusao_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
+						//exibirErro('error',$msg['erro_inclusao_vi'],'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));',false);
+						echo "showConfirmacao('$msg['erro_inclusao_vi']', 'Confirma&ccedil;&atilde;o - Aimaro', 'alert(\'historico\');', 'bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
 						exit;
 					}
 
@@ -253,14 +248,22 @@
 				}
 			}
 
-			if ($qtdGravame > 0) {
-				$msgProposta = $qtdGravame . " " . $msg['veiculos_alienados'];
+			if ($countAlienacao == 0) {
+				if ($countBaixa == 0) {
+					$msgProposta = $msg['veiculos_alienados'];
+				} else if ($countBaixa > 0) {
+					$msgProposta = $msg['erro_baixa'];
+				}
+				$operacao = 'GRAVAPROP';
 			}
-
 		}
 
-		$msgProposta .= $msg['efetivar_proposta'];
-		$retorno = "showConfirmacao('$msgProposta', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta(\'GRVEFEPROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
+		if ($msgProposta && $operacao != 'EFE_PRP') {
+			$msgProposta .= $msg['efetivar_proposta'];
+			$retorno = "showConfirmacao('$msgProposta', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta(\'GRVEFEPROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');";
+		} else {
+			$retorno = "efetivaProposta('GRVEFEPROP');";
+		}
 
 	}
 

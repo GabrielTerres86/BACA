@@ -2,7 +2,7 @@
 /*!
  * FONTE        : tab_registros.php                 Última alteração: 24/08/2016
  * CRIAÇÃO      : ANDREI - RKAM
- * DATA CRIAÇÃO : mAIO/2016
+ * DATA CRIAÇÃO : MAIO/2016
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING
  * --------------
  * ALTERAÇÕES   :  14/07/2016 - Ajustar nome do renvam (Andrei - RKAM).
@@ -238,8 +238,12 @@
 
 <style type="text/css">
 #frmBens label.rotulo-linha {
-    margin-left: 50px;
-    width: 105px;
+    margin-left: 43px;
+    width: 110px;
     text-align: left;
+}
+form.formulario label.rotulo {
+	width: 120px;
+	text-align: left;
 }
 </style>

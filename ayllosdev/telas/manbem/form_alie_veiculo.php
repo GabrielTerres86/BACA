@@ -66,12 +66,12 @@
 					<input name="dsbemfin" id="dsbemfinC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'dsbemfin') ?>" />
 				</div>
 				<div>
-                    <label for="nrmodbem" >Ano Modelo :</label>
-					<select name="nrmodbem" id="nrmodbem"></select>
-					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
-					<label for="nranobem" id="lsanobem">Fab:</label>
-					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
-				</div>
+					<label for="nranobem" > Ano Fabricação :</label>
+						<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
+                    <label for="nrmodbem" id="lsanobem">Mod:</label>
+						<select name="nrmodbem" id="nrmodbem"></select>
+						<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
+					</div>
 				<div>
 					<label for="vlfipbem"> Valor Fipe :</label>
 					<input name="vlfipbem" id="vlfipbem" type="text" class="currency" value="<? echo getByTagName($dados,'vlfipbem') ?>" readonly data-prefix="R$ " data-thousands="." data-decimal=","/>
@@ -119,3 +119,7 @@
 			</div>
 		</fieldset>
 	</form>
+
+<script type="text/javascript">
+	var glbCdCooper = '<? echo $glbvars["cdcooper"]; ?>';
+</script>

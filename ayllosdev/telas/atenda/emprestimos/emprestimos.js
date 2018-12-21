@@ -3511,7 +3511,7 @@ function controlaLayout(operacao) {
 					} else {
 						cdAnoFipe = modeloBem;
 					}
-					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, cdanofip: cdAnoFipe, cdcooper:glbCdCooper, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 			});
@@ -4518,6 +4518,8 @@ function attArray(novaOp, cdcooper) {
 
 			arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 			arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+			//bruno - prj 438 - manbem - vlmerbem não alterava
+            arrayAlienacoes[atual]['vlmerbem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 			arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 			arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
 			var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string

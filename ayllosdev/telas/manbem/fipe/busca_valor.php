@@ -21,12 +21,13 @@
     isPostMethod();
 
     /******************************************************* Chama Serviço Fipe *****************************************************************/
-    $idElementoHtml  	        = (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
+    $idElementoHtml  	        = (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0 ;
     $idElementoHtml2            = "vlrdobem";
-    $cdMarcaVeiculo		        = (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
-    $cdModeloVeiculo	        = (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ; 
-    $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0  ;
-	
+    $cdMarcaVeiculo		        = (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0 ; 
+    $cdModeloVeiculo	        = (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0 ; 
+    $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0 ;
+	$cdCooperGlb				= (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 1 ;
+
 	$cdMarcaModeloAnoVeiculo	= ($cdMarcaModeloAnoVeiculo <> 3200) ? $cdMarcaModeloAnoVeiculo : "" ; //diferente de ZERO KM, passamos vazio
 
     $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaTabelasFipe";
@@ -43,14 +44,14 @@
             }
         },
 		"cooperativa": {
-			"codigo": "1"
-		}
+			"codigo": "'.$cdCooperGlb.'"
+        }
     }';
     $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
-    /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
-	
-	//var_dump($data); die;
+    /**************************************************** Fim Chamada Servi诠Fipe ****************************************************************/
+
+	//var_dump($_SESSION["glbvars"][0]["cdcooper"]); die;
 
     /*************************************************** Tratamento dados retornados **************************************************************/
 	

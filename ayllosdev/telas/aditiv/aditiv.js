@@ -243,55 +243,54 @@ function manterRotina( operacao ) {
 			break;
 		}
 	}
-  
-  if(cddopcao == "I" && cdaditiv == 5) {	
-  
-	var dscatbem = $('#dscatbem', '#frmTipo').val();
-	var dstipbem = $('#dstipbem', '#frmTipo').val();
-    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text());
-	var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val()); // inteiro
-	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
-	
-	var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
-	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro
-	var dschassi =  $('#dschassi', '#frmTipo').val(); // string
 
-	var dscorbem =  $('#dscorbem', '#frmTipo').val();; // string
-	var ufdplaca =  $('#ufdplaca', '#frmTipo').val(); // string
-	var nrdplaca =  $('#nrdplaca', '#frmTipo').val(); // string
-	nrdplaca =  nrdplaca.replace("-","");
-	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
-    var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
-    var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+	if(cddopcao == "I" && cdaditiv == 5) {
+		var dscatbem = $('#dscatbem', '#frmTipo').val().toUpperCase();
+		var dstipbem = $('#dstipbem', '#frmTipo').val().toUpperCase();
+		var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text().toUpperCase());
+		var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val().toUpperCase()); // inteiro
+		var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
 
-	var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text(); 
-	var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
-	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
-	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
+		var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
+		var tpchassi = normalizaNumero($('#tpchassi', '#frmTipo').val()); // inteiro
+		var dschassi =  $('#dschassi', '#frmTipo').val().toUpperCase(); // string
 
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
-		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
-		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
-		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
+		var dscorbem =  $('#dscorbem', '#frmTipo').val().toUpperCase();; // string
+		var ufdplaca =  $('#ufdplaca', '#frmTipo').val().toUpperCase(); // string
+		var nrdplaca =  $('#nrdplaca', '#frmTipo').val().toUpperCase(); // string
+		nrdplaca =  nrdplaca.replace("-","");
+		var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
+		var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
+		var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+
+		var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase(); 
+		var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
+		vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
+		vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
+
+		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
+			dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));
+			dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));
+			nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));
+		}
+
+		$.trim(dscatbem);
+		$.trim(dstipbem);
+		$.trim(nrmodbem);
+
+		$.trim(dsbemfin);
+		$.trim(vlrdobem);
+		$.trim(tpchassi);
+		$.trim(dschassi);
+
+		$.trim(dscorbem);
+		$.trim(ufdplaca);
+		$.trim(nrdplaca);
+		$.trim(nrrenava);
+		$.trim(uflicenc);
+		$.trim(dsmarbem);
+		$.trim(vlfipbem);
 	}
-
- 	$.trim(dscatbem.toUpperCase());
-	$.trim(dstipbem.toUpperCase());
-	$.trim(nrmodbem.toUpperCase());
-    
-	$.trim(dsbemfin.toUpperCase());
-	$.trim(vlrdobem.toUpperCase());
-	$.trim(tpchassi.toUpperCase());
-	$.trim(dschassi.toUpperCase());
-
-	$.trim(dscorbem.toUpperCase());
-	$.trim(ufdplaca.toUpperCase());
-	$.trim(nrdplaca.toUpperCase());
-	$.trim(nrrenava);
-	$.trim(uflicenc.toUpperCase());
-	$.trim(dsmarbem.toUpperCase());
-	$.trim(vlfipbem.toUpperCase());
-  }
 
 	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
 
@@ -355,7 +354,6 @@ function manterRotina( operacao ) {
 				nraditiv	: nraditiv, // global
 				cdaditiv	: cdaditiv, // global
 
-
 				nrdconta	: nrdconta, // global
 				nrctremp	: nrctremp, // global
                 tpctrato    : tpctrato, // global
@@ -378,7 +376,6 @@ function manterRotina( operacao ) {
 				idseqbem	: idseqbem,
 				dsmarbem    : dsmarbem,
 				vlfipbem	: vlfipbem,
-
 
 				flgpagto	: flgpagto,
 				dtdpagto	: dtdpagto,
@@ -584,39 +581,39 @@ function formataCabecalho() {
             } else {
                 
 				if ( cddopcao != 'I' ) {
-                showMsgAguardo('Aguarde, buscando ...');
+					showMsgAguardo('Aguarde, buscando ...');
 
-                // Executa script de confirmação através de ajax
-                $.ajax({
-                    type: 'POST',
-                    dataType: 'html',
-                    url: UrlSite + 'telas/aditiv/busca_tipo_aditivo.php',
-                    data: {
-                        nrdconta : nrdconta,
-                        nrctremp : nrctremp,
-                        nraditiv : nraditiv,
-                        tpctrato : tpctrato,
-                        redirect : 'html_ajax'
-                        },
-                    error: function(objAjax,responseError,objExcept) {
-                        hideMsgAguardo();
-                        showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
-                    },
-                    success: function(cdaditiv_ajax) {
+					// Executa script de confirmação através de ajax
+					$.ajax({
+						type: 'POST',
+						dataType: 'html',
+						url: UrlSite + 'telas/aditiv/busca_tipo_aditivo.php',
+						data: {
+							nrdconta : nrdconta,
+							nrctremp : nrctremp,
+							nraditiv : nraditiv,
+							tpctrato : tpctrato,
+							redirect : 'html_ajax'
+							},
+						error: function(objAjax,responseError,objExcept) {
+							hideMsgAguardo();
+							showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+						},
+						success: function(cdaditiv_ajax) {
 
-                        // Marca o aditivo
-                        $("#cdaditiv option[value='" + cdaditiv_ajax + "']",'#frmCab').prop('selected',true);
+							// Marca o aditivo
+							$("#cdaditiv option[value='" + cdaditiv_ajax + "']",'#frmCab').prop('selected',true);
 
-                        cdaditiv = cdaditiv_ajax > 0 ? $("#cdaditiv","#frmCab").val()[0] : 0;
+							cdaditiv = cdaditiv_ajax > 0 ? $("#cdaditiv","#frmCab").val()[0] : 0;
 
-                        // Se for Cobertura de Aplicacao Vinculada a Operacao
-                        if (cdaditiv_ajax == 9) {
-                            buscaDadosGAROPC();
-                        } else {
-			mostraTipo();
-		}
-                    }
-                });
+							// Se for Cobertura de Aplicacao Vinculada a Operacao
+							if (cdaditiv_ajax == 9) {
+								buscaDadosGAROPC();
+							} else {
+								mostraTipo();
+							}
+						}
+					});
 				} else {
 					mostraTipo();
 				}
@@ -770,26 +767,22 @@ function controlaLayout() {
 	if ( cddopcao == 'V' ) {
 		rDtmvtolx.css({'display':'block'});
 		cDtmvtolx.css({'display':'block'});
-
 	} else if ( cddopcao == 'X' ) {
 		rCdaditiv.css({'display':'block'});
 		cCdaditiv.css({'display':'block'});
 
 		$("#cdaditiv option[value='5']",'#'+frmCab).prop('selected',true);
-
 	} else if ( cddopcao == 'I' ) {
 		rCdaditiv.css({'display':'block'});
 		cCdaditiv.css({'display':'block'});
 		rCdaditix.css({'display':'block'});
 		cCdaditix.css({'display':'block'});
-
 	} else {
 		rNraditiv.css({'display':'block'});
 		cNraditiv.css({'display':'block'});
 		cNraditiv.next().css({'display':'block'}); // lupa
 		rCdaditiv.css({'display':'block','width':'0px'});
 		cCdaditiv.css({'display':'block'});
-
 	}
 
 	return false;
@@ -911,7 +904,6 @@ function formataTipo1( tpdescto ) {
 		cDtmvtolt.focus();
 		trocaBotao( 'gravar' );
 
-		//
 		if ( tpdescto == '2' ) {
 			cFlgpagto.desabilitaCampo();
 		}
@@ -953,7 +945,7 @@ function formataTipo2() {
 		$('#divRotina').css({'width':'680px'});
 		$('#divConteudo', '#divRotina').css({'width':'705px'});
 		$('#divRotina').centralizaRotinaH();
-	
+
 		// tabela
 		var divRegistro = $('div.divRegistros', '#'+tabTipo2);
 		var tabela      = $('table', divRegistro );
@@ -970,7 +962,7 @@ function formataTipo2() {
 		arrayLargura[4] = '75px';
 		arrayLargura[5] = '63px';
 	//	arrayLargura[6] = '69px';
-	
+
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
 		arrayAlinha[1] = 'left';
@@ -989,7 +981,7 @@ function formataTipo2() {
 		$('#divRotina').css({'width':'575px'});
 		$('#divConteudo', '#divRotina').css({'width':'550px'});
 		$('#divRotina').centralizaRotinaH();
-	
+
 		// label
 		rBtaplic1	= $('label[for="btaplic1"]','#'+frmTipo2);
 		rBtaplic3	= $('label[for="btaplic3"]','#'+frmTipo2);
@@ -1084,8 +1076,8 @@ function formataTipo3() {
 		$('#divRotina').centralizaRotinaH();
 
 		var ordemInicial = new Array();
-
 		var arrayLargura = new Array();
+
 		arrayLargura[0] = '70px';
 		arrayLargura[1] = '150px';
 		arrayLargura[2] = '80px';
@@ -1093,7 +1085,7 @@ function formataTipo3() {
 		arrayLargura[4] = '75px';
 		arrayLargura[5] = '63px';
 	//	arrayLargura[6] = '69px';
-	
+
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
 		arrayAlinha[1] = 'left';
@@ -1102,7 +1094,7 @@ function formataTipo3() {
 		arrayAlinha[4] = 'right';
 		arrayAlinha[5] = 'right';
 		arrayAlinha[6] = 'right';
-		
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
 	} else if ( cddopcao == 'I' ) {
@@ -2010,7 +2002,6 @@ function formataTipo8() {
 	return false;
 }
 
-
 function selecionaComplemento(tr) {
 
 	$('#idseqbem','#'+frmCab).val( $('#idseqbem', tr).val() );
@@ -2034,7 +2025,6 @@ function selecionaTipo() {
 	}
 
 }
-
 
 function mostraAplicacao(tpaplica) {
 
@@ -2161,7 +2151,6 @@ function formataAplicacao() {
 	hideMsgAguardo();
 	bloqueiaFundo( $('#divUsoGenerico') );
 	return false;
-
 }
 
 function continuarAplicacao(tp) {
@@ -2207,7 +2196,6 @@ function continuarAplicacao(tp) {
 	bloqueiaFundo( $('#divRotina') );
 	return false;
 }
-
 
 // contrato
 function mostraContrato() {
@@ -2732,7 +2720,6 @@ function ConsulAditivos(tipsaida,cdcooper) {
 	return false;
 }
 
-
 function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
@@ -2740,7 +2727,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 	//$('#divUsoGenerico').css('width','750px');
 	exibeRotina($('#divUsoGenerico'));
 
-	var dschassi = $("#dschassi","#frmTipo").val();
+	var dschassi = $("#dschassi","#frmTipo").val().toUpperCase();
 	var cdcoptel = cdcooper;
 	var nrctrpro = nrctremp;
 
@@ -2748,8 +2735,8 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		//url: UrlSite + 'telas/manbem/historico_gravames.php',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		url: UrlSite + 'telas/manbem/historico_gravames.php',
+		//url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 		data: {
 			nrdconta: nrdconta,
 			nrctrpro: nrctrpro,
@@ -2772,11 +2759,13 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1095px'});
+
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
 	divRegistro.css({'height':'250px'});
+
+	$('#divUsoGenerico').css({ 'width': '1095px'});
 	$('div.divRegistros').css({'height':'200px'});
 	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
 	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
