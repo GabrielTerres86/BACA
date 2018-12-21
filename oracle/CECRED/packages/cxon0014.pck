@@ -582,7 +582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 21/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -671,7 +671,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                           da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
   --
   --              04/07/2018 - Projeto Ligeirinho. Ajustes atualização na CRAPLOT #40089 (Mário AMcom)
-
+  --
+  --              21/12/2018 - inc0028676 Retornando a versão do package para correçao da criação/atualização
+  --                           do lote na rotina pc_gera_faturas (Carlos)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -9293,7 +9296,7 @@ END pc_gera_titulos_iptu_prog;
                   ,pr_cdagenci
                   ,pr_cdbccxlt
                   ,pr_nrdolote
-                  ,PAGA0001.fn_seq_parale_craplcm() -- craplot.nrseqdig
+                  ,1
                   ,13 -- craplot.tplotmov
                   ,pr_cdoperad
                   ,0
@@ -9322,7 +9325,7 @@ END pc_gera_titulos_iptu_prog;
         ELSE
           -- ou atualizar o nrseqdig para reservar posição
           UPDATE craplot
-             SET craplot.nrseqdig = PAGA0001.fn_seq_parale_craplcm()
+             SET craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
            WHERE craplot.ROWID = rw_craplot.ROWID
            RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
         END IF;
