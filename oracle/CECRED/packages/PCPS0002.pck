@@ -1325,7 +1325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- INSERIR REGISTRO DE PORTABILIDADE SOLICITADA
       BEGIN
-        vr_cdoperad := '1'; -- ver renato - remover
+        
         INSERT INTO tbcc_portabilidade_recebe
                           (nrnu_portabilidade
                           ,cdcooper
@@ -1465,8 +1465,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
        RETURNING t.nrnu_portabilidade INTO vr_nrnuportab;
        
       -- Apagar os registros de erros anteriores
---      DELETE tbcc_portabilidade_rcb_erros t
-  --     WHERE t.nrnu_portabilidade = vr_nrnuportab; ver renato
+      DELETE tbcc_portabilidade_rcb_erros t
+       WHERE t.nrnu_portabilidade = vr_nrnuportab; 
        
     END;
     
@@ -2108,19 +2108,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS104';
         
     -- CURSOR
-    CURSOR cr_dadosret(pr_dsxmlarq CLOB) IS
+    CURSOR cr_dadosapr(pr_dsxmlarq CLOB) IS
       WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
       SELECT nrnuport
            , idaprova
+        FROM DATA
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_PortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrnuport  NUMBER       PATH 'NUPortddPCS'
+                            , idaprova  NUMBER       PATH 'Grupo_APCS104_PortddCtSalrAprovd/Grupo_APCS104_Cli/1' );
+    
+    CURSOR cr_dadosrep(pr_dsxmlarq CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrnuport
            , nrmotrep
            , to_date(dtreprova, vr_dateformat) dtreprova
         FROM DATA
-           , XMLTABLE(('/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_PortddCtSalr')
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_PortddCtSalr')
                       PASSING XMLTYPE(xml)
                       COLUMNS nrnuport  NUMBER       PATH 'NUPortddPCS'
-                            , idaprova  NUMBER       PATH 'Grupo_APCS104_PortddCtSalrAprovd/Grupo_APCS104_Cli/1'
                             , nrmotrep  NUMBER       PATH 'Grupo_APCS104_PortddCtSalrRepvd/MotvReprvcPortddCtSalr'
-                            ,dtreprova  VARCHAR2(30) PATH 'Grupo_APCS104_PortddCtSalrRepvd/DtReprvcPortddCtSalr' );
+                            , dtreprova VARCHAR2(30) PATH 'Grupo_APCS104_PortddCtSalrRepvd/DtReprvcPortddCtSalr' );
     
     -- Buscar a solicitação da portabilidade 
     CURSOR cr_portab(pr_nrnuport  tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
@@ -2146,11 +2154,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                        ,pr_nmarquiv => vr_nmarquiv
                        ,pr_dtarquiv => vr_dtarquiv);
     
-    -- Percorrer todos os dados retornados no arquivo 
-    FOR rg_dadosret IN cr_dadosret(vr_dsxmlarq) LOOP
+    -- Percorrer todos os dados retornados no arquivo com aprovações
+    FOR rg_dadosapr IN cr_dadosapr(vr_dsxmlarq) LOOP
   
       -- Buscar o registro pelo código da NU portabilidade
-      OPEN  cr_portab(rg_dadosret.nrnuport);
+      OPEN  cr_portab(rg_dadosapr.nrnuport);
       FETCH cr_portab INTO rg_portab;
       
       -- Se não encontrar a solicitação de portabilidade
@@ -2159,7 +2167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
                          || 'PCPS0002.pc_proc_xml_APCS104'
-                         || ' --> Não encontrado NU Portabilidade '||rg_dadosret.nrnuport;
+                         || ' --> Não encontrado NU Portabilidade '||rg_dadosapr.nrnuport;
           
           -- Incluir log de execução.
           BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
@@ -2183,7 +2191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       CLOSE cr_portab;
     
       -- Se o registro está indicando aprovação
-      IF NVL(rg_dadosret.idaprova,0) = 1 THEN
+      IF NVL(rg_dadosapr.idaprova,0) = 1 THEN
         
         -- Atualiza a solicitação para aprovada 
         UPDATE tbcc_portabilidade_envia t
@@ -2194,21 +2202,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
              , t.nmarquivo_retorno = vr_nmarquiv
          WHERE ROWID = rg_portab.dsdrowid;
       
-      ELSE 
+      END IF;
+    
+    END LOOP;
+    
+    -- Percorrer todos os dados retornados no arquivo com reprovações
+    FOR rg_dadosrep IN cr_dadosrep(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU portabilidade
+      OPEN  cr_portab(rg_dadosrep.nrnuport);
+      FETCH cr_portab INTO rg_portab;
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF cr_portab%NOTFOUND THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS104'
+                         || ' --> Não encontrado NU Portabilidade '||rg_dadosrep.nrnuport;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
         
+        -- Fechar o cursor
+        CLOSE cr_portab;
+    
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab;
+      
+      -- Se tem motivo de reprovação 
+      IF rg_dadosrep.nrmotrep IS NOT NULL THEN
         -- Atualiza a solicitação para Reprovada
         UPDATE tbcc_portabilidade_envia t
            SET t.idsituacao        = 4 -- Reprovada
              , t.dsdominio_motivo  = vr_dsmotivoreprv
-             , t.cdmotivo          = rg_dadosret.nrmotrep
+             , t.cdmotivo          = rg_dadosrep.nrmotrep
              , t.dtretorno         = vr_dtarquiv
              , t.nmarquivo_retorno = vr_nmarquiv
          WHERE ROWID = rg_portab.dsdrowid;
-      
       END IF;
-    
+      
     END LOOP;
-        
+    
+    
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS104. ' ||SQLERRM;

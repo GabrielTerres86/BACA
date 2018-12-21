@@ -130,6 +130,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
   PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
                                      pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online
                                      pr_dscritic   OUT VARCHAR2);          --> Retorno de Erro
+/*  -- Rotina para criar a associacao da conta com a pessoa de representante e 
+  -- responsavel legal
+  PROCEDURE pc_cria_pessoa_conta(wp_idalteracao tbhistor_pessoa_conta.idalteracao%TYPE,
+                                 wp_intabela    tbhistor_pessoa_conta.intabela%TYPE,
+                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE);
+*/
+
 END CADA0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
@@ -169,6 +176,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
 
   vr_exc_saida EXCEPTION;
+
+  -- Rotina para criar a associacao da conta com a pessoa de representante e 
+  -- responsavel legal
+/*  PROCEDURE pc_cria_pessoa_conta(wp_idalteracao tbhistor_pessoa_conta.idalteracao%TYPE,
+                                 wp_intabela    tbhistor_pessoa_conta.intabela%TYPE,
+                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE) IS
+    -- Cursor para buscar as contas com base no idpessoa
+    CURSOR cr_conta IS
+      SELECT b.cdcooper,
+             b.nrdconta
+        FROM crapass b,
+             tbcadast_pessoa a
+       WHERE a.idpessoa = wp_idpessoa
+         AND b.nrcpfcgc = a.nrcpfcgc
+         AND b.inpessoa <> 1
+       UNION
+      SELECT b.cdcooper,
+             b.nrdconta
+        FROM crapttl b,
+             tbcadast_pessoa a
+       WHERE a.idpessoa = wp_idpessoa
+         AND b.nrcpfcgc = a.nrcpfcgc;
+  BEGIN
+    FOR rw_conta IN cr_conta LOOP
+      BEGIN
+        INSERT INTO tbhistor_pessoa_conta
+          (idalteracao,
+           intabela,
+           cdcooper,
+           nrdconta)
+         VALUES
+          (wp_idalteracao,
+           wp_intabela,
+           rw_conta.cdcooper,
+           rw_conta.nrdconta);
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL;
+      END;
+    END LOOP;
+  END;                                 */
 
   -- Rotina para criar registro na tbhistor_conta_comunic_soa
   FUNCTION cria_conta_comunic_soa(pr_cdcooper tbhistor_conta_comunic_soa.cdcooper%TYPE,
@@ -3116,7 +3164,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --> Se for um procurador
     ELSIF pr_crapavt.tpctrato = 6 AND
        (nvl(pr_crapavt.dsproftl,' ') = 'PROCURADOR' OR
-        pr_crapavt.dsproftl IS NULL OR -- Se for uma exclusao
         rw_pessoa_id.tppessoa = 1) THEN
       -- verificacao para buscar pessoa de contato
       IF pr_crapavt.nrdctato <> 0 AND pr_tpoperacao <> 3 THEN
@@ -3137,7 +3184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       ELSE
         vr_idseqttl := pr_crapavt.nrctremp;
       END IF;
-      
+
       -- Verifica se ja foi inserido o registro no ultimo minuto
       OPEN cr_crapavt_duplicado(pr_cdcooper => pr_crapavt.cdcooper,
                                 pr_nrdconta => pr_crapavt.nrdconta,
@@ -4678,16 +4725,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       
+      -- Buscar dados pessoa fisica
+      OPEN cr_pessoa_fis_cpf(pr_nrcpf => pr_crapttl.nrcpfcgc);
+      FETCH cr_pessoa_fis_cpf INTO rw_pessoa_fis;
+      CLOSE cr_pessoa_fis_cpf;
+
       --Se existe titular
       OPEN cr_existe_crapttl(pr_crapttl.nrcpfcgc);
       FETCH cr_existe_crapttl INTO rw_existe_crapttl;
      
       IF cr_existe_crapttl%NOTFOUND THEN 
         CLOSE cr_existe_crapttl;
-        -- Buscar dados pessoa fisica
-        OPEN cr_pessoa_fis_cpf(pr_nrcpf => pr_crapttl.nrcpfcgc);
-        FETCH cr_pessoa_fis_cpf INTO rw_pessoa_fis;
-        CLOSE cr_pessoa_fis_cpf;
       
         rw_pessoa_fis.tpcadastro             := 2; -- Cadastro basico
         
@@ -4725,7 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
            pr_crapttl.cdcooper, 
            pr_crapttl.nrdconta, 
            pr_crapttl.idseqttl,
-           0);
+           nvl(rw_pessoa_fis.idpessoa,0));
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tbhistor_crapttl: '||SQLERRM;
@@ -5378,7 +5426,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4); 
+                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4),
+                decode(substr(atl.dschave,1,1),'S',1,2); 
 
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
@@ -5577,13 +5626,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     -- Cursor 
     CURSOR cr_conta_comunic_soa(pr_cdcooper crapass.cdcooper%TYPE,
                                 pr_nrdconta crapass.nrdconta%TYPE) IS
-       SELECT 1
-         FROM tbhistor_conta_comunic_soa
+       SELECT *
+         FROM tbhistor_crapass a
         WHERE cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
---          AND dhalteracao = SYSDATE
-          AND to_char(dhalteracao,'ddmmrrrr hh24mi') = to_char(sysdate,'ddmmrrrr hh24mi');
+        ORDER BY a.dhalteracao DESC;
     rw_conta_comunic_soa cr_conta_comunic_soa%ROWTYPE;
+
+    CURSOR cr_atualiza(pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT 1
+        FROM tbcadast_pessoa_atualiza a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND a.nmtabela = 'CRAPTTL'
+         AND substr(a.dschave,1,1) = 'S'
+         AND a.insit_atualiza IN (1,4);
+
 
     ---------------> VARIAVEIS <-----------------
 
@@ -5600,6 +5659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     vr_insit_atualiza INTEGER;
     vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;
     vr_idalteracao     tbhistor_conta_comunic_soa.idalteracao%TYPE;
+    vr_tpalteracao     tbhistor_crapass.tpoperacao%TYPE;
+    vr_idinclusao      BOOLEAN;
 
   BEGIN
 
@@ -5813,6 +5874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             rw_crapavt.nrdconta := vr_tab_campos(3);
             rw_crapavt.nrctremp := vr_tab_campos(4);
             rw_crapavt.nrcpfcgc := vr_tab_campos(5);
+            rw_crapavt.dsproftl := vr_tab_campos(6);
 
           ELSE
 						-- Fechar cursor
@@ -5980,12 +6042,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             -- Processo da CRAPASS
             -- Busca o ID PESSOA do email
             IF rw_crapttl.idseqttl = 1 THEN
-              -- Verifica se ja existe registro com a mesma data para a mesma conta
+              vr_idinclusao := FALSE;
+              -- Busca os dados da ultima inclusao do historico
               OPEN cr_conta_comunic_soa(rw_crapttl.cdcooper, rw_crapttl.nrdconta);
               FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
               IF cr_conta_comunic_soa%NOTFOUND THEN
+                vr_idinclusao := TRUE;
+              -- Se possuir alguma informacao diferente
+              ELSIF rw_conta_comunic_soa.tpsituacao_matricula <> 1 OR
+                    rw_conta_comunic_soa.cdagenci <> rw_crapass.cdagenci OR
+                    nvl(rw_conta_comunic_soa.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) <> nvl(rw_crapass.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) THEN
+                vr_idinclusao := TRUE;
+              END IF;
                 CLOSE cr_conta_comunic_soa;
                   
+              IF vr_idinclusao THEN
                 -- Buscar conta do cooperado
                 OPEN cr_crapass( pr_cdcooper => rw_crapttl.cdcooper
                                 ,pr_nrdconta => rw_crapttl.nrdconta);
@@ -6026,8 +6097,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                     vr_dscritic := 'Erro ao inserir tbhistor_crapass: '||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
-              ELSE
-                CLOSE cr_conta_comunic_soa;
+                
+/*                -- Insere a associacao da pessoa com as contas
+                cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
+                                              wp_intabela    => 1,
+                                              wp_idpessoa    => vr_idpessoa);
+*/
               END IF;
             END IF;
                 
@@ -6129,11 +6204,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF substr(nvl(rw_pessoa_atlz.dschave,' '),1,1) = 'S' THEN
             pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
 
-            -- Verifica se ja existe registro com a mesma data para a mesma conta
+            vr_idinclusao := FALSE;
+            -- Busca os dados da ultima inclusao do historico
             OPEN cr_conta_comunic_soa(rw_crapass.cdcooper, rw_crapass.nrdconta);
             FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
             IF cr_conta_comunic_soa%NOTFOUND THEN
+              vr_idinclusao := TRUE;
+            -- Se possuir alguma informacao diferente
+            ELSIF rw_conta_comunic_soa.tpsituacao_matricula <> 1 OR
+                  rw_conta_comunic_soa.cdagenci <> rw_crapass.cdagenci OR
+                  nvl(rw_conta_comunic_soa.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) <> nvl(rw_crapass.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) THEN
+              vr_idinclusao := TRUE;
+            END IF;
               CLOSE cr_conta_comunic_soa;
+
+            IF vr_idinclusao THEN
               -- Busca o ID PESSOA do email
               vr_idpessoa := fn_busca_pessoa(pr_cdcooper => rw_crapass.cdcooper,
                                              pr_nrdconta => rw_crapass.nrdconta,
@@ -6173,16 +6258,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                   vr_dscritic := 'Erro ao inserir tbhistor_crapass: '||SQLERRM;
                   RAISE vr_exc_erro;
               END;
-            ELSE
-              CLOSE cr_conta_comunic_soa;
+
+              -- Insere a associacao da pessoa com as contas
+/*              cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
+                                            wp_intabela    => 1,
+                                            wp_idpessoa    => vr_idpessoa);
+*/
             END IF;
           -- Se teve alteracao da data da demissao ou 
           ELSIF substr(nvl(rw_pessoa_atlz.dschave,'   '),3,1) = 'S' THEN
-            -- Verifica se ja existe registro com a mesma data para a mesma conta
+
+            vr_idinclusao := FALSE;
+            -- Busca os dados da ultima inclusao do historico
             OPEN cr_conta_comunic_soa(rw_crapass.cdcooper, rw_crapass.nrdconta);
             FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
             IF cr_conta_comunic_soa%NOTFOUND THEN
+              vr_idinclusao := TRUE;
+            -- Se possuir alguma informacao diferente
+            ELSIF rw_conta_comunic_soa.tpsituacao_matricula <> rw_crapass_2.tpsituacao_matricula OR
+                  rw_conta_comunic_soa.cdagenci <> rw_crapass.cdagenci OR
+                  nvl(rw_conta_comunic_soa.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) <> nvl(rw_crapass.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) THEN
+              vr_idinclusao := TRUE;
+            END IF;
               CLOSE cr_conta_comunic_soa;
+
+            IF vr_idinclusao THEN
               -- Busca o ID PESSOA do email
               vr_idpessoa := fn_busca_pessoa(pr_cdcooper => rw_crapass.cdcooper,
                                              pr_nrdconta => rw_crapass.nrdconta,
@@ -6199,6 +6299,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                        rw_crapass.nrdconta,
                                                        'CRAPASS');
                                                          
+              -- Verifica se existe registro pendente de inclusao na CRAPTTL
+              OPEN cr_atualiza(rw_crapass.cdcooper,
+                               rw_crapass.nrdconta);
+              FETCH cr_atualiza INTO vr_tpalteracao;
+              IF cr_atualiza%NOTFOUND THEN
+                vr_tpalteracao := 2;
+              END IF;
+              CLOSE cr_atualiza;
+              
               -- Insere na capa
               BEGIN
                 INSERT INTO tbhistor_crapass
@@ -6215,7 +6324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                  VALUES
                   (vr_idalteracao, 
                    SYSDATE, 
-                   1,
+                   vr_tpalteracao,
                    rw_crapass.cdcooper, 
                    rw_crapass.nrdconta, 
                    vr_idpessoa,
@@ -6228,6 +6337,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                   vr_dscritic := 'Erro ao inserir na tbhistor_crapass: '||SQLERRM;
                   RAISE vr_exc_erro;
               END;
+              
+/*              IF vr_tpalteracao = 1 THEN
+                -- Insere a associacao da pessoa com as contas
+                cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
+                                              wp_intabela    => 1,
+                                              wp_idpessoa    => vr_idpessoa);
+              END IF;
+*/              
             END IF;
 
           END IF;

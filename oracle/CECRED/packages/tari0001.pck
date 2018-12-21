@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --  Programa: TARI0001                         Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Tiago Machado/Daniel Zimmermann
-  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 23/10/2018
+  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 20/12/2018
   --
   --  Dados referentes ao programa:
   --
@@ -103,7 +103,9 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --              20/11/2018 - Inclusao da rotina de estorno da tarifa de adiantamento a depositante (APD).
   --                         - PRJ435 - Adriano Nagasava (Supero).
-  --
+  --                20/12/2018 - Incluído a cooperativa na verificação do intervalo de saques (f_verifica_intervalo_saque)..
+  --                             (Fabio Stein - Supero)
+
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipos de registros para tabelas memoria */
@@ -640,7 +642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 23/10/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 20/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -725,6 +727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                 20/11/2018 - incluido procedure  pc_estorno_tarifa_saque para estorno de tarifa de saque.
                              (Fabio Stein - Supero)
                              
+                20/12/2018 - Incluído a cooperativa na verificação do intervalo de saques (f_verifica_intervalo_saque)..
+                             (Fabio Stein - Supero)
 
   */
  
@@ -6622,7 +6626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   END pc_cobra_tarifa_imgchq;
   
     /*função para verificar se operação de saque foi realizada no intervalo definido */
-  Function f_verifica_intervalo_saque(p_data_operacao date
+  Function f_verifica_intervalo_saque(p_data_operacao DATE
+                                     ,pr_cdcooper NUMBER
                                      ,p_nrdconta number
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE)     --> Descricao da critica
@@ -6640,11 +6645,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         AND rownum = 1;
         
     CURSOR cr_operacoes_diarias(pr_data_operacao DATE,
+                                pr_cdcooper NUMBER,
                                 pr_nrdconta NUMBER,
                                 pr_dsconteu crappco.dsconteu%TYPE) IS
-    SELECT COUNT(*)
+    SELECT COUNT(1)
     FROM cecred.tbcc_operacoes_diarias op
     WHERE op.cdoperacao = 1
+      AND op.cdcooper = pr_cdcooper
       AND op.nrdconta = pr_nrdconta
       AND op.hroperacao BETWEEN (pr_data_operacao - pr_dsconteu / 1440) AND (pr_data_operacao + pr_dsconteu /1440)
       AND op.hroperacao <> pr_data_operacao;
@@ -6678,6 +6685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         END IF;
         
         OPEN cr_operacoes_diarias(pr_data_operacao => p_data_operacao,
+                                  pr_cdcooper => pr_cdcooper,
                                   pr_nrdconta => p_nrdconta,
                                   pr_dsconteu => vr_dsconteu);
         FETCH cr_operacoes_diarias INTO vr_retorno;
@@ -6867,7 +6875,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_cdbatsaq VARCHAR2(50);
     vr_qtoperac INTEGER := 0;
     vr_saqativo BOOLEAN := FALSE;
-    vr_qtdopera INTEGER := 0;
+    vr_qtdopera INTEGER := 0;    
+
 
   BEGIN
                                   
@@ -7249,6 +7258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                --também não será tributado se o for operação do tipo saque dentro de intervalo de 30 mim
                OR (pr_tipotari = 1
                    AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                          ,pr_cdcooper
                                                           ,pr_nrdconta
                                                           ,vr_cdcritic
                                                           ,vr_dscritic) = 1)
@@ -7283,6 +7293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
                    IF (pr_tipotari = 1
                        AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                              ,pr_cdcooper
                                                               ,pr_nrdconta
                                                               ,vr_cdcritic
                                                               ,vr_dscritic) = 1)
@@ -7329,6 +7340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
                    IF (pr_tipotari = 1
                        AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                              ,pr_cdcooper
                                                               ,pr_nrdconta
                                                               ,vr_cdcritic
                                                               ,vr_dscritic) = 1)
@@ -7372,6 +7384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
              --também não será tributado se o for operação do tipo saque dentro de intervalo de 30 mim
              OR (pr_tipotari = 1
                  AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                        ,pr_cdcooper
                                                         ,pr_nrdconta
                                                         ,vr_cdcritic
                                                         ,vr_dscritic) = 1)
@@ -7399,6 +7412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                  ,vr_hroperacao) returning rowid into vr_rowid_insert;
                    --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
                    if (pr_tipotari = 1 and TARI0001.f_verifica_intervalo_saque (vr_hroperacao
+                                                                               ,pr_cdcooper
                                                                                ,pr_nrdconta
                                                                                ,vr_cdcritic
                                                                                ,vr_dscritic) = 1) then
@@ -7495,6 +7509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
          -- adicionado Valéria Supero outubro/2018
          OR (pr_tipotari = 1
              AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                                    ,pr_cdcooper
                                                     ,pr_nrdconta
                                                     ,vr_cdcritic
                                                     ,vr_dscritic) = 1)
@@ -7523,6 +7538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             ,vr_hroperacao) returning rowid into vr_rowid_insert;
              --caso tenha ficado isenta devido ao intervalo de 30 min não será descontado do pacote
              if (pr_tipotari = 1 and TARI0001.f_verifica_intervalo_saque (vr_hroperacao
+                                                                         ,pr_cdcooper
                                                                          ,pr_nrdconta
                                                                          ,vr_cdcritic
                                                                          ,vr_dscritic) = 1) then
@@ -7546,6 +7562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- adicionado por Valéria Supero: se saque estiver dentro do intervalor não será tarifado
     IF (pr_tipotari = 1
         AND TARI0001.f_verifica_intervalo_saque(vr_hroperacao
+                                              ,pr_cdcooper
                                                ,pr_nrdconta
                                                ,vr_cdcritic
                                                ,vr_dscritic) = 1)

@@ -67,7 +67,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
                 <tr>
                     <td><?= utf8ToHtml(getByTagName($r->tags, 'dthorlog')); ?></td>
-                    <td><?= utf8ToHtml(getByTagName($r->tags, 'dscdolog')); ?></td>
+                    <td><?= utf8ToHtml(utf8_encode(getByTagName($r->tags, 'dscdolog'))); ?></td>
                     <td><?= utf8ToHtml(getByTagName($r->tags, 'dsstatus')); ?></td>
                     <td><?= utf8ToHtml(getByTagName($r->tags, 'nmoperad')); ?></td>	
                 </tr>
