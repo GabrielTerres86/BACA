@@ -12,7 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
   --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
-   
+  --              02/10/2018 - Ajustada rotina de envio de email com antecipações não processadas a mais de 1 hora
+   --                          (André - Mouts PRB0040347)               
+  -- 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
@@ -35,6 +37,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   var_dt_ult_envio_email_slc VARCHAR2(15);
   vr_horini_33_cancel        VARCHAR2(15);
   vr_horfim_33_cancel        VARCHAR2(15);
+  var_dthr_ult_env_email_antcp VARCHAR2(20);
   vr_hor_dom5                number(4);
   vr_hor_email_dom5          number(4);
 
@@ -547,6 +550,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_para          VARCHAR2(100);
     vr_assunto       VARCHAR2(200);
     vr_mensagem      VARCHAR2(32000);
+    vr_interv_slc33  NUMBER;
+
 
 
     BEGIN
@@ -622,7 +627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                                    ,pr_cdacesso => 'HORARIO_SLC_T5_DEB_CRED'),1,5),':','');
     vr_hor_email_dom5 := replace(substr(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                    ,pr_cdacesso => 'HORARIO_SLC_EMAIL_DOM5'),1,5),':','');
-
+    var_dthr_ult_env_email_antcp := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                   ,pr_cdacesso => 'DTHR_ULT_ENV_EMAIL_ANTCP');
     vr_database_name   := GENE0001.fn_database_name;
 
     -- executa o processo CCRD0006.pc_leitura_arquivo_xml
@@ -697,9 +703,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END IF;
     END IF;
 
-    -- Verifica arquivos de antecipação não processados há mais de 1 hora
+    -- Verifica arquivos de antecipação não processados há mais de 1 hora, ou 5 min se faltar 1 hora
+    -- para o horário limite para envio dos arquivos 
+    vr_interv_slc33 := 1/24*1; -- 1 Hora
+    if sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi')-1/24*1 then
+      vr_interv_slc33 := 1/24/60*5; -- 5 minutos
+    end if;  
+    
+    if (sysdate > to_date(nvl(var_dthr_ult_env_email_antcp,'01/01/0001 00:00'),'dd/mm/yyyy hh24:mi')+vr_interv_slc33) then
     pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
                               ,pr_dscritic    => vr_dscritic);
+    end if;                              
 
     IF vr_dscritic is not null then
       RAISE vr_exc_saida;
@@ -7998,6 +8012,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT VARCHAR2)  IS
 
+/*                                    
+                   25/06/2018 - Tratamento de Históricos de Credito/Debito   
+                                José Carvalho  AMcom 
+*/            
+                        
+     vr_tab_retorno    LANC0001.typ_reg_retorno;
+     vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+                                    
+
     -- Registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -8438,41 +8461,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               RAISE vr_exc_saida;
             END IF;
 
-            -- insere o registro na tabela de lancamentos
             BEGIN
-              INSERT INTO craplcm
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 nrseqdig,
-                 vllanmto,
-                 nrdctabb,
-                 nrdctitg,
-                 cdcooper,
-                 dtrefere,
-                 cdoperad,
-                 CDPESQBB)
-              VALUES
-                (trunc(vr_dtprocesso),                                     --dtmvtolt
-                 1,                                                 --cdagenci
-                 100,                                               --cdbccxlt
-                 vr_nrdolote,                                       --nrdolote
-                 vr_nrdconta,                                       --nrdconta
-                 vr_nrseqdiglcm,                                    --nrdocmto
-                 vr_cdhistor,                                       --cdhistor
-                 vr_nrseqdiglcm,                                    --nrseqdig
-                 rw_tabela.vlpagamento,                             --vllanmto
-                 vr_nrdconta,                                       --nrdctabb
-                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
-                 vr_cdcooper,                                       --cdcooper
-                 rw_tabela.dtpagamento,                             --dtrefere
-                 '1',                                               --cdoperad
-                 rw_tabela.nrliquidacao);                           --CDPESQBB
+            -- insere o registro na tabela de lancamentos
+              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>trunc(vr_dtprocesso)    -- dtmvtolt
+                                                ,pr_cdagenci=>1                        -- cdagenci
+                                                ,pr_cdbccxlt =>100                     -- cdbccxlt
+                                                ,pr_nrdolote =>vr_nrdolote             -- nrdolote 
+                                                ,pr_nrdconta =>vr_nrdconta             -- nrdconta 
+                                                ,pr_nrdocmto =>vr_nrseqdiglcm          -- nrdocmto 
+                                                ,pr_cdhistor =>vr_cdhistor             -- cdhistor
+                                                ,pr_nrseqdig =>vr_nrseqdiglcm          -- nrseqdig
+                                                ,pr_vllanmto =>rw_tabela.vlpagamento   -- vllanmto 
+                                                ,pr_nrdctabb =>vr_nrdconta             -- nrdctabb
+                                                ,pr_nrdctitg =>GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg 
+                                                ,pr_cdcooper =>vr_cdcooper             -- cdcooper
+                                                ,pr_dtrefere =>rw_tabela.dtpagamento   -- dtrefere
+                                                ,pr_cdoperad =>1                       -- cdoperad
+                                                ,pr_cdpesqbb =>rw_tabela.nrliquidacao  -- cdpesqbb                                                                                                
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tab_retorno
+                                                ,pr_incrineg => vr_incrineg
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_saida;
+              END IF;   
             EXCEPTION
+              WHEN vr_exc_saida THEN
+                raise vr_exc_saida; -- Apenas passar a critica 
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
                 RAISE vr_exc_saida;
@@ -10805,7 +10822,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
           AND pdv.idcentraliza = ctz.idcentraliza
           AND lct.insituacao = 0
           AND arq.tparquivo  = 3
-          AND to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12),'YYYY-MM-DDHH24:MI:SS') < SYSDATE-1/24*1
+          --AND to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12),'YYYY-MM-DDHH24:MI:SS') < SYSDATE-1/24*1
           AND to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') = trunc(sysdate)
         ORDER BY 4;
     rw_antecip cr_antecip%ROWTYPE;
@@ -10855,6 +10872,12 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                      ,pr_dscritic   => vr_dscritic);
     END IF;
 
+    UPDATE crapprm
+       SET dsvlrprm = to_char(sysdate,'DD/MM/YYYY HH24:MI')
+     WHERE nmsistem = 'CRED'
+       AND cdcooper = 0
+       AND cdacesso = 'DTHR_ULT_ENV_EMAIL_ANTCP';
+       
   EXCEPTION
      WHEN OTHERS THEN
         pr_dscritic := 'ERRO ao tentar enviar lista de arquivos de antecipação em atraso: '||SQLERRM;
