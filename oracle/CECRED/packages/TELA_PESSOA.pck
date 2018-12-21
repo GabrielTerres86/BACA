@@ -804,7 +804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     end if;
       
     close cr_funcao;
-      
+
     -- Busca data de movimentacao
     -- para fazer validacao do fim de vigencia
     open cr_crapdat (pr_cdcooper);
@@ -1291,40 +1291,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
       end;
 
-      begin
-          
-        if rw_busca_cargos.dtfim_vigencia is null then
-          
+	  if rw_busca_cargos.dtfim_vigencia is null then
+
+		begin
+
           update crapass c
              set c.tpvincul = vr_cdfuncao
            where c.cdcooper = pr_cdcooper
              and c.nrcpfcgc = pr_nrcpfcgc;
+
+        exception
           
-        end if;
-               
-      exception
+          when others then
           
-        when others then
-          
-          -- Montar mensagem de critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
+            -- Montar mensagem de critica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
           raise vr_exc_erro;
 
-      end;
+        end;
+
+        -- Controle de historico de vinculos
+        pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
+                               ,pr_nrcpfcgc => pr_nrcpfcgc
+                               ,pr_tpvincul => vr_cdfuncao
+                               ,pr_dscritic => vr_dscritic);
         
+        -- Aborta em caso de erro
+        if trim(vr_dscritic) is not null then
+          raise vr_exc_erro;
     end if;  
 
-    -- Controle de historico de vinculos
-    pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
-                           ,pr_nrcpfcgc => pr_nrcpfcgc
-                           ,pr_tpvincul => vr_cdfuncao
-                           ,pr_dscritic => vr_dscritic);
-                     
-    -- Aborta em caso de erro
-    if trim(vr_dscritic) is not null then
-      raise vr_exc_erro;
-    end if;
+      end if;
+        
+    end if;  
 
     -- Busca contas do cooperado para gerar log
     for rw_busca_cooperado in cr_busca_cooperado (pr_cdcooper
@@ -1670,7 +1670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     elsif pr_dtinicio_vigencia > pr_dtfim_vigencia then
       vr_dscritic := 'Data de fim de vigência deve ser maior que a data de início.';
       raise vr_exc_erro;
-    end if;
+	end if;
 
     -- Analisa permissoes do operador
     open cr_cdoperad (pr_cdcooper
@@ -2296,7 +2296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and vin.idpessoa   = pr_idpessoa
        and vin.tpsituacao = 0;
     rw_limpeza_registros cr_limpeza_registros%rowtype;
-    
+
+    vr_exc_saida            exception;    
     vr_retorno              xmltype;
     vr_nrmatric             tbhistor_vinculo_coop.nrmatric%type;
     vr_tpvincul             crapass.tpvincul%type := pr_tpvincul;
@@ -2339,7 +2340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     if cr_crapcop%notfound then
       close cr_crapcop;
       vr_dscritic := 'Cooperativa não está ativa para eventos assembleares.';
-      raise vr_exc_erro;
+      raise vr_exc_saida;
     end if;
     
     close cr_crapcop;
@@ -2420,6 +2421,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
   exception
     
+    when vr_exc_saida then
+      
+      -- Nao deve fazer nada pois o objetivo da 
+      -- exception eh apenas nao inserir na tabela
+      null;
+
     when others then
       
       pr_dscritic := vr_dscritic;  
