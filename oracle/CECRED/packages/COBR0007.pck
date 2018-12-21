@@ -292,14 +292,14 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   -- Procedure para exportar boletos emitidos
   PROCEDURE pc_exporta_boletos_emitidos(pr_cdcooper crapcob.cdcooper%TYPE --> Codigo da cooperativa
                                        ,pr_nrdconta crapcob.nrdconta%TYPE --> Nro da conta cooperado
-                                       ,pr_dtmvtini crapcob.dtmvtolt%TYPE --> Data de inicio da emissao
-                                       ,pr_dtmvtfim crapcob.dtmvtolt%TYPE --> Data de fim da emissao
+                                       ,pr_dtmvtini VARCHAR2 --> Data de inicio da emissao
+                                       ,pr_dtmvtfim VARCHAR2 --> Data de fim da emissao
                                        ,pr_incobran crapcob.incobran%TYPE --> Situacao da cobranca
                                        ,pr_nmdsacad VARCHAR2 --> Nome do sacado/pagador
-                                       ,pr_nmarqexp OUT VARCHAR2 --> Caminho e nome do arquivo a ser exportado
+                                       ,pr_dsretxml IN OUT NOCOPY XMLType --> Caminho e nome do arquivo em XML
                                        ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                        ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-                                       );
+                                        );
 
 END COBR0007;
 /
@@ -13131,16 +13131,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_envio_sms. ' || SQLERRM;
   END pc_inst_envio_sms;
 
-  PROCEDURE pc_exporta_boletos_emitidos(pr_cdcooper crapcob.cdcooper%TYPE --> Codigo da cooperativa
-                                         ,pr_nrdconta crapcob.nrdconta%TYPE --> Nro da conta cooperado
-                                         ,pr_dtmvtini crapcob.dtmvtolt%TYPE --> Data de inicio da emissao
-                                         ,pr_dtmvtfim crapcob.dtmvtolt%TYPE --> Data de fim da emissao
-                                         ,pr_incobran crapcob.incobran%TYPE --> Situacao da cobranca
-                                         ,pr_nmdsacad VARCHAR2 --> Nome do sacado/pagador
-                                         ,pr_nmarqexp OUT VARCHAR2 --> Caminho e nome do arquivo a ser exportado
-                                         ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-                                         ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-                                          ) IS
+    PROCEDURE pc_exporta_boletos_emitidos(pr_cdcooper crapcob.cdcooper%TYPE --> Codigo da cooperativa
+                                       ,pr_nrdconta crapcob.nrdconta%TYPE --> Nro da conta cooperado
+                                       ,pr_dtmvtini VARCHAR2 --> Data de inicio da emissao
+                                       ,pr_dtmvtfim VARCHAR2 --> Data de fim da emissao
+                                       ,pr_incobran crapcob.incobran%TYPE --> Situacao da cobranca
+                                       ,pr_nmdsacad VARCHAR2 --> Nome do sacado/pagador
+                                       ,pr_dsretxml IN OUT NOCOPY XMLType --> Caminho e nome do arquivo em XML
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                        ) IS
     BEGIN
     
         /* .............................................................................
@@ -13172,19 +13172,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             rw_crapdat btch0001.cr_crapdat%ROWTYPE;
         
             -- Variaveis internas
-            vr_dsarquiv       CLOB := NULL;
-            vr_texto_completo CLOB := NULL;
-            vr_caminho_arq    VARCHAR2(300);
-            vr_nmarqind       VARCHAR2(100);
+            vr_dsxml          CLOB := NULL;
+            vr_texto_completo VARCHAR2(32726) := '';
         
             ---------------------------- CURSORES -----------------------------------
             -- Buscar registros crapcob
             CURSOR cr_crapcob(pr_cdcooper crapcob.cdcooper%TYPE
                              ,pr_nrdconta crapcob.nrdconta%TYPE
-                             ,pr_dtmvtini crapcob.dtmvtolt%TYPE
-                             ,pr_dtmvtfim crapcob.dtmvtolt%TYPE
+                             ,pr_dtmvtini VARCHAR2
+                             ,pr_dtmvtfim VARCHAR2
                              ,pr_incobran crapcob.incobran%TYPE
-                             ,pr_nmdsacad VARCHAR2) IS
+                             ,pr_nmdsacad VARCHAR2
+                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
                 SELECT crapcob.nrdconta
                       ,crapcob.nrcnvcob
                       ,crapcco.dsorgarq -- 01. Convênio (Internet ou Software)
@@ -13213,43 +13212,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                 -- ,crapcob.dtmvtolt -- 17. Data do movimento
                   FROM crapcob
                       ,crapceb
-                      ,crapass
                       ,crapsab
+                      ,crapass
                       ,crapcco
-                      ,tbcobran_retorno_ieptb ret
-                 WHERE crapceb.cdcooper = crapcob.cdcooper
-                   AND crapceb.nrdconta = crapcob.nrdconta
-                   AND crapceb.nrconven = crapcob.nrcnvcob
+                 WHERE crapcob.cdcooper = crapceb.cdcooper
+                   AND crapcob.nrdconta = crapceb.nrdconta 
+                   AND crapcob.nrcnvcob = crapceb.nrconven
+                   
+                   AND crapcob.cdcooper = crapsab.cdcooper
+                   AND crapcob.nrdconta = crapsab.nrdconta
+                   AND crapcob.nrinssac = crapsab.nrinssac
+                           
+                   AND crapcob.cdcooper = crapass.cdcooper
+                   AND crapcob.nrdconta = crapass.nrdconta 
                       
-                   AND crapsab.cdcooper = crapcob.cdcooper
-                   AND crapsab.nrdconta = crapcob.nrdconta
-                   AND crapsab.nrinssac = crapcob.nrinssac
-                      
-                   AND crapass.cdcooper = crapcob.cdcooper
-                   AND crapass.nrdconta = crapcob.nrdconta
-                      
-                   AND crapcco.cdcooper = crapcob.cdcooper
-                   AND crapcco.nrconven = crapcob.nrcnvcob
-                   AND crapcco.cddbanco = crapcob.cdbandoc
-                      
-                   AND ret.cdcooper(+) = crapcob.cdcooper
-                   AND ret.nrdconta(+) = crapcob.nrdconta
-                   AND ret.nrcnvcob(+) = crapcob.nrcnvcob
-                   AND ret.nrdocmto(+) = crapcob.nrdocmto
+                   AND crapcob.cdcooper = crapcco.cdcooper
+                   AND crapcob.nrcnvcob = crapcco.nrconven 
+                   AND crapcob.cdbandoc = crapcco.cddbanco
                       
                       -- filtro por cooperativa
-                   AND (crapcob.cdcooper = pr_cdcooper OR pr_cdcooper IS NULL)
+                   AND crapcob.cdcooper = pr_cdcooper
                       -- filtro por numero da conta
-                   AND (crapcob.nrdconta = pr_nrdconta OR pr_nrdconta IS NULL)
+                   AND crapcob.nrdconta = pr_nrdconta
                       -- filtro por data de emissao
-                   AND (crapcob.dtmvtolt BETWEEN nvl(to_date(pr_dtmvtini, 'DD/MM/RRRR'), '01/01/1900') AND
-                       nvl(to_date(pr_dtmvtfim, 'DD/MM/RRRR'), trunc(SYSDATE)))
+                   AND (crapcob.dtmvtolt BETWEEN nvl(to_date(pr_dtmvtini,'dd/mm/yyyy'), '01/01/1900') 
+                              AND nvl(to_date(pr_dtmvtfim,'dd/mm/yyyy'),trunc(pr_dtmvtolt)))
                       -- filtro por situacao
                    AND (crapcob.incobran = pr_incobran OR pr_incobran IS NULL)
                       -- filtro por nome do sacado/pagador
-                   AND (upper(crapsab.nmdsacad) LIKE '%' || upper(pr_nmdsacad) || '%' OR pr_nmdsacad IS NULL)
-                      
-                   AND rownum < 2;
+                   AND (upper(crapsab.nmdsacad) LIKE '%' || upper(nvl(pr_nmdsacad,'')) || '%');
             rw_crapcob cr_crapcob%ROWTYPE;
         
             --------------------------- SUBROTINAS INTERNAS --------------------------
@@ -13257,7 +13248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
                                     ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
             BEGIN
-                gene0002.pc_escreve_xml(vr_dsarquiv, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+                gene0002.pc_escreve_xml(vr_dsxml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
             END;
         
         BEGIN
@@ -13268,15 +13259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                 INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
         
-            -- Inicializar o CLOB
-            dbms_lob.createtemporary(vr_dsarquiv, TRUE);
-            dbms_lob.open(vr_dsarquiv, dbms_lob.lob_readwrite);
-        
             -- Cabecalho
-            pc_escreve_xml('Conta;Nro.Convenio;Origem;Nome Sacado;CPF/CNPJ;Cidade;UF;Endereco;Bairro;' ||
-                           'Nro Inscricao;Data Emissao;Data Vencto;Nro Documento;Nosso Nro;Vlr Titulo;' ||
-                           'Vlr Pago;Ind. Cobran.;Prot. Aut.;Qtd. Prot.;Neg. Serasa;Qtd. Neg.;' ||
-                           'SMS Ant. Vencto;SMS Vencto;SMS Pos Vencto;Situacao');
+            pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><Root><boletos>');
         
             -- Montar linhas
             FOR rw_crapcob IN cr_crapcob(pr_cdcooper
@@ -13284,33 +13268,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                         ,pr_dtmvtini
                                         ,pr_dtmvtfim
                                         ,pr_incobran
-                                        ,pr_nmdsacad) LOOP
-                pc_escreve_xml(chr(10));
-                pc_escreve_xml(rw_crapcob.nrdconta || ';');
-                pc_escreve_xml(rw_crapcob.nrcnvcob || ';');
-                pc_escreve_xml(rw_crapcob.dsorgarq || ';');
-                pc_escreve_xml(rw_crapcob.nmdsacad || ';');
-                pc_escreve_xml(rw_crapcob.nrcpfcgc || ';');
-                pc_escreve_xml(rw_crapcob.nmcidsac || ';');
-                pc_escreve_xml(rw_crapcob.cdufsaca || ';');
-                pc_escreve_xml(rw_crapcob.dsendsac || ';');
-                pc_escreve_xml(rw_crapcob.nmbaisac || ';');
-                pc_escreve_xml(rw_crapcob.nrinssac || ';');
-                pc_escreve_xml(rw_crapcob.dtmvtolt || ';');
-                pc_escreve_xml(rw_crapcob.dtvencto || ';');
-                pc_escreve_xml(rw_crapcob.nrdocmto || ';');
-                pc_escreve_xml(rw_crapcob.nrnosnum || ';');
-                pc_escreve_xml(rw_crapcob.vltitulo || ';');
-                pc_escreve_xml(rw_crapcob.vldpagto || ';');
-                pc_escreve_xml(rw_crapcob.incobran || ';');
-                pc_escreve_xml(rw_crapcob.flgdprot || ';');
-                pc_escreve_xml(rw_crapcob.qtdiaprt || ';');
-                pc_escreve_xml(rw_crapcob.flserasa || ';');
-                pc_escreve_xml(rw_crapcob.qtdianeg || ';');
-                pc_escreve_xml(rw_crapcob.insmsant || ';');
-                pc_escreve_xml(rw_crapcob.insmsvct || ';');
-                pc_escreve_xml(rw_crapcob.insmspos || ';');
-                pc_escreve_xml(rw_crapcob.insitcrt || chr(10));
+                                        ,pr_nmdsacad
+                                        ,rw_crapdat.dtmvtolt) LOOP
+                pc_escreve_xml('<boleto>');
+                pc_escreve_xml('  <nrdconta>' || rw_crapcob.nrdconta || '</nrdconta>');
+                pc_escreve_xml('  <nrcnvcob>' || rw_crapcob.nrcnvcob || '</nrcnvcob>');
+                pc_escreve_xml('  <dsorgarq>' || rw_crapcob.dsorgarq || '</dsorgarq>');
+                pc_escreve_xml('  <nmdsacad>' || rw_crapcob.nmdsacad || '</nmdsacad>');
+                pc_escreve_xml('  <nrcpfcgc>' || rw_crapcob.nrcpfcgc || '</nrcpfcgc>');
+                pc_escreve_xml('  <nmcidsac>' || rw_crapcob.nmcidsac || '</nmcidsac>');
+                pc_escreve_xml('  <cdufsaca>' || rw_crapcob.cdufsaca || '</cdufsaca>');
+                pc_escreve_xml('  <dsendsac>' || rw_crapcob.dsendsac || '</dsendsac>');
+                pc_escreve_xml('  <nmbaisac>' || rw_crapcob.nmbaisac || '</nmbaisac>');
+                pc_escreve_xml('  <nrinssac>' || rw_crapcob.nrinssac || '</nrinssac>');
+                pc_escreve_xml('  <dtmvtolt>' || rw_crapcob.dtmvtolt || '</dtmvtolt>');
+                pc_escreve_xml('  <dtvencto>' || rw_crapcob.dtvencto || '</dtvencto>');
+                pc_escreve_xml('  <nrdocmto>' || rw_crapcob.nrdocmto || '</nrdocmto>');
+                pc_escreve_xml('  <nrnosnum>' || rw_crapcob.nrnosnum || '</nrnosnum>');
+                pc_escreve_xml('  <vltitulo>' || rw_crapcob.vltitulo || '</vltitulo>');
+                pc_escreve_xml('  <vldpagto>' || rw_crapcob.vldpagto || '</vldpagto>');
+                pc_escreve_xml('  <incobran>' || rw_crapcob.incobran || '</incobran>');
+                pc_escreve_xml('  <flgdprot>' || rw_crapcob.flgdprot || '</flgdprot>');
+                pc_escreve_xml('  <qtdiaprt>' || rw_crapcob.qtdiaprt || '</qtdiaprt>');
+                pc_escreve_xml('  <flserasa>' || rw_crapcob.flserasa || '</flserasa>');
+                pc_escreve_xml('  <qtdianeg>' || rw_crapcob.qtdianeg || '</qtdianeg>');
+                pc_escreve_xml('  <insmsant>' || rw_crapcob.insmsant || '</insmsant>');
+                pc_escreve_xml('  <insmsvct>' || rw_crapcob.insmsvct || '</insmsvct>');
+                pc_escreve_xml('  <insmspos>' || rw_crapcob.insmspos || '</insmspos>');
+                pc_escreve_xml('  <insitcrt>' || rw_crapcob.insitcrt || '</insitcrt>');
+                pc_escreve_xml('</boleto>');
             END LOOP;
         
             IF cr_crapcob%ISOPEN THEN
@@ -13318,37 +13304,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             END IF;
         
             -- Finaliza documento
-            pc_escreve_xml('', TRUE);
-        
-            -- Busca o diretorio da cooperativa conectada
-            vr_caminho_arq := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                                   ,pr_cdcooper => pr_cdcooper
-                                                   ,pr_nmsubdir => 'arq');
-        
-            vr_nmarqind := 'exporta_boletos.csv';
-        
-            -- Escreve o clob no arquivo físico
-            gene0002.pc_clob_para_arquivo(pr_clob     => vr_dsarquiv
-                                         ,pr_caminho  => vr_caminho_arq
-                                         ,pr_arquivo  => vr_nmarqind
-                                         ,pr_des_erro => vr_dscritic);
-        
-            -- Liberando a memória alocada pro CLOB
-            dbms_lob.close(vr_dsarquiv);
-            dbms_lob.freetemporary(vr_dsarquiv);
-        
-            pr_nmarqexp := vr_caminho_arq || '/' || vr_nmarqind;
-        
-            --> Garantir que o arquivo foi gerado
-            IF gene0001.fn_exis_arquivo(pr_caminho => pr_nmarqexp) = FALSE THEN
-                vr_dscritic := 'Não foi possivel gerar arquivo, tente novamente.';
-            END IF;
-        
-            --Se ocorreu erro
-            IF vr_dscritic IS NOT NULL THEN
-                --Levantar Excecao
-                RAISE vr_exc_saida;
-            END IF;
+            pc_escreve_xml('</boletos></Root>', TRUE);
+            
+            -- Atualiza o XML de retorno
+            pr_dsretxml := xmltype(vr_dsxml);
         
         EXCEPTION
             WHEN vr_exc_saida THEN
@@ -13360,13 +13319,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     pr_dscritic := vr_dscritic;
                 END IF;
             
-                ROLLBACK;
+                -- Carregar XML padrao para variavel de retorno
+                pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
             
             WHEN OTHERS THEN
                 pr_cdcritic := vr_cdcritic;
-                pr_dscritic := 'Erro geral na rotina da tela PARPRT: ' || SQLERRM;
+                pr_dscritic := 'Erro geral na rotina da package COBR0010: ' || SQLERRM;
             
-                ROLLBACK;
+                -- Carregar XML padrao para variavel de retorno
+                pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
         END;
     
     END pc_exporta_boletos_emitidos;
