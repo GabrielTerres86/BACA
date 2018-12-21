@@ -1066,7 +1066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 01/11/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 19/12/2018
       
         Dados referentes ao programa:
       
@@ -1085,6 +1085,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                  Campo documentoAval - Diego Simas - AMcom
                                  
                     01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)             
+
+                    19/12/2011 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)          
 
     ..........................................................................*/
     DECLARE
@@ -1114,6 +1116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_flprjcop BOOLEAN;
 			vr_fl800900 BOOLEAN;
 			vr_vladtdep crapsda.vllimcre%TYPE;
+			vr_qtdiaest INTEGER;
 			vr_flggrupo INTEGER;
 			vr_nrdgrupo crapgrp.nrdgrupo%TYPE;
 			vr_gergrupo VARCHAR2(100);
@@ -1586,6 +1589,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                             AND epr.nrdconta = wpr.nrdconta
                             AND epr.nrctremp = wpr.nrctremp);
       rw_crawepr_outras cr_crawepr_outras%ROWTYPE;
+      
+      -- Busca saldo
+      CURSOR cr_crapsld IS
+        SELECT crapsld.qtddsdev
+          FROM crapsld
+         WHERE crapsld.cdcooper = pr_cdcooper
+           AND crapsld.nrdconta = pr_nrdconta;
+      rw_crapsld cr_crapsld%ROWTYPE;
       
       -- Buscar Contrato Limite Crédito
       CURSOR cr_craplim_chqesp IS
@@ -2707,9 +2718,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         ELSE
           vr_vladtdep := 0;
         END IF;
+        -- Buscar dados do Saldo para enviar quantos dias está em estouro
+        OPEN cr_crapsld;
+        FETCH cr_crapsld INTO rw_crapsld;
+        CLOSE cr_crapsld;
+        vr_qtdiaest := nvl(rw_crapsld.qtddsdev,0);
       ELSE
         vr_vladtdep := 0;
+        vr_qtdiaest := 0;
       END IF;
+     
+      -- Enviar dados do Estouro
+      vr_obj_generic2.put('quantDiaEstouroVigente',vr_qtdiaest);
     
       -- Enviar o valorAdiantDeposit
       vr_obj_generic2.put('valorAdiantDeposit'
