@@ -350,7 +350,8 @@ PROCEDURE CriaListaEventos :
                            crapedp.tpevento = 13 OR
                            crapedp.tpevento = 14 OR
                            crapedp.tpevento = 15 OR
-                           crapedp.tpevento = 16)                             NO-LOCK
+                           crapedp.tpevento = 16 OR
+						   crapedp.tpevento = 17)                             NO-LOCK
                            BY crapedp.nmevento:
                            
         aux_flgexist = FALSE.

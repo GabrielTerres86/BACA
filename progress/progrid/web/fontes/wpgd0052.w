@@ -314,7 +314,8 @@ PROCEDURE CriaListaEventos :
 											OR	crapedp.tpevento = 13	                               
 											OR	crapedp.tpevento = 14	                               
 											OR	crapedp.tpevento = 15	                               
-											OR  crapedp.tpevento = 16) NO-LOCK
+											OR  crapedp.tpevento = 16
+											OR  crapedp.tpevento = 17) NO-LOCK
               BY crapedp.nmevento:
                       
       /* Busca os PA'S cadastrados no Evento */
@@ -445,7 +446,8 @@ PROCEDURE CriaListaPacs:
 															 OR	crapedp.tpevento = 13	                               
 															 OR	crapedp.tpevento = 14	                               
 															 OR	crapedp.tpevento = 15	                               
-															 OR  crapedp.tpevento = 16)                              NO-LOCK
+															 OR crapedp.tpevento = 16
+															 OR crapedp.tpevento = 17)                              NO-LOCK
                               BY crapedp.nmevento:
 
 
@@ -529,7 +531,8 @@ FOR EACH crapsdp WHERE crapsdp.idevento = INT(ab_unmap.aux_idevento) AND
 											OR	crapedp.tpevento = 13	                               
 											OR	crapedp.tpevento = 14	                               
 											OR	crapedp.tpevento = 15	                               
-											OR  crapedp.tpevento = 16) NO-LOCK NO-ERROR.
+											OR  crapedp.tpevento = 16
+											OR  crapedp.tpevento = 17) NO-LOCK NO-ERROR.
 
             /* Se não for integração, a sugestão é descartada */
             IF  AVAILABLE crapedp      AND 
@@ -700,7 +703,8 @@ PROCEDURE ExcluiEvento :
 											OR	crapedp.tpevento = 13	                               
 											OR	crapedp.tpevento = 14	                               
 											OR	crapedp.tpevento = 15	                               
-											OR  crapedp.tpevento = 16) NO-LOCK NO-ERROR.
+											OR  crapedp.tpevento = 16
+											OR  crapedp.tpevento = 17) NO-LOCK NO-ERROR.
       
           CREATE cratedp.
           BUFFER-COPY crapedp TO cratedp.

@@ -291,7 +291,8 @@ PROCEDURE CriaListaEventos :
 											OR  crapedp.tpevento = 13	                              
 											OR	crapedp.tpevento = 14	                              
 											OR	crapedp.tpevento = 15	                              
-											OR	crapedp.tpevento = 16) NO-LOCK
+											OR	crapedp.tpevento = 16
+											OR  crapedp.tpevento = 17) NO-LOCK
 											BY crapedp.nmevento:    
 					
 			RUN RodaJavaScript("meventos.push(~{cdevento:'" + STRING(crapedp.cdevento) + "',nmevento:'" + crapedp.nmevento + "'});"). 
@@ -393,7 +394,8 @@ PROCEDURE local-assign-record :
 																						OR	crapedp.tpevento = 13	                               
 																						OR	crapedp.tpevento = 14	                               
 																						OR	crapedp.tpevento = 15	                               
-																						OR	crapedp.tpevento = 16) NO-LOCK NO-ERROR NO-WAIT.                   
+																						OR	crapedp.tpevento = 16
+																						OR  crapedp.tpevento = 17) NO-LOCK NO-ERROR NO-WAIT.                   
                           
                             IF AVAILABLE crapedp THEN
                               DO:                                
@@ -429,7 +431,8 @@ PROCEDURE local-assign-record :
 																OR	crapedp.tpevento = 13	                               
 																OR	crapedp.tpevento = 14	                               
 																OR	crapedp.tpevento = 15	                               
-																OR  crapedp.tpevento = 16) NO-LOCK NO-ERROR.
+																OR  crapedp.tpevento = 16
+																OR  crapedp.tpevento = 17) NO-LOCK NO-ERROR.
                 
                 IF   NOT AVAILABLE crapedp THEN
 									DO: 
@@ -443,7 +446,8 @@ PROCEDURE local-assign-record :
 																			 crapedp.tpevento = 13 OR
 																			 crapedp.tpevento = 14 OR
 																			 crapedp.tpevento = 15 OR
-																			 crapedp.tpevento = 16) NO-LOCK NO-ERROR.
+																			 crapedp.tpevento = 16 OR
+																			 crapedp.tpevento = 17) NO-LOCK NO-ERROR.
     
                    IF  NOT AVAILABLE crapedp  THEN NEXT.
     

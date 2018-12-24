@@ -46,6 +46,7 @@
       <input type="hidden" name="aux_idstaeve" value="">
       <input type="hidden" name="aux_tpinseve" value="">
       <input type="hidden" name="aux_nminseve" value="">
+	  <input type="hidden" name="aux_nmdgrupo" value="">
       <input type="hidden" name="aux_flgalter" value="no">
       <input type="hidden" name="aux_flginscr" value="">
       <input type="hidden" name="aux_dsinscri" value="">
@@ -63,6 +64,7 @@
       <input type="hidden" name="aux_cdoperad" id="aux_cdoperad" value="">
       <input type="hidden" name="aux_indficin" id="aux_indficin" value="">
 			<input type="hidden" name="aux_encerrar" id="aux_encerrar" value="">
+			<input type="hidden" name="aux_nmdgrupoeve" id="aux_nmdgrupoeve" value="">			
             
       <div id="divAguardo"></div>
       
@@ -171,6 +173,7 @@
                                   <input name="aux_qtmaxtur" style=" border-width:0px; " type="text" disabled="true" class="txtPequeno" size="6">
                                 </span>
                               </td>
+							  
                               <td width="10%" align="right" class="txtPequeno">
                                 <span class="NomeCampo">Pr&eacute;-Insc.:</span>
                               </td>
@@ -318,6 +321,14 @@
                            </td>
                         </tr>
                         <tr>
+                          <td class="NomeCampo" align="right">&nbsp;</td>
+                          <td class="NomeCampo" align="right">Grupo:</td>
+                          <td class="NomeCampo" colspan="2">
+                            <input name="nmdgrupo" maxlength="10" type="text" class="Campo" disabled size="10">
+                          </td>
+                        </tr>
+						
+                        <tr>
                           <td class="NomeCampo" align="right"><img src="/cecred/images/icones/ico_cooperativa.gif" width="19" height="19" align="left"></td>
                           <td colspan="3" align="right" class="NomeCampo"><div align="left"><strong>Dados para a Pr&eacute;-Inscri&ccedil;&atilde;o </strong></div></td>
                         </tr>
@@ -373,7 +384,7 @@
                       </tr>                               
                       
                       </table> 
-                      <br/><br/><br/><br/><br/>
+                      <br/><br/><br/>
                       <table border="0" align="center" cellpadding="1" cellspacing="1">
                         <tr height="30" valign="bottom">
                           <th scope="col"><img id="incluir" style="cursor:hand" src="/cecred/images/botoes/btn_limpar.gif" onclick="Incluir();"></th>
@@ -821,6 +832,14 @@
         }      
 	    //Fim PJ322 - SM 8	  
 		
+      /* Se for tipo de evento por grupo, valida o grupo de evento é igual ao grupo da conta, se não for, mostra mensagem*/
+      if ($("#aux_nrseqeve").children(":selected").attr("tpevento") == 17){
+	    if(document.form.aux_nmdgrupoeve.value != document.form.nmdgrupo.value){
+          if (!confirm("O grupo do evento(" + document.form.aux_nmdgrupoeve.value + "),\né diferente do grupo da conta("+ document.form.nmdgrupo.value +").\n Deseja efetuar a inscrição assim mesmo?")) 
+            return false; 
+		  }
+      }		
+		
        // já possui inscrição
       if (document.form.aux_flginscr.value == "S") {
         alert("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value + "\nInclusão duplicada não permitida!")
@@ -1070,6 +1089,7 @@
                document.form.aux_flgrest.value = mevento[i].flgrest;
                document.form.aux_idstaeve.value = mevento[i].idstaeve;
                document.form.aux_qtmaxtur.value = mevento[i].qtmaxtur;
+               document.form.aux_nmdgrupoeve.value = mevento[i].nmdgrupoeve;			   
                document.form.aux_nrinscri.value = mevento[i].nrinscri;
                document.form.aux_nrconfir.value = mevento[i].nrconfir;
                document.form.aux_nrcompar.value = mevento[i].nrcompar;
@@ -1746,6 +1766,7 @@
                 document.all.nrtelins.value = "";
                 document.all.idseqttl.value = "";
                 document.all.dsdemail.value = "";
+                document.all.nmdgrupo.value = "";				
                 document.all.nminseve.value = "";
                 document.all.dsobsins.value = "";
                 document.all.aux_nrcpfcgc.value = "";
@@ -1760,6 +1781,7 @@
                     document.all.nrtelins.value = vetNome[idseqttl].nrtelefo;
                     document.all.idseqttl.value = vetNome[idseqttl].idseqttl;
                     document.all.dsdemail.value = vetNome[idseqttl].dsdemail;
+                    document.all.nmdgrupo.value = vetNome[idseqttl].nmdgrupo;					
                     document.all.nminseve.value = vetNome[idseqttl].nmextttl;
                     document.all.nmresage.value = vetNome[idseqttl].nmresage;
                     document.all.aux_nrcpfcgc.value = vetNome[idseqttl].nrcpfcgc;

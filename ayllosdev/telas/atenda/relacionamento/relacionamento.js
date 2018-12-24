@@ -40,10 +40,14 @@ var dsrestri = "";
 var cdgraupr = new Array(); // grau de parentesco quando selecionado opcao outra pessoa na pre inscricao
 var idseqttl = 1;           // Titular que estara fazendo a preinscricao
 var titular = new Array(); // Array que guardara os dados de cada titular que esta fazendo a inscricao
+var nrcpfcgc = ""; // pre-inscricao
 
-	
 // Função para carregar dados da opção principal
 function acessaOpcaoPrincipal() {
+
+	//pre-inscricao
+	nrcpfcgc = $('#nrcpfcgc','#frmCabAtenda').val();
+	nrcpfcgc = nrcpfcgc.replace(/\./g,'').replace(/-/g,'');
 
     $("#divConteudoOpcao").css("display", "block");
     $("#divRelacionamentoPrincipal").css("display", "none");
@@ -799,27 +803,32 @@ function formataEventosAndamentoBusca() {
     var tabela = $('table', divRegistro);
     var linha = $('table > tbody > tr', divRegistro);
 	
-    divRegistro.css({ 'height': '150px', 'width': '550px' });
+	//relacionamentos
+    divRegistro.css({ 'height': '150px', 'width': '625px' });
 	
 	var ordemInicial = new Array();
 	
+	//relacionamentos
 	var arrayLargura = new Array();
 	arrayLargura[0] = '170px';
-	arrayLargura[1] = '40px';
-	arrayLargura[2] = '45px';
-	arrayLargura[3] = '30px';
-	arrayLargura[4] = '56px';
+	arrayLargura[1] = '45cpx';
+	arrayLargura[2] = '40px';
+	arrayLargura[3] = '45px';
+	arrayLargura[4] = '30px';
 	arrayLargura[5] = '56px';
-	arrayLargura[6] = '60px';
+	arrayLargura[6] = '56px';
+	arrayLargura[7] = '60px';
 	
+	// relacionamentos
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'left';
-	arrayAlinha[1] = 'right';
+	arrayAlinha[1] = 'center';
 	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'right';
-	arrayAlinha[4] = 'center';
+	arrayAlinha[4] = 'right';
 	arrayAlinha[5] = 'center';
-	arrayAlinha[6] = 'left';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'left';
 	
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 	ajustarCentralizacao();	
@@ -989,4 +998,57 @@ function formataEventosdoSI() {
     $('li:eq(5)', complemento).addClass('txtNormal').css({ 'width': '16%' });
 
 	return false;
+}
+
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's;
+ * Data: 12/12/2018
+ */
+function validaGrupo(){
+	var linha = $('.corSelecao','#frmEventosEmAndamentoBusca');
+
+	var nmdgrupo = $(linha).data('nmdgrupo');
+	var idevento = $(linha).data('idevento');
+
+	if(nmdgrupo != ""){
+
+		var data = {
+			nrdconta: nrdconta,
+			nmdgrupo: nmdgrupo,
+			idevento: idevento,
+			nrcpfcgc: nrcpfcgc,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		}
+
+		$.ajax({		
+			type: "POST", 
+			url: UrlSite + "telas/atenda/relacionamento/consulta_pre_inscricao.php",
+			data: data,
+			dataType: 'json',
+			error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function (response) {
+				console.log(response);
+				if(response.erro != ""){
+					showError("error", response.erro, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}else{
+					if(nmdgrupo != response.retorno.nmdgrupo){
+						showConfirmacao('Grupo do evento ('+nmdgrupo+') difere do grupo do cooperado ('+response.retorno.nmdgrupo+'), deseja efetuar a pr&eacute;-inscri&ccedil;&atilde;o assim mesmo?',
+										'Confirma&ccedil;&atilde;o - Aimaro',
+										'mostraPreInscricao()',
+										'',
+										'sim.gif',
+										'nao.gif');
+					}else{
+						mostraPreInscricao();
+					}
+				}
+			}				
+		}); 	
+	}else{
+		mostraPreInscricao();
+	}
 }

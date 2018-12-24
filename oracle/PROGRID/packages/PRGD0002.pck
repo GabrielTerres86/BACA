@@ -49,6 +49,19 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0002 IS
   FUNCTION fn_prm_logo_relat( pr_cdcooper IN crapcop.cdcooper%TYPE,
                               pr_nmrescop IN crapcop.nmrescop%TYPE) RETURN VARCHAR2;
                                                      
+  PROCEDURE pc_retorna_pa_pessoa(pr_cdcooper in  crapcop.cdcooper%type,
+                                 pr_nrcpfcgc in  crapass.nrcpfcgc%type,
+                                 pr_cdagenci out crapage.cdagenci%type,
+                                 pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                 pr_dscritic out crapcri.dscritic%type); --> Descricao da critica   
+
+  PROCEDURE pc_retorna_grupo_coop(pr_cdcooper in  crapcop.cdcooper%type,
+                                  pr_nrcpfcgc in  crapass.nrcpfcgc%type,
+                                  pr_nmdgrupo out tbevento_grupos.nmdgrupo%type,
+                                  pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                  pr_dscritic out crapcri.dscritic%type); --> Descricao da critica   
+                                
+                                                     
 END PRGD0002;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0002 IS
@@ -318,6 +331,138 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0002 IS
     WHEN OTHERS THEN
         RETURN NULL;
   END fn_prm_logo_relat;
+  
+  PROCEDURE pc_retorna_pa_pessoa(pr_cdcooper in  crapcop.cdcooper%type,
+                                 pr_nrcpfcgc in  crapass.nrcpfcgc%type,
+                                 pr_cdagenci out crapage.cdagenci%type,
+                                 pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                 pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica  
+                                     
+    /* .............................................................................
+
+    Programa:  pc_retorna_pa_pessoa
+    Sistema : Progrid
+    Autor   : Márcio(Mouts)
+    Data    : Dezembro/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Retornar o número do PA relacionado a conta que está na tabela tbcadast_pessoa 
+
+    Alteracoes: -----
+    ..............................................................................*/                                     
+   cursor agencia is
+     select
+           tg.cdagenci
+       from 
+           tbevento_pessoa_grupos tg
+      where
+           tg.cdcooper = pr_cdcooper 
+       AND tg.idpessoa = ( select 
+                                 tp.idpessoa
+                             from
+                                 tbcadast_pessoa tp
+                            where
+                                 tp.nrcpfcgc = pr_nrcpfcgc);                                
+
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000); 
+  
+    
+  BEGIN
+    pr_cdagenci:=-1; -- Inicia como -1 pois se não encontrar não deve carregar os eventos
+    FOR c1 in agencia LOOP
+      pr_cdagenci:= c1.cdagenci;
+    END LOOP;
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      ROLLBACK;  
+  END pc_retorna_pa_pessoa;   
+
+  PROCEDURE pc_retorna_grupo_coop(pr_cdcooper in  crapcop.cdcooper%type,
+                                  pr_nrcpfcgc in  crapass.nrcpfcgc%type,
+                                  pr_nmdgrupo out tbevento_grupos.nmdgrupo%type,
+                                  pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
+                                  pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica  
+    /* .............................................................................
+
+    Programa:  pc_retorna_grupo_coop
+    Sistema : Progrid
+    Autor   : Márcio(Mouts)
+    Data    : Dezembro/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Retornar o grupo da qual o cooperado participa
+
+    Alteracoes: -----
+    ..............................................................................*/                                     
+   cursor grupo is
+    select tg.nmdgrupo 
+    from tbevento_pessoa_grupos tp,
+         tbevento_grupos tg
+   where tp.cdcooper = pr_cdcooper
+     and tp.nrcpfcgc = pr_nrcpfcgc
+     and tg.cdcooper = tp.cdcooper
+     and tg.cdagenci = tp.cdagenci
+     and tg.nrdgrupo = tp.nrdgrupo;
+
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000); 
+    
+  BEGIN
+    pr_nmdgrupo:= 'Não Cad';
+    FOR c1 in grupo LOOP
+      pr_nmdgrupo:= c1.nmdgrupo;
+    END LOOP;
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      ROLLBACK;  
+      
+  END pc_retorna_grupo_coop;   
+
   
 BEGIN
 
