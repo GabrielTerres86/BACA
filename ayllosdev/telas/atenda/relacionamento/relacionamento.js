@@ -41,7 +41,7 @@ var cdgraupr = new Array(); // grau de parentesco quando selecionado opcao outra
 var idseqttl = 1;           // Titular que estara fazendo a preinscricao
 var titular = new Array(); // Array que guardara os dados de cada titular que esta fazendo a inscricao
 var nrcpfcgc = ""; // pre-inscricao
-
+	
 // Função para carregar dados da opção principal
 function acessaOpcaoPrincipal() {
 
@@ -1031,7 +1031,6 @@ function validaGrupo(){
 				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function (response) {
-				console.log(response);
 				if(response.erro != ""){
 					showError("error", response.erro, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				}else{
