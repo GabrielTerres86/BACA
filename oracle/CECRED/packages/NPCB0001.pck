@@ -1263,7 +1263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+      Data     : Janeiro/2017.                   Ultima atualizacao: 30/11/2018
     
       Dados referentes ao programa:
     
@@ -1271,6 +1271,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotina para retornar os valores do titulo calculado pela NPC
       Alteração : 
         
+      30/11/2018 - Validar a data de validade do cálculo comparando com trunc(sysdate)
+                   e não com dtmvtolt. Isso porque em feriados e finais de semana
+                   dtmvtolt já está como o próximo dia útil. Ex.: sysdate=15/11 dtmvtolt=16/11.
+                   Com isso não calculava o desconto do título ao incluir o pagamento
+                   em um final de semana. (AJFink INC0026043)
+
+      30/11/2018 - No caso de agendamentos a data de movimento vem como a data 
+                   do agendamento. (AJFink INC0029111)
+
     ..........................................................................*/
     
     vr_VlrTotCobrar  NUMBER;
@@ -1278,17 +1287,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_VlrCalcdMulta NUMBER;
     vr_VlrCalcdDesct NUMBER;
     vr_dtValiddCalc  DATE := to_date('25/04/2049','DD/MM/RRRR'); -- RC7
-    vr_data DATE;
+
   BEGIN    
     
     IF pr_tbtitulo.TabCalcTit.count <> 0 THEN
       FOR idx IN pr_tbtitulo.TabCalcTit.first..pr_tbtitulo.TabCalcTit.last LOOP
         
-      vr_data := pr_tbtitulo.TabCalcTit(idx).dtValiddCalc;
-      
-        --> utilizar o valor se a data do movimento for menor que a dta de validade
+        --> utilizar o valor se a data for menor ou igual a dta de validade
         --> e se for a menor data encontrada.. caso a temptable nao esteja ordenada
-        IF pr_dtmvtolt <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
+        --> isso acontecia porque a JD enviada data de validade incoerente
+        --INC0026043 IF pr_dtmvtolt <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
+        IF pr_dtmvtolt-4 <= pr_tbtitulo.TabCalcTit(idx).dtValiddCalc    AND 
            pr_tbtitulo.TabCalcTit(idx).dtValiddCalc < vr_dtValiddCalc THEN 
           vr_VlrTotCobrar  := pr_tbtitulo.TabCalcTit(idx).VlrTotCobrar;
           vr_dtValiddCalc  := pr_tbtitulo.TabCalcTit(idx).dtValiddCalc; 
