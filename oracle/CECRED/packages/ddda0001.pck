@@ -442,7 +442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 20/09/2018
+  --  Data     : Julho/2013.                   Ultima atualizacao: 30/11/2018
   --
   -- Dados referentes ao programa:
   --
@@ -473,6 +473,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
   --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
   --             07/08/2018 - Luis Fernando (GFT)
+  --
+  --             30/11/2018 - Implementado UPPER na consulta da CRAPSAB na procedure pc_cria_remessa_dda
+  --                          (Tiago - INC0026317)   
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -1702,7 +1705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/08/2018
+    --  Data     : Julho/2013.                   Ultima atualizacao: 30/11/2018
     --
     -- Dados referentes ao programa:
     --
@@ -1736,6 +1739,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                          para que seja possível alterar o modelo de cálculo de forma on-line
     --                          sem necessidade de liberação do programa. (PRB0040338 - AJFink)
     --
+    --             30/11/2018 - Algumas contas estao com o campo cdufsaca cadastrado na CRAPSAB como LOWERCASE
+    --                          e este campo é usado para pesquisar em outras tabelas que estão esperando
+    --                          como UPPERCASE e ocasiona erro. por isso na consulta da CRAPSAB foi implementado
+    --                          o UPPER (Tiago - INC0026317).
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1744,7 +1751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                        ,pr_nrdconta IN crapsab.nrdconta%type
                        ,pr_nrinssac IN crapsab.nrinssac%type) IS
         SELECT crapsab.cdtpinsc
-              ,crapsab.cdufsaca
+              ,UPPER(crapsab.cdufsaca) cdufsaca
               ,crapsab.nrcepsac
               ,crapsab.nmdsacad
               ,crapsab.dsendsac
