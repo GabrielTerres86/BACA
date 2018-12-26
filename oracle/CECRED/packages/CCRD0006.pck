@@ -483,7 +483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao: 
+  --  Data    : Junho/2017                     Ultima Atualizacao: 21/12/2018
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -499,6 +499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                > PRB0040361: Não efetuar o envio do arquivo ASLC033 (quando possuir qualquer movimentação
                                              da CABAL) enquanto não for recebido todo o valor finaneiciro para demais bandeiras.
                                              (Adriano).
+ 
+                  21/12/2018 - Ajustes para tratar estouro de variável 
+                               (Adriano - INC0029689).
  
 */
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -552,7 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_assunto       VARCHAR2(200);
     vr_mensagem      VARCHAR2(32000);
     vr_interv_slc33  NUMBER;
-    
+
 
 
     BEGIN
@@ -712,8 +715,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     end if;  
     
     if (sysdate > to_date(nvl(var_dthr_ult_env_email_antcp,'01/01/0001 00:00'),'dd/mm/yyyy hh24:mi')+vr_interv_slc33) then
-      pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
-                                ,pr_dscritic    => vr_dscritic);
+    pc_verif_arq_antecip_nproc(pr_cdcritic    => vr_cdcritic
+                              ,pr_dscritic    => vr_dscritic);
     end if;                              
 
     IF vr_dscritic is not null then
@@ -7700,7 +7703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
-    vr_nrdconta      crapass.nrdconta%TYPE;
+    vr_nrdconta      NUMBER(25);
     vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
@@ -7931,8 +7934,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         IF rw_lancamento.tparquivo = 3 THEN
         
-          -- Efetua a atualizacao da situacao na tabela de lancamentos
-          BEGIN
+        -- Efetua a atualizacao da situacao na tabela de lancamentos
+        BEGIN
 
             UPDATE tbdomic_liqtrans_lancto tllan
                SET tllan.insituacao      = 1 -- Enviado para CIP/Aguardando Aprovação
@@ -7959,17 +7962,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                  
           -- Efetua a atualizacao da situacao na tabela de lancamentos
           BEGIN
-            UPDATE tbdomic_liqtrans_lancto
-               SET insituacao = 1 -- Enviado para CIP/Aguardando Aprovação
-                  ,dhprocessamento = SYSDATE
-             WHERE idlancto = rw_lancamento.idlancto;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
-          
-        END IF;
+          UPDATE tbdomic_liqtrans_lancto
+             SET insituacao = 1 -- Enviado para CIP/Aguardando Aprovação
+                ,dhprocessamento = SYSDATE
+           WHERE idlancto = rw_lancamento.idlancto;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
+      END IF;
 
       END IF;
     END LOOP;  -- loop cr_lancamento
@@ -8148,7 +8151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
 
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
-    vr_nrdconta      crapass.nrdconta%TYPE;
+    vr_nrdconta      NUMBER(25);
     vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
     vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
@@ -10185,9 +10188,9 @@ from  (
                          AND tlc.idcentraliza = pdv.idcentraliza
                          and SUBSTR(LPAD(tll.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_ispb 
                       ) cred
-                   , (SELECT count(1) AS qdepagamentos
-                           , sum(str.vllancamento) vlpagamentos
-                        FROM cecred.tbdomic_liqtrans_msg_ltrstr str
+                     , (SELECT count(1) AS qdepagamentos
+                             , sum(str.vllancamento) vlpagamentos
+                          FROM cecred.tbdomic_liqtrans_msg_ltrstr str
                        WHERE str.cdmsg = vr_tipo_msg
                          AND nvl(SUBSTR(LPAD(STR.nrcnpj_cpf_cliente_debitado, 14, '0'), 1, 8),0)  = 
                                                       DECODE(vr_tipo_msg,'STR0006R2',
@@ -10199,7 +10202,7 @@ from  (
                          AND nvl(str.cdfinalidade_if,0) = DECODE(vr_tipo_msg,'STR0006R2',
                                                              0,                      -- CIELO
                                                              23)                     -- REDECARD               
-                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
+                           AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
 
                            
   BEGIN
@@ -10872,7 +10875,7 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                      ,pr_dstexto    => vr_mensagem
                      ,pr_dscritic   => vr_dscritic);
     END IF;
-    
+
     UPDATE crapprm
        SET dsvlrprm = to_char(sysdate,'DD/MM/YYYY HH24:MI')
      WHERE nmsistem = 'CRED'
