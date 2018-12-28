@@ -1522,6 +1522,7 @@ function consultaListaAgencias(){
 	showMsgAguardo("Aguarde, buscando as ag&ecirc;ncia...");
 
 	var listaAgencias = '';
+	var cddopcao = $('#cddopcao', '#frmCabCadgrp').val();
 
 	$('table > tbody > tr', '#frmDistribuicaoGrupos').each(function(){
 		if ($("input[type=checkbox]", this).is(':checked')){
@@ -1539,6 +1540,7 @@ function consultaListaAgencias(){
 		type: 'POST', 
 		url: UrlSite + 'telas/cadgrp/consulta_lista_agencias.php',
 		data: {
+		    cddopcao: cddopcao,
 			listaAgencias: listaAgencias,
 			redirect: 'html_ajax' // Tipo de retorno do ajax
 		},		
