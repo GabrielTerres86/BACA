@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Janeiro/2011                       Ultima atualizacao: 02/01/2018
+   Data    : Janeiro/2011                       Ultima atualizacao: 20/12/2018
 
    Dados referentes ao programa:
    Frequencia: Diario.
@@ -78,6 +78,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
                             que compensam nos dias 29/12, 30/12, 31/12 e 01/01/18. 
                             Esse fato está ocorrendo sempre no último dia do ano.
                             (Douglas - Chamado 822733)
+                            
+               20/12/2018 - Ajuste na lógica de fim de ano para enviar os movimentos
+                            conforme estipulado pela ABBC
+                            (Adriano - SCTASK0039214). 
+               
 ..............................................................................*/
 BEGIN
   DECLARE
@@ -110,6 +115,8 @@ BEGIN
     vr_dtlimite    DATE;                         --> Data de limite
     vr_dtlibera    DATE;                         --> Data de liberação
     vr_dtultdia    DATE;                         --> Data do ultimo dia
+    vr_dtmvtopr_abbc DATE;                       --> Data ABBC
+    vr_dtdemvto_abbc DATE;                       --> Data de movimentos ABBC
     vr_vlchqmai    NUMBER(20,2);                 --> Valor de cheque
     vr_exc_erro    EXCEPTION;                    --> Controle de exceção personalizado
     vr_cdprogra    VARCHAR2(30);                 --> Nome do programa
@@ -260,6 +267,7 @@ BEGIN
           -- Verifica se a data existe na tabela de feriados
           IF vr_tab_crapfer.exists(to_char(tmp_dtrefere, 'DDMMRRRR') || lpad(pr_cdcooper, 3, '0')) THEN
             tmp_dtrefere := tmp_dtrefere + 1;
+
             continue;
           END IF;
 
@@ -376,12 +384,7 @@ BEGIN
     vr_nmarqlog := 'prcctl_' || to_char(rw_crapdat.dtmvtolt, 'RRRR') || to_char(rw_crapdat.dtmvtolt,'MM') || to_char(rw_crapdat.dtmvtolt,'DD') || '.log';
     vr_dirlog := gene0001.fn_diretorio(pr_tpdireto => 'C',pr_cdcooper => 3,pr_nmsubdir => '/log');
     vr_dtultdia := to_date('31/12/' || to_char(rw_crapdat.dtmvtolt, 'RRRR'), 'DD/MM/RRRR');
-
-    -- Buscar dia útil
-    vr_dtultdia := gene0005.fn_valida_dia_util(pr_cdcooper
-                                              ,pr_dtmvtolt => vr_dtultdia
-                                              ,pr_tipo     => 'A'
-                                              ,pr_feriado  => FALSE);
+    vr_dtmvtopr_abbc := rw_crapdat.dtmvtopr;
 
     -- Buscar dados das taxas
     OPEN cr_craptab(pr_cdcooper, 'CRED', 'USUARI', 11, 'MAIORESCHQ', 1);
@@ -403,6 +406,45 @@ BEGIN
     FOR registro IN cr_crapfer LOOP
       vr_tab_crapfer(registro.idx).registro := 1;
     END LOOP;
+
+    -- Buscar dia útil
+    vr_dtultdia := gene0005.fn_valida_dia_util(pr_cdcooper
+                                              ,pr_dtmvtolt => vr_dtultdia
+                                              ,pr_tipo     => 'A'
+                                              ,pr_feriado  => FALSE
+                                              ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
+       
+    -------------------------------
+    -- Exceção do último dia do ano
+    -------------------------------
+    vr_dtdemvto_abbc := ADD_MONTHS(TRUNC (vr_dtmvtopr_abbc,'YEAR'),12)-1;
+    IF vr_dtmvtopr_abbc = vr_dtdemvto_abbc THEN
+      vr_dtmvtopr_abbc := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                     ,pr_dtmvtolt => vr_dtmvtopr_abbc
+                                                     ,pr_tipo     => 'P'
+                                                     ,pr_feriado  => TRUE
+                                                     ,pr_excultdia => FALSE);        
+    END IF;
+    -------------------------------
+    -------------------------------
+
+    -- busca o proximo dia util 
+    vr_dtmvtopr_abbc := fn_calc_prox_dia_util(pr_cdcooper
+                                             ,pr_data     => vr_dtmvtopr_abbc
+                                             ,pr_datautl  => vr_dtultdia);   
+                                             
+    --------------------------------------------------------
+    -- Exceção para não gerar nada no ultimo dia útil do ano
+    --------------------------------------------------
+
+    -- excecao para não gerar nada no ultimo dia do ano
+    vr_dtdemvto_abbc := ADD_MONTHS(TRUNC (rw_crapdat.dtmvtolt,'YEAR'),12)-1;
+    
+    IF rw_crapdat.dtmvtolt = vr_dtdemvto_abbc THEN
+      vr_dtmvtopr_abbc := to_date('01/01/1800','dd/mm/rrrr');
+    END IF;                                                                                           
+                                               
+    
 
     -- Verificar registros no cadastro da cooperativa.
     -- C    - Fixo (Custodia e Dsc Chq)
@@ -587,9 +629,7 @@ BEGIN
                                             ,pr_datautl  => vr_dtultdia);
 
         -- Compara datas uteís para gerar XML 2
-        IF vr_dtlibera = fn_calc_prox_dia_util(pr_cdcooper => registro.cdcooper
-                                              ,pr_data     => rw_crapdat.dtmvtopr
-                                              ,pr_datautl  => vr_dtultdia) THEN
+        IF vr_dtlibera = vr_dtmvtopr_abbc THEN
           -- Sumarizar valores
           vr_nrseqar2 := vr_nrseqar2 + 1;
           vr_totvalo2 := vr_totvalo2 + rw_crapcst.vlcheque;
@@ -702,9 +742,7 @@ BEGIN
                                             ,pr_datautl  => vr_dtultdia);
 
         -- Compara datas uteís para gerar XML 2
-        IF vr_dtlibera = fn_calc_prox_dia_util(pr_cdcooper => registro.cdcooper
-                                              ,pr_data     => rw_crapdat.dtmvtopr
-                                              ,pr_datautl  => vr_dtultdia) THEN
+        IF vr_dtlibera = vr_dtmvtopr_abbc THEN
 
           -- Sumarizar valores
           vr_nrseqar2 := vr_nrseqar2 + 1;
