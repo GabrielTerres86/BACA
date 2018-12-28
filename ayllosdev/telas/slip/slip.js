@@ -401,9 +401,40 @@ function formataCabecalho() {
 	return false;		
 }
 
+function validaPermissao(cddotipo) {
+	$.ajax({
+	        type: "POST",
+	        url: UrlSite + "telas/slip/valida_permissao.php",
+	        data: {	            
+	            cddotipo: cddotipo,
+				redirect: "script_ajax"
+			},
+	        error: function(objAjax,responseError,objExcept) {
+	        
+	            hideMsgAguardo();
+	            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')) )");
+	        },
+	        success: function(response) {
+	           hideMsgAguardo();
+				try {
+					eval(response);
+				} catch (error) {
+						hideMsgAguardo();
+						showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+				}
+
+		
+			}
+	    });
+    
+    	return false;	
+}
+
 function liberaFormulario(){
 	var cddotipo = $("#cddotipo","#frmCab");
 
+	validaPermissao(cddotipo.val());
+	
 	if(cddotipo.prop("disabled")){
 		// Se o campo estiver desabilitado, não executa a liberação do formulário pois já existe uma ação sendo executada
 		return;
@@ -457,8 +488,6 @@ function estadoInicialConsulta(){
 	$("#divConLancamento").css({"display":"block"});
 	$("#divFiltrosConLanc").css({"display":"block"});
 	$("#tabIncLancamento").css({"display":"none"});
-
-	
 
 	$("#divBotoes").css({"display":"block"});
 
