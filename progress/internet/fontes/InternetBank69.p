@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jorge
-   Data    : Setembro/2011                        Ultima atualizacao: 23/03/2016
+   Data    : Setembro/2011                        Ultima atualizacao: 24/12/2018
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Importar dados de remessa de cobrança enviado pelo cooperado.
@@ -20,8 +20,11 @@
                             
                11/03/2014 - Correcao fechamento instancia b1wgen0090 (Daniel) 
                           
-			   23/03/2016 - Conversao para PL SQL (Andrei - RKAM ).
-			   
+               23/03/2016 - Conversao para PL SQL (Andrei - RKAM ).
+
+               24/12/2018 - Somente retornar "NOK" se a proc retornou a mensagem de erro 
+                            caso contrário deverá retornar o XML da Operacao com "OK" pois existem mensagens de 
+                            validacao do arquivo que devem ser retornadas para o cooperado (Douglas - INC0029384)
  ............................................................................ */
  
 create widget-pool.
@@ -111,7 +114,10 @@ ASSIGN aux_dsretorn       = ""
                             WHEN pc_InternetBank69.pr_xml_operacao69 <> ?               .
 
 /* Verificar se retornou critica */
-IF aux_dsretorn = "NOK" THEN
+/* Somente retornar "NOK" se a proc retornou a mensagem de erro 
+   caso contrário deverá retornar o XML da Operacao com "OK" pois existem mensagens de 
+   validacao do arquivo que devem ser retornadas para o cooperado */
+IF xml_dsmsgerr <> "" THEN
    RETURN "NOK".
    
   
