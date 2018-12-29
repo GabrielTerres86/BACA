@@ -3960,7 +3960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 29/12/2018
   
   Dados referentes ao programa:
   
@@ -4043,6 +4043,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                            Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                            pendente (Lucas Ranghetti #INC0011082)
+                           
+              29/12/2018 - Ajuste emergencial na rotina de validação do último dia não útil do ano. (Cechet/Pablão)
+              
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4726,7 +4729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => FALSE      --> Nao considera feriados
+                                               ,pr_feriado  => TRUE      --> Nao considera feriados
                                                ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
