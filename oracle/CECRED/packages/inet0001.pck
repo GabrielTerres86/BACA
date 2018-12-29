@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
 
     Programa: inet001                         Antiga: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 25/10/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 04/12/2018
 
     Dados referentes ao programa:
 
@@ -228,6 +228,11 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
          
 			25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego). 
          
+            01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
+                         Marcelo Telles Coelho - Mouts
+
+			04/12/2018 - Ajuste na rotina de validação de agendamento de boletos. (Dionathan/Cechet)
+
 ..............................................................................*/
 
   --Tipo de Registro para limites
@@ -242,7 +247,9 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
            ,qtmesagd INTEGER
            ,qtmesrec INTEGER
            ,qtmesfut INTEGER
-           ,idtpdpag INTEGER);    /* 1 - Transf / 2 - Pagamento */
+           ,idtpdpag INTEGER    /* 1 - Transf / 2 - Pagamento */
+           ,hrcancel VARCHAR2(5)
+           ,nrhrcanc INTEGER);
 
   --Tipo de tabela de memoria para limites
   TYPE typ_tab_limite IS TABLE OF typ_reg_limite INDEX BY PLS_INTEGER;
@@ -632,8 +639,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                              Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                              pendente (Lucas Ranghetti #INC0011082)
+  --            12/06/2018 - Ajuste nos tratamentos e na forma de atualizar os prepostos da rotina 
+  --                         pc_atu_trans_pend_prep. (Wagner - Sustentação - #PRB0040080).
+  --
+  --            17/10/2018 - Atualizações referente ao projeto 475 - Sprint C
+  --                         Jose Dill - Mouts
 
-                21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
+  				21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
                              INC0027280 - Paulo Martins - Mouts
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -655,8 +667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           ,crapcop.hrfimatr
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper
-       AND crapcop.flgativo = 1;
+       AND crapcop.Flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
+  rw_crapcopgrade cr_crapcop%ROWTYPE; -- Projeto 475
 
   /* Buscar dados das agencias */
   CURSOR cr_crapage (pr_cdcooper IN crapage.cdcooper%type
@@ -774,10 +787,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
+
+      --Cursores
+      CURSOR cr_hrcancel IS
+      SELECT age.hrcancel
+        FROM crapage age
+       WHERE age.cdcooper = pr_cdcooper
+         AND age.cdagenci = pr_cdagenci;
+
       --Variaveis Locais
       vr_flsgproc BOOLEAN;
       vr_hrinipag INTEGER;
       vr_hrfimpag INTEGER;
+      vr_hrcancel INTEGER;
       vr_qtmesagd INTEGER;
       vr_qtmesfut INTEGER;
       vr_qtmesrec INTEGER;
@@ -823,7 +845,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- Se estiver setado como estado de crise
         IF  vr_inestcri > 0  THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Sistema indisponivel no momento. Tente mais tarde!';
+            vr_dscritic := 'Sistema temporariamente indisponivel para a realizacao da transacao.'||chr(10)||
+                           'Por favor, tente novamente mais tarde.'; -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+                        -- 'Sistema indisponivel no momento. Tente mais tarde!';
             RAISE vr_exc_erro;
         END IF;
       END IF;
@@ -1041,12 +1065,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_idesthor:= 2;
           END IF;
 
+          OPEN cr_hrcancel;
+          FETCH cr_hrcancel
+          INTO vr_hrcancel;
+          CLOSE cr_hrcancel;
+
           --Criar registro para tabela limite horarios
           vr_index_limite:= pr_tab_limite.Count+1;
           pr_tab_limite(vr_index_limite).hrinipag:= GENE0002.fn_converte_time_data(vr_hrinipag);
           pr_tab_limite(vr_index_limite).hrfimpag:= GENE0002.fn_converte_time_data(vr_hrfimpag);
+          pr_tab_limite(vr_index_limite).hrcancel:= GENE0002.fn_converte_time_data(vr_hrcancel);
           pr_tab_limite(vr_index_limite).nrhorini:= vr_hrinipag;
           pr_tab_limite(vr_index_limite).nrhorfim:= vr_hrfimpag;
+          pr_tab_limite(vr_index_limite).nrhrcanc:= vr_hrcancel;
           pr_tab_limite(vr_index_limite).idesthor:= vr_idesthor;
           pr_tab_limite(vr_index_limite).iddiauti:= NULL;
           pr_tab_limite(vr_index_limite).flsgproc:= vr_flsgproc;
@@ -1183,6 +1214,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF vr_hratual < vr_hrinipag OR vr_hratual > vr_hrfimpag THEN
             --Estourou limite
             vr_idesthor:= 1;
+            /* Projeto 475 Sprint C (Req14) - Tratamento para permitir agendar uma TED antes da abertura da sua grade 
+               Permite ou não habilitar o campo data atual no IB (vr_idesthor) */
+            IF vr_iddiauti = 1 THEN
+              -- Faz a validação somente para dias úteis              
+              IF vr_hratual < vr_hrinipag 
+                 and pr_tpoperac = 4 THEN
+                 -- Dentro do limite (antes da abertura da grade)
+                vr_idesthor:= 2;              
+              END IF; 
+            END IF;
           ELSE
             --Dentro do Horario limite
             vr_idesthor:= 2;
@@ -1444,8 +1485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                                          ELSE NULL
                                                        END;
         
-        END IF;        
-      END IF; 
+        END IF;
+      END IF;
       
       
     EXCEPTION
@@ -3178,7 +3219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   ---------------------------------------------------------------------------------------------------------------*/
       CURSOR cr_crappfp (prc_indrowid IN VARCHAR2)IS
         SELECT pfp.dtdebito,
-               pfp.vllctpag
+               pfp.vllctpag,
+               pfp.idsitapr
           FROM crappfp pfp
          WHERE pfp.rowid like prc_indrowid;
        --
@@ -3364,6 +3406,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_rowid := vr_indrowid(vr_index);
           -- buscar informacao Rowid selecionado 
           FOR rw_crappfp IN cr_crappfp(vr_rowid) LOOP
+            
+            -- Verificar se folha já foi registrada como transação pendente
+            IF rw_crappfp.idsitapr = 6 THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Folha de pagamento já foi registrada para aprovação do(s) preposto(s). Verifique as transações pendentes.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+                
             -- Verificar se deve somar o valor ou validara validar os limites
             IF va_data_ant is null or
               va_data_ant = rw_crappfp.dtdebito THEN
@@ -3988,7 +4039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               
               22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
                            transação alem da sua alçada enviar para aprovação do preposto (Tiago/Fabricio)
-
+                           
               04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                            Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                            pendente (Lucas Ranghetti #INC0011082)
@@ -4122,6 +4173,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_tp_transa VARCHAR2(100) := null;     
       --
       tab_limite_conta INET0001.typ_tab_internet; --Tabelas de retorno de horarios limite
+      -- Projeto 475 Sprint C
+      vr_hratualgrade INTEGER;
+      vr_hrinipaggrade INTEGER;
+      
     BEGIN
       --Inicializar varaivel retorno erro
       pr_cdcritic:= NULL;
@@ -4671,14 +4726,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => FALSE);     --> Nao considera feriados
+                                               ,pr_feriado  => FALSE      --> Nao considera feriados
+                                               ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
         
         /** Data do agendamento nao pode ser o ultimo dia util do ano **/
         IF pr_idagenda = 2  AND
            pr_tpoperac <> 4 AND 
-           pr_dtmvtopg = vr_dtdialim THEN
+           pr_dtmvtopg > vr_dtdialim THEN
            
           vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
           vr_cdcritic:= 0;
@@ -4740,7 +4796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             -- Tenta buscar o erro no vetor de erro
             IF vr_tab_erro.COUNT > 0 THEN
               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+              vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrctatrf;
             ELSE
               vr_cdcritic:= 0;
               vr_dscritic:= 'Erro na validacao da conta destino.';
@@ -4867,8 +4923,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
 
           /** Critica se data do pagamento for no ultimo dia util do ano **/
-          IF (pr_idagenda = 1 AND pr_dtmvtolt = vr_dtdialim) OR
-             (pr_idagenda > 1 AND pr_dtmvtopg = vr_dtdialim) THEN
+          IF (pr_idagenda = 1 AND pr_dtmvtolt > vr_dtdialim) OR
+             (pr_idagenda > 1 AND pr_dtmvtopg > vr_dtdialim) THEN
             vr_cdcritic:= 0;
             IF pr_idagenda = 1 THEN
               vr_dscritic:= 'Não é possível efetuar pagamentos neste dia.';
@@ -5123,7 +5179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- Verifica se data de agendamento e uma data futura
         IF pr_tpoperac IN (10,12,13) THEN --DARF/DAS, FGTS, DAE   
           
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil
@@ -5143,10 +5199,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
           ELSIF pr_dtmvtopg = vr_datdodia AND -- Se for agendamento para hoje
                 pr_assin_conjunta <> 1 THEN -- e não for transacao pendente
+            -- Projeto 475 - Sprint C (Req14) - Tratamento para permitir agendar uma TED antes da abertura da sua grade 
+            -- Verificar se estourou o limite de grade para TED
+            IF sspb0003.fn_valida_horario_ted (pr_cdcooper) AND pr_tpoperac = 4 THEN
+               -- Dentro do limite (antes da abertura da grade)
+               NULL;              
+            ELSE
             --Montar mensagem erro
             vr_cdcritic:= 0;
             vr_dscritic:= 'Não é possível agendar para a data de hoje. Utilize a opção "Nesta Data".';
           END IF;
+                        
+          END IF;
+        
         
           END IF;
         
@@ -6550,42 +6615,98 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
                                    ,pr_cdcritic   OUT INTEGER              --Código do erro
                                    ,pr_dscritic   OUT VARCHAR2) IS         --Descricao do erro
   BEGIN
-  DECLARE
-    -------------------------> VARIAVEIS <-------------------------
-    vr_exc_erro EXCEPTION;
     
+  DECLARE
+    
+      CURSOR cur_trans_pend IS
+        SELECT ttp.cdtransacao_pendente
+          FROM tbgen_trans_pend ttp
+         WHERE ttp.cdcooper = pr_cdcooper -- cooperativa
+           AND ttp.nrdconta = pr_nrdconta -- conta
+           AND ttp.idsituacao_transacao = 1 -- pendentes       
+         ORDER BY ttp.cdtransacao_pendente;
+    
+      vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+       
     BEGIN
       
       IF pr_tpdsenha =  1 /*Internet*/ AND
          pr_inpessoa > 1 /*PJ*/        AND 
          pr_idastcjt = 0 /*Nao exige Ass.Conj*/ THEN
+         
+        FOR reg IN cur_trans_pend LOOP          
          BEGIN
            UPDATE tbgen_trans_pend
-              SET tbgen_trans_pend.nrcpf_representante = pr_nrcpfcgc
-            WHERE tbgen_trans_pend.cdcooper = pr_cdcooper
-              AND tbgen_trans_pend.nrdconta = pr_nrdconta
-              AND tbgen_trans_pend.idsituacao_transacao = 1;             
+               SET tbgen_trans_pend.nrcpf_representante  = pr_nrcpfcgc
+             WHERE tbgen_trans_pend.cdtransacao_pendente = reg.cdtransacao_pendente -- pela pk
+               AND tbgen_trans_pend.nrcpf_representante  <> pr_nrcpfcgc; -- CPF diferente apenas, se for o mesmo não atualiza.
               
            UPDATE tbgen_aprova_trans_pend
               SET tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc
-            WHERE tbgen_aprova_trans_pend.cdcooper = pr_cdcooper
-              AND tbgen_aprova_trans_pend.nrdconta = pr_nrdconta
-              AND tbgen_aprova_trans_pend.idsituacao_aprov = 1;             
+             WHERE tbgen_aprova_trans_pend.cdtransacao_pendente    = reg.cdtransacao_pendente -- por parte da pk
+               AND tbgen_aprova_trans_pend.idsituacao_aprov        = 1 -- somente pendentes
+               AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov <> pr_nrcpfcgc; -- CPF diferente apenas, se for o mesmo não atualiza.
               
          EXCEPTION           
-           WHEN OTHERS THEN
-             RAISE vr_exc_erro;
+            WHEN dup_val_on_index THEN
+              -- Conforme constatado com o INC0016955, há casos em que o novo preposto (CPF)
+              -- já existe para a mesma transação, gerando erro de PK.
+              -- Com isso, para não parar o processo iremos desconsiderar erros de PK para essa
+              -- atualização de prepostos.
+              NULL;
+              
+              -- Registra o erro para log
+              cecred.pc_log_programa(pr_dstiplog            => 'E', -- Erro
+                                     pr_cdprograma          => 'INET0001',
+                                     pr_cdcooper            => 3, -- CECRED
+                                     pr_tpexecucao          => 3, -- Online
+                                     pr_tpocorrencia        => 1, -- Erro de negócio
+                                     pr_cdcriticidade       => 0,
+                                     pr_cdmensagem          => 0, -- critica
+                                     pr_dsmensagem          => 'INET0001.pc_atu_trans_pend_prep. Chave duplicada na atualização da tabela tbgen_aprova_trans_pend. Parametros: pr_cdcooper ='||pr_cdcooper||
+                                                               ', pr_nrdconta ='||pr_nrdconta||', pr_nrcpfcgc ='||pr_nrcpfcgc||', pr_inpessoa ='||pr_inpessoa||
+                                                               ', pr_tpdsenha ='||pr_tpdsenha||', pr_idastcjt ='||pr_idastcjt, -- descrição da critica
+                                     pr_flgsucesso          => 1,
+                                     pr_nmarqlog            => NULL,
+                                     pr_flabrechamado       => 0,
+                                     pr_texto_chamado       => NULL,
+                                     pr_destinatario_email  => NULL,
+                                     pr_flreincidente       => 0,
+                                     pr_idprglog            => vr_idprglog);
          END;
+        END LOOP;
+         
       END IF;
       
     EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;    
+        pr_dscritic := 'Erro geral na rotina INET0001.pc_atu_trans_pend_prep. Descrição: '|| SQLERRM;    
+
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                                            
+        
+        -- Registra o erro para log
+        cecred.pc_log_programa(pr_dstiplog            => 'E', -- Erro
+                               pr_cdprograma          => 'INET0001',
+                               pr_cdcooper            => 3, -- CECRED
+                               pr_tpexecucao          => 3, -- Online
+                               pr_tpocorrencia        => 2, -- Erro não tratado
+                               pr_cdcriticidade       => 0,
+                               pr_cdmensagem          => pr_cdcritic, -- critica
+                               pr_dsmensagem          => pr_dscritic||CHR(10)||
+                                                         'INET0001.pc_atu_trans_pend_prep. Parametros: pr_cdcooper ='||pr_cdcooper||
+                                                         ', pr_nrdconta ='||pr_nrdconta||', pr_nrcpfcgc ='||pr_nrcpfcgc||', pr_inpessoa ='||pr_inpessoa||
+                                                         ', pr_tpdsenha ='||pr_tpdsenha||', pr_idastcjt ='||pr_idastcjt, -- descrição da critica
+                               pr_flgsucesso          => 1,
+                               pr_nmarqlog            => NULL,
+                               pr_flabrechamado       => 0,
+                               pr_texto_chamado       => NULL,
+                               pr_destinatario_email  => NULL,
+                               pr_flreincidente       => 0,
+                               pr_idprglog            => vr_idprglog);        
     END;
+    
   END pc_atu_trans_pend_prep;
   
 
