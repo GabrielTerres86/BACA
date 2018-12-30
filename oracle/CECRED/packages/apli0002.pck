@@ -19140,7 +19140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                  Antigo: sistema/generico/procedures/b1wgen0081.p > cadastrar-resgate-aplicacao
    Sigla   : APLI
    Autor   : Renato Darosci.
-   Data    : Agosto/2014                          Ultima atualizacao: 05/12/2017
+   Data    : Agosto/2014                          Ultima atualizacao: 29/12/2017
 
    Dados referentes ao programa:
 
@@ -19169,6 +19169,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 19/07/2018 - Inclusão de tratamento para bloquear resgate de aplicação enquanto o
                              processo batch estiver rodando (Jean Michel)
           
+                29/12/2018 - Setado na fn_valida_dia_util pra executar no ultimo dia do ano como se 
+                             fosse dia util (Tiago).
   .......................................................................................*/
   PROCEDURE pc_cad_resgate_aplica(pr_cdcooper    IN NUMBER
                                  ,pr_cdagenci    IN NUMBER
@@ -19560,7 +19562,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_dtvalida := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
                                                  pr_dtmvtolt => pr_dtresgat, 
                                                  pr_tipo     => 'P', 
-                                                 pr_feriado  => TRUE );
+                                                 pr_feriado  => TRUE,
+                                                 pr_excultdia => TRUE );
       
       -- Se NÃO retornar a mesma data, é porque é NÃO é dia util
       IF vr_dtvalida <> pr_dtresgat THEN
