@@ -540,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 31/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -647,6 +647,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
   				21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
                              INC0027280 - Paulo Martins - Mouts
+                             
+                31/12/2018 - Ajuste para contornar validação do último dia 
+                             útil do ano 
+                             (Adriano - INC0030017).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1208,6 +1212,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_iddiauti:= 1;
           END IF;
 
+          ---Ajuste para atender o INC0030017 
+          IF vr_iddiauti = 2                      AND 
+             pr_tpoperac = 4                      AND 
+             trunc(SYSDATE) = to_date('31/12/2018','DD/MM/RRRR') THEN
+            vr_iddiauti:= 1;
+          END IF; 
+          
+          
           --Determinar a hora atual
           vr_hratual:= GENE0002.fn_busca_time;
           --Verificar se estourou o limite
