@@ -2475,6 +2475,7 @@ PROCEDURE gera-dados:
                                    INPUT "",
                                    INPUT par_vldsacad,
                                    INPUT FALSE,
+								   INPUT 0,
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-sacados-blt).
                                  
@@ -2909,6 +2910,7 @@ PROCEDURE seleciona-sacados:
     DEF  INPUT PARAM par_nmdsacad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac             NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrconins AS DECI                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-sacados-blt.
@@ -2986,7 +2988,8 @@ PROCEDURE seleciona-sacados:
 
     FOR EACH crapsab WHERE crapsab.cdcooper = par_cdcooper AND
                            crapsab.nrdconta = par_nrdconta AND
-                           crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
+                           crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" AND 
+                           (( par_nrconins > 0 AND STRING(crapsab.nrinssac) MATCHES "*" + STRING( par_nrconins ) + "*" ) OR par_nrconins = 0)
                            NO-LOCK BY crapsab.nmdsacad:
         
         /* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
