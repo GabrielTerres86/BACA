@@ -332,6 +332,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 			   17/08/2018 - SCTASK0018345-Borderô desconto cheque - Paulo Martins - Mouts
                29/11/2018 - Inclusão de log para acompanhamento da crítica 717
                             INC0027476 - Ana - Envolti
+
+               27/12/2018 - Inclusão de mensagem para a crítica 757 conforme 
+                            instruções da requisição. Chamado SCTASK0029400 - Gabriel (Mouts).
+
 ............................................................................. */
 
      DECLARE
@@ -3493,7 +3497,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_tab_craprej(vr_index_craprej).cdcritic:= vr_cdcritic;
                           vr_tab_craprej(vr_index_craprej).cdpesqbb:= vr_cdpesqbb;
                           vr_tab_craprej(vr_index_craprej).nrctadep:= to_char(vr_nrctadep);
-                          vr_tab_craprej(vr_index_craprej).dscritic:= 'Conta '||rw_crapcst.nrdconta;
+                          --vr_tab_craprej(vr_index_craprej).dscritic:= 'Conta '||rw_crapcst.nrdconta;
                         END IF;
                       END IF;  --cr_crapcst%FOUND
                       --Fechar Cursor
@@ -5145,7 +5149,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF;
                     ELSIF vr_cdcritic = 948 THEN -- Oriundo da rotina CHEQ0001 - Cheques sinistrados
                       vr_dscritic:= rw_craprej.dshistor; -- Busca o motivo do cheque sinistrado
-                    ELSE
+                    ELSIF vr_cdcritic = 757 THEN -- Requisicao XYZ
+                      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' Conta 922.';
+					ELSE
                       --Selecionar a mensagem da critica
                       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                     END IF;
@@ -5166,7 +5172,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_tot_vlregrej:= Nvl(vr_tot_vlregrej,0) + Nvl(rw_craprej.vllanmto,0);
                         
                         -- Caso esteja dentro da lista abaixo
-                        IF vr_cdcritic IN (9,97,108,109,320,811) THEN
+                        IF vr_cdcritic IN (9,97,108,109,320,757,811) THEN
                           -- Monta a mensagem
                           vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                          ',1773,1455,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
