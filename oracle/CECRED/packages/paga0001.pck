@@ -1280,7 +1280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 29/10/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 02/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1682,8 +1682,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   ( Belli - Envolti - PRB0040400)
 		
        29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
-                    PRJ450 - Renato Cordeiro (AMcom)         
-		
+                    PRJ450 - Renato Cordeiro (AMcom)
+
+     02/01/2019 -  sctask0041317 Retirada de variáveis e cursores não utilizados, rotinas pc_paga_convenio e 
+                   pc_paga_titulo; retirada de consulta repetida da crapass, rotina pc_paga_convenio (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -8415,7 +8418,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                              ,pr_dscritic OUT VARCHAR2                --Descricao critica
                              ,pr_msgofatr OUT VARCHAR2
                              ,pr_cdempcon OUT NUMBER
-							 ,pr_cdsegmto OUT VARCHAR2) IS 
+                             ,pr_cdsegmto OUT VARCHAR2) IS 
 
     -- ..........................................................................
     --
@@ -8482,8 +8485,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_cdhisdeb INTEGER;
       vr_sequenci INTEGER;
       vr_nrdigito INTEGER;
-      vr_contador INTEGER;
-    vr_flgachou BOOLEAN;
+      vr_flgachou BOOLEAN;
       vr_flgretor BOOLEAN;
       vr_flgpagto BOOLEAN;
       vr_nrdocmto NUMBER;
@@ -8504,7 +8506,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_cdagenci INTEGER;
       vr_cdtippro INTEGER;
       vr_nrcpfpre NUMBER;
-      vr_datdodia DATE;
       vr_nmprepos VARCHAR2(100);
       --Tipo de registro de associado
       rw_cra2ass cr_crapass%ROWTYPE;
@@ -8514,25 +8515,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro EXCEPTION;
       vr_vllantot NUMBER := 0;
-      vr_flgemail BOOLEAN;
-      vr_vlpagtos NUMBER;
-      vr_qtpagtos NUMBER := 0;
-      vr_dspagtos VARCHAR2(4000);
-      vr_cdbccxlt INTEGER;
-      vr_nrcnvco1 INTEGER;
-      vr_nrcnvco2 INTEGER;
-      vr_dtabtcct DATE;
-      vr_qtidenti INTEGER;
-      vr_dtlimite DATE;
-      vr_nrdipatu VARCHAR2(1000);
-      vr_nrdipant VARCHAR2(1000);
-      vr_exec_lgm EXCEPTION;
-      vr_conteudo VARCHAR2(4000);
-      rw_crapass_prot cr_crapass%ROWTYPE;
-      vr_cra2ass BOOLEAN;
-      vr_des_assunto VARCHAR2(100);
-      vr_email_dest  VARCHAR2(100);
-      vr_agendame VARCHAR2(100); 
+
       --Agrupa os parametros - 15/12/2017 - Chamado 779415
       vr_dsparame VARCHAR2(4000);	 
 
@@ -8586,132 +8569,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 					 crapscn.cddmoden = 'C');
      rw_crapscn cr_crapscn%ROWTYPE;
 
-      CURSOR cr_tbarrecd (pr_cdempcon IN crapscn.cdempcon%TYPE
-                         ,pr_cdsegmto IN crapscn.cdsegmto%TYPE) IS
-       SELECT arr.cdsegmto
-             ,arr.cdempcon
-         FROM tbconv_arrecadacao arr
-        WHERE arr.cdempcon = pr_cdempcon
-          AND arr.cdsegmto = pr_cdsegmto; 
-      rw_tbarrecd cr_tbarrecd%ROWTYPE;
-      
-      --Busca faturas
-      CURSOR cr_craplft (pr_cdcooper IN craplft.cdcooper%type
-                        ,pr_dtmvtolt IN craplft.dtmvtolt%type
-                        ,pr_cdagenci IN craplft.cdagenci%type
-                        ,pr_cdbccxlt IN craplft.cdbccxlt%type
-                        ,pr_nrdolote IN craplft.nrdolote%type
-                        ,pr_nrseqdig IN craplft.nrseqdig%type) IS
-        SELECT craplft.cdbarras
-              ,craplft.vllanmto
-              ,craplft.cdempcon
-              ,craplft.cdhistor
-        FROM craplft
-        WHERE craplft.cdcooper = pr_cdcooper
-        AND   craplft.dtmvtolt = pr_dtmvtolt
-        AND   craplft.cdagenci = pr_cdagenci
-        AND   craplft.cdbccxlt = pr_cdbccxlt
-        AND   craplft.nrdolote = pr_nrdolote
-        AND   craplft.nrseqdig = pr_nrseqdig;
-
-      rw_craplft cr_craplft%ROWTYPE;
-
-      --Selecionar todos protocolos das transacoes
-      CURSOR cr_crappro (pr_cdcooper IN crappro.cdcooper%type
-                        ,pr_nrdconta IN crappro.nrdconta%type
-                        ,pr_dtmvtolt IN crappro.dtmvtolt%type
-                        ,pr_cdtippro IN crappro.cdtippro%type) IS
-        SELECT crappro.cdcooper
-              ,crappro.dtmvtolt
-              ,crappro.dsinform##2
-              ,crappro.dsprotoc
-              ,crappro.nrseqaut
-              ,crappro.dscedent
-              ,crappro.flgagend
-        FROM crappro
-        WHERE crappro.cdcooper = pr_cdcooper
-        AND   crappro.nrdconta = pr_nrdconta
-        AND   crappro.dtmvtolt = pr_dtmvtolt
-        AND   crappro.cdtippro = pr_cdtippro;
-
-      -- Selecionar a data de abertura da conta
-      CURSOR cr_crapass_data(pr_cdcooper IN craplgm.cdcooper%type,
-                             pr_nrdconta IN craplgm.nrdconta%type) IS
-        SELECT crapass.dtabtcct
-          FROM crapass
-         WHERE crapass.cdcooper = pr_cdcooper
-           AND crapass.nrdconta = pr_nrdconta;
-
-      rw_crapass_data cr_crapass_data%ROWTYPE;
-
-      --Selecionar informacoes log transacoes no sistema
-      CURSOR cr_craplgm(pr_cdcooper IN craplgm.cdcooper%type,
-                        pr_nrdconta IN craplgm.nrdconta%type,
-                        pr_idseqttl IN craplgm.idseqttl%type,
-                        pr_dttransa IN craplgm.dttransa%type,
-                        pr_dsorigem IN craplgm.dsorigem%type,
-                        pr_cdoperad IN craplgm.cdoperad%type,
-                        pr_flgtrans IN craplgm.flgtrans%type,
-                        pr_dstransa IN craplgm.dstransa%TYPE) IS
-        SELECT craplgm.cdcooper,
-               craplgm.nrdconta,
-               craplgm.idseqttl,
-               craplgm.dttransa,
-               craplgm.hrtransa,
-               craplgm.nrsequen
-          FROM craplgm
-         WHERE craplgm.cdcooper = pr_cdcooper
-           AND craplgm.nrdconta = pr_nrdconta
-           AND craplgm.idseqttl = pr_idseqttl
-           AND craplgm.dttransa = pr_dttransa
-           AND craplgm.dsorigem = pr_dsorigem
-           AND craplgm.cdoperad = pr_cdoperad
-           AND craplgm.flgtrans = pr_flgtrans
-           AND craplgm.dstransa = pr_dstransa
-         ORDER BY craplgm.progress_recid DESC;
-
-      --Selecionar tabela complementar de log
-      CURSOR cr_craplgi(pr_cdcooper IN craplgm.cdcooper%type,
-                        pr_nrdconta IN craplgm.nrdconta%type,
-                        pr_idseqttl IN craplgm.idseqttl%type,
-                        pr_dttransa IN craplgm.dttransa%type,
-                        pr_hrtransa IN craplgm.hrtransa%type,
-                        pr_nrsequen IN craplgm.nrsequen%type,
-                        pr_nmdcampo IN craplgi.nmdcampo%type) IS
-        SELECT craplgi.dsdadatu, craplgi.nmdcampo
-          FROM craplgi
-         WHERE craplgi.cdcooper = pr_cdcooper
-           AND craplgi.nrdconta = pr_nrdconta
-           AND craplgi.idseqttl = pr_idseqttl
-           AND craplgi.dttransa = pr_dttransa
-           AND craplgi.hrtransa = pr_hrtransa
-           AND craplgi.nrsequen = pr_nrsequen
-           AND craplgi.nmdcampo = pr_nmdcampo;
-
-
-      CURSOR cr_crapavt2 (pr_cdcooper IN crapavt.cdcooper%type
-                         ,pr_nrdconta IN crapavt.nrdconta%type
-                         ,pr_tpctrato IN crapavt.tpctrato%type) IS
-        SELECT crapavt.nrdctato
-              ,crapavt.nmdavali
-              ,crapavt.cdcooper
-        FROM crapavt
-        WHERE crapavt.cdcooper = pr_cdcooper
-        AND   crapavt.nrdconta = pr_nrdconta
-        AND   crapavt.tpctrato = pr_tpctrato;
-
-      rw_crapavt cr_crapavt%ROWTYPE;
-
-      --Selecionar os telefones do titular
-      CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%type
-                        ,pr_nrdconta IN craptfc.nrdconta%type) IS
-        SELECT craptfc.nrdddtfc
-              ,craptfc.nrtelefo
-        FROM craptfc
-        WHERE craptfc.cdcooper = pr_cdcooper
-        AND   craptfc.nrdconta = pr_nrdconta;
-
-      rw_craptfc cr_craptfc%ROWTYPE;
+     rw_crapavt cr_crapavt%ROWTYPE;
 
       -- Verificar cadasto de senhas
       CURSOR cr_crapsnh2 (pr_cdcooper crapass.cdcooper%TYPE,
@@ -9038,24 +8896,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Fechar Cursor
       CLOSE cr_crapass;
 
-      --Selecionar informacoes do associado
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta);
-      --Posicionar no primeiro registro
-      FETCH cr_crapass INTO rw_crapass_prot;
-      --Se nao encontrou
-      IF cr_crapass%NOTFOUND THEN
-        --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-        --Mensagem Erro
-        vr_cdcritic := 9; --Associado nao cadastrado
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_crapass;
-
-
       --Banco e Agencia centralizadora
       pr_cdbcoctl:= gene0002.fn_mask(rw_crapcop.cdbcoctl,'999');
       pr_cdagectl:= gene0002.fn_mask(rw_crapcop.cdagectl,'9999');
@@ -9289,9 +9129,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         --> Bancoob
 				ELSIF rw_crapcon.tparrecd = 2 THEN		
           /* Bancoob não possui deb.aut */			
-					/*OPEN cr_tbarrecd (pr_cdempcon => rw_crapcon.cdempcon
-                          ,pr_cdsegmto  => rw_crapcon.cdsegmto);
-          FETCH cr_tbarrecd INTO rw_tbarrecd;*/
           vr_flgachou := FALSE;
          
         ELSE
@@ -9303,12 +9140,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           IF pr_flmobile = 1 THEN
              pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
           ELSE
-					pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+					   pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
           END IF;
           
-            pr_cdempcon := rw_crapcon.cdempcon;
+          pr_cdempcon := rw_crapcon.cdempcon;
 		      pr_cdsegmto := TO_CHAR(rw_crapcon.cdsegmto);
-          END IF;
+        END IF;
 
         IF cr_gnconve%ISOPEN THEN
 					CLOSE cr_gnconve;
@@ -9317,10 +9154,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			  IF cr_crapscn%ISOPEN THEN
 					CLOSE cr_crapscn;
 				END IF;
-
-        IF cr_tbarrecd%ISOPEN THEN
-					CLOSE cr_tbarrecd;
-				END IF; 
 
       ELSE
         pr_msgofatr := '';
@@ -10234,156 +10067,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               );
       rw_crapttl cr_crapttl%ROWTYPE;
 
-      --Selecionar parametros Cobranca
-      CURSOR cr_crapcco (pr_cdcooper IN crapcco.cdcooper%type
-                        ,pr_nrconven IN crapcco.nrconven%type
-                        ,pr_cddbanco IN crapcco.cddbanco%type) IS
-        SELECT crapcco.flgregis
-        FROM crapcco
-        WHERE  crapcco.cdcooper = pr_cdcooper
-        AND    crapcco.nrconven = pr_nrconven
-        AND    crapcco.cddbanco = pr_cddbanco;
-      rw_crapcco cr_crapcco%ROWTYPE;
-
-      --Selecionar todos protocolos das transacoes
-      CURSOR cr_crappro (pr_cdcooper IN crappro.cdcooper%type
-                        ,pr_nrdconta IN crappro.nrdconta%type
-                        ,pr_dtmvtolt IN crappro.dtmvtolt%type
-                        ,pr_cdtippro IN crappro.cdtippro%type) IS
-        SELECT crappro.cdcooper
-              ,crappro.dtmvtolt
-              ,crappro.dsinform##2
-              ,crappro.dsprotoc
-              ,crappro.nrseqaut
-              ,crappro.dscedent
-              ,crappro.flgagend
-        FROM crappro
-        WHERE crappro.cdcooper = pr_cdcooper
-        AND   crappro.nrdconta = pr_nrdconta
-        AND   crappro.dtmvtolt = pr_dtmvtolt
-        AND   crappro.cdtippro = pr_cdtippro;
-
-      --Selecionar Titulos
-      CURSOR cr_craptit (pr_cdcooper IN craptit.cdcooper%type
-                        ,pr_dtmvtolt IN craptit.dtmvtolt%type
-                        ,pr_cdagenci IN craptit.cdagenci%type
-                        ,pr_cdbccxlt IN craptit.cdbccxlt%type
-                        ,pr_nrdolote IN craptit.nrdolote%type
-                        ,pr_nrseqdig IN craptit.nrseqdig%type) IS
-        SELECT craptit.dscodbar
-              ,craptit.flgpgdda
-              ,craptit.vldpagto
-        FROM craptit
-        WHERE craptit.cdcooper = pr_cdcooper
-        AND   craptit.dtmvtolt = pr_dtmvtolt
-        AND   craptit.cdagenci = pr_cdagenci
-        AND   craptit.cdbccxlt = pr_cdbccxlt
-        AND   craptit.nrdolote = pr_nrdolote
-        AND   craptit.nrseqdig = pr_nrseqdig;
-      rw_craptit cr_craptit%ROWTYPE;
-
-      --Selecionar informacoes log transacoes no sistema
-      CURSOR cr_craplgm(pr_cdcooper IN craplgm.cdcooper%type,
-                        pr_nrdconta IN craplgm.nrdconta%type,
-                        pr_idseqttl IN craplgm.idseqttl%type,
-                        pr_dttransa IN craplgm.dttransa%type,
-                        pr_dsorigem IN craplgm.dsorigem%type,
-                        pr_cdoperad IN craplgm.cdoperad%type,
-                        pr_flgtrans IN craplgm.flgtrans%type,
-                        pr_dstransa IN craplgm.dstransa%TYPE) IS
-        SELECT craplgm.cdcooper,
-               craplgm.nrdconta,
-               craplgm.idseqttl,
-               craplgm.dttransa,
-               craplgm.hrtransa,
-               craplgm.nrsequen
-          FROM craplgm
-         WHERE craplgm.cdcooper = pr_cdcooper
-           AND craplgm.nrdconta = pr_nrdconta
-           AND craplgm.idseqttl = pr_idseqttl
-           AND craplgm.dttransa = pr_dttransa
-           AND craplgm.dsorigem = pr_dsorigem
-           AND craplgm.cdoperad = pr_cdoperad
-           AND craplgm.flgtrans = pr_flgtrans
-           AND craplgm.dstransa = pr_dstransa
-         ORDER BY craplgm.progress_recid DESC;
-
-      --Selecionar tabela complementar de log
-      CURSOR cr_craplgi(pr_cdcooper IN craplgm.cdcooper%type,
-                        pr_nrdconta IN craplgm.nrdconta%type,
-                        pr_idseqttl IN craplgm.idseqttl%type,
-                        pr_dttransa IN craplgm.dttransa%type,
-                        pr_hrtransa IN craplgm.hrtransa%type,
-                        pr_nrsequen IN craplgm.nrsequen%type,
-                        pr_nmdcampo IN craplgi.nmdcampo%type) IS
-        SELECT craplgi.dsdadatu, craplgi.nmdcampo
-          FROM craplgi
-         WHERE craplgi.cdcooper = pr_cdcooper
-           AND craplgi.nrdconta = pr_nrdconta
-           AND craplgi.idseqttl = pr_idseqttl
-           AND craplgi.dttransa = pr_dttransa
-           AND craplgi.hrtransa = pr_hrtransa
-           AND craplgi.nrsequen = pr_nrsequen
-           AND craplgi.nmdcampo = pr_nmdcampo;
-
-      -- Selecionar a data de abertura da conta
-      CURSOR cr_crapass_data(pr_cdcooper IN craplgm.cdcooper%type,
-                             pr_nrdconta IN craplgm.nrdconta%type) IS
-        SELECT crapass.dtabtcct
-          FROM crapass
-         WHERE crapass.cdcooper = pr_cdcooper
-           AND crapass.nrdconta = pr_nrdconta;
-      rw_crapass_data cr_crapass_data%ROWTYPE;
-
-      --Selecionar os telefones do titular
-      CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%type
-                        ,pr_nrdconta IN craptfc.nrdconta%type) IS
-        SELECT craptfc.nrdddtfc
-              ,craptfc.nrtelefo
-        FROM craptfc
-        WHERE craptfc.cdcooper = pr_cdcooper
-        AND   craptfc.nrdconta = pr_nrdconta;
-      rw_craptfc cr_craptfc%ROWTYPE;
-      --Selecionar Avalistas
-      CURSOR cr_crapavt2 (pr_cdcooper IN crapavt.cdcooper%type
-                         ,pr_nrdconta IN crapavt.nrdconta%type
-                         ,pr_tpctrato IN crapavt.tpctrato%type) IS
-        SELECT crapavt.nrdctato
-              ,crapavt.nmdavali
-              ,crapavt.cdcooper
-        FROM crapavt
-        WHERE crapavt.cdcooper = pr_cdcooper
-        AND   crapavt.nrdconta = pr_nrdconta
-        AND   crapavt.tpctrato = pr_tpctrato;
       rw_crapavt cr_crapavt%ROWTYPE;
-
-      --Selecionar transacoes de operações conjuntas			
-			CURSOR cr_tbpagto_trans_pend (pr_cdcooper IN craptit.cdcooper%TYPE
-                              		 ,pr_nrdconta IN craptit.nrdconta%TYPE
-																	 ,pr_dtmvtolt IN craptit.dtmvtolt%TYPE
-																	 ,pr_dscodbar IN craptit.dscodbar%TYPE) IS
-				SELECT tbgen_trans_pend.nrcpf_operador
-					FROM tbpagto_trans_pend,
-							 tbgen_trans_pend
-				 WHERE tbpagto_trans_pend.cdcooper = pr_cdcooper
-					 AND tbpagto_trans_pend.nrdconta = pr_nrdconta
-					 AND tbpagto_trans_pend.tppagamento = 2 /* Título */ 
-					 AND tbpagto_trans_pend.dtdebito = pr_dtmvtolt
-					 AND tbpagto_trans_pend.dscodigo_barras = pr_dscodbar
-           AND tbgen_trans_pend.cdtransacao_pendente =
-					     tbpagto_trans_pend.cdtransacao_pendente;
-			rw_tbpagto_trans_pend cr_tbpagto_trans_pend%ROWTYPE;
-
-      -- buscar operador da conta.
-      CURSOR cr_crapopi (pr_cdcooper IN crapopi.cdcooper%type
-                        ,pr_nrdconta IN crapopi.nrdconta%TYPE
-                        ,pr_nrcpfope IN crapopi.nrcpfope%TYPE) IS
-        SELECT crapopi.nmoperad
-        FROM crapopi
-        WHERE crapopi.cdcooper = pr_cdcooper
-        AND   crapopi.nrdconta = pr_nrdconta
-        AND   crapopi.nrcpfope = pr_nrcpfope;
-      rw_crapopi cr_crapopi%ROWTYPE;
 
       -- Verificar cadasto de senhas
       CURSOR cr_crapsnh2 (pr_cdcooper crapass.cdcooper%TYPE,
@@ -10457,7 +10141,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       rw_cob cr_cob%ROWTYPE;                                                           
 
       --Variaveis Locais
-      vr_contador INTEGER;
       vr_cdhistor INTEGER;
       vr_cdhisdeb INTEGER;
       vr_sequenci INTEGER;
@@ -10466,46 +10149,25 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_nrctabol INTEGER;
       vr_nrboleto INTEGER;
       vr_cdagenci INTEGER;
-      vr_nrcnvco1 INTEGER;
-      vr_nrcnvco2 INTEGER;
-      vr_tptelefo INTEGER;
-      vr_nrdddtfc INTEGER;
-      vr_nrtelefo INTEGER;
       vr_cdtippro INTEGER;
       vr_cdsittit INTEGER;
       vr_flgpagto BOOLEAN;
-      vr_flgemail BOOLEAN;
-      vr_flsenlet BOOLEAN;
       vr_flgpgdda BOOLEAN;
-      vr_cra2ass  BOOLEAN;
       vr_nrdocmto NUMBER;
-      vr_vlpagtos NUMBER;
-      vr_qtpagtos NUMBER := 0;
       vr_nrcpfpre NUMBER;
-      vr_vlmovweb NUMBER;
-      vr_vlmovpgo NUMBER;
-      vr_datdodia DATE;
-      vr_email_dest  VARCHAR2(100);
-      vr_des_assunto VARCHAR2(100);
       vr_dslitera VARCHAR2(32000);
       vr_lindigit VARCHAR2(1000);
       vr_dsinfor1 VARCHAR2(1000);
       vr_dsinfor2 VARCHAR2(1000);
       vr_dsinfor3 VARCHAR2(1000);
       vr_nmextttl VARCHAR2(1000);
-      vr_conteudo VARCHAR2(4000);
-      vr_nrdipant VARCHAR2(1000);
-      vr_nrdipatu VARCHAR2(1000);
       vr_nmprepos VARCHAR2(1000);
       vr_cdpesqbb VARCHAR2(1000);
-      vr_dspagtos VARCHAR2(4000);
       vr_nrautdoc craplcm.nrautdoc%TYPE;
       vr_nrdrecid ROWID;
       vr_rowidcob ROWID;
       vr_indpagto INTEGER;
       vr_nmdatela VARCHAR2(100);
-      vr_ret_dsinserr VARCHAR2(1000);
-      vr_agendame VARCHAR2(100);
       vr_tbtitulo npcb0001.typ_reg_TituloCIP;
 
       --Variaveis de Erro
@@ -10523,16 +10185,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_idanalise_fraude   INTEGER;    
 			vr_cdoperacao INTEGER;
 
-      --Tabela de memoria de erros
-      vr_tab_erro GENE0001.typ_tab_erro;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
 
-      -- Controle dos logs de acesso ao Internet Bank
-      vr_dtlimite DATE;
-      vr_dtabtcct DATE;
-      vr_qtidenti INTEGER;
-      vr_exec_lgm EXCEPTION;
       --Agrupa os parametros - 15/12/2017 - Chamado 779415 
       vr_dsparame VARCHAR2(4000);
 
@@ -11556,8 +11211,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       END;
       /* Cria o registro do movimento da internet */
       IF  pr_idorigem <> 4  THEN /* TAA */
-        --Buscar a data do dia
-        vr_datdodia:= trunc(sysdate); /*PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper); */
 
         IF rw_crapass_prot.idastcjt = 0 THEN
 
