@@ -1357,6 +1357,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         
                   12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
                                utilizando ROUND na comparação (Douglas - Chamado 817561)        
+
+                  28/12/2018 - Ajuste se o tipo de título (vr_tituloCIP.CodEspTit) é
+                        31 (fatura de cartão de crédito) então deve ser sempre "baixa operacional parcial" 
+                           (tipos 2 ou 3).
+                           (Elton AMcom - Chamado 29254)        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
@@ -1528,7 +1533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     --> Verificar se boleto possui valor de saldo
     IF vr_tituloCIP.VlrSldTotAtlPgtoTit > 0 THEN
  
-      IF pr_vldpagto >= vr_tituloCIP.VlrSldTotAtlPgtoTit THEN
+      IF pr_vldpagto >= vr_tituloCIP.VlrSldTotAtlPgtoTit and vr_tituloCIP.CodEspTit <> 31 THEN
         IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
           pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
         ELSE
@@ -1544,12 +1549,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       END IF;   
            
     ELSE
+      --se o tipo de título (vr_tituloCIP.CodEspTit) é
+      -- 31 (fatura de cartão de crédito) então deve ser sempre "baixa operacional parcial" (tipos 2 ou 3).
+      IF   vr_tituloCIP.CodEspTit = 31 THEN                                     
       IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
-        pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
+          pr_tpdbaixa := 2; -- Baixa Operacional Parcial Interbancária
       ELSE
-        pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
+          pr_tpdbaixa := 3; -- Baixa Operacional Parcial Intrabancária
       END IF;      
+       --fim 
+      ELSE 
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085'  THEN 
+          pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
+        ELSE
+          pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
     END IF;
+      END IF;
+    END IF;
+    
      
     --END LOOP;
   EXCEPTION 
