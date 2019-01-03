@@ -5669,7 +5669,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END IF;
 			
 		  -- Não permite data de pagamento para o último dia do ano
-		  IF pr_tab_cheques(vr_index).dtlibera = vr_dtdialim THEN
+		  IF pr_tab_cheques(vr_index).dtlibera > vr_dtdialim and
+			 extract(year from pr_tab_cheques(vr_index).dtlibera) = extract(year from vr_dtdialim) THEN
          -- Gerar ocorrencia 16 - Data de liberacao ultimo dia do ano
 			   pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 				                       ,pr_idx_cheques => vr_index
