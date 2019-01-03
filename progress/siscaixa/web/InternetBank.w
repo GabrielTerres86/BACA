@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 26/10/2018
+   Data    : Julho/2004.                       Ultima atualizacao: 12/11/2018
 
    Dados referentes ao programa:
 
@@ -717,20 +717,28 @@
                  16/04/2018 - Ajustes para o novo sistema do caixa eletronico 
                               PRJ363 - Douglas Quisinski
 
-                 19/04/2018 - Incluido operacao217 referente ao servico SOA 
+				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
                
-                 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
-                              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
+				 11/05/2018 - Incluidas as operacoes 218 e 219 para a tela
+				              unificada de pagamentos do Mobile 2.0 (Pablao - PR359)
 
                  01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
-                              processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
+                              processar a instruçao 95. Prj. 285 - Nova Conta Online (Douglas)
 
                  28/06/2018 - Adaptacao para implantacao dos servicos de resgate, aplicacao e consulta de saldo
-                              via URA
+				              via URA
+
+                 08/10/2018 - Adicionar os parametros do codigo de barras para serem utilizados no
+                              cadastro da fatura em debito automatico (IB99). Esses parametros sao 
+                              necessarios para que o caadastro tenha o mesmo comportamento que o TAA.
+                              (Douglas - Prj 363 - Novo Caixa Eletrônico)
                               
                  26/10/2018 - Ajustar a validacao dos parametros de "CANAL_XXXXX" para que sejam feitas 
                               valor a valor (Douglas)
+
+                 12/11/2018 - Remover a vaidação de senha no fluxo de inclusão de cheque em custódia
+                              (Card de Melhoria 780 - Douglas)                      
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1343,6 +1351,12 @@ DEF VAR canal_nrterfin AS INTE NO-UNDO.
 DEF VAR aux_nrcartao AS DECI NO-UNDO.
 DEF VAR token_autenticacao AS CHAR NO-UNDO.
 
+/* Identificacao da fatura para debito automatico */
+DEF VAR aux_fatura01 AS CHAR NO-UNDO.
+DEF VAR aux_fatura02 AS CHAR NO-UNDO.
+DEF VAR aux_fatura03 AS CHAR NO-UNDO.
+DEF VAR aux_fatura04 AS CHAR NO-UNDO.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -1620,7 +1634,7 @@ PROCEDURE process-web-request :
                               DECI(GET-VALUE("nrcpfope"))
            aux_nripuser = GET-VALUE("nripuser").
 
-		/* Projeto 363 - Novo caixa eletronico */
+		    /* Projeto 363 - Novo caixa eletronico */
         /* Tratamento deve ser realizado campo a campo, e utilizaremos a conta online como padrao para todos os campos */
 
         /* CANAL que esta fazendo a requisicao sempre sera enviado */
@@ -1763,11 +1777,11 @@ PROCEDURE process-web-request :
             ASSIGN token_autenticacao = GET-VALUE("aux_token_aut").
         END.
         ELSE
-            DO:
+            DO: 
                 /* Se nao foi informado o canal de origem, será considerado como IB */
                 ASSIGN token_autenticacao = "".
             END.
-
+        
         
         /** Se parametro flmobile nao foi informado, considerar que a requisicao
         não originou do mobile **/
@@ -2727,57 +2741,57 @@ PROCEDURE proc_operacao2:
     ELSE
         DO:
             /* Se nao for URA, ou o TOKEN nao tenha sido enviado, continuamos validando a senha informada. */    
-			ASSIGN aux_vldfrase = INTE(GET-VALUE("vldfrase"))
-				   aux_dssenlet = GET-VALUE("dssenlet")   
-				   aux_vldshlet = LOGICAL(GET-VALUE("vldshlet"))
-				   aux_inaceblq = INTE(GET-VALUE("inaceblq"))
-				   aux_dsorigip = GET-VALUE("dsorigip")
-				   aux_indlogin = INTE(GET-VALUE("indlogin")).
+    ASSIGN aux_vldfrase = INTE(GET-VALUE("vldfrase"))
+           aux_dssenlet = GET-VALUE("dssenlet")   
+           aux_vldshlet = LOGICAL(GET-VALUE("vldshlet"))
+           aux_inaceblq = INTE(GET-VALUE("inaceblq"))
+           aux_dsorigip = GET-VALUE("dsorigip")
+           aux_indlogin = INTE(GET-VALUE("indlogin")).
 
-			IF  aux_vldshlet  THEN
-				DO:
-					IF  aux_flgcript  THEN /** Utiliza criptografia **/
-						DO:
-							RUN sistema/generico/procedures/b1wgencrypt.p PERSISTENT 
-								SET h-b1wgencrypt (INPUT aux_nrdconta).
+    IF  aux_vldshlet  THEN
+        DO:
+            IF  aux_flgcript  THEN /** Utiliza criptografia **/
+                DO:
+                    RUN sistema/generico/procedures/b1wgencrypt.p PERSISTENT 
+                        SET h-b1wgencrypt (INPUT aux_nrdconta).
             
-							ASSIGN aux_dssenlet = DYNAMIC-FUNCTION("decriptar" IN h-b1wgencrypt,
-																   INPUT aux_dssenlet,
-																   INPUT aux_nrdconta).
+                    ASSIGN aux_dssenlet = DYNAMIC-FUNCTION("decriptar" IN h-b1wgencrypt,
+                                                           INPUT aux_dssenlet,
+                                                           INPUT aux_nrdconta).
         
-							DELETE PROCEDURE h-b1wgencrypt.
-						END.
-				END.
+                    DELETE PROCEDURE h-b1wgencrypt.
+                END.
+        END.
 
-			RUN sistema/internet/fontes/InternetBank2.p (INPUT aux_cdcooper,
-														 INPUT aux_nrdconta,
-														 INPUT aux_idseqttl,
-														 INPUT aux_nrcpfope,
-														 INPUT aux_cddsenha,
-														 INPUT aux_dssenweb,
-														 INPUT aux_dssenlet,
-														 INPUT aux_vldshlet,
-														 INPUT aux_vldfrase,
-														 INPUT aux_inaceblq,
-														 INPUT aux_nripuser,
-														 INPUT aux_dsorigip,
-														 INPUT aux_flmobile,
-														 INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
-														OUTPUT aux_dsmsgerr,
-														OUTPUT TABLE xml_operacao).
+    RUN sistema/internet/fontes/InternetBank2.p (INPUT aux_cdcooper,
+                                                 INPUT aux_nrdconta,
+                                                 INPUT aux_idseqttl,
+                                                 INPUT aux_nrcpfope,
+                                                 INPUT aux_cddsenha,
+                                                 INPUT aux_dssenweb,
+                                                 INPUT aux_dssenlet,
+                                                 INPUT aux_vldshlet,
+                                                 INPUT aux_vldfrase,
+                                                 INPUT aux_inaceblq,
+                                                 INPUT aux_nripuser,
+                                                 INPUT aux_dsorigip,
+                                                 INPUT aux_flmobile,
+                                                 INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
+                                                OUTPUT aux_dsmsgerr,
+												OUTPUT TABLE xml_operacao).
     
-			IF  RETURN-VALUE = "NOK"  THEN
-				DO:
-					{&out} aux_dsmsgerr aux_tgfimprg.
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
             
-					RETURN "NOK".
-				END.
-			ELSE
-				FOR EACH xml_operacao NO-LOCK:
+            RETURN "NOK".
+        END.
+	ELSE
+	    FOR EACH xml_operacao NO-LOCK:
 
-					{&out} xml_operacao.dslinxml. 
+            {&out} xml_operacao.dslinxml. 
                 
-				END.	
+                END.        
         END.	
 
     RETURN "OK".
@@ -3694,7 +3708,7 @@ PROCEDURE proc_operacao22:
                                                   INPUT aux_gravafav,
                                                   INPUT aux_dshistor,
                                                   INPUT aux_flmobile,
-												  INPUT aux_nripuser,
+                                                  INPUT aux_nripuser,
                                                   INPUT aux_iddispmobile,
                                                   /* Projeto 363 - Novo ATM */
                                                   INPUT canal_cdorigem,
@@ -4995,6 +5009,7 @@ PROCEDURE proc_operacao62:
                                                   INPUT aux_idordena,
                                                   INPUT aux_flgerlog,
                                                   INPUT aux_cdsittit,
+                                                  INPUT aux_flmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -6208,7 +6223,12 @@ PROCEDURE proc_operacao99:
            aux_cdhisdeb = INTE(GET-VALUE("cdhisdeb"))
            aux_flcadast = INTE(GET-VALUE("flcadast"))
            aux_cdhistor = INTE(GET-VALUE("cdhistor"))
-           aux_idmotivo = INTE(GET-VALUE("idmotivo")).
+           aux_idmotivo = INTE(GET-VALUE("idmotivo"))
+           aux_fatura01 = GET-VALUE("aux_lindigi1")
+           aux_fatura02 = GET-VALUE("aux_lindigi2")
+           aux_fatura03 = GET-VALUE("aux_lindigi3")
+           aux_fatura04 = GET-VALUE("aux_lindigi4")
+           aux_cdbarras = GET-VALUE("aux_cdbarras").
 
     RUN sistema/internet/fontes/InternetBank99.p 
                                          (INPUT aux_cdcooper,
@@ -6235,6 +6255,13 @@ PROCEDURE proc_operacao99:
                                           INPUT canal_cdagetfn,
                                           INPUT canal_nrterfin,
                                           /* Projeto 363 - Novo ATM */
+                                          /* Linha digitavel e codigo de barras para permitir a 
+                                             inclusao de fatura em debito automativo no TAA */
+                                          INPUT aux_fatura01,
+                                          INPUT aux_fatura02,
+                                          INPUT aux_fatura03,
+                                          INPUT aux_fatura04,
+                                          INPUT aux_cdbarras,
                                          OUTPUT aux_dsmsgerr,
                                          OUTPUT TABLE xml_operacao).
 
@@ -8639,13 +8666,6 @@ PROCEDURE proc_operacao178:
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
                               
-    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
-        DO:
-            RUN proc_operacao2.
-
-            IF   RETURN-VALUE = "NOK"   THEN
-                 RETURN "NOK".
-        END.           
                               
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
@@ -8802,7 +8822,7 @@ PROCEDURE proc_operacao181:
                                                    INPUT aux_cdopcaodt,
                                                    INPUT aux_dtrecarga,
                                                    INPUT aux_qtmesagd,
-													   INPUT aux_flmobile,
+													                         INPUT aux_flmobile,
                                                    /* Projeto 363 - Novo ATM */
                                                    INPUT canal_cdorigem,
                                                    INPUT canal_cdagenci,
@@ -8883,19 +8903,19 @@ PROCEDURE proc_operacao186:
 	RUN sistema/internet/fontes/InternetBank186.p (INPUT aux_cdcooper,
 	                                               INPUT aux_nrdconta,
 	                                               INPUT aux_idseqttl,
-                                                   INPUT aux_cdagenci,
-												   INPUT aux_nrdcaixa,
-                                                   INPUT aux_inmobile,
-												   INPUT aux_titulo1,
-												   INPUT aux_titulo2,
-												   INPUT aux_titulo3,
-												   INPUT aux_titulo4,
-												   INPUT aux_titulo5,
-												   INPUT aux_codigo_barras,
-                                                   INPUT "996",
+	                                               INPUT aux_cdagenci,
+	                                               INPUT aux_nrdcaixa,
+	                                               INPUT aux_inmobile,
+	                                               INPUT aux_titulo1,
+	                                               INPUT aux_titulo2,
+	                                               INPUT aux_titulo3,
+	                                               INPUT aux_titulo4,
+	                                               INPUT aux_titulo5,
+	                                               INPUT aux_codigo_barras,
+	                                               INPUT "996",
                                                    INPUT 3,
-                                                  OUTPUT aux_dsmsgerr,
-												  OUTPUT TABLE xml_operacao).
+	                                              OUTPUT aux_dsmsgerr,
+	                                              OUTPUT TABLE xml_operacao).
 
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
@@ -9870,8 +9890,8 @@ PROCEDURE proc_operacao220:
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_qtdregistros,
 												   INPUT aux_cdcanal,
-                                                   OUTPUT TABLE xml_operacao).
-                                                   
+                                                  OUTPUT TABLE xml_operacao).
+
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.

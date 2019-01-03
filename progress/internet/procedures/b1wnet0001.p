@@ -1,8 +1,9 @@
+
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
+   Data    : 14/07/2006                        Ultima atualizacao: 30/08/2018
 
    Dados referentes ao programa:
 
@@ -256,7 +257,7 @@
 
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
-                            
+
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
                             nao fixara em convenio INTERNET, mas utilizara uma logica
                             semelhante ao que acontece para SERASA, assumindo valor
@@ -284,6 +285,18 @@
                07/07/2017 - Ajuste na leitura da flprotes.
                             PRJ340 - NPC (Odirlei-AMcom)   
 
+               16/06/2018 - Ajuste na procedure grava-boleto para utilizar o convenio
+                            por parametro quando o codigo da carteira for 5-Quanta ou 
+                            6-Recuperacao de Credito. (PRJ468 - Previdencia - Rafael)   
+
+               16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (Rafael).
+
+               30/08/2018 - Adicionar validacao nos parametros de TIPO de JUROS, TIPO de MULTA,
+                           TIPO de EMISSAO e FORMATO do DOCUMENTO (DOuglas - PRJ285 Nova Conta Online)
+      
+               17/10/2018 - Impedir criacao de boleto com instrucao de protesto automatico para boletos
+                            do tipo Duplicata de Servico (PRJ352 - Andre Clemer - Supero )
+      
 .............................................................................*/
 
 
@@ -943,10 +956,10 @@ PROCEDURE gravar-boleto:
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM par_inavisms AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmsant AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmsvct AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmspos AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
 
     /* NPC */
     DEF  INPUT PARAM par_flgregon AS INTE                           NO-UNDO.
@@ -994,9 +1007,10 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
-    
+
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
+
     /* Tratamento para os boletos e a emissão de carnê */
     DEF VAR aux_vltitulo      AS DECI                               NO-UNDO.
     DEF VAR aux_vldescto      AS DECI                               NO-UNDO.
@@ -1403,6 +1417,31 @@ PROCEDURE gravar-boleto:
                  END.                              
            END.
 
+       /* Verificar se o TIPO de JUROS, ou MULTA, sejam um dos valores validos*/
+       IF  NOT CAN-DO("1,2,3",STRING(par_tpjurmor)) OR    /* 1=vlr "R$" diario, 2= "%" Mensal, 3=isento */
+           NOT CAN-DO("1,2,3",STRING(par_tpdmulta)) THEN  /* 1=vlr "R$", 2= "%" , 3=isento */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Tipo de juros de mora ou tipo de multa nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+
+        IF NOT CAN-DO("1,2",STRING(par_tpemitir)) THEN  /* 1-Boleto/2-Carne */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Formato do documento (boleto avulso ou carne) nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+        
+        IF NOT CAN-DO("1,2,3",STRING(par_inemiten)) THEN  /* 1-Banco/2-Cooperado/3-Cooperativa */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Forma de emissao do documento nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 
@@ -1433,8 +1472,8 @@ PROCEDURE gravar-boleto:
 			      DO:   
 				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
 			      END.
-				    UNDO TRANSACAO, LEAVE TRANSACAO.
-        END.
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
 
         /* ************************************************************************* */
@@ -1657,9 +1696,59 @@ PROCEDURE gravar-boleto:
             /* se flgregis = true - cobranca registrada */
             IF par_flgregis THEN
             DO:                                                
+			
+				/** Instrucao Automatica E Duplicata de Servico **/
+				IF  par_flgdprot AND par_cddespec = 2 THEN DO:
+				
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+					RUN STORED-PROCEDURE pc_validar_dsnegufds_parprt
+						aux_handproc = PROC-HANDLE NO-ERROR
+												(INPUT par_cdcooper,
+												 INPUT tt-dados-sacado-blt.cdufsaca,
+												OUTPUT "",  /* pr_des_erro */
+												OUTPUT ""). /* pr_dscritic */
+
+					CLOSE STORED-PROC pc_validar_dsnegufds_parprt
+						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+					ASSIGN aux_dscritic = ""
+						   aux_deserro  = ""
+						   aux_dscritic = pc_validar_dsnegufds_parprt.pr_dscritic
+											  WHEN pc_validar_dsnegufds_parprt.pr_dscritic <> ?
+						   aux_deserro = pc_validar_dsnegufds_parprt.pr_des_erro
+											  WHEN pc_validar_dsnegufds_parprt.pr_des_erro <> ?.
+
+					ASSIGN tt-dados-sacado-blt.dsdemail = aux_dsdemail
+						   tt-dados-sacado-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).
+						   
+					IF aux_dscritic <> "" THEN DO:
+						IF  VALID-HANDLE(h-b1wgen0087) THEN
+							DELETE PROCEDURE h-b1wgen0087.
+
+						UNDO TRANSACAO, LEAVE TRANSACAO.
+					END.
+					
+
+				END.
+			
+                /* Se o codigo da carteira for 5 ou 6, entao o convenio sera
+                   escolhido pelo parameto par_nrcnvcob */
+                /* carteira 5 - Quanta */
+                /* carteira 6 - Recuperacao de credito */
+                IF par_cdcartei = 5 OR 
+                   par_cdcartei = 6 THEN DO:                   
+                   IF par_nrcnvcob = ? THEN
+                      ASSIGN par_nrcnvcob = 0.
+                END.
+                ELSE 
+                  ASSIGN par_nrcnvcob = 0.
+                                              
                 /* o sistema irá fazer a escolha do convenio em funcao
                    do sacado ser DDA ou nao */
-                ASSIGN par_nrcnvcob = 0.
 
                 IF par_inemiten = 1 AND tt-verifica-sacado.flgsacad = FALSE THEN
                 DO:
@@ -1680,6 +1769,7 @@ PROCEDURE gravar-boleto:
                 END.
                 ELSE
                 DO:
+                  IF par_nrcnvcob = 0 THEN DO:
                     FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper
                                        AND crapcco.cddbanco = 085
                                        AND crapcco.flginter = TRUE
@@ -1693,6 +1783,20 @@ PROCEDURE gravar-boleto:
                                        AND crapceb.insitceb = 1
                                        NO-LOCK:
                         par_nrcnvcob = crapcco.nrconven.
+                      END.                    
+                  END.
+                  ELSE DO:
+                        FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper
+                                           AND crapcco.cddbanco = 085
+                                           AND crapcco.nrconven = par_nrcnvcob
+                                           NO-LOCK
+                           ,FIRST crapceb WHERE crapceb.cdcooper = crapcco.cdcooper
+                                           AND crapceb.nrdconta = par_nrdconta  
+                                           AND crapceb.nrconven = crapcco.nrconven
+                                           AND crapceb.insitceb = 1
+                                           NO-LOCK:
+                            par_nrcnvcob = crapcco.nrconven.
+                      END.                                      
                     END.                       
 
                     /* se nao encontrou convenio 085, pode ser que o cooperado
@@ -1757,7 +1861,8 @@ PROCEDURE gravar-boleto:
             FIND crapceb WHERE 
                  crapceb.cdcooper = par_cdcooper AND
                  crapceb.nrdconta = par_nrdconta AND
-                 crapceb.nrconven = par_nrcnvcob NO-LOCK NO-ERROR.
+                 crapceb.nrconven = par_nrcnvcob AND
+				 crapceb.insitceb = 1 NO-LOCK NO-ERROR.
 
             FIND crapcco WHERE
                  crapcco.cdcooper = par_cdcooper AND
@@ -1969,8 +2074,8 @@ PROCEDURE gravar-boleto:
                                    INPUT par_inavisms,
                                    INPUT par_insmsant,
                                    INPUT par_insmsvct,
-                                   INPUT par_insmspos,         
-                                                                   
+                                   INPUT par_insmspos,
+
                                    /* NPC */
                                    INPUT crapceb.flgregon,
                                    INPUT par_inpagdiv,
@@ -2251,7 +2356,7 @@ PROCEDURE gera-dados:
     DEF VAR aux_flgregon         AS LOG                             NO-UNDO.
     DEF VAR aux_flgpgdiv         AS LOG                             NO-UNDO.
     DEF VAR aux_flpersms         AS INT                             NO-UNDO.
-    DEF VAR aux_fllindig         AS INT                             NO-UNDO. 
+    DEF VAR aux_fllindig         AS INT                             NO-UNDO.
     DEF VAR aux_flsitsms         AS INT                             NO-UNDO.
     DEF VAR aux_idcontrato       AS INT                             NO-UNDO.
             
@@ -2345,65 +2450,31 @@ PROCEDURE gera-dados:
             RETURN "NOK".
         END.*/
         
-    RUN seleciona-sacados (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT par_cdoperad,
-                           INPUT par_nmdatela,
-                           INPUT par_idorigem,
-                           INPUT par_nrdconta,
-                           INPUT par_idseqttl,
-                           INPUT "",
-                           INPUT (IF par_vldsacad = 1 THEN TRUE ELSE FALSE),
-                           INPUT FALSE,
-                          OUTPUT TABLE tt-erro,
-                          OUTPUT TABLE tt-sacados-blt).
-                         
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
-        
-                IF  AVAILABLE tt-erro  THEN
-                    aux_dscritic = tt-erro.dscritic.
-                ELSE        
-                    aux_dscritic = "Nao foi possivel concluir a requisicao3".
-            
-                IF  par_flgerlog  THEN
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT aux_dscritic,
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT par_idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid).
-        
-                RETURN "NOK".
-            END.
-
-        IF  par_vldsacad = 1  THEN
+    IF  par_vldsacad < 2 THEN /* Quando receber valor 2 nao deve consultar sacados */
         DO:
-        
-            FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
-    
-            IF  NOT AVAILABLE tt-sacados-blt  THEN
-                DO: 
-                    ASSIGN aux_cdcritic = 0 
-                           aux_dscritic = "Nao foram encontrados registros de" +
-                                          " Pagadores.\nEfetue o cadastro de " +
-                                          "pagador na secao " + '"BOLETO"' + 
-                                          " no item " + '"CADASTRAR/' + 
-                                          'ALTERAR PAGADOR".'.
-               
-                    RUN gera_erro (INPUT par_cdcooper,
+            RUN seleciona-sacados (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
                                    INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                           
+                                   INPUT par_cdoperad,
+                                   INPUT par_nmdatela,
+                                   INPUT par_idorigem,
+                                   INPUT par_nrdconta,
+                                   INPUT par_idseqttl,
+                                   INPUT "",
+                                   INPUT par_vldsacad,
+                                   INPUT FALSE,
+                                  OUTPUT TABLE tt-erro,
+                                  OUTPUT TABLE tt-sacados-blt).
+                                 
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            
+                    IF  AVAILABLE tt-erro  THEN
+                        aux_dscritic = tt-erro.dscritic.
+                    ELSE        
+                        aux_dscritic = "Nao foi possivel concluir a requisicao3".
+                
                     IF  par_flgerlog  THEN
                         RUN proc_gerar_log (INPUT par_cdcooper,
                                             INPUT par_cdoperad,
@@ -2415,8 +2486,44 @@ PROCEDURE gera-dados:
                                             INPUT par_nmdatela,
                                             INPUT par_nrdconta,
                                            OUTPUT aux_nrdrowid).
-                                   
+            
                     RETURN "NOK".
+                END.
+
+            IF  par_vldsacad = 1  THEN
+                DO:                
+                    FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
+            
+                    IF  NOT AVAILABLE tt-sacados-blt  THEN
+                        DO: 
+                            ASSIGN aux_cdcritic = 0 
+                                   aux_dscritic = "Nao foram encontrados registros de" +
+                                                  " Pagadores.\nEfetue o cadastro de " +
+                                                  "pagador na secao " + '"BOLETO"' + 
+                                                  " no item " + '"CADASTRAR/' + 
+                                                  'ALTERAR PAGADOR".'.
+                       
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                                                   
+                            IF  par_flgerlog  THEN
+                                RUN proc_gerar_log (INPUT par_cdcooper,
+                                                    INPUT par_cdoperad,
+                                                    INPUT aux_dscritic,
+                                                    INPUT aux_dsorigem,
+                                                    INPUT aux_dstransa,
+                                                    INPUT FALSE,
+                                                    INPUT par_idseqttl,
+                                                    INPUT par_nmdatela,
+                                                    INPUT par_nrdconta,
+                                                   OUTPUT aux_nrdrowid).
+                                           
+                            RETURN "NOK".
+                        END.
                 END.
         END.
          
@@ -2614,7 +2721,7 @@ PROCEDURE gera-dados:
 
     IF aux_dscritic <> "" THEN
       DO:
-      
+
           RUN gera_erro (INPUT par_cdcooper,
                          INPUT par_cdagenci,
                          INPUT par_nrdcaixa,
@@ -2673,7 +2780,7 @@ PROCEDURE gera-dados:
                               WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?
            aux_dscritic = pc_verif_permite_lindigi.pr_dscritic
                               WHEN pc_verif_permite_lindigi.pr_dscritic <> ?.       
-
+      
     CREATE tt-dados-blt.
     ASSIGN tt-dados-blt.vllbolet = crapsnh.vllbolet
            tt-dados-blt.dsdinstr = crapsnh.dsdinstr
@@ -2788,7 +2895,7 @@ PROCEDURE seleciona-sacados:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdsacad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_flsitsac AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac             NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2870,24 +2977,24 @@ PROCEDURE seleciona-sacados:
                            crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
                            NO-LOCK BY crapsab.nmdsacad:
         
-		/* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
-		IF TRIM(par_nmdsacad) = "" AND
-		   aux_qtregcon >= 400     THEN
-		   DO:			   
-			   LEAVE.
-			END.
-		ELSE
-			DO:
-				IF TRIM(par_nmdsacad) <> "" AND
-		           aux_qtregcon >= 2000     THEN
-				   DO:
-						LEAVE.
-				   END.
-			END.
+        /* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
+        IF TRIM(par_nmdsacad) = "" AND
+           aux_qtregcon >= 400     THEN
+           DO:			   
+              LEAVE.
+           END.
+        ELSE
+           DO:
+              IF TRIM(par_nmdsacad) <> "" AND
+                 aux_qtregcon >= 2000     THEN
+                 DO:
+                   LEAVE.
+                 END.
+           END.
 
         ASSIGN aux_qtregcon = aux_qtregcon + 1.
         
-        IF  par_flsitsac AND crapsab.cdsitsac = 2  THEN
+        IF  par_cdsitsac <> 0 AND crapsab.cdsitsac <> par_cdsitsac  THEN
             NEXT.
                                                       /* 80835988953 */
         IF  crapsab.cdtpinsc = 1 AND crapsab.nrinssac <= 99999999999  THEN
@@ -2975,14 +3082,27 @@ PROCEDURE seleciona-sacados:
         ASSIGN tt-sacados-blt.nmdsacad = 
                  (IF aux_errodcep THEN "** Verificar endereço ** - " 
                   ELSE "") + 
-                 (IF aux_errodpnp THEN "** Praça não protesta ** - " 
+                 (IF aux_errodpnp THEN "** Praça nao protesta ** - " 
                   ELSE "") + 
                   REPLACE(crapsab.nmdsacad,"&","%26")
+               tt-sacados-blt.nmsacado = REPLACE(crapsab.nmdsacad,"&","%26")
+               tt-sacados-blt.dsflgend = aux_errodcep
+               tt-sacados-blt.dsflgprc = aux_errodpnp
                tt-sacados-blt.nrinssac = crapsab.nrinssac
+               tt-sacados-blt.cdtpinsc = crapsab.cdtpinsc
                tt-sacados-blt.dsinssac = aux_dsinssac
                tt-sacados-blt.nrctasac = crapsab.nrctasac
                tt-sacados-blt.dsctasac = TRIM(STRING(crapsab.nrctasac,
                                                      "zzzz,zz9,9"))
+               tt-sacados-blt.cdsitsac = crapsab.cdsitsac
+               tt-sacados-blt.dssitsac = IF crapsab.cdsitsac = 1 THEN
+                                            "Ativo"
+                                         ELSE
+                                         IF crapsab.cdsitsac = 2 THEN
+                                            "Inativo"
+                                         ELSE
+                                            ""
+               tt-sacados-blt.dsdemail = aux_dsdemail
                tt-sacados-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN 
                                              TRUE
                                           ELSE 
@@ -3199,6 +3319,13 @@ PROCEDURE valida-sacado:
            tt-dados-sacado-blt.cdufsaca = crapsab.cdufsaca
            tt-dados-sacado-blt.nrcepsac = crapsab.nrcepsac
            tt-dados-sacado-blt.cdsitsac = crapsab.cdsitsac
+           tt-dados-sacado-blt.dssitsac = IF crapsab.cdsitsac = 1 THEN
+                                             "Ativo"
+                                          ELSE
+                                          IF crapsab.cdsitsac = 2 THEN
+                                             "Inativo"
+                                          ELSE
+                                             ""
            tt-dados-sacado-blt.flgremov = (IF  AVAILABLE crapcob  THEN
                                               FALSE
                                            ELSE
@@ -3445,6 +3572,8 @@ PROCEDURE gerencia-sacados:
                 UNDO TRANSACAO, LEAVE TRANSACAO.       
             END.
             
+        IF  par_tprotina <> 2  THEN /* Excluir */
+            DO:
         IF  crapass.inpessoa = 1  THEN
             DO:
                 FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
@@ -3538,6 +3667,7 @@ PROCEDURE gerencia-sacados:
                        
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.        
+            END.
         
         IF  par_tprotina = 0  THEN /** Cadastrar **/
             DO:
@@ -4213,7 +4343,7 @@ DO TRANSACTION:
      CREATE tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
-  
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4551,11 +4681,11 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM p-inavisms AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmsant AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmsvct AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmspos AS INTE                     NO-UNDO.
-    
+    DEF  INPUT PARAM p-inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmspos AS INTE                                  NO-UNDO.
+
     /* NPC */
     DEF INPUT   PARAM p-flgregon    AS INTE                 NO-UNDO.
     DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
@@ -4691,15 +4821,6 @@ PROCEDURE p_cria_titulo:
 
     END.
 
-   
-    /* se inst aut de protesto, cob registrada e banco 085 */
-    IF p-flgregis AND 
-       p-flgdprot AND 
-       crapcco.cddbanco = 085 THEN 
-       ASSIGN p-dsdinstr = 
-              "** Servico de protesto sera efetuado " + 
-              "pelo Banco do Brasil **".
-
     /* se banco emite e expede, nosso num conv+ceb+doctmo -
        Rafael Cechet 29/03/11 */
 
@@ -4726,7 +4847,7 @@ PROCEDURE p_cria_titulo:
 
 
     END.
-    
+
     /* Se foi informado para enviar aviso, porem sem selecionar
        o momente, deve gravar como nao enviar aviso */
     IF  p-inavisms <> 0 AND 
@@ -4798,7 +4919,7 @@ PROCEDURE p_cria_titulo:
            crapcob.inavisms = p-inavisms
            crapcob.insmsant = p-insmsant
            crapcob.insmsvct = p-insmsvct
-           crapcob.insmspos = p-insmspos 
+           crapcob.insmspos = p-insmspos
 
            /* NPC */        
            crapcob.inenvcip = IF p-cddbanco = 85 THEN 1 ELSE 0
