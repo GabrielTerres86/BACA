@@ -88,6 +88,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
                    cnab240 e cnab400 causaram lentidão no servidor e instabilidade nos sistemas. Liberação do chamado
                    #753383 não estava em produção (Carlos)
 
+      28/12/2018 - Estava disparando EXCEPTION quando não encontra o layout da linha, porém o erro não era retornado para o cooperado
+                   Ajustado exception para que o erro seja retornado (Douglas - INC0029758)
   ------------------------------------------------------------------------------------------------------------------*/
   PROCEDURE pc_importa_arq_layout ( pr_nmlayout   IN VARCHAR2,            --> Nome do Layout do arquivo a ser importado
                                     pr_dsdireto   IN VARCHAR2,            --> Descrição do diretorio onde o arquivo se enconta
@@ -387,6 +389,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
           END IF;
         END LOOP;
       EXCEPTION
+        -- Se a validação "Identificar layout a ser utilizado(multiplos layouts)" disparar a exception
+        -- Não está sendo retornado o erro devido a esse tratamento de exception
+        -- Deve ser executado mais um RAISE para que seja realizado o tratamento de erro, sem carregar a tab_linhas
+        WHEN vr_exc_erro  THEN
+          RAISE vr_exc_erro;
         WHEN no_data_found THEN
           -- Fechar o arquivo
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
