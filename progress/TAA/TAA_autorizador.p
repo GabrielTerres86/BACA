@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 03/10/2018
+      Data: Janeiro/2010                        Ultima alteracao: 17/12/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -332,6 +332,8 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             03/10/2018 - Na validação de senha foi separado o canal para enviar TAA (4) ou URA(6),
                          para que seja possivel zerar a quantidade de senha incorreta quando
                          estiver sendo executado pela URA (Douglas - Prj 427 URA)
+                         
+            17/12/2018 - Ajuste no tratamento de erro na consulta de dados do ECO (Douglas - SCTASK0039027)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -10947,9 +10949,6 @@ PROCEDURE verifica_opcao_benef_inss:
   xText:NODE-VALUE = STRING(aux_flgsitbi).
   xField:APPEND-CHILD(xText).
   
-  
-  MESSAGE STRING(aux_flgsitbi).
-  
   RETURN "OK".
   
 END PROCEDURE.
@@ -11040,8 +11039,9 @@ PROCEDURE consultar_eco:
     DEFINE VARIABLE aux_cdcoptfn AS INTEGER                         NO-UNDO.
     DEFINE VARIABLE aux_cdagetfn AS INTEGER                         NO-UNDO.
     DEFINE VARIABLE aux_nrterfin AS INTEGER                         NO-UNDO.
+    DEFINE VARIABLE aux_habilita_consulta_eco AS CHAR               NO-UNDO.
 
-    DEF VAR aux_dscritic         AS CHAR                            NO-UNDO.
+    DEF VAR aux_dserror          AS CHAR                            NO-UNDO.
 
     /* Variaveis para o XML */ 
     DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
@@ -11057,6 +11057,35 @@ PROCEDURE consultar_eco:
     ASSIGN aux_cdcoptfn = crapcop.cdcooper
            aux_cdagetfn = crapage.cdagenci
            aux_nrterfin = craptfn.nrterfin.
+
+    ASSIGN aux_habilita_consulta_eco = "0". /* Inicia Desabilitado */
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+                       (INPUT "CRED",                    /* pr_nmsistem */
+                        INPUT 0,                         /* pr_cdcooper */
+                        INPUT "HABILITAR_CONSULTA_ECO",  /* pr_cdacesso */
+                        OUTPUT ""                        /* pr_dsvlrprm */
+                        ).
+
+    CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+
+    ASSIGN aux_habilita_consulta_eco = "0"
+           aux_habilita_consulta_eco = pc_param_sistema.pr_dsvlrprm
+                                         WHEN pc_param_sistema.pr_dsvlrprm <> ?.
+
+    /* Verificar se a opcao de consulta do ECO esta desabilitada */
+    IF aux_habilita_consulta_eco = "0" THEN
+    DO:
+        ASSIGN aux_dscritic = "A CONSULTA AOS DADOS DE EMPRESTIMO CONSIGNADO ONLINE " + 
+                              "ESTA DESATIVADA NO MOMENTO".
+                              
+        RETURN "NOK".    
+    END.
+
 
     /* Tipo de comprovante 1 == Extrato Emprestimo Consignado */ 
     IF aux_tpconben = 1 THEN
@@ -11078,8 +11107,8 @@ PROCEDURE consultar_eco:
         CLOSE STORED-PROC pc_extrato_emprestimo_inss aux_statproc = PROC-STATUS 
              WHERE PROC-HANDLE = aux_handproc.
         
-        ASSIGN aux_dscritic = ""
-               aux_dscritic = pc_extrato_emprestimo_inss.pr_dsderror
+        ASSIGN aux_dserror = ""
+               aux_dserror = pc_extrato_emprestimo_inss.pr_dsderror
                       WHEN pc_extrato_emprestimo_inss.pr_dsderror <> ?.  
                xml_req_ora  = pc_extrato_emprestimo_inss.pr_retorno. 
         
@@ -11106,16 +11135,17 @@ PROCEDURE consultar_eco:
         CLOSE STORED-PROC pc_margem_consignavel_inss aux_statproc = PROC-STATUS 
              WHERE PROC-HANDLE = aux_handproc.
         
-        ASSIGN aux_dscritic = ""
-               aux_dscritic = pc_margem_consignavel_inss.pr_dsderror
+        ASSIGN aux_dserror = ""
+               aux_dserror = pc_margem_consignavel_inss.pr_dsderror
                       WHEN pc_margem_consignavel_inss.pr_dsderror <> ?.  
                xml_req_ora  = pc_margem_consignavel_inss.pr_retorno. 
         
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     END.
 
-    IF  aux_dscritic <> "" THEN
+    IF  aux_dserror <> "" THEN
         DO:
+           ASSIGN aux_dscritic = aux_dserror.
            RETURN "NOK".
         END.        
 

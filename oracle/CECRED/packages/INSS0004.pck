@@ -813,6 +813,15 @@ create or replace package body cecred.INSS0004 is
            RAISE vr_exc_erro; 
         END IF;
 
+        -- verificar se a consulta ao ECO está habilitada
+        IF GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                    ,pr_cdcooper => 0
+                                    ,pr_cdacesso => 'HABILITAR_CONSULTA_ECO') = '0' THEN
+                                    
+          vr_dsderror := 'A CONSULTA AOS DADOS DE MARGEM CONSIGNAVEL ESTA DESATIVADA NO MOMENTO';
+          RAISE vr_exc_erro;
+        END IF;
+
         -- Inicialização de variáveis
         vr_msgenvio := NULL;
         
@@ -889,25 +898,16 @@ create or replace package body cecred.INSS0004 is
         pr_retorno := vr_xml_reto;
     EXCEPTION 
         WHEN vr_exc_erro THEN
-            pr_dsderror := 'Erro INNS0004.pc_consulta_margem_consignavel : ' || vr_dsderror;
+            pr_dsderror := vr_dsderror;
             
             -- Faz a exclusão do arquivo de requisição
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
-            -- Verifica se conseguiu excluir o arquivo de requisição
-            IF vr_retorno = 'NOK' THEN
-                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
-                RAISE vr_exc_erro;    
-            END IF;
         WHEN OTHERS THEN
             -- Faz a exclusão do arquivo de requisição
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
+            pr_dsderror := 'Erro nat tratado na INNS0004.pc_consulta_margem_consignavel.';
 
-            -- Verifica se conseguiu excluir o arquivo de requisição
-            IF vr_retorno = 'NOK' THEN
-                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
-                RAISE vr_exc_erro;    
-            END IF;
     END pc_margem_consignavel_inss;
 
 
@@ -971,6 +971,15 @@ create or replace package body cecred.INSS0004 is
         IF pr_nrterfin IS NULL THEN
            vr_dsderror := 'Numero do TAA nao informado';
            RAISE vr_exc_erro; 
+        END IF;
+
+        -- verificar se a consulta ao ECO está habilitada
+        IF GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                    ,pr_cdcooper => 0
+                                    ,pr_cdacesso => 'HABILITAR_CONSULTA_ECO') = '0' THEN
+                                    
+          vr_dsderror := 'A CONSULTA AOS DADOS DE EMPRESTIMO CONSIGNADO ESTA DESATIVADA NO MOMENTO';
+          RAISE vr_exc_erro;
         END IF;
 
         -- Inicialização de variáveis
@@ -1049,24 +1058,15 @@ create or replace package body cecred.INSS0004 is
         pr_retorno := vr_xml_reto;
     EXCEPTION 
         WHEN vr_exc_erro THEN
-            pr_dsderror := 'Erro INNS0004.pc_emite_extrato_emprestimo : ' || vr_dsderror;
             -- Faz a exclusão do arquivo de requisição
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
+            pr_dsderror := vr_dsderror;
 
-            -- Verifica se conseguiu excluir o arquivo de requisição
-            IF vr_retorno = 'NOK' THEN
-                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
-                RAISE vr_exc_erro;    
-            END IF;
         WHEN OTHERS THEN
             -- Faz a exclusão do arquivo de requisição
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
-            -- Verifica se conseguiu excluir o arquivo de requisição
-            IF vr_retorno = 'NOK' THEN
-                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
-                RAISE vr_exc_erro;    
-            END IF;
+            pr_dsderror := 'Erro nao tratado na INNS0004.pc_emite_extrato_emprestimo ';
     
     END pc_extrato_emprestimo_inss;
 
