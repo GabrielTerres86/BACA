@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-388
+390
 declare
   TYPE typ_tab_linha IS VARRAY(8) OF VARCHAR2(5000);
 
@@ -199,6 +199,8 @@ declare
          WHERE crapret.cdcooper = pr_cdcooper
            AND crapret.nrcnvcob = pr_nrcnvcob
            AND crapret.dtocorre = pr_dtmvtolt
+           AND crapret.dtocorre BETWEEN '28/12/2018' AND '30/12/2018'
+           AND tbrecup_acordo.dtcancela IS NULL
            AND crapret.cdocorre IN (6, 76); -- liquidacao normal COO/CEE
     
       vr_nrcnvcob crapprm.dsvlrprm%TYPE;
