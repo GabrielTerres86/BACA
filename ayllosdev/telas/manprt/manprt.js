@@ -1031,6 +1031,8 @@ function verificaCheckbox(elem, valorCheckbox) {
     var totalConc = 0;
 
     totalConc = $(elem).is(':checked') ? (valorInput + valorCheckbox) : (valorInput - valorCheckbox);
+    totalConc = totalConc.toFixed(2);
+
     $('#vltitulos').val(number_format(totalConc, 2, ',', '.'));
 
     if (totalConc && totalConc == converteMoedaFloat($('#vltotal').val())) {
