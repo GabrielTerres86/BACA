@@ -74,6 +74,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   vr_dsarqlg         CONSTANT VARCHAR2(30) := 'pcps_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- Nome do arquivo de log mensal
   vr_dsmasklog       CONSTANT VARCHAR2(30) := 'dd/mm/yyyy hh24:mi:ss';
   vr_qtminuto        CONSTANT NUMBER       := (5/24/60); -- Equivalente à 5 minutos
+  vr_qtxvsegundos    CONSTANT NUMBER       := (15/24/60/60); -- Equivalente à 15 segundos
   vr_nrispb_emissor           VARCHAR2(8);  -- ISPB Ailos - Valor atribuido via cursor
   vr_nrispb_destina  CONSTANT VARCHAR2(8)  := '02992335'; -- ISPB CIP
   vr_datetimeformat  CONSTANT VARCHAR2(30) := 'YYYY-MM-DD"T"HH24:MI:SS'; -- Formato campo dataHora
@@ -292,6 +293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   PROCEDURE pc_gera_XML_APCS101(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
                                ,pr_dsxmlarq IN OUT XMLTYPE       --> Conteúdo do arquivo
                                ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
                                ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -386,6 +388,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     
     -- Indicar que não foram inclusos dados
     pr_inddados := FALSE;
+    
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
     
     -- Montar a estrutura do XML
     vr_dsxmlarq := pr_dsxmlarq;
@@ -565,6 +570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- Verificar o tamanho do arquivo que está sendo gerado
       IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
         -- demais registros serão enviados posteriormente
         EXIT;
       END IF;
@@ -1315,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- Verifica o tipo de conta
       IF rg_dadosret.cdtipcta = 'PG' THEN
-        vr_cdagedst := NULL;
+        vr_cdagedst := 0;
         vr_nrctadst := rg_dadosret.nrctapgt;
       ELSE 
         vr_cdagedst := rg_dadosret.cdagedst;
@@ -1413,6 +1420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   PROCEDURE pc_gera_XML_APCS103(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
                                ,pr_dsxmlarq IN OUT XMLTYPE       --> Conteúdo do arquivo
                                ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
                                ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -1498,6 +1506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Indicar que não foram inclusos dados
     pr_inddados := FALSE;
 
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
+    
     -- Montar a estrutura do XML
     vr_dsxmlarq := pr_dsxmlarq;
     
@@ -1523,7 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       -- Identificador Participante Administrativo - CNPJ Base
       pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalr'
                    ,pr_tag_nova => 'IdentdPartAdmtd'
-                   ,pr_tag_cont => LPAD(rg_dados.nrispb_destinataria,8,'0')
+                   ,pr_tag_cont => LPAD(rg_dados.nrispb_banco_folha,8,'0')
                    ,pr_posicao  => vr_nrposxml );
       
       -- Formar o número de controle, conforme chave da tabela
@@ -1689,6 +1700,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- Atualizar registro processado
       pc_atualiza_retorno(rg_dados.dsdrowid);
+      
+      -- Verificar o tamanho do arquivo que está sendo gerado
+      IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
+        -- demais registros serão enviados posteriormente
+        EXIT;
+      END IF;
       
     END LOOP;
     
@@ -2264,9 +2283,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   
   
   PROCEDURE pc_gera_XML_APCS105(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
-                               ,pr_dsxmlarq  IN OUT XMLTYPE       --> XML gerado
-                               ,pr_inddados     OUT BOOLEAN       --> Indica se o arquivo possui dados
-                               ,pr_dscritic     OUT VARCHAR2) IS  --> Descricao erro
+                               ,pr_dsxmlarq IN OUT XMLTYPE       --> XML gerado
+                               ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
+                               ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
     --
     --  Programa : pc_gera_XML_APCS105
@@ -2341,6 +2361,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Indicar que não foram inclusos dados
     pr_inddados := FALSE;
   
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
+  
     -- Montar a estrutura do XML
     vr_dsxmlarq := pr_dsxmlarq;
     
@@ -2402,6 +2425,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- Atualizar registro processado
       pc_cancelamento_solicitado(rg_dados.dsdrowid);
+      
+      -- Verificar o tamanho do arquivo que está sendo gerado
+      IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
+        -- demais registros serão enviados posteriormente
+        EXIT;
+      END IF;
       
     END LOOP;
     
@@ -3224,7 +3255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Iniciando processamento do arquivo: '||vr_nmarqERR;
           
           -- Incluir log de execução.
@@ -3317,7 +3348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Concluido processamento do arquivo: '||vr_nmarqERR;
           
           -- Incluir log de execução.
@@ -3350,7 +3381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Iniciando processamento do arquivo: '||vr_nmarqPRO;
           
           -- Incluir log de execução.
@@ -3469,7 +3500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Concluido processamento do arquivo: '||vr_nmarqPRO;
           
           -- Incluir log de execução.
@@ -3493,7 +3524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Iniciando processamento do arquivo: '||vr_nmarqRET;
           
           -- Incluir log de execução.
@@ -3585,7 +3616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- LOGS DE EXECUCAO
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
-                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || 'PCPS0002.pc_monitorar_ret_PCPS'
                          || ' --> Concluido processamento do arquivo: '||vr_nmarqRET;
           
           -- Incluir log de execução.
@@ -3699,6 +3730,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_dsmsglog      VARCHAR2(1000);
     vr_nrseqarq      NUMBER;
     vr_inddados      BOOLEAN;
+    vr_idfimreg      BOOLEAN;
+    vr_dthrexec      TIMESTAMP;
+    vr_jobnames      VARCHAR2(100);
+    vr_dsdplsql      VARCHAR2(10000);
     
     vr_exc_erro      EXCEPTION;
     
@@ -3773,18 +3808,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         pc_gera_XML_APCS101(pr_nmarqenv => vr_nmarquiv
                            ,pr_dsxmlarq => vr_dsxmlarq 
                            ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
                            ,pr_dscritic => vr_dscritic);
       WHEN 'APCS103' THEN
         -- Gerar o conteudo do arquivo
         pc_gera_XML_APCS103(pr_nmarqenv => vr_nmarquiv
                            ,pr_dsxmlarq => vr_dsxmlarq 
                            ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
                            ,pr_dscritic => vr_dscritic);
       WHEN 'APCS105' THEN
         -- Gerar o conteudo do arquivo
         pc_gera_XML_APCS105(pr_nmarqenv => vr_nmarquiv
                            ,pr_dsxmlarq => vr_dsxmlarq 
                            ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
                            ,pr_dscritic => vr_dscritic);
       ELSE
         vr_dscritic := 'Rotina não especificada para gerar este arquivo.';
@@ -3875,6 +3913,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- GRAVAR AS INFORMAÇÕES POIS O ARQUIVO FOI ENVIADO E CASO OCORRAM ERROS DESSE PONTO EM 
     -- DIANTE, AS TRATATIVAS DEVEM SER FEITAS CASO-A-CASO
     COMMIT;
+    
+    -- Se não finalizou o envio de todas as informações pendentes
+    IF NOT vr_idfimreg THEN
+      
+      BEGIN
+        
+        -- Em 15 segundos
+        vr_dthrexec := TO_TIMESTAMP_TZ(TO_CHAR((SYSDATE + vr_qtxvsegundos),'DD/MM/RRRR HH24:MI:SS') || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI:SS TZR');
+
+        -- Define o nome do JOB
+        vr_jobnames := 'JB_PCPS_GERAR$';
+
+        -- Define o bloco pl/sql 
+        vr_dsdplsql := 'BEGIN '||
+                       '  PCPS0002.pc_gera_arquivo_APCS('||pr_tparquiv||'); ' || 
+                       'END; ';
+
+        -- Agenda a execução
+        GENE0001.pc_submit_job(pr_cdcooper => 3
+                              ,pr_cdprogra => 'PCPS0002'
+                              ,pr_dsplsql  => vr_dsdplsql
+                              ,pr_dthrexe  => vr_dthrexec
+                              ,pr_interva  => NULL
+                              ,pr_jobname  => vr_jobnames
+                              ,pr_des_erro => vr_dscritic);
+
+        -- Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro; 
+        END IF;
+        
+        -- GERAR LOG 
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_gera_arquivo_APCS'
+                         || ' --> Agendado JOB '||vr_jobnames||', para gerar arquivos com solicitações pendentes. ';
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+      
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          -- GERAR LOG 
+          BEGIN
+            vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                           || 'PCPS0002.pc_gera_arquivo_APCS'
+                           || ' --> Erro ao agendar JOB '||vr_jobnames||': '||vr_dscritic;
+            
+            -- Incluir log de execução.
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dsmsglog
+                                      ,pr_nmarqlog     => vr_dsarqlg);
+          EXCEPTION
+            WHEN OTHERS THEN
+              NULL;
+          END;
+          
+          -- Seguir sem registro de erro
+          vr_dscritic := NULL;
+        WHEN OTHERS THEN
+          -- GERAR LOG 
+          BEGIN
+            vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                           || 'PCPS0002.pc_gera_arquivo_APCS'
+                           || ' --> Erro ao agendar JOB '||vr_jobnames||': '||SQLERRM;
+            
+            -- Incluir log de execução.
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dsmsglog
+                                      ,pr_nmarqlog     => vr_dsarqlg);
+          EXCEPTION
+            WHEN OTHERS THEN
+              NULL;
+          END;
+      END;
+    
+    END IF; -- IF NOT vr_idfimreg
     
     /**************** Criar o Job para monitorar o retorno do ERR ou PRO ****************/
     BEGIN
@@ -4437,7 +4561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- Enviar o e-mail
         gene0003.pc_solicita_email(pr_cdcooper        => rg_cooper.cdcooper
                                   ,pr_cdprogra        => 'SOLPOR'
-                                  ,pr_des_destino     => 'renatodarosci@gmail.com' -- vr_dsdemail
+                                  ,pr_des_destino     => vr_dsdemail
                                   ,pr_des_assunto     => vr_dsassunt
                                   ,pr_des_corpo       => vr_dsmensag
                                   ,pr_des_anexo       => NULL --> nao envia anexo
