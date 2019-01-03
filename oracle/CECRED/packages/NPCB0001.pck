@@ -1150,7 +1150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 21/12/2018
+      Data     : Dezembro/2016.                   Ultima atualizacao: 30/10/2017
     
       Dados referentes ao programa:
     
@@ -1167,8 +1167,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                no pagamento divergente, então deverá ser recebido montante
                                menor ao range cadastrado. (SD#821097 - AJFink)
 
-                  21/12/2018 - Incluido tratativa para utilizar valor calculado pela CIP, caso o valor for maior
-                               que o valor calculado. INC0029066 (Odirlei-AMcom) 
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -1198,12 +1196,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
 
     IF pr_vldpagto < vr_vlminpgt THEN
       RETURN 0; -- Valor a pagar menor que o mínimo
-    END IF;
-  
-    --> Verificar se valor maximo é menor que o valor calculado pela CIP, deve acatar o valor da CIP
-    --> pois ocorre casos onde o valor incide juros e multa
-    IF vr_vlmaxpgt < vr_vltitcal THEN
-      vr_vlmaxpgt := vr_vltitcal;    
     END IF;
   
     IF pr_vldpagto > vr_vlmaxpgt AND pr_idvlrmax = 1 THEN
@@ -1357,6 +1349,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         
                   12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
                                utilizando ROUND na comparação (Douglas - Chamado 817561)        
+
+                  28/12/2018 - Ajuste se o tipo de título (vr_tituloCIP.CodEspTit) é
+                        31 (fatura de cartão de crédito) então deve ser sempre "baixa operacional parcial" 
+                           (tipos 2 ou 3).
+                           (Elton AMcom - Chamado 29254)        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
@@ -1528,7 +1525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     --> Verificar se boleto possui valor de saldo
     IF vr_tituloCIP.VlrSldTotAtlPgtoTit > 0 THEN
  
-      IF pr_vldpagto >= vr_tituloCIP.VlrSldTotAtlPgtoTit THEN
+      IF pr_vldpagto >= vr_tituloCIP.VlrSldTotAtlPgtoTit and vr_tituloCIP.CodEspTit <> 31 THEN
         IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
           pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
         ELSE
@@ -1543,13 +1540,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         END IF;        
       END IF;   
            
-    ELSE
-      IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
-        pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
-      ELSE
-        pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
-      END IF;      
+    ELSE         
+      --se o tipo de título (vr_tituloCIP.CodEspTit) é
+      -- 31 (fatura de cartão de crédito) então deve ser sempre "baixa operacional parcial" (tipos 2 ou 3).
+      IF   vr_tituloCIP.CodEspTit = 31 THEN                                     
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
+          pr_tpdbaixa := 2; -- Baixa Operacional Parcial Interbancária
+        ELSE
+          pr_tpdbaixa := 3; -- Baixa Operacional Parcial Intrabancária
+        END IF;        
+       --fim 
+      ELSE 
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085'  THEN 
+          pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
+        ELSE
+          pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
+        END IF;      
+      END IF;
     END IF;
+    
      
     --END LOOP;
   EXCEPTION 
