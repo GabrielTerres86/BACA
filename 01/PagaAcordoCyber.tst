@@ -300,9 +300,9 @@ begin
 --  BTCH0001.rw_crapdat.dtmvtoan := '19/12/2018';
 --  BTCH0001.rw_crapdat.dtmvtopr := '21/12/2018';
 
-  BTCH0001.rw_crapdat.dtmvtolt := '31/12/2018';
-  BTCH0001.rw_crapdat.dtmvtoan := '28/12/2018';
-  BTCH0001.rw_crapdat.dtmvtopr := '02/01/2019';
+  rw_crapdat.dtmvtolt := '31/12/2018';
+  rw_crapdat.dtmvtoan := '28/12/2018';
+  rw_crapdat.dtmvtopr := '02/01/2019';
 
   -- Se estiver rodando pós processo 
   IF rw_crapdat.inproces = 1 THEN
