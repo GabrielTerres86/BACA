@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 30/05/2018
+    Data     : Dezembro/2012.                   Ultima atualizacao: 14/08/2018
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -463,6 +463,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
                                ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
                                ,pr_dscritic        OUT VARCHAR2);          --> Descrição da crítica
+
+  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
+                                    ,pr_dscritic  OUT VARCHAR2);            --> Descrição do erro                                
 END EXTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
@@ -473,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 30/05/2018
+    Data     : Dezembro/2012.                   Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -3326,6 +3331,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          AND lcm.cdhistor = pr_cdhistor;
        rw_lanc_est_cart_deb   cr_lanc_est_cart_deb%ROWTYPE;                                            
        
+			-- Cursor para verificar se registro de detalhamento de DOC existe
+			CURSOR cr_craptvl (pr_cdcooper IN craptvl.cdcooper%TYPE
+			                  ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE
+												,pr_nrdconta IN craptvl.nrdconta%TYPE
+												,pr_nrdocmto IN craptvl.nrdocmto%TYPE
+												,pr_vllanmto IN craptvl.vldocrcb%TYPE) IS
+				SELECT 1
+				  FROM craptvl tvl
+				 WHERE tvl.cdcooper = pr_cdcooper
+				   AND tvl.dtmvtolt = pr_dtmvtolt
+					 AND tvl.nrdconta = pr_nrdconta
+					 AND tvl.nrdocmto = pr_nrdocmto
+					 AND tvl.vldocrcb = pr_vllanmto;
+      rw_craptvl cr_craptvl%ROWTYPE; 
+			
       -- Sequencia das tabelas internas
       vr_ind_tab VARCHAR2(24); -- Chave composta por Data + Sequencial (YYMMDD99999999...)
       vr_ind_dep PLS_INTEGER;
@@ -3780,6 +3800,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           END IF;
           CLOSE cr_crapchd;
         END IF;
+        
+				IF rw_craplcm.cdhistor IN (103,355,575) THEN -- Envio/Recebimento de DOCs
+					IF rw_craplcm.cdhistor IN (103,355) THEN -- Débito
+						-- Buscar detalhe do DOC
+						OPEN cr_craptvl (pr_cdcooper => rw_craplcm.cdcooper
+														,pr_dtmvtolt => rw_craplcm.dtmvtolt
+														,pr_nrdconta => rw_craplcm.nrdconta
+														,pr_nrdocmto => rw_craplcm.nrdocmto
+														,pr_vllanmto => rw_craplcm.vllanmto);
+						FETCH cr_craptvl INTO rw_craptvl;
+						
+						IF cr_craptvl%FOUND THEN
+   						pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+							pr_tab_extr(vr_ind_tab).flgdetal := 1;
+							pr_tab_extr(vr_ind_tab).cdtippro := 0;
+							pr_tab_extr(vr_ind_tab).idlstdom := 41;          						
+						ELSE
+							pr_tab_extr(vr_ind_tab).nrseqlmt := 0;
+							pr_tab_extr(vr_ind_tab).flgdetal := 0;
+							pr_tab_extr(vr_ind_tab).cdtippro := 0;
+							pr_tab_extr(vr_ind_tab).idlstdom := 0;               
+						END IF;
+						-- Fechar cursos
+						CLOSE cr_craptvl;
+					ELSE -- Crédito
+						pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+						pr_tab_extr(vr_ind_tab).flgdetal := 1;
+						pr_tab_extr(vr_ind_tab).cdtippro := 0;
+						pr_tab_extr(vr_ind_tab).idlstdom := 41;          						
+					END IF;
+				END IF;
         
       ELSIF pr_nmdtable = 'D' THEN
         -- Guardar o ID do novo registro
@@ -4973,7 +5024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => 1
                                   ,pr_dscritic => ''
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Envio de informativo: '||pr_tab_env_extrato(vr_ind_reg).informat
                                   ,pr_dttransa => pr_dtmvtolt
                                   ,pr_flgtrans => 1 --> TRUE
@@ -7907,6 +7958,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
   END pc_carrega_medias;    
   
+  /* Buscar o valor de saldo que o cooperado tem disponivel */
+  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
+                                    ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição do erro                                
+    vr_des_reto VARCHAR2(03);           --> OK ou NOK
+    vr_tab_erro GENE0001.typ_tab_erro;  --> Tabela com erros
+    vr_tab_saldos  typ_tab_saldos;      --> Tabela de retorno da rotina
+    
+    vr_dscritic VARCHAR2(4000);
+    vr_exec_err EXCEPTION;
+    
+    -- Cursor para encontrar a conta/corrente
+    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.inpessoa
+            ,ass.vllimcre
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+    
+  BEGIN
+    -- Inicializar o valor de saldo do cooperado
+    pr_vlsaldo := 0;  
+    
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      -- Associado não encontrado
+      vr_dscritic := gene0001.fn_busca_critica(9);
+      RAISE vr_exec_err;
+    END IF;
+
+    pc_obtem_saldo_dia_sd(pr_cdcooper => rw_crapass.cdcooper
+                         ,pr_cdagenci => 0
+                         ,pr_nrdcaixa => 0
+                         ,pr_cdoperad => 996
+                         ,pr_nrdconta => rw_crapass.nrdconta
+                         ,pr_vllimcre => rw_crapass.vllimcre
+                         ,pr_tipo_busca => 'A'
+                         ,pr_des_reto => vr_des_reto
+                         ,pr_tab_sald => vr_tab_saldos
+                         ,pr_tab_erro => vr_tab_erro);
+
+    -- Verifica se deu erro
+    IF vr_des_reto = 'NOK' THEN
+      IF TRIM(vr_tab_erro(vr_tab_erro.first).dscritic) IS NULL THEN
+        vr_tab_erro(vr_tab_erro.first).dscritic := gene0001.fn_busca_critica(vr_tab_erro(vr_tab_erro.first).cdcritic);
+      END IF;
+      
+      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      RAISE vr_exec_err;
+    END IF;
+    
+    -- Se nao ocorreu erro, devolvemos o valor de saldo disponivel da conta do cooperado
+    pr_vlsaldo := NVL(vr_tab_saldos(vr_tab_saldos.first).vlsddisp, 0) +
+                  NVL(vr_tab_saldos(vr_tab_saldos.first).vlsdchsl, 0);
+    
+  EXCEPTION
+    WHEN vr_exec_err THEN
+      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
+      pr_vlsaldo  := 0;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
+      pr_vlsaldo  := 0;
+      pr_dscritic := '<dscritic>Erro nao tratado na rotina EXTR0001.pc_busca_saldo_cooperado: '||sqlerrm || '</dscritic>';
+      
+  END pc_busca_saldo_cooperado;
 
 END EXTR0001;
 /
