@@ -2455,7 +2455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --    Sistema : Conta-Corrente - Cooperativa de Credito
     --    Sigla   : CRED
     --    Autor   : Marcos (Supero)
-    --    Data    : Dez/2012                         Ultima atualizacao: 30/06/2016
+    --    Data    : Dez/2012                         Ultima atualizacao: 03/01/2018
     --
     --    Dados referetes ao programa:
     --    Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2475,6 +2475,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --
     --                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
     --                             Prj. 302 (Jean Michel).
+    --
+    --                03/01/2018 - Ajustar a chamada da gene0005.fn_valida_dia_util para considerar o dia 31/12 como dia util
+    --                             (Douglas - INC0030099 e INC0030182)
     ---------------------------------------------------------------------------------------------------------------------
 
     DECLARE
@@ -2495,6 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_dtrefere := gene0005.fn_valida_dia_util
                                        (pr_cdcooper => pr_cdcooper, 
                                         pr_dtmvtolt => pr_dtrefere-1,
+                                        pr_excultdia => TRUE,
                                         pr_tipo => 'A');
                                 
       -- Busca do Saldo da conta pela PK
