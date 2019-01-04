@@ -259,6 +259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
   --
   --              05/07/2018 - Correcao para que a rotina de atualizacao do cadastro unificado nao limpe o campo NRDCTATO da tabela CRAPAVT caso seja uma conta inativa.
   --                           INC0018472 - Heitor (Mouts)
+  --
+  --              04/01/2019 - Tratamento para fazer a atualizacao dos dados de contato com telefone nulo.
+  --                           INC0029620 - Andre (Mouts)
   ---------------------------------------------------------------------------------------------------------------*/
   
   vr_dtpadrao DATE := to_date('01/01/1900','DD/MM/RRRR');
@@ -1045,7 +1048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.idseqttl   = vr_tab_contas(idx).idseqttl
                  AND tfc.tptelefo   = pr_telefone_old.tptelefone
                  --> validar pelo numero do telefone
-                 AND tfc.nrtelefo = pr_telefone_old.nrtelefone
+                 AND nvl(tfc.nrtelefo,0) = nvl(pr_telefone_old.nrtelefone,0)
                  AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_old.nrramal,0);
             EXCEPTION
               WHEN OTHERS THEN
@@ -1074,7 +1077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.nrdconta = vr_tab_contas(idx).nrdconta
                  AND tfc.idseqttl = vr_tab_contas(idx).idseqttl
                  --> validar pelo numero do telefone, caso for insert, apenas terá o new
-                 AND tfc.nrtelefo = nvl(pr_telefone_old.nrtelefone,pr_telefone_new.nrtelefone)
+                 AND nvl(tfc.nrtelefo,0) = nvl(pr_telefone_old.nrtelefone,nvl(pr_telefone_new.nrtelefone,0))
                  AND nvl(tfc.nrdramal,0) = nvl(nvl(pr_telefone_old.nrramal,pr_telefone_new.nrramal),0);
             EXCEPTION
               WHEN dup_val_on_index THEN
@@ -1108,7 +1111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    --> validar pelo numero do telefone, caso for insert, apenas terá o new
                    AND --testar o numero novo, pois ocorre qnd a alteração partiu dessa propria 
                        -- tabela e numero da esta atualizado
-                       tfc.nrtelefo = pr_telefone_new.nrtelefone
+                       nvl(tfc.nrtelefo,0) = nvl(pr_telefone_new.nrtelefone,0)
                    AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_new.nrramal,0);
               EXCEPTION
                 WHEN OTHERS THEN
