@@ -488,8 +488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
     
     vr_dsxmldcp  VARCHAR2(2000);
     
-    vr_dsbuffer  CLOB; 
-    vr_dsbfhead  VARCHAR2(32000);
+    vr_dsbuffer  VARCHAR2(32000);
     
    -- vr_dsflhash   VARCHAR2(100);
     vr_bfchvsim  VARCHAR2(2000);
@@ -513,10 +512,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
     dbms_lob.copy(vr_dsheadfl, pr_dsconteu, 588 , 1, 1);
     
     -- Converter o buffer do arquivo em hexacimal
-    vr_dsbfhead := rawtohex(vr_dsheadfl);
+    vr_dsbuffer := rawtohex(vr_dsheadfl);
 
     -- Quebrar o head em um array de hexadecimais
-    vr_tbheadfl := fn_quebra_head(vr_dsbfhead);
+    vr_tbheadfl := fn_quebra_head(vr_dsbuffer);
     
     /*************** VALIDAÇÃO DOS NÚMEROS DE SÉRIE ***************/
     -- Ler o número de série das chaves e converter para char
@@ -577,11 +576,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
     -- Ler o conteúdo do zip
     dbms_lob.copy(vr_dsxmlarq, pr_dsconteu, dbms_lob.getlength(pr_dsconteu) - 588 , 1, 589);
     
-    vr_dsbuffer := rawtohex(vr_dsxmlarq);
-    
     -- Realizar a descriptografia da chave com base na chave PRIVADA da Ailos
-    vr_dsbuffer := CRYP0003.decrypt3DesCLOB(encrypted_text => vr_dsbuffer
-                                           ,hash_key       => vr_dsxmldcp );
+    vr_dsbuffer := CRYP0003.decrypt3Des(encrypted_text => rawtohex(vr_dsxmlarq) 
+                                       ,hash_key       => vr_dsxmldcp );
         
     /***************** LEITURA DO HASH DO ARQUIVO *****************/
     -- Ler o hexa do hash do arquivo - Campo C15 - ASSINADO
@@ -591,16 +588,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0003 IS
     --vr_dsflhash := CRYP0003.getXmlHash(pr_dsxmlarq => vr_dsbuffer);
     
     -- Realizar a verificação da assinatura
-    IF NOT CRYP0003.verifyHashSHA256CLOB(hash_message => vr_dsbuffer -- vr_dsflhash
-                                        ,signned_hash => vr_bfautmsg
-                                        ,public_key   => vr_dschvemt) THEN
+    IF NOT CRYP0003.verifyHashSHA256(hash_message => vr_dsbuffer -- vr_dsflhash
+                                    ,signned_hash => vr_bfautmsg
+                                    ,public_key   => vr_dschvemt) THEN
       -- Retornar mensagem de err o
       pr_dscritic := 'Assinatura da Mensagem inválida ou com Erro';
       RETURN;
     END IF;
     
+    
     -- Chamar a rotina para descompactar o corpo da mensagem
-    vr_dsbuffer := CRYP0003.gzipDecompressCLOB(pr_dsmsgzip => vr_dsbuffer);
+    vr_dsbuffer := CRYP0003.gzipDecompress(pr_dsmsgzip => vr_dsbuffer);
     
     -- Retornar o BLOB com os dados do arquivo
     pr_dsarqcmp := vr_dsbuffer;
