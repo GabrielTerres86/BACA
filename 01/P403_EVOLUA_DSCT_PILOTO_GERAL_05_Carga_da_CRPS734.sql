@@ -1,16 +1,16 @@
- /*---------------------------------------------------------------------------------------------------------------------
-    Programa    : CRPS736
+ /*-------------------------------------------------------------------------------------------------------------------------
+    Programa    : CRPS734
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Luis Fernando (GFT)
     Data        : Janeiro/2019
-    Objetivo    : Inserir na tabela de programas a nova CRPS736, Apropriação de Juros de Mora ao fim do mês. (MENSAL)
-  ---------------------------------------------------------------------------------------------------------------------*/ 
+    Objetivo    : Inserir na tabela de programas a nova CRPS734, Calculo do vencimento dos vencimentos dos titulos. (DIARIA)
+  --------------------------------------------------------------------------------------------------------------------------*/ 
 
   
 BEGIN
   DECLARE
     TYPE Cooperativas IS TABLE OF integer;
-    coop Cooperativas := Cooperativas(5,10,13,14); -- EX: Cooperativas(1,3,7,11);
+    coop Cooperativas := Cooperativas(14); -- EX: Cooperativas(1,3,7,11);
 
     -- dados para buscar o programa atual
     vr_nrordprg_atual crapprg.nrordprg%TYPE; --> armazenar o nrordprg do programa que deve ficar antes do novo.
@@ -40,13 +40,13 @@ BEGIN
       
       --================================================================
       -- DADOS DO PROGRAMA ATUAL PROCURADO.
-      vr_cdprogra_atual := 'CRPS147';
-      vr_nrsolici := 3;
+      vr_cdprogra_atual := 'CRPS720';
+      vr_nrsolici := 1;
 
       -- DADOS PARA INSERÇÃO DO NOVO PROGRAMA.
       vr_nmsistem_novo := 'CRED';
-      vr_cdprogra_novo := 'CRPS736';
-      vr_dsprogra_novo := 'Apropriação de Juros de Mora ao fim do mês.';
+      vr_cdprogra_novo := 'CRPS734';
+      vr_dsprogra_novo := 'Calculo do vencimento dos vencimentos dos titulos.';
 
       --================================================================
       --================================================================

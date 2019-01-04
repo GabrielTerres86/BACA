@@ -10,7 +10,7 @@
 BEGIN
   DECLARE
     TYPE Cooperativas IS TABLE OF integer;
-    coop Cooperativas := Cooperativas(5,10,13,14); -- EX: Cooperativas(1,3,7,11);
+    coop Cooperativas := Cooperativas(5,10,13); -- EX: Cooperativas(1,3,7,11);
 
     -- dados para buscar o programa atual
     vr_nrordprg_atual crapprg.nrordprg%TYPE; --> armazenar o nrordprg do programa que deve ficar antes do novo.

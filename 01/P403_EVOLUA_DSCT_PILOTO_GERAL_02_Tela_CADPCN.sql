@@ -53,7 +53,7 @@ INSERT INTO craptel
            '', 
            2 
       FROM crapcop          
-     WHERE cdcooper IN (5,10,13,14); /*,14);*/
+     WHERE cdcooper IN (14); /*,14);*/
 
 -- Permissões de consulta para os usuários pré-definidos pela CECRED                       
 INSERT INTO crapace
@@ -75,7 +75,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (5,10,13,14) /*14);*/ 
+     WHERE cop.cdcooper IN (14) /*14);*/ 
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -116,7 +116,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (5,10,13,14) /*14);*/ 
+     WHERE cop.cdcooper IN (14) /*14);*/ 
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -157,7 +157,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (5,10,13,14) /*14);*/ 
+     WHERE cop.cdcooper IN (14) /*14);*/ 
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -198,7 +198,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (5,10,13,14) /*14);*/ 
+     WHERE cop.cdcooper IN (14) /*14);*/ 
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -254,7 +254,7 @@ INSERT INTO crapprg
            1,
            cdcooper
       FROM crapcop          
-     WHERE cdcooper IN (5,10,13,14); /*14);*/ 
+     WHERE cdcooper IN (14); /*14);*/ 
 
 commit;
 end;

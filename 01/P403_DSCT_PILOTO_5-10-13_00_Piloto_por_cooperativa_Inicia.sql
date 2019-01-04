@@ -9,7 +9,7 @@
 
 DECLARE 
   TYPE Cooperativas IS TABLE OF integer;
-  coop Cooperativas := Cooperativas(5,10,13,14); -- EX: Cooperativas(1,3,7,11);
+  coop Cooperativas := Cooperativas(5,10,13); -- EX: Cooperativas(1,3,7,11);
   
   pr_cdcooper INTEGER;
 
