@@ -98,6 +98,10 @@
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+              04/01/2019 - Inclusao de find para evitar ocorrencia de exception. 
+                           Deletes que ocorrem anteriormente ao insert na crapeca
+                           nao estavam limpando contas com valor igual a zero. 
+                           Gabriel (Mouts) - SCTASK0035678.
 
 ............................................................................ */
 
@@ -676,9 +680,14 @@ PROCEDURE proc_processa_arquivo.
                               NO-LOCK NO-ERROR. 
                     END.
                     
-               
-               IF   NOT AVAILABLE crapass  /* AND
-                    aux_nrdconta <> 0*/       THEN
+               FIND crapeca WHERE 
+                    crapeca.cdcooper = glb_cdcooper     AND
+                    crapeca.tparquiv = 510              AND  
+                    crapeca.nrdconta = 0                AND
+                    crapeca.nrseqarq = crawarq.nrsequen AND  
+                    crapeca.nrdcampo = aux_nrdcampo NO-LOCK NO-ERROR.
+
+               IF   NOT AVAILABLE crapass AND NOT AVAILABLE crapeca THEN
                     DO: 
                         CREATE crapeca. 
                         ASSIGN crapeca.nrdconta = 0
