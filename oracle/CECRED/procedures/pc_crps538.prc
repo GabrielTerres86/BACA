@@ -3972,7 +3972,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                          --> Gerar Devolucao
                          --vr_cdmotdev := 99; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
-                         vr_cdmotdev := 83; Chamado SCTASK0023401
+                         vr_cdmotdev := 83; --> Chamado SCTASK0023401
                          /*
                            
                                pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
