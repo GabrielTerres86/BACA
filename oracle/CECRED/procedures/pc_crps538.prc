@@ -449,7 +449,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                11/12/2018 - Alterado logica na validação do cooperado no paralelismo, caso a conta não exista, devemos devolver.
                             Anteriormente, estava dando o Continue, isto fazia com que o boleto não saisse no crrl574.
                             Alcemir Mout's - INC0020305.
-                             
+                           
+               07/01/2019 - Alterações nas regras de devolucao da ABBC, alterado conforme 
+                            instrucoes da requisicao. Chamado SCTASK0023401 - Gabriel (Mouts).			   
+                             		     
    .............................................................................*/
 
      DECLARE
@@ -3968,8 +3971,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                          pc_gera_cratrej (rw_craprej);
 
                          --> Gerar Devolucao
-                         vr_cdmotdev := 99; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
-                           
+                         --vr_cdmotdev := 99; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                         vr_cdmotdev := 83; Chamado SCTASK0023401
                          /*
                            
                                pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
@@ -4136,8 +4139,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF; 
                                         
                    --> Gerar Devolucao
-                   vr_cdmotdev := 53; --> 53 - Apresentação indevida
-                     
+                   --vr_cdmotdev := 53; --> 53 - Apresentação indevida
+                   vr_cdmotdev := 83; --> Chamado SCTASK0023401
+				     
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -4308,8 +4312,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      END IF;
 
                      --> Gerar Devolucao
-                     vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
-                     
+                     --vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                     vr_cdmotdev := 83; --> Chamado SCTASK0023401
+
                      --> Procedimento para grava registro de devolucao
                      pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -4492,8 +4497,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;
 
                    --> Gerar Devolucao
-                   vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
-                   
+                   --vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                   vr_cdmotdev := 83; --> Chamado SCTASK0023401
+
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -4651,11 +4657,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    IF vr_cdcritic IN (965,966,980) THEN
                      CASE vr_cdcritic
                        WHEN 965 THEN
-                         vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                         --vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                         vr_cdmotdev := 83; --> Chamado SCTASK0023401
                        WHEN 966 THEN
-                         vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                         --vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                         vr_cdmotdev := 83; --> Chamado SCTASK0023401
                        WHEN 980 THEN
-                         vr_cdmotdev := 72; --> 72 - Devolução de Pagamento Fraudado                         
+                         --vr_cdmotdev := 72; --> 72 - Devolução de Pagamento Fraudado  
+                         vr_cdmotdev := 83; --> Chamado SCTASK0023401                       
                      END CASE;                       
                      
                      --> Procedimento para grava registro de devolucao
@@ -4805,8 +4814,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      RAISE vr_exc_sair;                       
                    END IF;
                    
-                   vr_cdmotdev := 74; --> 74 - CPF/CNPJ do beneficiário inválido ou não confere com registro de boleto na base da IF Destinatária
-                     
+                   --wintegravr_cdmotdev := 74; --> 74 - CPF/CNPJ do beneficiário inválido ou não confere com registro de boleto na base da IF Destinatária
+                   vr_cdmotdev := 83; --> Chamado SCTASK0023401                     
+
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -4953,8 +4963,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      RAISE vr_exc_sair;
                    END IF;                                
                  
-                   vr_cdmotdev := 72; --> 72 - Devolução de Pagamento Fraudado
-                     
+                   --vr_cdmotdev := 72; --> 72 - Devolução de Pagamento Fraudado
+                   vr_cdmotdev := 83; --> Chamado SCTASK0023401
+
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -5005,8 +5016,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;  
                    
                    --> Gerar Devolucao
-                   vr_cdmotdev := 53; --> 53 - Apresentação indevida
-                     
+                   --vr_cdmotdev := 53; --> 53 - Apresentação indevida
+                   vr_cdmotdev := 82; --> Chamado SCTASK0023401
+				    
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -5499,8 +5511,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;  
                    
                    --> Gerar Devolucao
-                   vr_cdmotdev := 53; --> 53 - Apresentação indevida
-                     
+                   --vr_cdmotdev := 53; --> 53 - Apresentação indevida
+                   vr_cdmotdev := 82; --> Chamado SCTASK0023401
+
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
@@ -5548,7 +5561,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;  
                    
                    --> Gerar Devolucao
-                   vr_cdmotdev := 53; --> 53 - Apresentação indevida
+                   --vr_cdmotdev := 53; --> 53 - Apresentação indevida
+                   vr_cdmotdev := 82; --> Chamado SCTASK0023401 
                      
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
