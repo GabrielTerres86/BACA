@@ -2,7 +2,7 @@
     Programa    : Tela CADPCP - Script de carga
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Luis Fernando (GFT)
-    Data        : Janeiro/2019
+    Data        : 07/01/2019
     Objetivo    : Realizar o cadastro da nova tela CADPCP no Ayllos Web
   ---------------------------------------------------------------------------------------------------------------------*/ 
 

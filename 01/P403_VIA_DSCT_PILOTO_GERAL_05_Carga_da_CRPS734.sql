@@ -2,7 +2,7 @@
     Programa    : CRPS734
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Luis Fernando (GFT)
-    Data        : Janeiro/2019
+    Data        : 07/01/2019
     Objetivo    : Inserir na tabela de programas a nova CRPS734, Calculo do vencimento dos vencimentos dos titulos. (DIARIA)
   --------------------------------------------------------------------------------------------------------------------------*/ 
 

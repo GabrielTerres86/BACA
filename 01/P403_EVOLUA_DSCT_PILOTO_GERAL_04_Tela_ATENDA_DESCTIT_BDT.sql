@@ -2,7 +2,7 @@
     Programa    : Tela ATENDA->DESCONTOS->TITULOS->BORDEROS - Script de carga
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Luis Fernando (GFT)
-    Data        : Janeiro/2019
+    Data        : 07/01/2019
     Objetivo    : Realiza o cadastro das novas funcionalidades da tela ATENDA->DESCONTOS->TÍTULOS->BORDERÔS
   ---------------------------------------------------------------------------------------------------------------------*/ 
 
