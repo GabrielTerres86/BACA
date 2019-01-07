@@ -3060,7 +3060,39 @@ end;
           vr_aux_descrica := fn_getValue(vr_valu_node);
 
           -- Gravar variaveis conforme tag em leitura
-          IF vr_node_name = 'CodMsg' THEN
+          IF vr_node_name = 'Grupo_STR0006R2_CtDebtd' THEN
+            -- Buscar todos os filhos deste nó
+            vr_elem_node := xmldom.makeElement(vr_item_node);
+            -- Faz o get de toda a lista de folhas da SEGCAB
+            vr_node_list_segcab := xmldom.getChildrenByTagName(vr_elem_node,'*');
+
+            -- Percorrer os elementos
+            FOR i IN 0..xmldom.getLength(vr_node_list_segcab)-1 LOOP
+
+              -- Buscar o item atual
+              vr_item_node_segcab := xmldom.item(vr_node_list_segcab, i);
+              -- Captura o nome e tipo do nodo
+              vr_node_name_segcab := xmldom.getNodeName(vr_item_node_segcab);
+
+              -- Sair se o nodo não for elemento
+              IF xmldom.getNodeType(vr_item_node_segcab) <> xmldom.ELEMENT_NODE THEN
+                CONTINUE;
+              END IF;
+
+              -- Para a tag NR_OPERACAO
+              IF vr_node_name_segcab = 'TpCtDebtd' THEN
+                -- Buscar valor da TAG
+                vr_aux_descrica  := fn_getValue(xmldom.getFirstChild(vr_item_node_segcab));
+                vr_aux_TpCtDebtd := vr_aux_descrica;
+              END IF;
+              -- Para a tag NR_OPERACAO
+              IF vr_node_name_segcab = 'CtDebtd' THEN
+                -- Buscar valor da TAG
+                vr_aux_descrica := fn_getValue(xmldom.getFirstChild(vr_item_node_segcab));
+                vr_aux_CtDebtd  := vr_aux_descrica;
+              END IF;
+            END LOOP;
+          ELSIF vr_node_name = 'CodMsg' THEN
             -- Buscar valor da TAG
             vr_aux_CodMsg := vr_aux_descrica;
             -- Nas mensagens de devolucao, o Numero de Controle Original
@@ -3101,7 +3133,7 @@ end;
             vr_aux_TpCtDebtd := vr_aux_descrica;
           ELSIF vr_node_name = 'CtPgtoDebtd' THEN
             vr_aux_CtPgtoDebtd := vr_aux_descrica;
-          ELSIF vr_node_name IN('NomCliDebtd','NomCliDebtdTitlar1','NomRemet') THEN
+          ELSIF vr_node_name IN('NomCliDebtd','NomCliDebtdTitlar1','NomRemet','NomCliDebtd_Remet') THEN
             vr_aux_NomCliDebtd := vr_aux_descrica;
             -- Transferencia entre mesma titularidade
             IF vr_aux_CodMsg IN('STR0037R2','PAG0137R2') THEN
@@ -7945,7 +7977,7 @@ END pc_trata_arquivo_ldl;
                   /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
 				  ) THEN
            -- Se for finalidade 10 com esse cnpj e agencia não gerar erro
-			     IF vr_aux_FinlddCli = 10                 AND
+           IF vr_aux_CtCredtd IN (10000003,20000006) AND
               vr_aux_CNPJ_CPFCred = '5463212000129' AND
               vr_aux_AgCredtd = '100'               THEN
                NULL;
