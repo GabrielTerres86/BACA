@@ -4814,7 +4814,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      RAISE vr_exc_sair;                       
                    END IF;
                    
-                   --wintegravr_cdmotdev := 74; --> 74 - CPF/CNPJ do beneficiário inválido ou não confere com registro de boleto na base da IF Destinatária
+                   --vr_cdmotdev := 74; --> 74 - CPF/CNPJ do beneficiário inválido ou não confere com registro de boleto na base da IF Destinatária
                    vr_cdmotdev := 83; --> Chamado SCTASK0023401                     
 
                    --> Procedimento para grava registro de devolucao
