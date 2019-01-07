@@ -2,7 +2,7 @@
     Programa    : CRPS736
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Luis Fernando (GFT)
-    Data        : Janeiro/2019
+    Data        : 07/01/2019
     Objetivo    : Inserir na tabela de programas a nova CRPS736, Apropriação de Juros de Mora ao fim do mês. (MENSAL)
   ---------------------------------------------------------------------------------------------------------------------*/ 
 

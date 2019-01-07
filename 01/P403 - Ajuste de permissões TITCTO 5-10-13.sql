@@ -2,14 +2,14 @@
     Programa    : Ajuste de permissões da tela TITCTO
     Projeto     : 403 - Desconto de Títulos - Release 3
     Autor       : Luis Fernando (GFT)
-    Data        : Janeiro/2019
+    Data        : 07/01/2019
     Objetivo    : Realiza o ajuste das permissões de acesso da tela TITCTO
   ---------------------------------------------------------------------------------------------------------------------*/ 
 
 
 DECLARE 
   TYPE Cooperativas IS TABLE OF integer;
-  coop Cooperativas := Cooperativas(1,5,10,13,14); -- EX: Cooperativas(1,3,7,11);
+  coop Cooperativas := Cooperativas(5,10,13); -- EX: Cooperativas(1,3,7,11);
   
   pr_cdcooper INTEGER;
 
