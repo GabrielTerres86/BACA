@@ -7977,7 +7977,7 @@ END pc_trata_arquivo_ldl;
                   /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
 				  ) THEN
            -- Se for finalidade 10 com esse cnpj e agencia não gerar erro
-           IF vr_aux_CtCredtd IN (10000003,20000006) AND
+           IF TRIM(vr_aux_CtCredtd) IN ('10000003','20000006') AND
               vr_aux_CNPJ_CPFCred = '5463212000129' AND
               vr_aux_AgCredtd = '100'               THEN
                NULL;
