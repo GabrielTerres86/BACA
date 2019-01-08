@@ -13,9 +13,6 @@
  *                              que o operador nao tinha permissao de acesso (Tiago/Elton SD 379410)
  * -------------- 
  */
-?> 
-
-<?
 
 session_start();
 require_once('../../includes/config.php');
@@ -37,6 +34,8 @@ $dtfimest = (isset($_POST['dtfimest'])) ? $_POST['dtfimest'] : '?';
 $flgctitg = (isset($_POST['flgctitg'])) ? $_POST['flgctitg'] : 0;
 $idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : 0;
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
+$nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;
+$vlcheque = (isset($_POST['vlcheque'])) ? $_POST['vlcheque'] : 0;
 
 
 switch ($operacao) {
@@ -55,33 +54,63 @@ switch ($operacao) {
         $retornoAposErro = '';
 		$cddopcao = 'R';
         break;
+	case 'incluiCCF':
+        $procedure = 'Inclui_CCF';
+        $retornoAposErro = 'bloqueiaFundo($(\'#divRotina\'));';
+		$cddopcao = 'R';
+        break;
 }
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+	if ($operacao != 'incluiCCF'){
+		if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
+			exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+		}		
 	}
 
-	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "  <Cabecalho>";
-	$xml .= "	    <Bo>b1wgen0143.p</Bo>";
-	$xml .= "        <Proc>".$procedure."</Proc>";
-	$xml .= "  </Cabecalho>";
-	$xml .= "  <Dados>";
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';		
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';		
-	$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';			
-	$xml .= '       <nrseqdig>'.$nrseqdig.'</nrseqdig>';		
-	$xml .= '       <nmoperad>'.$nmoperad.'</nmoperad>';		
-	$xml .= '       <dtfimest>'.$dtfimest.'</dtfimest>';		
-	$xml .= '       <flgctitg>'.$flgctitg.'</flgctitg>';		
-	$xml .= '       <idseqttl>'.$idseqttl.'</idseqttl>';		
+	if ($operacao == 'incluiCCF'){
+		
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Cabecalho>";
+		$xml .= "	    <Bo>b1wgen0143.p</Bo>";
+		$xml .= "        <Proc>".$procedure."</Proc>";
+		$xml .= "  </Cabecalho>";
+		$xml .= "  <Dados>";
+		$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';			
+		$xml .= '       <nrcheque>'.$nrcheque.'</nrcheque>';
+		$xml .= '       <vlcheque>'.$vlcheque.'</vlcheque>';
+		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+		$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
+		$xml .= '       <nmoperad>'.$nmoperad.'</nmoperad>';		
+		$xml .= '       <dtfimest>'.$dtfimest.'</dtfimest>';		
+		$xml .= '       <flgctitg>'.$flgctitg.'</flgctitg>';
+	
+	}else{
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Cabecalho>";
+		$xml .= "	    <Bo>b1wgen0143.p</Bo>";
+		$xml .= "        <Proc>".$procedure."</Proc>";
+		$xml .= "  </Cabecalho>";
+		$xml .= "  <Dados>";
+		$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+		$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+		$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+		$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
+		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';		
+		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';		
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';			
+		$xml .= '       <nrseqdig>'.$nrseqdig.'</nrseqdig>';		
+		$xml .= '       <nmoperad>'.$nmoperad.'</nmoperad>';		
+		$xml .= '       <dtfimest>'.$dtfimest.'</dtfimest>';		
+		$xml .= '       <flgctitg>'.$flgctitg.'</flgctitg>';		
+		$xml .= '       <idseqttl>'.$idseqttl.'</idseqttl>';	
+	}
+	
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 
@@ -94,9 +123,10 @@ switch ($operacao) {
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
+	
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;		
-		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	// Busca os dados do contrato e os avalista
@@ -128,6 +158,12 @@ switch ($operacao) {
 			
 		}
 	
+	}else if ($operacao = 'incluiCCF'){
+		$msgconfi	= $xmlObjeto->roottag->tags[0]->attributes['MSGCONFI'];
+		if( $msgconfi != "" ){
+			echo "buscaContrato('CCF');";
+			echo "fechaRotina($('#divRotina'));";
+			exibirErro('inform', $msgconfi, 'Alerta - Aimaro', '', false);
+		}
 	}
-	
 ?>

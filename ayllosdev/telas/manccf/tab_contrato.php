@@ -122,5 +122,6 @@
     <a href="#" class="botao" id="btRegulariza" onclick="Regulariza(); return false;" tabindex="4">Regularizar</a>
     <a href="#" class="botao" id="btRefazer" onclick="RefazRegulariza(); return false;" tabindex="5">Reenviar regulariza&ccedil;&atilde;o</a>
     <a href="#" class="botao" id="btImprimir" onclick="Gera_Impressao(); return false;" tabindex="6">Imprimir Carta</a>
-    <a href="#" class="botao" name="btVoltar" id="btVoltar" onclick="btnVoltar(); return false;" tabindex="7">Voltar</a>
+    <a href="#" class="botao" id="btCCF" onclick="Inclusao_CCF_PopUp(false); return false;" tabindex="7">Inclus&atilde;o CCF Al&iacute;nea 12</a>
+    <a href="#" class="botao" name="btVoltar" id="btVoltar" onclick="btnVoltar(); return false;" tabindex="8">Voltar</a>
 </div>
