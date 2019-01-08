@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 30/08/2018
+   Data    : 14/07/2006                        Ultima atualizacao: 07/01/2019
 
    Dados referentes ao programa:
 
@@ -296,6 +296,8 @@
       
                17/10/2018 - Impedir criacao de boleto com instrucao de protesto automatico para boletos
                             do tipo Duplicata de Servico (PRJ352 - Andre Clemer - Supero )
+      
+               07/01/2019 - Nao permitir cadastrar pagador com endereco acima de 55 caracteres. (P468 - Cechet)
       
 .............................................................................*/
 
@@ -3627,6 +3629,14 @@ PROCEDURE gerencia-sacados:
                        
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
+            
+        IF LENGTH(par_dsendsac) > 55 THEN   
+           DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Endereco deve possuir apenas 55 caracteres.".
+                       
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+           END.            
             
         IF  par_nrcepsac <= 0  THEN
             DO:
