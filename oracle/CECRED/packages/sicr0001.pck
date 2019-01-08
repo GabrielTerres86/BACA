@@ -341,7 +341,6 @@ create or replace package body cecred.SICR0001 is
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 				                      ( Belli - Envolti - Chamado REQ0014479 )
 							  
-                              
                  29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
                               (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
@@ -603,16 +602,13 @@ create or replace package body cecred.SICR0001 is
                 AND crapcon.flgcnvsi = 1 -- indica que é sicred
                 AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
                 AND crapscn.cdsegmto in (2, 3) -- agua / energia
-                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4)) -- empresa convenio
-                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),2,1))  -- segmento convenio
+                AND TO_NUMBER(SUBSTR(NVL(TRIM(rw_craplau.dscodbar),'0'),1,1)) = 8 -- 8=fatura, 2=titulo -- 05/11/2018.
                 AND crapcon.cdcooper = pr_cdcooper;
            EXCEPTION
-             WHEN NO_DATA_FOUND THEN
-               vr_agua_luz := 'N';
              WHEN OTHERS THEN
-               pr_dscritic := 'Erro em sicr0001.pc_obtem_agendamentos_debito. Conta '||rw_craplau.nrdconta||' - ao identificar se é água ou luz. '||sqlerrm;
-               -- gerando exceção
-               RAISE vr_exc_erro;					
+               vr_agua_luz := 'N';
            END;
 					
            IF pr_inpriori = 'S' THEN 

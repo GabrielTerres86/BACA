@@ -9519,6 +9519,14 @@ PROCEDURE valida_inclusao_bordero:
                 UNDO INCLUIR, LEAVE INCLUIR.
             END.
         
+        IF  craplim.dtfimvig < par_dtmvtolt THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "A vigencia do contrato deve ser maior que a data " +
+                                      "de movimentação do sistema.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
         FIND crapldc WHERE crapldc.cdcooper = par_cdcooper       AND
                            crapldc.cddlinha = craplim.cddlinha   AND
                            crapldc.tpdescto = 3 
