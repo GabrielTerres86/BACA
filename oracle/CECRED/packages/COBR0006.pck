@@ -4109,14 +4109,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao:  31/12/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Identifica qual o tipo de arquivo de cobranca.
 
-       Alteracoes:  
+       Alteracoes:  31/12/2018 - Alterar mensagem de erro de "Arquivo CNAB invalido."
+                                 para "Arquivo de remessa fora do layout."
+                                 (Douglas - INC0029384)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -4193,7 +4195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                       ,pr_nrlinseq => '99999'
                                       ,pr_cdseqcri => vr_contaerr
-                                      ,pr_dscritic => 'Arquivo CNAB invalido.'
+                                      ,pr_dscritic => 'Arquivo de remessa fora do layout.'
                                       ,pr_tab_rejeita => pr_rec_rejeita 
                                       ,pr_critica => vr_dscritic      
                                       ,pr_des_reto => vr_des_reto);
@@ -4265,7 +4267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
   EXCEPTION 
     WHEN vr_exc_saida  THEN
-      
+
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := pr_dscritic;
       
