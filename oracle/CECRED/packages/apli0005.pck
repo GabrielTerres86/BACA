@@ -3715,6 +3715,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
       vr_tab_retorno   LANC0001.typ_reg_retorno;
 
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
+
       -- CURSORES --
 
       -- Selecionar os dados da Cooperativa
@@ -4912,137 +4915,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Fim CRÉDITO
         
-        -- Consulta de lote
-        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
-                       ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 8501);
-
-        FETCH cr_craplot INTO rw_craplot;
-
-        -- Verifica se encontrou registro de lote
-        IF cr_craplot%NOTFOUND THEN
-          -- Fecha cursor
-          CLOSE cr_craplot;
-
-          -- Caso nao exista registro de lote, novo registro é inserido
         BEGIN
-            INSERT INTO
-              craplot(
-                cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,tplotmov
-               ,nrseqdig
-               ,qtinfoln
-               ,qtcompln
-               ,vlinfodb
-               ,vlcompdb)
-            VALUES(
-              pr_cdcooper
-             ,pr_dtmvtolt
-             ,1
-             ,100
-             ,8501
-             ,1
-             ,1
-             ,1
-             ,1
-             ,pr_vlaplica
-             ,pr_vlaplica) RETURNING
-               craplot.dtmvtolt
-              ,craplot.cdagenci
-              ,craplot.cdbccxlt
-              ,craplot.nrdolote
-              ,craplot.nrseqdig
-              ,craplot.rowid
-             INTO
-               rw_craplot.dtmvtolt
-              ,rw_craplot.cdagenci
-              ,rw_craplot.cdbccxlt
-              ,rw_craplot.nrdolote
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.rowid;
-  
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir registro de lote na CRAPLOT.';
+           LANC0001.pc_gerar_lancamento_conta(
+                          pr_cdcooper => pr_cdcooper
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                         ,pr_cdagenci => 1
+                         ,pr_cdbccxlt => 100
+                         ,pr_nrdolote => 8501
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctabb => pr_nrdconta
+                         ,pr_nrdocmto => vr_nraplica
+                         ,pr_nrseqdig => 0
+                         ,pr_dtrefere => rw_crapdat.dtmvtolt
+                         ,pr_vllanmto => pr_vlaplica
+                         ,pr_cdhistor => rw_crapcpc.cdhscacc
+                         ,pr_nraplica => vr_nraplica
+                         ,pr_inprolot => 1
+                         ,pr_tplotmov => 1
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
-          END;
-        ELSE
-          -- Fecha cursor
-          CLOSE cr_craplot;
-          
-          -- Caso exista registro de lote ele será atualizado
-          BEGIN
-            -- Atualiza registro de lote
-            UPDATE
-              craplot
-            SET
-              craplot.tplotmov = 1
-             ,craplot.nrseqdig = rw_craplot.nrseqdig + 1
-             ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
-             ,craplot.qtcompln = rw_craplot.qtcompln + 1
-             ,craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica
-             ,craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
-            WHERE
-              craplot.rowid = rw_craplot.rowid
-            RETURNING
-               craplot.dtmvtolt
-              ,craplot.cdagenci
-              ,craplot.cdbccxlt
-              ,craplot.nrdolote
-              ,craplot.nrseqdig
-              ,craplot.rowid
-             INTO
-               rw_craplot.dtmvtolt
-              ,rw_craplot.cdagenci
-              ,rw_craplot.cdbccxlt
-              ,rw_craplot.nrdolote
-              ,rw_craplot.nrseqdig
-              ,rw_craplot.rowid;
-     
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar registro de lote na CRAPLOT.';
-              RAISE vr_exc_saida;
-          END;
             END IF;
-
-        -- Insercao de Registro de lancamento de debito
-        BEGIN
-          INSERT INTO
-            craplcm(
-              cdcooper
-             ,dtmvtolt
-             ,cdagenci
-             ,cdbccxlt
-             ,nrdolote
-             ,nrdconta
-             ,nrdctabb
-             ,nrdocmto
-             ,nrseqdig
-             ,dtrefere
-             ,vllanmto
-             ,cdhistor
-             ,nraplica)
-          VALUES(
-            pr_cdcooper
-           ,rw_craplot.dtmvtolt
-           ,rw_craplot.cdagenci
-           ,rw_craplot.cdbccxlt
-           ,rw_craplot.nrdolote
-           ,pr_nrdconta
-           ,pr_nrdconta
-           ,vr_nraplica
-           ,rw_craplot.nrseqdig
-           ,rw_craplot.dtmvtolt
-           ,pr_vlaplica
-           ,rw_crapcpc.cdhscacc
-           ,vr_nraplica);
 
         EXCEPTION
           WHEN OTHERS THEN
