@@ -4738,7 +4738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => FALSE      --> Nao considera feriados
+                                               ,pr_feriado  => TRUE        --> Nao considera feriados
                                                ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
