@@ -143,6 +143,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 
                  15/08/2018 - Inclusão do código de crítica 1283 na procedure pc_validar_nova_aplicacao,
                               Prj. 427 - URA (Jean Michel)
+                              
+                 10/12/2018 - Adicionando controle de resgate duplo de aplicação. 
+                              INC0025636 - (Guilherme Kuhnen)
+                             
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1473,6 +1477,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
                              não estava deixando excluir aplicação 
                              PRJ 450 Jaison (Lucas Ranghetti INC0026191)
+                                                           
+                10/12/2018 - Adicionando controle de resgate duplo de aplicação. 
+                             INC0025636 - (Guilherme Kuhnen)
+                             
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -19257,9 +19265,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND craplap.nrdconta = pr_nrdconta
          AND craplap.nraplica = pr_nraplica;
     
+    -- Buscar resgates duplicados
+    CURSOR cr_craplrg_dup(pr_cdcooper IN craplrg.cdcooper%TYPE
+                      ,pr_nrdconta IN craplrg.nrdconta%TYPE
+                      ,pr_dtmvtocd IN craplrg.dtmvtolt%TYPE
+                      ,pr_vllanmto IN craplrg.vllanmto%TYPE
+                      ,pr_dtresgat IN craplrg.dtresgat%TYPE
+                      ,pr_tpresgat IN craplrg.tpresgat%TYPE
+                      ,pr_nraplica IN craplrg.nraplica%TYPE) IS
+      SELECT MAX(lrg.hrtransa)
+        FROM craplrg lrg
+       WHERE lrg.cdcooper = pr_cdcooper
+         AND lrg.nrdconta = pr_nrdconta
+         AND lrg.dtmvtolt = pr_dtmvtocd
+         AND lrg.vllanmto = pr_vllanmto
+         AND lrg.dtresgat = pr_dtresgat    
+         AND lrg.tpresgat = pr_tpresgat
+         AND lrg.nraplica = pr_nraplica;
+    
     -- Variáveis
     vr_nrseqdig       craplot.nrseqdig%TYPE;
     vr_dsdadatu       craplgi.dsdadatu%TYPE;
+    vr_hrtransa_dup   craplrg.hrtransa%TYPE;
     
     vr_dstransa       VARCHAR2(50); 
     vr_dsorigem       VARCHAR2(100);
@@ -19827,6 +19854,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     
     -- Cria o savepoint
     SAVEPOINT transacao;
+      
+    /*
+      Guilherme Kuhnen - 06/12/18.
+      INC0025636 - Adicionando controle de resgate duplo de aplicação.
+    */
+    OPEN cr_craplrg_dup (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_dtmvtocd => pr_dtmvtolt
+                         ,pr_vllanmto => pr_vlresgat
+                         ,pr_dtresgat => pr_dtresgat
+                         ,pr_tpresgat => vr_tpresgat
+                         ,pr_nraplica => pr_nraplica);
+      --Posicionar no proximo registro
+      FETCH cr_craplrg_dup INTO vr_hrtransa_dup;
+        --Se encontrar
+        IF cr_craplrg_dup%FOUND THEN
+          --Compara os segundos do último lançamento para não haver duplicidade
+          IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrtransa_dup) <= 600 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Resgate duplicado. Consulte seu extrato para verificar o lancamento.';
+            
+            CLOSE cr_craplrg_dup;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+    --Fechar Cursor
+    CLOSE cr_craplrg_dup;
+    /*INC0025636*/
       
     BEGIN -- Transação
     
