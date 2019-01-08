@@ -4915,7 +4915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         BEGIN
            LANC0001.pc_gerar_lancamento_conta(
                           pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                         ,pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
                          ,pr_nrdolote => 8501
@@ -4923,7 +4923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_nrdctabb => pr_nrdconta
                          ,pr_nrdocmto => vr_nraplica
                          ,pr_nrseqdig => 0
-                         ,pr_dtrefere => rw_crapdat.dtmvtolt
+                         ,pr_dtrefere => pr_dtmvtolt
                          ,pr_vllanmto => pr_vlaplica
                          ,pr_cdhistor => rw_crapcpc.cdhscacc
                          ,pr_nraplica => vr_nraplica
