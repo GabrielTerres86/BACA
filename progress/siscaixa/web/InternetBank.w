@@ -980,7 +980,6 @@ DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
 DEF VAR aux_nrinsava AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
-DEF VAR aux_nrconins AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfdrf AS CHAR                                           NO-UNDO.
 DEF VAR str_nrcpfope AS CHAR                                           NO-UNDO.
 DEF VAR aux_vldescto AS DECI                                           NO-UNDO.
@@ -3535,8 +3534,7 @@ PROCEDURE proc_operacao19:
     ASSIGN aux_nrcpfcgc = DECI(GET-VALUE("nrcpfcgc"))
            aux_nmdsacad = GET-VALUE("nmdsacad")
            aux_flgvalid = LOGICAL(GET-VALUE("flgvalid"))
-           aux_cdsitsac = INTE(GET-VALUE("cdsitsac"))
-           aux_nrconins = DECI(GET-VALUE("nrconins")).
+           aux_cdsitsac = INTE(GET-VALUE("cdsitsac")).
                    
     RUN sistema/internet/fontes/InternetBank19.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3545,7 +3543,6 @@ PROCEDURE proc_operacao19:
                                                   INPUT aux_nmdsacad,
                                                   INPUT aux_cdsitsac,
                                                   INPUT aux_flgvalid,
-                                                  INPUT aux_nrconins,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 

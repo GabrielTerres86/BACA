@@ -69,9 +69,6 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                             na pc_gps_arrecadar_sicredi.  
                             PRJ381 - Analise de Fraude (Teobaldo Jamunda - AMcom)
 
-               19/12/2018 - Adicionados busca do nome do preposto para retornar juntamente com o CPF que já existe.
-                            PJ 285.2 - Pacote 12 > (Guilherme Kuhnen).
-                                                   
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE
                                   ,pr_cdagenci IN NUMBER
@@ -538,10 +535,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                29/08/2018 - Incluir envio de e-mail para a validação e arrecadacao
                             do GPS WebService Sicredi em mais um lugar 
                             (Lucas Ranghetti INC0022952)
-                            
-               19/12/2018 - Adicionados busca do nome do preposto para retornar juntamente com o CPF que já existe.
-                            PJ 285.2 - Pacote 12 > (Guilherme Kuhnen).
-                            
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -3363,12 +3356,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,ass.cdagenci
               ,ass.inpessoa
               ,ass.nmprimtl
-              ,ass.vllimcre --PJ 285.2
-              ,ass.nrcpfcgc --PJ 285.2
-              ,ass.nrctacns --PJ 285.2
-              ,ass.dtdemiss --PJ 285.2
-		      ,ass.idastcjt --PJ 285.2
-              ,ass.cdtipcta --PJ 285.2 
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -3443,31 +3430,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          WHERE c.cdcooper = prc_cdcooper
            AND c.nrdconta = prc_nrdconta
            AND c.idseqttl = prc_idseqttl
-           AND c.tpdsenha = 1; -- INTERNET
-           
-     /*
-        PJ 285.2 - Pacote 12
-     */
-     
-     -- Selecionar informacoes Avalista
-     CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%type
-                       ,pr_nrdconta IN crapavt.nrdconta%type
-                       ,pr_tpctrato IN crapavt.tpctrato%type
-                       ,pr_nrcpfcgc IN crapavt.nrcpfcgc%type) IS
-       SELECT crapavt.nrdctato
-              ,crapavt.nmdavali
-         FROM crapavt
-        WHERE crapavt.cdcooper = pr_cdcooper
-          AND crapavt.nrdconta = pr_nrdconta
-          AND crapavt.tpctrato = pr_tpctrato
-          AND crapavt.nrcpfcgc = pr_nrcpfcgc;
-     rw_crapavt cr_crapavt%ROWTYPE;     
-     
-     -- Variavel de Registro     
-     rw_cra2ass  cr_crapass%ROWTYPE;
-     
-     /* PJ 285.2 - Pacote 12 */
-           
+           AND c.tpdsenha = 1 -- INTERNET
+           ;             
      -- Variáveis
      rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
 
@@ -3524,8 +3488,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_des_reto   VARCHAR2(500);
 
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
-     vr_nmprepos   VARCHAR2(100); -- PJ 285.2 - Pacote 12
-     
      vr_dscedent   VARCHAR2(300);
 
      -- Analise fraude
@@ -4360,49 +4322,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     pr_idseqttl) LOOP
       vr_nrcpfcgc :=  rw_crapsnh2.nrcpfcgc;
     END LOOP;
-    
-    /*
-       PJ 285.2 - Pacote 12
-    */
-    
-    --Selecionar Avalista
-    OPEN cr_crapavt (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta
-                    ,pr_tpctrato => 6 -- Representantes e procuradores de conta PJ.
-                    ,pr_nrcpfcgc => vr_nrcpfcgc);
-                    
-    --Posicionar no proximo registro
-    FETCH cr_crapavt INTO rw_crapavt;
-    
-    	--Se encontrar
-      IF cr_crapavt%FOUND THEN
-        
-        --Selecionar informacoes associado
-        OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => rw_crapavt.nrdctato);
-                         
-  		  --Posicionar no proximo registro
-        FETCH cr_crapass INTO rw_cra2ass;
-        
-          --Se encontrar
-          IF cr_crapass%FOUND THEN
-            --Nome preposto recebe nome avalista
-            vr_nmprepos:= rw_cra2ass.nmprimtl;
-          ELSE
-            --Nome preposto recebe nome avalista
-            vr_nmprepos:= rw_crapavt.nmdavali;
-          END IF;
-      
-        --Fechar Cursor
-        CLOSE cr_crapass;
-        
-      END IF;
-      
-     --Fechar Cursor
-     CLOSE cr_crapavt;
-     
-    /* PJ 285.2 - Pacote 12 */
-    
     -- Gerar Protocolo MD5
     GENE0006.pc_gera_protocolo_md5(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -4429,7 +4348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_flgagend => TRUE
                                   ,pr_nrcpfope => nvl(pr_nrcpfope,0)
                                   ,pr_nrcpfpre => nvl(vr_nrcpfcgc,0)
-                                  ,pr_nmprepos => nvl(vr_nmprepos, '') -- PJ 285.2
+                                  ,pr_nmprepos => ''
                                   ,pr_dsprotoc => vr_dsprotoc
                                   ,pr_dscritic => pr_dscritic
                                   ,pr_des_erro => vr_dsretorn);
@@ -4789,13 +4708,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,ass.nrdconta
               ,ass.inpessoa
               ,ass.nmprimtl
-              ,ass.cdagenci --PJ 285.2        
-              ,ass.vllimcre --PJ 285.2
-              ,ass.nrcpfcgc --PJ 285.2
-              ,ass.nrctacns --PJ 285.2
-              ,ass.dtdemiss --PJ 285.2
-			  ,ass.idastcjt --PJ 285.2
-              ,ass.cdtipcta --PJ 285.2
           FROM crapass ass
          WHERE ass.cdcooper = p_cdcooper
            AND ass.nrdconta = p_nrdconta
@@ -4841,29 +4753,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND bcx.cdsitbcx = 1;
     rw_existe_bcx cr_existe_bcx%ROWTYPE;
 
-    /*
-       PJ 285.2 - Pacote 12
-    */
-     
-    -- Selecionar informacoes Avalista
-    CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%type
-                       ,pr_nrdconta IN crapavt.nrdconta%type
-                       ,pr_tpctrato IN crapavt.tpctrato%type
-                       ,pr_nrcpfcgc IN crapavt.nrcpfcgc%type) IS
-      SELECT crapavt.nrdctato
-             ,crapavt.nmdavali
-        FROM crapavt
-       WHERE crapavt.cdcooper = pr_cdcooper
-         AND crapavt.nrdconta = pr_nrdconta
-         AND crapavt.tpctrato = pr_tpctrato
-         AND crapavt.nrcpfcgc = pr_nrcpfcgc;
-    rw_crapavt cr_crapavt%ROWTYPE;     
-     
-    -- Variavel de Registro     
-    rw_cra2ass  cr_crapass%ROWTYPE;
-     
-    /* PJ 285.2 - Pacote 12 */ 
-
      -- Variaveis de Cursor
      rw_crapcop cr_crapcop%ROWTYPE;
      rw_crapass cr_crapass%ROWTYPE;
@@ -4885,7 +4774,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dspesgps      VARCHAR2(15);
      vr_dtmvtolt      DATE;
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
-     vr_nmprepos      VARCHAR2(100); -- PJ 285.2 - Pacote 12 
 
      vr_lindigi1 VARCHAR2(50);
      vr_lindigi2 VARCHAR2(50);
@@ -5320,49 +5208,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
              vr_nrcpfcgc :=  rw_crapsnh2.nrcpfcgc;        
           END LOOP;
           --
-          
-          /*
-             PJ 285.2 - Pacote 12
-          */
-          
-          --Selecionar Avalista
-          OPEN cr_crapavt (pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_tpctrato => 6 -- Representantes e procuradores de conta PJ.
-                           ,pr_nrcpfcgc => vr_nrcpfcgc);
-                          
-          --Posicionar no proximo registro
-          FETCH cr_crapavt INTO rw_crapavt;
-          
-            --Se encontrar
-            IF cr_crapavt%FOUND THEN
-              
-              --Selecionar informacoes associado
-              OPEN cr_crapass (p_cdcooper => pr_cdcooper
-                               ,p_nrdconta => rw_crapavt.nrdctato);
-                               
-  		        --Posicionar no proximo registro
-              FETCH cr_crapass INTO rw_cra2ass;
-              
-                --Se encontrar
-                IF cr_crapass%FOUND THEN
-                  --Nome preposto recebe nome avalista
-                  vr_nmprepos:= rw_cra2ass.nmprimtl;
-                ELSE
-                  --Nome preposto recebe nome avalista
-                  vr_nmprepos:= rw_crapavt.nmdavali;
-                END IF;
-            
-              --Fechar Cursor
-              CLOSE cr_crapass;
-              
-            END IF;
-            
-          --Fechar Cursor
-          CLOSE cr_crapavt;
-           
-          /* PJ 285.2 - Pacote 12 */
-          
           -- Gerar Protocolo MD5
           GENE0006.pc_gera_protocolo_md5(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -5389,7 +5234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                         ,pr_flgagend => FALSE
                                         ,pr_nrcpfope => nvl(pr_nrcpfope,0)
                                         ,pr_nrcpfpre => nvl(vr_nrcpfcgc,0)
-                                        ,pr_nmprepos => nvl(vr_nmprepos, '') -- PJ 285.2
+                                        ,pr_nmprepos => ''
                                         ,pr_dsprotoc => vr_dsprotoc
                                         ,pr_dscritic => pr_dscritic
                                         ,pr_des_erro => vr_dsretorn);

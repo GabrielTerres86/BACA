@@ -156,9 +156,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   --
   --  Alterações: 06/02/2018 - Ajuste para não considerar a senha na validação do operador devido a mesma ser valida através do AD
   --  						  (Adriano - SD 845176).
-  
-  --              12/12/2018 - Ajuste para apresentar '0,00' nos dados de consulta de agendamentos.
-  --                (Guilherme Kuhnen - INC0027494)
   ---------------------------------------------------------------------------
 
 PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcooper%TYPE      -->CODIGO COOPER
@@ -1253,7 +1250,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'vlsaque_tot',
-                             pr_tag_cont => to_char(vr_vlsaque_tot, 'FM999G999G990D90', 'nls_numeric_characters='',.'''), --INC0027494
+                             pr_tag_cont => to_char(vr_vlsaque_tot, 'FM999G999G999D90', 'nls_numeric_characters='',.'''),
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
