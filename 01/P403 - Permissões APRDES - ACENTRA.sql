@@ -49,5 +49,12 @@ begin
                                             );
     
   END LOOP;
+  
+   
+ UPDATE crapbdt bdt
+    SET bdt.vltxmult = 0
+  WHERE bdt.cdcooper = 12
+    AND bdt.nrborder = 14764; 
+  
 commit;
 end;
