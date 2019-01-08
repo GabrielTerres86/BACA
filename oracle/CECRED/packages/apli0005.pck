@@ -4941,7 +4941,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
+            IF trim(vr_dscritic) IS NULL THEN
+              vr_dscritic := 'Erro ao inserir registro de lancamento de debito.' || SQLERRM;
+            END IF;
             RAISE vr_exc_saida;
         END;
       END IF; -- Fim ELSE recurso nao proveniente de conta investimento
