@@ -3715,9 +3715,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
       vr_tab_retorno   LANC0001.typ_reg_retorno;
 
-      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
-      vr_tab_retorno   LANC0001.typ_reg_retorno;
-
       -- CURSORES --
 
       -- Selecionar os dados da Cooperativa
