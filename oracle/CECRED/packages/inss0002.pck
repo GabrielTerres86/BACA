@@ -6821,7 +6821,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      Alteracoes: 30/09/2016 - Alterada a forma de listar os arquivos da pasta
                               de pc_lista_arquivos para pc_OScommand_Shell
                               (Guilherme/SUPERO)
-
+							  
+                 09/01/2019 - Ajustada a rotina para considerar arquivos criptografados e nao criptografados
+                              (PTASK0010307 André MoutS).  
+							  
     ..............................................................................*/
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -6853,6 +6856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_des_reto       VARCHAR2(30);
     vr_nmarqcri       VARCHAR2(1000);
     vr_arquivos       VARCHAR2(32767);
+    vr_arqcript       BOOLEAN;
 
     vr_cdcooper       NUMBER;
     vr_nmdatela       VARCHAR2(25);
@@ -6964,7 +6968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
     -- Montar o padrão do nome para a consulta dos arquivos
-    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*.crypto';
+    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*';
 
     -- Retorna a lista dos arquivos do diretório, conforme máscara
 /*    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
@@ -6999,52 +7003,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Percorrer todos os arquivos encontrados na pasta
     FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
-      /**** DESCRIPTOGRAFA O ARQUIVO ****/
-      -- Comando para descriptografar arquivo
-      vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
-                   'mqcecred_descriptografa.pl --descriptografa='||
-                   chr(39)|| vr_array_arquivo(ind)||chr(39);
+      
+      IF vr_array_arquivo(ind) IS NOT NULL THEN
+        vr_arqcript := INSTR(UPPER(vr_array_arquivo(ind)), '.CRYPTO') > 0;
+        
+        IF vr_arqcript THEN
+          /**** DESCRIPTOGRAFA O ARQUIVO ****/
+          -- Comando para descriptografar arquivo
+          vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
+                       'mqcecred_descriptografa.pl --descriptografa='||
+                       chr(39)|| vr_array_arquivo(ind)||chr(39);
 
-      -- Executar o comando no unix
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => vr_comando
-                            ,pr_typ_saida   => vr_typ_saida
-                            ,pr_des_saida   => vr_nmarqcri);
+          -- Executar o comando no unix
+          GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                ,pr_des_comando => vr_comando
+                                ,pr_typ_saida   => vr_typ_saida
+                                ,pr_des_saida   => vr_nmarqcri);
 
-      -- Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        pr_des_erro := 'Nao foi possivel executar comando unix: '||
-                        vr_comando||' - '||vr_nmarqcri;
+          -- Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+            pr_des_erro := 'Nao foi possivel executar comando unix: '||
+                            vr_comando||' - '||vr_nmarqcri;
 
-        -- retornando ao programa chamador
-        RAISE vr_exc_saida;
-      END IF;
+            -- retornando ao programa chamador
+            RAISE vr_exc_saida;
+          END IF;
+        
+          -- Retirar caracteres ENTER e LF do nome do arquivo
+          vr_nmarqcri := REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
 
-      -- Retirar caracteres ENTER e LF do nome do arquivo
-      vr_nmarqcri := REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
+          -- Renomear o arquivo atribuindo a extensão XML
+          GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml'));
 
-      -- Renomear o arquivo atribuindo a extensão XML
-      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml'));
+          -- Atualizar o nome do arquivo armazenado na variável
+          vr_nmarqcri := REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml');
+        ELSE
+          -- Retirar caracteres ENTER e LF do nome do arquivo
+          vr_nmarqcri := REPLACE(REPLACE(vr_array_arquivo(ind),chr(10),''),chr(13),'');
 
-      -- Atualizar o nome do arquivo armazenado na variável
-      vr_nmarqcri := REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml');
+          -- Renomear o arquivo atribuindo a extensão XML
+          GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||vr_nmarqcri||'.xml');
 
-      /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
-      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN
-        -- Se Existir o arquivo original
-        IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_array_arquivo(ind)) THEN
-          pr_des_erro := 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_array_arquivo(ind);
-
-          -- retornando ao programa chamador
-          RAISE vr_exc_saida;
+          -- Atualizar o nome do arquivo armazenado na variável
+          vr_nmarqcri := vr_nmarqcri||'.xml';        
         END IF;
+
+        /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
+        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN
+          -- Se Existir o arquivo original
+          IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_array_arquivo(ind)) THEN
+            IF vr_arqcript THEN
+              pr_des_erro := 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_array_arquivo(ind);
+            ELSE
+              pr_des_erro := 'Arquivo nao encontrado. Arquivo: '||vr_array_arquivo(ind);
+            END IF;
+
+            -- retornando ao programa chamador
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+
+        -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
+        vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
+
+        -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
+        vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
       END IF;
-
-      -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
-      vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
-
-      -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
-      vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
     END LOOP;
 
     -- Montar o nome do arquivo ZIP
