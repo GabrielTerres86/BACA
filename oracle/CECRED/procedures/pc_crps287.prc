@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 19/04/2018
+   Data    : Maio/2000.                      Ultima atualizacao: 07/11/2018
 
    Dados referentes ao programa:
 
@@ -124,7 +124,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
                             ferramentas contabeis e fiscais.
                             Heitor / Alcemir (Mouts)
-                                                        
+
+               07/11/2018 - Caso o cheque for da cooperativa, efetua a devolução de cheque automática, na conta do
+                            depositante, conforme alineas - Projeto Correcao Desconto do Cheque
+                            (Andre - Mouts)                                                          
      ............................................................................. */
 
      DECLARE
@@ -153,6 +156,20 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        TYPE typ_reg_crapass IS
          RECORD (cdsitdtl crapass.cdsitdtl%TYPE
                 ,nmprimtl crapass.nmprimtl%TYPE);
+                  
+       -- Tabela para armazenar os cheques devolvidos de cooperados
+       TYPE typ_reg_cheqdev IS RECORD(cdcoopch crapchd.cdcooper%TYPE  --> Cooperativa emitente cheque
+                                     ,cdbanchq crapchd.cdbanchq%TYPE  --> Código do banco do cheque      
+                                     ,cdagechq crapchd.cdagechq%TYPE  --> Código da agência do cheque    
+                                     ,nrctachq crapchd.nrctachq%TYPE  --> Número da conta do cheque
+                                     ,nrcheque crapchd.nrcheque%TYPE  --> Número do cheque
+                                     ,dtmvtolt crapchd.dtmvtolt%TYPE  --> Data da compensação
+                                     ,cdcmpchq crapchd.cdcmpchq%TYPE  --> Código da Compensação do cheque
+                                     ,cdcoopdp crapchd.cdcooper%TYPE  --> Cooperativa da conta do depositante
+                                     ,nrdconta crapass.nrdconta%TYPE  --> Número da conta depositante
+                                     ,cdagenci craplot.cdagenci%TYPE
+                                     ,cdbccxlt craplot.cdbccxlt%TYPE
+                                     ,nrdolote craplot.nrdolote%TYPE);
 
        --Definicao do tipo de registro para tabela memoria saldo medio
        TYPE typ_tab_crawtot IS TABLE OF typ_reg_crawtot INDEX BY PLS_INTEGER;
@@ -160,6 +177,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        TYPE typ_tab_craptab IS TABLE OF craptab.dstextab%type INDEX BY PLS_INTEGER;
        TYPE typ_tab_doctpchq IS TABLE OF INTEGER INDEX BY PLS_INTEGER;
        TYPE typ_tab_cheques IS TABLE OF typ_reg_cheques INDEX BY VARCHAR2(30);
+       TYPE typ_tab_cheqdev IS TABLE OF typ_reg_cheqdev INDEX BY PLS_INTEGER;
 
        --Definicao das tabelas de memoria
        vr_tab_crawtot  typ_tab_crawtot;
@@ -169,6 +187,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_tab_doctpchq typ_tab_doctpchq;
        vr_tab_crapage  typ_tab_doctpchq;
        vr_tab_cheques  typ_tab_cheques;
+       vr_tab_cheqdev  typ_tab_cheqdev;
 
        vr_log_nrdconta crapass.nrdconta%type;
        vr_log_dsdocmc7 crapcst.dsdocmc7%type;
@@ -243,6 +262,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                ,crapcst.cdcmpchq
                ,crapcst.dtdevolu
                ,crapcst.dtlibera
+               ,crapcst.nrcheque
                ,crapcst.ROWID
                ,Count(1) OVER (PARTITION BY crapcst.nrdconta) qtdreg
                ,Row_Number() OVER (PARTITION BY crapcst.nrdconta
@@ -439,6 +459,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_index_cheques VARCHAR2(30);
        vr_index_docmto  VARCHAR2(30);
        vr_index_crawtot VARCHAR2(10);
+       vr_index_cheqdev PLS_INTEGER;
 
 	     -- Vari?vel para armazenar as informa??es em XML
        vr_des_xml     CLOB;
@@ -490,6 +511,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          vr_tab_doctpchq.DELETE;
          vr_tab_crapage.DELETE;
          vr_tab_cheques.DELETE;
+         vr_tab_cheqdev.DELETE;
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -677,7 +699,42 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
            --Sair do programa
            RAISE vr_exc_erro;
        END pc_tabela_cheque;         
-
+       
+       PROCEDURE pc_tabela_cheqdev(pr_cdcoopch IN crapchd.cdcooper%TYPE  --> Cooperativa emitente cheque
+                                  ,pr_cdbanchq IN crapchd.cdbanchq%TYPE  --> Código do banco do cheque      
+                                  ,pr_cdagechq IN crapchd.cdagechq%TYPE  --> Código da agência do cheque    
+                                  ,pr_nrctachq IN crapchd.nrctachq%TYPE  --> Número da conta do cheque
+                                  ,pr_nrcheque IN crapchd.nrcheque%TYPE  --> Número do cheque
+                                  ,pr_dtmvtolt IN crapchd.dtmvtolt%TYPE  --> Data da compensação
+                                  ,pr_cdcmpchq IN crapchd.cdcmpchq%TYPE  --> Código da Compensação do cheque
+                                  ,pr_cdcoopdp IN crapchd.cdcooper%TYPE  --> Cooperativa da conta do depositante
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da conta depositante
+                                  ,pr_cdagenci IN craplot.cdagenci%TYPE  --> Agência lote lançamento depositante
+                                  ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE  --> 
+                                  ,pr_nrdolote IN craplot.nrdolote%TYPE) IS  
+         vr_index pls_integer;                          
+       BEGIN
+         vr_index := vr_tab_cheqdev.COUNT;
+  
+         vr_tab_cheqdev(vr_index).cdcoopch := pr_cdcoopch;						  
+         vr_tab_cheqdev(vr_index).cdbanchq := pr_cdbanchq;
+         vr_tab_cheqdev(vr_index).cdagechq := pr_cdagechq;
+         vr_tab_cheqdev(vr_index).nrctachq := pr_nrctachq;
+         vr_tab_cheqdev(vr_index).nrcheque := pr_nrcheque;
+         vr_tab_cheqdev(vr_index).dtmvtolt := pr_dtmvtolt;
+         vr_tab_cheqdev(vr_index).cdcmpchq := pr_cdcmpchq;
+         vr_tab_cheqdev(vr_index).cdcoopdp := pr_cdcoopdp;
+         vr_tab_cheqdev(vr_index).nrdconta := pr_nrdconta;
+         vr_tab_cheqdev(vr_index).cdagenci := pr_cdagenci;
+         vr_tab_cheqdev(vr_index).cdbccxlt := pr_cdbccxlt;
+         vr_tab_cheqdev(vr_index).nrdolote := pr_nrdolote;
+       EXCEPTION
+         WHEN OTHERS THEN
+           --Variavel de erro recebe erro ocorrido
+           vr_des_erro:= 'Erro ao adicionar registros em memória. Rotina pc_crps287.pc_tabela_cheqdev. '||SQLERRM;
+           --Sair do programa
+           RAISE vr_exc_erro;
+       END pc_tabela_cheqdev;         
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps287
      ---------------------------------------
@@ -1140,6 +1197,25 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              vr_tot_qtcontra:= Nvl(vr_tot_qtcontra,0) - 1;
              --Diminuir valor contra ordem
              vr_tot_vlcontra:= Nvl(vr_tot_vlcontra,0) - rw_crapcst.vlcheque;
+             
+             -- Se cheque devolvido da cooperativa soma no valor do crédito para realizar a devolução do mesmo
+             IF rw_crapcst.inchqcop = 1 THEN
+               --Incrementa Valor Cheque
+                vr_tot_vlchqcrh:= Nvl(vr_tot_vlchqcrh,0) + rw_crapcst.vlcheque;
+                
+                pc_tabela_cheqdev(pr_cdcooper, 
+                                  rw_crapcst.cdbanchq, 
+                                  rw_crapcst.cdagechq, 
+                                  rw_crapcst.nrctachq, 
+                                  rw_crapcst.nrcheque, 
+                                  rw_crapdat.dtmvtopr, 
+                                  16, 
+                                  pr_cdcooper, 
+                                  rw_crapcst.nrdconta, 
+                                  1, 
+                                  100, 
+                                  7600);
+             END IF;    
            ELSIF rw_crapcst.insitchq = 5 THEN
              --Diminuir quantidade descontado
              vr_tot_qtdescon:= Nvl(vr_tot_qtdescon,0) - 1;
@@ -1580,6 +1656,34 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                  --Selecionar proximo registro tabela memoria
                  vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
                END LOOP;
+             
+               --Faz os lançamentos de cheque devolvido na conta do depositante
+               vr_index_cheqdev := vr_tab_cheqdev.FIRST;
+               WHILE vr_index_cheqdev IS NOT NULL LOOP
+                 
+                 CHEQ0003.pc_efetiva_devchq_depositante(pr_cdcoopch => vr_tab_cheqdev(vr_index_cheqdev).cdcoopch,
+                                                        pr_cdbanchq => vr_tab_cheqdev(vr_index_cheqdev).cdbanchq,
+                                                        pr_cdagechq => vr_tab_cheqdev(vr_index_cheqdev).cdagechq,
+                                                        pr_nrctachq => vr_tab_cheqdev(vr_index_cheqdev).nrctachq,
+                                                        pr_nrcheque => vr_tab_cheqdev(vr_index_cheqdev).nrcheque,
+                                                        pr_dtmvtolt => vr_tab_cheqdev(vr_index_cheqdev).dtmvtolt,
+                                                        pr_cdcmpchq => vr_tab_cheqdev(vr_index_cheqdev).cdcmpchq,
+                                                        pr_cdcoopdp => vr_tab_cheqdev(vr_index_cheqdev).cdcoopdp,
+                                                        pr_nrdconta => vr_tab_cheqdev(vr_index_cheqdev).nrdconta,
+                                                        pr_cdagenci => vr_tab_cheqdev(vr_index_cheqdev).cdagenci,
+                                                        pr_cdbccxlt => vr_tab_cheqdev(vr_index_cheqdev).cdbccxlt,
+                                                        pr_nrdolote => vr_tab_cheqdev(vr_index_cheqdev).nrdolote, 
+                                                        pr_tpopechq => 1,
+                                                        pr_cdcritic => vr_cdcritic, 
+                                                        pr_dscritic => vr_des_erro);
+                                                          
+                 IF vr_cdcritic > 0 THEN
+                   RAISE vr_last_chq;
+                 END IF;                                      
+                 --Selecionar proximo registro
+                 vr_index_cheqdev:= vr_tab_cheqdev.NEXT(vr_index_cheqdev);
+               END LOOP;
+               vr_tab_cheqdev.DELETE;
              END IF;
 
          /* Prj421 - Item 28 */
