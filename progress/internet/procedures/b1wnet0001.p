@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 07/01/2019
+   Data    : 14/07/2006                        Ultima atualizacao: 30/08/2018
 
    Dados referentes ao programa:
 
@@ -296,8 +296,6 @@
       
                17/10/2018 - Impedir criacao de boleto com instrucao de protesto automatico para boletos
                             do tipo Duplicata de Servico (PRJ352 - Andre Clemer - Supero )
-      
-               07/01/2019 - Nao permitir cadastrar pagador com endereco acima de 55 caracteres. (P468 - Cechet)
       
 .............................................................................*/
 
@@ -1445,6 +1443,18 @@ PROCEDURE gravar-boleto:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
+        IF par_tpemitir = 2 THEN /* 1-Boleto/2-Carne */            
+           DO:
+           
+             IF ((par_vltitulo / par_qttitulo) < 0.01) THEN
+                DO:            
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Valor das parcelas nao pode ser menor que R$0,01".
+              
+                  UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+           END.
+            
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 
         IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
