@@ -7519,7 +7519,7 @@ PROCEDURE grava-proposta-completa:
            END.
         
         /*Valida a criaçao de seguro prestamista - PRJ438 - Paulo Martins (Mouts)*/
-        IF par_inpessoa = 1 THEN
+        IF par_inpessoa = 1 AND NOT aux_fleprCDC THEN /*INC0026220 não gera para CDC*/
         DO:
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_cria_proposta_sp
