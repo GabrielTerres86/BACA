@@ -104,6 +104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
   --              23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
 	--                         	 sobre o campo cdopecxa.(Carlos Rafael Tanholi). 				             
   --
+  --              15/11/2016 - Correcao na agencia usada para buscar os lançamento de destino 
+	--                         	 (Andre Bohn - Mout'S). 				             
+  --
    ---------------------------------------------------------------------------------------------------------------*/
 
    PROCEDURE pc_valida_chq_captura(pr_cooper         IN VARCHAR2            --> Coop. Origem
@@ -2995,8 +2998,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
 
          -- Inicializa variaveis
          vr_cdcritic := 0;
-         /** Dados ORIGEM/DEBITO **/
-         vr_aux_cdagenci := pr_cod_agencia;
+         /** Dados DESTINO/CREDITO **/
+         vr_aux_cdagenci := 1;--pr_cod_agencia;
          vr_aux_cdbccxlt := 100;
          vr_i_nro_lote   := 10118;
          vr_c_docto  := TO_CHAR(pr_nro_docmto)||'012';
