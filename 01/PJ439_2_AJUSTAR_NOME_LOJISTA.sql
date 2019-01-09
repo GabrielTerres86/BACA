@@ -55,5 +55,11 @@ begin
     END IF;
     CLOSE cr_valida;
   end loop;
-  
+
+  UPDATE tbepr_cdc_vendedor a
+     SET a.nmvendedor = REPLACE(a.nmvendedor, '&', 'E')
+   WHERE a.idvendedor = 848; 
+   
+   commit;
+
 end;
