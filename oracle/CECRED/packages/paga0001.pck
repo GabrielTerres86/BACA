@@ -13029,6 +13029,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   05/06/2018 - Ajustes para correta passagem de parametor na
                                arrecadacao de convenios FGTS/DAE.
                                PRJ406 - FGTS(Odirlei-AMcom)              
+                               
+                  08/01/2019 - Inclusão da flag "pr_flgagend" na chamada da rotina 
+                               "paga0003.pc_paga_tributos". Isso para evitar a validação
+                               anti-fraude no OFSAA na efetivação de agendamentos,
+                               que já tiveram a validaçaõ no momento zero.
+                               Wagner  - Sustentação -  #INC0029563.
+                               
      ..........................................................................*/
 
   BEGIN
@@ -13617,6 +13624,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                      ,pr_vlpercen => rw_craplau.vlpercentual -- Valor do percentual da guia
                                      ,pr_vldocmto => rw_craplau.vllanaut -- Valor da guia
                                      ,pr_idagenda => 1 -- Indicador de agendamento (1 – Nesta Data / 2 – Agendamento)
+                                     ,pr_flgagend => 1 /*TRUE*/ --Flag agendado -- Wagner - Sustentação - 08/01/2019
                                      ,pr_tpleitor => rw_craplau.tpleitura_docto -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
                                      ,pr_dsprotoc => vr_dsprotoc -- Descricao Protocolo
                                      ,pr_cdcritic => vr_cdcritic -- Código do erro
