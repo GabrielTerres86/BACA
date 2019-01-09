@@ -125,7 +125,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							  pelo AD. (PRJ339 - Reinert)
                  
                  18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-
+				 
                  27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
 				                       PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE
 			   
@@ -1139,8 +1139,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
+														
 
-  
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -1448,10 +1448,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
                 04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
                              com debito em Conta Investimento. Heitor (Mouts) - Chamado 821010.
-
+							 
                 27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
-                             PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE															
-
+                             PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE
+                             
                 19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
                              para bloquear resgate de aplicação enquanto o processo batch estiver rodando
                              na procedure pc_cad_resgate_aplica (Jean Michel)             
@@ -3285,6 +3285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                   
                 15/05/2018 - Inclusão do código de crítica 1283, Prj. 427 - URA (Jean Michel)
 
+				07/12/2018 -  Não considerar limite de crédito nas aplicações RDC-PRÉ e PÓS - Rubens Lima (Mouts)
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -3458,7 +3459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
 			vr_idesthor INTEGER;
-
+      
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
     
@@ -4096,7 +4097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             END IF;       
                                      
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-            IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp
             AND pr_cdcooper <> 3 THEN
                  
               -- Monta critica
@@ -4110,7 +4111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
           ELSE       
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-            IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)) 
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp 
             AND pr_cdcooper <> 3 THEN
                  
               -- RDCPOS
@@ -4347,7 +4348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              data de resgate cair em final de semana em vez de antecipar o resgate
                              para o dia útil anterior, mantém resgate com data do final de semana.
                              (AJFink - SD#543149)
-
+							 
                 27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
 
   .......................................................................................*/
@@ -4370,7 +4371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                      ,pr_flgerlog IN INTEGER
                                      ,pr_nmdcampo OUT VARCHAR2      
                                      ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE
-																		 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
+                                     ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
                                      ,pr_tab_msg_confirma OUT typ_tab_msg_confirma
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -4574,7 +4575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       -- Registro de Taxa
       vr_dstextab_taxa craptab.dstextab%TYPE;
-      
+
       -- PRJ450 - 27/06/2018.	  
       vr_tpaplica_lcm INTEGER := 0;
       
@@ -5936,7 +5937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             -- Gera exceção
             RAISE vr_exc_erro;
         END;
-        
+
         -- PRJ450 - 27/06/2018.
         select DECODE(pr_tpaplica,3,114,4,145,5,177,7,472,8,527,106)
           into vr_tpaplica_lcm 
@@ -5993,20 +5994,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         BEGIN
           SELECT craplcm.ROWID
-                   ,craplcm.cdhistor
-                   ,craplcm.cdcooper
-                   ,craplcm.dtmvtolt
-                   ,craplcm.hrtransa
-                   ,craplcm.nrdconta
-                   ,craplcm.nrdocmto
-                   ,craplcm.vllanmto
+                ,craplcm.cdhistor
+                ,craplcm.cdcooper
+                ,craplcm.dtmvtolt
+                ,craplcm.hrtransa
+                ,craplcm.nrdconta
+                ,craplcm.nrdocmto
+                ,craplcm.vllanmto
             INTO vr_rowid
-                   ,rw_craplcm.cdhistor
-                   ,rw_craplcm.cdcooper
-                   ,rw_craplcm.dtmvtolt
-                   ,rw_craplcm.hrtransa
-                   ,rw_craplcm.nrdconta
-                   ,rw_craplcm.nrdocmto
+                ,rw_craplcm.cdhistor
+                ,rw_craplcm.cdcooper
+                ,rw_craplcm.dtmvtolt
+                ,rw_craplcm.hrtransa
+                ,rw_craplcm.nrdconta
+                ,rw_craplcm.nrdocmto
                 ,rw_craplcm.vllanmto
             FROM craplcm
            WHERE craplcm.cdcooper = pr_cdcooper
@@ -6026,8 +6027,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             RAISE vr_exc_erro;
         END;
 		
-
-        
+            
+ 
         /*RDCPRE OU RDCPOS*/
         IF pr_tpaplica = 7 OR pr_tpaplica = 8 THEN
           
@@ -6419,7 +6420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       pr_nrdocmto := vr_nrdocmto;
 			-- e o protocolo
 			pr_dsprotoc := vr_dsprotoc;
-
+      
       --Gerar log                                                  
       IF pr_flgerlog = 1 THEN
             
@@ -8024,7 +8025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                          
           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
-            RAISE vr_exc_erro;
+             RAISE vr_exc_erro;
           END IF;                                 
         
         END;
@@ -11068,9 +11069,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              
                 09/05/2017 - Implementei o tratamento de erro para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)
-
-                27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).                             			
-
+							 
+                27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+							 
                 29/08/2018 - Ajuste realizado para prevenir problemas no resgate de aplicação.
                              (PRB0040124 - Kelvin)
   .......................................................................................*/
@@ -11908,12 +11909,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                  , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
                                                  , pr_cdcritic  => vr_cdcritic      -- OUT
                                                  , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
-                    
+        
                 IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                   -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                    RAISE vr_exc_erro;
+                    RAISE vr_exc_erro;	
                 END IF;				
-              
+				
                 BEGIN
                   UPDATE craplot
                      SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -13263,7 +13264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                    END IF;
                    
                  END IF;  
-          
+
 		         -- PRJ450 - 27/06/2018.
 				 vr_nrseqdig := (rw_craplot.nrseqdig + 1);
                  lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
@@ -13310,13 +13311,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
-                       
+
                  IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
                    -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                     RAISE vr_exc_erro;
+                    RAISE vr_exc_erro;	
                  END IF;				
+				 
                        
-                   
                  BEGIN
                    UPDATE craplot
                       SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -15593,7 +15594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                    , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
                   IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
-                      RAISE vr_exc_erro;
+                     RAISE vr_exc_erro;	
                   END IF;				
 				  
 			  
@@ -17939,7 +17940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                 ,pr_vlsldinv => pr_vlsldinv
                                 ,pr_des_reto => vr_des_reto
                                 ,pr_tab_erro => vr_tab_erro);
-  
+      
       -- Verifica se houve erro recuperando informacoes de log                              
       IF vr_des_reto = 'NOK' THEN
         -- Tenta buscar o erro no vetor de erro
@@ -18271,7 +18272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
-
+          
         END LOOP;
 
         CLOSE cr_crapaar;
@@ -19174,7 +19175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
                 19/07/2018 - Inclusão de tratamento para bloquear resgate de aplicação enquanto o
                              processo batch estiver rodando (Jean Michel)
-                
+          
                 29/12/2018 - Setado na fn_valida_dia_util pra executar no ultimo dia do ano como se 
                              fosse dia util (Tiago).                
   .......................................................................................*/
@@ -19901,9 +19902,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-      END IF;   
+        END IF;
+        
       
-
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
@@ -21063,7 +21064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
-
+  
       OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrdocmto => pr_nrdocmto);
@@ -21971,7 +21972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecoes
-      vr_exc_erro EXCEPTION;
+      vr_exc_erro EXCEPTION; 
       vr_exc_sair EXCEPTION;
     BEGIN
       --Limpar tabelas memoria
@@ -23328,7 +23329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao ' || vr_dscritic || ' - APLI0002.pc_processa_lote_resgt: '||SQLERRM;
       END;  
-
+      
   END pc_processa_lote_resgt;
   
 	-- Rotina para retornar se a aplicação está bloqueada
