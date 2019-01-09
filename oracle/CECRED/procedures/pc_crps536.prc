@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009                     Ultima atualizacao: 09/02/2018.
+   Data    : Novembro/2009                     Ultima atualizacao: 03/09/2018
 
    Dados referentes ao programa:
 
@@ -81,6 +81,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
 						   
                09/02/2018 - Adicionado coluna cdagenci no relatorio 521 - Chamado 751963 - (Mateus Zimmermann - Mouts)
 
+			   03/09/2018 - Correção para remover lote (Jonata - Mouts).     
 .............................................................................*/
 
   -- CURSORES
@@ -239,6 +240,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   -- Arquivo lido
   vr_utlfileh      UTL_FILE.file_type;
   vr_listarq       VARCHAR2(32767);
+  vr_nrseqdig     craplcm.nrseqdig%TYPE := 0;
   
   --rowid da craplot
   vr_rowid_craplot VARCHAR2(50);
@@ -782,22 +784,14 @@ BEGIN
               
             CLOSE cr_craplot;
 
-            -- Atualiza a tabela de capas de lote
-            BEGIN
-              UPDATE craplot
-                 SET nrseqdig = nrseqdig + 1,
-                     qtcompln = qtcompln + 1,
-                     qtinfoln = qtinfoln + 1,
-                     vlcompdb = vlcompdb + vr_relato(vr_indice).vltitulo,
-                     vlcompcr = 0,
-                     vlinfodb = vlcompdb + vr_relato(vr_indice).vltitulo,
-                     vlinfocr = 0
-               WHERE ROWID = vr_rowid_craplot;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'Erro ao atualizar CRAPLOT: ' ||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
+            vr_nrseqdig := fn_sequence('CRAPLOT'
+										,'NRSEQDIG'
+										,''||pr_cdcooper||';'
+											||to_char(vr_dtmvtolt,'DD/MM/RRRR')||';'
+											||1||';'
+											||85||';'
+											||10131);
+
             -- Verifica se já não existe a craplcm  
             OPEN cr_craplcm(pr_cdcooper => pr_cdcooper
                            ,pr_dtmvtolt => vr_dtmvtolt
@@ -836,7 +830,7 @@ BEGIN
                    nvl(rw_craptit.nrdconta,0),                        --nrdconta
                    nvl(rw_craptit.nrdocmto,0),                        --nrdocmto
                    465,                                               --cdhistor  
-                   nvl(rw_craplot.nrseqdig,0) + 1,                    --nrseqdig
+                   nvl(vr_nrseqdig,0),                                --nrseqdig
                    vr_relato(vr_indice).vltitulo,                     --vllanmto  
                    nvl(rw_craptit.nrdconta,0),                        --nrdctabb  
                    gene0002.fn_mask(nvl(rw_craptit.nrdconta,0),'99999999'),  --nrdctitg

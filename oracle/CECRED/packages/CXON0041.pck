@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jean Michel
-    Data     : Maio/2013                   Ultima atualizacao: 07/12/2017
+    Data     : Maio/2013                   Ultima atualizacao: 03/09/2018
   
     Dados referentes ao programa:
   
@@ -191,7 +191,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
     
+			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
+    
   ---------------------------------------------------------------------------------------------------------------*/
+  --Buscar informacoes de lote
+  CURSOR cr_craplot (pr_cdcooper IN craplot.cdcooper%TYPE
+                    ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                    ,pr_cdagenci IN craplot.cdagenci%TYPE
+                    ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                    ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+    SELECT  craplot.nrdolote
+           ,craplot.nrseqdig
+           ,craplot.cdbccxlt
+           ,craplot.tplotmov
+           ,craplot.dtmvtolt
+           ,craplot.cdagenci
+           ,craplot.cdhistor
+           ,craplot.cdoperad
+           ,craplot.qtcompln
+           ,craplot.qtinfoln
+           ,craplot.vlcompcr
+           ,craplot.vlinfocr
+           ,craplot.vlcompdb
+           ,craplot.vlinfodb
+           ,craplot.cdcooper
+           ,craplot.rowid
+    FROM craplot craplot
+    WHERE craplot.cdcooper = pr_cdcooper
+    AND   craplot.dtmvtolt = pr_dtmvtolt
+    AND   craplot.cdagenci = pr_cdagenci
+    AND   craplot.cdbccxlt = pr_cdbccxlt
+    AND   craplot.nrdolote = pr_nrdolote
+    FOR UPDATE NOWAIT;
+
+  rw_craplot cr_craplot%ROWTYPE;
   
   /* Busca dos dados da cooperativa */
   CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -1127,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
   --  Sistema  : Procedure de pagamento da DARF
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Julho/2016.                   Ultima atualizacao: 03/04/2017
+  --  Data     : Julho/2016.                   Ultima atualizacao: 03/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1137,11 +1170,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
   -- Alteracoes: 03/04/2017 - Retirar a soma do nrseqdig do craplot desta rotina pois ja esta
   --                          sendo efetuado na LOTE0001.pc_insere_lote (Lucas Eduardo Ranghetti #633737)
   --
+  --            03/09/2018 - Correção para remover lote (Jonata - Mouts).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
-  
-      rw_craplot LOTE0001.cr_craplot%ROWTYPE;
    
       CURSOR cr_crapscn(pr_cdempres crapscn.cdempres%TYPE) IS
         SELECT scn.cdempres
@@ -1169,6 +1201,126 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       vr_cdempres crapscn.cdempres%TYPE := 0;
       vr_registro ROWID;
       vr_progress_recid_lft craplft.progress_recid%TYPE;
+      vr_nrseqdig craplcm.nrseqdig%TYPE :=0;
+
+	  -- Procedimento para inserir o lote e não deixar tabela lockada
+      PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
+                                pr_dtmvtolt IN craplot.dtmvtolt%TYPE,
+                                pr_cdagenci IN craplot.cdagenci%TYPE,
+                                pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
+                                pr_nrdolote IN craplot.nrdolote%TYPE,
+                                pr_cdoperad IN craplot.cdoperad%TYPE,
+                                pr_nrdcaixa IN craplot.nrdcaixa%TYPE,
+                                pr_tplotmov IN craplot.tplotmov%TYPE,
+                                pr_cdhistor IN craplot.cdhistor%TYPE,
+                                pr_craplot  OUT cr_craplot%ROWTYPE,
+                                pr_dscritic OUT VARCHAR2)IS
+
+        -- Pragma - abre nova sessao para tratar a atualizacao
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        -- criar rowtype controle
+        rw_craplot_ctl cr_craplot%ROWTYPE;
+
+      BEGIN
+
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1..100 LOOP
+          BEGIN
+            -- Leitura do lote
+            OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
+                             pr_dtmvtolt  => pr_dtmvtolt,
+                             pr_cdagenci  => pr_cdagenci,
+                             pr_cdbccxlt  => pr_cdbccxlt,
+                             pr_nrdolote  => pr_nrdolote);
+            FETCH cr_craplot INTO rw_craplot_ctl;
+            pr_dscritic := NULL;
+            EXIT;
+          EXCEPTION
+            WHEN OTHERS THEN
+               IF cr_craplot%ISOPEN THEN
+                 CLOSE cr_craplot;
+               END IF;
+
+               -- setar critica caso for o ultimo
+               IF i = 100 THEN
+                 pr_dscritic:= pr_dscritic||'Registro de lote '||pr_nrdolote||' em uso. Tente novamente.';
+               END IF;
+               -- aguardar 0,5 seg. antes de tentar novamente
+               sys.dbms_lock.sleep(0.1);
+          END;
+        END LOOP;
+
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF pr_dscritic IS NOT NULL THEN
+          ROLLBACK;
+          RETURN;
+        END IF;
+
+        IF cr_craplot%NOTFOUND THEN
+          -- criar registros de lote na tabela
+          INSERT INTO craplot
+                  (craplot.cdcooper
+                  ,craplot.dtmvtolt
+                  ,craplot.cdagenci
+                  ,craplot.cdbccxlt
+                  ,craplot.nrdolote                  
+                  ,craplot.tplotmov
+                  ,craplot.cdoperad
+                  ,craplot.cdhistor
+                  ,craplot.nrdcaixa
+                  ,craplot.cdopecxa)
+          VALUES  (pr_cdcooper
+                  ,pr_dtmvtolt
+                  ,pr_cdagenci
+                  ,pr_cdbccxlt
+                  ,pr_nrdolote                  
+                  ,pr_tplotmov
+                  ,pr_cdoperad
+                  ,pr_cdhistor
+                  ,pr_nrdcaixa
+                  ,pr_cdoperad)
+             RETURNING  craplot.ROWID
+                       ,craplot.nrdolote                       
+                       ,craplot.cdbccxlt
+                       ,craplot.tplotmov
+                       ,craplot.dtmvtolt
+                       ,craplot.cdagenci
+                       ,craplot.cdhistor
+                       ,craplot.cdoperad
+                       ,craplot.qtcompln
+                       ,craplot.qtinfoln
+                       ,craplot.vlcompcr
+                       ,craplot.vlinfocr
+                   INTO rw_craplot_ctl.ROWID
+                      , rw_craplot_ctl.nrdolote                      
+                      , rw_craplot_ctl.cdbccxlt
+                      , rw_craplot_ctl.tplotmov
+                      , rw_craplot_ctl.dtmvtolt
+                      , rw_craplot_ctl.cdagenci
+                      , rw_craplot_ctl.cdhistor
+                      , rw_craplot_ctl.cdoperad
+                      , rw_craplot_ctl.qtcompln
+                      , rw_craplot_ctl.qtinfoln
+                      , rw_craplot_ctl.vlcompcr
+                      , rw_craplot_ctl.vlinfocr;
+        
+        END IF;
+
+        CLOSE cr_craplot;
+
+        -- retornar informações para o programa chamador
+        pr_craplot := rw_craplot_ctl;
+
+        COMMIT;
+      EXCEPTION
+        WHEN OTHERS THEN
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+          ROLLBACK;
+          -- se ocorreu algum erro durante a criac?o
+          pr_dscritic := 'Erro ao gravar craplot('|| pr_nrdolote||'): '||SQLERRM;
+      END pc_insere_lote;
       
     BEGIN
 
@@ -1231,23 +1383,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
       vr_nrdolote := 15000 + pr_nrdcaixa;
+      
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                   ||to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR')||';'
+                                   ||pr_cdagenci||';'
+                                   ||11||';'
+                                   ||vr_nrdolote);  
+
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
        PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
       if not paga0001.fn_exec_paralelo then
-      LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdbccxlt => 11
-                             ,pr_nrdolote => vr_nrdolote
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_tplotmov => 13
-                             ,pr_cdhistor => 1154
-                             ,pr_craplot => rw_craplot
-                             ,pr_dscritic => vr_dscritic);
+	    -- Controlar criação de lote, com pragma
+        pc_insere_lote (pr_cdcooper => pr_cdcooper,
+                        pr_dtmvtolt => rw_crapdat.dtmvtocd,
+                        pr_cdagenci => pr_cdagenci,
+                        pr_cdbccxlt => 11,
+                        pr_nrdolote => vr_nrdolote,
+                        pr_cdoperad => pr_cdoperad,
+                        pr_nrdcaixa => pr_nrdcaixa,
+                        pr_tplotmov => 13,
+                        pr_cdhistor => 1154,
+                        pr_craplot  => rw_craplot,
+                        pr_dscritic => vr_dscritic);
 
       -- Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -1276,7 +1438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         rw_craplot.cdoperad := pr_cdoperad;  
         rw_craplot.tplotmov := 13;                   
         rw_craplot.cdhistor := 1154;
-        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm;  
+        
       end if;
       
       
@@ -1359,7 +1521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,rw_craplot.cdbccxlt
                   ,rw_craplot.nrdolote
                   ,rw_crapdat.dtmvtocd
-                  ,rw_craplot.nrseqdig
+                  ,vr_nrseqdig
                   ,vr_cdseqfat
                   ,1
                   ,1154
@@ -1369,18 +1531,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         RETURNING progress_recid INTO vr_progress_recid_lft;
 
      
-      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
-      deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
-      if not paga0001.fn_exec_paralelo then
-      UPDATE craplot
-         SET craplot.qtcompln = rw_craplot.qtcompln + 1
-            ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
-            ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-            ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-       WHERE craplot.ROWID = rw_craplot.rowid;
-      end if;
-
       CXON0000.pc_grava_autenticacao_internet(pr_cooper => pr_cdcooper
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_idseqttl => pr_idseqttl     
@@ -1388,7 +1538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                                              ,pr_nro_caixa => pr_nrdcaixa
                                              ,pr_cod_operador => pr_cdoperad
                                              ,pr_valor => vr_vlrtotal
-                                             ,pr_docto => rw_craplot.nrseqdig
+                                             ,pr_docto => vr_nrseqdig
                                              ,pr_operacao => FALSE
                                              ,pr_status => '1'
                                              ,pr_estorno => FALSE

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2000.                     Ultima atualizacao: 13/12/2013
+   Data    : Abril/2000.                     Ultima atualizacao: 03/09/2018
 
    Dados referentes ao programa:
 
@@ -52,11 +52,14 @@
                             
                13/12/2013 - Inclusao de VALIDATE craptit e craplau (Carlos)
 
+			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
 ............................................................................. */
 
 { includes/var_online.i }
 
 { includes/var_lantit.i }
+
+{ sistema/generico/includes/var_oracle.i }
 
 { sistema/generico/includes/var_internet.i }
 DEF VAR h-b1wgen0001 AS HANDLE                                      NO-UNDO.
@@ -76,9 +79,23 @@ ASSIGN tel_nmprimtl = ""
        tel_reganter = ""
        tel_nrdconta = 0
        tel_vldpagto = 0
-       tel_nrseqdig = craplot.nrseqdig + 1
        tel_dtdpagto = craplot.dtmvtopg
        aux_tplotmov = craplot.tplotmov.
+
+/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+RUN STORED-PROCEDURE pc_sequence_progress
+aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+									,INPUT "NRSEQDIG"
+									,STRING(glb_cdcooper) + ";" + STRING(tel_dtmvtolt,"99/99/9999") + ";" + STRING(tel_cdagenci) + ";tel_cdbccxlt;" + STRING(tel_nrdolote)
+									,INPUT "N"
+									,"").
+
+CLOSE STORED-PROC pc_sequence_progress
+aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+ASSIGN tel_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				            WHEN pc_sequence_progress.pr_sequence <> ?.
+
 
 DISPLAY tel_nrdconta tel_nmprimtl tel_dtdpagto tel_nrseqdig WITH FRAME f_lantit.
 
@@ -549,13 +566,8 @@ DO WHILE TRUE:
                                          THEN 0       /*  Programado    */
                                          ELSE 4       /*  Arrec. caixa  */
                                          
-                   craptit.nrseqdig = craplot.nrseqdig + 1
+                   craptit.nrseqdig = tel_nrseqdig
                    craptit.cdcooper = glb_cdcooper
-                   
-                   craplot.qtcompln = craplot.qtcompln + 1
-                   craplot.vlcompcr = craplot.vlcompcr + tel_vldpagto
-                   craplot.nrseqdig = craptit.nrseqdig
-                   
                    tel_qtinfoln = craplot.qtinfoln
                    tel_qtcompln = craplot.qtcompln
                    tel_vlinfodb = craplot.vlinfodb 
@@ -565,6 +577,7 @@ DO WHILE TRUE:
                    tel_qtdifeln = craplot.qtcompln - craplot.qtinfoln
                    tel_vldifedb = craplot.vlcompdb - craplot.vlinfodb
                    tel_vldifecr = craplot.vlcompcr - craplot.vlinfocr.
+                  
             VALIDATE craptit.
 
             IF   craptit.nrdconta > 0   THEN

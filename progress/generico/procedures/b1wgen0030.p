@@ -567,6 +567,8 @@
                23/08/2018 - Alteraçao na efetua_cancelamento_limite: Registrar o cancelamento na tabela de histórico de alteraçao de contrato de limite (Andrew Albuquerque - GFT)
                
                29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
+				  
+               03/09/2018 - Correção para remover lote (Jonata - Mouts).
 
 			   13/11/2018 - Adicionada parametros a procedure pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
 
@@ -960,6 +962,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
     DEF VAR aux_cdacesso AS CHAR                                     NO-UNDO.
+	DEF VAR aux_nrseqdig AS INT									     NO-UNDO.
 
     DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
@@ -2116,6 +2119,24 @@ PROCEDURE efetua_liber_anali_bordero:
          DO TRANSACTION ON ENDKEY UNDO LIBERACAO, RETURN "NOK"
                         ON ERROR  UNDO LIBERACAO, RETURN "NOK":
                         
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+			RUN STORED-PROCEDURE pc_sequence_progress
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+												,INPUT "NRSEQDIG"
+												,STRING(par_cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";" + STRING(1) + ";100;" + STRING(17000 + aux_cdpactra)
+												,INPUT "N"
+												,"").
+
+			CLOSE STORED-PROC pc_sequence_progress
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				                       WHEN pc_sequence_progress.pr_sequence <> ?.
+
             /*  Liberacao do bordero .....................................*/
             DO aux_contador = 1 TO 10:
 
@@ -2487,26 +2508,18 @@ PROCEDURE efetua_liber_anali_bordero:
                    craplcm.cdbccxlt = craplot.cdbccxlt 
                    craplcm.nrdolote = craplot.nrdolote
                    craplcm.nrdconta = crapbdt.nrdconta
-                   craplcm.nrdocmto = craplot.nrseqdig + 1
+                   craplcm.nrdocmto = aux_nrseqdig 
                    craplcm.vllanmto = aux_vlborder
                    craplcm.cdhistor = 686
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
+                   craplcm.nrseqdig = aux_nrseqdig
                    craplcm.nrdctabb = crapbdt.nrdconta 
 
                    craplcm.nrautdoc = 0
                    craplcm.cdcooper = par_cdcooper
 
                    craplcm.cdpesqbb = "Desconto do bordero " +
-                                       STRING(crapbdt.nrborder,"zzz,zz9")
+                                       STRING(crapbdt.nrborder,"zzz,zz9").
 
-                   craplot.nrseqdig = craplcm.nrseqdig
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.qtcompln = craplot.qtcompln + 1
-        
-                   craplot.vlinfocr = craplot.vlinfocr +
-                                      craplcm.vllanmto
-                   craplot.vlcompcr = craplot.vlcompcr +
-                                      craplcm.vllanmto.
               
             VALIDATE craplot.
             VALIDATE craplcm.

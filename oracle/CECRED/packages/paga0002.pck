@@ -940,6 +940,8 @@ create or replace package body cecred.PAGA0002 is
                                Others, Modulo/Action, PC Internal Exception, PC Log Programa
                                Inserts, Updates, Deletes e SELECT's, Parâmetros
                                (Envolti - Belli - REQ0011727)
+																		  
+                  03/09/2018 - Correção para remover lote (Jonata - Mouts).
 
 				  10/10/2018 - Permitir agendar Teds antes da abertura da grade.
 				               Projeto 475 - Sprint C - Jose Dill (Mouts)
@@ -6897,7 +6899,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2015.                   Ultima atualizacao: 05/08/2016
+    --  Data     : Maio/2015.                   Ultima atualizacao: 03/09/2018
     --
     --  Dados referentes ao programa:
     --
@@ -6920,6 +6922,7 @@ create or replace package body cecred.PAGA0002 is
     --                           para verificar se o tipo de conta permite a contratação 
     --                           do produto. PRJ366 (Lombardi).
     --
+	--              03/09/2018 - Correção para remover lote (Jonata - Mouts).
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7158,6 +7161,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfpre NUMBER;
     vr_flgachou BOOLEAN;
     vr_dscritic_aux VARCHAR2(200);
+    vr_nrseqdig craplcm.nrseqdig%TYPE := 0;
 
     vr_idorigem INTEGER;
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
@@ -7382,6 +7386,14 @@ create or replace package body cecred.PAGA0002 is
     SAVEPOINT TRANSACAO;
 
     BEGIN
+    
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                 ||to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'
+                                 ||pr_cdagenci||';'
+                                 ||100||';'
+                                 ||vr_nrdolote);
       -- Tentar criar registro de lote ate 10 vezes
       -- senao abortar
       FOR i IN 1..10 LOOP
@@ -7450,22 +7462,7 @@ create or replace package body cecred.PAGA0002 is
 
       END LOOP;
 
-      -- Atualizar informações no lote
-      BEGIN
-        UPDATE craplot
-           SET craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-               craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-               craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1,
-               /* DEBITO */
-               craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vllanaut,
-               craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vllanaut
-         WHERE craplot.rowid = rw_craplot.rowid
-         RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar o craplot: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
+      
 
       vr_nmprepos := NULL;
       vr_nrcpfpre := 0;
@@ -7796,8 +7793,8 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_cdagenci               -- craplau.cdagenci
                      ,rw_craplot.cdbccxlt       -- craplau.cdbccxlt
                      ,rw_craplot.nrdolote       -- craplau.nrdolote
-                     ,rw_craplot.nrseqdig       -- craplau.nrseqdig
-                     ,rw_craplot.nrseqdig       -- craplau.nrdocmto
+                     ,vr_nrseqdig               -- craplau.nrseqdig
+                     ,vr_nrseqdig               -- craplau.nrdocmto
                      ,pr_cdhistor               -- craplau.cdhistor
                      ,pr_dsorigem               -- craplau.dsorigem
                      ,1  /** PENDENTE  **/      -- craplau.insitlau
