@@ -13,9 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
   --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
   --              02/10/2018 - Ajustada rotina de envio de email com antecipações não processadas a mais de 1 hora
-   --                          (André - Mouts PRB0040347)    
-  --              08/10/2018 - Inclusão das tags tppontovenda e tpvlpagamento no processamento dos arquivos CIP. 
-  --                           (SCTASK0024874 - Andre - Mouts)           
+   --                          (André - Mouts PRB0040347)               
   -- 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -115,8 +113,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                                    ,pr_codocorc                IN VARCHAR2
                                    ,pr_numctrlifacto           IN VARCHAR2
                                    ,pr_numctrlcipaceito        IN VARCHAR2
-                                   ,pr_tppontovenda            IN VARCHAR2
-                                   ,pr_tpvlpagamento           IN VARCHAR2
                                    ,pr_idcentraliza            IN NUMBER
                                    ,pr_idpdv                   IN OUT NUMBER
                                    ,pr_dscritic                IN OUT VARCHAR2);
@@ -1190,8 +1186,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
      vr_numctrlifacto          VARCHAR2(20);
      vr_numctrlcipaceito       VARCHAR2(20);
      vr_idpdv                  NUMBER;
-     vr_tppontovenda           VARCHAR2(2);
-     vr_tpvlpagamento          VARCHAR2(2);
 
      vr_dscritic               VARCHAR2(3200);
      vr_contador               PLS_INTEGER;
@@ -1682,8 +1676,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              vr_numctrlcipaceito         := NULL;
              vr_iderro                   := 0;
              vr_dscritic                 := NULL;
-             vr_tppontovenda             := NULL;
-             vr_tpvlpagamento            := NULL;
              -- Posiciona na TAG de início do bloco
              BEGIN
 
@@ -1875,28 +1867,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                ,pr_dscritic => vr_dscritic);
                 vr_iderro := 1;
              END  IF;
-             vr_linhaErro:=930;
-
-             vr_tppontovenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPontoVenda','S');
-             IF vr_tppontovenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-                vr_idcampo := 'TpPontoVenda';
-                pc_gera_critica(pr_nomearq => vr_nomarq
-                               ,pr_idcampo => vr_idcampo
-                               ,pr_dscritic => vr_dscritic);
-                vr_iderro := 1;
-             END  IF;
-             vr_linhaErro:=931;
-
-             vr_tpvlpagamento := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpVlrPgto','S');
-             IF vr_tpvlpagamento IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-                vr_idcampo := 'TpVlrPgto';
-                pc_gera_critica(pr_nomearq => vr_nomarq
-                               ,pr_idcampo => vr_idcampo
-                               ,pr_dscritic => vr_dscritic);
-                vr_iderro := 1;
-             END  IF;
 
              -- Verifica se algum campo tem problema e atualiza a tabela mãe com situacao = 2 (Erro)
              IF NVL(vr_iderro,0) = 1 THEN
@@ -1928,8 +1898,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                     ,pr_codocorc                => vr_codocorc
                                     ,pr_numctrlifacto           => vr_numctrlifacto
                                     ,pr_numctrlcipaceito        => vr_numctrlcipaceito
-                                    ,pr_tppontovenda            => vr_tppontovenda
-                                    ,pr_tpvlpagamento           => vr_tpvlpagamento
                                     ,pr_idcentraliza            => vr_idcentraliza
                                     ,pr_idpdv                   => vr_idpdv
                                     ,pr_dscritic                => vr_dscritic);
@@ -2234,8 +2202,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                    ,pr_codocorc                IN VARCHAR2
                                    ,pr_numctrlifacto           IN VARCHAR2
                                    ,pr_numctrlcipaceito        IN VARCHAR2
-                                   ,pr_tppontovenda            IN VARCHAR2
-                                   ,pr_tpvlpagamento           IN VARCHAR2
                                    ,pr_idcentraliza            IN NUMBER
                                    ,pr_idpdv                   IN OUT NUMBER
                                    ,pr_dscritic                IN OUT VARCHAR2) IS
@@ -2259,9 +2225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                        ,nrcontrole_if
                                        ,nrcontrole_cip
                                        ,dhretorno
-                                       ,cdocorrencia_retorno
-                                       ,tppontovenda
-                                       ,tpvlpagamento)
+                                       ,cdocorrencia_retorno)
                                 VALUES (0   --  preenchido automaticamente da sequence TRGDOMIC_LIQTRANS_PDV_ID
                                        ,pr_idcentraliza
                                        ,pr_NULiquid
@@ -2281,9 +2245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                        ,pr_numctrlifacto
                                        ,pr_numctrlcipaceito
                                        ,NULL
-                                       ,pr_codocorc
-                                       ,pr_tppontovenda
-                                       ,pr_tpvlpagamento )  RETURNING idpdv INTO pr_idpdv ;
+                                       ,pr_codocorc )  RETURNING idpdv INTO pr_idpdv ;
     EXCEPTION
       WHEN OTHERS THEN
          pr_dscritic := 'Erro ao inserir o transação PDV '||pr_idcentraliza||'. '||SQLERRM;
@@ -3281,8 +3243,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
      vr_codocorc                VARCHAR2(2) ;
      vr_numctrlifacto           VARCHAR2(20);
      vr_numctrlcipaceito        VARCHAR2(20);
-     vr_tppontovenda            VARCHAR2(2);
-     vr_tpvlpagamento           VARCHAR2(2);
 
      vr_idcampo      VARCHAR2(32000);
      vr_idpdv        NUMBER;
@@ -3760,8 +3720,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               vr_numctrlcipaceito         := null;
               vr_iderro                   := 0;
               vr_dscritic                 := null;
-              vr_tppontovenda             := NULL;
-              vr_tpvlpagamento            := NULL;
 
               -- Posiciona na TAG de início do bloco
               BEGIN
@@ -3933,26 +3891,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                  vr_iderro := 1;
               END IF;
 
-             vr_tppontovenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPontoVenda','S');
-             IF vr_tppontovenda IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-                vr_idcampo := 'TpPontoVenda';
-                pc_gera_critica(pr_nomearq => vr_nomarq
-                               ,pr_idcampo => vr_idcampo
-                               ,pr_dscritic => vr_dscritic);
-                vr_iderro := 1;
-             END  IF;
-
-             vr_tpvlpagamento := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpVlrPgto','S');
-             IF vr_tpvlpagamento IS NULL THEN
-                vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-                vr_idcampo := 'TpVlrPgto';
-                pc_gera_critica(pr_nomearq => vr_nomarq
-                               ,pr_idcampo => vr_idcampo
-                               ,pr_dscritic => vr_dscritic);
-                vr_iderro := 1;
-             END  IF;
-
               -- Verifica se algum campo tem problema e atualiza a tabela mãe com situacao = 2 (Erro)
               IF NVL(vr_iderro,0) = 1 THEN
                  pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
@@ -3982,8 +3920,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                      ,pr_codocorc                => vr_codocorc
                                      ,pr_numctrlifacto           => vr_numctrlifacto
                                      ,pr_numctrlcipaceito        => vr_numctrlcipaceito
-                                     ,pr_tppontovenda            => vr_tppontovenda
-                                     ,pr_tpvlpagamento           => vr_tpvlpagamento
                                      ,pr_idcentraliza            => vr_idcentraliza
                                      ,pr_idpdv                   => vr_idpdv
                                      ,pr_dscritic                => vr_dscritic);
@@ -5081,8 +5017,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_codocorc               VARCHAR2(2) ;
     vr_numctrlifacto          VARCHAR2(20);
     vr_numctrlcipaceito       VARCHAR2(20);
-    vr_tppontovenda           VARCHAR2(2);
-    vr_tpvlpagamento          VARCHAR2(2);
 
     vr_idcampo                VARCHAR2(1000);
     vr_idpdv                  NUMBER;
@@ -5558,8 +5492,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             vr_numctrlifacto            := null;
             vr_numctrlcipaceito         := null;
             vr_iderro                   := 0;
-            vr_tppontovenda             := NULL;
-            vr_tpvlpagamento            := NULL;
 
             -- Posiciona na TAG de início do bloco
             BEGIN
@@ -5730,26 +5662,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_iderro := 1;
             END IF;
 
-            vr_tppontovenda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpPontoVenda','S');
-            IF vr_tppontovenda IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-               vr_idcampo := 'TpPontoVenda';
-               pc_gera_critica(pr_nomearq => vr_nomarq
-                              ,pr_idcampo => vr_idcampo
-                              ,pr_dscritic => vr_dscritic);
-               vr_iderro := 1;
-            END  IF;
-
-            vr_tpvlpagamento := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'TpVlrPgto','S');
-            IF vr_tpvlpagamento IS NULL THEN
-               vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
-               vr_idcampo := 'TpVlrPgto';
-               pc_gera_critica(pr_nomearq => vr_nomarq
-                              ,pr_idcampo => vr_idcampo
-                              ,pr_dscritic => vr_dscritic);
-               vr_iderro := 1;
-            END IF;
-
             -- Verifica se algum campo tem problema e atualiza a tabela mãe com situacao = 2 (Erro)
             IF NVL(vr_iderro,0) = 1 THEN
                pc_atualiza_transacao_erro (pr_idlancto  => vr_idlancto
@@ -5778,8 +5690,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                    ,pr_codocorc                => vr_codocorc
                                    ,pr_numctrlifacto           => vr_numctrlifacto
                                    ,pr_numctrlcipaceito        => vr_numctrlcipaceito
-                                   ,pr_tppontovenda            => vr_tppontovenda
-                                   ,pr_tpvlpagamento           => vr_tpvlpagamento
                                    ,pr_idcentraliza            => vr_idcentraliza
                                    ,pr_idpdv                   => vr_idpdv
                                    ,pr_dscritic                => vr_dscritic);
