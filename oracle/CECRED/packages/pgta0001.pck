@@ -595,7 +595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 18/12/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 03/09/2018
 --
 -- Dados referentes ao programa:
 --
@@ -650,6 +650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          substituindo o acesso à tabela CRAPTIP, pela tabela TBCC_TIPO_CONTA.
 --                          PRJ366 (Lombardi).
 --
+--             03/09/2018 - Correção para remover lote (Jonata - Mouts).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -4319,7 +4320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 18/12/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 03/09/2018
     --
     -- Dados referentes ao programa:
     --
@@ -4329,6 +4330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
     --
     --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
+	-- 
+	--             03/09/2018 - Correção para remover lote (Jonata - Mouts).
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -4402,6 +4405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       vr_cdcoptfn NUMBER := 0;
       vr_cdagetfn NUMBER := 0;
       vr_nrterfin NUMBER := 0;
+      vr_nrseqdig craplcm.nrseqdig%TYPE := 0;
 
       vr_nmprepos VARCHAR2(4000);
 
@@ -4461,6 +4465,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
             -- Monta numero do lote
             vr_nrdolote := 11000 + pr_nrdcaixa;
+            vr_nrseqdig := fn_sequence('CRAPLOT'
+                                      ,'NRSEQDIG'
+                                      ,''||pr_cdcooper||';'
+                                         ||to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'
+                                         ||pr_cdagenci||';'
+                                         ||100||';'
+                                         ||vr_nrdolote);  
 
             IF pr_idtpdpag = 1 THEN -- Sera usado futuramente.
                -- Linha Digitavel
@@ -4576,11 +4587,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            END;
 
          END LOOP;
-
          vr_nmprepos := ' ';
          vr_nrcpfpre := 0;
-
-
 
          IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
               vr_idastcjt = 1 THEN
@@ -4675,8 +4683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,rw_craplot.cdagenci
                ,rw_craplot.cdbccxlt
                ,rw_craplot.nrdolote
-               ,rw_craplot.nrseqdig + 1
-               ,rw_craplot.nrseqdig + 1
+               ,vr_nrseqdig
+               ,vr_nrseqdig
                ,pr_cdhistor  -- 508
                ,pr_dsorigem  -- INTERNET
                ,1            -- Pendente insitlau
@@ -4709,39 +4717,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          END;
        END IF;
 
-
-         BEGIN
-            UPDATE craplot
-               SET vlinfodb = vlinfodb + pr_vllanaut, -- Debito
-                   vlcompdb = vlcompdb + pr_vllanaut, -- Debito
-                   qtinfoln = qtinfoln + 1,
-                   qtcompln = qtcompln + 1,
-                   nrseqdig = nrseqdig + 1
-             WHERE ROWID = rw_craplot.rowid
-             RETURNING vlinfocr,
-                       vlcompcr,
-                       qtinfoln,
-                       qtcompln,
-                       nrseqdig
-                  INTO rw_craplot.vlinfocr,
-                       rw_craplot.vlcompcr,
-                       rw_craplot.qtinfoln,
-                       rw_craplot.qtcompln,
-                       rw_craplot.nrseqdig;
-         EXCEPTION
-            WHEN OTHERS THEN
-               -- Gerar erro 0 com critica montada com o erro do update
-               vr_dscritic := 'Erro ao atualizar a CRAPLOT : ' || SQLERRM;
-               -- Envio centralizado de log de erro
-               pgta0001.pc_logar_cst_arq_pgto(pr_cdcooper => pr_cdcooper
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_nmarquiv => 'PGTA0001.PC_CADASTRAR_AGEND_PGTO'
-                                             ,pr_textolog => vr_dscritic
-                                             ,pr_cdcritic => vr_cdcritic_aux
-                                             ,pr_dscritic => vr_dscritic_aux);
-               -- Levantar excecao
-               RAISE vr_exc_saida;
-         END;
 
          -- DDA
          IF pr_idtitdda > 0 OR 

@@ -33,7 +33,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 26/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 03/09/2018
 
    Dados referentes ao programa:
 
@@ -312,6 +312,8 @@
 							para origem de "ACORDO", Prj. 302 (Jean Michel).
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
 
 ............................................................................ */
 
@@ -1684,6 +1686,7 @@ PROCEDURE gera-titulos-iptu.
     DEFINE VARIABLE aux_flgregst AS LOGICAL     NO-UNDO.
     DEFINE VARIABLE aux_nrinsced AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_nrnosnum AS CHAR        NO-UNDO.
+	DEFINE VARIABLE aux_nrseqdig AS INTE        NO-UNDO.
 
     DEFINE VARIABLE aux_nrdctabb AS INTEGER     NO-UNDO. 
     DEFINE BUFFER crablcm FOR craplcm.  
@@ -1770,6 +1773,20 @@ PROCEDURE gera-titulos-iptu.
             RETURN "NOK".
         END.
     
+	/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+	RUN STORED-PROCEDURE pc_sequence_progress
+	aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+										,INPUT "NRSEQDIG"
+										,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+										,INPUT "N"
+										,"").
+
+	CLOSE STORED-PROC pc_sequence_progress
+	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+	ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				               WHEN pc_sequence_progress.pr_sequence <> ?.
+
     ASSIGN in99 = 0. 
 
     DO WHILE TRUE:
@@ -1860,27 +1877,22 @@ PROCEDURE gera-titulos-iptu.
            craptit.vldpagto = p-valor-informado
            craptit.vltitulo = p-vlfatura
            craptit.dtdpagto = crapdat.dtmvtocd                   
-           craptit.nrdocmto = craplot.nrseqdig + 1
+           craptit.nrdocmto = aux_nrseqdig
            craptit.cdopedev = ""
            craptit.dtdevolu = ?
            craptit.insittit = p-insittit       /*  Arrec. caixa  */            
-           craptit.nrseqdig = craplot.nrseqdig + 1
+           craptit.nrseqdig = aux_nrseqdig
            craptit.intitcop = p-intitcop
            craptit.flgenvio = (p-intitcop = 1) OR 
                               (p-valor-informado >= 250000 AND p-iptu = NO AND
                                TODAY >= 06/28/2013)
            craptit.flgpgdda = p-flgpgdda
            craptit.nrinsced = p-nrinsced
-           craplot.qtcompln = craplot.qtcompln + 1
-           craplot.qtinfoln = craplot.qtinfoln + 1                  
-           craplot.vlcompcr = craplot.vlcompcr + p-valor-informado
-           craplot.vlinfocr = craplot.vlinfocr + p-valor-informado
-           craplot.nrseqdig = craptit.nrseqdig
+           
            /* Dados do TAA */                                         
            craptit.cdcoptfn = par_cdcoptfn 
            craptit.cdagetfn = par_cdagetfn
            craptit.nrterfin = par_nrterfin.
-
     VALIDATE craplot.
     VALIDATE craptit.
 
@@ -1997,6 +2009,20 @@ PROCEDURE gera-titulos-iptu.
             IF  NOT aux_flgdesct  AND 
                 NOT aux_flgregst  THEN
                 DO:
+				    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+					RUN STORED-PROCEDURE pc_sequence_progress
+					aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+														,INPUT "NRSEQDIG"
+														,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";100;" + STRING(10800 + p-nro-caixa)
+														,INPUT "N"
+														,"").
+
+					CLOSE STORED-PROC pc_sequence_progress
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+					ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				                            WHEN pc_sequence_progress.pr_sequence <> ?.
+
                     ASSIGN in99 = 0.
                     
                     DO WHILE TRUE:
@@ -2130,20 +2156,13 @@ PROCEDURE gera-titulos-iptu.
                            craplcm.nrdctitg = crapass.nrdctitg
                            craplcm.nrdocmto = p-bloqueto
                            craplcm.nrdolote = craplot.nrdolote
-                           craplcm.nrseqdig = craplot.nrseqdig + 1
+                           craplcm.nrseqdig = aux_nrseqdig
                            craplcm.vllanmto = p-valor-informado
                            /* Dados do TAA */               
                            craplcm.cdcoptfn = par_cdcoptfn          
                            craplcm.cdagetfn = par_cdagetfn
                            craplcm.nrterfin = par_nrterfin.         
                         
-                    ASSIGN craplot.qtcompln = craplot.qtcompln + 1
-                           craplot.qtinfoln = craplot.qtinfoln + 1
-                           craplot.vlcompcr = craplot.vlcompcr + 
-                                              p-valor-informado
-                           craplot.vlinfocr = craplot.vlinfocr + 
-                                              p-valor-informado
-                           craplot.nrseqdig = craplcm.nrseqdig.
 
                     /* Faz a baixa de titulos em emprestimo */
                     FIND crapcob WHERE crapcob.cdcooper = crapcop.cdcooper AND
