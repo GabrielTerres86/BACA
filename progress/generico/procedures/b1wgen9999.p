@@ -299,6 +299,9 @@
 			   28/03/2018 - Alterado a procedure lista_avalistas para ler a tabela de proposta de limite de desconto 
                       de titulos CRAWLIM para pegar os avalista caso ainda não exista o contrato CRAPLIM (Paulo Penteado GFT)
            
+               06/12/2018 - Ajuste na busca de enderecos para nao utilizar a sequencia 1 fixa.
+                            PRB0040414 - Heitor (Mouts)
+           
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -972,10 +975,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1203,10 +1205,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1406,10 +1407,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1681,10 +1681,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1883,10 +1882,9 @@ PROCEDURE lista_avalistas:
                                 RETURN "NOK".
                             END.
 
-                        FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                        FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                            crapenc.nrdconta = crapass.nrdconta AND
-                                           crapenc.idseqttl = 1                AND
-                                           crapenc.cdseqinc = 1 
+                                           crapenc.idseqttl = 1
                                            NO-LOCK NO-ERROR.
 
                         IF  NOT AVAILABLE crapenc THEN
@@ -2112,10 +2110,9 @@ PROCEDURE lista_avalistas:
                                 RETURN "NOK".
                             END.
 
-                        FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                        FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                            crapenc.nrdconta = crapass.nrdconta AND
-                                           crapenc.idseqttl = 1                AND
-                                           crapenc.cdseqinc = 1 
+                                           crapenc.idseqttl = 1
                                            NO-LOCK NO-ERROR.
 
                         IF  NOT AVAILABLE crapenc THEN
@@ -2313,10 +2310,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -2542,10 +2538,9 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -2920,10 +2915,10 @@ PROCEDURE consulta-avalista:
                         END.
                 END.
                 
-            FIND crapenc WHERE crapenc.cdcooper = par_cdcooper AND
+            FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                crapenc.nrdconta = par_nrctaava AND
-                               crapenc.idseqttl = 1            AND
-                               crapenc.cdseqinc = 1            NO-LOCK NO-ERROR.
+                               crapenc.idseqttl = 1
+							   NO-LOCK NO-ERROR.
      
             IF  NOT AVAILABLE crapenc THEN
                 DO:
