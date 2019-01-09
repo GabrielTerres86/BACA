@@ -8,20 +8,7 @@
  * ALTERAÇÕES   : 
  */
 
-    session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');
-	require_once('../../includes/controla_secao.php');
-	require_once('../../class/xmlfile.php');
-	isPostMethod();			
-	
-	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
-	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
-// Monta o xml de requisição		
+	// Monta o xml de requisição		
 		$xml  		= "";
 		$xml 	   .= "<Root>";
 		$xml 	   .= "  <Dados>";
@@ -35,13 +22,26 @@
 		$xmlResult = mensageria($xml, "CONLOG", "BUSCA_COOPER", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
 		
+	//var_dump($xmlObj->roottag->tags[0]); die;
+/*
+	$xmlx = "<Root>";
+	$xmlx .= " <Dados>";
+	$xmlx .= " <cdcooper>0</cdcooper>";
+	$xmlx .= " <flgativo>1</flgativo>";
+	$xmlx .= " </Dados>";
+	$xmlx .= "</Root>";
+
+	$xmlResultx = mensageria($xmlx, "CADA0001", "LISTA_COOPERATIVAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjx = getObjectXML($xmlResultx);
+*/
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);		
+		//echo ""exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","","NaN");';
 						
-		} 
+	} else {
 			
 		$cooperativas = $xmlObj->roottag->tags[0]->tags;
 		foreach ( $cooperativas as $coop ) {
@@ -49,4 +49,6 @@
 		   $nmrescop .= '<option value="'.getByTagName($coop->tags,'cdcooper').'">'.getByTagName($coop->tags,'nmrescop').'</option> ';
 		
 		}
+
+	}
 ?>

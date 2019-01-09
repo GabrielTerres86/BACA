@@ -27,28 +27,22 @@
 	setVarSession("opcoesTela",$opcoesTela);
 		
 ?>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
-		<meta http-equiv="Pragma" content="no-cache">
-		<title><? echo $TituloSistema; ?></title>
-		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
-		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
-		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
-		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
-		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js"></script>
-		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="conlog.js?keyrand=<?php echo mt_rand(); ?>"></script>
 
-		<script type="text/javascript"">
+<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
+<script type="text/javascript" src="../../scripts/dimensions.js"></script>
+<script type="text/javascript" src="../../scripts/funcoes.js"></script>
+<script type="text/javascript" src="../../scripts/mascara.js"></script>
+<script type="text/javascript" src="../../scripts/menu.js"></script>
+<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
+<script type="text/javascript" src="conlog.js?keyrand=<?php echo mt_rand(); ?>"></script>
+
+<script type="text/javascript">
 			
 			var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 
-		</script>
+</script>
 
-</head>
-<body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr>
 		<td><?php include("../../includes/topo.php"); ?></td>
@@ -122,7 +116,7 @@
 											</td>
 										</tr>
 									</table>																
-								</
+								</td>
 							</tr>
 						</table>
 					</td>
@@ -131,5 +125,3 @@
 		</td>
 	</tr>
 </table>
-</body>
-</html>
