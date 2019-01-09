@@ -17,8 +17,10 @@
                10/12/2013 - Incluir script login_cifs_mount.sh (Lucas R.)
                
                17/12/2013 - Inclusao de VALIDATE crapsol (Carlos)
-                            
+               
                09/01/2018 - Inclusao do processamento de convenios Bancoob - PRJ406.
+
+			   10/12/2018 - Remoção script login_cifs_mount.sh (Wagner da Silva - #INC0027407)
                             
 ............................................................................ */
 
@@ -214,7 +216,7 @@ DO WHILE TRUE:
     HIDE tel_datadlog tel_pesquisa IN FRAME f_prccon_l.
 
     DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
+    
         IF  glb_cdcritic > 0   THEN 
             DO:
                 RUN fontes/critic.p.
@@ -248,10 +250,7 @@ DO WHILE TRUE:
             { includes/acesso.i }
             aux_cddopcao = glb_cddopcao.
         END.
-
-    /* Executar script de login das cifs */
-    UNIX SILENT VALUE ("/usr/local/cecred/bin/login_cifs_mount.sh").
-
+    
     HIDE MESSAGE NO-PAUSE.
          
     IF  glb_cddopcao = "I"   THEN
@@ -392,30 +391,30 @@ DO WHILE TRUE:
         END.
             
         IF tel_opagente = "S" THEN
-        DO:
+          DO:
             ASSIGN aux_confirma = "N".
             RUN fontes/confirma.p (INPUT  "Exportar os arquivos do Sicredi?",
                                    OUTPUT aux_confirma).
 
             IF  aux_confirma <> "S" THEN 
-                NEXT.
+              NEXT.
 
             MESSAGE "Realizando exportacao dos arquivos...".
 
             /* Cria solicitação */
             DO TRANSACTION:
-                FIND FIRST crapsol WHERE 
-                           crapsol.cdcooper = glb_cdcooper   AND 
-                           crapsol.nrsolici = 89             AND
-                           crapsol.dtrefere = glb_dtmvtolt   
-                           NO-LOCK NO-ERROR.
-                           
-                IF  AVAILABLE crapsol  THEN
-                     DO:
-                         FIND CURRENT crapsol EXCLUSIVE-LOCK.
-                         DELETE crapsol.
-                     END.
-        
+              FIND FIRST crapsol WHERE 
+                         crapsol.cdcooper = glb_cdcooper   AND 
+                         crapsol.nrsolici = 89             AND
+                         crapsol.dtrefere = glb_dtmvtolt   
+                         NO-LOCK NO-ERROR.
+                               
+              IF  AVAILABLE crapsol  THEN
+                DO:
+                  FIND CURRENT crapsol EXCLUSIVE-LOCK.
+                  DELETE crapsol.
+                END.
+            
                 CREATE crapsol. 
                 ASSIGN crapsol.nrsolici = 89
                        crapsol.dtrefere = glb_dtmvtolt
@@ -427,7 +426,7 @@ DO WHILE TRUE:
                        crapsol.cdcooper = glb_cdcooper.
                 VALIDATE crapsol.
             END.
-        
+            
             UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") + 
                                " - "   + STRING(TIME,"HH:MM:SS")           +
                                " - "   + CAPS(glb_cdprogra) + "'  --> '"   +
@@ -444,26 +443,26 @@ DO WHILE TRUE:
                                " >> log/prccon.log").
 
             DO TRANSACTION:
-                /* Limpa solicitacao se existente */
-                FIND FIRST crapsol WHERE 
-                           crapsol.cdcooper = glb_cdcooper   AND 
-                           crapsol.nrsolici = 89             AND
-                           crapsol.dtrefere = glb_dtmvtolt   
-                           NO-LOCK NO-ERROR.
-                           
-                IF  AVAILABLE crapsol  THEN
-                     DO:
-                         FIND CURRENT crapsol EXCLUSIVE-LOCK.
-                         DELETE crapsol.
-                     END.
+              /* Limpa solicitacao se existente */
+              FIND FIRST crapsol WHERE 
+                         crapsol.cdcooper = glb_cdcooper   AND 
+                         crapsol.nrsolici = 89             AND
+                         crapsol.dtrefere = glb_dtmvtolt   
+                         NO-LOCK NO-ERROR.
+                               
+              IF  AVAILABLE crapsol  THEN
+                DO:
+                  FIND CURRENT crapsol EXCLUSIVE-LOCK.
+                  DELETE crapsol.
+                END.
 
             END. /* Fim TRANSACTION */
 
             HIDE MESSAGE NO-PAUSE.
             MESSAGE "Exportacao finalizada!".
 
-        END.
-
+          END. 
+          
         ELSE IF tel_opagente = "B" THEN
           DO:
             ASSIGN aux_confirma = "N".
@@ -499,7 +498,7 @@ DO WHILE TRUE:
                    tel_datadlog = glb_dtmvtolt.
 
             DO WHILE TRUE ON ENDKEY UNDO, NEXT prccon:
-
+                
                 UPDATE tel_opagente WITH FRAME f_prccon.
                 
                 UPDATE tel_datadlog tel_pesquisa WITH FRAME f_prccon_l.
@@ -508,9 +507,9 @@ DO WHILE TRUE:
             END.
 
             HIDE tel_datadlog tel_pesquisa IN FRAME f_prccon_l.
-
+            
             IF tel_opagente = "S" THEN
-            ASSIGN aux_nmarqimp = "/usr/coop/cecred/log/prccon.log".
+              ASSIGN aux_nmarqimp = "/usr/coop/cecred/log/prccon.log".
             ELSE
               ASSIGN aux_nmarqimp = "/usr/coop/cecred/log/prccon_b.log".
 
@@ -523,10 +522,10 @@ DO WHILE TRUE:
 
             /* nome do arquivo temporário */
             IF tel_opagente = "S" THEN
-            ASSIGN aux_nomedarq = "log/tmp_ged_" + STRING(TIME).
+              ASSIGN aux_nomedarq = "log/tmp_ged_" + STRING(TIME).
             ELSE
               ASSIGN aux_nomedarq = "log/tmp_ged_b_" + STRING(TIME).
-
+              
             IF  tel_datadlog <> ?  THEN
                 UNIX SILENT VALUE('grep -i "' + STRING(tel_datadlog,"99/99/9999") + '" ' + aux_nmarqimp + ' | grep -i "' + tel_pesquisa + '" ' +
                                   ' >> '   + aux_nomedarq + ' 2> /dev/null').
