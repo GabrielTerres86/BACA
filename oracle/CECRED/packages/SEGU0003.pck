@@ -345,7 +345,7 @@ EXCEPTION
       where 
              cs.cdcooper = pr_cdcooper 
          and cs.nrdconta = pr_nrdconta 
-         and (cs.nrctrseg = pr_nrctrseg or cs.nrctrato = pr_nrctremp)
+         and cs.nrctrseg = pr_nrctrseg
          and cs.cdcooper = cc.cdcooper
          and cs.cdcooper = ca.cdcooper
          and cs.nrdconta = ca.nrdconta
@@ -356,8 +356,62 @@ EXCEPTION
          and ct.nrcpfcgc = cs.nrcpfcgc
          and g.cdestcvl  = ct.cdestcvl
          and co.cdcooper = cs.cdcooper
-         and co.cdoperad = pr_cdoperad;
+         and co.cdoperad = pr_cdoperad
+         UNION 
+         select 
+             cc.nmextcop, -- Nome da cooperativa
+             trim(gene0002.fn_mask_conta(ca.nrdconta)) nrdconta, -- Número da conta
+             cs.nrctrseg, -- Número da Proposta de Seguro de Vida Prestamista             
+             cg.cdagenci, -- Número do PA
+             cs.nmdsegur, -- Nome do segurado
+             cs.nrcpfcgc, -- Cpf do segurado
+             g.rsestcvl , -- Estado Civil
+             cs.dtnascsg, -- Data de nascimento
+             decode(cs.cdsexosg,1,'MASCULINO','FEMININO') cdsexosg, -- Sexo
+             cs.dsendres||' '||cs.nrendres Endereco,
+             cs.nmbairro, -- Nome do Bairro
+             cs.nmcidade, -- Nome da Cidade
+             cs.cdufresd, -- UF
+             cs.nrcepend, -- CEP
+             cs.nrctrato, -- Número do Contrato             
+             lpad(cs.tpplaseg,3,'0') tpplaseg, -- Plano
+             0 vl_saldo_devedor, --cs.vl_saldo_devedor
+             1 id_imprime_DPS, -- Indicador se imprime DPS ou não
+             cs.dtinivig,
+             cs.dtmvtolt,
+             cs.nmdsegur Cooperado, -- Cooperado
+             trim(gene0002.fn_mask_conta(ca.nrdconta)) nrdconta2, -- Número da conta
+             co.nmoperad -- Nome do operador
+      from 
+             crawseg cs,
+             crapcop cc,
+             crapass ca,
+             crapage cg,
+             crapttl ct,
+             gnetcvl g,
+             crapope co,
+             crapseg se
+      where 
+             cs.cdcooper = pr_cdcooper 
+         and cs.nrdconta = pr_nrdconta 
+         AND cs.Nrctrato = pr_nrctremp
+         and cs.cdcooper = cc.cdcooper
+         and cs.cdcooper = ca.cdcooper
+         and cs.nrdconta = ca.nrdconta
+         and ca.cdcooper = cg.cdcooper
+         and ca.cdagenci = cg.cdagenci
+         and ct.cdcooper = cs.cdcooper
+         and ct.nrdconta = cs.nrdconta
+         and ct.nrcpfcgc = cs.nrcpfcgc
+         and g.cdestcvl  = ct.cdestcvl
+         and co.cdcooper = cs.cdcooper
+         and co.cdoperad = pr_cdoperad
+         AND cs.cdcooper = se.cdcooper
+         AND cs.nrdconta = se.nrdconta
+         AND cs.nrctrseg = se.nrctrseg         
+         AND se.cdsitseg  NOT IN (2,4)         
 
+         ;    
     rw_crawseg cr_crawseg%ROWTYPE;   
       
     --> Buscar informações da proposta efetivada
@@ -1415,12 +1469,18 @@ EXCEPTION
         INTO
            vr_dscritic
         FROM
-           crawseg c
+             crawseg c,
+             crapseg seg
+           
        WHERE
            c.cdcooper = vr_cdcooper
        AND c.nrdconta = pr_nrdconta 
        AND c.nrctrato = pr_nrctrato
-       AND c.nrctrato > 0;       
+       AND c.nrctrato > 0       
+       AND c.cdcooper = seg.cdcooper (+)
+       AND c.nrdconta = seg.nrdconta (+)
+       AND c.nrctrseg = seg.nrctrseg (+)         
+       AND seg.cdsitseg  NOT IN (2,4);
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
        pr_des_erro:='OK';
