@@ -672,6 +672,20 @@ PROCEDURE grava_dados:
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
+    EMPTY TEMP-TABLE tt-dados-coope.
+    EMPTY TEMP-TABLE tt-dados-assoc.
+    EMPTY TEMP-TABLE tt-tipo-rendi.
+    EMPTY TEMP-TABLE tt-itens-topico-rating.
+    EMPTY TEMP-TABLE tt-proposta-epr.
+    EMPTY TEMP-TABLE tt-crapbem.
+    EMPTY TEMP-TABLE tt-bens-alienacao.
+    EMPTY TEMP-TABLE tt-rendimento.
+    EMPTY TEMP-TABLE tt-faturam.
+    EMPTY TEMP-TABLE tt-dados-analise.
+    EMPTY TEMP-TABLE tt-interv-anuentes.
+    EMPTY TEMP-TABLE tt-hipoteca.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-aval-crapbem.
 
     IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
@@ -689,7 +703,10 @@ PROCEDURE grava_dados:
            aux_flgerlog = TRUE
            aux_flgtrans = FALSE
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Gravacao pre-aprovado".
+           aux_dstransa = "Gravacao pre-aprovado"
+           aux_cdcritic = 0
+           aux_dscritic = "".
+
 
     GRAVA: DO TRANSACTION ON ERROR  UNDO GRAVA, LEAVE GRAVA
                           ON ENDKEY UNDO GRAVA, LEAVE GRAVA:
@@ -799,7 +816,7 @@ PROCEDURE grava_dados:
                                INPUT 1,
                                INPUT aux_cdcritic,
                                INPUT-OUTPUT aux_dscritic).
-                RETURN "NOK".
+                UNDO GRAVA, LEAVE GRAVA.
             END.
 
         FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -817,7 +834,7 @@ PROCEDURE grava_dados:
                               INPUT 1,
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
+               UNDO GRAVA, LEAVE GRAVA.
            END.
        
        /* Dados de parametrizacao do credito pre-aprovado */
@@ -837,7 +854,8 @@ PROCEDURE grava_dados:
                              INPUT 1,
                              INPUT aux_cdcritic,
                              INPUT-OUTPUT aux_dscritic).
-              RETURN "NOK".
+              
+              UNDO GRAVA, LEAVE GRAVA.
           END.
 
        /* Rendimento */
@@ -1158,39 +1176,47 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
+          
+       GRAVA_EFETIVA: DO TRANSACTION ON ERROR  UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA
+                                     ON ENDKEY UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA:
+    
 
-       RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
-                                                     INPUT par_cdagenci,
-                                                     INPUT par_nrdcaixa,
-                                                     INPUT par_cdoperad,
-                                                     INPUT "CMAPRV", /*par_nmdatela*/
-                                                     INPUT par_idorigem,
-                                                     INPUT par_nrdconta,
-                                                     INPUT par_idseqttl,
-                                                     INPUT par_dtmvtolt,
-                                                     INPUT aux_flgerlog,
-                                                     INPUT nov_nrctremp,
-                                                     INPUT 0,  /*par_insitapr*/
-                                                     INPUT "", /*par_dsobscmt*/
-                                                     INPUT par_dtdpagto,
-                                                     INPUT 0, /*par_cdbccxlt*/
-                                                     INPUT 0, /*par_nrdolote*/
-                                                     INPUT par_dtmvtopr,
-                                                     INPUT 0, /*par_inproces*/
-                                                     /* calculo de tarifa sera
-                                                     realizado na propria rotina
-                                                     INPUT aux_vltarifa,
-                                                     INPUT aux_vltaxiof,
-                                                     INPUT aux_vltariof,*/
-                                                     INPUT par_nrcpfope,
-                                                     OUTPUT aux_dsmesage,
-                                                     OUTPUT TABLE tt-ratings,
-                                                     OUTPUT TABLE tt-erro).
+           RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
+                                                         INPUT par_cdagenci,
+                                                         INPUT par_nrdcaixa,
+                                                         INPUT par_cdoperad,
+                                                         INPUT "CMAPRV", /*par_nmdatela*/
+                                                         INPUT par_idorigem,
+                                                         INPUT par_nrdconta,
+                                                         INPUT par_idseqttl,
+                                                         INPUT par_dtmvtolt,
+                                                         INPUT aux_flgerlog,
+                                                         INPUT nov_nrctremp,
+                                                         INPUT 0,  /*par_insitapr*/
+                                                         INPUT "", /*par_dsobscmt*/
+                                                         INPUT par_dtdpagto,
+                                                         INPUT 0, /*par_cdbccxlt*/
+                                                         INPUT 0, /*par_nrdolote*/
+                                                         INPUT par_dtmvtopr,
+                                                         INPUT 0, /*par_inproces*/
+                                                         /* calculo de tarifa sera
+                                                         realizado na propria rotina
+                                                         INPUT aux_vltarifa,
+                                                         INPUT aux_vltaxiof,
+                                                         INPUT aux_vltariof,*/
+                                                         INPUT par_nrcpfope,
+                                                         OUTPUT aux_dsmesage,
+                                                         OUTPUT TABLE tt-ratings,
+                                                         OUTPUT TABLE tt-erro).
 
-       IF RETURN-VALUE <> "OK" THEN
-          UNDO GRAVA, LEAVE GRAVA.
-
-       ASSIGN aux_flgtrans = TRUE.
+           IF RETURN-VALUE <> "OK" THEN
+              UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA.
+              
+              
+            ASSIGN aux_flgtrans = TRUE.
+           
+       
+       END. /* END GRAVA_EFETIVA: DO TRANSACTION */
 
     END. /* END GRAVA: DO TRANSACTION */
 
