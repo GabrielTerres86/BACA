@@ -7051,7 +7051,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 (Ana - Envolti - Ch REQ0011327)
                                 
                    27/07/2018 - Ajuste mensagem do Log
-                                ( Belli - Envolti - Ch INC0019045 )             
+                                ( Belli - Envolti - Ch INC0019045 )
+
+				   07/01/2019 - Removido o "ESMS0001.pc_conclui_lote_sms" pois estava 
+								impactando no produto 19. (Andrey Formigari - Mouts)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -7731,8 +7734,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
           
           --> Fechar o lote apos o envio
-          ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlote_sms
-                                      ,pr_dscritic    => vr_dscritic);
+          /*ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlote_sms
+                                      ,pr_dscritic    => vr_dscritic);*/
           
           IF TRIM(vr_dscritic) IS NOT NULL THEN
             ROLLBACK TO trans_coop;
