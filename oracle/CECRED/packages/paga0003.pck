@@ -406,7 +406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
                     e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
 
-	   05/01/2018 - Inclusão da rotina pc_gera_arrecadacao_bancoob
+       05/01/2018 - Inclusão da rotina pc_gera_arrecadacao_bancoob
                     PRJ406-FGTS.
 
        14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
@@ -1228,7 +1228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     --> FGTS
     ELSIF pr_cdtippro IN (24) THEN
-      
+
       -- Busca as informações do banco/agencia arrecadador (756 - BANCO COOPERATIVO DO BRASIL S.A.)
       OPEN cr_arrec(pr_cddbanco => 756
                    ,pr_cdageban => 1);
@@ -1606,13 +1606,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)     
        
                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
-  
+   
 	 --          02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
 
-				 28/12/2017 - Renomeado rotina de .pc_verifica_darf_das  para pc_verifica_tributos,
+                 28/12/2017 - Renomeado rotina de .pc_verifica_darf_das  para pc_verifica_tributos,
                               e realizado ajuste para validação depagamento de FGTS/DAE.
                               PRJ406-FGTS (Odirlei-AMcom)
-                 
+      
                19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
                             for através do processo JOB(Lucas Ranghetti #843167)
     ..............................................................................*/
@@ -1808,7 +1808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_nrdigito  INTEGER;
 	vr_flgretor  BOOLEAN;
     vr_idagenda  INTEGER;
-    
+
     --Tipo de registro de data
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
   
@@ -2807,7 +2807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dscritic:= 'Registro da autenticacao nao encontrado.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     vr_nrseqdig := fn_sequence('CRAPLOT'
                               ,'NRSEQDIG'
                               ,''||rw_crapaut.cdcooper||';'
@@ -2835,7 +2835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					  pr_cdhistor => 0,
 					  pr_craplot  => rw_craplot,
 					  pr_dscritic => vr_dscritic);	  
-
+                           
     else
       paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapaut.cdcooper,
                                    pr_dtmvtolt => rw_crapaut.dtmvtolt,
@@ -2848,7 +2848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                    pr_cdhistor => 0,
                                    pr_cdbccxpg => null,
                                    pr_nmrotina => 'PAGA0003.PC_PAGA_DARF_DAS');
-       
+    
        rw_craplot.cdcooper := rw_crapaut.cdcooper;
        rw_craplot.dtmvtolt := rw_crapaut.dtmvtolt;
        rw_craplot.cdagenci := rw_crapaut.cdagenci;
@@ -2940,7 +2940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       ELSIF pr_tpdaguia = 4 THEN   
         vr_cdtippro := 23; --DAE
       END IF;  
-			
+
 			-- Pega o nome do convenio
 			OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
 											,pr_cdempcon => TO_NUMBER(SUBSTR(vr_cdbarras,16,4))
@@ -2976,7 +2976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
 			vr_dtvencto := vr_dttolera;
       END IF;  
-			
+
 		END IF;
     
     --Obtem flag de agendamento
@@ -4596,7 +4596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			END IF;
           CLOSE cr_crapscn; 
         ELSIF rw_crapcon.tparrecd = 2 THEN
-														
+
           -- Verificar registro de convenio bancoob
           OPEN cr_tbarrec (pr_cdempcon  => rw_crapcon.cdempcon
                           ,pr_cdsegmto  => rw_crapcon.cdsegmto);
@@ -4654,7 +4654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
-    
+			
     if not PAGA0001.fn_exec_paralelo then 
       
 	  -- Controlar criação de lote, com pragma
@@ -4669,7 +4669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					  pr_cdhistor => 0,
 					  pr_craplot  => rw_craplot,
 					  pr_dscritic => vr_dscritic);	
-			
+  			
 			
       ELSE
         paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
@@ -5075,7 +5075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						
 			pr_dsprotoc := vr_dsprotoc;
     END IF; --> FIM IF pr_tpdaguia IN (1,2)
-						
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -5575,9 +5575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
       
       --> IDENTIFICADOR
-      IF vr_cdempcon IN ( '0239','0451') THEN
+      IF vr_cdempcon IN ( '0239') THEN
+        vr_nrrecolh := SUBSTR(pr_cdbarras, 28, 17);
+      ELSIF vr_cdempcon IN ('0451') THEN
         vr_nrrecolh := SUBSTR(pr_cdbarras, 30, 15);
-      
       ELSIF vr_cdempcon IN ( '0178','0240') THEN
         --> SEQUENCIAL DA GRDE 
         vr_nrsqgrde := SUBSTR(pr_cdbarras, 26, 3);
@@ -5862,6 +5863,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_saida;
       END IF;
       
+	  IF vr_dsempcon = '0239' THEN
+         vr_nrrecolh := lpad(vr_nrrecolh,17,'0');
+      ELSE
+         vr_nrrecolh := lpad(vr_nrrecolh,15,'0');
+      END IF;
 
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
@@ -5877,7 +5883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
                      '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
-                     '<identificador>'   || lpad(vr_nrrecolh,15,'0')          ||'</identificador>'  ||   
+                     '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||      
                      '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
                      '<vlrtotal>'        || to_char(vr_vldocmto,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vlrtotal>';
                      
