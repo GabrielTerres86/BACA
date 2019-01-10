@@ -62,6 +62,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 	   23/11/2018 - Implantacao Projeto 421 (Parte 2)
                     Heitor (Mouts) - Prj421
 
+       07/01/2019 - Alterações nas regras de devolucao da ABBC, alterado conforme
+                    instrucoes da requisicao. Chamado SCTASK0023401 - Gabriel (Mouts).			   
+                    
    ................................................................................................*/
 
      DECLARE
@@ -558,6 +561,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          vr_dsmotdev := 'Beneficiário inválido ou boleto não encontrado';
        WHEN 77 THEN
          vr_dsmotdev := 'Boleto em cartório ou protestado';
+       WHEN 82 THEN
+         vr_dsmotdev := 'Boleto de Pagamento divergente da Base '||
+                        'Centralizada de Boletos de Pagamento';
+       WHEN 83 THEN
+         vr_dsmotdev := 'Boleto inexistente na Base Centralizada '||
+                        'de Boletos de Pagamentos';
        ELSE
          vr_dsmotdev := 'Descrição de motivo não encontrada';
       END CASE;    
