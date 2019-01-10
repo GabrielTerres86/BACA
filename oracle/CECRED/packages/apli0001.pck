@@ -2255,7 +2255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         pc_saldo_rdca_resgate(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                              ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                             ,pr_cdprogra => 'INTERNETBANK'      --> Programa chamador
+                             ,pr_cdprogra => pr_cdprogra         --> Programa chamador /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                              ,pr_nrdconta => pr_nrdconta         --> Conta da aplicacao RDCA
                              ,pr_dtaplica => pr_dtmvtolt         --> Data pada resgate da aplicacao
                              ,pr_nraplica => pr_nraplica         --> Numero da aplicacao RDCA
@@ -2915,7 +2915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         pc_saldo_rdca_resgate(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                              ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                             ,pr_cdprogra => 'INTERNETBANK'      --> Programa chamador
+                             ,pr_cdprogra => pr_cdprogra         --> Programa chamador /* Projeto 363 - Novo ATM -> estava fixo 'INTERNETBANK' */
                              ,pr_nrdconta => pr_nrdconta         --> Conta da aplicacao RDCA
                              ,pr_dtaplica => pr_dtmvtopr         --> Data para resgate da aplicacao
                              ,pr_nraplica => pr_nraplica         --> Numero da aplicacao RDCA
@@ -5464,42 +5464,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     rw_craprpp     cr_craprpp%rowtype;
     -- Lançamentos da poupança programada
     cursor cr_craplpp is
-      select nvl(SUM(decode(cdhistor,150,vllanmto,0)),0) vllan150,
-             nvl(SUM(decode(cdhistor,152,vllanmto,154,vllanmto,155,vllanmto*-1,0)),0) vllan152,
-             nvl(SUM(decode(cdhistor,158,vllanmto,496,vllanmto,0)),0) vllan158,
-             nvl(SUM(decode(cdhistor,925,vllanmto,1115,vllanmto,0)),0) vllan925
-      from(
-            select lpp.cdhistor cdhistor,
-                   lpp.vllanmto vllanmto
-              from craplpp lpp
-             where lpp.cdcooper  = pr_cdcooper
-               and lpp.nrdconta  = rw_craprpp.nrdconta
-               and lpp.nrctrrpp  = rw_craprpp.nrctrrpp
-               and lpp.dtmvtolt >= vr_dtcalcul
-               and lpp.dtmvtolt <= vr_dtmvtolt
-               and lpp.dtrefere  = vr_dtrefere
-               and lpp.cdhistor IN (150,152,154,155,158,496,925,1115)
-      union         
-      select decode(lac.cdhistor,
-                    cpc.cdhsraap,150,
-                    cpc.cdhsnrap,152,
-                    cpc.cdhsrvap,154,
-                    2747,155,
-                    cpc.cdhsrgap,158,
-                    cpc.cdhsvtap,496
-                    ) cdhistor
-             ,lac.vllanmto vllanmto
-        FROM  craplac lac, craprac rac,crapcpc cpc
-        WHERE rac.cdcooper = pr_cdcooper
-        AND   rac.nrdconta = rw_craprpp.nrdconta
-        AND   rac.nrctrrpp = rw_craprpp.nrctrrpp
-        AND   rac.cdcooper = lac.cdcooper
-        AND   rac.nrdconta = lac.nrdconta
-        AND   rac.nraplica = lac.nraplica
-        AND   cpc.cdprodut = rac.cdprodut
-        AND   lac.dtmvtolt between vr_dtcalcul and vr_dtmvtolt
-        AND   lac.cdhistor IN (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsrvap,2747,cpc.cdhsrgap,cpc.cdhsvtap)
-       );
+      select nvl(SUM(decode(craplpp.cdhistor,150,vllanmto,0)),0) vllan150,
+             nvl(SUM(decode(craplpp.cdhistor,152,vllanmto,154,vllanmto,155,vllanmto*-1,0)),0) vllan152,
+             nvl(SUM(decode(craplpp.cdhistor,158,vllanmto,496,vllanmto,0)),0) vllan158,
+             nvl(SUM(decode(craplpp.cdhistor,925,vllanmto,1115,vllanmto,0)),0) vllan925
+        from craplpp
+       where craplpp.cdcooper  = pr_cdcooper
+         and craplpp.nrdconta  = rw_craprpp.nrdconta
+         and craplpp.nrctrrpp  = rw_craprpp.nrctrrpp
+         and craplpp.dtmvtolt >= vr_dtcalcul
+         and craplpp.dtmvtolt <= vr_dtmvtolt
+         and craplpp.dtrefere  = vr_dtrefere
+         AND craplpp.cdhistor IN (150,152,154,155,158,496,925,1115);
          
     rw_craplpp cr_craplpp%ROWTYPE;
 
@@ -5592,17 +5568,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     -- Leitura dos lançamentos da aplicação
     if rw_craprpp.cdprodut < 1 then -- aplicacao antiga 
-    OPEN cr_craplpp;
-    FETCH cr_craplpp INTO rw_craplpp;
-    IF cr_craplpp%FOUND THEN
-      vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
-      vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
-      vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
-      vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
-    END IF;
-    CLOSE cr_craplpp;
+       OPEN cr_craplpp;
+       FETCH cr_craplpp INTO rw_craplpp;
+       IF cr_craplpp%FOUND THEN
+          vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
+          vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
+          vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
+          vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
+       END IF;
+       CLOSE cr_craplpp;
         -- Calcula o saldo da poupança
-    vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
+        vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
     else -- Apl. Prog
         apli0008.pc_calc_saldo_apl_prog (pr_cdcooper => pr_cdcooper
                                         ,pr_cdprogra => pr_cdprogra
@@ -9396,7 +9372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         AND   craplpp.dtmvtolt <= pr_dtmvtolt
         AND   craplpp.dtrefere = pr_dtrefere
         AND   craplpp.cdhistor IN (150,152,154,155,158,496,925,1115)
-        UNION
+        UNION ALL
         SELECT decode(lac.cdhistor,
                       cpc.cdhsraap,150,
                       cpc.cdhsnrap,152,
