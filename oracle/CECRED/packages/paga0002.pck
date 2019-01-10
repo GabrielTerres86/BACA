@@ -946,6 +946,9 @@ create or replace package body cecred.PAGA0002 is
 				  10/10/2018 - Permitir agendar Teds antes da abertura da grade.
 				               Projeto 475 - Sprint C - Jose Dill (Mouts)
 
+			      26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a finalidade 400 - Tributos Municipais ISS - LCP 157
+                              (Jonata  - Mouts / INC0024119).
+
                    30/10/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
   --                           Correção da quantidade de parâmetros passados para LANC0001 - Heckmann (AMcom)
 

@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 13/06/2018
+    Ultima Atualizacao: 26/10/2018
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -259,6 +259,10 @@
                 13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                              norturno rodando (Douglas Pagel - AMcom).
 				
+			    26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a
+ 				             finalidade 400 - Tributos Municipais ISS - LCP 157
+                             (Jonata  - Mouts / INC0024119).
+
 				13/11/2018 - Adicionada parametros a procedure 
 							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
 ----------------------------------------------------------------------------- **/
@@ -468,6 +472,7 @@ PROCEDURE valida-valores:
     DEFINE INPUT PARAMETER p-cod-finalidade   AS INT  NO-UNDO. /*Cod.Finalidade*/
     DEFINE INPUT PARAMETER p-dsc-historico    AS CHAR NO-UNDO. /*Descriçao do Histórico*/
     DEFINE INPUT PARAMETER p-ispb-if          AS CHAR   NO-UNDO.  /* ISPB Banco    */
+	DEFINE INPUT PARAMETER p-cdidtran         AS CHAR NO-UNDO.
 
 
     DEF VAR aux_flestcri AS INTE                    NO-UNDO.
@@ -1307,8 +1312,7 @@ PROCEDURE valida-valores:
                 END. 
         END. 
       
-        IF  (INT(p-cod-finalidade) = 99 OR INT(p-cod-finalidade) = 99999 OR INT(p-cod-finalidade) = 999) AND p-dsc-historico = ''
-          THEN 
+    IF  (INT(p-cod-finalidade) = 99 OR INT(p-cod-finalidade) = 99999 OR INT(p-cod-finalidade) = 999) AND p-dsc-historico = '' THEN
           DO:
                ASSIGN i-cod-erro  = 0
                       c-desc-erro = "Informe a descriçao do histórico". 
@@ -1319,6 +1323,37 @@ PROCEDURE valida-valores:
                               INPUT c-desc-erro,
                               INPUT YES).
           END. 
+	/* Quando informado a finalidade “400 - Tributos Municipais ISS - LCP 157" deve ser validado
+       o código identificador onde pode conter apenas números e ter no máximo 11 posições.*/
+    ELSE IF int(p-cod-finalidade) = 400 THEN
+	  DO:
+	    DEC(p-cdidtran) NO-ERROR.
+
+        IF ERROR-STATUS:ERROR THEN    
+           DO:
+			 ASSIGN i-cod-erro  = 0
+                    c-desc-erro = "Codigo identificador deve conter apenas caracteres numericos.". 
+             RUN cria-erro (INPUT p-cooper,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT i-cod-erro,
+                            INPUT c-desc-erro,
+                            INPUT YES).
+		   END.
+        ELSE IF LENGTH(TRIM(p-cdidtran)) > 11 THEN
+          DO:
+		     ASSIGN i-cod-erro  = 0
+                    c-desc-erro = "Codigo identificador deve conter no maximo 11 caracteres.". 
+					
+             RUN cria-erro (INPUT p-cooper,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT i-cod-erro,
+                            INPUT c-desc-erro,
+                            INPUT YES).
+	  	  END.
+		
+	  END.
     
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -1497,6 +1532,12 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                            INPUT YES).
             RETURN "NOK".
         END.
+
+	IF int(p-cod-finalidade) = 400 THEN
+	  DO:
+	     ASSIGN p-cod-id-transf = STRING(dec(p-cod-id-transf),"99999999999").
+		
+	  END.
 
     /* Lote para craptvl e para autenticacao */
     IF  p-tipo-doc = 3 OR p-tipo-doc = 4  THEN
