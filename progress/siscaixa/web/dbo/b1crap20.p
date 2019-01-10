@@ -258,6 +258,13 @@
                              
                 13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                              norturno rodando (Douglas Pagel - AMcom).
+
+				29/09/2018 -  Correcao para TED de titularidade diferente, sempre que for em especie nao deve 
+	                          gerar cobranca de tarifa e, em caso de devolucao por qualquer motivo, 
+	                          tambem nao devera ser feito estorno na conta do cooperado
+							  (Jonata - Mouts / PRB0040337).
+
+
 				
 			    26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a
  				             finalidade 400 - Tributos Municipais ISS - LCP 157
@@ -1328,7 +1335,7 @@ PROCEDURE valida-valores:
     ELSE IF int(p-cod-finalidade) = 400 THEN
 	  DO:
 	    DEC(p-cdidtran) NO-ERROR.
-
+    
         IF ERROR-STATUS:ERROR THEN    
            DO:
 			 ASSIGN i-cod-erro  = 0
@@ -1705,6 +1712,14 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     ELSE
          ASSIGN p-nro-conta-rm = p-nro-conta-de.
     
+	/* TED de titularidade diferente, sempre que for em especie nao deve 
+	   gerar cobranca de tarifa e, em caso de devolucao por qualquer motivo, 
+	   tambem nao devera ser feito estorno na conta do cooperado.	*/
+	IF p-tipo-doc = 3 AND p-tipo-pag = 'E' THEN
+	   ASSIGN p-nro-conta-rm = 0
+	          p-aviso-cx = FALSE.
+	   
+
     ASSIGN aux_nrdctitg = " "
            aux_cdagenci = " ".
     IF  p-nro-conta-rm > 0 THEN
@@ -2995,9 +3010,9 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                      ,OUTPUT ""). /* Descriçao da crítica */
                   CLOSE STORED-PROC pc_proc_envia_tec_ted_prog
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                  
+            
                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                  
+
                   ASSIGN c-desc-erro = ""
                          c-desc-erro = pc_proc_envia_tec_ted_prog.pr_dscritic
                                          WHEN pc_proc_envia_tec_ted_prog.pr_dscritic <> ?.
