@@ -214,6 +214,9 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                                    ,pr_nmdcampo      OUT VARCHAR2           --> Nome do campo com erro
                                    ,pr_des_erro      OUT VARCHAR2);         --> Erros do processo
 
+  
+  PROCEDURE pc_ajusta_seq_dig_evento(pr_dscritic OUT VARCHAR2);                        
+
 END PRGD0001;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
@@ -2059,6 +2062,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                            PR_CDPROGRAMA => vr_nomdojob,
                            PR_IDPRGLOG   => vr_idprglog);
     
+
+     prgd0001.pc_ajusta_seq_dig_evento(pr_dscritic => vr_dscritic);
+      -- Verifica se houve critica
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;                             
+                               
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
       -- Atualiza variavel de retorno
@@ -2786,6 +2797,166 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         pr_dscritic := 'Erro geral ASSE0001.pc_envia_email_sondagem: ' || SQLERRM;
     END;
   END pc_envia_email_sondagem;
+
+    --> Rotina de ajuste de sequencia de digitação dos eventos
+  PROCEDURE pc_ajusta_seq_dig_evento(pr_dscritic OUT VARCHAR2)  IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_ajusta_seq_dig_evento
+    --  Sistema  : Rotinas gerais
+    --  Sigla    : GENE
+    --  Autor    : Márcio - Mouts
+    --  Data     : Dezembro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Procedure para ajusta NRSEQDIG igua a 0 na CRAPADP
+    --
+    --  Alteracoes: 
+    --              
+    -- .............................................................................
+
+    -- consulta os registros que devem ser atualizados
+    CURSOR cr_evento IS
+      SELECT
+             c.cdcooper,
+             c.cdagenci,
+             c.cdevento,
+             c.dtanoage,
+             c.nrseqdig
+        FROM
+             crapadp c
+       WHERE
+             c.nrseqdig = 0;
+           
+    -- Consulta proximo sequencial de evento
+    CURSOR cr_nrseqdig IS
+     SELECT nrseqadp.nextval FROM dual; 
+   
+    -- Sequencial de evento
+    vr_nrseqeve INTEGER := 0;
+   
+    -- Variável de críticas
+    vr_dscritic      VARCHAR2(10000);
+    vr_cdcritic      crapcri.cdcritic%TYPE := 0;
+
+    -- Tratamento de erros
+    vr_exc_saida     EXCEPTION;
+
+  
+    vr_nomdojob CONSTANT VARCHAR2(50) := 'jbpgd_email_evento_local';
+    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+  
+    -- Gerar log
+    PROCEDURE pc_gera_log (pr_dscritic IN VARCHAR2) IS
+    BEGIN
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - PRGD0001.pc_ajusta_seq_dig_evento --> ' || pr_dscritic,
+                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_dstiplog     => 'E',
+                                 pr_cdprograma   => vr_nomdojob);
+    END pc_gera_log;
+  
+  BEGIN
+
+    -- Início de execução do programa
+    cecred.pc_log_programa(PR_DSTIPLOG   => 'I',
+                           PR_CDPROGRAMA => vr_nomdojob,
+                           PR_IDPRGLOG   => vr_idprglog);
+
+    -------------------------------------------------------------
+    -- Esta Rotina deverá ser executada a 01:00 horas da manha --
+    -------------------------------------------------------------
+    FOR rw_evento IN cr_evento LOOP
+      -- Consulta proximo sequencial de evento 
+      OPEN cr_nrseqdig;
+
+      FETCH cr_nrseqdig INTO vr_nrseqeve;
+
+      CLOSE cr_nrseqdig;
+
+      -- Atualiza registros de evento do PROGRID
+      BEGIN
+        UPDATE crapadp c 
+        SET    c.nrseqdig = vr_nrseqeve 
+        WHERE  c.cdcooper = rw_evento.cdcooper 
+          AND  c.cdagenci = rw_evento.cdagenci
+          AND  c.cdevento = rw_evento.cdevento
+          AND  c.dtanoage = rw_evento.dtanoage 
+          AND  c.nrseqdig = 0;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar registro da agenda do evento(crapadp). Erro: ' || SQLERRM;
+          pc_gera_log (pr_dscritic => vr_dscritic);                    
+          RAISE vr_exc_saida;
+      END;
+
+      -- Atualiza registros de inscricoes do PROGRID
+      BEGIN
+        UPDATE crapidp ci 
+        SET    ci.nrseqeve = vr_nrseqeve 
+        WHERE  ci.cdcooper = rw_evento.cdcooper 
+           AND ci.cdagenci = rw_evento.cdagenci 
+           AND ci.cdevento = rw_evento.cdevento
+           AND ci.dtanoage = rw_evento.dtanoage
+           AND ci.nrseqeve = 0;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar registro das inscrições da agenda do evento(crapidp). Erro: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+
+      BEGIN
+        UPDATE craphea ch 
+        SET    ch.nrseqdig = vr_nrseqeve 
+        WHERE  ch.cdcooper = rw_evento.cdcooper 
+           AND ch.cdagenci = rw_evento.cdagenci
+           AND ch.cdevento = rw_evento.cdevento
+           AND ch.dtanoage = rw_evento.dtanoage 
+           AND ch.nrseqdig = 0;  
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar registro de histórico da agenda do evento(craphea). Erro: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+    END LOOP;
+    
+    COMMIT;
+
+    -- Log de final de execução do job
+    cecred.pc_log_programa(PR_DSTIPLOG   => 'F',
+                           PR_CDPROGRAMA => vr_nomdojob,
+                           PR_IDPRGLOG   => vr_idprglog);
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Atualiza variavel de retorno
+      pr_dscritic := vr_dscritic;
+      pc_gera_log (pr_dscritic => vr_dscritic);
+    WHEN OTHERS THEN
+      
+      cecred.pc_internal_exception;
+
+      -- Efetuar retorno do erro não tratado
+      pr_dscritic := sqlerrm;
+      pc_gera_log (pr_dscritic => vr_dscritic);    
+      
+      cecred.pc_log_programa(PR_DSTIPLOG      => 'E',
+                             PR_CDPROGRAMA    => vr_nomdojob,
+                             pr_cdcriticidade => 2, -- alta
+                             pr_dsmensagem    => vr_dscritic,
+                             pr_tpexecucao    => 1,   -- job
+                             pr_tpocorrencia  => 2, --  erro não tratado
+                             PR_IDPRGLOG      => vr_idprglog);
+      
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F',
+                             PR_CDPROGRAMA => vr_nomdojob,
+                             pr_flgsucesso => 0,
+                             PR_IDPRGLOG   => vr_idprglog);
+  END pc_ajusta_seq_dig_evento;
 
 END PRGD0001;
 /
