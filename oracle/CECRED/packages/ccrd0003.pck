@@ -8497,6 +8497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 relatorio (Lucas Ranghetti INC0018668)
 				   23/10/2018 - Adicionado cursor para encontrar cooperado pelo cpf (Bruno Mouts INC0024859 )
 				   13/11/2018 - Criado uma nova regra onde gera lote a cada mil mensagem sms (Douglas Mouts PRB0040381)
+				   10/12/2018 - foi feito a validação do codigo de administrador, caso o mesmo esteja zerado
+                                será usado o cdgrafin do arquivo para fazer a validação (Bruno Cardoso,PRB0040377, Mout'S).
     ............................................................................ */
 
     DECLARE
@@ -9103,6 +9105,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND tfc.idsittfc = 1 /* Ativo */
          ORDER BY tfc.cdseqtfc DESC;  -- Para o caso de mais de um telefone cadastrado, utilizar o último
       rw_craptfc   cr_craptfc%ROWTYPE;
+	  --cursor para validar código administrador na crawcrd
+	   CURSOR cr_cdadmcrd(pr_cdgrafin IN crawcrd.cdadmcrd%TYPE) IS
+        SELECT crapacb.cdadmcrd
+          from crapacb crapacb
+         where crapacb.cdgrafin = pr_cdgrafin; --será alimentado pela substr
+      rw_cdadmcrd cr_cdadmcrd%rowtype;
+    --cursor para validar código administrador na crapcrd
+      CURSOR cr_crapcrd_cdadmcrd(pr_rowid IN ROWID) IS
+        SELECT crd.cdadmcrd FROM crapcrd crd WHERE ROWID = pr_rowid;
+      rw_crapcrd_cdadmcrd cr_crapcrd_cdadmcrd%ROWTYPE;
             
       -- Buscar atualizações de limite provenientes do SAS
       CURSOR cr_atulimi(pr_cdcooper IN tbcrd_limite_atualiza.cdcooper%TYPE
@@ -10496,6 +10508,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   CONTINUE;
                   
                 ELSE
+				--verifica p código de administrador da crawcrd
+				IF rw_crawcrd.cdadmcrd = 0 THEN
+                    OPEN cr_cdadmcrd(pr_cdgrafin => vr_cdgrafin);
+                    FETCH cr_cdadmcrd
+                      INTO rw_cdadmcrd;
+                    CLOSE cr_cdadmcrd;
+                    BEGIN
+                      UPDATE crawcrd
+                         SET cdadmcrd = nvl(rw_cdadmcrd.cdadmcrd, 0)
+                       where ROWID = rw_crawcrd.rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro2 ao atualizar crawcrd:';
+                        RAISE vr_exc_saida;
+                    END;
+                  END IF;--fim da validação do codigo de administrador crawcrd
+                  OPEN cr_crapcrd_cdadmcrd(pr_rowid => rw_crapcrd.rowid);
+                  FETCH cr_crapcrd_cdadmcrd
+                    INTO rw_crapcrd_cdadmcrd;
+                  CLOSE cr_crapcrd_cdadmcrd;
+                
+                  IF rw_crapcrd_cdadmcrd.cdadmcrd = 0 THEN
+                    OPEN cr_cdadmcrd(pr_cdgrafin => vr_cdgrafin);
+                    FETCH cr_cdadmcrd
+                      INTO rw_cdadmcrd;
+                    CLOSE cr_cdadmcrd;
+                    BEGIN
+                      UPDATE crapcrd
+                         SET cdadmcrd = nvl(rw_cdadmcrd.cdadmcrd, 0)
+                       WHERE ROWID = rw_crapcrd.rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro2 ao atualizar crapcrd:'; 
+                        RAISE vr_exc_saida;
+                    END;
+                  
+                  END IF;--fim da validação do codigo de administrador crapcrd
                   -- Limpa a data de rejeicao da proposta do cartao
                   altera_data_rejeicao(pr_cdcooper => vr_cdcooper,
                                        pr_nrdconta => vr_nrdconta,
