@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
 
     Programa: inet001                         Antiga: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 25/10/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 04/12/2018
 
     Dados referentes ao programa:
 
@@ -230,6 +230,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
          
             01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                          Marcelo Telles Coelho - Mouts
+
+			04/12/2018 - Ajuste na rotina de validação de agendamento de boletos. (Dionathan/Cechet)
 
 ..............................................................................*/
 
@@ -538,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 31/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -645,6 +647,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
   				21/11/2018 - Incluído FlgAtivo nos cursores da crapcop para não permitir operações com cooperativas inativas
                              INC0027280 - Paulo Martins - Mouts
+                             
+                31/12/2018 - Ajuste para contornar validação do último dia 
+                             útil do ano 
+                             (Adriano - INC0030017).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1206,6 +1212,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_iddiauti:= 1;
           END IF;
 
+          ---Ajuste para atender o INC0030017 
+          IF vr_iddiauti = 2                      AND 
+             pr_tpoperac = 4                      AND 
+             trunc(SYSDATE) = to_date('31/12/2018','DD/MM/RRRR') THEN
+            vr_iddiauti:= 1;
+          END IF; 
+
+          
           --Determinar a hora atual
           vr_hratual:= GENE0002.fn_busca_time;
           --Verificar se estourou o limite
@@ -3958,7 +3972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 29/12/2018
   
   Dados referentes ao programa:
   
@@ -4041,6 +4055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                            Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                            pendente (Lucas Ranghetti #INC0011082)
+                           
+              29/12/2018 - Ajuste emergencial na rotina de validação do último dia não útil do ano. (Cechet/Pablão)
+              
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4724,14 +4741,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => FALSE);     --> Nao considera feriados
+                                               ,pr_feriado  => TRUE      --> Nao considera feriados
+                                               ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
         
         /** Data do agendamento nao pode ser o ultimo dia util do ano **/
         IF pr_idagenda = 2  AND
            pr_tpoperac <> 4 AND 
-           pr_dtmvtopg = vr_dtdialim THEN
+           pr_dtmvtopg > vr_dtdialim THEN
            
           vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
           vr_cdcritic:= 0;
@@ -4920,8 +4938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
 
           /** Critica se data do pagamento for no ultimo dia util do ano **/
-          IF (pr_idagenda = 1 AND pr_dtmvtolt = vr_dtdialim) OR
-             (pr_idagenda > 1 AND pr_dtmvtopg = vr_dtdialim) THEN
+          IF (pr_idagenda = 1 AND pr_dtmvtolt > vr_dtdialim) OR
+             (pr_idagenda > 1 AND pr_dtmvtopg > vr_dtdialim) THEN
             vr_cdcritic:= 0;
             IF pr_idagenda = 1 THEN
               vr_dscritic:= 'Não é possível efetuar pagamentos neste dia.';
