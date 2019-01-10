@@ -261,7 +261,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inenvcip  crapcob.inenvcip%TYPE,
                inemiten  crapcob.inemiten%TYPE,
                flgdprot  crapcob.flgdprot%TYPE,
-			   insrvprt  crapcob.insrvprt%TYPE,
+			         insrvprt  crapcob.insrvprt%TYPE,
                flgaceit  crapcob.flgaceit%TYPE,
                idseqttl  crapcob.idseqttl%TYPE,
                cdoperad  crapcob.cdoperad%TYPE,
@@ -273,7 +273,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inavisms  crapcob.inavisms%TYPE,
                insmsant  crapcob.insmsant%TYPE,
                insmsvct  crapcob.insmsvct%TYPE,
-               insmspos  crapcob.insmspos%TYPE);
+               insmspos  crapcob.insmspos%TYPE,
+							 tpdescto  crapcob.tpvlrdesc%TYPE);
   TYPE typ_tab_crapcob IS TABLE OF typ_rec_crapcob
     INDEX BY VARCHAR2(50);
 
@@ -1357,7 +1358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).dsdoccop := pr_rec_cobranca.dsdoccop;
     pr_tab_crapcob(vr_index).vltitulo := pr_rec_cobranca.vltitulo;
     pr_tab_crapcob(vr_index).vldescto := pr_rec_cobranca.vldescto;
-    pr_tab_crapcob(vr_index).cdmensag := pr_rec_cobranca.tpdescto;
+    pr_tab_crapcob(vr_index).tpdescto := pr_rec_cobranca.tpdescto;
     pr_tab_crapcob(vr_index).dtvencto := pr_rec_cobranca.dtvencto;
     pr_tab_crapcob(vr_index).cdcartei := pr_rec_cobranca.cdcartei;
     pr_tab_crapcob(vr_index).cddespec := pr_rec_cobranca.cddespec;
@@ -1386,7 +1387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).vlrmulta := pr_rec_cobranca.vldmulta;
     pr_tab_crapcob(vr_index).inemiten := pr_rec_cobranca.inemiten;
     pr_tab_crapcob(vr_index).flgdprot := pr_rec_cobranca.flgdprot;
-	pr_tab_crapcob(vr_index).insrvprt := pr_rec_cobranca.insrvprt;
+	  pr_tab_crapcob(vr_index).insrvprt := pr_rec_cobranca.insrvprt;
     pr_tab_crapcob(vr_index).flgaceit := pr_rec_cobranca.flgaceit;
     pr_tab_crapcob(vr_index).idseqttl := 1;
     pr_tab_crapcob(vr_index).cdoperad := '996';
@@ -1395,7 +1396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).vlminimo := pr_rec_cobranca.vlminimo;
     pr_tab_crapcob(vr_index).inpagdiv := pr_rec_cobranca.inpagdiv;
     pr_tab_crapcob(vr_index).inenvcip := pr_rec_cobranca.inenvcip;
-	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
+	  pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
 
@@ -5495,7 +5496,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- 30.3P Valida Codigo do Desconto */
     pr_rec_cobranca.tpdescto := pr_tab_linhas('TPDESCTO').numero;
     IF pr_rec_cobranca.tpdescto <> 0 AND   -- Desprezar Desconto
-       pr_rec_cobranca.tpdescto <> 1 THEN  -- Valor Fixo ate a Data Informada
+       pr_rec_cobranca.tpdescto <> 1 AND   -- Valor Fixo ate a Data Informada
+			 pr_rec_cobranca.tpdescto <> 2 THEN  -- Percentual
       -- Codigo do Desconto Invalido
       vr_rej_cdmotivo := '28';
       RAISE vr_exc_reje;

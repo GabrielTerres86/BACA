@@ -5125,6 +5125,7 @@ END pc_gera_titulos_iptu_prog;
               ,crapcob.inpagdiv
               ,crapcob.vlminimo
               ,crapceb.flgpgdiv
+							,crapcob.tpvlrdesc
         FROM crapcob,
              crapceb
         WHERE crapcob.cdcooper = pr_cdcooper
@@ -6469,9 +6470,19 @@ END pc_gera_titulos_iptu_prog;
           IF rw_crapcob.cdmensag = 2 THEN
             --Valor Desconto
             pr_vldescto:= rw_crapcob.vldescto;
-            --Diminuir valor desconto do Valor Fatura
-            pr_vlfatura:= Nvl(pr_vlfatura,0) - pr_vldescto;
+						
+						--Diminuir valor desconto do Valor Fatura
+						IF rw_crapcob.tpvlrdesc = 2 THEN
+							pr_vlfatura := Nvl(pr_vlfatura,0) - (Nvl(pr_vlfatura,0) * (pr_vldescto/100));
+						ELSE
+     					pr_vlfatura := Nvl(pr_vlfatura,0) - pr_vldescto;
+						END IF;
           END IF;
+					
+
+					
+					
+					
           /* utilizar o abatimento antes do calculo de juros/multa */
           IF rw_crapcob.vlabatim > 0 THEN
             --Valor Abatimento
@@ -6571,7 +6582,11 @@ END pc_gera_titulos_iptu_prog;
               --Valor Desconto
               pr_vldescto:= rw_crapcob.vldescto;
               --Retirar o desconto da fatura
-              pr_vlfatura:= Nvl(pr_vlfatura,0) - pr_vldescto;
+							IF rw_crapcob.tpvlrdesc = 2 THEN
+								pr_vlfatura := Nvl(pr_vlfatura,0) - (Nvl(pr_vlfatura,0) * (pr_vldescto/100));
+							ELSE
+								pr_vlfatura := Nvl(pr_vlfatura,0) - pr_vldescto;
+							END IF;
             END IF;
           END IF;
 
@@ -11473,7 +11488,8 @@ END pc_gera_titulos_iptu_prog;
              crapcob.vljurdia,
              crapcob.tpjurmor,
              crapcob.dtvencto,
-             crapcob.dsinform
+             crapcob.dsinform,
+						 crapcob.tpvlrdesc
         FROM crapcob, crapceb, crapcco
        WHERE crapceb.nrconven = pr_nrcnvcob
          AND crapceb.nrdconta = pr_nrdconta
@@ -11702,7 +11718,11 @@ END pc_gera_titulos_iptu_prog;
         --Valor Desconto
         vr_vldescto:= rw_crapcob.vldescto;
         --Diminuir valor desconto do Valor Fatura
-        vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
+				IF rw_crapcob.tpvlrdesc = 2 THEN
+					pr_vlfatura := Nvl(pr_vlfatura,0) - (Nvl(pr_vlfatura,0) * (vr_vldescto/100));
+				ELSE
+					pr_vlfatura := Nvl(pr_vlfatura,0) - vr_vldescto;
+				END IF;
       END IF;
       /* utilizar o abatimento antes do calculo de juros/multa */
       IF rw_crapcob.vlabatim > 0 THEN
@@ -11766,7 +11786,11 @@ END pc_gera_titulos_iptu_prog;
           --Valor Desconto
           vr_vldescto:= rw_crapcob.vldescto;
           --Retirar o desconto da fatura
-          vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
+					IF rw_crapcob.tpvlrdesc = 2 THEN
+						pr_vlfatura := Nvl(pr_vlfatura,0) - (Nvl(pr_vlfatura,0) * (vr_vldescto/100));
+					ELSE
+						pr_vlfatura := Nvl(pr_vlfatura,0) - vr_vldescto;
+					END IF;
         END IF;
       END IF;
           

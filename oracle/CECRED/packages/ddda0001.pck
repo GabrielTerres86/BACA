@@ -569,7 +569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.dtmvtolt
           ,crapcob.qtdiaprt
           ,crapcob.vljurdia
-		  ,decode(nvl(crapcob.tpdmulta,0),1,1,2,2,3) tpdmulta /*SD#769996*/
+		      ,decode(nvl(crapcob.tpdmulta,0),1,1,2,2,3) tpdmulta /*SD#769996*/
           ,crapcob.vlrmulta
           ,crapcob.flgaceit
           ,crapcob.cdcartei
@@ -587,6 +587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.incobran
           ,crapcob.vldpagto
           ,crapcob.cdbanpag
+					,crapcob.tpvlrdesc
       FROM crapcob
      WHERE crapcob.ROWID = pr_rowid;
   rw_crapcob cr_crapcob%ROWTYPE;
@@ -2340,11 +2341,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Portanto, não será utilizada
       pr_tab_remessa_dda(vr_index).dtddesct := NULL;
       
-      IF pr_vldescto > 0 THEN
+      /*IF pr_vldescto > 0 THEN
         pr_tab_remessa_dda(vr_index).cdddesct := '1';
       ELSE
         pr_tab_remessa_dda(vr_index).cdddesct := '0';
-      END IF;
+      END IF;*/
+			
+			IF rw_crapcob.tpvlrdesc = 1 THEN
+				pr_tab_remessa_dda(vr_index).cdddesct := '2';
+			ELSIF rw_crapcob.tpvlrdesc = 2 THEN
+				pr_tab_remessa_dda(vr_index).cdddesct := '1';
+			ELSE
+				pr_tab_remessa_dda(vr_index).cdddesct := '0';
+			END IF;
+			
       pr_tab_remessa_dda(vr_index).vlrdesct := pr_vldescto;
       pr_tab_remessa_dda(vr_index).dsinstru := vr_dsdinstr;
       /* regra nova da CIP - titulos emitidos apos 17/03/2012 sao

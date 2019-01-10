@@ -13258,6 +13258,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             FETCH btch0001.cr_crapdat
                 INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
+
+						-- Monta documento XML de Dados
+						dbms_lob.createtemporary(vr_dsxml, TRUE);
+						dbms_lob.open(vr_dsxml, dbms_lob.lob_readwrite);						
         
             -- Cabecalho
             pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><Root><boletos>');
@@ -13274,6 +13278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                 pc_escreve_xml('  <nrdconta>' || rw_crapcob.nrdconta || '</nrdconta>');
                 pc_escreve_xml('  <nrcnvcob>' || rw_crapcob.nrcnvcob || '</nrcnvcob>');
                 pc_escreve_xml('  <dsorgarq>' || rw_crapcob.dsorgarq || '</dsorgarq>');
+								pc_escreve_xml('  <tpconvenio>' || rw_crapcob.dsorgarq || '</tpconvenio>');
                 pc_escreve_xml('  <nmdsacad>' || rw_crapcob.nmdsacad || '</nmdsacad>');
                 pc_escreve_xml('  <nrcpfcgc>' || rw_crapcob.nrcpfcgc || '</nrcpfcgc>');
                 pc_escreve_xml('  <nmcidsac>' || rw_crapcob.nmcidsac || '</nmcidsac>');
@@ -13289,11 +13294,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                 pc_escreve_xml('  <vldpagto>' || rw_crapcob.vldpagto || '</vldpagto>');
                 pc_escreve_xml('  <incobran>' || rw_crapcob.incobran || '</incobran>');
                 pc_escreve_xml('  <flgdprot>' || rw_crapcob.flgdprot || '</flgdprot>');
-                pc_escreve_xml('  <qtdiaprt>' || rw_crapcob.qtdiaprt || '</qtdiaprt>');
-                pc_escreve_xml('  <flserasa>' || rw_crapcob.flserasa || '</flserasa>');
-                pc_escreve_xml('  <qtdianeg>' || rw_crapcob.qtdianeg || '</qtdianeg>');
-                pc_escreve_xml('  <insmsant>' || rw_crapcob.insmsant || '</insmsant>');
-                pc_escreve_xml('  <insmsvct>' || rw_crapcob.insmsvct || '</insmsvct>');
+                pc_escreve_xml('  <pzocobrprot>' || rw_crapcob.qtdiaprt || '</pzocobrprot>');
+                pc_escreve_xml('  <inserasa>' || rw_crapcob.flserasa || '</inserasa>');
+                pc_escreve_xml('  <pzocobrneg>' || rw_crapcob.qtdianeg || '</pzocobrneg>');
+                pc_escreve_xml('  <smsnovcmto>' || rw_crapcob.insmsant || '</smsnovcmto>');
+                pc_escreve_xml('  <smsantesvcmto>' || rw_crapcob.insmsvct || '</smsantesvcmto>');
                 pc_escreve_xml('  <insmspos>' || rw_crapcob.insmspos || '</insmspos>');
                 pc_escreve_xml('  <insitcrt>' || rw_crapcob.insitcrt || '</insitcrt>');
                 pc_escreve_xml('</boleto>');
@@ -13308,6 +13313,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             
             -- Atualiza o XML de retorno
             pr_dsretxml := xmltype(vr_dsxml);
+						
+						-- Libera a memoria do CLOB
+            dbms_lob.close(vr_dsxml);						
         
         EXCEPTION
             WHEN vr_exc_saida THEN

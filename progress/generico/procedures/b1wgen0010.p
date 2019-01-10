@@ -187,7 +187,7 @@
                23/04/2012 - Quando consulta 6 utilizar conta/dv do cooperado
                             para localizar os titulos do sacado. (Rafael)
                             
-               04/06/2012 - Adapta√ß√£o dos fontes para projeto Oracle. Retirada
+               04/06/2012 - AdaptaÁ„o dos fontes para projeto Oracle. Retirada
                             do prefixo "banco" (Guilherme Maba).
                             
                13/08/2012 - Ajuste na tt-consulta-blt ref aos titulos da cob.
@@ -195,8 +195,8 @@
                           - Adicionado campo de tipo de cobranca na rotina
                             de exportar titulos. (Rafael)
                             
-               27/08/2012 - Tratamento para Dt. de Venct. n√£o informada
-                            (conv. pr√©-impresso) (Lucas).
+               27/08/2012 - Tratamento para Dt. de Venct. n„o informada
+                            (conv. prÈ-impresso) (Lucas).
                             
                03/10/2012 - Ajuste na consulta de titulos ref a titulos pagos
                             com cheque (crapcob.dcmc7chq) (Rafael).
@@ -253,8 +253,8 @@
                             instrucoes da b1wgen0088 ref. ao numero do arquivo
                             remessa. (Rafael).
                
-               12/11/2013 - Nova forma de chamar as ag√™ncias, de PAC agora 
-                            a escrita ser√° PA (Guilherme Gielow)
+               12/11/2013 - Nova forma de chamar as agÍncias, de PAC agora 
+                            a escrita ser· PA (Guilherme Gielow)
                             
                13/12/2013 - Melhoria nas leituras efetuadas na tabela CRAPCOB (Daniel).        
                
@@ -266,11 +266,11 @@
                
                04/04/2014 - Ajuste para evitar busca de tarifa incorreta (Daniel).             
                
-               09/05/2014 - Mostrar convenios de cobran√ßa "IMPRESSO PELO SOFTWARE"
+               09/05/2014 - Mostrar convenios de cobranÁa "IMPRESSO PELO SOFTWARE"
                             no InternetBanking apenas se o cooperado estiver
                             habilitado. (Rafael)
                             
-               29/08/2014 - Float: Adi√ß√£o do campo dtcredit na temp-table
+               29/08/2014 - Float: AdiÁ„o do campo dtcredit na temp-table
                             tt-consulta-blt. (Vanessa)
                             
                07/10/2014 - Remover crapcco.flgativo dos for each's (Rafael)
@@ -279,32 +279,32 @@
                             Incorporacao (Rafael).
                
                02/12/2014 - De acordo com a circula 3.656 do Banco Central, substituir nomenclaturas 
-                            Cedente por Benefici√°rio e  Sacado por Pagador 
+                            Cedente por Benefici·rio e  Sacado por Pagador 
                             Chamado 229313 (Jean Reddiga - RKAM).
                
-               17/12/2014 - Ajustes nas rotinas abaixo devido a incorpora√ßao                            
+               17/12/2014 - Ajustes nas rotinas abaixo devido a incorporaÁao                            
                             - gera_retorno_arq_cobranca_coopcob
                             - p_gera_arquivo_febraban           
                             - p_gera_arquivo_outros             
                             (SD 234123 Odirlei-AMcom)                 
                             
-               14/01/2015 - Ajustes para gera√ß√£o do 4-relatorio cedente,
+               14/01/2015 - Ajustes para geraÁ„o do 4-relatorio cedente,
                             montagem do relatorio de titulo descontados
                             (Odirlei-AMcom)
                             
-               27/02/2015 - Ajustes para carregar as informa√ß√µes do email 
+               27/02/2015 - Ajustes para carregar as informaÁıes do email 
                             do pagador da crapsab. 
                             (Projeto Boleto por email - Douglas)
                
                17/03/2015 - Ajuste feito na procedure consulta-boleto-2via onde 
-                            √© feita a chamada da procedure verifica-vencimento-titulo            
+                            È feita a chamada da procedure verifica-vencimento-titulo            
                             em que foi mudado a passagem de parametro de "TODAY"
                             para crapdat.dtmvtocd SD - 134773 (Kelvin)
                             
                28/04/2015 - Ajustes referente Projeto Cooperativa Emite e Expede 
                             (Daniel/Rafael/Reinert) 
                             
-               04/05/2015 - Adicionar valida√ß√£o para n√£o emitir segunda via de boleto
+               04/05/2015 - Adicionar validaÁ„o para n„o emitir segunda via de boleto
                             quando o campo crapcob.dsinform possuir "LIQAPOSBX"
                             (Douglas - Chamado 273377)
 
@@ -318,7 +318,7 @@
                18/08/2015 - Nao eh permitido gerar 2via de boleto do convenio 
                             EMPRESTIMO - Projeto 210. (Rafael)
                
-               25/08/2015 - Alterado rotina consulta-boleto-2via para n√£o 
+               25/08/2015 - Alterado rotina consulta-boleto-2via para n„o 
                             atribuir valor de desconto caso o tipo de mensagem for zero
                             e o titulo ja esteja vencido SD323492 (Odirlei-AMcom)  
                             
@@ -373,7 +373,7 @@
                             Prj. 302 (Jean Michel).
 
                11/10/2016 - Inclusao dos campos de aviso por SMS. 
-                            PRJ319 - SMS Cobran√ßa.  (Odirlei-AMcom)
+                            PRJ319 - SMS CobranÁa.  (Odirlei-AMcom)
 
                24/11/2016 - A busca de conta transferida/migrada nao estava sendo
                             feita corretamente na consulta de 2via de boleto.
@@ -381,7 +381,7 @@
                             da craptco ao buscar na crapass.
                             Heitor (Mouts) - Chamado 554866
 
-               25/11/2016 - Corre√ß√£o no calculo de multa e juros da Melhoria 271
+               25/11/2016 - CorreÁ„o no calculo de multa e juros da Melhoria 271
                             (Douglas Quisinski - Chamado 562804)
 							
                02/12/2016 - Ajuste realizado para nao gerar em branco o relatorio		
@@ -398,7 +398,7 @@
                             conforme solicitado no chamado 573538 (Kelvin).
 
                02/01/2017 - Melhorias referentes a performance no IB na parte
-                            de cobran√ßa rotinas consulta-bloqueto e 
+                            de cobranÁa rotinas consulta-bloqueto e 
                             consulta-boleto-2via (Tiago/Ademir SD573538).  
          
                02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
@@ -412,7 +412,7 @@
                             (Tiago/Ademir SD593608)
                             
                11/10/2016 - Inclusao dos campos de aviso por SMS. 
-                            PRJ319 - SMS Cobran√ßa.  (Odirlei-AMcom)
+                            PRJ319 - SMS CobranÁa.  (Odirlei-AMcom)
 
                07/02/2017 - Alterei a proc. consulta-bloqueto opcao 14 - Relatorio Francesa, obrigando
                             informar a conta para filtro sobre a craprtc. SD 560911 (Carlos Rafael Tanholi)
@@ -460,7 +460,7 @@
                             executar (Douglas - Chamado 807531)
 
                04/01/2018 - Ajuste na verifica-rollout para utilizar a procedure pc_verifica_rollout,
-                            ao inv√©s de executar "SELECT NPCB0001.fn_verifica_rollout FROM DUAL", pois
+                            ao invÈs de executar "SELECT NPCB0001.fn_verifica_rollout FROM DUAL", pois
                             a execucao dessa funcao atraves de SELECT deixa o cursor aberto na sessao
                             do Oracle (Douglas - Chamado 824704)
 
@@ -470,9 +470,9 @@
 			                Manutencao, registros que possuam o campo cdmensag com o valor nulo.
 			                Chamado INC0011898 - Gabriel (Mouts).
 
-               08/06/2018 - Cobran√ßas com campo "dtvctori" nulo n√£o eram apresentados no Internet Banking
+               08/06/2018 - CobranÁas com campo "dtvctori" nulo n„o eram apresentados no Internet Banking
                             na Tela: Cobrancas Bancarias >> Manutencao. Logica alterada para verificar
-                            o campo, caso ele seja nulo, utilizar dtvencto, se n√£o utilizar o proprio campo.
+                            o campo, caso ele seja nulo, utilizar dtvencto, se n„o utilizar o proprio campo.
                             Chamado INC0016935 - Gabriel (Mouts).
 
                16/06/2018 - Ajuste na situacao do boleto quando Protestado "P" 
@@ -787,7 +787,7 @@ PROCEDURE consulta-boleto-2via.
     
     /* ====  validacao do boleto ====*/
     IF crapcob.insitcrt = 3 THEN
-         ASSIGN aux_dscritic = "Boleto bloqueado, entre em contato com o benefici√°rio".
+         ASSIGN aux_dscritic = "Boleto bloqueado, entre em contato com o benefici·rio".
     ELSE IF crapcob.incobran = 5 THEN
          ASSIGN aux_dscritic = "Boleto liquidado. Nao e possivel imprimi-lo.".
     ELSE IF crapcob.incobran = 3 AND crapcob.insitcrt = 1 THEN
@@ -905,9 +905,10 @@ PROCEDURE consulta-boleto-2via.
 								   INPUT crapcob.tpdmulta,           
 								   INPUT crapcob.tpjurmor,           
 								   INPUT YES,           
-                                   INPUT crapcob.flgcbdda,
-                                   INPUT crapdat.dtmvtolt,
-                                   INPUT crapcob.dtvctori,
+                   INPUT crapcob.flgcbdda,
+                   INPUT crapdat.dtmvtolt,
+                   INPUT crapcob.dtvctori,
+                   INPUT crapcob.tpvlrdesc,
 								   OUTPUT aux_dtvencut,           
 								   OUTPUT aux_vltituut,           
 								   OUTPUT aux_vlmormut,           
@@ -923,8 +924,7 @@ PROCEDURE consulta-boleto-2via.
 		DO: 
 			/* se concede ate o vencimento */
 			IF  crapcob.cdmensag = 1 OR
-				crapcob.cdmensag = 0 OR
-				crapcob.cdmensag = 3 THEN /* desconto em @percentual */
+				crapcob.cdmensag = 0 THEN
 				ASSIGN tt-consulta-blt.vldescto = aux_vldescut
 					   tt-consulta-blt.cdmensag = aux_cdmensut.
 		END.
@@ -952,7 +952,7 @@ PROCEDURE consulta-boleto-2via.
 					
     IF aux_npc_cip = 1 THEN
 	 DO:
-	    /* Se estiver na faixa do rollout, data de vencimento e valor do t√≠tulo devem ser mantidos os originais */
+	    /* Se estiver na faixa do rollout, data de vencimento e valor do tÌtulo devem ser mantidos os originais */
          ASSIGN aux_vltituut_atualizado = crapcob.vltitulo
                 aux_dtvencut_atualizado = aux_dtvencut
 				aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori.
@@ -1046,7 +1046,7 @@ PROCEDURE consulta-bloqueto.
  /*                                                                          */
  /* p-origem        > 1-AYLLOS/2-CAIXA ON-LINE/3-INTERNET                    */
  /*                                                                          */
- /* p-inserasa      Vazio ("") = Todos / 2. N√£o Negativado /  3. Sol. Enviadas         */ 
+ /* p-inserasa      Vazio ("") = Todos / 2. N„o Negativado /  3. Sol. Enviadas         */ 
  /*                 4. Negativados / 5. Sol. Com Erros                       */
  /****************************************************************************/
 
@@ -1335,6 +1335,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.tpvlrdesc,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -1575,6 +1576,7 @@ PROCEDURE consulta-bloqueto.
                                                             INPUT crapcob.flgcbdda,
                                                             INPUT crapdat.dtmvtolt,
                                                             INPUT crapcob.dtvctori,
+                                                            INPUT crapcob.tpvlrdesc,
                                                             OUTPUT aux_dtvencut,           
                                                             OUTPUT aux_vltituut,           
                                                             OUTPUT aux_vlmormut,           
@@ -1814,6 +1816,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.tpvlrdesc,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -2056,6 +2059,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.flgcbdda,
                                                                 INPUT crapdat.dtmvtolt,
                                                                 INPUT crapcob.dtvctori,
+                                                                INPUT crapcob.tpvlrdesc,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -2515,6 +2519,7 @@ PROCEDURE consulta-bloqueto.
                                                               INPUT crapcob.flgcbdda,
                                                               INPUT crapdat.dtmvtolt,
                                                               INPUT crapcob.dtvctori,
+                                                              INPUT crapcob.tpvlrdesc,
                                                               OUTPUT aux_dtvencut,           
                                                               OUTPUT aux_vltituut,           
                                                               OUTPUT aux_vlmormut,           
@@ -3640,7 +3645,7 @@ PROCEDURE p_grava_bloqueto:
         
         ASSIGN par_qtregist = par_qtregist + 1.
 
-        /* controles da pagina√ß√£o */
+        /* controles da paginaÁ„o */
         IF  (par_qtregist < par_nriniseq) OR
             (par_qtregist > (par_nriniseq + par_nrregist)) THEN
             LEAVE Cria.
@@ -3689,7 +3694,7 @@ PROCEDURE p_grava_bloqueto_rej:
    Cria: DO ON ERROR UNDO, LEAVE:
         ASSIGN par_qtregist = par_qtregist + 1.
 
-        /* controles da pagina√ß√£o */
+        /* controles da paginaÁ„o */
         IF  (par_qtregist < par_nriniseq) OR
             (par_qtregist > (par_nriniseq + par_nrregist)) THEN
             LEAVE Cria.
@@ -3741,7 +3746,7 @@ PROCEDURE busca_instrucoes:
         EMPTY TEMP-TABLE tt-crapoco.
         EMPTY TEMP-TABLE tt-erro.
 
-        /* Carrega dados para a tela de instru√ß√µes */
+        /* Carrega dados para a tela de instruÁıes */
         FOR EACH crapoco WHERE crapoco.cdcooper = par_cdcoopex
                            AND crapoco.cddbanco = par_cdbandoc
                            AND crapoco.cdocorre > 1
@@ -3863,7 +3868,7 @@ PROCEDURE grava_instrucoes:
                                  (INPUT par_cdcooper, /* Cooperativa */ 
                                   INPUT par_dtmvtolt, /* Data */
                                   INPUT par_cdoperad, /* Operador */
-                                  INPUT par_cdinstru, /* Instru√ßao */
+                                  INPUT par_cdinstru, /* InstruÁao */
                                   INPUT par_nrdconta, /* Conta */
                                   INPUT par_nrcnvcob, /* Convenio */
                                   INPUT par_nrdocmto, /* Boleto */
@@ -3991,7 +3996,7 @@ PROCEDURE exporta_boleto:
 
         PUT STREAM str_1 UNFORMATTED 
         "PA; Conta/DV;Tipo de Cobranca;Convenio;Nosso numero;CPF/CNPJ Pagador;Nome pagador;" +
-        " Data Emiss√£o;Data Vencimento;Vlr Titulo; Data Pagto;Vlr Pagto;Status"
+        " Data Emiss„o;Data Vencimento;Vlr Titulo; Data Pagto;Vlr Pagto;Status"
         SKIP.
 
         FOR EACH tt-consulta-blt:
@@ -4134,7 +4139,7 @@ PROCEDURE cria_tt-consulta-blt.
         ASSIGN aux_nossonro = STRING(crapcob.nrdconta,"99999999") +
                               STRING(crapcob.nrdocmto,"999999999").
     
-    /* Verificar se a crapceb est√° carregada */ 
+    /* Verificar se a crapceb est· carregada */ 
     IF NOT AVAILABLE crapceb THEN
     DO:
         /* Se nao foi carregada, buscamos com base no boleto */
@@ -4305,7 +4310,7 @@ PROCEDURE cria_tt-consulta-blt.
             RETURN "NOK".
          END.                      
 
-     /* Verificar se a crapdat est√° carregada */ 
+     /* Verificar se a crapdat est· carregada */ 
      IF NOT AVAILABLE crapdat THEN
      DO:
        FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
@@ -4373,15 +4378,14 @@ PROCEDURE cria_tt-consulta-blt.
                                            crapcob.dtdocmto)
             tt-consulta-blt.cddespec = crapcob.cddespec
             tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
-                                            crapcob.cdmensag = 2  OR   /* Desconto apos o vencimento */ 
-                                            crapcob.cdmensag = 3) THEN /* Desconto ate o vencimento em @percentual */ 
+                                            crapcob.cdmensag = 2) THEN  /* Desconto apos o vencimento */
                                             crapcob.vldescto
                                         ELSE
                                             0)
             tt-consulta-blt.vlabatim = crapcob.vlabatim
             tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
 
-     /* Tratamento para Negativa√ßao Serasa e Protesto */ 
+     /* Tratamento para NegativaÁao Serasa e Protesto */ 
      ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
             tt-consulta-blt.qtdianeg = crapcob.qtdianeg
             tt-consulta-blt.inserasa = STRING(crapcob.inserasa)
@@ -4532,7 +4536,7 @@ PROCEDURE cria_tt-consulta-blt.
                                     aux_dsstacom = "SUSTADO"
                                     aux_dtsitcrt = crapcob.dtsitcrt.
 
-                 /* se n√£o for nenhuma dos op√ß√µes acima, ent√£o aberto
+                 /* se n„o for nenhuma dos opÁıes acima, ent„o aberto
                     Rafael Cechet - 30/03/11 */
                  OTHERWISE ASSIGN aux_dsstaabr = "ABE"
                                   aux_dsstacom = "ABERTO"
@@ -4706,17 +4710,20 @@ PROCEDURE cria_tt-consulta-blt.
                                        ELSE IF crapcob.tpdmulta = 3 THEN
                                            "ISENTO"
                                        ELSE ""
-            tt-consulta-blt.dscdscto = IF crapcob.cdmensag = 1 THEN
+            tt-consulta-blt.dscdscto = IF crapcob.cdmensag = 1 AND crapcob.tpvlrdesc = 1 THEN
                                            "R$ " + 
                                    TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
                                             " ate vencto"
-                                       ELSE IF crapcob.cdmensag = 2 THEN
+                                       ELSE IF crapcob.cdmensag = 2 AND crapcob.tpvlrdesc = 1 THEN
                                            "R$ " + 
                                    TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
                                             " apos vencto"
-                                       ELSE IF crapcob.cdmensag = 3 THEN /* desconto em @percentual */
+                                       ELSE IF crapcob.cdmensag = 1 AND crapcob.tpvlrdesc = 2 THEN
                                    TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
                                             "% ate vencto"
+                                       ELSE IF crapcob.cdmensag = 2 AND crapcob.tpvlrdesc = 2 THEN
+                                   TRIM(STRING(crapcob.vldescto, "z,zz9.99")) +
+                                            "% apos vencto"
                                        ELSE "".
 
             IF  tt-consulta-blt.cdtpinsc = 1                  AND
@@ -4784,8 +4791,6 @@ PROCEDURE cria_tt-consulta-blt.
         ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
      ELSE IF crapcob.cdmensag = 2 THEN
         ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
-     ELSE IF crapcob.cdmensag = 3 THEN /* desconto em @percentual */
-        ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
      ELSE
         ASSIGN tt-consulta-blt.dsdinst1 = ' '.
      
@@ -5193,7 +5198,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
             WHEN "B" THEN tt-consulta-blt.dssituac = "BAIXADO S/ PAGTO".
        END CASE. 
        
-       /* Verificar se a crapdat est√° carregada */ 
+       /* Verificar se a crapdat est· carregada */ 
        IF NOT AVAILABLE crapdat THEN
        DO:
          FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
@@ -5462,7 +5467,7 @@ PROCEDURE proc_nosso_numero.
         RETURN.
 
 
-    /* Verificar se a crapceb est√° carregada */ 
+    /* Verificar se a crapceb est· carregada */ 
     IF NOT AVAILABLE crapceb THEN
     DO:
         /* Se nao foi carregada, buscamos com base no boleto */
@@ -5503,7 +5508,7 @@ PROCEDURE proc_nosso_numero.
                    aux_na_cdufsaca = crapsab.cdufsaca
                    aux_na_nrcepsac = crapsab.nrcepsac.
 
-        /* Assume como Padr√£o Cooperado Emite e Expede*/
+        /* Assume como Padr„o Cooperado Emite e Expede*/
         aux_nrvarcar = 1.
 
         /* banco emite e expede */
@@ -5617,7 +5622,7 @@ PROCEDURE proc_nosso_numero.
                    ASSIGN tt-consulta-blt.dsendsac = REPLACE(aux_na_dsendsac,"&","%26")
                           tt-consulta-blt.flgemail = FALSE.
 
-               /* Verificar se a crapdat est√° carregada */ 
+               /* Verificar se a crapdat est· carregada */ 
                IF NOT AVAILABLE crapdat THEN
                DO:
                  FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
@@ -5672,8 +5677,7 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.vltitulo = crapcob.vltitulo
                tt-consulta-blt.vldpagto = crapcob.vldpagto
                tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
-                                               crapcob.cdmensag = 2  OR   /* Desconto apos o vencimento */
-                                               crapcob.cdmensag = 3) THEN /* Desconto ate o vencimento em @percentual */ 
+                                               crapcob.cdmensag = 2) THEN /* Desconto apos o vencimento */
                                                crapcob.vldescto
                                            ELSE
                                                0)
@@ -5724,7 +5728,7 @@ PROCEDURE proc_nosso_numero.
                                                             
           END.
            
-           /* Tratamento para Negativa√ßao Serasa e Protesto */ 
+           /* Tratamento para NegativaÁao Serasa e Protesto */ 
            ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
                   tt-consulta-blt.qtdianeg = crapcob.qtdianeg
                   tt-consulta-blt.flgdprot = crapcob.flgdprot
@@ -5781,7 +5785,7 @@ PROCEDURE proc_nosso_numero.
                                            FALSE).
 
         /* verificar se houve a ent confirmada do titulo no BB 
-           condi√ß√£o especial para titulos BB - Banco Emite e Expede */
+           condiÁ„o especial para titulos BB - Banco Emite e Expede */
         IF  crapcob.flgregis       AND 
             crapcob.cdbandoc = 001 AND 
             crapcob.incobran = 0   THEN
@@ -8359,7 +8363,7 @@ PROCEDURE gera_relatorio:
                                                              (INPUT  par_cdcooper        /* par_cdcooper         */
                                                              ,INPUT  ""                  /* par_cdprogra         */
                                                              ,INPUT  crapcem.dsdemail    /* par_des_destino      */
-                                                             ,INPUT  "ARQUIVO DE MOVIMENTO DE COBRAN√áA COM REGISTRO"     /* par_des_assunto      */
+                                                             ,INPUT  "ARQUIVO DE MOVIMENTO DE COBRAN«A COM REGISTRO"     /* par_des_assunto      */
                                                              ,INPUT  ""                  /* par_des_corpo        */
                                                              ,INPUT  aux_nmarqzip        /* par_des_anexo        */
                                                              ,INPUT  "S"                 /* par_flg_remove_anex  */
@@ -8842,7 +8846,7 @@ PROCEDURE pega_valor_tarifas:
                      INPUT  par_nrcnvcob,
                      INPUT  "RET",
                      INPUT  00,
-                     INPUT  "31", /* Outras institui√ß√µes financeiras */
+                     INPUT  "31", /* Outras instituiÁıes financeiras */
                      INPUT  par_inpessoa,
                      INPUT  1,
                      INPUT  "", /* cdprogra */
@@ -9216,7 +9220,7 @@ PROCEDURE verifica_sit_serasa:
     ASSIGN par_proximo = "N".
 
     CASE par_inserasa:
-    WHEN "2" THEN /* 2. N√£o Negativado - Buscar apenas quando CRAPCOB.INSERASA igual a 0 ou 6 */
+    WHEN "2" THEN /* 2. N„o Negativado - Buscar apenas quando CRAPCOB.INSERASA igual a 0 ou 6 */
     DO:
         IF par_cob_inserasa <> 0 AND
            par_cob_inserasa <> 6 THEN
@@ -9267,9 +9271,9 @@ PROCEDURE verifica-rollout:
                  aux_handproc = PROC-HANDLE NO-ERROR
                                  (INPUT par_cdcooper, /* Cooperativa */ 
                                   INPUT STRING(par_dtmvtolt,"99/99/9999"),  /* Data de movimento */
-                                  INPUT par_vltitulo, /* Vl. do T√≠tulo */
+                                  INPUT par_vltitulo, /* Vl. do TÌtulo */
                                   INPUT 2, /* Tipo de regra de rollout(1-registro,2-pagamento)  */
-                                 OUTPUT 0). /* Est√° no Rollout */
+                                 OUTPUT 0). /* Est· no Rollout */
        
     CLOSE STORED-PROC pc_verifica_rollout
                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -9333,6 +9337,7 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF INPUT PARAM par_flgcbdda             AS INTE              NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt             AS DATE              NO-UNDO.
     DEF INPUT PARAM par_dtvctori             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_tpvlrdesc            AS INTE              NO-UNDO.
     DEF OUTPUT PARAM par_dtvencut            AS DATE              NO-UNDO.
     DEF OUTPUT PARAM par_vltituut            AS DECI              NO-UNDO.
     DEF OUTPUT PARAM par_vlmormut            AS DECI              NO-UNDO.
@@ -9397,7 +9402,6 @@ PROCEDURE calcula_multa_juros_boleto:
     
         /* se concede ate o vencimento */
         IF  par_cdmensag = 1 OR
-            par_cdmensag = 3 OR /* desconto em @percentual */
             par_cdmensag = 0 THEN
             ASSIGN par_vldescut = 0
                    par_cdmensut = 0
@@ -9407,21 +9411,25 @@ PROCEDURE calcula_multa_juros_boleto:
     ELSE
     DO:       
         /* se concede ate o vencto, ja calculou */
-        IF  par_cdmensag <> 2 AND par_cdmensag <> 3 THEN
+        IF  par_cdmensag <> 2 AND par_tpvlrdesc <> 2 THEN
             ASSIGN aux_vldescto = par_vldescto
                    aux_vlfatura = aux_vlfatura - aux_vldescto.
 
         /* se concede ate o vencto em @percentual, ja calculou */
-        IF  par_cdmensag = 3 THEN
+        IF  par_tpvlrdesc = 2 THEN
             ASSIGN aux_vldescto = par_vldescto
-                   aux_vlfatura = aux_vlfatura - (aux_vlfatura * (aux_vldescto/100)).
+                   aux_vlfatura = ROUND(aux_vlfatura - (aux_vlfatura * (aux_vldescto / 100)), 2).
     END.
 
     /* se concede apos o vencimento */
-    IF  par_cdmensag = 2  THEN
+    IF  par_cdmensag = 2 AND par_tpvlrdesc <> 2 THEN
         ASSIGN aux_vldescto = par_vldescto
                aux_vlfatura = aux_vlfatura - aux_vldescto.
 
+    /* se concede apos o vencto em @percentual */
+    IF  par_cdmensag = 2 AND par_tpvlrdesc = 2 THEN
+        ASSIGN aux_vldescto = par_vldescto
+               aux_vlfatura = ROUND(aux_vlfatura - (aux_vlfatura * (aux_vldescto / 100)), 2).
 
     /* valor final da tarifa */
     ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
@@ -9429,7 +9437,7 @@ PROCEDURE calcula_multa_juros_boleto:
     IF  par_flag2via  THEN
         DO:
             
-            /* Verificar se o titulo est√° vencido e se est√° fora do rollout
+            /* Verificar se o titulo est· vencido e se est· fora do rollout
                para atualizar a data de vencimento */
             ASSIGN par_dtvencut = (IF aux_critdata THEN /* Titulo Vencido */
                                        par_dtmvtocd 
@@ -9473,7 +9481,7 @@ PROCEDURE calcula_multa_juros_boleto:
         END CASE.    
 
         /* 3 = desconto em @percentual*/
-        IF  (tt-consulta-blt.cdmensag = 1 OR tt-consulta-blt.cdmensag = 3) AND par_vldescut > 0 THEN
+        IF  tt-consulta-blt.cdmensag = 1 AND par_vldescut > 0 THEN
             ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
         ELSE IF tt-consulta-blt.cdmensag = 2 THEN
             ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
@@ -9644,10 +9652,10 @@ PROCEDURE p_calc_linha_digitavel:
                         OUTPUT aux_digito,
                         OUTPUT aux_retorno).
                               
-     /* Quarto Campo Linha Digit√°vel = DV - C√≥digo de Barras */
+     /* Quarto Campo Linha Digit·vel = DV - CÛdigo de Barras */
      ASSIGN aux_titulo4 = DEC(SUBSTRING(par_codbarras,5,1)).
       
-     /* Quinto Campo Linha Digit√°vel = FV + Valor do titulo */
+     /* Quinto Campo Linha Digit·vel = FV + Valor do titulo */
      ASSIGN aux_titulo5 = DEC(SUBSTRING(par_codbarras,6,4) + 
                               SUBSTRING(par_codbarras,10,10)).      
       
@@ -9680,7 +9688,7 @@ PROCEDURE valida_caracteres:
  
     ASSIGN aux_especial = ".,-_ "
 		   aux_numeros  = "1234567890"
-		   aux_letras   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ√Å√Ä√Ñ√Ç√É√â√à√ã√ä√ç√å√è√é√ì√í√ñ√î√ï√ö√ô√ú√õ√áabcdefghijklmnopqrstuvwxyz√°√†√§√¢√£√©√®√´√™√≠√¨√Ø√Æ√≥√≤√∂√¥√µ√∫√π√º√ª√ß".
+		   aux_letras   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ¡¿ƒ¬√…»À ÕÃœŒ”“÷‘’⁄Ÿ‹€«abcdefghijklmnopqrstuvwxyz·‡‰‚„ÈËÎÍÌÏÔÓÛÚˆÙı˙˘¸˚Á".
    
     aux_caracteres = aux_caracteres + aux_numeros.
 
