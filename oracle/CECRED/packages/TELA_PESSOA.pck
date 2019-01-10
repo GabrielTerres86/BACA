@@ -182,7 +182,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
          , ass.flgctitg
          , ass.inpessoa
          , ass.tpvincul
-         , ass.dtelimin
          , ass.cdsitdct
       from crapass ass
      where ass.cdcooper = pr_cdcooper
@@ -283,15 +282,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
     close cr_crapass;
 
-    -- Verifica se conta esta ativa
-    if rw_crapass.dtelimin is not null then
-      vr_cdcritic := 410;
-      raise vr_exc_erro;
-    elsif rw_crapass.cdsitdct <> 1 and rw_crapass.tpvincul is not null then
-      vr_cdcritic := 64;
-      raise vr_exc_erro;
-    end if;
-
     -- Verifica se existe segundo titular
     if rw_crapass.inpessoa = 1 then
 
@@ -317,11 +307,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
     -- Concatena informacoes da conta integracao
     if  rw_crapass.flgctitg = 2 then
-      vr_nrdctitg := gene0002.fn_mask_conta(nvl(trim(rw_crapass.nrdctitg),0)) || ' - Ativa';
+      vr_nrdctitg := gene0002.fn_mask_conta(nvl(trim(replace(rw_crapass.nrdctitg,'X',0)),0)) || ' - Ativa';
     elsif rw_crapass.flgctitg = 3 then
       vr_nrdctitg := gene0002.fn_mask_conta(nvl(trim(replace(rw_crapass.nrdctitg,'X',0)),0)) || ' - Inativa';
     elsif rw_crapass.nrdctitg is not null then
-      vr_nrdctitg := gene0002.fn_mask_conta(nvl(trim(rw_crapass.nrdctitg),0)) || ' - Em Proc';
+      vr_nrdctitg := gene0002.fn_mask_conta(nvl(trim(replace(rw_crapass.nrdctitg,'X',0)),0)) || ' - Em Proc';
     end if;
 
     -- Busca cnpj da cooperativa
@@ -1290,16 +1280,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
           raise vr_exc_erro;
 
       end;
-
+      
 	  if rw_busca_cargos.dtfim_vigencia is null then
-
+        
 		begin
 
           update crapass c
              set c.tpvincul = vr_cdfuncao
            where c.cdcooper = pr_cdcooper
              and c.nrcpfcgc = pr_nrcpfcgc;
-
+        
         exception
           
           when others then
@@ -1307,7 +1297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
             -- Montar mensagem de critica
             vr_cdcritic := 0;
             vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
-          raise vr_exc_erro;
+            raise vr_exc_erro;
 
         end;
 
@@ -1316,11 +1306,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
                                ,pr_nrcpfcgc => pr_nrcpfcgc
                                ,pr_tpvincul => vr_cdfuncao
                                ,pr_dscritic => vr_dscritic);
-        
+                     
         -- Aborta em caso de erro
         if trim(vr_dscritic) is not null then
           raise vr_exc_erro;
-    end if;  
+        end if;
 
       end if;
         

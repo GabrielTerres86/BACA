@@ -1028,7 +1028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                       ,vr_table_insert(vr_idx).idpessoa
                                       ,vr_table_insert(vr_idx).nrdconta
                                       ,sysdate
-                                      ,0
+                                      ,0 --1 Primeira execucao sera como "Enviado"
                                       ,null
                                       ,null
                                       ,null
@@ -2625,7 +2625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , crd.nrcrcard
       from crawcrd crd
      where crd.cdcooper = pr_cdcooper
-       and crd.dtrefatu > pr_dtrefatu
+       and crd.dtlibera > pr_dtrefatu
        and nvl(crd.nrcrcard,0) > 0
        -- Evita reenviar um cartao que ja foi
        -- enviado anteriormente com sucesso
