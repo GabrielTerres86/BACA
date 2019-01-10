@@ -540,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 31/12/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 08/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -651,6 +651,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 31/12/2018 - Ajuste para contornar validação do último dia 
                              útil do ano 
                              (Adriano - INC0030017).
+
+				 08/01/2019 - Ajuste para desconsiderar contas favorecidas que pertecem a uma cooperativa inativa
+			                 (Adriano - INC0029631).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -5562,7 +5565,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     Sistema  : Procedure para consulta de contas de trnsf cadastradas 
     Sigla    : CRED
     Autor    : Carlos Henrique
-    Data     : março/2016.                   Ultima atualizacao: 25/04/2017
+    Data     : março/2016.                   Ultima atualizacao: 08/01/2019
   
    Dados referentes ao programa:
   
@@ -5582,6 +5585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+  
+			   08/01/2019 - Ajuste para desconsiderar contas favorecidas que pertecem a uma cooperativa inativa
+			                (Adriano - INC0029631).
   
   ---------------------------------------------------------------------------------------------------------------*/
   -------------------------> VARIAVEIS <-------------------------
@@ -5647,7 +5653,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     CURSOR cr_crapcop_cdagectl(pr_cdageban IN crapcop.cdagectl%TYPE) IS
     SELECT cdcooper, nmrescop
       FROM crapcop
-     WHERE crapcop.cdagectl = pr_cdageban;
+     WHERE crapcop.cdagectl = pr_cdageban
+	   AND crapcop.flgativo = 1;
     rw_crapcop_cdagectl cr_crapcop_cdagectl%ROWTYPE;
 
     CURSOR cr_crapass (pr_cdcooper IN crapcop.cdcooper%TYPE,
