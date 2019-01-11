@@ -190,10 +190,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
                                        ,pr_idsessao OUT VARCHAR2 -- Id da Sessão no WS da PG  (Parâmetro SessionId)
                                        ,pr_dscritic OUT VARCHAR2 -- Mensagem de erro retornada no WS
                                         ) IS
-    vr_response json;
-    vr_clob     CLOB;
-    vr_nmdireto VARCHAR2(1000);
-    vr_nmarquiv VARCHAR2(1000);
+    vr_response   json;
+    vr_clob       CLOB;
+    vr_nmdireto   VARCHAR2(1000);
+    vr_nmarquiv   VARCHAR2(1000);
+	vr_erroconver VARCHAR2(1);
   BEGIN
     --Separar arquivo do path
     gene0001.pc_separa_arquivo_path(pr_caminho => pr_arqreceb --Arquivo Recebimento
