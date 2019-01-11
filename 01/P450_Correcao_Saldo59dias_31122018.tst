@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-607
+618
 -- Created on 11/01/2019 by T0031667 
 declare 
   -- Busca saldo até 59 dias e valores de juros +60 detalhados (hist. 37+2718, hist 38 e hist. 57)
@@ -15,10 +15,13 @@ declare
   CURSOR cr_crapris(pr_cdcooper NUMBER) IS 
   SELECT nrdconta
        , qtdiaatr
+			 , innivris
+			 , progress_recid
     FROM crapris ris
    WHERE cdcooper = pr_cdcooper
      AND dtrefere = to_date('31/12/2018', 'DD/MM/YYYY')
 		 AND cdmodali = 101
+		 AND nrdconta = nrctremp
 		 AND qtdiaatr < 60
 		 AND vldivida > 0
 		 AND vlsld59d = 0;
@@ -30,6 +33,8 @@ vr_vlju6038 NUMBER;
 vr_vlju6057 NUMBER;
 vr_cdcritic NUMBER;
 vr_dscritic VARCHAR(2000);
+
+vr_cdvencto NUMBER;
 	
 FUNCTION fn_valida_dia_util(pr_cdcooper NUMBER, pr_dtmvtolt DATE)
     RETURN BOOLEAN AS vr_dia_util BOOLEAN;
@@ -591,16 +596,22 @@ begin
 			UPDATE crapris ris
 			   SET vlsld59d = nvl(vr_vlsld59d, 0)
 				   , vljura60 = nvl(vr_vlju6037, 0) + nvl(vr_vlju6038, 0) + nvl(vr_vlju6057, 0)
-			 WHERE cdcooper = rw_crapcop.cdcooper
-			   AND nrdconta = rw_crapris.nrdconta
-				 AND cdmodali = 101
-				 AND dtrefere = to_Date('31/12/2018', 'DD/MM/YYYY');
+			 WHERE progress_recid = rw_crapris.progress_recid;
+			 
+			IF rw_crapris.qtdiaatr <= 30 THEN
+			  vr_cdvencto := 110;
+			ELSE 
+			  vr_cdvencto := 120;
+			END IF;
 				 
 			UPDATE crapvri vri
 			   SET vri.vldivida = nvl(vr_vlsld59d, 0)
 			 WHERE cdcooper = rw_crapcop.cdcooper
 			   AND nrdconta = rw_crapris.nrdconta
 				 AND cdmodali = 101
+				 AND cdvencto = vr_cdvencto
+				 AND nrctremp = rw_crapris.nrdconta
+				 AND innivris = rw_crapris.innivris
 				 AND dtrefere = to_Date('31/12/2018', 'DD/MM/YYYY');
 		END LOOP;
 	END LOOP;
