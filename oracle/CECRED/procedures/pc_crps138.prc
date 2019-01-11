@@ -155,7 +155,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
           FROM dual 
          WHERE gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
                                               ,'CRPS133'   --> Código do programa
-                                               ) > 0
+                                               ) > 0;
 
 
       --busca cadastro de informacoes gerais para todos os PAs
