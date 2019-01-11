@@ -28,24 +28,6 @@ PROCEDURE pc_extrato_emprestimo_inss(pr_cdcooper IN INTEGER             -- Codig
 
 end INSS0004;
 /
-/* 
-  Programa : INSS0004
-  Autor    : Douglas Quisinski
-  Data     :                               Ultima atualizacao: 19/11/2018
-
-  Dados referentes ao programa:
-
-  Frequencia: Diario (on-line)
-  Objetivo  : 
-
-  Alterações:
-  
-  19/11/2018 - sctask0034357 na rotina pc_obter_token, atualização do type json para pljson, correção de retorno 
-               de erro na obtenção do token, que estava retornando sempre ok; na rotina pc_envia_requisicao_soap,
-               criada a exception vr_exception, que estava sendo chamada mas não estava implementada; na rotina
-               pc_extrato_emprestimo_inss, melhoria no retorno das informações dos erros (Carlos)
-   
-*/
 create or replace package body cecred.INSS0004 is
 
     /*  
@@ -172,6 +154,9 @@ create or replace package body cecred.INSS0004 is
                             ,pr_retorno OUT VARCHAR2) IS    -- Saída OK/NOK
         vr_comando_curl     VARCHAR2(5000);
 
+        vr_token            VARCHAR2(1000) := '';
+        vr_token_type       VARCHAR2(50)   := ''; 
+
         vr_token_api_eco    VARCHAR2(200);
 
         vr_typ_saida        VARCHAR2(5000);
@@ -192,21 +177,22 @@ create or replace package body cecred.INSS0004 is
                                ,pr_des_saida   => vr_out);                                    
 
         -- Extrai TOKEN do JSON de retorno
-        pr_token := regexp_replace(pljson(vr_out).get('access_token').to_char,'^\"|\"$','');
+        vr_token := regexp_replace(json(vr_out).get('access_token').to_char,'^\"|\"$','');
         
         -- Extrai TOKEN do JSON de retorno
-        pr_token_type := regexp_replace(pljson(vr_out).get('token_type').to_char,'^\"|\"$','');
+        vr_token_type := regexp_replace(json(vr_out).get('token_type').to_char,'^\"|\"$','');
         
-        IF nvl(pr_token,NULL) IS NULL OR nvl(pr_token_type,NULL) IS NULL THEN
+        IF vr_token = '' THEN
             pr_retorno := 'NOK';
-            RETURN;
         END IF;
 
+        IF vr_token_type = '' THEN
+            pr_retorno := 'NOK';
+        END IF;
+
+        pr_token := vr_token;
+        pr_token_type := vr_token_type;
         pr_retorno := 'OK';
-      EXCEPTION
-        WHEN OTHERS THEN
-          cecred.pc_internal_exception;
-          pr_retorno := 'NOK';
     END pc_obter_token;
 
     /* 
@@ -342,7 +328,6 @@ create or replace package body cecred.INSS0004 is
         pr_retorno := 'OK';
     EXCEPTION 
         WHEN OTHERS THEN
-            cecred.pc_internal_exception;
             pr_retorno := 'NOK';
     END pc_gerar_caminho_arquivos_req;    
 
@@ -378,7 +363,7 @@ create or replace package body cecred.INSS0004 is
                                                         pr_cdcooper => 0,
                                                         pr_cdacesso => 'LINK_API_ECO_INSS');
 
-        IF nvl(vr_link_api_eco,NULL) IS NULL THEN
+        IF vr_link_api_eco = '' THEN
             pr_dsderror := 'Erro ao obter API do servico SOAP';
             RAISE vr_exception;
         END IF;
@@ -398,10 +383,7 @@ create or replace package body cecred.INSS0004 is
         pr_xml_ret := XMLTYPE(vr_out);
         pr_retorno := 'OK';
     EXCEPTION 
-        WHEN vr_exception THEN            
-            pr_retorno := 'NOK';
         WHEN OTHERS THEN
-            cecred.pc_internal_exception;
             pr_retorno := 'NOK';
     END pc_envia_requisicao_soap;
 
