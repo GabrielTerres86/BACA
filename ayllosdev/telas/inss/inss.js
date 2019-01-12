@@ -1,7 +1,7 @@
 /*****************************************************************************************
  Fonte: inss.js                                                   
  Autor: Adriano                                                   
- Data : Maio/2013             					   Última Alteração: 26/06/2017
+ Data : Maio/2013             					   Última Alteração: 07/01/2019
                                                                   
  Objetivo  : Biblioteca de funções da tela INSS                 
                                                                   
@@ -30,6 +30,9 @@
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
 						  
              11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+
+             07/01/2019 - Inclusão das rotinas para uso do serviço de "Reenvio cadastral"
+			             (Jonata - Mouts - SCTASK0030602).
  		  
 ******************************************************************************************/
 
@@ -2936,5 +2939,53 @@ function voltarAtenda() {
 	setaParametros ('ATENDA', '', nrdconta, flgcadas);
 	setaATENDA();
 	direcionaTela('ATENDA','no');
+	
+}
+
+
+
+
+function reenviarCadastro(cddopcao){
+
+	var nrdconta = normalizaNumero($('#nrdconta','#frmConsulta').val());
+	var cdorgins = $('#cdorgins','#frmConsulta').val();
+	var nrrecben = $('#nrrecben','#frmConsulta').val();
+	var nrcpfcgc = normalizaNumero($('#nrcpfcgc','#frmAlteracaoCadastral').val());
+	var idseqttl = $('#idseqttl','#frmConsulta').val();
+	
+	$('input,select').removeClass('campoErro');
+	
+	//Mostra mensagem de aguardo
+    showMsgAguardo('Aguarde, reenviando cadastro...');
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'telas/inss/reenviar_cadastro.php',
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			cdorgins: cdorgins,
+			nrcpfcgc: nrcpfcgc,
+			idseqttl: idseqttl,
+			nrrecben: nrrecben,
+			redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Aimaro","$('#btVoltar','#divBotoesConsulta').focus();");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();				
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$("#btVoltar","#divBotoesConsulta").focus();');
+				}
+				
+		}				
+	});
+		
+	return false;
 	
 }

@@ -1,22 +1,25 @@
 <?php
 /*****************************************************************
-	Fonte        : form_consulta.php					⁄ltima alteraÁ„o: 26/06/2017
-  CriaÁ„o      : Adriano
-  Data criaÁ„o : Maio/2013
+	Fonte        : form_consulta.php					√öltima altera√ß√£o: 07/01/2019
+  Cria√ß√£o      : Adriano
+  Data cria√ß√£o : Maio/2013
   Objetivo     : Mostra o form de consulta da tela INSS
   --------------
-  AlteraÁıes   : 10/03/2015 - Ajuste referente ao HistÛrico cadastral
+  Altera√ß√µes   : 10/03/2015 - Ajuste referente ao Hist√≥rico cadastral
                               (Adriano - Softdesk 261226).
 							  
-				 01/09/2015 - MudanÁa no layout:
+				 01/09/2015 - Mudan√ßa no layout:
 						      Aumento do tamanho da tela para inclusao de novos campos.
-							  Inseridos campos "Data de nascimento", "DescriÁ„o do benefÌcio".
+							  Inseridos campos "Data de nascimento", "Descri√ß√£o do benef√≠cio".
 							  Projeto 255 - INSS (Lombardi)
 
 					03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
 
 
-					26/06/2017 - Ajuste para rotina ser chamada atravÈs da tela ATENDA > Produtos (Jonata - RKAM - P364).
+					26/06/2017 - Ajuste para rotina ser chamada atrav√©s da tela ATENDA > Produtos (Jonata - RKAM - P364).
+
+					07/01/2019 - Inclus√£o das rotinas para uso do servi√ßo de "Reenvio cadastral"
+			                    (Jonata - Mouts - SCTASK0030602).
 
   --------------
  ****************************************************************/ 
@@ -176,14 +179,14 @@
 		
 		for ($i = 0; $i < count($rotinas); $i++) {
 		
-		/*Habilita os botıes abaixo apenas se a cooperativa do benefÌcio for igual a cooperativa logada*/
+		/*Habilita os bot√µes abaixo apenas se a cooperativa do benef√≠cio for igual a cooperativa logada*/
 		if($rotinas[$i] == "CONSULTA" && 
 		   getByTagName($registro->tags,'copvalid') == 1){?>
 						
 			<a href="#" class="botao" id="btTrocaConta" onClick="acessaRotina('<?echo $rotinas[$i];?>','T');return false;" >Troca Conta</a>	
 			<a href="#" class="botao" id="btCompravaVida" onClick="acessaRotina('<?echo $rotinas[$i];?>','C');return false;" >Comprova Vida</a>	
 			<a href="#" class="botao" id="btAlteracaoCadastral" onClick="acessaRotina('<?echo $rotinas[$i];?>','A');return false;" >Altera Cadastro</a>	
-					
+			<a href="#" class="botao" id="btReenviarCadastro" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','reenviarCadastro(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesConsulta\').focus();','sim.gif','nao.gif');return false;" >Reenvio de Cadastro</a> 
 		<?}	
 		}
 	

@@ -1,37 +1,95 @@
 create or replace package CECRED.INSS0004 is
 
   /*
-  *   Procedure para realizar a consulta de margem consign√°vel
+  *   Procedure para realizar a consulta de margem consign·vel
   */
   PROCEDURE pc_margem_consignavel_inss(pr_cdcooper IN INTEGER             -- Codigo da Cooperativa        
                                           ,pr_nrdconta IN INTEGER         -- Numero da Conta          
                                           ,pr_cdorgins IN NUMBER          -- Codigo do Orgao Pagador  
-                                          ,pr_nrbenefi IN NUMBER          -- Numero do Benef√≠cio      
+                                          ,pr_nrbenefi IN NUMBER          -- Numero do BenefÌcio      
                                           ,pr_cdcoptfn IN INTEGER         -- Cooperativa do TAA       
                                           ,pr_cdagetfn IN INTEGER         -- Agencia do TAA           
                                           ,pr_nrterfin IN INTEGER         -- Numero do TAA            
-                                          ,pr_retorno OUT CLOB            -- XML da margem consign√°vel
-                                          ,pr_dsderror OUT VARCHAR2);     -- Mensagem de erro de sa√≠da
+                                          ,pr_retorno OUT CLOB            -- XML da margem consign·vel
+                                          ,pr_dsderror OUT VARCHAR2);     -- Mensagem de erro de saÌda
 
 /*
-*   Procedure para realizar a consulta de margem consign√°vel
+*   Procedure para realizar a consulta de margem consign·vel
 */
 PROCEDURE pc_extrato_emprestimo_inss(pr_cdcooper IN INTEGER             -- Codigo da Cooperativa
                                         ,pr_nrdconta IN INTEGER         -- Numero da Conta
                                         ,pr_cdorgins IN NUMBER          -- Codigo do Orgao Pagador
-                                        ,pr_nrbenefi IN NUMBER          -- Numero do Benef√≠cio
+                                        ,pr_nrbenefi IN NUMBER          -- Numero do BenefÌcio
                                         ,pr_cdcoptfn IN INTEGER         -- Cooperativa do TAA
                                         ,pr_cdagetfn IN INTEGER         -- Agencia do TAA
                                         ,pr_nrterfin IN INTEGER         -- Numero do TAA
                                         ,pr_retorno OUT CLOB            -- XML do extrato de emprestimo
-                                        ,pr_dsderror OUT VARCHAR2);     -- Descri√ß√£o do erro                                                
+                                        ,pr_dsderror OUT VARCHAR2);     -- DescriÁ„o do erro                                                
+                                        
+/* 
+    *   Executar um comando no Host usando a interface com saÌda 
+    */
+PROCEDURE pc_OScommand_SHELL_INSS(pr_des_comando IN VARCHAR2
+                                  ,pr_typ_saida  OUT VARCHAR2
+                                  ,pr_des_saida  OUT VARCHAR2);
+                                  
+/*  
+*   Realiza a requisiÁ„o SOAP 
+*/
+PROCEDURE pc_envia_requisicao_soap (pr_xml_req IN VARCHAR2          -- Caminho do arquvio XML de requesiÁ„o       
+                                    ,pr_tpservico IN INTEGER        -- Tipo do servico          
+                                    ,pr_xml_ret OUT XMLTYPE         -- XML de retorno da requisiÁ„o
+                                    ,pr_retorno OUT VARCHAR2        -- SaÌda OK/NOK
+                                    ,pr_dsderror OUT VARCHAR2);   -- Mensagem de erro  
+/*
+*   Procedure para gerar os caminho dos arquivos XML da requisiÁao (envio/retorno)
+*/
+PROCEDURE pc_gerar_caminho_arquivos_req(pr_cdcooper IN crapcop.cdcooper%type    -- Codigo Cooperativa
+                                        ,pr_nrdconta IN VARCHAR2                -- Numero da Conta
+                                        ,pr_tpservico IN INTEGER                -- Tipo do servico
+                                        ,pr_msgenvio OUT VARCHAR2               -- Caminho absoluto do arquivo de envio
+                                        ,pr_msgreceb OUT VARCHAR2               -- Caminho absoluto do arquivo de retorno
+                                        ,pr_nmdireto OUT VARCHAR2               -- Caminho do diretÛrio dos arquvios de envio e retorno    
+                                        ,pr_retorno  OUT VARCHAR2);             -- SaÌda OK/NOK   
+                                        
+/* 
+*   Gera o arquivo XML da requisic„o 
+*/
+PROCEDURE pc_criar_arq_xml_requisicao(pr_caminho IN VARCHAR2             -- DiretÛrio com o nome do arquivo que ser· salvo
+                                     ,pr_nmmetodo IN VARCHAR2            -- Nome do mÈtodo 
+                                     ,pr_nmmetodo_in IN VARCHAR2         -- Nome do mÈtodo In
+                                     ,pr_canal IN VARCHAR2               -- CÛdigo do canal de atendimento
+                                     ,pr_tpservico IN INTEGER             -- Tipo de servico
+                                     ,pr_coop_origem IN NUMBER           -- CÛdigo da cooperativa que est· realizando a consulta                                         
+                                     ,pr_numero_beneficio IN NUMBER      -- N˙mero do benifici·rio
+                                     ,pr_orgao_pagador IN NUMBER         -- N˙mero do org„o pagador
+                                     ,pr_posto_origem IN NUMBER          -- N˙mero do posto/UA que est· realizando a consulta
+                                     ,pr_usuario_origem IN VARCHAR2      -- CÛdigo do usu·rio que est· realizando a consulta
+                                     ,pr_retorno  OUT VARCHAR2           -- SaÌda OK/NOK
+                                     ,pr_dsderror OUT VARCHAR2) ;        -- Mensagem de erro                                                             
+                                     
+/*
+*   Procedure para gerar os caminho dos arquivos XML da requisiÁao (envio/retorno)
+*/
+PROCEDURE pc_excluir_arq_xml_requisicao(pr_caminho IN VARCHAR2,      -- DiretÛrio com o nome do arquivo que ser· salvo
+                                        pr_retorno OUT VARCHAR2) ;  -- SaÌda OK/NOK                                     
 
+
+/*
+*   Procedure para pegar retorno xml
+*/
+PROCEDURE pc_pegar_retorno_xml(pr_orgao_pagador IN NUMBER          -- CÛdigo do org„o pagador
+                              ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisiÁ„o
+                              ,pr_dscritic OUT VARCHAR2       --Descricao da critica
+                              ,pr_retorno OUT VARCHAR2);    -- SaÌda OK/NOK
+                                
+                                
 end INSS0004;
 /
 create or replace package body cecred.INSS0004 is
 
     /*  
-    *    Fun√ß√£o para buscar a cooperativa de origem.
+    *    FunÁ„o para buscar a cooperativa de origem.
     */
     FUNCTION fn_get_coop_origem(pr_cdcoptfn IN NUMBER) RETURN NUMBER IS  -- Cooperativa do TAA
         vr_coop_origem NUMBER(10);
@@ -57,7 +115,7 @@ create or replace package body cecred.INSS0004 is
     /*
     *   Adiciona linha com espacamento conforme tamanho do label
     */
-    FUNCTION fn_adicionar_linha(pr_label IN VARCHAR2                        -- Descri√ß√£o do valor
+    FUNCTION fn_adicionar_linha(pr_label IN VARCHAR2                        -- DescriÁ„o do valor
                                 ,pr_value IN VARCHAR2) RETURN VARCHAR2 IS   -- Valor para ser adicionado
         vr_linha VARCHAR2(500);
         vr_espacamento INTEGER;
@@ -98,13 +156,13 @@ create or replace package body cecred.INSS0004 is
         AS LANGUAGE JAVA NAME 'OSCommand.executeCommand(java.lang.String,java.lang.String,java.lang.String)';
 
     /* 
-    *   Executar um comando no Host usando a interface com sa√≠da 
+    *   Executar um comando no Host usando a interface com saÌda 
     */
     PROCEDURE pc_OScommand_SHELL_INSS(pr_des_comando IN VARCHAR2
                                     ,pr_typ_saida  OUT VARCHAR2
                                     ,pr_des_saida  OUT VARCHAR2) IS
 
-        -- Busca da sa√≠da na DBMS_OUTPUT
+        -- Busca da saÌda na DBMS_OUTPUT
         vr_dsout DBMS_OUTPUT.chararr;
         vr_qtlin INTEGER := 1000;
         
@@ -115,26 +173,26 @@ create or replace package body cecred.INSS0004 is
         DBMS_OUTPUT.disable;
         DBMS_OUTPUT.enable(1000000);
         DBMS_JAVA.set_output(1000000);
-        -- Efetuar a instru√ß√£o passada diretamente no shell
+        -- Efetuar a instruÁ„o passada diretamente no shell
         pc_interface_OScommand_INSS(gene0001.fn_param_sistema('CRED',0,'SCRIPT_EXEC_SHELL'),'shell',pr_des_comando);
         -- Armazenar o retorno
         DBMS_OUTPUT.get_lines(vr_dsout,vr_qtlin);
         -- Processar o retorno
         FOR vr_ind IN 1..vr_qtlin LOOP
-            -- Na primeira intera√ß√£o
+            -- Na primeira interaÁ„o
             IF vr_ind = 1 THEN
             -- Se o tamanho for superior a 3 bytes
             IF LENGTH(vr_dsout(vr_ind)) > 3 THEN
                 -- Gerar erro
                 pr_typ_saida := 'ERR';
-                -- Incluir esta informa√ß√£o na sa√≠da
+                -- Incluir esta informaÁ„o na saÌda
                 pr_des_saida := pr_des_saida || vr_dsout(vr_ind) ||chr(10);
             ELSE
-                -- Retorna o tipo da sa√≠da
+                -- Retorna o tipo da saÌda
                 pr_typ_saida := vr_dsout(vr_ind);
             END IF;
             ELSE
-            -- Adicionar na vari√°vel de retorno
+            -- Adicionar na vari·vel de retorno
             pr_des_saida := pr_des_saida || vr_dsout(vr_ind) ||chr(10);
             END IF;
         END LOOP;
@@ -147,27 +205,38 @@ create or replace package body cecred.INSS0004 is
     END pc_OScommand_SHELL_INSS;
 
     /* 
-    *   Procedure para obter o TOKEN para realiza√ß√£o das requisi√ß√µes 
+    *   Procedure para obter o TOKEN para realizaÁ„o das requisiÁıes 
     */
-    PROCEDURE pc_obter_token(pr_token OUT VARCHAR2          -- TOKEN para realiza√ß√£o das requisi√ß√µes
+    PROCEDURE pc_obter_token(pr_tpservico IN INTEGER        -- Tipo do servico          
+                            ,pr_token OUT VARCHAR2          -- TOKEN para realizaÁ„o das requisiÁıes
                             ,pr_token_type OUT VARCHAR2     -- Tipo do TOKEN retornado
-                            ,pr_retorno OUT VARCHAR2) IS    -- Sa√≠da OK/NOK
+                            ,pr_retorno OUT VARCHAR2) IS    -- SaÌda OK/NOK
         vr_comando_curl     VARCHAR2(5000);
 
         vr_token            VARCHAR2(1000) := '';
         vr_token_type       VARCHAR2(50)   := ''; 
 
-        vr_token_api_eco    VARCHAR2(200);
-
+        vr_token_api        VARCHAR2(200);
+        vr_cod_token_api    VARCHAR2(4000);
         vr_typ_saida        VARCHAR2(5000);
         vr_out              VARCHAR2(5000);
     BEGIN
-        vr_token_api_eco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+        vr_cod_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                      pr_cdcooper => 0,
+                                                      pr_cdacesso => 'COD_TOKEN_API_INSS');
+        
+        IF pr_tpservico = 1 THEN                                            
+          vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdcooper => 0,
                                                         pr_cdacesso => 'TOKEN_API_ECO_INSS');
-
+        ELSE
+          vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                    pr_cdcooper => 0,
+                                                    pr_cdacesso => 'TOKEN_API_REENV_CAD_INSS');
+        END IF;
+                                                
         vr_comando_curl := 'curl -k -X POST ' 
-                            || '"'||vr_token_api_eco||'"'
+                            || '"'||vr_token_api||'"'
                             || ' -H "authorization: Basic eTFKZ05HYmNkcERmSzVMdXBxblY5c0l2aks4YTpFRUlIWGpfYnNmMEVMVk5CVjVuX0FrNVNmTThh"'
                             || ' -H "cache-control: no-cache"';
         
@@ -196,18 +265,19 @@ create or replace package body cecred.INSS0004 is
     END pc_obter_token;
 
     /* 
-    *   Gera o arquivo XML da requisic√£o 
+    *   Gera o arquivo XML da requisic„o 
     */
-    PROCEDURE pc_criar_arq_xml_requisicao(pr_caminho IN VARCHAR2             -- Diret√≥rio com o nome do arquivo que ser√° salvo
-                                         ,pr_nmmetodo IN VARCHAR2            -- Nome do m√©todo 
-                                         ,pr_nmmetodo_in IN VARCHAR2         -- Nome do m√©todo In
-                                         ,pr_canal IN VARCHAR2               -- C√≥digo do canal de atendimento
-                                         ,pr_coop_origem IN NUMBER           -- C√≥digo da cooperativa que est√° realizando a consulta
-                                         ,pr_numero_beneficio IN NUMBER      -- N√∫mero do benifici√°rio
-                                         ,pr_orgao_pagador IN NUMBER         -- N√∫mero do org√£o pagador
-                                         ,pr_posto_origem IN NUMBER          -- N√∫mero do posto/UA que est√° realizando a consulta
-                                         ,pr_usuario_origem IN VARCHAR2      -- C√≥digo do usu√°rio que est√° realizando a consulta
-                                         ,pr_retorno  OUT VARCHAR2           -- Sa√≠da OK/NOK
+    PROCEDURE pc_criar_arq_xml_requisicao(pr_caminho IN VARCHAR2             -- DiretÛrio com o nome do arquivo que ser· salvo
+                                         ,pr_nmmetodo IN VARCHAR2            -- Nome do mÈtodo 
+                                         ,pr_nmmetodo_in IN VARCHAR2         -- Nome do mÈtodo In
+                                         ,pr_canal IN VARCHAR2               -- CÛdigo do canal de atendimento
+                                         ,pr_tpservico IN INTEGER             -- Tipo de servico
+                                         ,pr_coop_origem IN NUMBER           -- CÛdigo da cooperativa que est· realizando a consulta                                         
+                                         ,pr_numero_beneficio IN NUMBER      -- N˙mero do benifici·rio
+                                         ,pr_orgao_pagador IN NUMBER         -- N˙mero do org„o pagador
+                                         ,pr_posto_origem IN NUMBER          -- N˙mero do posto/UA que est· realizando a consulta
+                                         ,pr_usuario_origem IN VARCHAR2      -- CÛdigo do usu·rio que est· realizando a consulta
+                                         ,pr_retorno  OUT VARCHAR2           -- SaÌda OK/NOK
                                          ,pr_dsderror OUT VARCHAR2) IS       -- Mensagem de erro
     vr_arquivo_saida    UTL_File.File_Type;
     vr_nmdireto         VARCHAR2(1000);
@@ -220,21 +290,35 @@ create or replace package body cecred.INSS0004 is
 
         vr_arquivo_saida := UTL_File.Fopen(vr_nmdireto, vr_nmarquiv, 'w');
         
-        UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eco="http://sicredi.com.br/inss/ws/v1/eco/">');
-        UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Header/>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<eco:'||pr_nmmetodo||'>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<eco:'||pr_nmmetodo_in||'>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<canal>'||pr_canal||'</canal>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<coopOrigem>'||pr_coop_origem||'</coopOrigem>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<postoOrigem>'||pr_posto_origem||'</postoOrigem>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<usuarioOrigem>'||pr_usuario_origem||'</usuarioOrigem>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<numeroBeneficio>'||pr_numero_beneficio||'</numeroBeneficio>');
-        UTL_File.Put_Line(vr_arquivo_saida, '<orgaoPagador>'||pr_orgao_pagador||'</orgaoPagador>');
-        UTL_File.Put_Line(vr_arquivo_saida, '</eco:'||pr_nmmetodo_in||'>');
-        UTL_File.Put_Line(vr_arquivo_saida, '</eco:'||pr_nmmetodo||'>');
-        UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
-        UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
+        IF pr_tpservico = 1 THEN
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eco="http://sicredi.com.br/inss/ws/v1/eco/">');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Header/>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<eco:'||pr_nmmetodo||'>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<eco:'||pr_nmmetodo_in||'>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<canal>'||pr_canal||'</canal>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<coopOrigem>'||pr_coop_origem||'</coopOrigem>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<postoOrigem>'||pr_posto_origem||'</postoOrigem>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<usuarioOrigem>'||pr_usuario_origem||'</usuarioOrigem>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<numeroBeneficio>'||pr_numero_beneficio||'</numeroBeneficio>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<orgaoPagador>'||pr_orgao_pagador||'</orgaoPagador>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</eco:'||pr_nmmetodo_in||'>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</eco:'||pr_nmmetodo||'>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
+        
+        ELSE
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ben="http://sicredi.com.br/convenios/cadastro/BeneficiarioINSS">');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Header/>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');      
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:InReenviarCadastroBeneficiarioINSS>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:orgaoPagador>' || pr_orgao_pagador ||'</ben:orgaoPagador>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:codBeneficiario> ' || pr_numero_beneficio || '</ben:codBeneficiario>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</ben:InReenviarCadastroBeneficiarioINSS>'); 
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
+          
+        END IF;
         
         UTL_File.Fclose(vr_arquivo_saida);
         pr_retorno := 'OK';
@@ -262,10 +346,10 @@ create or replace package body cecred.INSS0004 is
     END pc_criar_arq_xml_requisicao;
 
     /*
-    *   Procedure para gerar os caminho dos arquivos XML da requisi√ßao (envio/retorno)
+    *   Procedure para gerar os caminho dos arquivos XML da requisiÁao (envio/retorno)
     */
-    PROCEDURE pc_excluir_arq_xml_requisicao(pr_caminho IN VARCHAR2,      -- Diret√≥rio com o nome do arquivo que ser√° salvo
-                                            pr_retorno OUT VARCHAR2) IS  -- Sa√≠da OK/NOK
+    PROCEDURE pc_excluir_arq_xml_requisicao(pr_caminho IN VARCHAR2,      -- DiretÛrio com o nome do arquivo que ser· salvo
+                                            pr_retorno OUT VARCHAR2) IS  -- SaÌda OK/NOK
         vr_nmdireto         VARCHAR2(1000);
         vr_nmarquiv         VARCHAR2(1000);
     BEGIN 
@@ -284,14 +368,15 @@ create or replace package body cecred.INSS0004 is
     END pc_excluir_arq_xml_requisicao;
 
     /*
-    *   Procedure para gerar os caminho dos arquivos XML da requisi√ßao (envio/retorno)
+    *   Procedure para gerar os caminho dos arquivos XML da requisiÁao (envio/retorno)
     */
     PROCEDURE pc_gerar_caminho_arquivos_req(pr_cdcooper IN crapcop.cdcooper%type    -- Codigo Cooperativa
                                             ,pr_nrdconta IN VARCHAR2                -- Numero da Conta
+                                            ,pr_tpservico IN INTEGER                -- Tipo do servico
                                             ,pr_msgenvio OUT VARCHAR2               -- Caminho absoluto do arquivo de envio
                                             ,pr_msgreceb OUT VARCHAR2               -- Caminho absoluto do arquivo de retorno
-                                            ,pr_nmdireto OUT VARCHAR2               -- Caminho do diret√≥rio dos arquvios de envio e retorno    
-                                            ,pr_retorno  OUT VARCHAR2) IS           -- Sa√≠da OK/NOK
+                                            ,pr_nmdireto OUT VARCHAR2               -- Caminho do diretÛrio dos arquvios de envio e retorno    
+                                            ,pr_retorno  OUT VARCHAR2) IS           -- SaÌda OK/NOK
     
     vr_nmdireto VARCHAR2(1000);
     vr_msgenvio VARCHAR2(32767);
@@ -300,32 +385,50 @@ create or replace package body cecred.INSS0004 is
     vr_dstime   VARCHAR2(100);
     
     BEGIN
-        -- Inicializa√ß√£o de vari√°veis
+        -- InicializaÁ„o de vari·veis
         vr_dtmvtolt := to_char(SYSDATE,'DDMMYYYYHHMISS');
         vr_dstime := lpad(gene0002.fn_busca_time,5,'0');
 
-        -- Gera o caminho do diret√≥rio em que os arquivos ficaram armazenados
+        -- Gera o caminho do diretÛrio em que os arquivos ficaram armazenados
         vr_nmdireto:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => null);
         
-        -- Cria nome do arquivo de envio
-        vr_msgenvio := vr_nmdireto 
-                        || '/arq/INSS.SOAP.ERELAPG'
-                        || vr_dtmvtolt
-                        || vr_dstime
-                        || pr_nrdconta; 
+        
+        IF pr_tpservico = 1 THEN
+          -- Cria nome do arquivo de envio
+          vr_msgenvio := vr_nmdireto 
+                          || '/arq/INSS.SOAP.ERELAPG'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta; 
 
-        --Determinar Nome do Arquivo de Recebimento    
-        vr_msgreceb:= vr_nmdireto||'/arq/INSS.SOAP.RRELAPG'
-                        || vr_dtmvtolt
-                        || vr_dstime
-                        || pr_nrdconta;
+          --Determinar Nome do Arquivo de Recebimento    
+          vr_msgreceb:= vr_nmdireto||'/arq/INSS.SOAP.RRELAPG'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta;
+        ELSE
+          -- Cria nome do arquivo de envio
+          vr_msgenvio := vr_nmdireto 
+                          || '/arq/INSS.SOAP.EREVCAD'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta; 
 
+          --Determinar Nome do Arquivo de Recebimento    
+          vr_msgreceb:= vr_nmdireto||'/arq/INSS.SOAP.RREVCAD'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta;
+        
+        END IF;
+                          
         pr_msgenvio := vr_msgenvio;
         pr_msgreceb := vr_msgreceb;
         pr_nmdireto := vr_nmdireto;
         pr_retorno := 'OK';
+        
     EXCEPTION 
         WHEN OTHERS THEN
             pr_retorno := 'NOK';
@@ -333,24 +436,26 @@ create or replace package body cecred.INSS0004 is
 
 
     /*  
-    *   Realiza a requisi√ß√£o SOAP 
+    *   Realiza a requisiÁ„o SOAP 
     */
-    PROCEDURE pc_envia_requisicao_soap (pr_xml_req IN VARCHAR2          -- Caminho do arquvio XML de requesi√ß√£o           
-                                        ,pr_xml_ret OUT XMLTYPE         -- XML de retorno da requisi√ß√£o
-                                        ,pr_retorno OUT VARCHAR2        -- Sa√≠da OK/NOK
+    PROCEDURE pc_envia_requisicao_soap (pr_xml_req IN VARCHAR2          -- Caminho do arquvio XML de requesiÁ„o     
+                                        ,pr_tpservico IN INTEGER        -- Tipo do servico      
+                                        ,pr_xml_ret OUT XMLTYPE         -- XML de retorno da requisiÁ„o
+                                        ,pr_retorno OUT VARCHAR2        -- SaÌda OK/NOK
                                         ,pr_dsderror OUT VARCHAR2) IS   -- Mensagem de erro 
         vr_comando_curl VARCHAR2(32000);
         vr_typ_saida    VARCHAR2(5000);
         vr_out          VARCHAR2(32000);
-        vr_token        VARCHAR2(200);      -- Armazena o TOKEN para a requsi√ß√£o SOAP       
-        vr_token_type   VARCHAR2(50);       -- Armazena o tipo do TOKEN para a requisi√ß√£o SOAP
+        vr_token        VARCHAR2(200);      -- Armazena o TOKEN para a requsiÁ„o SOAP       
+        vr_token_type   VARCHAR2(50);       -- Armazena o tipo do TOKEN para a requisiÁ„o SOAP
         
-        vr_link_api_eco VARCHAR2(200);
+        vr_link_api     VARCHAR2(200);
 
         vr_retorno      VARCHAR2(3);
         vr_exception    EXCEPTION;
     BEGIN    
-        pc_obter_token(pr_token => vr_token
+        pc_obter_token(pr_tpservico => pr_tpservico
+                        ,pr_token => vr_token
                         ,pr_token_type => vr_token_type
                         ,pr_retorno => vr_retorno);
 
@@ -359,17 +464,24 @@ create or replace package body cecred.INSS0004 is
             RAISE vr_exception;
         END IF;
 
-        vr_link_api_eco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                        pr_cdcooper => 0,
-                                                        pr_cdacesso => 'LINK_API_ECO_INSS');
-
-        IF vr_link_api_eco = '' THEN
+        IF pr_tpservico = 1 THEN
+          
+          vr_link_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                   pr_cdcooper => 0,
+                                                   pr_cdacesso => 'LINK_API_ECO_INSS');
+        ELSE
+          vr_link_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                   pr_cdcooper => 0,
+                                                   pr_cdacesso => 'LINK_API_REENV_CAD_INSS'); 
+        END IF;
+                                               
+        IF vr_link_api = '' THEN
             pr_dsderror := 'Erro ao obter API do servico SOAP';
             RAISE vr_exception;
         END IF;
 
         vr_comando_curl := 'curl -k -X POST ' 
-                            || '"'||vr_link_api_eco||'"'
+                            || '"'||vr_link_api||'"'
                             || ' -H "authorization: '||vr_token_type||' '|| vr_token ||'"'
                             || ' -H "cache-control: no-cache"'
                             || ' -H "content-type: text/xml"'
@@ -387,16 +499,84 @@ create or replace package body cecred.INSS0004 is
             pr_retorno := 'NOK';
     END pc_envia_requisicao_soap;
 
+  /*
+  *   Procedure para pegar retorno xml
+  */
+  PROCEDURE pc_pegar_retorno_xml(pr_orgao_pagador IN NUMBER          -- CÛdigo do org„o pagador
+                                ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisiÁ„o
+                                ,pr_dscritic OUT VARCHAR2       --Descricao da critica
+                                ,pr_retorno OUT VARCHAR2) IS    -- SaÌda OK/NOK
+                                          
+      -- Vari·vel utilizada para montagem do XML
+      vr_des_retorno      VARCHAR2(5000);
+      -- Variaveis DOM
+      vr_xmldoc           XMLDOM.DOMDocument;
+      vr_lista_nodo       DBMS_XMLDOM.DOMNodelist;
+      vr_nodo             xmldom.DOMNode;
+      
+      vr_dscritic VARCHAR2(32767);
+      vr_cdderror VARCHAR2(32767);
+      vr_dsderror VARCHAR2(32767);
+      
+      --Vari·vel controle do xml
+      vr_xmlparser  dbms_xmlparser.Parser;
+      
+      
+  BEGIN
+       
+      -- Realizar o parse do arquivo XML
+      vr_xmldoc := XMLDOM.newDOMDocument(pr_xml_req);
+
+      --Lista de nodos
+      vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'faultstring');
+      
+      -- Tratamento adicional para verificaÁ„o se retornou falha, pois qnd retorna com sucesso
+      -- o arquivo ultrapassa o limite de tamanho suportado pelo dbms_xmlparser.parse;       
+      IF xmldom.getLength(vr_lista_nodo) > 0 THEN 
+          
+        --Buscar o item
+        vr_nodo:= DBMS_XMLDOM.item(vr_lista_nodo,0);
+          
+        --Buscar o Filho
+        vr_nodo:= xmldom.getFirstChild(vr_nodo);
+          
+        --Codigo do Erro
+        vr_cdderror:= SUBSTR(dbms_xmldom.getnodevalue(vr_nodo),1,4);
+          
+        --Descricao do erro
+        vr_dsderror:= dbms_xmldom.getnodevalue(vr_nodo);
+                    
+        --Se possui erro
+        IF vr_dsderror IS NOT NULL THEN 
+          pr_dscritic:= vr_dsderror;
+        ELSE
+          pr_dscritic:= NULL;
+        END IF;           
+
+        --Retorno Nao OK
+        pr_retorno:= 'NOK';
+           
+      ELSE                 
+        --Retorno OK  
+        pr_retorno:= 'OK';    
+      END IF;       
+    
+  EXCEPTION
+      WHEN OTHERS THEN
+          pr_retorno := 'NOK';
+
+  END pc_pegar_retorno_xml;
+  
     /*
-    *   Procedure para montar o XML de retorno da consulta de margem consign√°vel
+    *   Procedure para montar o XML de retorno da consulta de margem consign·vel
     */
-    PROCEDURE pc_gerar_xml_cons_marg_consig(pr_orgao_pagador IN NUMBER          -- C√≥digo do org√£o pagador
-                                                ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisi√ß√£o
+    PROCEDURE pc_gerar_xml_cons_marg_consig(pr_orgao_pagador IN NUMBER          -- CÛdigo do org„o pagador
+                                                ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisiÁ„o
                                                 ,pr_xml_ret OUT CLOB            -- XML gerado para
-                                                ,pr_retorno OUT VARCHAR2) IS    -- Sa√≠da OK/NOK
-        -- Vari√°vel utilizada para montagem do XML
+                                                ,pr_retorno OUT VARCHAR2) IS    -- SaÌda OK/NOK
+        -- Vari·vel utilizada para montagem do XML
         vr_des_retorno      VARCHAR2(5000);
-        -- Vari√°veis utilizadas para ler o XML do request
+        -- Vari·veis utilizadas para ler o XML do request
         vr_node_name        VARCHAR2(100);
         vr_lenght           NUMBER;
         -- Variaveis DOM
@@ -404,7 +584,7 @@ create or replace package body cecred.INSS0004 is
         vr_item_node        XMLDOM.DOMNode;
         vr_node_list        DBMS_XMLDOM.DOMNodelist;
 
-        -- Vari√°veis para montagem do XML de retorno da consulta
+        -- Vari·veis para montagem do XML de retorno da consulta
         vr_data_hora                            VARCHAR2(50);
         vr_nome_beneficiario                    VARCHAR2(50);
         vr_numero_beneficio                     VARCHAR2(50);
@@ -424,11 +604,11 @@ create or replace package body cecred.INSS0004 is
         -- Realizar o parse do arquivo XML
         vr_xmldoc := XMLDOM.newDOMDocument(pr_xml_req);
 
-        -- Obt√©m todas as tags do arquivo XML   
+        -- ObtÈm todas as tags do arquivo XML   
         vr_node_list := XMLDOM.getElementsByTagName(vr_xmldoc, '*');
         vr_lenght := XMLDOM.getLength(vr_node_list);
         
-        -- Faz a leitura do XML do request e j√° monta o XML da consulta                            
+        -- Faz a leitura do XML do request e j· monta o XML da consulta                            
         FOR i IN 0..vr_lenght-1 LOOP
             -- Pega o item
             vr_item_node := xmldom.item(vr_node_list, i);
@@ -516,14 +696,14 @@ create or replace package body cecred.INSS0004 is
     /*
     *   Procedure para montar o XML de retorno da rotina de extrato emprestimos
     */
-    PROCEDURE pc_gerar_xml_extr_empr(pr_orgao_pagador IN NUMBER     -- C√≥digo do org√£o pagador
-                                    ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisi√ß√£o
+    PROCEDURE pc_gerar_xml_extr_empr(pr_orgao_pagador IN NUMBER     -- CÛdigo do org„o pagador
+                                    ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisiÁ„o
                                     ,pr_xml_ret OUT CLOB            -- XML gerado para
-                                    ,pr_retorno OUT VARCHAR2) IS    -- Sa√≠da OK/NOK 
-        -- Vari√°vel utilizada para montagem do XML
+                                    ,pr_retorno OUT VARCHAR2) IS    -- SaÌda OK/NOK 
+        -- Vari·vel utilizada para montagem do XML
         vr_des_retorno      VARCHAR2(32000);
         
-        -- Vari√°veis utilizadas para ler o XML do request
+        -- Vari·veis utilizadas para ler o XML do request
         vr_node_name        VARCHAR2(100);
         vr_lenght           NUMBER;
         
@@ -543,7 +723,7 @@ create or replace package body cecred.INSS0004 is
         vr_extrato_emprestimo VARCHAR2(7000) := NULL;
         vr_cartoes_consignados VARCHAR2(7000) := NULL;
 
-        -- Vari√°veis para montagem do XML de retorno da consulta
+        -- Vari·veis para montagem do XML de retorno da consulta
         vr_data_hora                            VARCHAR2(50);
         vr_nome_beneficiario                    VARCHAR2(50);
         vr_numero_beneficio                     VARCHAR2(50);
@@ -574,7 +754,7 @@ create or replace package body cecred.INSS0004 is
                 --Buscar Nodo Corrente
                 vr_item_node := xmldom.item(vr_emprestimos, j);
                 vr_elemento  := xmldom.makeElement(vr_item_node);
-                -- Obt√©m todas as tags do arquivo XML   
+                -- ObtÈm todas as tags do arquivo XML   
                 vr_node_list := XMLDOM.getElementsByTagName(vr_elemento, '*');
                 
                 
@@ -606,7 +786,7 @@ create or replace package body cecred.INSS0004 is
             
         END LOOP;
 
-        --Lista de Cart√µes consignados
+        --Lista de Cartıes consignados
         vr_lista_cartoes := xmldom.getElementsByTagName(vr_xmldoc,'listaCartoes');
         FOR i IN 0..(xmldom.getLength(vr_lista_cartoes) -1) LOOP
 
@@ -618,7 +798,7 @@ create or replace package body cecred.INSS0004 is
                 --Buscar Nodo Corrente
                 vr_item_node := xmldom.item(vr_cartoes, j);
                 vr_elemento  := xmldom.makeElement(vr_item_node);
-                -- Obt√©m todas as tags do arquivo XML   
+                -- ObtÈm todas as tags do arquivo XML   
                 vr_node_list := XMLDOM.getElementsByTagName(vr_elemento, '*');
                 
                 vr_cartoes_consignados := vr_cartoes_consignados
@@ -642,11 +822,11 @@ create or replace package body cecred.INSS0004 is
             
         END LOOP;
 
-        -- Obt√©m todas as tags do arquivo XML   
+        -- ObtÈm todas as tags do arquivo XML   
         vr_node_list := XMLDOM.getElementsByTagName(vr_xmldoc, '*');
         vr_lenght := XMLDOM.getLength(vr_node_list);
         
-        -- Faz a leitura do XML do request e j√° monta o XML da consulta                            
+        -- Faz a leitura do XML do request e j· monta o XML da consulta                            
         FOR i IN 0..vr_lenght-1 LOOP
             -- Pega o item
             vr_item_node := xmldom.item(vr_node_list, i);
@@ -753,17 +933,17 @@ create or replace package body cecred.INSS0004 is
     END pc_gerar_xml_extr_empr;
 
     /*
-    *   Procedure para realizar a consulta de margem consign√°vel
+    *   Procedure para realizar a consulta de margem consign·vel
     */
     PROCEDURE pc_margem_consignavel_inss(pr_cdcooper IN INTEGER             -- Codigo da Cooperativa        
                                             ,pr_nrdconta IN INTEGER         -- Numero da Conta          
                                             ,pr_cdorgins IN NUMBER          -- Codigo do Orgao Pagador  
-                                            ,pr_nrbenefi IN NUMBER          -- Numero do Benef√≠cio      
+                                            ,pr_nrbenefi IN NUMBER          -- Numero do BenefÌcio      
                                             ,pr_cdcoptfn IN INTEGER         -- Cooperativa do TAA       
                                             ,pr_cdagetfn IN INTEGER         -- Agencia do TAA           
                                             ,pr_nrterfin IN INTEGER         -- Numero do TAA            
-                                            ,pr_retorno OUT CLOB            -- XML da margem consign√°vel
-                                            ,pr_dsderror OUT VARCHAR2) IS    -- Mensagem de erro de sa√≠da
+                                            ,pr_retorno OUT CLOB            -- XML da margem consign·vel
+                                            ,pr_dsderror OUT VARCHAR2) IS    -- Mensagem de erro de saÌda
     vr_nmdireto         VARCHAR2(1000);
     vr_msgenvio         VARCHAR2(32767);
     vr_msgreceb         VARCHAR2(32767);
@@ -777,7 +957,7 @@ create or replace package body cecred.INSS0004 is
     vr_xml_reto         CLOB;
     
     BEGIN
-        -- Verifica se todos os par√¢metros de entrada foram informados
+        -- Verifica se todos os par‚metros de entrada foram informados
         IF pr_cdcooper IS NULL THEN
            vr_dsderror := 'Codigo da cooperativa nao informado';
            RAISE vr_exc_erro; 
@@ -813,83 +993,75 @@ create or replace package body cecred.INSS0004 is
            RAISE vr_exc_erro; 
         END IF;
 
-        -- verificar se a consulta ao ECO est√° habilitada
-        IF GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                    ,pr_cdcooper => 0
-                                    ,pr_cdacesso => 'HABILITAR_CONSULTA_ECO') = '0' THEN
-                                    
-          vr_dsderror := 'A CONSULTA AOS DADOS DE MARGEM CONSIGNAVEL ESTA DESATIVADA NO MOMENTO';
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Inicializa√ß√£o de vari√°veis
+        -- InicializaÁ„o de vari·veis
         vr_msgenvio := NULL;
         
-        -- Gera os caminhos dos arquivos XML de envio e retorno da requisi√ß√£o
-        pc_gerar_caminho_arquivos_req(pr_cdcooper, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
+        -- Gera os caminhos dos arquivos XML de envio e retorno da requisiÁ„o
+        pc_gerar_caminho_arquivos_req(pr_cdcooper, 1, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
 
-        -- Verifica se ocorreu erro durante a gera√ß√£o do caminho dos arquivos da requisi√ß√£o
+        -- Verifica se ocorreu erro durante a geraÁ„o do caminho dos arquivos da requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao gerar caminho dos arquivos da requisicao (INSS0004.pc_gerar_caminho_arquivos_req)';
             RAISE vr_exc_erro;
         END IF;
         
-        -- Busca o c√≥digo da cooperativa de origem
+        -- Busca o cÛdigo da cooperativa de origem
         vr_coop_origem := fn_get_coop_origem(pr_cdcoptfn);
 
-        -- Cria arquivo XML que ser√° utilizado na requisi√ß√£o
-        pc_criar_arq_xml_requisicao(pr_caminho => vr_msgenvio                           -- Diret√≥rio com o nome do arquivo que ser√° salvo
-                                    ,pr_nmmetodo => 'consultaMargemConsignavel'         -- Nome do m√©todo 
-                                    ,pr_nmmetodo_in => 'InConsultaMargemConsignavel'    -- Nome do m√©todo In
-                                    ,pr_canal => 'ATM'                                  -- C√≥digo do canal de atendimento
-                                    ,pr_coop_origem => vr_coop_origem                   -- C√≥digo da cooperativa que est√° realizando a consulta
-                                    ,pr_numero_beneficio => pr_nrbenefi                 -- N√∫mero do benifici√°rio
-                                    ,pr_orgao_pagador => pr_cdorgins                    -- N√∫mero do org√£o pagador
-                                    ,pr_posto_origem => pr_cdagetfn                     -- N√∫mero do posto/UA que est√° realizando a consulta
-                                    ,pr_usuario_origem => 'CECR'                        -- C√≥digo do usu√°rio que est√° realizando a consulta
-                                    ,pr_retorno => vr_retorno                           -- Sa√≠da OK/NOK
+        -- Cria arquivo XML que ser· utilizado na requisiÁ„o
+        pc_criar_arq_xml_requisicao(pr_caminho => vr_msgenvio                           -- DiretÛrio com o nome do arquivo que ser· salvo
+                                    ,pr_nmmetodo => 'consultaMargemConsignavel'         -- Nome do mÈtodo 
+                                    ,pr_nmmetodo_in => 'InConsultaMargemConsignavel'    -- Nome do mÈtodo In
+                                    ,pr_canal => 'ATM'                                  -- CÛdigo do canal de atendimento
+                                    ,pr_tpservico => 1                                  -- Tipo de servico
+                                    ,pr_coop_origem => vr_coop_origem                   -- CÛdigo da cooperativa que est· realizando a consulta
+                                    ,pr_numero_beneficio => pr_nrbenefi                 -- N˙mero do benifici·rio
+                                    ,pr_orgao_pagador => pr_cdorgins                    -- N˙mero do org„o pagador
+                                    ,pr_posto_origem => pr_cdagetfn                     -- N˙mero do posto/UA que est· realizando a consulta
+                                    ,pr_usuario_origem => 'CECR'                        -- CÛdigo do usu·rio que est· realizando a consulta
+                                    ,pr_retorno => vr_retorno                           -- SaÌda OK/NOK
                                     ,pr_dsderror => vr_dsderror);                       -- Mensagem de erro
         
-        -- Verifica se ocorreu erro durante a gera√ß√£o do arquivo XML de requisi√ß√£o
+        -- Verifica se ocorreu erro durante a geraÁ„o do arquivo XML de requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao criar arquivos XML de requisicao (INSS0004.pc_criar_arq_xml_requisicao) - ' || vr_dsderror;
             RAISE vr_exc_erro;
         END IF;
 
-        -- Faz o envio da requisi√ß√£o SOAP, passando o caminho do arquivo XML
-        pc_envia_requisicao_soap(vr_msgenvio, vr_xml_soap, vr_retorno, vr_dsderror);
+        -- Faz o envio da requisiÁ„o SOAP, passando o caminho do arquivo XML
+        pc_envia_requisicao_soap(vr_msgenvio, 1, vr_xml_soap, vr_retorno, vr_dsderror);
         
-        -- Verifica se ocorreu erro no envio da requisi√ß√£o SOAP
+        -- Verifica se ocorreu erro no envio da requisiÁ„o SOAP
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao enviar requisicao SOAP (INSS0004.pc_envia_requisicao) - ' || vr_dsderror;
             RAISE vr_exc_erro;    
         END IF;
 
-        -- Faz a leitura do XML de retorno da requisi√ß√£o e monta o XML de retorno da consulta de margem consign√°vel
+        -- Faz a leitura do XML de retorno da requisiÁ„o e monta o XML de retorno da consulta de margem consign·vel
         pc_gerar_xml_cons_marg_consig(pr_cdorgins, vr_xml_soap, vr_xml_reto, vr_retorno);
 
-        -- Verifica se ocorreu erro durante a constru√ß√£o do XML de retorno da consulta de margem consign√°vel
+        -- Verifica se ocorreu erro durante a construÁ„o do XML de retorno da consulta de margem consign·vel
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao gerar XML consulta de margem consignavel (INSS0004.pc_gerar_xml_cons_marg_consig)';
             RAISE vr_exc_erro;    
         END IF;
 
-        -- Registra log da consulta de margem consign√°vel
+        -- Registra log da consulta de margem consign·vel
         INSS0003.pc_gera_reg_emp_consignado(pr_cdcooper => pr_cdcooper  --> Codigo da Cooperativa
                                       ,pr_nrdconta => pr_nrdconta       --> Numero da Conta
                                       ,pr_cdorgins => pr_cdorgins       --> Codigo do Orgao Pagador
-                                      ,pr_nrbenefi => pr_nrbenefi       --> Numero do Benef√≠cio
+                                      ,pr_nrbenefi => pr_nrbenefi       --> Numero do BenefÌcio
                                       ,pr_tpoperac => 2                 --> Tipo de operacao: (1 - Historico de emprestimos ativos, 2 - Consulta de margem consignavel)
                                       ,pr_cdcoptfn => pr_cdcoptfn       --> Cooperativa do TAA
                                       ,pr_cdagetfn => pr_cdagetfn       --> Agencia do TAA
                                       ,pr_nrterfin => pr_nrterfin       --> Numero do TAA
                                       ,pr_nmdcanal => 'ATM'             --> Nome do Canal
-                                      ,pr_nmusuari => 'CECR');          --> Nome do Usu√°rio da consulta
+                                      ,pr_nmusuari => 'CECR');          --> Nome do Usu·rio da consulta
 
-        -- Faz a exclus√£o do arquivo de requisi√ß√£o
+        -- Faz a exclus„o do arquivo de requisiÁ„o
         pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
-        -- Verifica se conseguiu excluir o arquivo de requisi√ß√£o
+        -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
             RAISE vr_exc_erro;    
@@ -898,31 +1070,40 @@ create or replace package body cecred.INSS0004 is
         pr_retorno := vr_xml_reto;
     EXCEPTION 
         WHEN vr_exc_erro THEN
-            pr_dsderror := vr_dsderror;
+            pr_dsderror := 'Erro INNS0004.pc_consulta_margem_consignavel : ' || vr_dsderror;
             
-            -- Faz a exclus√£o do arquivo de requisi√ß√£o
+            -- Faz a exclus„o do arquivo de requisiÁ„o
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
+            -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
+            IF vr_retorno = 'NOK' THEN
+                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
+                RAISE vr_exc_erro;    
+            END IF;
         WHEN OTHERS THEN
-            -- Faz a exclus√£o do arquivo de requisi√ß√£o
+            -- Faz a exclus„o do arquivo de requisiÁ„o
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
-            pr_dsderror := 'Erro nat tratado na INNS0004.pc_consulta_margem_consignavel.';
 
+            -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
+            IF vr_retorno = 'NOK' THEN
+                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
+                RAISE vr_exc_erro;    
+            END IF;
     END pc_margem_consignavel_inss;
 
 
     /*
-    *   Procedure para realizar a consulta de margem consign√°vel
+    *   Procedure para realizar a consulta de margem consign·vel
     */
     PROCEDURE pc_extrato_emprestimo_inss(pr_cdcooper IN INTEGER             -- Codigo da Cooperativa
                                             ,pr_nrdconta IN INTEGER         -- Numero da Conta
                                             ,pr_cdorgins IN NUMBER          -- Codigo do Orgao Pagador
-                                            ,pr_nrbenefi IN NUMBER          -- Numero do Benef√≠cio
+                                            ,pr_nrbenefi IN NUMBER          -- Numero do BenefÌcio
                                             ,pr_cdcoptfn IN INTEGER         -- Cooperativa do TAA
                                             ,pr_cdagetfn IN INTEGER         -- Agencia do TAA
                                             ,pr_nrterfin IN INTEGER         -- Numero do TAA
                                             ,pr_retorno OUT CLOB            -- XML do extrato de emprestimo
-                                            ,pr_dsderror OUT VARCHAR2) IS   -- Descri√ß√£o do erro  
+                                            ,pr_dsderror OUT VARCHAR2) IS   -- DescriÁ„o do erro  
     vr_nmdireto         VARCHAR2(1000);
     vr_msgenvio         VARCHAR2(32767);
     vr_msgreceb         VARCHAR2(32767);
@@ -937,7 +1118,7 @@ create or replace package body cecred.INSS0004 is
     vr_xml_reto         CLOB;
     
     BEGIN
-        -- Verifica se todos os par√¢metros de entrada foram informados
+        -- Verifica se todos os par‚metros de entrada foram informados
         IF pr_cdcooper IS NULL THEN
            vr_dsderror := 'Codigo da cooperativa nao informado';
            RAISE vr_exc_erro; 
@@ -973,62 +1154,54 @@ create or replace package body cecred.INSS0004 is
            RAISE vr_exc_erro; 
         END IF;
 
-        -- verificar se a consulta ao ECO est√° habilitada
-        IF GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                    ,pr_cdcooper => 0
-                                    ,pr_cdacesso => 'HABILITAR_CONSULTA_ECO') = '0' THEN
-                                    
-          vr_dsderror := 'A CONSULTA AOS DADOS DE EMPRESTIMO CONSIGNADO ESTA DESATIVADA NO MOMENTO';
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Inicializa√ß√£o de vari√°veis
+        -- InicializaÁ„o de vari·veis
         vr_msgenvio := NULL;
         
-        -- Gera os caminhos dos arquivos XML de envio e retorno da requisi√ß√£o
-        pc_gerar_caminho_arquivos_req(pr_cdcooper, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
+        -- Gera os caminhos dos arquivos XML de envio e retorno da requisiÁ„o
+        pc_gerar_caminho_arquivos_req(pr_cdcooper, 1, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
 
-        -- Verifica se ocorreu erro durante a gera√ß√£o do caminho dos arquivos da requisi√ß√£o
+        -- Verifica se ocorreu erro durante a geraÁ„o do caminho dos arquivos da requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao gerar caminho dos arquivos da requisicao (INSS0004.pc_gerar_caminho_arquivos_req)';
             RAISE vr_exc_erro;
         END IF;
 
-        -- Busca o c√≥digo da cooperativa de origem
+        -- Busca o cÛdigo da cooperativa de origem
         vr_coop_origem := fn_get_coop_origem(pr_cdcoptfn);
         
-        -- Cria arquivo XML que ser√° utilizado na requisi√ß√£o
-        pc_criar_arq_xml_requisicao(pr_caminho => vr_msgenvio                           -- Diret√≥rio com o nome do arquivo que ser√° salvo
-                                    ,pr_nmmetodo => 'emiteExtratoEmprestimo'            -- Nome do m√©todo 
-                                    ,pr_nmmetodo_in => 'InEmiteExtratoEmprestimo'       -- Nome do m√©todo In
-                                    ,pr_canal => 'ATM'                                  -- C√≥digo do canal de atendimento
-                                    ,pr_coop_origem => vr_coop_origem                   -- C√≥digo da cooperativa que est√° realizando a consulta
-                                    ,pr_numero_beneficio => pr_nrbenefi                 -- N√∫mero do benifici√°rio
-                                    ,pr_orgao_pagador => pr_cdorgins                    -- N√∫mero do org√£o pagador
-                                    ,pr_posto_origem => pr_cdagetfn                     -- N√∫mero do posto/UA que est√° realizando a consulta
-                                    ,pr_usuario_origem => 'CECR'                        -- C√≥digo do usu√°rio que est√° realizando a consulta
-                                    ,pr_retorno => vr_retorno                           -- Sa√≠da OK/NOK
+        -- Cria arquivo XML que ser· utilizado na requisiÁ„o
+        pc_criar_arq_xml_requisicao(pr_caminho => vr_msgenvio                           -- DiretÛrio com o nome do arquivo que ser· salvo
+                                    ,pr_nmmetodo => 'emiteExtratoEmprestimo'            -- Nome do mÈtodo 
+                                    ,pr_nmmetodo_in => 'InEmiteExtratoEmprestimo'       -- Nome do mÈtodo In
+                                    ,pr_canal => 'ATM'                                  -- CÛdigo do canal de atendimento
+                                    ,pr_tpservico => 1                                  -- Tipo de servico
+                                    ,pr_coop_origem => vr_coop_origem                   -- CÛdigo da cooperativa que est· realizando a consulta
+                                    ,pr_numero_beneficio => pr_nrbenefi                 -- N˙mero do benifici·rio
+                                    ,pr_orgao_pagador => pr_cdorgins                    -- N˙mero do org„o pagador
+                                    ,pr_posto_origem => pr_cdagetfn                     -- N˙mero do posto/UA que est· realizando a consulta
+                                    ,pr_usuario_origem => 'CECR'                        -- CÛdigo do usu·rio que est· realizando a consulta
+                                    ,pr_retorno => vr_retorno                           -- SaÌda OK/NOK
                                     ,pr_dsderror => vr_dsderror);                       -- Mensagem de erro
         
-        -- Verifica se ocorreu erro durante a gera√ß√£o do arquivo XML de requisi√ß√£o
+        -- Verifica se ocorreu erro durante a geraÁ„o do arquivo XML de requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao criar arquivos XML de requisicao (INSS0004.pc_criar_arq_xml_requisicao) - ' || vr_dsderror;
             RAISE vr_exc_erro;
         END IF;
 
-        -- Faz o envio da requisi√ß√£o SOAP, passando o caminho do arquivo XML
-        pc_envia_requisicao_soap(vr_msgenvio, vr_xml_soap, vr_retorno, vr_dsderror);
+        -- Faz o envio da requisiÁ„o SOAP, passando o caminho do arquivo XML
+        pc_envia_requisicao_soap(vr_msgenvio, 1, vr_xml_soap, vr_retorno, vr_dsderror);
         
-        -- Verifica se ocorreu erro no envio da requisi√ß√£o SOAP
+        -- Verifica se ocorreu erro no envio da requisiÁ„o SOAP
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao enviar requisicao SOAP (INSS0004.pc_envia_requisicao) - ' || vr_dsderror;
             RAISE vr_exc_erro;    
         END IF;
 
-        -- Faz a leitura do XML de retorno da requisi√ß√£o e monta o XML de retorno da consulta de margem consign√°vel
+        -- Faz a leitura do XML de retorno da requisiÁ„o e monta o XML de retorno da consulta de margem consign·vel
         pc_gerar_xml_extr_empr(pr_cdorgins, vr_xml_soap, vr_xml_reto, vr_retorno);
 
-        -- Verifica se ocorreu erro durante a constru√ß√£o do XML de retorno da consulta de margem consign√°vel
+        -- Verifica se ocorreu erro durante a construÁ„o do XML de retorno da consulta de margem consign·vel
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao gerar XML consulta de margem consignavel (INSS0004.pc_emite_extrato_emprestimo)';
             RAISE vr_exc_erro;    
@@ -1038,18 +1211,18 @@ create or replace package body cecred.INSS0004 is
         INSS0003.pc_gera_reg_emp_consignado(pr_cdcooper => pr_cdcooper        --> Codigo da Cooperativa
                                             ,pr_nrdconta => pr_nrdconta       --> Numero da Conta
                                             ,pr_cdorgins => pr_cdorgins       --> Codigo do Orgao Pagador
-                                            ,pr_nrbenefi => pr_nrbenefi       --> Numero do Benef√≠cio
+                                            ,pr_nrbenefi => pr_nrbenefi       --> Numero do BenefÌcio
                                             ,pr_tpoperac => 1                 --> Tipo de operacao: (1 - Historico de emprestimos ativos, 2 - Consulta de margem consignavel)
                                             ,pr_cdcoptfn => pr_cdcoptfn       --> Cooperativa do TAA
                                             ,pr_cdagetfn => pr_cdagetfn       --> Agencia do TAA
                                             ,pr_nrterfin => pr_nrterfin       --> Numero do TAA
                                             ,pr_nmdcanal => 'ATM'             --> Nome do Canal
-                                            ,pr_nmusuari => 'CECR');          --> Nome do Usu√°rio da consulta
+                                            ,pr_nmusuari => 'CECR');          --> Nome do Usu·rio da consulta
 
-        -- Faz a exclus√£o do arquivo de requisi√ß√£o
+        -- Faz a exclus„o do arquivo de requisiÁ„o
         pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
-        -- Verifica se conseguiu excluir o arquivo de requisi√ß√£o
+        -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
         IF vr_retorno = 'NOK' THEN
             vr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
             RAISE vr_exc_erro;    
@@ -1058,15 +1231,24 @@ create or replace package body cecred.INSS0004 is
         pr_retorno := vr_xml_reto;
     EXCEPTION 
         WHEN vr_exc_erro THEN
-            -- Faz a exclus√£o do arquivo de requisi√ß√£o
+            pr_dsderror := 'Erro INNS0004.pc_emite_extrato_emprestimo : ' || vr_dsderror;
+            -- Faz a exclus„o do arquivo de requisiÁ„o
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
-            pr_dsderror := vr_dsderror;
 
+            -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
+            IF vr_retorno = 'NOK' THEN
+                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
+                RAISE vr_exc_erro;    
+            END IF;
         WHEN OTHERS THEN
-            -- Faz a exclus√£o do arquivo de requisi√ß√£o
+            -- Faz a exclus„o do arquivo de requisiÁ„o
             pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
 
-            pr_dsderror := 'Erro nao tratado na INNS0004.pc_emite_extrato_emprestimo ';
+            -- Verifica se conseguiu excluir o arquivo de requisiÁ„o
+            IF vr_retorno = 'NOK' THEN
+                pr_dsderror := 'Erro ao excluir arquivo XML da requisicao (INSS0004.pc_excluir_arq_xml_requisicao)';
+                RAISE vr_exc_erro;    
+            END IF;
     
     END pc_extrato_emprestimo_inss;
 
