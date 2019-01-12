@@ -7327,6 +7327,8 @@ END fn_letra_risco;
     --               05/09/2018 - Campos de restrição de volta mas somente para borderos antigos (Vitor S. Assanuma - GFT)
     --
     --               30/10/2018 - Verificação se o borderô está no modelo antigo ou novo. (Vitor S. Assanuma - GFT)
+    --
+    --               26/11/2018 - Alteração no cálculo de liquidez para mensal para bater com o cálculo inserido na CRAPLJT (Vitor S. Assanuma - GFT)
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -7431,6 +7433,13 @@ END fn_letra_risco;
     vr_idxtot          PLS_INTEGER;
     vr_dstpcobr        VARCHAR2(20);
     
+    vr_vldjurosliq NUMBER;
+    vr_dtrefere DATE;
+    vr_dtcalcul DATE;
+    vr_jurosdia NUMBER;
+    vr_vltotjur NUMBER;
+    vr_dia INTEGER;
+
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -7645,9 +7654,30 @@ END fn_letra_risco;
           ELSE
               vr_qtd_dias := vr_tab_tit_bordero_ord(vr_idxord).dtvencto -  pr_dtmvtolt;
           END IF;
-          vr_vldjuros := vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_qtd_dias * ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30); -- Juros Simples
+          --  Percorre a quantidade de dias baseado na data atual até o vencimento do título
+          vr_vltotjur    := 0;
+          vr_vldjurosliq := 0;
+          vr_dtrefere := last_day(pr_dtmvtolt);
+          vr_dtcalcul := pr_dtmvtolt;
+          vr_jurosdia := ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30);
+            
+          WHILE (vr_qtd_dias > 0) LOOP
+            vr_dtcalcul := vr_dtcalcul+1;
+            vr_dtrefere := last_day(vr_dtcalcul);
+            IF (vr_dtcalcul+vr_qtd_dias) > vr_dtrefere THEN             -- se a ultima data calculada + os dias restantes de juros são maior que a data de referencia
+              vr_dia := vr_dtrefere - (vr_dtcalcul-1);                      -- calcula quantos dias terão juros naquele mes
+              vr_dtcalcul := vr_dtrefere;                             -- coloca o proximo dia de calculo de juros para o proximo dia da referencia
+              vr_qtd_dias := vr_qtd_dias - vr_dia;                       -- tira quantos dias de juros foram calculados do total
+            ELSE
+              vr_dia := vr_qtd_dias;                                    --
+              vr_dtcalcul := vr_dtrefere;
+              vr_qtd_dias := 0;
+            END IF;
 
-          vr_tab_tit_bordero_ord(vr_idxord).vlliquid := ROUND((vr_tab_tit_bordero_ord(vr_idxord).vltitulo - vr_vldjuros),2);
+            vr_vldjurosliq := apli0001.fn_round(vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_dia * vr_jurosdia,2);        -- calcula o juros em cima dos dias
+            vr_vltotjur    := vr_vltotjur + vr_vldjurosliq;
+          END LOOP;
+          vr_tab_tit_bordero_ord(vr_idxord).vlliquid := apli0001.fn_round(vr_tab_tit_bordero_ord(vr_idxord).vltitulo - vr_vltotjur, 2);
         END IF;
       
         IF vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt IS NOT NULL THEN
