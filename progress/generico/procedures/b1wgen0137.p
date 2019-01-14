@@ -5037,7 +5037,7 @@ PROCEDURE retorna_docs_liberados:
 
         /* Validar a chave de acesso e tipos de documentos */
         IF  par_key <> "Ck3tBzyhxp8dWzq" OR 
-            NOT CAN-DO("79,84,85,86,87,88,89,102,207",STRING(par_tpdocmto)) THEN
+            NOT CAN-DO("84,85,86,87,88,89,102,207",STRING(par_tpdocmto)) THEN
             DO:
                 aux_flgok = FALSE.
                 LEAVE.
