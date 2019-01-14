@@ -66,7 +66,7 @@ BEGIN
                              AND UPPER(acn2.nmrotina) = ' '
                              AND UPPER(acn2.nmdatela) = 'TITCTO'
                              AND acn2.idambace = 2);
-    
+    /*
     -- Insere a permissão da nova opção
     INSERT INTO crapace
         (nmdatela,
@@ -113,7 +113,7 @@ BEGIN
                              AND UPPER(acn2.nmrotina) = ' '
                              AND UPPER(acn2.nmdatela) = 'TITCTO'
                              AND acn2.idambace = 2);
-    
+    */
   END LOOP;
     
   COMMIT;
