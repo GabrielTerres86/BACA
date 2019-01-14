@@ -338,7 +338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 05/07/2018
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -365,7 +365,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --             07/08/2018  - 9318:Pagamento de Emprestimo  Transferencia para conta
   --                           transitoria quando a origem da tela for BLQPREJU
   --                          -pc_gera_lancamento_epr_tr Rangel Decker (AMcom)
-
+	--
+	--             27/12/2018 - Inclusão de tratamento na "pc_pagar_epr_cobranca" para contas corrente em 
+	--                          prejuízo (debitar da conta transitória e não da conta corrente).
+	--  												P450 - Reginaldo/AMcom
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1066,7 +1069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 24/04/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 27/12/2018
 
       Dados referentes ao programa:
 
@@ -1085,6 +1088,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   
                   24/04/2017 - Ajustado para efetuar abono para contratos de boletagem massiva 
                                e liquidação de prejuízo quando necessário. Projeto 210_2 (Lombardi)
+															 
+									27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
+									             conta transitória e não da conta corrente).
+															 P450 - Reginaldo/AMcom
     ..............................................................................*/
 
     DECLARE
@@ -1114,6 +1121,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
     vr_vlsdprej NUMBER(25,2);
     
     vr_vlparcel craplcm.vllanmto%TYPE;
+    
+		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
     
     -------------------------- TABELAS TEMPORARIAS --------------------------
 
@@ -1271,7 +1280,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         RETURN;
       END IF;
       
-      /** Tratativa contratos prejuizo **/
+			-- Verifica se a conta corrente está em prejuízo (Reginaldo/AMcom)
+			vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+			                                              , pr_nrdconta => pr_nrdconta);
 
       -- Contrato em Prejuizo
       IF rw_crapepr.inprejuz = 1 THEN
@@ -1491,6 +1502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   
                   IF vr_vlabono > 0 THEN
                         -- Gerar abono
+										IF NOT vr_prejuzcc THEN
                     EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                   ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
                                                   ,pr_cdagenci => rw_cde.cdagenci --> Código da agência
@@ -1519,6 +1531,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                       -- Gera exceção
                       RAISE vr_exc_saida;
                     END IF;
+										ELSE -- Se a conta está em prejuízo
+										  -- Lança o crédito de abono na conta transitória (Bloqueado Prejuízo) - Reginaldo/AMcom
+										  PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+											                            , pr_nrdconta => pr_nrdconta
+																									, pr_vlrlanc  => vr_vlabono
+																									, pr_dtmvtolt => pr_dtmvtolt
+																									, pr_cdcritic => vr_cdcritic
+																									, pr_dscritic => vr_dscritic);
+																									
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+											  vr_cdcritic := 0;
+											  vr_dscritic := 'Erro ao criar o lancamento de ajuste em Bloqueado Prejuízo (' || vr_dscritic || ')';
+													
+											  RAISE vr_exc_saida;
+											END IF;
+											
+											-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
+											PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+											                                , pr_nrdconta => pr_nrdconta
+																											, pr_dtmvtolt => pr_dtmvtolt
+																											, pr_cdhistor => 2279
+																											, pr_vllanmto => vr_vlabono
+																											, pr_nrctremp => pr_nrctremp
+																											, pr_cdcritic => vr_cdcritic
+																											, pr_dscritic => vr_dscritic); 
+																											
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+											  vr_cdcritic := 0;
+											  vr_dscritic := 'Erro ao criar o lancamento de ajuste no extrato do prejuizo de C/C.';
+													
+											  RAISE vr_exc_saida;
+											END IF; 
+										END IF;
+											
                     -- Valor do lancamento recebe o saldo devedor
                     vr_vldpagto := nvl(vr_vlsdeved,0);
                   END IF;
@@ -1530,6 +1576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
                     /* Valor do ajuste */
                     IF nvl(vr_vlajuste, 0) > 0 THEN
+										  IF NOT vr_prejuzcc THEN
                       /* Lanca em C/C e atualiza o lote */
                       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                     ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
@@ -1558,6 +1605,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                         END IF;
                         -- Gera exceção
                         RAISE vr_exc_saida;
+												END IF;
+											ELSE
+											  -- Lança o crédito de abono na conta transitória (Bloqueado Prejuízo) - Reginaldo/AMcom
+												PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+																										, pr_nrdconta => pr_nrdconta
+																										, pr_vlrlanc  => vr_vlajuste
+																										, pr_dtmvtolt => pr_dtmvtolt
+																										, pr_cdcritic => vr_cdcritic
+																										, pr_dscritic => vr_dscritic);
+																										
+												IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+													vr_cdcritic := 0;
+													vr_dscritic := 'Erro ao criar o lancamento de ajuste em Bloqueado Prejuízo (' || vr_dscritic || ')';
+														
+													RAISE vr_exc_saida;
+												END IF;
+												
+												-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
+												PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+																												, pr_nrdconta => pr_nrdconta
+																												, pr_dtmvtolt => pr_dtmvtolt
+																												, pr_cdhistor => 2012
+																												, pr_vllanmto => vr_vlajuste
+																												, pr_nrctremp => pr_nrctremp
+																												, pr_cdcritic => vr_cdcritic
+																												, pr_dscritic => vr_dscritic); 
+																												
+												IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+													vr_cdcritic := 0;
+													vr_dscritic := 'Erro ao criar o lancamento de ajuste no extrato do prejuizo de C/C.';
+														
+													RAISE vr_exc_saida;
+												END IF; 
                       END IF;
                     END IF;  
                   ELSE
@@ -1672,6 +1752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                          
                          /* Valor do ajuste */
                          IF nvl(vr_vlajuste, 0) > 0 THEN
+												    IF NOT vr_prejuzcc THEN
                             /* Lanca em C/C e atualiza o lote */
                             EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                           ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
@@ -1701,6 +1782,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                               -- Gera exceção
                               RAISE vr_exc_saida;
                             END IF;
+														ELSE
+														  -- Lança o crédito de abono na conta transitória (Bloqueado Prejuízo) - Reginaldo/AMcom
+															PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+																													, pr_nrdconta => pr_nrdconta
+																													, pr_vlrlanc  => vr_vlajuste
+																													, pr_dtmvtolt => pr_dtmvtolt
+																													, pr_cdcritic => vr_cdcritic
+																													, pr_dscritic => vr_dscritic);
+																													
+															IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+																vr_cdcritic := 0;
+																vr_dscritic := 'Erro ao criar o lancamento de ajuste em Bloqueado Prejuízo (' || vr_dscritic || ')';
+																	
+																RAISE vr_exc_saida;
+                         END IF;
+															
+															-- Lança histórico 2012 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
+															PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+																															, pr_nrdconta => pr_nrdconta
+																															, pr_dtmvtolt => pr_dtmvtolt
+																															, pr_cdhistor => 2012
+																															, pr_vllanmto => vr_vlajuste
+																															, pr_nrctremp => pr_nrctremp
+																															, pr_cdcritic => vr_cdcritic
+																															, pr_dscritic => vr_dscritic); 
+																															
+															IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+																vr_cdcritic := 0;
+																vr_dscritic := 'Erro ao criar o lancamento de ajuste no extrato do prejuizo de C/C.';
+																	
+																RAISE vr_exc_saida;
+															END IF;
+														END IF;	
                          END IF;
                       ELSE 
                          vr_tab_pgto_parcel(idx2).vlpagpar := ROUND(vr_vldpagto,2);
@@ -1725,6 +1839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                  
                  IF vr_vlabono > 0 THEN
                    -- Gerar abono
+									 IF NOT vr_prejuzcc THEN
                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                  ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
                                                  ,pr_cdagenci => rw_cde.cdagenci --> Código da agência
@@ -1752,6 +1867,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                      END IF;
                      -- Gera exceção
                      RAISE vr_exc_saida;
+										 END IF;
+									 ELSE
+									    -- Lança o crédito de abono na conta transitória (Bloqueado Prejuízo) - Reginaldo/AMcom
+											PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+																									, pr_nrdconta => pr_nrdconta
+																									, pr_vlrlanc  => vr_vlabono
+																									, pr_dtmvtolt => pr_dtmvtolt
+																									, pr_cdcritic => vr_cdcritic
+																									, pr_dscritic => vr_dscritic);
+																													
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+												vr_cdcritic := 0;
+												vr_dscritic := 'Erro ao criar o lancamento de ajuste em Bloqueado Prejuízo (' || vr_dscritic || ')';
+																	
+												RAISE vr_exc_saida;
+											END IF;
+															
+											-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
+											PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+																											, pr_nrdconta => pr_nrdconta
+																											, pr_dtmvtolt => pr_dtmvtolt
+																											, pr_cdhistor => 2279
+																											, pr_vllanmto => vr_vlabono
+																											, pr_nrctremp => pr_nrctremp
+																											, pr_cdcritic => vr_cdcritic
+																											, pr_dscritic => vr_dscritic); 
+																															
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+												vr_cdcritic := 0;
+												vr_dscritic := 'Erro ao criar o lancamento de ajuste no extrato do prejuizo de C/C.';
+																	
+												RAISE vr_exc_saida;
+											END IF;
                    END IF;
                    -- Valor do lancamento recebe o saldo devedor
                    vr_vldpagto := nvl(vr_tab_calculado(vr_tab_calculado.FIRST).vlsdeved,0);
@@ -1765,6 +1913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
                    -- lançar o valor do ajuste na conta do cooperado;
                    IF nvl(vr_vlajuste, 0) > 0 THEN
+									   IF NOT vr_prejuzcc THEN
                      /* Lanca em C/C e atualiza o lote */
                      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                    ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
@@ -1793,6 +1942,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                        END IF;
                        -- Gera exceção
                        RAISE vr_exc_saida;
+											 END IF;
+										 ELSE
+										  -- Lança o crédito de abono na conta transitória (Bloqueado Prejuízo) - Reginaldo/AMcom
+											PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+																									, pr_nrdconta => pr_nrdconta
+																									, pr_vlrlanc  => vr_vlajuste
+																									, pr_dtmvtolt => pr_dtmvtolt
+																									, pr_cdcritic => vr_cdcritic
+																									, pr_dscritic => vr_dscritic);
+																													
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+												vr_cdcritic := 0;
+												vr_dscritic := 'Erro ao criar o lancamento de ajuste em Bloqueado Prejuízo (' || vr_dscritic || ')';
+																	
+												RAISE vr_exc_saida;
+											END IF;
+															
+											-- Lança histórico 2012 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
+											PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+																											, pr_nrdconta => pr_nrdconta
+																											, pr_dtmvtolt => pr_dtmvtolt
+																											, pr_cdhistor => 2012
+																											, pr_vllanmto => vr_vlajuste
+																											, pr_nrctremp => pr_nrctremp
+																											, pr_cdcritic => vr_cdcritic
+																											, pr_dscritic => vr_dscritic); 
+																															
+											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+												vr_cdcritic := 0;
+												vr_dscritic := 'Erro ao criar o lancamento de ajuste no extrato do prejuizo de C/C.';
+																	
+												RAISE vr_exc_saida;
+											END IF;
                      END IF;
                    END IF;
                  ELSE

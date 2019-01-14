@@ -212,7 +212,7 @@ create or replace package body cecred.EMPR9999 as
   --  Sistema  : Rotinas focando nas funcionalidades genericas
   --  Sigla    : EMPR
   --  Autor    : Pedro Cruz (GFT)
-  --  Data     : Julho/2018.                   Ultima atualizacao: 26/07/2018
+  --  Data     : Julho/2018.                   Ultima atualizacao: 27/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -235,7 +235,11 @@ create or replace package body cecred.EMPR9999 as
   --
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                         - pc_pagar_emprestimo_pos
-
+  --
+  --
+  --             27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
+  -- 						              da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
+  --													P450 - Reginaldo/AMcom        
   ---------------------------------------------------------------------------------------------------------------
   /* Tratamento de erro */
   vr_exc_erro EXCEPTION;
@@ -558,7 +562,7 @@ create or replace package body cecred.EMPR9999 as
       END IF;
 			
       IF cr_crapris%ISOPEN THEN
-        CLOSE cr_crapris;
+      CLOSE cr_crapris;
       END IF;
 
       -- Verificando para Empréstimos
@@ -596,7 +600,7 @@ create or replace package body cecred.EMPR9999 as
   END LOOP;
 		
   pr_dsquapro := vr_vet_qualif(pr_idquapro);
-  
+
   EXCEPTION
     WHEN vr_exc_erro THEN
     /* busca valores de critica predefinidos */
@@ -877,6 +881,26 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
 
+    /* ..........................................................................
+      Programa : pc_pagar_emprestimo_prejuizo
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : 
+      Data     :                             Ultima atualizacao: 27/12/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamada
+      Objetivo  : Realizar o calculo e pagamento de prejuízo
+          
+      Alteração : 29/11/2018 - Ajustado para gerar lanc. hist 384 na tabela de prejuizo detalhe, 
+                               para pagamentos com conta em prejuiz CC. PRJ450 - Regulatorio (Odirlei-AMcom)
+							    
+									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
+									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
+															 P450 - Reginaldo/AMcom
+    ..........................................................................*/
+    
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
     CURSOR cr_craplem(pr_cdhistor  craplem.cdhistor%TYPE) IS
       SELECT SUM(lem.vllanmto) vllanmto
@@ -902,8 +926,12 @@ create or replace package body cecred.EMPR9999 as
     vr_vlsdprej     crapepr.vlsdprej%TYPE;
     vr_dtliquid     crapepr.dtliquid%TYPE;
 
+    vr_nrseqdig        craplem.nrseqdig%TYPE;
+
     -- EXCEPTIONS
     vr_exc_erro     EXCEPTION;
+
+		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
   BEGIN
 
@@ -1217,11 +1245,14 @@ create or replace package body cecred.EMPR9999 as
     -- FIM PARA O LANÇAMENTO DE PAGAMENTO DE JUROS
     ------------------------------------------------------------------------------------------------------------
 
+		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
+		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+
     ------------------------------------------------------------------------------------------------------------
     -- INICIO PARA O LANÇAMENTO DE DEBITO DO PAGAMENTO DE PREJUIZO  -->  (((3º ETAPA)))  <--
     ------------------------------------------------------------------------------------------------------------
     IF pr_vltotpag > 0 THEN
-     IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+     IF NOT vr_prejuzcc THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
                                       ,pr_cdagenci => pr_cdagenci         --> Código da agência
@@ -1249,11 +1280,29 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
+    ELSE
+      -- Lança débito no extrato do prejuízo (para correta contabilização)
+      PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                      , pr_cdhistor => 384
+                                      , pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)
+                                      , pr_nrctremp => pr_nrctremp
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+      IF nvl(vr_cdcritic,0) > 0 OR  
+         TRIM(vr_dscritic) IS NOT NULL THEN
+         
+        pr_cdcritic := vr_cdcritic; 
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;   
+
     END IF; -- Lançamento conta corrente
 
      IF NVL(pr_vliofcpl,0) > 0 THEN
-       IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
-          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+       IF NOT vr_prejuzcc THEN
+          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci         --> Código da agência
                                         ,pr_cdbccxlt => 100                 --> Número do caixa
@@ -1265,6 +1314,7 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_vllanmto => pr_vliofcpl         --> Valor do debito
                                         ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                         ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
+                                              ,pr_nrseqdig => vr_nrseqdig         --> Número de sequencia de lançamento 
                                         ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                         ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
 
@@ -1283,8 +1333,7 @@ create or replace package body cecred.EMPR9999 as
         END IF; --Lançamento na conta corrente
 
       -- Lançamento na conta corrente
-       IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
-
+       IF vr_prejuzcc THEN
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
                                       pr_nrdconta => pr_nrdconta,
                                       pr_cdoperad => pr_cdoperad,
@@ -1313,7 +1362,7 @@ create or replace package body cecred.EMPR9999 as
                                , pr_cdagenci_lcm => pr_cdagenci
                                , pr_cdbccxlt_lcm => 100
                                , pr_nrdolote_lcm => 650001
-                               , pr_nrseqdig_lcm => 1
+														 , pr_nrseqdig_lcm => vr_nrseqdig
                                , pr_vliofpri     => 0
                                , pr_vliofadi     => 0
                                , pr_vliofcpl     => pr_vliofcpl
@@ -1493,6 +1542,8 @@ create or replace package body cecred.EMPR9999 as
 
     -- EXCEPTION
     vr_exc_erro     EXCEPTION;
+
+		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
   BEGIN
     -- Leitura do indicador de uso da tabela de taxa de juros
@@ -1710,10 +1761,13 @@ create or replace package body cecred.EMPR9999 as
       END;
     END LOOP; -- cr_crapavs
 
+		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
+		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+
     -----------------------------------------------------------------------------------------------
     -- Debita em conta corrente o total pago do emprestimo
     -----------------------------------------------------------------------------------------------
-    IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+    IF NOT vr_prejuzcc THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --> Movimento atual
                                     ,pr_cdagenci => pr_cdagenci   --> Código da agência
@@ -1741,11 +1795,7 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
-   END IF; -- Lançamento na conta corrente
-
-    --Lançamento conta transitoria
-    IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
-
+    ELSE
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper  => pr_cdcooper,
                                      pr_nrdconta => pr_nrdconta,
                                      pr_cdoperad => pr_cdoperad,
@@ -1842,6 +1892,8 @@ create or replace package body cecred.EMPR9999 as
 
     -- EXCEPTION
     vr_exc_erro        EXCEPTION;
+
+		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
     -- Função para retornar o ultimo dia util anterior
     FUNCTION fn_dia_util_anterior(pr_data IN DATE) RETURN DATE IS
@@ -2102,9 +2154,11 @@ create or replace package body cecred.EMPR9999 as
       -- Realiza o ajuste de lançamento
       vr_vlajuste := vr_vlajuste + NVL(vr_vllanlem,0);
 
-      -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
-      IF nvl(vr_vlajuste, 0) > 0 AND pr_nmtelant <> 'BLQPREJU' THEN
+			-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
+			vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
 
+      -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
+      IF nvl(vr_vlajuste, 0) > 0 AND NOT vr_prejuzcc THEN
         -- Lanca em C/C e atualiza o lote
         EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
