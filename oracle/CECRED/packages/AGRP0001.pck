@@ -243,7 +243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     vr_idprglog := 0;
       
-    -- Gera log no inÌcio da execuÁ„o
+    -- Gera log no in√≠cio da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'I'         
                    ,pr_cdprograma => vr_cdprogra 
                    ,pr_cdcooper   => 0
@@ -255,7 +255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       
       -- Verificacoes para a cooperativa e ou chamada web
       if pr_cdcooper is not null and rw_crapcop.flgrupos = 0 then
-        pr_dsretorn := 'Cooperativa n„o possui produto assembleias ativo.';
+        pr_dsretorn := 'Cooperativa n√£o possui produto assembleias ativo.';
         raise vr_exc_saida;
       elsif rw_crapcop.flgrupos = 0 then
         continue;
@@ -282,7 +282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           if cr_crapdat%notfound then
             
             close cr_crapdat;
-            vr_dscritic := 'Data da cooperativa n„o cadastrada.';
+            vr_dscritic := 'Data da cooperativa n√£o cadastrada.';
             raise vr_exc_erro;
 
           end if;
@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           elsif rw_busca_travamento_grupos.dtinicio_grupo < rw_crapdat.dtmvtolt and
                 rw_busca_travamento_grupos.dtfim_grupo > rw_crapdat.dtmvtolt then
             close cr_busca_travamento_grupos;
-            vr_dscritic := 'PerÌodo n„o permite criaÁ„o de novos grupos.';
+            vr_dscritic := 'Per√≠odo n√£o permite cria√ß√£o de novos grupos.';
             raise vr_exc_saida;
           end if;
           
@@ -418,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                   
                 vr_idprglog := 0;
                   
-                -- Logar fim de execuÁ„o sem sucesso
+                -- Logar fim de execu√ß√£o sem sucesso
                 cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
                                       ,pr_cdprograma    => 'AGRP0001.pc_distribui_conta_grupo_auto'
                                       ,pr_cdcooper      => rw_crapcop.cdcooper
@@ -489,7 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     end loop;
     
-    -- Gera log no fim da execuÁ„o
+    -- Gera log no fim da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'F'         
                    ,pr_cdprograma => vr_cdprogra 
                    ,pr_cdcooper   => 0
@@ -503,7 +503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   
       rollback;
        
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra 
                      ,pr_cdcooper   => 0
@@ -515,7 +515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       
       rollback;
        
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra 
                      ,pr_cdcooper   => 0
@@ -524,7 +524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                      ,pr_idprglog   => vr_idprglog);
        
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro n„o tratado AGRP0001.pc_distribui_conta_grupo_auto: '||SQLERRM;
+      vr_dscritic := 'Erro n√£o tratado AGRP0001.pc_distribui_conta_grupo_auto: '||SQLERRM;
       vr_idprglog := 0;
       pr_dsretorn := vr_dscritic;
       
@@ -682,7 +682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     vr_idprglog := 0;
       
-    -- Gera log no inÌcio da execuÁ„o
+    -- Gera log no in√≠cio da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'I'         
                    ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
                    ,pr_cdcooper   => pr_cdcooper
@@ -1028,7 +1028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                       ,vr_table_insert(vr_idx).idpessoa
                                       ,vr_table_insert(vr_idx).nrdconta
                                       ,sysdate
-                                      ,0 --1 Primeira execucao sera como "Enviado"
+                                      ,1 -- Primeira execucao sera como "Enviado"
                                       ,null
                                       ,null
                                       ,null
@@ -1044,7 +1044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     end loop;
     
-    -- Gera log no inÌcio da execuÁ„o
+    -- Gera log no in√≠cio da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'F'         
                    ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
                    ,pr_cdcooper   => pr_cdcooper
@@ -1059,7 +1059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic := nvl(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
                      ,pr_cdcooper   => pr_cdcooper
@@ -1072,7 +1072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na AGRP0001.pc_distribui_conta_grupo (5) --> '|| sqlerrm;
       
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
                      ,pr_cdcooper   => pr_cdcooper
@@ -1176,7 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     if cr_crapdat%notfound then
       
       close cr_crapdat;
-      vr_dscritic := 'Data da cooperativa n„o cadastrada.';
+      vr_dscritic := 'Data da cooperativa n√£o cadastrada.';
       raise vr_exc_erro;
 
     end if;
@@ -1531,10 +1531,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
-      vr_dscritic := 'O n˙mero da cooperativa deve ser informado.';
+      vr_dscritic := 'O n√∫mero da cooperativa deve ser informado.';
       raise vr_exc_erro;
     elsif pr_nrdconta is null then
-      vr_dscritic := 'O n˙mero da conta deve ser informado.';
+      vr_dscritic := 'O n√∫mero da conta deve ser informado.';
       raise vr_exc_erro;
     end if;
 
@@ -1546,7 +1546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Se nao encontrou aborta
     if cr_crapass%notfound then
       close cr_crapass;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de associados.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de associados.';
       raise vr_exc_erro;
     end if;
     
@@ -1560,13 +1560,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta se nao encontrar
     if cr_buscar_cooperado%notfound then
       close cr_buscar_cooperado;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de grupos.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de grupos.';
       raise vr_exc_erro;
     end if;
     
     close cr_buscar_cooperado;
     
-    -- Criar cabeÁalho do XML
+    -- Criar cabe√ßalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',  pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -1627,7 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         -- Se nao encontrar aborta
         if cr_crapdat%notfound then
           close cr_crapdat;
-          vr_dscritic := 'Data da cooperativa n„o cadastrada.';
+          vr_dscritic := 'Data da cooperativa n√£o cadastrada.';
           raise vr_exc_erro;
         end if;
           
@@ -1685,7 +1685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         -- Significa que agencia nao possui grupos
         if cr_busca_grupo_novo%notfound then
           close cr_busca_grupo_novo;
-          vr_dscritic := 'AgÍncia n„o possui um grupo formado.';
+          vr_dscritic := 'Ag√™ncia n√£o possui um grupo formado.';
           raise vr_exc_erro; 
         end if;
           
@@ -1886,10 +1886,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
-      vr_dscritic := 'O n˙mero da cooperativa deve ser informado.';
+      vr_dscritic := 'O n√∫mero da cooperativa deve ser informado.';
       raise vr_exc_erro;
     elsif pr_nrdconta is null then
-      vr_dscritic := 'O n˙mero da conta deve ser informado.';
+      vr_dscritic := 'O n√∫mero da conta deve ser informado.';
       raise vr_exc_erro;
     end if;
 
@@ -1901,7 +1901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Se nao encontrou aborta
     if cr_crapass%notfound then
       close cr_crapass;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de associados.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de associados.';
       raise vr_exc_erro;
     end if;
     
@@ -1915,13 +1915,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta caso nao encontre cooperado
     if cr_tabela_de_grupos%notfound then
       close cr_tabela_de_grupos;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de grupos.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de grupos.';
       raise vr_exc_erro;
     end if;
       
     close cr_tabela_de_grupos;
 
-    -- Criar cabeÁalho do XML
+    -- Criar cabe√ßalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',  pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2015,7 +2015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             -- Se nao encontrar aborta
             if cr_crapdat%notfound then
               close cr_crapdat;
-              vr_dscritic := 'Data da cooperativa n„o cadastrada.';
+              vr_dscritic := 'Data da cooperativa n√£o cadastrada.';
               raise vr_exc_erro;
             end if;
               
@@ -2083,7 +2083,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           -- Significa que agencia nao possui grupos
           if cr_busca_grupo_novo%notfound then
             close cr_busca_grupo_novo;
-            vr_dscritic := 'AgÍncia n„o possui um grupo formado.';
+            vr_dscritic := 'Ag√™ncia n√£o possui um grupo formado.';
             raise vr_exc_erro; 
           end if;
           
@@ -2256,10 +2256,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
-      vr_dscritic := 'O n˙mero da cooperativa deve ser informado.';
+      vr_dscritic := 'O n√∫mero da cooperativa deve ser informado.';
       raise vr_exc_erro;
     elsif pr_nrdconta is null then
-      vr_dscritic := 'O n˙mero da conta deve ser informado.';
+      vr_dscritic := 'O n√∫mero da conta deve ser informado.';
       raise vr_exc_erro;
     end if;
     
@@ -2270,7 +2270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta caso nao encontre
     if cr_crapcop%notfound then
       close cr_crapcop;
-      vr_dscritic := 'Cooperativa n„o est· ativa para eventos assembleares.';
+      vr_dscritic := 'Cooperativa n√£o est√° ativa para eventos assembleares.';
       raise vr_exc_erro;
     end if;
     
@@ -2284,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta caso nao encontre
     if cr_crapass%notfound then
       close cr_crapass;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de associados.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de associados.';
       raise vr_exc_erro;
     end if;
     
@@ -2296,7 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     fetch cr_tabela_de_grupos into rw_tabela_de_grupos;
     close cr_tabela_de_grupos;
   
-    -- Criar cabeÁalho do XML
+    -- Criar cabe√ßalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',  pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2305,7 +2305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Conta ja admitida e eh a conta mais antiga: retornar critica
     if    rw_tabela_de_grupos.nrdconta = rw_crapass.nrdconta then
       
-      vr_dscritic := 'Conta j· admitida anteriormente.';
+      vr_dscritic := 'Conta j√° admitida anteriormente.';
       raise vr_exc_erro;
       
     -- cr_buscar_cooperado%found e conta mais antiga do cooperado 
@@ -2369,7 +2369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         -- Significa que agencia nao possui grupos
         if cr_busca_grupo_novo%notfound then
           close cr_busca_grupo_novo;
-          vr_dscritic := 'AgÍncia n„o possui um grupo formado.';
+          vr_dscritic := 'Ag√™ncia n√£o possui um grupo formado.';
           raise vr_exc_erro; 
         end if;
           
@@ -2518,7 +2518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
   begin
     
-    -- Criar cabeÁalho do XML
+    -- Criar cabe√ßalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',  pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2532,7 +2532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta caso nao retorne informacoes
     if cr_buscar_cooperado%notfound then
       close cr_buscar_cooperado;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de associados.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de associados.';
       raise vr_exc_erro;
     end if;
     
@@ -2625,7 +2625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , crd.nrcrcard
       from crawcrd crd
      where crd.cdcooper = pr_cdcooper
-       and crd.dtlibera > pr_dtrefatu
+       and crd.dtrefatu > pr_dtrefatu
        and nvl(crd.nrcrcard,0) > 0
        -- Evita reenviar um cartao que ja foi
        -- enviado anteriormente com sucesso
@@ -2644,7 +2644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     vr_idprglog := 0;
       
-    -- Gera log no inÌcio da execuÁ„o
+    -- Gera log no in√≠cio da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'I'         
                    ,pr_cdprograma => vr_cdprogra 
                    ,pr_cdcooper   => 0
@@ -2667,7 +2667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         if cr_crapdat%notfound then
             
           close cr_crapdat;
-          vr_dscritic := 'Data da cooperativa n„o cadastrada.';
+          vr_dscritic := 'Data da cooperativa n√£o cadastrada.';
           raise vr_exc_erro;
 
         end if;
@@ -2700,7 +2700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     end loop;
 
-    -- Gera log no fim da execuÁ„o
+    -- Gera log no fim da execu√ß√£o
     pc_log_programa(pr_dstiplog   => 'F'         
                    ,pr_cdprograma => vr_cdprogra 
                    ,pr_cdcooper   => 0
@@ -2714,7 +2714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       rollback;
        
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra 
                      ,pr_cdcooper   => 0
@@ -2739,7 +2739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       
       rollback;
        
-      -- Gera log no inÌcio da execuÁ„o
+      -- Gera log no in√≠cio da execu√ß√£o
       pc_log_programa(pr_dstiplog   => 'F'         
                      ,pr_cdprograma => vr_cdprogra 
                      ,pr_cdcooper   => 0
@@ -2748,7 +2748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                      ,pr_idprglog   => vr_idprglog);
        
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro n„o tratado AGRP0001.pc_cartoes_conta_auto_job: '||SQLERRM;
+      vr_dscritic := 'Erro n√£o tratado AGRP0001.pc_cartoes_conta_auto_job: '||SQLERRM;
       vr_idprglog := 0;
       
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
@@ -2811,7 +2811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       vr_dscritic := 'Conta deve ser informada.';
       raise vr_exc_erro;
     elsif nvl(pr_nrcrcard,0) = 0 then
-      vr_dscritic := 'N˙mero do cart„o deve ser informado.';
+      vr_dscritic := 'N√∫mero do cart√£o deve ser informado.';
       raise vr_exc_erro;
     end if;
     
@@ -2823,7 +2823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     -- Aborta operacao caso nao encontre
     if cr_crapass%notfound then
       close cr_crapass;
-      vr_dscritic := 'Cooperado n„o encontrado na tabela de associados.';
+      vr_dscritic := 'Cooperado n√£o encontrado na tabela de associados.';
       raise vr_exc_erro;
     end if;
     
