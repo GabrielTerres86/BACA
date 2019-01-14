@@ -12,6 +12,10 @@
                 reenviar o cheque para regularizacao. Gravando log para 
                 verlog (Carlos)
 
+     14/01/2019 - Alteracoes para balizar novo botao de inclusao de
+                  devolucoes pela alinea 12. 
+                  Chamado PRB0040458 - Gabriel (Mouts).
+
 ............................................................................*/
 
 
