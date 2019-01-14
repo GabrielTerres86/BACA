@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-15
+17
 -- Created on 14/01/2019 by T0031667 
 declare 
   -- Local variables here
@@ -14,6 +14,8 @@ begin
 															, pr_dtmvtolt => trunc(SYSDATE)
 															, pr_cdcritic => vr_cdcritic
 															, pr_dscritic => vr_dscritic);
+															
+	COMMIT;
 end;
 0
 0
