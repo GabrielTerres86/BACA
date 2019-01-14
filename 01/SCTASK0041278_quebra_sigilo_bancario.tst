@@ -2887,15 +2887,45 @@ DECLARE
         vr_tbdoc.DELETE;
 
         -- DOC sempre será montado manualmente
-/*        vr_tbdoc(1).cdagenci := 1;
-        vr_tbdoc(1).nrcpfdeb := 19277670000188;
-        vr_tbdoc(1).nrdconta := 120693;
-        vr_tbdoc(1).nrctadeb := 3000023570;
-        vr_tbdoc(1).dtmvtolt := TO_DATE('29/09/16','DD/MM/RRRR');
-        vr_tbdoc(1).cdbancod := 104;
-        vr_tbdoc(1).nmclideb := 'MAO SANTA';
-        vr_tbdoc(1).valordoc := 4999.99;
-        vr_tbdoc(1).flgativo := 0; */
+        vr_tbdoc(1).cdagenci := 2693;
+        vr_tbdoc(1).nrcpfdeb := 75339051000141;
+        vr_tbdoc(1).nrdconta := 1619;
+        vr_tbdoc(1).nrctadeb := 698261;
+        vr_tbdoc(1).dtmvtolt := TO_DATE('28/08/2018','DD/MM/RRRR');
+        vr_tbdoc(1).cdbancod := 237;
+        vr_tbdoc(1).nmclideb := 'DOCOL METAIS SANITARIOS LTDA';
+        vr_tbdoc(1).valordoc := 1896.59;
+        vr_tbdoc(1).flgativo := 0;
+
+        vr_tbdoc(2).cdagenci := 2693;
+        vr_tbdoc(2).nrcpfdeb := 75339051000141;
+        vr_tbdoc(2).nrdconta := 1619;
+        vr_tbdoc(2).nrctadeb := 698261;
+        vr_tbdoc(2).dtmvtolt := TO_DATE('19/09/2018','DD/MM/RRRR');
+        vr_tbdoc(2).cdbancod := 237;
+        vr_tbdoc(2).nmclideb := 'DOCOL METAIS SANITARIOS LTDA';
+        vr_tbdoc(2).valordoc := 1645.04;
+        vr_tbdoc(2).flgativo := 0;
+
+        vr_tbdoc(3).cdagenci := 2693;
+        vr_tbdoc(3).nrcpfdeb := 75339051000141;
+        vr_tbdoc(3).nrdconta := 1619;
+        vr_tbdoc(3).nrctadeb := 698261;
+        vr_tbdoc(3).dtmvtolt := TO_DATE('21/09/2018','DD/MM/RRRR');
+        vr_tbdoc(3).cdbancod := 237;
+        vr_tbdoc(3).nmclideb := 'DOCOL METAIS SANITARIOS LTDA';
+        vr_tbdoc(3).valordoc := 19.40;
+        vr_tbdoc(3).flgativo := 0;
+
+        vr_tbdoc(4).cdagenci := 2693;
+        vr_tbdoc(4).nrcpfdeb := 75339051000141;
+        vr_tbdoc(4).nrdconta := 1619;
+        vr_tbdoc(4).nrctadeb := 698261;
+        vr_tbdoc(4).dtmvtolt := TO_DATE('24/10/2018','DD/MM/RRRR');
+        vr_tbdoc(4).cdbancod := 237;
+        vr_tbdoc(4).nmclideb := 'DOCOL METAIS SANITARIOS LTDA';
+        vr_tbdoc(4).valordoc := 1988.77;
+        vr_tbdoc(4).flgativo := 0;
         
         -- Percorrer todas as movimentaçoes da conta
         FOR rw_lancamento IN cr_lancamentos (pr_cdcooper     => rw_conta.cdcooper
