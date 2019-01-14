@@ -1263,6 +1263,46 @@ DO WHILE TRUE:
             /*  Verifica se os lotes estao fechados  */
             HIDE MESSAGE NO-PAUSE.
    
+            MESSAGE "Verificando os lotes do dia (arrecadacao de caixa)...".
+
+            ASSIGN aux_cdagefim = IF   tel_cdagenci = 0  THEN 
+                                       9999
+                                  ELSE tel_cdagenci.
+
+            FOR EACH craplot WHERE craplot.cdcooper  = glb_cdcooper    AND
+                                   craplot.dtmvtolt  = tel_dtmvtopg    AND
+                                   craplot.dtmvtopg  = ?               AND
+                                   craplot.tplotmov  = 20              AND
+                                (((craplot.cdagenci >= tel_cdagenci    AND
+                                   craplot.cdagenci <= aux_cdagefim)   AND
+                                   craplot.cdagenci <> 90              AND
+                                   craplot.cdagenci <> 91)      OR
+                                  (craplot.cdagenci  = 90              AND
+                                   tel_cdagenci      = 90)      OR
+                                  (craplot.cdagenci  = 91              AND
+                                   tel_cdagenci      = 91))            NO-LOCK,
+                EACH crawage WHERE crawage.cdagenci  = craplot.cdagenci AND
+                                   crawage.cdagenci <> crapcop.cdbcoctl NO-LOCK:
+                          
+                IF   craplot.qtinfoln <> craplot.qtcompln   OR
+                     craplot.vlinfocr <> craplot.vlcompcr   THEN
+                     DO:
+                         MESSAGE "Lote nao batido:" 
+                                 STRING(craplot.cdagenci,"999") + "-" +
+                                 STRING(craplot.cdbccxlt,"999") + "-" +
+                                 STRING(craplot.nrdolote,"999999").
+
+                         glb_cdcritic = 139.
+                         NEXT.
+                     END.
+                          
+            END.  /*  Fim do FOR EACH  */
+
+            IF   glb_cdcritic > 0   THEN
+                 NEXT.
+  
+            MESSAGE "Lote(s) do dia fechado(s)! Gerando arquivo(s)...".
+
             ASSIGN aux_qtarquiv = 0
                    aux_qttitarq = 0.
             
@@ -2681,18 +2721,6 @@ PROCEDURE imprimir_lotes:
                                  STRING(DAY(tel_dtmvtopg),"99") +
                                  STRING(craplot.cdagenci,"999") +
                                  STRING(craplot.nrdolote,"999999") + ".CBE".
-
-       
-       FOR EACH craptit WHERE craptit.cdcooper  = glb_cdcooper       AND
-                              craptit.dtmvtolt  = craplot.dtmvtolt   AND
-                              craptit.cdagenci  = craplot.cdagenci   AND
-                              craptit.cdbccxlt  = craplot.cdbccxlt   AND
-                              craptit.nrdolote  = craplot.nrdolote   NO-LOCK:
-    
-            ASSIGN cratlot.qttitulo = cratlot.qttitulo + 1
-                   cratlot.vltitulo = cratlot.vltitulo + craptit.vldpagto.
-    
-       END.  /*  for each craptit */
 
        /* Restages */
        FOR EACH craptit WHERE craptit.cdcooper  = glb_cdcooper       AND

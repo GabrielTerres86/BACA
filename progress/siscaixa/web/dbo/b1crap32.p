@@ -406,17 +406,6 @@ PROCEDURE proc_resgates:
                            craptit.dtmvtolt  = craplot.dtmvtolt     AND
                            craptit.cdagenci  = craplot.cdagenci     AND
                            craptit.cdbccxlt  = craplot.cdbccxlt     AND
-                           craptit.nrdolote  = craplot.nrdolote     NO-LOCK:
-    
-        ASSIGN tt-lote.qttitulo = tt-lote.qttitulo + 1
-               tt-lote.vltitulo = tt-lote.vltitulo + craptit.vldpagto.
-    
-    END.  /*  for each craptit */
-
-	FOR EACH craptit WHERE craptit.cdcooper  = crapcop.cdcooper     AND
-                           craptit.dtmvtolt  = craplot.dtmvtolt     AND
-                           craptit.cdagenci  = craplot.cdagenci     AND
-                           craptit.cdbccxlt  = craplot.cdbccxlt     AND
                            craptit.nrdolote  = craplot.nrdolote     AND
                            craptit.dtdevolu <> ?                    NO-LOCK:
     

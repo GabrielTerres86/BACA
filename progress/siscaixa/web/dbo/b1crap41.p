@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Maio/2013                       Ultima atualizacao: 03/09/2018
+   Data    : Maio/2013                       Ultima atualizacao: 07/12/2017
 
    Dados referentes ao programa:
 
@@ -52,8 +52,6 @@
                              valor do pagamento for superior ao limite cadastrado 
                              na CADCOP / CADPAC
                             (Diogo - MoutS)
-                                 
-			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
                                  
 ............................................................................ */
 
@@ -1023,7 +1021,6 @@ PROCEDURE paga-darf:
     DEF        VAR  aux_dsconsul       AS CHAR            NO-UNDO.
     DEF        VAR  aux_dsmvtocd       AS CHAR            NO-UNDO.
     DEF        VAR  aux_flgfatex       AS LOGI INIT FALSE NO-UNDO.
-	DEF        VAR  aux_nrseqdig       AS INT             NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
@@ -1133,20 +1130,6 @@ PROCEDURE paga-darf:
                 END.
         END.
 
-	/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
-	RUN STORED-PROCEDURE pc_sequence_progress
-	aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-										,INPUT "NRSEQDIG"
-										,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";11;" + STRING(aux_nrdolote)
-										,INPUT "N"
-										,"").
-
-	CLOSE STORED-PROC pc_sequence_progress
-	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-	ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
-				               WHEN pc_sequence_progress.pr_sequence <> ?.
-
     DO aux_contador = 1 TO 10:
         
         c-desc-erro = "".
@@ -1238,11 +1221,16 @@ PROCEDURE paga-darf:
            craplft.cdbccxlt = craplot.cdbccxlt
            craplft.nrdolote = craplot.nrdolote
            craplft.dtvencto = crapdat.dtmvtocd
-           craplft.nrseqdig = aux_nrseqdig
+           craplft.nrseqdig = craplot.nrseqdig + 1
            craplft.cdseqfat = aux_cdseqfat
            craplft.insitfat = 1
-           craplft.cdhistor = 1154.   
+           craplft.cdhistor = 1154
 
+           craplot.nrseqdig = craplot.nrseqdig + 1
+           craplot.qtcompln = craplot.qtcompln + 1
+           craplot.qtinfoln = craplot.qtinfoln + 1
+           craplot.vlcompcr = craplot.vlcompcr + (par_vllanmto + par_vlrmulta + par_vlrjuros)
+           craplot.vlinfocr = craplot.vlinfocr + (par_vllanmto + par_vlrmulta + par_vlrjuros).
     VALIDATE craplot.
     
 
