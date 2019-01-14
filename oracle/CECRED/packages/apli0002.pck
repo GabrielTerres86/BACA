@@ -4350,6 +4350,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 							 
                 27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
 
+                11/01/2019 - Ajustado a informação referente ao IdOrigem (Kledir)
+
   .......................................................................................*/
   PROCEDURE pc_incluir_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -5975,7 +5977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                          --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
                                          --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
                                          --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
-                                         --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                         , pr_cdorigem => pr_idorigem
                                          --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
                                          -------------------------------------------------
                                          -- Dados do lote (Opcional)
@@ -11073,6 +11075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 							 
                 29/08/2018 - Ajuste realizado para prevenir problemas no resgate de aplicação.
                              (PRB0040124 - Kelvin)
+                             
+                11/01/2019 - Ajustado a informação referente ao IdOrigem (Kledir)
   .......................................................................................*/
   PROCEDURE pc_efetua_resgate_online(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -11897,7 +11901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                  --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
                                                  --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
                                                  --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
-                                                 --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                 , pr_cdorigem => pr_idorigem
                                                  --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
                                                  -------------------------------------------------
                                                  -- Dados do lote (Opcional)
@@ -13299,7 +13303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
                                                   --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
                                                   --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
-                                                  --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                  , pr_cdorigem => pr_idorigem
                                                   --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
                                                   -------------------------------------------------
                                                   -- Dados do lote (Opcional)
@@ -15580,7 +15584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                    --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
                                                    --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
                                                    --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
-                                                   --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                   , pr_cdorigem => pr_idorigem
                                                    --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
                                                    -------------------------------------------------
                                                    -- Dados do lote (Opcional)
