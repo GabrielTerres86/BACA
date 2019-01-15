@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
+CREATE OR REPLACE PACKAGE CECRED.APLI0005_TESTE_145 IS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -917,9 +917,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                         ,pr_cdcritic OUT PLS_INTEGER                     --> Código da crítica
                                         ,pr_dscritic OUT VARCHAR2);
 
-END APLI0005;
+END APLI0005_TESTE_145;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005_TESTE_145 IS
 
   -- Cursor genérico de parametrização
   CURSOR cr_craptab_taxas(pr_cdcooper IN craptab.cdcooper%TYPE
@@ -5238,7 +5238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_dtvencto := TO_DATE(pr_dtvencto,'dd/mm/RRRR');
 
       -- Efetua o cadastro de aplicacoes
-      APLI0005.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
+      APLI0005_TESTE_145.pc_cadastra_aplic(pr_cdcooper => vr_cdcooper   -- Código da Cooperativa
                                 ,pr_cdoperad => vr_cdoperad   -- Código do Operador
                                 ,pr_nmdatela => vr_nmdatela   -- Nome da Tela
                                 ,pr_idorigem => vr_idorigem   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
@@ -5342,7 +5342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     ..............................................................................*/
 
     BEGIN
-         APLI0005.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
+         APLI0005_TESTE_145.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
                                                  pr_cdoperad => pr_cdoperad,
                                                    pr_nmdatela => pr_nmdatela,
                                                    pr_idorigem => pr_idorigem,
@@ -7883,7 +7883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     BEGIN
       
 		  -- pc_lista_aplicacoes com pr_dtinicio e pr_dtfim
-      APLI0005.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+      APLI0005_TESTE_145.pc_lista_apli_demon(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
                                   ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
                                   ,pr_nmdatela => pr_nmdatela         --> Nome da tela
                                   ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
@@ -16160,5 +16160,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     END;
   END pc_busca_saldo_total_resgate;
 
-END APLI0005;
+END APLI0005_TESTE_145;
 /

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps145_teste (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -705,14 +705,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
               -- Leitura de carencias do produto informado
               vr_cdcritic := NULL;
               vr_dscritic := NULL;
-              apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+              APLI0005_TESTE_145.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                          ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                          ,pr_dscritic => vr_dscritic   -- Descricao da Critica
                                          ,pr_tab_care => vr_tab_care); -- Tabela com registros de Carencia do produto    
 
                IF vr_dscritic IS NULL THEN
-                apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
+                APLI0005_TESTE_145.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
                                               pr_cdoperad => '1',
                                               pr_nmdatela => 'CRPS145',
                                               pr_idorigem => 5,
@@ -1078,4 +1078,5 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         ROLLBACK;
     END;
 
-  END pc_crps145;
+  END pc_crps145_teste;
+/
