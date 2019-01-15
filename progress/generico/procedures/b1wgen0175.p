@@ -813,7 +813,7 @@ PROCEDURE busca-devolucoes-cheque:
                                          AND crapdev.cdagechq = crapfdc.cdagechq
                                          AND crapdev.nrctachq = crapfdc.nrctachq
                                          AND crapdev.nrcheque = aux_nrcalcul  
-					                     AND crapdev.vllanmto = crapfdc.vllanmto									 
+					                     AND crapdev.vllanmto = crapfdc.vlcheque									 
 								         AND crapdev.cdbandep = (IF crapfdc.cdbandep = ? 
 																 THEN crapdev.cdbandep
 																 ELSE crapfdc.cdbandep)
