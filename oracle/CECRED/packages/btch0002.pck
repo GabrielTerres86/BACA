@@ -22,6 +22,9 @@ CREATE OR REPLACE PACKAGE CECRED.btch0002 AS
                             
                01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
                             (Lucas Ranghetti #491624)                
+                            
+               04/01/2019 - Incluido critica na tela PROCES para taxas TR e Selic Meta não incluidas 
+	                    na tela INDICE para o ultimo dia do mes.  (Andre - MoutS SCTASK0030377)                
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Tipo para armazenamento as criticas identificadas */
@@ -725,6 +728,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 		-- Data do período do indexador
 		vr_dtperiod DATE;
     
+    -- Data do ultimo dia util do mes
+    vr_dtultdia DATE;
+    
     vr_flexecut BOOLEAN := FALSE;
     
     
@@ -771,7 +777,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                  pr_des_log      => TO_CHAR(sysdate,'dd/mm/rrrr hh24:mi:ss') ||
                                                     ' --> ' || pr_des_log);      
     END;    
-                                              
+    
+    PROCEDURE pc_verifica_indice (pr_cdcooper  crapcop.cdcooper%TYPE,       
+                                  pr_cddindex  crapind.cddindex%TYPE) IS
+    BEGIN
+  
+      -- Abre cursor do indexador a ser verificado
+      OPEN cr_crapind(pr_cddindex => pr_cddindex);
+      FETCH cr_crapind INTO rw_crapind;
+      CLOSE cr_crapind; 
+        
+      -- Se não encontrar, gerar crítica
+      IF rw_crapind.cddindex IS NULL THEN   
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' Indexador não cadastrado ' || pr_cddindex );               
+      END IF;
+
+      -- Abre cursor para buscar a taxa do indexador
+      OPEN cr_craptxi(pr_cddindex => rw_crapind.cddindex   -- Código do indexador
+                     ,pr_dtiniper => rw_crapdat.dtmvtolt   -- Data inicial do periodo de taxa
+                     ,pr_dtfimper => rw_crapdat.dtmvtolt); -- Data final do periodo de taxa
+      FETCH cr_craptxi INTO rw_craptxi;     
+
+      IF cr_craptxi%NOTFOUND THEN
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta cadastrar taxa do dia ' || to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || 
+                                        ' para o indexador ' || rw_crapind.nmdindex || '. Tela INDICE.',
+                         pr_cancsoli => 0 ); -- Não deve cancelar o processamento   
+      END IF;
+      CLOSE cr_craptxi;
+     END;
+                                            
     
   BEGIN
     -- Limpar parametro
@@ -1150,6 +1186,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 			END IF;
 		  CLOSE cr_craptxi;
     END LOOP;  
+    
+    -- Verifica ultimo dia util do mes
+    vr_dtultdia := gene0005.fn_valida_dia_util( pr_cdcooper => pr_cdcooper
+                                               ,pr_dtmvtolt => LAST_DAY(rw_crapdat.dtmvtolt)
+                                               ,pr_tipo     => 'A'
+                                               ,pr_feriado  => TRUE
+                                               ,pr_excultdia => TRUE); -- Deve ser o ultimo dia util do mes
+
+    -- Se for o ultimo dia util do mes, verifica se a taxa TR e Selic Meta estão cadastradas SCTASK0030377
+    IF rw_crapdat.dtmvtolt = vr_dtultdia THEN
+      /* Verifica se taxa TR esta cadastrada */
+      pc_verifica_indice(pr_cdcooper => pr_cdcooper,
+                         pr_cddindex => 2);
+
+      /* Verifica se taxa Selic Meta esta cadastrada */
+      pc_verifica_indice(pr_cdcooper => pr_cdcooper,
+                         pr_cddindex => 3);                     
+    END IF;  
     
     /*  Verifica se foram cadastradas as taxas (emprestimo) do mes  */
     -- Verificar se é virada de mês
