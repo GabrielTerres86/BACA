@@ -8514,6 +8514,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro EXCEPTION;
+	  vr_vllantot NUMBER := 0;
 
       --Agrupa os parametros - 15/12/2017 - Chamado 779415
       vr_dsparame VARCHAR2(4000);	 
@@ -9280,6 +9281,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
 		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_paga_convenio');
 
+      -- guardar valor para atualizar o lote
+      vr_vllantot := nvl(rw_crapaut.vldocmto,0);
+		  
       /* Campos gravados na crappro para visualizacao na internet */
 
       vr_dsinfor1:= 'Pagamento';
@@ -10174,6 +10178,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Registro de dados de associado
       rw_cra2ass cr_crapass%ROWTYPE;
       rw_crapass_prot cr_crapass%ROWTYPE;
+	  
+	  vr_vllantot NUMBER;
 
       vr_dscedent VARCHAR2(200);
       vr_idorigem INTEGER;
@@ -10782,6 +10788,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
 		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_paga_titulo');
+
+	  -- guardar valor para atualizar o lote
+      vr_vllantot := nvl(rw_crapaut.vldocmto,0);
 
       /* Gera um protocolo para o pagamento */
       vr_dscedent := pr_dscedent;
