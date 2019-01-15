@@ -44,11 +44,7 @@
                07/07/2014 - Alimentar glb_nmrescop quando executado pelo script
                             (Diego).                
                
-               28/08/2015 - Incluir criticas no log do prcctl 319730 (Odirlei-AMcom)   
-			   
-               26/12/2018 - Efetuar copia de arquivo txt para diretorio micros.
-                            Chamado SCTASK0036838 - Gabriel Marcos (Mouts).
-                  
+               28/08/2015 - Incluir criticas no log do prcctl 319730 (Odirlei-AMcom)                    
 ............................................................................. */
 
 { includes/var_online.i }
@@ -599,12 +595,6 @@ ELSE      /* Gera PDF no CRPS662 */
                 RUN gera_critica_procbatch.
                 RETURN "NOK".
               END.
-
-         /*** copiar arquivo para o diretorio 'compel' ***/
-         UNIX SILENT VALUE("cp " + aux_nmarqimp + " " + "/micros/" + 
-                           crapcop.dsdircop + "/compel/" + 
-                           REPLACE(SUBSTRING(aux_nmarqimp,R-INDEX(aux_nmarqimp,"/") + 1,
-                           LENGTH(aux_nmarqimp) - R-INDEX(aux_nmarqimp,"/")),"lst","txt")).
 
          UNIX SILENT VALUE("rm /micros/cecred/compel/crrl262_" + 
                            STRING(crapcop.cdagectl,"9999") + 
