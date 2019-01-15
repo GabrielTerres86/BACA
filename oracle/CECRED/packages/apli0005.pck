@@ -4490,7 +4490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10106);
+                       ,pr_nrdolote => 9900010106);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4515,7 +4515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,rw_crapdat.dtmvtolt
              ,1
              ,100
-             ,10106
+             ,9900010106 --10106
              ,29
              ,1
              ,1
@@ -4671,7 +4671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10104);
+                       ,pr_nrdolote => 9900010104);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4698,7 +4698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10104
+               ,9900010104 --10104
                ,29
                ,1
                ,1
@@ -4788,7 +4788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10105);
+                       ,pr_nrdolote => 9900010105);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4815,7 +4815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10105
+               ,9900010105 --10105
                ,29
                ,1
                ,1
