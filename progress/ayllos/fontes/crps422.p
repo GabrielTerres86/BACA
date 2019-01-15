@@ -101,10 +101,7 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa) 
 
-	       26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
-	       20/12/2018 - Alteracao para enviar tipo do cartao como internacional
-                            (SCTASK0032664 - Andre Mouts).
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................ */
 
@@ -137,8 +134,6 @@ DEF     VAR aux_contador AS INTE                                     NO-UNDO.
 DEF     VAR aux_flgerros AS LOGICAL                                  NO-UNDO.
 DEF     VAR aux_nrdctitg LIKE crapass.nrdctitg                       NO-UNDO.
 DEF     VAR aux_valor    LIKE craptlc.vllimcrd                       NO-UNDO.
-DEF     VAR aux_tpcartao AS INTE                                     NO-UNDO.
-DEF     VAR aux_cartinte AS INTE                                     NO-UNDO.
 
 DEF        VAR aux_dadosusr AS CHAR                                  NO-UNDO.
 DEF        VAR par_loginusr AS CHAR                                  NO-UNDO.
@@ -356,15 +351,6 @@ FOR EACH crawcrd WHERE crawcrd.cdcooper = glb_cdcooper   AND
          END. 
 END.
 
-/* Carrega parametro para verificar se envia tipo de cartao internacional como padrao SCTASK0032664 */
-ASSIGN aux_cartinte = 0.
-FIND crapprm WHERE crapprm.nmsistem = "CRED"  AND
-                   crapprm.cdcooper = 0   AND
-                   crapprm.cdacesso = "COO410_TPCARTAO_INTER"		 
-                   NO-LOCK NO-ERROR.
-IF AVAILABLE crapprm   THEN
-   aux_cartinte = INTEGER(crapprm.dsvlrprm).		  
-
 FOR EACH wcartao NO-LOCK BREAK BY wcartao.nrdconta
                                   BY wcartao.cdadmcrd
                                      BY wcartao.nrsequen TRANSACTION:
@@ -387,11 +373,6 @@ FOR EACH wcartao NO-LOCK BREAK BY wcartao.nrdconta
                              craptlc.cdlimcrd = crawcrd.cdlimcrd   
                              NO-LOCK NO-ERROR.
      
-    
-    ASSIGN aux_tpcartao = crawcrd.cdadmcrd.
-    IF aux_cartinte = 1 THEN
-       aux_tpcartao = 85. /* Internacional */		  
-
     IF   FIRST-OF(wcartao.nrdconta)   AND 
          FIRST-OF(wcartao.cdadmcrd)  THEN
          DO:
@@ -407,7 +388,7 @@ FOR EACH wcartao NO-LOCK BREAK BY wcartao.nrdconta
                            aux_nrdctitg = SUBSTRING(crapass.nrdctitg,1,7)
                            aux_dsdlinha = STRING(aux_nrregist,"99999")        +
                                           "13"                                +
-                                          STRING(aux_tpcartao,"99")           +
+                                          STRING(crawcrd.cdadmcrd,"99")       +
                                           STRING(crawcrd.dddebito,"99")       +
                                           "S"                                 +
                                           STRING(crapcop.cdageitg,"9999")     +
@@ -484,7 +465,7 @@ FOR EACH wcartao NO-LOCK BREAK BY wcartao.nrdconta
                                                  "99999999999")           +
                                           "  000000000"                   +
                                           "         "                     +
-                                          STRING(aux_tpcartao,"99")       +
+                                          STRING(crawcrd.cdadmcrd,"99")   +
                                           STRING(crawcrd.nrcpftit,
                                                  "99999999999")           +
                                           STRING(crapass.nrdconta,
@@ -514,7 +495,7 @@ FOR EACH wcartao NO-LOCK BREAK BY wcartao.nrdconta
                                           "  000000000"                   +
                                           STRING(crawcrd.nrcctitg,
                                                  "999999999")             +
-                                          STRING(aux_tpcartao,"99")       +
+                                          STRING(crawcrd.cdadmcrd,"99")   +
                                           STRING(crawcrd.nrcpftit,
                                                  "99999999999")           +
                                           STRING(crapass.nrdconta,
