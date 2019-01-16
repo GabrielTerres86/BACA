@@ -750,6 +750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --   19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da 
   --                situação do titulo dssittit (Paulo Penteado GFT)
+  --
+  --   12/01/2019 - Alterada ordem de retorno das informacoes do bordero. Campo tipo de documento deve ser o 14 da lista.
+  --                Heitor (Mouts) - INC0030658
   -------------------------------------------------------------------------------------------------------------
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
@@ -2817,8 +2820,8 @@ END fn_letra_risco;
                             '<dsopelib>' || vr_tab_dados_border(vr_index).dsopelib || '</dsopelib>' ||
                             '<dsopedig>' || vr_tab_dados_border(vr_index).dsopedig || '</dsopedig>' ||
                             '<flgdigit>' || vr_tab_dados_border(vr_index).flgdigit || '</flgdigit>' ||
+							'<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
                             '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
-                            '<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
                             '<innivris>' || vr_tab_dados_border(vr_index).innivris || '</innivris>' ||
                             '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
                         '</inf>'
