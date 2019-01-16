@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2000.                     Ultima atualizacao: 13/02/2006
+   Data    : Abril/2000.                     Ultima atualizacao: 03/09/2018
 
    Dados referentes ao programa:
 
@@ -34,6 +34,9 @@
                13/02/2006 - Inclusao do parametro glb_cdcooper para a chamada 
                             do programa fontes/testa_boletim.p - SQLWorks - 
                             Fernando.
+
+  			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -568,11 +571,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                NEXT BARRAS.
            END.
 
-      ASSIGN craplot.vlcompcr = craplot.vlcompcr + tel_vldpagto -
-                                craptit.vldpagto
-              
-             craptit.vldpagto = tel_vldpagto
-             
+      ASSIGN craptit.vldpagto = tel_vldpagto
              tel_vlcompdb = craplot.vlcompdb
              tel_vlcompcr = craplot.vlcompcr
              tel_vldifedb = craplot.vlcompdb - craplot.vlinfodb
