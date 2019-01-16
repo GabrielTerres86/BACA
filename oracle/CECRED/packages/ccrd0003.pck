@@ -2546,7 +2546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                      ,pr_nrseqarq in number                --> Sequencia do arquivo
                                      ,pr_nrseqexe in number                --> Sequencia da execucao
                                      ,pr_idparale IN NUMBER                --> Indicador de processo paralelo
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
   BEGIN
     /* .............................................................................
@@ -6571,7 +6571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_sexbancoob crapttl.cdsexotl%TYPE;
       vr_cdestcvl   crapavt.cdestcvl%TYPE;
       vr_nrcpfcgc   crapavt.nrcpfcgc%TYPE;
-      vr_inpessoa   crapavt.inpessoa%TYPE;     
+      vr_inpessoa   crapavt.inpessoa%TYPE;      
       vr_qtdconta   pls_integer; -- Contar quantidade de registros por conta no arquivo
       vr_cdprogra   VARCHAR2(19) := 'CCRD0003.PC_CRPS671';
       
@@ -6688,7 +6688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ass.dtdemiss IS NULL        AND
              age.cdcooper = ass.cdcooper AND
              age.cdagenci = ass.cdagenci AND
-             pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
+			 pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh 
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)             
              ORDER BY pcr.nrdconta   
@@ -7842,7 +7842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_cdufdttl := ' ';
               vr_titulari := 0;
               vr_tipooper := ' ';
-             
+              
               -- Solicitacao de upgrade/downgrade no cartao do primeiro titular
               IF NVL(vr_nrctaant,0) <> rw_crawcrd.nrdconta THEN
                 vr_flupgrad := FALSE;
@@ -8630,6 +8630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               - Incluir a critica 143 - conta duplicada junto da critica 080
                                 para não prosseguirmos com a inclusão do cartão pois o mesmo
                                 ja possui cartão (Lucas Ranghetti #PRB0040493)
+
+				   16/01/2019 - Adicionar ordenacao no cursor cr_crawcrd (Anderson).
     ............................................................................ */
 
     DECLARE
@@ -8895,7 +8897,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              pcr.nrcpftit = pr_nrcpftit  AND
              pcr.cdadmcrd = pr_cdadmcrd  AND
              (pcr.rowid <> pr_rowid OR pr_rowid IS NULL) AND
-             pcr.dtcancel IS NULL;
+             pcr.dtcancel IS NULL
+    /* Dar preferencia para os cartoes insitcrd = [2 - solicitado] pois acabou
+       pegando propostas de cartoes cancelados e outras situacoes indevidas */
+    ORDER BY DECODE(pcr.insitcrd,2,0,9);
       rw_crawcrd cr_crawcrd%ROWTYPE;
 
       -- cursor para busca de proposta de cartões do bancoob por conta
