@@ -1072,7 +1072,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
         -- Validar se a data auxiliar e util e se não for trazer a primeira apos
         vr_dtcalcul:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                 ,pr_dtmvtolt => vr_dtiniper);
+                                                 ,pr_dtmvtolt => vr_dtiniper
+                                                 ,pr_tipo     => 'P'     -- valor padrao
+                                                 ,pr_feriado  => true    -- valor padrao 
+                                                 ,pr_excultdia => true); -- considera 31/12 como util
 
         --Se for sabado ou domingo ou feriado entao pega a proxima data
         IF Trunc(vr_dtcalcul) <> Trunc(vr_dtiniper) THEN
@@ -1274,7 +1277,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         -- Validar se a data auxiliar e util e se não for trazer a primeira apos
         vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                  ,pr_dtmvtolt => vr_dtcalcul);
+                                                  ,pr_dtmvtolt => vr_dtcalcul
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         -- Continuar enquanto a data auxiliar de calculo for inferior a data final
         EXIT WHEN vr_dtcalcul >= pr_dtfimper;
         -- Acumular os rendimentos com base no saldo RCA * taxa
@@ -1975,7 +1981,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_dtmvtolt := rw_craprda.dtfimper;
           -- Validar se esta data e util e se não for trazer o proximo dia util
           vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => vr_dtmvtolt);
+                                                    ,pr_dtmvtolt => vr_dtmvtolt
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
         ELSIF pr_cdprogra = 'CRPS105' THEN -- Resgate
           -- Usar a data do proximo movimento
           vr_dtmvtolt := pr_dtmvtopr;
@@ -2087,7 +2096,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         LOOP
           -- Validar se a data auxiliar e util e se não for trazer a primeira apos
           vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => vr_dtcalcul);
+                                                    ,pr_dtmvtolt => vr_dtcalcul
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
           -- Continuar enquanto a data auxiliar de calculo for inferior
           -- a data do movimento e houver saldo acumulado da aplicacao RDCA
           EXIT WHEN vr_dtcalcul >= rw_craplap.dtmvtolt OR pr_vlsdrdca <= 0;
@@ -2189,7 +2201,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         LOOP
           -- Validar se a data auxiliar e util e se não for trazer a primeira apos
           vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => vr_dtcalcul);
+                                                    ,pr_dtmvtolt => vr_dtcalcul
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
           -- Continuar enquanto a data auxiliar de calculo for inferior a
           -- a data auxiliar de termino encontrada acimla
           EXIT WHEN vr_dtcalcul >= vr_dtmvtolt;
@@ -2217,7 +2232,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         LOOP
           -- Validar se a data auxiliar e util e se não for trazer a primeira apos
           vr_dup_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                        ,pr_dtmvtolt => vr_dup_dtcalcul);
+                                                        ,pr_dtmvtolt => vr_dup_dtcalcul
+                                                        ,pr_tipo     => 'P'     -- valor padrao
+                                                        ,pr_feriado  => true    -- valor padrao 
+                                                        ,pr_excultdia => true); -- considera 31/12 como util
           -- Continuar enquanto a data auxiliar de calculo for inferior a
           -- a data auxiliar de termino encontrada acimla
           EXIT WHEN vr_dup_dtcalcul >= vr_dup_dtmvtolt;
@@ -4338,7 +4356,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         -- Validar se a data auxiliar e util e se não for trazer a primeira apos
         vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                  ,pr_dtmvtolt => vr_dtiniper);
+                                                  ,pr_dtmvtolt => vr_dtiniper
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         -- Continuar enquanto a data inicial for inferior a final
         EXIT WHEN vr_dtiniper >= vr_dtfimper;
         -- Aplicar ao rendimento a taxa
@@ -4452,8 +4473,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                  07/04/2014 - Alterações referente ao novo indexador de poupanca
                               (Jean Michel).
-				 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
-							  cr_crapmfx (Jean Michel).
+								 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
+															cr_crapmfx (Jean Michel).
 
                  24/06/2014 - Retirada leitura da craptab e incluido data de
                               liberacao do projeto do novo indexador de
@@ -4501,7 +4522,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
@@ -4673,23 +4694,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
       IF rw_crapdat.inproces > 1 THEN
-        -- Se o vetor de dias uteis ainda não possuir informacoes
-        IF vr_tab_qtdiaute.COUNT = 0 THEN
-          -- Buscar os dias uteis
-          FOR rw_craptrd IN (SELECT *
-                               FROM (SELECT craptrd.dtiniper
-                                           ,craptrd.qtdiaute
-                                           ,count(*) over (partition by craptrd.dtiniper
-                                                           order by craptrd.progress_recid) registro
-                                       FROM craptrd
-                                       WHERE craptrd.cdcooper = pr_cdcooper)
-                              WHERE registro = 1) LOOP
-            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-            IF rw_craptrd.registro = 1 THEN
-              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-            END IF;
-          END LOOP;
-        END IF;
+      -- Se o vetor de dias uteis ainda não possuir informacoes
+      IF vr_tab_qtdiaute.COUNT = 0 THEN
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT *
+                             FROM (SELECT craptrd.dtiniper
+                                         ,craptrd.qtdiaute
+                                         ,count(*) over (partition by craptrd.dtiniper
+                                                         order by craptrd.progress_recid) registro
+                                     FROM craptrd
+                                     WHERE craptrd.cdcooper = pr_cdcooper)
+                            WHERE registro = 1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+      END IF;
 
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
@@ -4710,20 +4731,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
-          -- Buscar os dias uteis
-          FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                   ,craptrd.qtdiaute
-                                   ,count(*) over (partition by craptrd.dtiniper
-                                                       order by craptrd.progress_recid) registro
-                               FROM craptrd
-                              WHERE craptrd.cdcooper = pr_cdcooper
-                                AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-            IF rw_craptrd.registro = 1 THEN
-              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
               EXIT;
-            END IF;
-          END LOOP;
+          END IF;
+        END LOOP;
         END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
@@ -4754,7 +4775,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         -- Validar se a data auxiliar e util e se não for trazer a primeira apos
         vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                  ,pr_dtmvtolt => vr_dtiniper);
+                                                  ,pr_dtmvtolt => vr_dtiniper
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         -- Continuar enquanto a data inicial for inferior a final
         EXIT WHEN vr_dtiniper >= vr_dtfimper;
         -- Limpar variavel de moeda
@@ -5394,7 +5418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             Projeto Ligeirinho - Jonatas Jaqmam (AMcom)
                             
                09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
-                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)  
+                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                            
                             
                23/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             Incluido crps147 na lista de programas que nao gravam CRAPTRD             
@@ -5436,7 +5460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-    
+
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
     vr_vlcompcr         craplot.vlcompcr%type := 0; 
@@ -5553,8 +5577,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_dtmvtolt := pr_dtmvtolt + 1;
       ELSIF vr_cdprogra = 'CRPS148' then /* ANIVERSARIO */
         -- Cálculo até o primeiro dia util a partir do fim do periodo
-        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                   rw_craprpp.dtfimper);
+        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                  ,rw_craprpp.dtfimper
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
       end if;
     else /* ONLINE */
       IF vr_cdprogra = 'CRPS156' then /* RESGATE */
@@ -5568,17 +5595,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     -- Leitura dos lançamentos da aplicação
     if rw_craprpp.cdprodut < 1 then -- aplicacao antiga 
-       OPEN cr_craplpp;
-       FETCH cr_craplpp INTO rw_craplpp;
-       IF cr_craplpp%FOUND THEN
-          vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
-          vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
-          vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
-          vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
-       END IF;
-       CLOSE cr_craplpp;
+    OPEN cr_craplpp;
+    FETCH cr_craplpp INTO rw_craplpp;
+    IF cr_craplpp%FOUND THEN
+      vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
+      vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
+      vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
+      vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
+    END IF;
+    CLOSE cr_craplpp;
         -- Calcula o saldo da poupança
-        vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
+    vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
     else -- Apl. Prog
         apli0008.pc_calc_saldo_apl_prog (pr_cdcooper => pr_cdcooper
                                         ,pr_cdprogra => pr_cdprogra
@@ -5646,8 +5673,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_des_erro := gene0001.fn_busca_critica(427)||
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
-      end if;      
-      
+      end if;
+
       -- Para os programas CRPS147 e 148, foi realizado o upate no próprio crps, visto que teríamos problemas no paralelismo           
       if vr_cdprogra IN('CRPS148','CRPS147') then
         begin
@@ -5663,25 +5690,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
           if vr_des_erro is not null then
             raise vr_exc_erro; 
-          end if;
-        
+    end if;
+
         exception
           when others then
             vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
             raise vr_exc_erro;              
         end;
       else
-        -- Atualiza o indicador de cálculo
-        begin
-          update craptrd
+      -- Atualiza o indicador de cálculo
+      begin
+        update craptrd
              set incalcul = 1
-           where rowid = rw_craptrd.rowid;
-        exception
-          when others then
-            vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
-            raise vr_exc_erro;
-        end;
-      end if;
+         where rowid = rw_craptrd.rowid;
+      exception
+        when others then
+          vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
+          raise vr_exc_erro;
+      end;
+    end if;
     end if;
 
     --
@@ -5692,8 +5719,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Acrescenta o rendimento para o período VR_DTCALCUL ate VR_DTMVTOLT
       while vr_dtcalcul < vr_dtmvtolt loop
         -- Busca o próximo dia útil
-        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                   vr_dtcalcul);
+        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                  ,vr_dtcalcul
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         if vr_dtcalcul >= vr_dtmvtolt then
           exit;
         end if;
@@ -5707,7 +5737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Próxima data
         vr_dtcalcul := vr_dtcalcul + 1;
       end loop;  /* Fim do WHILE */
-    end if;      
+    end if;
 
     /*  Arredondamento dos valores calculados  */
     vr_vlsdrdpp := fn_round(vr_vlsdrdpp,2);
@@ -5909,43 +5939,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       --
       if vr_vlrentot > 0 then
         if vr_cdprogra NOT IN('CRPS147','CRPS148') then
-          -- Atualizar o tipo do lote
+        -- Atualizar o tipo do lote
+        begin
+          update craplot
+             set craplot.tplotmov = 14
+           where craplot.cdcooper = pr_cdcooper
+             and craplot.dtmvtolt = vr_dtdolote
+             and craplot.cdagenci = vr_cdagenci
+             and craplot.cdbccxlt = vr_cdbccxlt
+             and craplot.nrdolote = vr_nrdolote
+          returning craplot.nrseqdig into vr_nrseqdig;
+        exception
+          when others then
+              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
+            raise vr_exc_erro;
+        end;
+        
+        if sql%rowcount = 0 then
           begin
-            update craplot
-               set craplot.tplotmov = 14
-             where craplot.cdcooper = pr_cdcooper
-               and craplot.dtmvtolt = vr_dtdolote
-               and craplot.cdagenci = vr_cdagenci
-               and craplot.cdbccxlt = vr_cdbccxlt
-               and craplot.nrdolote = vr_nrdolote
-            returning craplot.nrseqdig into vr_nrseqdig;
+            insert into craplot (dtmvtolt,
+                                 cdagenci,
+                                 cdbccxlt,
+                                 nrdolote,
+                                 tplotmov,
+                                 cdcooper)
+            values (vr_dtdolote,
+                    vr_cdagenci,
+                    vr_cdbccxlt,
+                    vr_nrdolote,
+                    14,
+                    pr_cdcooper)
+             returning 0 into vr_nrseqdig;
           exception
             when others then
-              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
+              vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
               raise vr_exc_erro;
           end;
-        
-          if sql%rowcount = 0 then
-            begin
-              insert into craplot (dtmvtolt,
-                                   cdagenci,
-                                   cdbccxlt,
-                                   nrdolote,
-                                   tplotmov,
-                                   cdcooper)
-              values (vr_dtdolote,
-                      vr_cdagenci,
-                      vr_cdbccxlt,
-                      vr_nrdolote,
-                      14,
-                      pr_cdcooper)
-               returning 0 into vr_nrseqdig;
-            exception
-              when others then
-                vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
-                raise vr_exc_erro;
-            end;
-          end if;
+        end if;
         
         end if;
        
@@ -5993,7 +6023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           when others then
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
-        end;  
+        end;
         
         -- Atualiza a capa do lote
         if vr_cdprogra IN('CRPS147','CRPS148') then
@@ -6004,24 +6034,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_qtcompln := vr_qtcompln + 1;        
       
         else
-          begin
-            update craplot
-               set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
-                   craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
-                   craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
-                   craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
+        begin
+          update craplot
+             set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
+                 craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
+                 craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
+                 craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
                    craplot.nrseqdig = vr_nrseqdig
-             where craplot.cdcooper = pr_cdcooper
-               and craplot.dtmvtolt = vr_dtdolote
-               and craplot.cdagenci = vr_cdagenci
-               and craplot.cdbccxlt = vr_cdbccxlt
-               and craplot.nrdolote = vr_nrdolote
-            returning nrseqdig into vr_nrseqdig;
-          exception
-            when others then
-              vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
-              raise vr_exc_erro;
-          end;
+           where craplot.cdcooper = pr_cdcooper
+             and craplot.dtmvtolt = vr_dtdolote
+             and craplot.cdagenci = vr_cdagenci
+             and craplot.cdbccxlt = vr_cdbccxlt
+             and craplot.nrdolote = vr_nrdolote
+          returning nrseqdig into vr_nrseqdig;
+        exception
+          when others then
+            vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
+            raise vr_exc_erro;
+        end;
         end if;
         --
         IF vr_cdprogra = 'CRPS148' and
@@ -6073,7 +6103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --     
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
@@ -6295,7 +6325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --        
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
@@ -6403,7 +6433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --       
+      --
       if vr_cdprogra in ('CRPS147', 'CRPS148') then
         /* Ajuste */
         vr_vlajuste := vr_vlprovis - vr_vllan152;
@@ -6420,17 +6450,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_vlajuste_db := abs(vr_vlajuste);
           end if;
 
-          
-          vr_vlinfocr := vr_vlinfocr + nvl(vr_vlajuste_cr, 0); 
-          vr_vlcompcr := vr_vlcompcr + nvl(vr_vlajuste_cr, 0);  
-          vr_vlinfodb := vr_vlinfodb + nvl(vr_vlajuste_db, 0); 
-          vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
-          vr_qtinfoln := vr_qtinfoln + 1;    
-          vr_qtcompln := vr_qtcompln + 1; 
+
+            vr_vlinfocr := vr_vlinfocr + nvl(vr_vlajuste_cr, 0); 
+            vr_vlcompcr := vr_vlcompcr + nvl(vr_vlajuste_cr, 0);  
+            vr_vlinfodb := vr_vlinfodb + nvl(vr_vlajuste_db, 0); 
+            vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
+            vr_qtinfoln := vr_qtinfoln + 1;    
+            vr_qtcompln := vr_qtcompln + 1; 
             
           -- Para lote 8384 utilizar sequence da tabela de lote.
-          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;
-          
+            vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;            
+            
           -- Insere histórico de ajuste nos lançamentos da poupança programada
           begin
             insert into craplpp (dtmvtolt,
@@ -6502,8 +6532,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       end if;
 
-    end if;    
-    
+    end if;
+
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
@@ -6637,7 +6667,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           WHILE vr_dtmvtolt < vr_dtultdia
           LOOP
             BEGIN
-              vr_dtmvtolt := gene0005.fn_valida_dia_util(1, vr_dtmvtolt);
+              vr_dtmvtolt := gene0005.fn_valida_dia_util(1
+                                                        ,vr_dtmvtolt
+                                                        ,pr_tipo     => 'P'     -- valor padrao
+                                                        ,pr_feriado  => true    -- valor padrao 
+                                                        ,pr_excultdia => true); -- considera 31/12 como util
 
               IF vr_dtmvtolt >= vr_dtultdia THEN
                 RAISE vr_controle;
@@ -7187,7 +7221,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        WHILE vr_dtiniper < vr_dtfimper
        LOOP
          BEGIN
-           vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper, vr_dtiniper);
+           vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                     ,vr_dtiniper
+                                                     ,pr_tipo     => 'P'     -- valor padrao
+                                                     ,pr_feriado  => true    -- valor padrao 
+                                                     ,pr_excultdia => true); -- considera 31/12 como util
 
            -- Compara data inicial com data final do periodo
            IF vr_dtiniper >= vr_dtfimper THEN
@@ -7630,7 +7668,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         BEGIN
           -- Busca data de feriado
-          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper, vr_dtiniper);
+          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                    ,vr_dtiniper
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
 
           IF vr_dtiniper >= vr_dtfimper THEN
             RAISE vr_controle;
@@ -8028,7 +8070,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         BEGIN
           -- Pesquisar data de feriado
-          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper, vr_dtiniper);
+          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                    ,vr_dtiniper
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
 
           -- Verificar ponto de encerramento do while
           IF vr_dtiniper >= vr_dtfimper THEN
@@ -8383,7 +8429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       LOOP
         BEGIN
           -- Busca feriados
-          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper, vr_dtiniper);
+          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                    ,vr_dtiniper
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
 
           -- Se atender condicão de datas finaliza iteracao do WHILE.
           IF vr_dtiniper >= pr_dtfimper THEN
@@ -9758,7 +9808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                              ,pr_dtmvtolt => pr_dtmvtolt
                                              ,pr_vlsdrdpp => vr_vlsdrdpp
                                              ,pr_des_erro => vr_des_erro);
-                                             
+
           End If; -- Aplicacao Programada
 
           --Se ocorreu erro
@@ -11324,8 +11374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_dtmvtolt := pr_dtmvtolt + 1;
       elsif pr_cdprogra = 'CRPS104' then -- aniversario
         vr_incalcul := 2;
-        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                   rw_craprda.dtfimper);
+        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                  ,rw_craprda.dtfimper
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
       elsif pr_cdprogra = 'CRPS105' then -- resgate
         vr_dtmvtolt := pr_dtmvtopr;
       elsif pr_cdprogra = 'CRPS117' or -- resgate para o dia
@@ -11385,8 +11438,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       while vr_dtcalcul < rw_craplap.dtmvtolt and
             vr_vlsdrdca > 0 loop
         -- Busca o proximo dia util
-        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                   vr_dtcalcul);
+        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                  ,vr_dtcalcul
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         if vr_dtcalcul >= rw_craplap.dtmvtolt then
           exit;
         end if;
@@ -11460,8 +11516,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Acrescenta o rendimento para o periodo VR_DTCALCUL até VR_DTMVTOLT
       while vr_dtcalcul < vr_dtmvtolt loop
         -- Busca o proximo dia util
-        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                   vr_dtcalcul);
+        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                  ,vr_dtcalcul
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         if vr_dtcalcul >= vr_dtmvtolt then
           exit;
         end if;
@@ -11483,8 +11542,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Acrescenta o rendimento para o periodo DUP_DTCALCUL até DUP_DTMVTOLT
       while dup_dtcalcul < dup_dtmvtolt loop
         -- Busca o proximo dia util
-        dup_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                    dup_dtcalcul);
+        dup_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper
+                                                   ,dup_dtcalcul
+                                                   ,pr_tipo     => 'P'     -- valor padrao
+                                                   ,pr_feriado  => true    -- valor padrao 
+                                                   ,pr_excultdia => true); -- considera 31/12 como util
         if dup_dtcalcul >= dup_dtmvtolt then
           exit;
         end if;
@@ -12556,7 +12618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Sobescrever também no rw, pois ele é passado adiante   
       rw_crapdat.dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
                                                          pr_dtmvtolt  => vr_dtmvtolt-1,
-                                                         pr_tipo      => 'A');
+                                                         pr_tipo      => 'A',
+                                                         pr_feriado   => true,  -- valor padrao
+                                                         pr_excultdia => true); -- considera dia 31/12 como util
       rw_crapdat.dtmvtolt := vr_dtmvtolt;
       rw_crapdat.dtmvtocd := vr_dtmvtolt;
       rw_crapdat.dtmvtopr := vr_dtmvtopr;
@@ -12566,7 +12630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_dtmvtopr := rw_crapdat.dtmvtopr;
       vr_dtmvtocd := rw_crapdat.dtmvtocd;    
     END IF;
-    
+
 
     -- Data de fim e inicio da utilizacao da taxa de poupanca.
     -- Utiliza-se essa data quando o rendimento da aplicacao for menor que

@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/07/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -57,7 +57,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             21/07/2018 - (Proj. 411.2) (CIS Corporate)
   --                          Não desfaz todas as transações em pc_obtem_taxa_modalidade
-
+  --
+	--             04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	--                          dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -4490,7 +4492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10106);
+                       ,pr_nrdolote => 9900010106);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4515,7 +4517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,rw_crapdat.dtmvtolt
              ,1
              ,100
-             ,10106
+             ,9900010106 --10106
              ,29
              ,1
              ,1
@@ -4671,7 +4673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10104);
+                       ,pr_nrdolote => 9900010104);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4698,7 +4700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10104
+               ,9900010104 --10104
                ,29
                ,1
                ,1
@@ -4788,7 +4790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10105);
+                       ,pr_nrdolote => 9900010105);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4815,7 +4817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10105
+               ,9900010105 --10105
                ,29
                ,1
                ,1
@@ -4909,15 +4911,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         BEGIN
            LANC0001.pc_gerar_lancamento_conta(
                           pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                         ,pr_cdagenci => rw_craplot.cdagenci
-                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                         ,pr_cdagenci => 1
+                         ,pr_cdbccxlt => 100
+                         ,pr_nrdolote => 8501
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_nrdctabb => pr_nrdconta
                          ,pr_nrdocmto => vr_nraplica
-                         ,pr_nrseqdig => rw_craplot.nrseqdig
-                         ,pr_dtrefere => rw_craplot.dtmvtolt
+                         ,pr_nrseqdig => 0
+                         ,pr_dtrefere => rw_crapdat.dtmvtolt
                          ,pr_vllanmto => pr_vlaplica
                          ,pr_cdhistor => rw_crapcpc.cdhscacc
                          ,pr_nraplica => vr_nraplica
@@ -5624,7 +5626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10106
+              AND craplci.nrdolote = 9900010106
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
 
@@ -5669,7 +5671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10106);
+                         ,pr_nrdolote => 9900010106);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5678,7 +5680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             -- Fecha cursor
             CLOSE cr_craplot;
             -- Descricao de critica por nao ter encontrado registro
-            vr_dscritic := 'Registro de lote 10106 nao encontrado.';
+            vr_dscritic := 'Registro de lote 9900010106 nao encontrado.';
             RAISE vr_exc_saida;
           ELSE
             -- Fecha cursor
@@ -5697,7 +5699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               DELETE FROM craplot WHERE craplot.rowid = rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao deletar regitro de lote 10106. Erro: ' || SQLERRM;
+                vr_dscritic := 'Erro ao deletar regitro de lote 9900010106. Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -5718,7 +5720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro de lote 10106. Erro: ' || SQLERRM;
+                vr_dscritic := 'Erro ao atualizar registro de lote 9900010106. Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -5796,7 +5798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10104
+              AND craplci.nrdolote = 9900010104
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
           EXCEPTION
@@ -5820,7 +5822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10105
+              AND craplci.nrdolote = 9900010105
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
           EXCEPTION
@@ -5865,7 +5867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10104);
+                         ,pr_nrdolote => 9900010104);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5918,7 +5920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
                 AND craplot.cdbccxlt = 100
-                AND craplot.nrdolote = 10104;
+                AND craplot.nrdolote = 9900010104;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar registro de lote de debito. Erro: ' || SQLERRM;
@@ -5931,7 +5933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10105);
+                         ,pr_nrdolote => 9900010105);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5984,7 +5986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
                 AND craplot.cdbccxlt = 100
-                AND craplot.nrdolote = 10105;
+                AND craplot.nrdolote = 9900010105;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar registro de lote de credito. Erro: ' || SQLERRM;
@@ -6417,7 +6419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Lucas Reinert
-     Data    : Agosto/14.                    Ultima atualizacao: --/--/----
+     Data    : Agosto/14.                    Ultima atualizacao: 04/12/2018
 
      Dados referentes ao programa:
 
@@ -6429,6 +6431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Alteracoes: 18/07/2018 - 1. Desconsiderar as aplicações programadas
                               Proj. 411.2 (Claudio - CIS Corporate)
+                 04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)															
     ..............................................................................*/
 
     DECLARE
@@ -6742,19 +6746,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Gerar log
       IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 1 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
     EXCEPTION
@@ -6770,19 +6774,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
@@ -7136,7 +7140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Agosto/14.                    Ultima atualizacao: 14/04/2015
+     Data    : Agosto/14.                    Ultima atualizacao: 04/12/2018
 
      Dados referentes ao programa:
 
@@ -7153,6 +7157,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                  14/04/2015 - Foram adicionados novos campos na PLTABLE montada com
                               o retorno dos dados da pc_busca_aplicacoes (DTCARENC)
                               SD 266191 (Kelvin).
+
+                 04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
     ..............................................................................*/
 
     DECLARE
@@ -7291,18 +7298,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Verifica se deve gerar log
       IF pr_idgerlog = 1 THEN
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdoperad
-                            ,pr_dscritic => pr_dscritic
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> FALSE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+        gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																 ,pr_cdoperad => pr_cdoperad
+																 ,pr_dscritic => pr_dscritic
+																 ,pr_dsorigem => vr_dsorigem
+																 ,pr_dstransa => vr_dstransa
+																 ,pr_dttransa => TRUNC(SYSDATE)
+																 ,pr_flgtrans => 0 --> FALSE
+																 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																 ,pr_idseqttl => pr_idseqttl
+																 ,pr_nmdatela => pr_nmdatela
+																 ,pr_nrdconta => pr_nrdconta
+																 ,pr_nrdrowid => vr_nrdrowid
+																 );
       END IF;
 
     EXCEPTION
@@ -7318,38 +7326,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
         pr_cdcritic := vr_cdcritic;
