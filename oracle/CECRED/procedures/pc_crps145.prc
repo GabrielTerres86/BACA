@@ -128,6 +128,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
        vr_nrctares  INTEGER:= 0;
        vr_inrestar  INTEGER:= 0;
        vr_dsrestar  crapres.dsrestar%TYPE;
+	   vr_dsorigem VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
+       vr_nrdrowid  ROWID;
 
       -- Temp Table
       vr_tab_care APLI0005.typ_tab_care;
@@ -712,7 +714,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                          ,pr_tab_care => vr_tab_care); -- Tabela com registros de Carencia do produto    
 
                IF vr_dscritic IS NULL THEN
-                apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
+                   SAVEPOINT APLICA_APL_PROG;
+                   apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
                                               pr_cdoperad => '1',
                                               pr_nmdatela => 'CRPS145',
                                               pr_idorigem => 5,
@@ -728,12 +731,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                               pr_vlaplica => rw_craprpp.vlprerpp,
                                               pr_iddebcti => 0,
                                               pr_idorirec => 0,
-                                              pr_idgerlog => 1,
+                                              pr_idgerlog => 0,
                                               pr_nrctrrpp => rw_craprpp.nrctrrpp, -- Número da RPP
                                               pr_nraplica => vr_nraplica,
                                               pr_cdcritic => vr_cdcritic,
                                               pr_dscritic => vr_dscritic);
-            END IF;  
+                  IF (vr_cdcritic IS NOT NULL) OR (vr_dscritic IS NOT NULL) THEN
+                    /* Se deu critica nessa conta, vamos desfazer o processo dela e logar */
+                    ROLLBACK TO APLICA_APL_PROG;
+                    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                        ,pr_cdoperad => '1'
+                                        ,pr_dscritic => vr_dscritic
+                                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => 5,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                                        ,pr_dstransa => 'INCLUSAO APLICACAO PROGRAMADA'
+                                        ,pr_dttransa => TRUNC(SYSDATE)
+                                        ,pr_flgtrans => 1 --> TRUE
+                                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                        ,pr_idseqttl => 1
+                                        ,pr_nmdatela => 'CRPS145'
+                                        ,pr_nrdconta => rw_craprpp.nrdconta
+                                        ,pr_nrdrowid => vr_nrdrowid);
+                  END IF;
+              END IF;  
             END IF;  
 
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
