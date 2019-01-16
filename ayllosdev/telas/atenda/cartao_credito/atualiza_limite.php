@@ -35,6 +35,7 @@ $tpsituacao = ( (!empty($_POST['tpsituacao'])) ? $_POST['tpsituacao'] : 0 );
 $vllimite_anterior = ( (!empty($_POST['vllimite_anterior'])) ? $_POST['vllimite_anterior'] : 0 );
 $vllimite_alterado = ( (!empty($_POST['vllimite_alterado'])) ? $_POST['vllimite_alterado'] : 0 );
 $dsjustificativa = ( (!empty($_POST['dsjustificativa'])) ? $_POST['dsjustificativa'] : '' );
+$dsiduser = session_id();
 
 // Montar o xml de Requisicao
 $xml  = "<Root>";
@@ -47,6 +48,7 @@ $xml .= "   <tpsituacao>".$tpsituacao."</tpsituacao>";
 $xml .= "   <vllimite_anterior>".$vllimite_anterior."</vllimite_anterior>";
 $xml .= "   <vllimite_alterado>".$vllimite_alterado."</vllimite_alterado>";
 $xml .= "   <dsjustificativa>".$dsjustificativa."</dsjustificativa>";
+$xml .= "   <dsiduser>".$dsiduser."</dsiduser>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

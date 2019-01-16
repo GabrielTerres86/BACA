@@ -58,6 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
                                     ,pr_cdorigem  IN INTEGER
                                     ,pr_nrdconta  IN crawcrd.nrdconta%TYPE
                                     ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                    ,pr_nmarquiv  IN VARCHAR2
                                      ---- OUT ----
                                     ,pr_dsmensag OUT VARCHAR2
                                     ,pr_cdcritic OUT NUMBER
@@ -71,6 +72,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
                                     pr_nrdconta  IN crawcrd.nrdconta%TYPE,  --> Numero da conta do cooperado
                                     pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE,  --> Numero da proposta de emprestimo
                                     pr_flreiflx  IN INTEGER,                --> Indica se deve reiniciar o fluxo de aprovacao na esteira (1-true, 0-false)
+                                    pr_nmarquiv  IN VARCHAR2,            --> Nome do arquivo PDF
                                     ---- OUT ----                           
                                     pr_cdcritic OUT NUMBER,                 --> Codigo da critica
                                     pr_dscritic OUT VARCHAR2);              --> Descricao da critica
@@ -82,6 +84,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
                                       pr_nrdconta  IN crawcrd.nrdconta%TYPE,  --> Numero da conta do cooperado
                                       pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE,  --> Numero da proposta de cartao                                      
+                                      pr_nrctrest  IN crawcrd.nrctrcrd%TYPE DEFAULT NULL,    --> Numero do contrato original da esteira (tratamento limite credito)
                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
                                       pr_nmarquiv  IN VARCHAR2,               --> Diretorio e nome do arquivo pdf da proposta de cartao de credito
                                       pr_tpregistro IN VARCHAR2,              --> Tipo de regitro I - Solicitação cartão, A - Alteração de Limite
@@ -6300,6 +6303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt    --> Data de Movimento
                                           ,pr_nrctrlim => rw_crawcrd.nrctrcrd    --> Proposta Contrato
                                           ,pr_flgerlog => 0                      --> Indicador se deve gerar log(0-nao, 1-sim)
+                                          ,pr_nmarquiv => vr_nmarquiv            --> Id usuario
                                           --------> OUT <--------
                                           ,pr_nmarqpdf => vr_imptermo            --> Retornar quantidad de registros                           
                                           ,pr_cdcritic => vr_cdcritic            --> Código da crítica
@@ -6317,6 +6321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt    --> Data de Movimento
                                           ,pr_nrctrlim => rw_crawcrd.nrctrcrd    --> Proposta Contrato
                                           ,pr_flgerlog => 0                      --> Indicador se deve gerar log(0-nao, 1-sim)
+                                          ,pr_nmarquiv => vr_nmarquiv            --> Id usuario
                                           --------> OUT <--------
                                           ,pr_nmarqpdf => vr_imptermo            --> Retornar quantidad de registros                           
                                           ,pr_cdcritic => vr_cdcritic            --> Código da crítica
@@ -6507,6 +6512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                    ,pr_cdorigem  IN INTEGER
                                    ,pr_nrdconta  IN crawcrd.nrdconta%TYPE
                                    ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                   ,pr_nmarquiv  IN VARCHAR2
                                     ---- OUT ----
                                    ,pr_dsmensag OUT VARCHAR2
                                    ,pr_cdcritic OUT NUMBER
@@ -6517,13 +6523,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 28/11/2018
 
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a inclusao da proposta para a esteira
-      Alteração :
+      
+      Alteração : 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
 
     ..........................................................................*/
 
@@ -6544,6 +6551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_xmllog   VARCHAR2(32000);
     vr_nmdcampo VARCHAR2(4000);
     vr_vllimite NUMBER;
+    vr_envia_esteira BOOLEAN := TRUE;
     
     -- Tipo Envio Esteira
     vr_tpenvest VARCHAR2(1);
@@ -6566,6 +6574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
             ,wpr.nrcctitg
             ,wpr.inupgrad
             ,wpr.cdadmcrd
+            ,wpr.vllimcrd
             ,wpr.rowid
         FROM crawcrd wpr
             ,crapass ass
@@ -6577,7 +6586,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     rw_crawcrd cr_crawcrd%ROWTYPE;
     
     CURSOR cr_limatu IS
-        SELECT *
+        SELECT a.rowid
+              ,a.*
+              ,crd.flgprcrd
           FROM tbcrd_limite_atualiza a
           JOIN crawcrd crd
             ON crd.cdcooper = a.cdcooper
@@ -6599,22 +6610,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
   BEGIN
 
+    -- Buscar informações da proposta
+    OPEN cr_crawcrd;
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
+    
+    /* Ajuste Anderson: Procedimento copiado do WEBS0001, para verificar 
+       se está sendo enviado alteracao de limite para a esteira. 
+       REVISAR DEPOIS DA ENTREGA 3 - precisamos de uma foma melhor de
+       identificar isso. */  
+    vr_majoraca := FALSE;
+    OPEN cr_limatu;
+    FETCH cr_limatu INTO rw_limatu;
+    IF cr_limatu%FOUND THEN
+      vr_majoraca := TRUE;
+    END IF;
+    CLOSE cr_limatu;
+   /* fim verificacao alteracao limite */
+    
     pc_verifica_regras_esteira(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
                                ---- OUT ----
                                pr_cdcritic => vr_cdcritic,   --> Codigo da critica
                                pr_dscritic => vr_dscritic);  --> Descricao da critica
 
+    vr_envia_esteira := TRUE;
+    IF (nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL) THEN
+      vr_envia_esteira := FALSE;
+    ELSIF NOT vr_majoraca AND rw_crawcrd.vllimcrd=0 THEN
+      vr_envia_esteira := FALSE;
+    END IF;
+
     -- Se houve erro
-    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      vr_majoraca := FALSE;
-      OPEN cr_limatu;
-      FETCH cr_limatu INTO rw_limatu;
-      IF cr_limatu%FOUND THEN      
-        vr_vllimite := rw_limatu.vllimite_anterior;
-        vr_majoraca := TRUE;
-      END IF;
-      CLOSE cr_limatu;
-      
+    IF NOT vr_envia_esteira THEN
       IF NOT vr_majoraca THEN
       
         vr_retxml := xmltype.createXML('<?xml version="1.0" encoding="WINDOWS-1252"?>
@@ -6649,6 +6676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
           RAISE vr_exc_erro;
         END IF;
       ELSE
+        vr_vllimite := rw_limatu.vllimite_anterior;
         --Chama alteração de limite do cartão Bancoob
         ccrd0007.pc_alterar_cartao_bancoob(pr_cdcooper => pr_cdcooper
                                           ,pr_cdagenci => pr_cdagenci
@@ -6707,25 +6735,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                     pr_dscritic              => vr_dscritic);
     END IF;
 
-    -- Buscar informações da proposta
-    OPEN cr_crawcrd;
-    FETCH cr_crawcrd INTO rw_crawcrd;
-    CLOSE cr_crawcrd;
     
-    /* Ajuste Anderson: Procedimento copiado do WEBS0001, para verificar 
-       se está sendo enviado alteracao de limite para a esteira. 
-       REVISAR DEPOIS DA ENTREGA 3 - precisamos de uma foma melhor de
-       identificar isso. */  
-    vr_majoraca := FALSE;
     
-    OPEN cr_limatu;
-    FETCH cr_limatu INTO rw_limatu;
-    IF cr_limatu%FOUND THEN      
-      
-      vr_majoraca := TRUE;
-    END IF;
-    CLOSE cr_limatu;
-   /* fim verificacao alteracao limite */
+    
     
     --> Gerar informações no padrao JSON da proposta do cartão
     pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
@@ -6803,6 +6815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                        ,pr_nrdconta => pr_nrdconta          --> Numero da conta do cooperado
                                        ,pr_nrctrcrd => pr_nrctrcrd          --> Numero da proposta do cartão atual/antigo
                                        ,pr_flreiflx => 1                    --> Reiniciar o fluxo
+                                       ,pr_nmarquiv => pr_nmarquiv          --> nome do arquivo PDF
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
 
@@ -6827,6 +6840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
           UPDATE crawcrd wpr
              SET wpr.insitcrd = 1 -- Aprovado
                 ,wpr.insitdec = 1 -- Sem Aprovacao
+                ,wpr.dtenvest = trunc(sysdate)
            WHERE wpr.cdcooper = pr_cdcooper
              AND wpr.nrdconta = pr_nrdconta
              AND wpr.inupgrad = 1  /* flag upgrade */
@@ -6849,6 +6863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
             UPDATE crawcrd wpr
                SET wpr.insitcrd = 1 -- Aprovado
                   ,wpr.insitdec = 1 -- Sem Aprovacao
+                  ,wpr.dtenvest = trunc(sysdate)
              WHERE wpr.rowid = rw_crawcrd.rowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -6882,6 +6897,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                ,pr_nmdcampo => 'insitdec'
                                ,pr_dsdadant => rw_crawcrd.insitdec
                                ,pr_dsdadatu => 1);
+    ELSE -- majoracao
+
+      BEGIN
+	      UPDATE tbcrd_limite_atualiza tla
+           SET dtenvest = trunc(sysdate)
+         WHERE tla.rowid = rw_limatu.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar proposta apos envio para Análise de Crédito: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
     END IF;
 
     pr_dsmensag := 'Proposta Enviada para Analise Manual de Credito.';
@@ -6959,6 +6985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                     pr_nrdconta  IN crawcrd.nrdconta%TYPE,  --> Numero da conta do cooperado
                                     pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE,  --> Numero da proposta de emprestimo
                                     pr_flreiflx  IN INTEGER,                --> Indica se deve reiniciar o fluxo de aprovacao na esteira (1-true, 0-false)
+                                    pr_nmarquiv  IN VARCHAR2,            --> nome do arquivo PDF
                                     ---- OUT ----
                                     pr_cdcritic OUT NUMBER,                 --> Codigo da critica
                                     pr_dscritic OUT VARCHAR2) IS            --> Descricao da critica
@@ -6968,13 +6995,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 28/11/2018
 
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a alteracao da proposta para a esteira
-      Alteração :
+
+      Alteração : 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
 
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -6989,6 +7017,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     rw_crapope cr_crapope%ROWTYPE;
 
+   CURSOR cr_limatu IS
+      SELECT a.rowid,a.*
+        FROM tbcrd_limite_atualiza a
+        JOIN crawcrd crd
+          ON crd.cdcooper = a.cdcooper
+         AND crd.nrdconta = a.nrdconta
+         AND crd.nrctrcrd = pr_nrctrcrd
+         AND crd.nrcctitg > 0 /* Se a proposta nao tem conta cartao 
+                                 ela nao foi pro bancoob, logo nao
+                                 pode ter uma alteracao de limite */
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.tpsituacao = 6 --Em Análise
+         AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
+         AND NOT EXISTS (SELECT 1
+                           FROM tbcrd_limite_atualiza b
+                          WHERE b.cdcooper = a.cdcooper
+                            AND b.nrdconta = a.nrdconta
+                            AND b.idatualizacao > a.idatualizacao);
+    rw_limatu cr_limatu%ROWTYPE;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER := 0;
@@ -7002,6 +7051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_obj_agencia  json := json();
     vr_dsprotocolo  VARCHAR2(1000);
     vr_obj_proposta_clob clob;
+    vr_majoraca BOOLEAN := FALSE;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -7072,6 +7122,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       CLOSE cr_crapope;
     END IF;
 
+    vr_majoraca := FALSE;
+    OPEN cr_limatu;
+    FETCH cr_limatu INTO rw_limatu;
+    IF cr_limatu%FOUND THEN      
+      vr_majoraca := TRUE;
+    END IF;
+    CLOSE cr_limatu;
     -- Incluir objeto proposta
     vr_obj_alter.put('dadosAtualizados'      ,vr_obj_proposta);
     vr_obj_alter.put('operadorAlteracaoLogin',lower(pr_cdoperad));
@@ -7126,20 +7183,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- Se não houve erro
     IF vr_dscritic IS NULL THEN
-
-    --> Atualizar proposta
-    BEGIN
-      UPDATE crawcrd crd
-         SET crd.dsprotoc = nvl(vr_dsprotocolo,crd.dsprotoc),
-             crd.dtaprova = NULL
-       WHERE crd.cdcooper = pr_cdcooper
-         AND crd.nrdconta = pr_nrdconta
-         AND crd.nrctrcrd = pr_nrctrcrd;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
-      END;
-
+      -- atualiza limite
+      IF vr_majoraca THEN
+        UPDATE tbcrd_limite_atualiza tla
+           SET dtenvest = trunc(sysdate)
+         WHERE tla.rowid = rw_limatu.rowid;
+      ELSE
+        --> Atualizar proposta
+        BEGIN
+          UPDATE crawcrd crd
+             SET crd.dsprotoc = nvl(vr_dsprotocolo,crd.dsprotoc)
+                ,crd.dtaprova = NULL
+                ,crd.dtenvest = trunc(sysdate)
+           WHERE crd.cdcooper = pr_cdcooper
+             AND crd.nrdconta = pr_nrdconta
+             AND crd.nrctrcrd = pr_nrctrcrd;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
+        END;
+      END IF;
 
     -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
     ELSIF lower(vr_dscritic) LIKE '%proposta nao encontrada%' THEN
@@ -7151,6 +7214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                              ,pr_cdorigem => pr_cdorigem --> Origem da operacao
                              ,pr_nrdconta => pr_nrdconta --> Numero da conta do cooperado
                              ,pr_nrctrcrd => pr_nrctrcrd --> Numero da proposta do cartão atual/antigo
+                             ,pr_nmarquiv => pr_nmarquiv --> Nome do arquivo PDF
                              ,pr_dsmensag => vr_dsmensag
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
@@ -7224,6 +7288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
                                       pr_nrdconta  IN crawcrd.nrdconta%TYPE,  --> Numero da conta do cooperado
                                       pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE,  --> Numero da proposta de cartao                                      
+                                      pr_nrctrest  IN crawcrd.nrctrcrd%TYPE DEFAULT NULL,    --> Numero do contrato original da esteira (tratamento limite credito)
                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
                                       pr_nmarquiv  IN VARCHAR2,               --> Diretorio e nome do arquivo pdf da proposta de cartao de credito
                                       pr_tpregistro IN VARCHAR2,              --> Tipo de regitro I - Solicitação cartão, A - Alteração de Limite
@@ -7236,13 +7301,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Carlos Lima(Supero)
-      Data     : Junho/2018.                   Ultima atualizacao: 04/06/2018
+      Data     : Junho/2018.                   Ultima atualizacao: 05/11/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a efetivacao da proposta para a esteira
-      Alteração : --
+      
+      Alteração : 05/11/2018 - PJ345 - Ajustado dados enviados (Rafael Faria - Supero)
 
     ..........................................................................*/ 
     
@@ -7269,42 +7335,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     CURSOR cr_crawcrd (pr_cdcooper crawcrd.cdcooper%TYPE,
                        pr_nrdconta crawcrd.nrdconta%TYPE,
                        pr_nrctrcrd crawcrd.nrctrcrd%TYPE)IS
-      SELECT wepr.nrctrcrd,
-             wepr.vllimcrd,
-             wepr.cdagenci,
-             wepr.cdagenci cdagenci_efet,
-             wepr.dtmvtolt,
-             wepr.dtpropos,
-             wepr.dtsolici
-        FROM crawcrd wepr
-       WHERE 1=1
-         AND wepr.cdcooper = pr_cdcooper
-         AND wepr.nrdconta = pr_nrdconta
-         AND wepr.nrctrcrd = pr_nrctrcrd;
+      SELECT wcrd.nrctrcrd,
+             wcrd.vllimcrd,
+             wcrd.cdagenci,
+             wcrd.cdagenci cdagenci_efet,
+             wcrd.dtmvtolt,
+             wcrd.dtpropos,
+             wcrd.dtsolici,
+             wcrd.cdoperad--- ver isso
+        FROM crawcrd wcrd
+       WHERE wcrd.cdcooper = pr_cdcooper
+         AND wcrd.nrdconta = pr_nrdconta
+         AND wcrd.nrctrcrd = pr_nrctrcrd;
 
     rw_crawcrd cr_crawcrd%ROWTYPE;   
-/*    
-   CURSOR cr_craplem (pr_cdcooper crawcrd.cdcooper%TYPE,
-                      pr_nrdconta crawcrd.nrdconta%TYPE,
-                      pr_nrctrcrd crawcrd.nrctrcrd%TYPE,
-                      pr_dtmvtolt crawcrd.dtmvtolt%TYPE)IS  
                         
-    SELECT dtsolici
-      FROM crawcrd
-     WHERE cdcooper = pr_cdcooper
-       AND nrdconta = pr_nrdconta
-       AND nrctrcrd = pr_nrctrcrd
-     --  AND dtmvtolt = pr_dtmvtolt
-       AND rownum = 1;
-    rw_craplem cr_craplem%ROWTYPE;
-*/
     CURSOR cr_limatu IS
       SELECT *
-        FROM tbcrd_limite_atualiza
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         AND nrctrcrd = pr_nrctrcrd;
+        FROM tbcrd_limite_atualiza a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.nrctrcrd = pr_nrctrcrd
+         AND a.nrproposta_est = pr_nrctrest;
     rw_limatu cr_limatu%ROWTYPE;
+    
+    --> Buscar operador
+    CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
+                       pr_cdoperad  crapope.cdoperad%TYPE) IS
+      SELECT ope.nmoperad,
+             ope.cdoperad
+        FROM crapope ope
+       WHERE ope.cdcooper = pr_cdcooper
+         AND upper(ope.cdoperad) = upper(pr_cdoperad);
+    rw_crapope cr_crapope%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -7362,6 +7425,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;
     CLOSE cr_crapass;  
     
+    OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
+                     pr_cdoperad  => pr_cdoperad);
+    FETCH cr_crapope INTO rw_crapope;
+    IF cr_crapope%NOTFOUND THEN
+      CLOSE cr_crapope;
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapope;
+    END IF;    
+    
     IF pr_tpregistro = 'I' THEN
     --> Buscar dados da proposta de cartao de credito
     OPEN cr_crawcrd(pr_cdcooper => pr_cdcooper,
@@ -7381,23 +7455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_cdagenci := rw_crawcrd.cdagenci;
       vr_dtsolici := rw_crawcrd.dtsolici;
       vr_vllimcrd := rw_crawcrd.vllimcrd;
-/*    
-    --> Buscar dados da proposta de cartao de credito
-    OPEN cr_craplem(pr_cdcooper => pr_cdcooper,
-                    pr_nrdconta => pr_nrdconta,
-                    pr_nrctrcrd => pr_nrctrcrd,
-                    pr_dtmvtolt => rw_crawcrd.dtmvtolt);
-    FETCH cr_craplem INTO rw_craplem;
     
-    -- Caso nao encontrar abortar proceso
-    IF cr_craplem%NOTFOUND THEN
-      CLOSE cr_craplem;
-      vr_cdcritic := 0; 
-      vr_dscritic := 'Proposta nao foi efetivada.';
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_craplem;
-*/
     ELSE
       OPEN cr_limatu;
       FETCH cr_limatu INTO rw_limatu;
@@ -7439,8 +7497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;
     
     vr_obj_efetivar.put('numero'                 , vr_nrctrprp);
-    vr_obj_efetivar.put('operadorEfetivacaoLogin', '');
-    vr_obj_efetivar.put('operadorEfetivacaoNome' , '');
+    vr_obj_efetivar.put('operadorEfetivacaoLogin', lower(rw_crapope.cdoperad));
+    vr_obj_efetivar.put('operadorEfetivacaoNome' , rw_crapope.nmoperad);
      --> Criar objeto json para agencia do cooperado
     vr_obj_agencia.put('cooperativaCodigo'       , pr_cdcooper);
     vr_obj_agencia.put('PACodigo'                , vr_cdagenci);
@@ -7449,12 +7507,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_obj_efetivar.put('contratoNumero'         , vr_nrctrprp);
     vr_obj_efetivar.put('valor'                  , vr_vllimcrd);
     vr_obj_efetivar.put('parcelaQuantidade'      , ''); -- TODO descomentar
-    --vr_obj_efetivar.put('parcelaQuantidade'      , '1');
     vr_obj_efetivar.put('parcelaPrimeiroVencimento' , '');
-    --vr_obj_efetivar.put('parcelaPrimeiroVencimento' , fn_Data_ibra(rw_crawcrd.dtpropos));
     vr_obj_efetivar.put('parcelaValor'           , ''); -- TODO descomentar
-   -- vr_obj_efetivar.put('parcelaValor'           , rw_crawcrd.vllimcrd);
-    --vr_obj_efetivar.put('tipoProduto'           , 'MJ');
     vr_obj_efetivar.put('produtoCreditoSegmentoCodigo',7);
     vr_obj_efetivar.put('produtoCreditoSegmentoDescricao','Cartao de Credito CECRED');
     
@@ -7499,15 +7553,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;    
     
      --> Atualizar proposta
-     
     IF pr_tpregistro = 'I' THEN
          
       BEGIN
-        UPDATE crawcrd epr
-           SET epr.insitdec = 8 -- Efetivado
-         WHERE epr.cdcooper = pr_cdcooper
-           AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctrcrd = pr_nrctrcrd;
+        UPDATE crawcrd crd
+           SET crd.insitdec = 8 -- Efetivado
+              ,crd.dtenefes = trunc(sysdate)
+         WHERE crd.cdcooper = pr_cdcooper
+           AND crd.nrdconta = pr_nrdconta
+           AND crd.nrctrcrd = pr_nrctrcrd;
       EXCEPTION    
         WHEN OTHERS THEN
           vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da efetivacao de Analise de Credito: '||SQLERRM;
@@ -7518,9 +7572,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       
       BEGIN
         UPDATE tbcrd_limite_atualiza
-        SET insitdec   = 8 -- Efetivado
-        WHERE 1=1
-        and   tpsituacao = 3 -- Concluído com sucesso
+           SET insitdec   = 8 -- Efetivado
+              ,dtenefes   = trunc(sysdate)
+         WHERE tpsituacao = 3 -- Concluído com sucesso
         AND   cdcooper = pr_cdcooper
         AND   nrdconta = pr_nrdconta
         AND   nrctrcrd = pr_nrctrcrd;

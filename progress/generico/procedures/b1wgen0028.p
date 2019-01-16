@@ -2651,8 +2651,7 @@ PROCEDURE valida_nova_proposta:
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ OR 
-                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                      NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
@@ -2691,8 +2690,7 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ OR 
-                                 cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                                  NEXT.
 
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and

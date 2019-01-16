@@ -35,6 +35,7 @@
     $glbvars['cdoperad'] = $_POST['cdoperad'];
     $glbvars['dsdircop'] = $_POST['dsdircop'];
 	$nmArqui = $_POST['nmarqui'];
+    $dsiduser = session_id();
 
 	if(isset($nmArqui) && strlen($nmArqui) > 0){
 		
@@ -46,6 +47,7 @@
     $xmlpdf .= " <Dados>";
     $xmlpdf.= "   <nrdconta>". $nrdconta."</nrdconta>";
     $xmlpdf.= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xmlpdf .= "  <dsiduser>".$dsiduser."</dsiduser>";
     $xmlpdf.= " </Dados>";
     $xmlpdf.= "</Root>";
     if($inpesoa ==1 )

@@ -259,6 +259,17 @@ function goCecred(){
 			}
 			
 function goAdicional(cdadmcrd){
+
+	// Limpar variavel
+	if (typeof idacionamento != "undefined") {
+		idacionamento = null;
+	}
+	if (typeof protocolo != "undefined") {
+		protocolo = null;
+	}
+
+	$("#idacionamento","#frmNovoCartao").val("");
+
 	if(inpessoa == 2){
 		nmEmpresPla = nmempmul;
 			}

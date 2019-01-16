@@ -349,14 +349,14 @@
 			<input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
 			<br />
 			
-			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:') ?></label>
+			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:'); ?></label>
 			<div id="limiteDiv">
 				<? if($adicional || $tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
 					<?php
 					//for ($i = 0; $i < count($cdLimite); $i++){
 						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option>
-					//}
+					<?php //} ?>
 				</select>
 				<?php
 				}else{
