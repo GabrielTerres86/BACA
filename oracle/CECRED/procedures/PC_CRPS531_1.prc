@@ -32,7 +32,7 @@ end;
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/01/2019
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/01/2019
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -334,6 +334,9 @@ end;
                           Jose Dill - Mouts
  
              02/01/2019 - Tratamento para STR0006R2 - Pagto de boletos em cartório (Lucas Afonso/Cechet)                          
+ 
+             14/01/2019 - Tratamento para STR0006R2, contas 10000003 e 20000006, agencia 100 = Pagto de boletos
+                          em cartorio (Lucas Afonso/Cechet)
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -7976,9 +7979,9 @@ END pc_trata_arquivo_ldl;
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
                   /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
 				  ) THEN
-           -- Se for finalidade 10 com esse cnpj e agencia não gerar erro
+           -- Se conta 10000003 ou 20000006 e Agencia 100, entao é
+           -- TED recebida de boleto pago em cartório
            IF TRIM(vr_aux_CtCredtd) IN ('10000003','20000006') AND
-              vr_aux_CNPJ_CPFCred = '5463212000129' AND
               vr_aux_AgCredtd = '100'               THEN
                NULL;
            ELSE  
