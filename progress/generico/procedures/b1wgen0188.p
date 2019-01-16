@@ -672,6 +672,20 @@ PROCEDURE grava_dados:
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
+    EMPTY TEMP-TABLE tt-dados-coope.
+    EMPTY TEMP-TABLE tt-dados-assoc.
+    EMPTY TEMP-TABLE tt-tipo-rendi.
+    EMPTY TEMP-TABLE tt-itens-topico-rating.
+    EMPTY TEMP-TABLE tt-proposta-epr.
+    EMPTY TEMP-TABLE tt-crapbem.
+    EMPTY TEMP-TABLE tt-bens-alienacao.
+    EMPTY TEMP-TABLE tt-rendimento.
+    EMPTY TEMP-TABLE tt-faturam.
+    EMPTY TEMP-TABLE tt-dados-analise.
+    EMPTY TEMP-TABLE tt-interv-anuentes.
+    EMPTY TEMP-TABLE tt-hipoteca.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-aval-crapbem.
 
     IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
@@ -689,7 +703,10 @@ PROCEDURE grava_dados:
            aux_flgerlog = TRUE
            aux_flgtrans = FALSE
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Gravacao pre-aprovado".
+           aux_dstransa = "Gravacao pre-aprovado"
+           aux_cdcritic = 0
+           aux_dscritic = "".
+
 
     GRAVA: DO TRANSACTION ON ERROR  UNDO GRAVA, LEAVE GRAVA
                           ON ENDKEY UNDO GRAVA, LEAVE GRAVA:
@@ -799,7 +816,7 @@ PROCEDURE grava_dados:
                                INPUT 1,
                                INPUT aux_cdcritic,
                                INPUT-OUTPUT aux_dscritic).
-                RETURN "NOK".
+                UNDO GRAVA, LEAVE GRAVA.
             END.
 
         FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -817,7 +834,7 @@ PROCEDURE grava_dados:
                               INPUT 1,
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
+               UNDO GRAVA, LEAVE GRAVA.
            END.
        
        /* Dados de parametrizacao do credito pre-aprovado */
@@ -837,7 +854,8 @@ PROCEDURE grava_dados:
                              INPUT 1,
                              INPUT aux_cdcritic,
                              INPUT-OUTPUT aux_dscritic).
-              RETURN "NOK".
+              
+              UNDO GRAVA, LEAVE GRAVA.
           END.
 
        /* Rendimento */
@@ -1159,6 +1177,10 @@ PROCEDURE grava_dados:
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
 
+       GRAVA_EFETIVA: DO TRANSACTION ON ERROR  UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA
+                                     ON ENDKEY UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA:
+    
+
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1188,9 +1210,13 @@ PROCEDURE grava_dados:
                                                      OUTPUT TABLE tt-erro).
 
        IF RETURN-VALUE <> "OK" THEN
-          UNDO GRAVA, LEAVE GRAVA.
+              UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA.
+              
 
        ASSIGN aux_flgtrans = TRUE.
+
+       
+       END. /* END GRAVA_EFETIVA: DO TRANSACTION */
 
     END. /* END GRAVA: DO TRANSACTION */
 
@@ -2356,8 +2382,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-    
+         RETURN "NOK".
+       
        END.
     
     /* Busca a tarifa especial */
@@ -2385,8 +2411,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-    
+         RETURN "NOK".
+       
        END.
     
     /* Valor da tarifa */
