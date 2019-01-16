@@ -104,13 +104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
   --              23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
 	--                         	 sobre o campo cdopecxa.(Carlos Rafael Tanholi). 				             
   --
-  --              15/01/2019 - Correcao na procedure pc_estorna_dep_chq_captura
-	--                         	 problemas nos parametros enviados ao cursor cr_existe_lcm1,
-  --                           a agencia deveria estar sendo passada fixo com 1, porém
-  --                           estava assumindo a agencia logada. Com isso, não localizava o lcm
-  --                           a ser estornado.
-  --                           (INC0030879 - Wagner - Sustentação).    
-  ---------------------------------------------------------------------------------------------------------------*/
+   ---------------------------------------------------------------------------------------------------------------*/
 
    PROCEDURE pc_valida_chq_captura(pr_cooper         IN VARCHAR2            --> Coop. Origem
                                   ,pr_cod_agencia    IN INTEGER             --> Cod. Agencia
@@ -3002,7 +2996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
          -- Inicializa variaveis
          vr_cdcritic := 0;
          /** Dados ORIGEM/DEBITO **/
-         vr_aux_cdagenci := 1; -- Assim como no "valida" a agencia deve ser fixa 1
+         vr_aux_cdagenci := pr_cod_agencia;
          vr_aux_cdbccxlt := 100;
          vr_i_nro_lote   := 10118;
          vr_c_docto  := TO_CHAR(pr_nro_docmto)||'012';
