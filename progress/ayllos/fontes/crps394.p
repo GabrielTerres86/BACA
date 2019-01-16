@@ -37,6 +37,10 @@
              
                21/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                             de cheques (Lucas Ranghetti #484923)
+							
+			   14/01/2019 - Gerar o relatório 353 - Relação de Cheques na intranet.
+			                (Wagner - Sustentação - #SCTASK0035560).
+							
 ............................................................................ */
 
 DEF STREAM str_1. /* Relatorio */
@@ -425,6 +429,9 @@ FOR EACH w-crapass NO-LOCK
              ASSIGN glb_nrcopias = 1
                     glb_nmformul = "132col"
                     glb_nmarqimp = aux_nmarqimp.
+					
+			 RUN fontes/imprim.p.
+			 
           END.
 END.
 
