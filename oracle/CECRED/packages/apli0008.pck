@@ -356,6 +356,34 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                               pr_cdcritic out crapcri.cdcritic%type,          --> Codigo da crítica de erro
                               pr_des_erro out varchar2);                    --> Descrição do erro encontrado
 
+  -- Rotina para geração do Termo de Adesão de uma aplicação programada  
+  PROCEDURE pc_impres_termo_adesao_ap(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                                     ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                     ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                                     ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  --> Contrato
+                                     ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarqpdf OUT VARCHAR2              --> Nome do PDF                           
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
+
+  -- Rotina para geração do Termo de Adesão de uma aplicação programada  - Mensageria
+  PROCEDURE pc_impres_termo_adesao_ap_web (pr_nrdconta IN craprac.nrdconta%TYPE   -- Número da Conta
+                                          ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE   -- Número da Aplicação Programada.
+                                          ,pr_dtmvtolt IN VARCHAR2                -- Data de Movimento Inicial
+                                          ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                          ,pr_xmllog   IN VARCHAR2                -- XML com informacoes de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER            -- Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2               -- Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2               -- Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2);             -- Erros do processo
+
 END APLI0008;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
@@ -5358,7 +5386,473 @@ END pc_calc_app_programada;
         END;
     END pc_busca_aplicacoes_prog;
 
+  PROCEDURE pc_impres_termo_adesao_ap(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                                     ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                     ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                                     ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  --> Contrato
+                                     ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarqpdf OUT VARCHAR2              --> Nome do PDF                           
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+    /* .............................................................................
 
+     Programa: pc_impres_termo_adesao_ap
+     Sistema : Rotinas referentes à aplicação programada
+     Sigla   : CRED
+     Autor   : CIS Corporate
+     Data    : Agosto/2018.                    
+
+     Dados referentes ao programa:
+
+     Frequencia:
+     Objetivo  : Rotina para geração do Termo de Adesão de uma Aplicação programada
+     Alteracoes: 
+     
+    ..............................................................................*/
+    
+    ---- Cursores
+    
+     CURSOR cr_info IS
+     SELECT
+        cop.nmcidade, 
+        cop.cdufdcop,
+        ass.cdagenci, -- numero da PA
+        ass.nmprimtl,
+        ass.nrcpfcgc,
+        rpp.dtmvtolt,
+        rpp.vlprerpp,
+        Extract(day from rpp.dtdebito) indiadeb
+     FROM 
+        crapcop cop, 
+        crapass ass, 
+        craprpp rpp, 
+        crapcpc cpc
+  WHERE ass.cdcooper = pr_cdcooper
+    AND ass.nrdconta = pr_nrdconta
+    AND rpp.nrctrrpp = pr_nrctrrpp
+    AND ass.cdcooper = cop.cdcooper
+    AND ass.cdcooper = rpp.cdcooper
+    AND ass.nrdconta = rpp.nrdconta
+    AND rpp.cdprodut = cpc.cdprodut;
+    
+    rw_info cr_info%ROWTYPE;
+    
+    -- RG
+    CURSOR cr_rg IS
+    SELECT nrdocttl 
+      FROM crapttl 
+     WHERE tpdocttl = 'CI'
+      AND cdcooper = pr_cdcooper
+      AND nrdconta = pr_nrdconta;
+    rw_rg cr_rg%ROWTYPE;
+
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    vr_des_reto        VARCHAR2(100);
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    
+    vr_dsorigem        craplgm.dsorigem%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_nrdrowid        ROWID;
+
+    vr_idseqttl        crapttl.idseqttl%TYPE;
+    
+    vr_dsdireto        VARCHAR2(4000);
+    vr_nmendter        VARCHAR2(4000);     
+    vr_dscomand        VARCHAR2(4000);
+    vr_typsaida        VARCHAR2(100);    
+    
+    vr_rg varchar2(20);
+        
+    vr_dsmailcop VARCHAR2(4000);
+    vr_dsassmail VARCHAR2(200);
+    vr_dscormail VARCHAR2(50);
+
+    vr_cpfcgc VARCHAR2 (30);    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml   CLOB;
+    vr_txtcompl  VARCHAR2(32600);
+    
+    l_offset     NUMBER:=0;
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
+    END;
+    
+  BEGIN    
+    --> Definir transação
+    IF pr_flgerlog = 1 THEN
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    END IF; 
+    
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => pr_cdcooper);
+                                         
+    vr_nmendter := vr_dsdireto ||'/rl/taap001';
+    
+    vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
+    
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF; 
+    
+    --> Montar nome do arquivo
+    pr_nmarqpdf := 'taap001'|| gene0002.fn_busca_time || '.pdf';
+
+    --> Buscar dados para impressao do Termo de Adesão 
+    OPEN cr_info;
+    FETCH cr_info INTO rw_info;
+    IF cr_info%NOTFOUND THEN
+        vr_dscritic:='Aplicacao programada nao encontrada.';
+        CLOSE cr_info;
+        RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_info;
+
+    -- Busca rg
+    OPEN cr_rg;
+    FETCH cr_rg INTO rw_rg;
+    IF cr_rg%FOUND THEN
+       vr_rg := rw_rg.nrdocttl;
+    END IF;
+    CLOSE cr_rg;
+
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    
+    vr_txtcompl := NULL;
+    IF length(rw_info.nrcpfcgc)=11 THEN -- CPF 
+        vr_cpfcgc := regexp_replace(rw_info.nrcpfcgc, '([0-9]{3})([0-9]{3})([0-9]{3})([0-9]{2})', '\1.\2.\3-\4');
+    ELSE -- CNPJ
+        vr_cpfcgc := regexp_replace(lpad(rw_info.nrcpfcgc,14,0), '([0-9]{2})([0-9]{3})([0-9]{3})([0-9]{4})([0-9]{2})', '\1.\2.\3/\4-\5') ;      
+    END IF;
+    
+    --> INICIO
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>'); 
+    
+    pc_escreve_xml('<nrctrrpp>'     || to_char(pr_nrctrrpp,'fm99g999g990','NLS_NUMERIC_CHARACTERS=,.') ||'</nrctrrpp>'||
+                   '<nomeCompleto>' || rw_info.nmprimtl     ||'</nomeCompleto>'||     
+                   '<contaCorrente>'|| to_char(pr_nrdconta,'fm9g999g999g0','NLS_NUMERIC_CHARACTERS=,.') ||'</contaCorrente>'||     
+                   '<cpf>'          || vr_cpfcgc     ||'</cpf>'||
+                   '<valorParcela>' || to_char(rw_info.vlprerpp,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||'</valorParcela>'||
+                   '<identidade>'   || vr_rg                ||'</identidade>'|| 
+                   '<postoAtendimento>'||rw_info.cdagenci   ||'</postoAtendimento>'||
+                   '<cidade>'       || rw_info.nmcidade     ||'</cidade>'||
+                   '<uf>'           || rw_info.cdufdcop     ||'</uf>'||
+                   '<dataInicio>'   || to_char(rw_info.dtmvtolt,'dd/mm/yyyy') ||'</dataInicio>'||
+                   '<diaDebito>'    || rw_info.indiadeb     ||'</diaDebito>');    
+    --> Descarregar buffer    
+    pc_escreve_xml(' ',TRUE); 
+    
+    --> Descarregar buffer    
+    pc_escreve_xml('</raiz>',TRUE); 
+    
+   loop exit when l_offset > dbms_lob.getlength(vr_des_xml);
+   l_offset := l_offset + 255;
+   end loop;
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => pr_cdprogra
+                               , pr_dtmvtolt  => pr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/raiz'
+                               , pr_dsjasper  => 'termo_adesao_appr.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 234
+                               , pr_cdrelato  => 280
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_dsextmail => NULL
+                               , pr_dsmailcop => vr_dsmailcop
+                               , pr_dsassmail => vr_dsassmail
+                               , pr_dscormail => vr_dscormail
+                               , pr_des_erro  => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;        
+    
+    IF pr_idorigem = 5 THEN
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => NULL
+                                  ,pr_nrdcaixa => NULL
+                                  ,pr_nmarqpdf => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se retornou erro
+      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_erro; -- encerra programa
+        END IF;
+      END IF;
+
+      -- Remover relatorio do diretorio padrao da cooperativa
+      gene0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm '||vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;        
+    
+    --> Gerar log de sucesso
+    IF pr_flgerlog = 1 THEN
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdoperad, 
+                           pr_dscritic => NULL, 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans =>  1, -- True
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => vr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);
+                             
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                pr_nmdcampo => 'nrctrrpp', 
+                                pr_dsdadant => NULL, 
+                                pr_dsdadatu => pr_nrctrrpp);
+    END IF;
+    
+    COMMIT;
+    
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+      END IF;
+      
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdoperad, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans =>  0, --FALSE
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => vr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+                             
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'nrctrrpp', 
+                                  pr_dsdadant => NULL, 
+                                  pr_dsdadatu => pr_nrctrrpp);
+      END IF;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao gerar impressao do termo de adesao: ' || SQLERRM, chr(13)),chr(10));   
+  
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdoperad, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans =>  0, --FALSE
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => vr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+                             
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'nrctrrpp', 
+                                  pr_dsdadant => NULL, 
+                                  pr_dsdadatu => pr_nrctrrpp);
+      END IF; 
+      
+  END pc_impres_termo_adesao_ap;
+
+  PROCEDURE pc_impres_termo_adesao_ap_web (pr_nrdconta IN craprac.nrdconta%TYPE   -- Número da Conta
+                                          ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE   -- Número da Aplicação Programada.
+                                          ,pr_dtmvtolt IN VARCHAR2                -- Data de Movimento Inicial
+                                          ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                          ,pr_xmllog   IN VARCHAR2                -- XML com informacoes de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER            -- Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2               -- Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2               -- Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2)              -- Erros do processo
+
+  IS
+  BEGIN
+    /* .............................................................................
+
+     Programa: pc_impres_termo_adesao_ap_web
+     Sistema : Rotinas referentes à aplicação programada
+     Sigla   : CRED
+     Autor   : CIS Corporate
+     Data    : Agosto/2018.                    
+
+     Dados referentes ao programa:
+
+     Frequencia:
+     Objetivo  : Rotina para geração do Termo de Adesão de uma Aplicação programada - Mensageria
+     Alteracoes: 
+     
+    ..............................................................................*/
+
+  DECLARE
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    vr_nmarqpdf VARCHAR2(100);
+    
+    -- Variaveis auxiliares
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de entrada
+    vr_dtmvtolt Date := TO_DATE(pr_dtmvtolt,'dd/mm/yyyy');  
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    -- Variaveis de XML 
+    vr_xml_temp VARCHAR2(32767);
+    vr_clobxmlc CLOB;
+    
+  BEGIN
+     -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;     
+
+    -- Imprime o termo
+    pc_impres_termo_adesao_ap (pr_cdcooper => vr_cdcooper
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdprogra => 'ATENDA'
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_dtmvtolt => vr_dtmvtolt
+                              ,pr_nrctrrpp => pr_nrctrrpp
+                              ,pr_flgerlog => pr_flgerlog
+                              ,pr_nmarqpdf => vr_nmarqpdf
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;     
+
+     -- Criar cabeçalho do XML
+     dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+     dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+     -- Insere o cabeçalho do XML 
+     gene0002.pc_escreve_xml (pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>');
+
+     gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                            ,pr_texto_completo => vr_xml_temp 
+                            ,pr_texto_novo     => 
+                            '<Registro>'||
+                            '<nmarqpdf>'||vr_nmarqpdf||'</nmarqpdf>'||
+                            '</Registro>'
+                            );
+     -- Encerrar a tag raiz 
+     gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '</Dados></Root>' 
+                             ,pr_fecha_xml      => TRUE);
+                                 
+     pr_retxml := XMLType.createXML(vr_clobxmlc);
+
+  Exception
+    When vr_exc_erro Then
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
+    When others Then
+      pr_cdcritic := null; -- não será utilizado
+      pr_dscritic := 'Erro geral em APLI0008.pc_buscar_extrato_apl_prog_web: '||SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+      
+  END;
+
+
+  END pc_impres_termo_adesao_ap_web;
 
 END APLI0008; 
 /
