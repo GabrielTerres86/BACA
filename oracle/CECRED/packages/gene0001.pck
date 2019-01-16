@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -38,6 +38,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --               e por programa - Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)
   --  18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
   --               Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)  
+	--
+	--  04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
+	--               commit da operacao (Adriano Nagasava - Supero)
+	--
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -260,6 +264,21 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                        ,pr_nmdatela IN craplgm.nmdatela%TYPE
                        ,pr_nrdconta IN craplgm.nrdconta%TYPE
                        ,pr_nrdrowid OUT ROWID);
+											 
+  /* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														);
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */
@@ -504,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -552,6 +571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
   --                          pc_controle_exec                   
   --                          ( Belli - Envolti - REQ0027434 )
+  --
+	--             04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
+	--                          commit da operacao (Adriano Nagasava - Supero)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1826,6 +1848,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                 RETURNING ROWID INTO pr_nrdrowid;
     END;
   END pc_gera_log;
+	
+	/* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														) IS
+	/*..............................................................................
+
+       Programa: pc_gera_log_auto
+       Autor   : David
+       Data    : Dezembro/2018                      Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo  : Geracao de log utilizando autonomous_transaction com commit da operacao
+
+       Alteracoes: 04/12/2018 - Criar procedure pc_gera_log_auto (Adriano Nagasava - Supero)
+
+    ..............................................................................*/
+		--
+		PRAGMA AUTONOMOUS_TRANSACTION;
+		--
+	BEGIN
+		-- Chama a rotina para inserir o log
+		pc_gera_log(pr_cdcooper => pr_cdcooper -- IN
+							 ,pr_cdoperad => pr_cdoperad -- IN
+							 ,pr_dscritic => pr_dscritic -- IN
+							 ,pr_dsorigem => pr_dsorigem -- IN
+							 ,pr_dstransa => pr_dstransa -- IN
+							 ,pr_dttransa => pr_dttransa -- IN
+							 ,pr_flgtrans => pr_flgtrans -- IN
+							 ,pr_hrtransa => pr_hrtransa -- IN
+							 ,pr_idseqttl => pr_idseqttl -- IN
+							 ,pr_nmdatela => pr_nmdatela -- IN
+							 ,pr_nrdconta => pr_nrdconta -- IN
+							 ,pr_nrdrowid => pr_nrdrowid -- OUT
+							 );
+		--
+		COMMIT;
+		--
+  END pc_gera_log_auto;
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */

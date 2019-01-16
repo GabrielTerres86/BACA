@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/07/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -57,7 +57,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             21/07/2018 - (Proj. 411.2) (CIS Corporate)
   --                          Não desfaz todas as transações em pc_obtem_taxa_modalidade
-
+  --
+	--             04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	--                          dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -6417,7 +6419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Lucas Reinert
-     Data    : Agosto/14.                    Ultima atualizacao: --/--/----
+     Data    : Agosto/14.                    Ultima atualizacao: 04/12/2018
 
      Dados referentes ao programa:
 
@@ -6429,6 +6431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Alteracoes: 18/07/2018 - 1. Desconsiderar as aplicações programadas
                               Proj. 411.2 (Claudio - CIS Corporate)
+                 04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)															
     ..............................................................................*/
 
     DECLARE
@@ -6742,19 +6746,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Gerar log
       IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 1 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
     EXCEPTION
@@ -6770,19 +6774,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
@@ -7136,7 +7140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Agosto/14.                    Ultima atualizacao: 14/04/2015
+     Data    : Agosto/14.                    Ultima atualizacao: 04/12/2018
 
      Dados referentes ao programa:
 
@@ -7153,6 +7157,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                  14/04/2015 - Foram adicionados novos campos na PLTABLE montada com
                               o retorno dos dados da pc_busca_aplicacoes (DTCARENC)
                               SD 266191 (Kelvin).
+
+                 04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+	                            dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
     ..............................................................................*/
 
     DECLARE
@@ -7291,18 +7298,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Verifica se deve gerar log
       IF pr_idgerlog = 1 THEN
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdoperad
-                            ,pr_dscritic => pr_dscritic
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> FALSE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+        gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																 ,pr_cdoperad => pr_cdoperad
+																 ,pr_dscritic => pr_dscritic
+																 ,pr_dsorigem => vr_dsorigem
+																 ,pr_dstransa => vr_dstransa
+																 ,pr_dttransa => TRUNC(SYSDATE)
+																 ,pr_flgtrans => 0 --> FALSE
+																 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																 ,pr_idseqttl => pr_idseqttl
+																 ,pr_nmdatela => pr_nmdatela
+																 ,pr_nrdconta => pr_nrdconta
+																 ,pr_nrdrowid => vr_nrdrowid
+																 );
       END IF;
 
     EXCEPTION
@@ -7318,38 +7326,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
       WHEN OTHERS THEN
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
-          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => pr_dscritic
-                              ,pr_dsorigem => vr_dsorigem
-                              ,pr_dstransa => vr_dstransa
-                              ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-          COMMIT;
+          gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+																	 ,pr_cdoperad => pr_cdoperad
+																	 ,pr_dscritic => pr_dscritic
+																	 ,pr_dsorigem => vr_dsorigem
+																	 ,pr_dstransa => vr_dstransa
+																	 ,pr_dttransa => TRUNC(SYSDATE)
+																	 ,pr_flgtrans => 0 --> FALSE
+																	 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+																	 ,pr_idseqttl => pr_idseqttl
+																	 ,pr_nmdatela => pr_nmdatela
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_nrdrowid => vr_nrdrowid
+																	 );
         END IF;
 
         pr_cdcritic := vr_cdcritic;
