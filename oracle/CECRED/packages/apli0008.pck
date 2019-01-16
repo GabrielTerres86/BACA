@@ -324,6 +324,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
 															 ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
 															 ,pr_idconsul    IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
 															 ,pr_idgerlog    IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim) 																 
+															 ,pr_tpaplica    IN PLS_INTEGER DEFAULT 0           --> Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
 															 ,pr_cdcritic   OUT INTEGER                         --> Código da crítica
 															 ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
 															 ,pr_saldo_rdca OUT apli0001.typ_tab_saldo_rdca);   --> Tabela com os dados da aplicação
@@ -4743,23 +4744,24 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
       pr_des_erro := 'Erro ao fazer o cálculo da aplicação programada para a conta '||rw_craprpp.nrdconta||': '||sqlerrm;
 END pc_calc_app_programada;
 
-  PROCEDURE pc_lista_aplicacoes_progr(pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
-                                                             ,pr_cdoperad    IN crapope.cdoperad%TYPE           --> Código do Operador
-                                                             ,pr_nmdatela    IN craptel.nmdatela%TYPE           --> Nome da Tela
-                                                             ,pr_idorigem    IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
-                               ,pr_nrdcaixa    IN craplot.nrdcaixa%TYPE           --> Numero do Caixa                  
-                               ,pr_nrdconta    IN craprac.nrdconta%TYPE           --> Número da Conta
-                                                             ,pr_idseqttl    IN crapttl.idseqttl%TYPE           --> Titular da Conta
-                               ,pr_cdagenci    IN crapage.cdagenci%TYPE           --> Codigo da Agencia
-                               ,pr_cdprogra    IN craplog.cdprogra%TYPE           --> Codigo do Programa
-                                                             ,pr_nraplica    IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação - Parâmetro Opcional
-                                                             ,pr_cdprodut    IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto – Parâmetro Opcional 
-                                                             ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
-                                                             ,pr_idconsul    IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
-                                                             ,pr_idgerlog    IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)                                                                  
-                                                             ,pr_cdcritic   OUT INTEGER                         --> Código da crítica
-                                                             ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
-                                                             ,pr_saldo_rdca OUT apli0001.typ_tab_saldo_rdca) IS --> Tabela com os dados da aplicação
+  PROCEDURE pc_lista_aplicacoes_progr (pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+                                      ,pr_cdoperad    IN crapope.cdoperad%TYPE           --> Código do Operador
+                                      ,pr_nmdatela    IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                      ,pr_idorigem    IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+                                      ,pr_nrdcaixa    IN craplot.nrdcaixa%TYPE           --> Numero do Caixa                  
+                                      ,pr_nrdconta    IN craprac.nrdconta%TYPE           --> Número da Conta
+                                      ,pr_idseqttl    IN crapttl.idseqttl%TYPE           --> Titular da Conta
+                                      ,pr_cdagenci    IN crapage.cdagenci%TYPE           --> Codigo da Agencia
+                                      ,pr_cdprogra    IN craplog.cdprogra%TYPE           --> Codigo do Programa
+                                      ,pr_nraplica    IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação - Parâmetro Opcional
+                                      ,pr_cdprodut    IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto – Parâmetro Opcional 
+                                      ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
+                                      ,pr_idconsul    IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                      ,pr_idgerlog    IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)                                                                  
+                                      ,pr_tpaplica    IN PLS_INTEGER DEFAULT 0           --> Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
+                                      ,pr_cdcritic   OUT INTEGER                         --> Código da crítica
+                                      ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
+                                      ,pr_saldo_rdca OUT apli0001.typ_tab_saldo_rdca) IS --> Tabela com os dados da aplicação
 
    BEGIN                                                             
      /* .............................................................................
@@ -4804,47 +4806,53 @@ END pc_calc_app_programada;
 
       BEGIN
 
-      -- Consulta de novas aplicacoes
-      apli0008.pc_busca_aplicacoes_prog(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
-                                  ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
-                                  ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
-                                  ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
-                                  ,pr_nrdconta   => pr_nrdconta     --> Número da Conta
-                                  ,pr_idseqttl   => pr_idseqttl     --> Titular da Conta
-                                  ,pr_nraplica   => pr_nraplica     --> Número da Aplicação - Parâmetro Opcional
-                                  ,pr_cdprodut   => pr_cdprodut     --> Código do Produto – Parâmetro Opcional 
-                                  ,pr_dtmvtolt   => pr_dtmvtolt     --> Data de Movimento
-                                  ,pr_idconsul   => pr_idconsul     --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
-                                  ,pr_idgerlog   => 0               --> Identificador de Log (0 – Não / 1 – Sim)                                                                  
-                                  ,pr_cdcritic   => vr_cdcritic     --> Código da crítica
-                                  ,pr_dscritic   => vr_dscritic     --> Descrição da crítica
-                                  ,pr_tab_aplica => vr_tab_aplica); --> Tabela com os dados da aplicação );
+          /* 0 - Todas ou 2 - PCAPTA */
+          IF pr_tpaplica IN (0,2) THEN
+            -- Consulta de novas aplicacoes
+            apli0008.pc_busca_aplicacoes_prog(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+                                     ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
+                                     ,pr_nmdatela   => pr_nmdatela     --> Nome da Tela
+                                     ,pr_idorigem   => pr_idorigem     --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+                                     ,pr_nrdconta   => pr_nrdconta     --> Número da Conta
+                                     ,pr_idseqttl   => pr_idseqttl     --> Titular da Conta
+                                     ,pr_nraplica   => pr_nraplica     --> Número da Aplicação - Parâmetro Opcional
+                                     ,pr_cdprodut   => pr_cdprodut     --> Código do Produto – Parâmetro Opcional 
+                                     ,pr_dtmvtolt   => pr_dtmvtolt     --> Data de Movimento
+                                     ,pr_idconsul   => pr_idconsul     --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                     ,pr_idgerlog   => 0               --> Identificador de Log (0 – Não / 1 – Sim)                                                                                                 
+                                     ,pr_cdcritic   => vr_cdcritic     --> Código da crítica
+                                     ,pr_dscritic   => vr_dscritic     --> Descrição da crítica
+                                     ,pr_tab_aplica => vr_tab_aplica); --> Tabela com os dados da aplicação );
+       
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;
 
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
+          /* 0 - Todas ou 1 - Não PCAPTA */
+          IF pr_tpaplica IN (0,1) THEN
+            -- Consulta de aplicacoes antigas
+            APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   --> Cooperativa
+                                           ,pr_cdagenci   => pr_cdagenci   --> Codigo da agencia
+                                           ,pr_nrdcaixa   => pr_nrdcaixa   --> Numero do caixa
+                                           ,pr_nrdconta   => pr_nrdconta   --> Conta do associado
+                                           ,pr_nraplica   => pr_nraplica   --> Numero da aplicacao
+                                           ,pr_tpaplica   => 0             --> Tipo de aplicacao
+                                           ,pr_dtinicio   => NULL          --> Data de inicio da aplicacao
+                                           ,pr_dtfim      => NULL          --> Data final da aplicacao
+                                           ,pr_cdprogra   => pr_cdprogra   --> Codigo do programa chamador da rotina
+                                           ,pr_nrorigem   => pr_idorigem   --> Origem da chamada da rotina
+                                           ,pr_saldo_rdca => vr_saldo_rdca --> Tipo de tabela com o saldo RDCA
+                                           ,pr_des_reto   => vr_dscritic   --> OK ou NOK
+                                           ,pr_tab_erro   => vr_tab_erro); --> Tabela com erros
 
-          -- Consulta de aplicacoes antigas
-          APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   --> Cooperativa
-                                         ,pr_cdagenci   => pr_cdagenci   --> Codigo da agencia
-                                         ,pr_nrdcaixa   => pr_nrdcaixa   --> Numero do caixa
-                                         ,pr_nrdconta   => pr_nrdconta   --> Conta do associado
-                                         ,pr_nraplica   => pr_nraplica   --> Numero da aplicacao
-                                         ,pr_tpaplica   => 0             --> Tipo de aplicacao
-                                         ,pr_dtinicio   => NULL          --> Data de inicio da aplicacao
-                                         ,pr_dtfim      => NULL          --> Data final da aplicacao
-                                         ,pr_cdprogra   => pr_cdprogra   --> Codigo do programa chamador da rotina
-                                         ,pr_nrorigem   => pr_idorigem   --> Origem da chamada da rotina
-                                         ,pr_saldo_rdca => vr_saldo_rdca --> Tipo de tabela com o saldo RDCA
-                                         ,pr_des_reto   => vr_dscritic   --> OK ou NOK
-                                         ,pr_tab_erro   => vr_tab_erro); --> Tabela com erros
-
-          IF vr_dscritic = 'NOK' THEN
-            -- Se existir erro adiciona na crítica
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            RAISE vr_exc_saida;
-          END IF;                                        
+            IF vr_dscritic = 'NOK' THEN
+              -- Se existir erro adiciona na crítica
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;                                     
 
       -- Montagem do XML com todas as aplicacoes que deverao ser exibidas na tela atenda
       IF vr_tab_aplica.COUNT > 0 THEN

@@ -682,6 +682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                     ,pr_dtmvtolt   => pr_dtmvtolt          -- Data de Movimento
                                     ,pr_idconsul   => 5                    -- Todas
                                     ,pr_idgerlog   => 0                    -- Identificador de Log (0 – Nao / 1 – Sim)
+                                    ,pr_tpaplica   => 2                    -- Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
                                     ,pr_cdcritic   => vr_cdcritic          -- Código da crítica 
                                     ,pr_dscritic   => vr_dscritic          -- Descriçao da crítica 
                                     ,pr_saldo_rdca => vr_tbsaldo_rdca);   -- Retorno das aplicações
@@ -1150,7 +1151,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       
       -- Saldo da aplicação + cotas do resgate
       vr_sldaplic     craprda.vlsdrdca%TYPE;
-      vr_vlpreco_unit tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE; 
+      --vr_vlpreco_unit tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE; --NUMBER(25,8)
+      vr_vlpreco_unit NUMBER(38,30);
       vr_qtcotas_resg tbcapt_custodia_aplicacao.qtcotas%TYPE; 
       
       -- Controle de lançamento anterior
@@ -1438,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             END IF;
             
             -- Cuantidade de cotas referente a operação atual
-            vr_qtcotas_resg := round(rw_lcto.vllanmto / vr_vlpreco_unit);
+            vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
             -- Devemos gerar o registro de CUstódia do Lançamento
             BEGIN
               INSERT INTO TBCAPT_CUSTODIA_LANCTOS
@@ -2204,6 +2206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_qtarqrgt NUMBER := 0;
       vr_qtarqreg NUMBER := 0;
       vr_qtdlinhas NUMBER;
+      vr_tpaplica  PLS_INTEGER;
     BEGIN
 	    -- Inclusão do módulo e ação logado
 	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_gera_arquivos_envio');
@@ -2336,6 +2339,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           END IF;
         END IF;
         
+        IF (rw_lct.cdprodut = 0) THEN
+          vr_tpaplica := 1; /* Não Pcapta */
+        ELSE
+          vr_tpaplica := 2; /* Pcapta */
+        END IF;
+        
         -- Limpar toda a tabela de memória
         vr_tbsaldo_rdca.DELETE();
               
@@ -2354,6 +2363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                     ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  -- Data de Movimento
                                     ,pr_idconsul   => 5                    -- Todas
                                     ,pr_idgerlog   => 0                    -- Identificador de Log (0 – Nao / 1 – Sim)
+                                    ,pr_tpaplica   => vr_tpaplica          -- Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
                                     ,pr_cdcritic   => vr_cdcritic          -- Código da crítica 
                                     ,pr_dscritic   => vr_dscritic          -- Descriçao da crítica 
                                     ,pr_saldo_rdca => vr_tbsaldo_rdca);   -- Retorno das aplicações
