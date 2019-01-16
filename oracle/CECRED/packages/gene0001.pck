@@ -1196,6 +1196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro gene0001.pc_executa_OSCommand: '||vr_des_erro;
             WHEN OTHERS THEN
+              cecred.pc_internal_exception;
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro geral gene0001.pc_executa_OSCommand: '||SQLERRM;
           END;
