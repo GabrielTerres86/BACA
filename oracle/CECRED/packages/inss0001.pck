@@ -2002,7 +2002,8 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_arqdesti IN VARCHAR2              --Nome Arquivo Destino
                                       ,pr_dsmensag IN VARCHAR2              --Descricao da Mensagem
                                       ,pr_nmarqlog IN VARCHAR2              --Nome Arquivo Log
-                                      ,pr_dscritic OUT VARCHAR2) IS         --Mensagem Erro
+                                      ,pr_dscritic OUT VARCHAR2             --Mensagem Erro
+                                      ,pr_criptogf IN BOOLEAN DEFAULT TRUE) IS   --Se deve criptografar o arquivo
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : pc_criptografa_move_arquiv      Antigo: procedures/b1wgen0091.p/criptografa_move_arquivo
@@ -2029,6 +2030,10 @@ create or replace package body cecred.INSS0001 as
                  26/03/2015 - Ajuste na organização e identação da escrita
                               (Adriano).          
                            
+                 09/01/2019 - Incluido parametro para permitir definir se deve criptografar o arquivo,
+		              para melhorar a performance do pagamento em lote de GPS
+                              (PTASK0010307 André MoutS).          
+						   
   ---------------------------------------------------------------------------------------------------------------*/
     --Varaiveis Locais
     vr_nmarqcri  VARCHAR2(1000);
@@ -2051,66 +2056,70 @@ create or replace package body cecred.INSS0001 as
       
       --Limpar variavel retorno                                         
       pr_dscritic:= NULL;
+ 
+     IF pr_criptogf THEN
+        --Buscar parametros 
+        vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
+        vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
+        
+        --se nao encontrou
+        IF vr_dscomora IS NULL OR 
+           vr_dsdirbin IS NULL THEN
+          
+          --Montar mensagem erro        
+          vr_dscritic:= 'Nao foi possivel selecionar parametros.';
+          
+          --Gera exceção
+          RAISE vr_exc_erro;
+          
+        END IF;
+        
+        -- Comando para criptografar o arquivo 
+        vr_comando:= vr_dscomora||' perl_remoto ' ||vr_dsdirbin||
+                     'mqcecred_criptografa.pl --criptografa='||
+                     chr(39)|| pr_nmarquiv ||chr(39);
+                     
+        --Executar o comando no unix
+        GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                              ,pr_des_comando => vr_comando
+                              ,pr_typ_saida   => vr_typ_saida
+                              ,pr_des_saida   => vr_nmarqcri);
+                              
+        --Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+          vr_comando||' - '||vr_nmarqcri;
+          
+          -- retornando ao programa chamador
+          RAISE vr_exc_erro;
+          
+        END IF;
 
-      --Buscar parametros 
-      vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
-      vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
-      
-      --se nao encontrou
-      IF vr_dscomora IS NULL OR 
-         vr_dsdirbin IS NULL THEN
-        
-        --Montar mensagem erro        
-        vr_dscritic:= 'Nao foi possivel selecionar parametros.';
-        
-        --Gera exceção
-        RAISE vr_exc_erro;
-        
+        --Retirar sujeira do final do nome do arquivo
+        vr_nmarqcri:= replace(replace(vr_nmarqcri,chr(10),''),chr(13),'');
       END IF;
-      
-      -- Comando para criptografar o arquivo 
-      vr_comando:= vr_dscomora||' perl_remoto ' ||vr_dsdirbin||
-                   'mqcecred_criptografa.pl --criptografa='||
-                   chr(39)|| pr_nmarquiv ||chr(39);
-                   
-      --Executar o comando no unix
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => vr_comando
-                            ,pr_typ_saida   => vr_typ_saida
-                            ,pr_des_saida   => vr_nmarqcri);
-                            
-      --Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        
-        vr_dscritic:= 'Nao foi possivel executar comando unix: '||
-        vr_comando||' - '||vr_nmarqcri;
-        
-        -- retornando ao programa chamador
-        RAISE vr_exc_erro;
-        
-      END IF;
-
-      --Retirar sujeira do final do nome do arquivo
-      vr_nmarqcri:= replace(replace(vr_nmarqcri,chr(10),''),chr(13),'');
       
       /* Obtem arquivo temporario criptografado / com .crypto no fim */
       IF TRIM(vr_nmarqcri) IS NULL THEN
         
-        --Mensagem Erro
-        vr_dscritic:= 'Erro ao criptografar o arquivo: '||pr_nmarquiv;
-        
-        vr_cdprogra := pr_cdprogra;
-        
-        --Escrever no Log
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => pr_nmarqlog
-                                  ,pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra || ' --> ' || 
-                                                    'ERRO: ' || vr_dscritic 
-                                  ,pr_cdprograma   => vr_cdprogra
-                                                    );
-                                                    
+        IF pr_criptogf THEN
+          
+          --Mensagem Erro
+          vr_dscritic:= 'Erro ao criptografar o arquivo: '||pr_nmarquiv;
+          
+          vr_cdprogra := pr_cdprogra;
+          
+          --Escrever no Log
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => pr_nmarqlog
+                                    ,pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                      ' - ' || vr_cdprogra || ' --> ' || 
+                                                      'ERRO: ' || vr_dscritic 
+                                    ,pr_cdprograma   => vr_cdprogra
+                                                      );
+        END IF;                                            
         /** MOVE SEM CRIPTOGRAFAR **/
         -- Comando para mover arquivo
         GENE0001.pc_mv_arquivo(pr_dsarqori => pr_nmarquiv 
@@ -4314,7 +4323,10 @@ create or replace package body cecred.INSS0001 as
   
     Alterações : 10/02/2015 Conversao Progress -> Oracle (Alisson-AMcom)
     
-                
+                 09/01/2019 - Ajustado para não criptografar o arquivo de backup,
+		              para melhorar a performance do pagamento em lote de GPS
+                              (PTASK0010307 André MoutS).   
+							  
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4343,7 +4355,8 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_arqdesti => vr_arqdesti     /* Nome arq Destino */
                                             ,pr_dsmensag => 'INSS - Gestao de beneficios'           
                                             ,pr_nmarqlog => pr_nmarqlog     /* Nome arq LOG */
-                                            ,pr_dscritic => pr_dscritic);  /* Mensagem Log (se erro) */
+                                            ,pr_dscritic => pr_dscritic     /* Mensagem Log (se erro) */
+                                            ,pr_criptogf => FALSE);  /* Não criptografa PTASK0010307 */
         --Se ocorreu erro
         IF pr_dscritic IS NOT NULL THEN
           --Retorno NOK
@@ -4364,7 +4377,8 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_arqdesti => vr_arqdesti     /* Nome arq Destino */
                                             ,pr_dsmensag => 'INSS - Gestao de beneficios'           
                                             ,pr_nmarqlog => pr_nmarqlog     /* Nome arq LOG */
-                                            ,pr_dscritic => pr_dscritic);  /* Mensagem Log (se erro) */
+                                            ,pr_dscritic => pr_dscritic     /* Mensagem Log (se erro) */
+                                            ,pr_criptogf => FALSE);         /* Não criptografa PTASK0010307 */
         --Se ocorreu erro
         IF pr_dscritic IS NOT NULL THEN
           --Retorno NOK

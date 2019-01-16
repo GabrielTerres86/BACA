@@ -19,6 +19,8 @@
                17/12/2013 - Inclusao de VALIDATE crapsol (Carlos)
                
                09/01/2018 - Inclusao do processamento de convenios Bancoob - PRJ406.
+
+			   10/12/2018 - Remoção script login_cifs_mount.sh (Wagner da Silva - #INC0027407)
                             
 ............................................................................ */
 
@@ -248,10 +250,7 @@ DO WHILE TRUE:
             { includes/acesso.i }
             aux_cddopcao = glb_cddopcao.
         END.
-
-    /* Executar script de login das cifs */
-    UNIX SILENT VALUE ("/usr/local/cecred/bin/login_cifs_mount.sh").
-
+    
     HIDE MESSAGE NO-PAUSE.
          
     IF  glb_cddopcao = "I"   THEN

@@ -54,6 +54,7 @@ DEF  INPUT PARAM par_nrinssac LIKE crapsab.nrinssac                    NO-UNDO.
 DEF  INPUT PARAM par_nmdsacad LIKE crapsab.nmdsacad                    NO-UNDO.
 DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac                    NO-UNDO.
 DEF  INPUT PARAM par_flgvalid AS LOGI                                  NO-UNDO.
+DEF  INPUT PARAM par_nrconins LIKE crapsab.nrinssac                    NO-UNDO.
                                               
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -182,6 +183,7 @@ ELSE
                                          INPUT par_nmdsacad,
                                          INPUT par_cdsitsac,
                                          INPUT FALSE,          /** Logar    **/
+                                         INPUT par_nrconins,
                                         OUTPUT TABLE tt-erro,
                                         OUTPUT TABLE tt-sacados-blt).
 

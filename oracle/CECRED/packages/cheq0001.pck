@@ -3554,6 +3554,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --
     --   Alteracoes: 19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
     --                            (Adriano - INC0017466).
+	--               17/12/2018 - Ajuste para validar se uma conta pode ou não solicitar talão.
+	--							  (Andrey Formigari - Mouts) #SCTASK0039579
     -- .............................................................................
     -- Cursores 
         
@@ -3562,6 +3564,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                      ,pr_nrdconta IN crapreq.nrdconta%TYPE) IS
       SELECT ass.cdtipcta
             ,ass.cdagenci
+			,ass.cdsitdtl
+            ,ass.inlbacen
         FROM crapass ass   
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -3620,6 +3624,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     vr_exc_saida EXCEPTION;    --> Controle de erros de processo
     vr_cdcritic  crapcri.cdcritic%TYPE;
     vr_dscritic  crapcri.dscritic%TYPE;
+
+	vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
+    vr_des_erro VARCHAR2(1000);
     
   BEGIN
     
@@ -3681,6 +3688,33 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       vr_dscritic := 'Já existe uma solicitação de talonário pendente para a conta.';
       RAISE vr_exc_saida;
     END IF;
+
+	/* INICIO: SCTASK0039579 */
+    
+    CADA0006.pc_ind_impede_talonario(pr_cdcooper => vr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_inimpede_talionario => vr_inimpede_talionario
+                                    ,pr_des_erro => vr_des_erro
+                                    ,pr_dscritic => vr_dscritic);
+    IF vr_des_erro = 'NOK' THEN
+      RAISE vr_exc_saida;
+    END IF;
+                
+    IF vr_inimpede_talionario = 1 THEN -- Se nao houver impedimento para retirada de talionarios
+      vr_cdcritic := 18; --018 - Situacao da conta errada.
+    ELSIF rw_crapass.cdsitdtl IN (5,6,7,8) THEN --5=NORMAL C/PREJ., 6=NORMAL BLQ.PREJ, 7=DEMITIDO C/PREJ, 8=DEM. BLOQ.PREJ.
+      vr_cdcritic := 695; --695 - ATENCAO! Houve prejuizo nessa conta
+    ELSIF rw_crapass.cdsitdtl IN (2,4) THEN --2=NORMAL C/BLOQ., 4=DEMITIDO C/BLOQ
+      vr_cdcritic := 95; --095 - Titular da conta bloqueado.
+    ELSIF rw_crapass.inlbacen <> 0 THEN -- Indicador se o associado consta na lista do Banco Central
+      vr_cdcritic := 720; --720 - Associado esta no CCF.
+    END IF;
+      
+    IF nvl(vr_cdcritic,0) <> 0 THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    /* FIM: SCTASK0039579 */
     
     -- Verifica se existe capa do lote da requisição
     OPEN cr_craptrq(pr_cdcooper => vr_cdcooper

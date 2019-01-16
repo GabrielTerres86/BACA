@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 07/11/2017
+  Data    : Abril/2004                          Ultima atualizacao: 03/01/2019
 
   Dados referentes ao programa:
 
@@ -267,6 +267,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            
               07/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo 
                            (Lucas Ranghetti #789879)
+                           
+              03/01/2019 - Ajuste para que nos arquivos de retorno dos convênios 127,128 seja
+                           enviada a data de pagamento do agendamento (craplau.dtmvtopg) 
+                           conforme já é enviado para o convênio 085
+                           (Adriano - INC0027597).
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1389,6 +1394,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Enviar informações para o arquivo conforme especificidades do convênio
 
           IF vr_qtdigito <> 0 THEN
+            
+            IF rw_gnconve.cdconven IN(127,128) THEN 
+            
+              -- Todos outros casos 
+              -- Enviar linha ao arquivo 
+              vr_dslinreg := 'F'
+                          ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
+                          ||LPAD(' ',3,' ')
+                          ||to_char(vr_nragenci,'fm0000')
+                          ||RPAD(vr_nrdconta,14,' ')
+                          ||vr_dtmvtolt
+                          ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                          ||'00'
+                          ||rpad(rw_craplau.cdseqtel,60,' ')
+                          ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                          ||RPAD(' ',12,' ')||'0';      
+                
+            ELSE
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||vr_nrrefere
@@ -1400,6 +1423,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                         ||rpad(rw_craplau.cdseqtel,60,' ')
                         ||RPAD(' ',20,' ')||'0';       
           
+            END IF;
           
           /* 30 - Celesc Distribuicao */
           /* 45 - Aguas Pres.Getulio  */

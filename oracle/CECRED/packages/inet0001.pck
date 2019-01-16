@@ -249,7 +249,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
            ,qtmesfut INTEGER
            ,idtpdpag INTEGER    /* 1 - Transf / 2 - Pagamento */
            ,hrcancel VARCHAR2(5)
-           ,nrhrcanc INTEGER);
+           ,nrhrcanc INTEGER
+           ,dsdemail crapage.dsdemail%TYPE);
 
   --Tipo de tabela de memoria para limites
   TYPE typ_tab_limite IS TABLE OF typ_reg_limite INDEX BY PLS_INTEGER;
@@ -795,6 +796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       --Cursores
       CURSOR cr_hrcancel IS
       SELECT age.hrcancel
+            ,age.dsdemail
         FROM crapage age
        WHERE age.cdcooper = pr_cdcooper
          AND age.cdagenci = pr_cdagenci;
@@ -804,6 +806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_hrinipag INTEGER;
       vr_hrfimpag INTEGER;
       vr_hrcancel INTEGER;
+      vr_dsdemail crapage.dsdemail%TYPE;
       vr_qtmesagd INTEGER;
       vr_qtmesfut INTEGER;
       vr_qtmesrec INTEGER;
@@ -1071,7 +1074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
           OPEN cr_hrcancel;
           FETCH cr_hrcancel
-          INTO vr_hrcancel;
+          INTO vr_hrcancel, vr_dsdemail;
           CLOSE cr_hrcancel;
 
           --Criar registro para tabela limite horarios
@@ -1089,6 +1092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           pr_tab_limite(vr_index_limite).qtmesfut:= vr_qtmesfut;
           pr_tab_limite(vr_index_limite).qtmesrec:= vr_qtmesrec;
           pr_tab_limite(vr_index_limite).idtpdpag:= 2;
+          pr_tab_limite(vr_index_limite).dsdemail:= vr_dsdemail;
         END IF;
       END IF;
 
@@ -1218,7 +1222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
              trunc(SYSDATE) = to_date('31/12/2018','DD/MM/RRRR') THEN
             vr_iddiauti:= 1;
           END IF; 
-
+          
           
           --Determinar a hora atual
           vr_hratual:= GENE0002.fn_busca_time;
@@ -1427,6 +1431,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_inpessoa:= pr_inpessoa;
         END IF;   
 
+        OPEN cr_hrcancel;
+        FETCH cr_hrcancel
+        INTO vr_hrcancel, vr_dsdemail;
+        CLOSE cr_hrcancel;
+        
+        --Limpar variável pois o horário limite de estorno será obitdo na craptab
+        vr_hrcancel := NULL;
+
         --Selecionar Horarios Limites Internet
         vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                 ,pr_nmsistem => 'CRED'
@@ -1446,6 +1458,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_hrinipag:= GENE0002.fn_busca_entrada(1,vr_dstextab,' ');
           --Hora Fim
           vr_hrfimpag:= GENE0002.fn_busca_entrada(2,vr_dstextab,' ');
+          --Hora Estorno
+          vr_hrcancel:= GENE0002.fn_busca_entrada(3,vr_dstextab,' ');
         END IF;
 
         --Determinar a hora atual
@@ -1473,12 +1487,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_index_limite:= pr_tab_limite.Count+1;
         pr_tab_limite(vr_index_limite).hrinipag:= GENE0002.fn_converte_time_data(vr_hrinipag);
         pr_tab_limite(vr_index_limite).hrfimpag:= GENE0002.fn_converte_time_data(vr_hrfimpag);
+        pr_tab_limite(vr_index_limite).hrcancel:= GENE0002.fn_converte_time_data(vr_hrcancel);
         pr_tab_limite(vr_index_limite).nrhorini:= vr_hrinipag;
         pr_tab_limite(vr_index_limite).nrhorfim:= vr_hrfimpag;
         pr_tab_limite(vr_index_limite).idesthor:= vr_idesthor;
         pr_tab_limite(vr_index_limite).iddiauti:= vr_iddiauti;
         pr_tab_limite(vr_index_limite).flsgproc:= vr_flsgproc;
         pr_tab_limite(vr_index_limite).qtmesagd:= vr_qtmesagd;
+        pr_tab_limite(vr_index_limite).dsdemail:= vr_dsdemail;
         
         --> Caso for todos, replicar dados para ambos
         IF pr_tpoperac = 0 THEN
@@ -1570,6 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                ,pr_texto_novo     => '<horario>' 
                                                   ||   '<hrinipag>'||vr_tab_limite(vr_contador).hrinipag    ||'</hrinipag>'
                                                   ||   '<hrfimpag>'||vr_tab_limite(vr_contador).hrfimpag    ||'</hrfimpag>'
+                                                  ||   '<hrcancel>'||vr_tab_limite(vr_contador).hrcancel    ||'</hrcancel>'
                                                   ||   '<nrhorini>'||to_char(vr_tab_limite(vr_contador).nrhorini)  ||'</nrhorini>'
                                                   ||   '<nrhorfim>'||to_char(vr_tab_limite(vr_contador).nrhorfim)  ||'</nrhorfim>'
                                                   ||   '<idesthor>'||to_char(vr_tab_limite(vr_contador).idesthor)  ||'</idesthor>'
@@ -1577,6 +1594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                                   ||   '<flsgproc>'|| vr_aux_flsgproc ||'</flsgproc>'
                                                   ||   '<qtmesagd>'||to_char(vr_tab_limite(vr_contador).qtmesagd)  ||'</qtmesagd>'
                                                   ||   '<idtpdpag>'||to_char(vr_tab_limite(vr_contador).idtpdpag)  ||'</idtpdpag>'
+                                                  ||   '<emailest_pag>'||vr_tab_limite(vr_contador).dsdemail||'</emailest_pag>'
                                                   || '</horario>');
       END LOOP;
          
@@ -3972,7 +3990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 29/12/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
   
   Dados referentes ao programa:
   
@@ -4741,7 +4759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                ,pr_dtmvtolt => vr_dtdialim --> Data do movimento
                                                ,pr_tipo     => 'A'         --> Dia Anterior
-                                               ,pr_feriado  => TRUE      --> Nao considera feriados
+                                               ,pr_feriado  => TRUE        --> Nao considera feriados
                                                ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN

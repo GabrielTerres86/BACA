@@ -18,6 +18,8 @@
  *
  *                03/10/2018 - Scripts para tratamento de opcao de excluir.
  *                             Bruno Luiz K. - Chamado SCTASK0029653 (Mouts).
+ *				
+ *				  23/11/2018 - Tratando erro quando acessado a tela atraves pelo CRM.
  * 
  */
 
@@ -45,6 +47,11 @@ var flag;
 var iqtSelecao = 0;
 var altalinea;
 var dstabela;
+var flgerpdf = false;
+var flbaiarq = false;
+var cdbandep;
+var cdagedep;
+var nrctadep;
 
 var camposDc, dadosDc;
 
@@ -1752,11 +1759,6 @@ function btVoltContatos(){
     unblockBackground();
 }
 
-function baixarArquivo(rand,sidlog,frente,verso){
-		var quallado = selbaixa == 'F' ? frente : verso;
-		var apagartb = selbaixa == 'F' ? verso  : frente;
-		window.open('download.php?keyrand='+rand+'&sidlogin='+sidlog+'&src='+quallado+'&apagartb='+apagartb, '_blank');
-}
 
 function consultaCheque(cdagechq,nrctachq,nrcheque) {
 	

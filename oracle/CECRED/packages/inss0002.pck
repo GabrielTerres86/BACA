@@ -69,6 +69,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                             na pc_gps_arrecadar_sicredi.  
                             PRJ381 - Analise de Fraude (Teobaldo Jamunda - AMcom)
 
+               19/12/2018 - Adicionados busca do nome do preposto para retornar juntamente com o CPF que já existe.
+                            PJ 285.2 - Pacote 12 > (Guilherme Kuhnen).
+                                                   
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE
                                   ,pr_cdagenci IN NUMBER
@@ -368,6 +371,24 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_dscritic1     OUT VARCHAR2) ;
                                
   /*---------------------------------------------------------------------------------------------------------------
+   Autor    : Jefferson (MoutS)
+   Objetivo : GPS - Verificar existencia do lancamento
+  ---------------------------------------------------------------------------------------------------------------*/                                        
+  PROCEDURE pc_gps_verificar_lancamento(pr_cdcooper    IN crapcop.cdcooper%TYPE
+                                       ,pr_nrdconta    IN crapass.nrdconta%TYPE
+                                       ,pr_dtmvtolt    IN DATE
+                                       ,pr_cdagenci    IN craplgp.cdagenci%TYPE
+                                       ,pr_nrdcaixa    IN NUMBER
+                                       ,pr_cdtransacao IN NUMBER                DEFAULT 0
+                                       ,pr_cdidenti    IN VARCHAR2              DEFAULT NULL
+                                       ,pr_cddpagto    IN craplgp.cddpagto%TYPE DEFAULT 0
+                                       ,pr_mmaacomp    IN VARCHAR2              DEFAULT NULL
+                                       ,pr_vlrtotal    IN NUMBER                DEFAULT 0
+                                       ,pr_cdcritic    OUT PLS_INTEGER --Código da crítica
+                                       ,pr_dscritic    OUT VARCHAR2 --Descrição da crítica
+                                        );
+
+  /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
   ---------------------------------------------------------------------------------------------------------------*/                                        
@@ -535,6 +556,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                29/08/2018 - Incluir envio de e-mail para a validação e arrecadacao
                             do GPS WebService Sicredi em mais um lugar 
                             (Lucas Ranghetti INC0022952)
+                            
+               19/12/2018 - Adicionados busca do nome do preposto para retornar juntamente com o CPF que já existe.
+                            PJ 285.2 - Pacote 12 > (Guilherme Kuhnen).
+                            
+               04/01/2019 - Centralizacao da verificacao de lancamento existente na nova rotina
+			                pc_gps_verificar_lancamento utilizada na validacao e no pagamento de GPS
+                            PRB0040392 - (Jefferson - MoutS)
+							
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -715,30 +744,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_des_reto   OUT VARCHAR2 --Saida OK/NOK
                                   ) IS
 
-    -- Cursor CRAPLGP
-    CURSOR cr_craplgp(p_cdcooper IN craplgp.cdcooper%TYPE
-                     ,p_dtmvtolt IN craplgp.dtmvtolt%TYPE
-                     ,p_cdagenci IN craplgp.cdagenci%TYPE
-                     ,p_cdbccxlt IN craplgp.cdbccxlt%TYPE
-                     ,p_nrdolote IN craplgp.nrdolote%TYPE
-                     ,p_cdidenti IN VARCHAR2
-                     ,p_cddpagto IN craplgp.cddpagto%TYPE
-                     ,p_mmaacomp IN craplgp.mmaacomp%TYPE
-                     ,p_vlrtotal IN craplgp.vlrtotal%TYPE) IS
-      SELECT lgp.rowid
-        FROM craplgp lgp
-       WHERE lgp.cdcooper  = p_cdcooper
-         AND lgp.dtmvtolt  = p_dtmvtolt
-         AND lgp.cdagenci  = p_cdagenci
-         AND lgp.cdbccxlt  = p_cdbccxlt
-         AND lgp.nrdolote  = p_nrdolote
-         AND lgp.cdidenti2 = p_cdidenti
-         AND lgp.mmaacomp  = TO_NUMBER(p_mmaacomp)
-         AND lgp.vlrtotal  = p_vlrtotal
-         AND lgp.cddpagto  = p_cddpagto
-         AND lgp.flgpagto  = 1 --TRUE
-         AND lgp.flgativo  = 1;
-
     -- Cursor CRAPLGP para identificar Agendamento
     CURSOR cr_lgp_agp(p_cdcooper IN craplgp.cdcooper%TYPE
                      ,p_nrdconta IN craplgp.nrctapag%TYPE
@@ -753,8 +758,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          ;
 
     rw_lgp_agp       cr_lgp_agp%ROWTYPE;
-    rw_craplgp       cr_craplgp%ROWTYPE;
-    cr_craplgp_found BOOLEAN := FALSE;
 
     vr_nrdolote craplgp.nrdolote%TYPE := 31000 + pr_nrdcaixa;
 
@@ -894,25 +897,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   BEGIN
 
     -- Verifica se já possui registro na lgp
-    OPEN cr_craplgp(p_cdcooper => pr_cdcooper
-                   ,p_dtmvtolt => pr_dtmvtolt
-                   ,p_cdagenci => pr_cdagenci
-                   ,p_cdbccxlt => 100 /* Fixo */
-                   ,p_nrdolote => vr_nrdolote
-                   ,p_cdidenti => pr_cdidenti
-                   ,p_cddpagto => pr_cddpagto
-                   ,p_mmaacomp => pr_mmaacomp
-                   ,p_vlrtotal => pr_vlrtotal);
-    FETCH cr_craplgp
-      INTO rw_craplgp;
-    cr_craplgp_found := cr_craplgp%FOUND;
-    CLOSE cr_craplgp;
-
-    IF cr_craplgp_found THEN
-      -- Montar mensagem de critica
-      pr_cdcritic := 92;
-      -- Busca critica
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+    INSS0002.pc_gps_verificar_lancamento(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_dtmvtolt => pr_dtmvtolt
+                                        ,pr_cdagenci => pr_cdagenci
+                                        ,pr_nrdcaixa => pr_nrdcaixa
+                                        ,pr_cdidenti => pr_cdidenti
+                                        ,pr_cddpagto => pr_cddpagto
+                                        ,pr_mmaacomp => pr_mmaacomp
+                                        ,pr_vlrtotal => pr_vlrtotal
+                                        ,pr_cdcritic => pr_cdcritic
+                                        ,pr_dscritic => pr_dscritic
+                                         );
+    -- verificar se retornou critica
+    IF NVL(pr_cdcritic,0) > 0 OR
+       TRIM(pr_dscritic) IS NOT NULL THEN
+      -- abortar programa
       RAISE vr_exc_saida;
     END IF;
 
@@ -3356,6 +3356,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,ass.cdagenci
               ,ass.inpessoa
               ,ass.nmprimtl
+              ,ass.vllimcre --PJ 285.2
+              ,ass.nrcpfcgc --PJ 285.2
+              ,ass.nrctacns --PJ 285.2
+              ,ass.dtdemiss --PJ 285.2
+		      ,ass.idastcjt --PJ 285.2
+              ,ass.cdtipcta --PJ 285.2 
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -3430,8 +3436,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          WHERE c.cdcooper = prc_cdcooper
            AND c.nrdconta = prc_nrdconta
            AND c.idseqttl = prc_idseqttl
-           AND c.tpdsenha = 1 -- INTERNET
-           ;             
+           AND c.tpdsenha = 1; -- INTERNET
+           
+     /*
+        PJ 285.2 - Pacote 12
+     */
+     
+     -- Selecionar informacoes Avalista
+     CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%type
+                       ,pr_nrdconta IN crapavt.nrdconta%type
+                       ,pr_tpctrato IN crapavt.tpctrato%type
+                       ,pr_nrcpfcgc IN crapavt.nrcpfcgc%type) IS
+       SELECT crapavt.nrdctato
+              ,crapavt.nmdavali
+         FROM crapavt
+        WHERE crapavt.cdcooper = pr_cdcooper
+          AND crapavt.nrdconta = pr_nrdconta
+          AND crapavt.tpctrato = pr_tpctrato
+          AND crapavt.nrcpfcgc = pr_nrcpfcgc;
+     rw_crapavt cr_crapavt%ROWTYPE;     
+     
+     -- Variavel de Registro     
+     rw_cra2ass  cr_crapass%ROWTYPE;
+     
+     /* PJ 285.2 - Pacote 12 */
+           
      -- Variáveis
      rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
 
@@ -3488,6 +3517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_des_reto   VARCHAR2(500);
 
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
+     vr_nmprepos   VARCHAR2(100); -- PJ 285.2 - Pacote 12
+     
      vr_dscedent   VARCHAR2(300);
 
      -- Analise fraude
@@ -4322,6 +4353,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     pr_idseqttl) LOOP
       vr_nrcpfcgc :=  rw_crapsnh2.nrcpfcgc;
     END LOOP;
+    
+    /*
+       PJ 285.2 - Pacote 12
+    */
+    
+    --Selecionar Avalista
+    OPEN cr_crapavt (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_tpctrato => 6 -- Representantes e procuradores de conta PJ.
+                    ,pr_nrcpfcgc => vr_nrcpfcgc);
+                    
+    --Posicionar no proximo registro
+    FETCH cr_crapavt INTO rw_crapavt;
+    
+    	--Se encontrar
+      IF cr_crapavt%FOUND THEN
+        
+        --Selecionar informacoes associado
+        OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_crapavt.nrdctato);
+                         
+  		  --Posicionar no proximo registro
+        FETCH cr_crapass INTO rw_cra2ass;
+        
+          --Se encontrar
+          IF cr_crapass%FOUND THEN
+            --Nome preposto recebe nome avalista
+            vr_nmprepos:= rw_cra2ass.nmprimtl;
+          ELSE
+            --Nome preposto recebe nome avalista
+            vr_nmprepos:= rw_crapavt.nmdavali;
+          END IF;
+      
+        --Fechar Cursor
+        CLOSE cr_crapass;
+        
+      END IF;
+      
+     --Fechar Cursor
+     CLOSE cr_crapavt;
+     
+    /* PJ 285.2 - Pacote 12 */
+    
     -- Gerar Protocolo MD5
     GENE0006.pc_gera_protocolo_md5(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -4348,7 +4422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_flgagend => TRUE
                                   ,pr_nrcpfope => nvl(pr_nrcpfope,0)
                                   ,pr_nrcpfpre => nvl(vr_nrcpfcgc,0)
-                                  ,pr_nmprepos => ''
+                                  ,pr_nmprepos => nvl(vr_nmprepos, '') -- PJ 285.2
                                   ,pr_dsprotoc => vr_dsprotoc
                                   ,pr_dscritic => pr_dscritic
                                   ,pr_des_erro => vr_dsretorn);
@@ -4708,6 +4782,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,ass.nrdconta
               ,ass.inpessoa
               ,ass.nmprimtl
+              ,ass.cdagenci --PJ 285.2        
+              ,ass.vllimcre --PJ 285.2
+              ,ass.nrcpfcgc --PJ 285.2
+              ,ass.nrctacns --PJ 285.2
+              ,ass.dtdemiss --PJ 285.2
+			  ,ass.idastcjt --PJ 285.2
+              ,ass.cdtipcta --PJ 285.2
           FROM crapass ass
          WHERE ass.cdcooper = p_cdcooper
            AND ass.nrdconta = p_nrdconta
@@ -4753,6 +4834,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND bcx.cdsitbcx = 1;
     rw_existe_bcx cr_existe_bcx%ROWTYPE;
 
+    /*
+       PJ 285.2 - Pacote 12
+    */
+     
+    -- Selecionar informacoes Avalista
+    CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%type
+                       ,pr_nrdconta IN crapavt.nrdconta%type
+                       ,pr_tpctrato IN crapavt.tpctrato%type
+                       ,pr_nrcpfcgc IN crapavt.nrcpfcgc%type) IS
+      SELECT crapavt.nrdctato
+             ,crapavt.nmdavali
+        FROM crapavt
+       WHERE crapavt.cdcooper = pr_cdcooper
+         AND crapavt.nrdconta = pr_nrdconta
+         AND crapavt.tpctrato = pr_tpctrato
+         AND crapavt.nrcpfcgc = pr_nrcpfcgc;
+    rw_crapavt cr_crapavt%ROWTYPE;     
+     
+    -- Variavel de Registro     
+    rw_cra2ass  cr_crapass%ROWTYPE;
+     
+    /* PJ 285.2 - Pacote 12 */ 
+
      -- Variaveis de Cursor
      rw_crapcop cr_crapcop%ROWTYPE;
      rw_crapass cr_crapass%ROWTYPE;
@@ -4774,6 +4878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dspesgps      VARCHAR2(15);
      vr_dtmvtolt      DATE;
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
+     vr_nmprepos      VARCHAR2(100); -- PJ 285.2 - Pacote 12 
 
      vr_lindigi1 VARCHAR2(50);
      vr_lindigi2 VARCHAR2(50);
@@ -5208,6 +5313,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
              vr_nrcpfcgc :=  rw_crapsnh2.nrcpfcgc;        
           END LOOP;
           --
+          
+          /*
+             PJ 285.2 - Pacote 12
+          */
+          
+          --Selecionar Avalista
+          OPEN cr_crapavt (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_tpctrato => 6 -- Representantes e procuradores de conta PJ.
+                           ,pr_nrcpfcgc => vr_nrcpfcgc);
+                          
+          --Posicionar no proximo registro
+          FETCH cr_crapavt INTO rw_crapavt;
+          
+            --Se encontrar
+            IF cr_crapavt%FOUND THEN
+              
+              --Selecionar informacoes associado
+              OPEN cr_crapass (p_cdcooper => pr_cdcooper
+                               ,p_nrdconta => rw_crapavt.nrdctato);
+                               
+  		        --Posicionar no proximo registro
+              FETCH cr_crapass INTO rw_cra2ass;
+              
+                --Se encontrar
+                IF cr_crapass%FOUND THEN
+                  --Nome preposto recebe nome avalista
+                  vr_nmprepos:= rw_cra2ass.nmprimtl;
+                ELSE
+                  --Nome preposto recebe nome avalista
+                  vr_nmprepos:= rw_crapavt.nmdavali;
+                END IF;
+            
+              --Fechar Cursor
+              CLOSE cr_crapass;
+              
+            END IF;
+            
+          --Fechar Cursor
+          CLOSE cr_crapavt;
+           
+          /* PJ 285.2 - Pacote 12 */
+          
           -- Gerar Protocolo MD5
           GENE0006.pc_gera_protocolo_md5(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -5234,7 +5382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                         ,pr_flgagend => FALSE
                                         ,pr_nrcpfope => nvl(pr_nrcpfope,0)
                                         ,pr_nrcpfpre => nvl(vr_nrcpfcgc,0)
-                                        ,pr_nmprepos => ''
+                                        ,pr_nmprepos => nvl(vr_nmprepos, '') -- PJ 285.2
                                         ,pr_dsprotoc => vr_dsprotoc
                                         ,pr_dscritic => pr_dscritic
                                         ,pr_des_erro => vr_dsretorn);
@@ -6673,7 +6821,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      Alteracoes: 30/09/2016 - Alterada a forma de listar os arquivos da pasta
                               de pc_lista_arquivos para pc_OScommand_Shell
                               (Guilherme/SUPERO)
-
+							  
+                 09/01/2019 - Ajustada a rotina para considerar arquivos criptografados e nao criptografados
+                              (PTASK0010307 André MoutS).  
+							  
     ..............................................................................*/
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -6705,6 +6856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_des_reto       VARCHAR2(30);
     vr_nmarqcri       VARCHAR2(1000);
     vr_arquivos       VARCHAR2(32767);
+    vr_arqcript       BOOLEAN;
 
     vr_cdcooper       NUMBER;
     vr_nmdatela       VARCHAR2(25);
@@ -6816,7 +6968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
     -- Montar o padrão do nome para a consulta dos arquivos
-    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*.crypto';
+    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*';
 
     -- Retorna a lista dos arquivos do diretório, conforme máscara
 /*    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
@@ -6851,52 +7003,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Percorrer todos os arquivos encontrados na pasta
     FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
-      /**** DESCRIPTOGRAFA O ARQUIVO ****/
-      -- Comando para descriptografar arquivo
-      vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
-                   'mqcecred_descriptografa.pl --descriptografa='||
-                   chr(39)|| vr_array_arquivo(ind)||chr(39);
+      
+      IF vr_array_arquivo(ind) IS NOT NULL THEN
+        vr_arqcript := INSTR(UPPER(vr_array_arquivo(ind)), '.CRYPTO') > 0;
+        
+        IF vr_arqcript THEN
+          /**** DESCRIPTOGRAFA O ARQUIVO ****/
+          -- Comando para descriptografar arquivo
+          vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
+                       'mqcecred_descriptografa.pl --descriptografa='||
+                       chr(39)|| vr_array_arquivo(ind)||chr(39);
 
-      -- Executar o comando no unix
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => vr_comando
-                            ,pr_typ_saida   => vr_typ_saida
-                            ,pr_des_saida   => vr_nmarqcri);
+          -- Executar o comando no unix
+          GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                ,pr_des_comando => vr_comando
+                                ,pr_typ_saida   => vr_typ_saida
+                                ,pr_des_saida   => vr_nmarqcri);
 
-      -- Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        pr_des_erro := 'Nao foi possivel executar comando unix: '||
-                        vr_comando||' - '||vr_nmarqcri;
+          -- Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+            pr_des_erro := 'Nao foi possivel executar comando unix: '||
+                            vr_comando||' - '||vr_nmarqcri;
 
-        -- retornando ao programa chamador
-        RAISE vr_exc_saida;
-      END IF;
+            -- retornando ao programa chamador
+            RAISE vr_exc_saida;
+          END IF;
+        
+          -- Retirar caracteres ENTER e LF do nome do arquivo
+          vr_nmarqcri := REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
 
-      -- Retirar caracteres ENTER e LF do nome do arquivo
-      vr_nmarqcri := REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
+          -- Renomear o arquivo atribuindo a extensão XML
+          GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml'));
 
-      -- Renomear o arquivo atribuindo a extensão XML
-      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml'));
+          -- Atualizar o nome do arquivo armazenado na variável
+          vr_nmarqcri := REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml');
+        ELSE
+          -- Retirar caracteres ENTER e LF do nome do arquivo
+          vr_nmarqcri := REPLACE(REPLACE(vr_array_arquivo(ind),chr(10),''),chr(13),'');
 
-      -- Atualizar o nome do arquivo armazenado na variável
-      vr_nmarqcri := REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml');
+          -- Renomear o arquivo atribuindo a extensão XML
+          GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||vr_nmarqcri||'.xml');
 
-      /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
-      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN
-        -- Se Existir o arquivo original
-        IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_array_arquivo(ind)) THEN
-          pr_des_erro := 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_array_arquivo(ind);
-
-          -- retornando ao programa chamador
-          RAISE vr_exc_saida;
+          -- Atualizar o nome do arquivo armazenado na variável
+          vr_nmarqcri := vr_nmarqcri||'.xml';        
         END IF;
+
+        /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
+        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN
+          -- Se Existir o arquivo original
+          IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_array_arquivo(ind)) THEN
+            IF vr_arqcript THEN
+              pr_des_erro := 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_array_arquivo(ind);
+            ELSE
+              pr_des_erro := 'Arquivo nao encontrado. Arquivo: '||vr_array_arquivo(ind);
+            END IF;
+
+            -- retornando ao programa chamador
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+
+        -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
+        vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
+
+        -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
+        vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
       END IF;
-
-      -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
-      vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
-
-      -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
-      vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
     END LOOP;
 
     -- Montar o nome do arquivo ZIP
@@ -7198,6 +7370,151 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       pr_dscritic1 := 'Erro na INSS0002.pc_gps_pgt_aprovado --> ' || SQLERRM;  
   
   END pc_gps_pgt_aprovado;  
+
+  /*---------------------------------------------------------------------------------------------------------------
+   Autor    : Jefferson (MoutS)
+   Objetivo : GPS - Verificar existencia do lancamento
+  ---------------------------------------------------------------------------------------------------------------*/                                        
+  PROCEDURE pc_gps_verificar_lancamento(pr_cdcooper    IN crapcop.cdcooper%TYPE
+                                       ,pr_nrdconta    IN crapass.nrdconta%TYPE
+                                       ,pr_dtmvtolt    IN DATE
+                                       ,pr_cdagenci    IN craplgp.cdagenci%TYPE
+                                       ,pr_nrdcaixa    IN NUMBER
+                                       ,pr_cdtransacao IN NUMBER                DEFAULT 0
+                                       ,pr_cdidenti    IN VARCHAR2              DEFAULT NULL
+                                       ,pr_cddpagto    IN craplgp.cddpagto%TYPE DEFAULT 0
+                                       ,pr_mmaacomp    IN VARCHAR2              DEFAULT NULL
+                                       ,pr_vlrtotal    IN NUMBER                DEFAULT 0
+                                       ,pr_cdcritic    OUT PLS_INTEGER --Código da crítica
+                                       ,pr_dscritic    OUT VARCHAR2 --Descrição da crítica
+                                        ) IS
+
+    -- Cursor C1 e C2 para buscar informacoes da transacao
+    CURSOR C1 (pr_cdcooper     IN NUMBER
+              ,pr_nrdconta     IN NUMBER
+              ,pr_cdtransacao IN tbgen_trans_pend.cdtransacao_pendente%type)IS
+      SELECT lgm.rowid
+        FROM craplgi lgi,      
+             craplgm lgm
+       WHERE lgi.nmdcampo LIKE 'gpscdtransacao_pendente' -- BUSCAR SOMENTE DESTE VALOR
+         AND lgi.dsdadatu = pr_cdtransacao -- Busca registros da transacao
+         AND lgm.cdcooper = pr_cdcooper
+         AND lgm.nrdconta = pr_nrdconta
+         AND lgm.dttransa > SYSDATE - 30
+         AND lgi.cdcooper = lgm.cdcooper
+         AND lgi.nrdconta = lgm.nrdconta
+         AND lgi.idseqttl = lgm.idseqttl
+         AND lgi.dttransa = lgm.dttransa
+         AND lgi.hrtransa = lgm.hrtransa
+         AND lgi.nrsequen = lgm.nrsequen;
+    --     
+    CURSOR C2 (prc_rowid in ROWID)IS
+      SELECT lgi.nmdcampo,
+             lgi.dsdadatu
+        FROM craplgi lgi,
+             craplgm lgm
+       WHERE lgm.rowid    = prc_rowid
+         AND lgi.cdcooper = lgm.cdcooper
+         AND lgi.nrdconta = lgm.nrdconta
+         AND lgi.idseqttl = lgm.idseqttl
+         AND lgi.dttransa = lgm.dttransa
+         AND lgi.hrtransa = lgm.hrtransa
+         AND lgi.nrsequen = lgm.nrsequen;    
+
+    -- Cursor CRAPLGP
+    CURSOR cr_craplgp(p_cdcooper IN craplgp.cdcooper%TYPE
+                     ,p_dtmvtolt IN craplgp.dtmvtolt%TYPE
+                     ,p_cdagenci IN craplgp.cdagenci%TYPE
+                     ,p_cdbccxlt IN craplgp.cdbccxlt%TYPE
+                     ,p_nrdolote IN craplgp.nrdolote%TYPE
+                     ,p_cdidenti IN VARCHAR2
+                     ,p_cddpagto IN craplgp.cddpagto%TYPE
+                     ,p_mmaacomp IN craplgp.mmaacomp%TYPE
+                     ,p_vlrtotal IN craplgp.vlrtotal%TYPE) IS
+      SELECT lgp.rowid
+        FROM craplgp lgp
+       WHERE lgp.cdcooper  = p_cdcooper
+         AND lgp.dtmvtolt  = p_dtmvtolt
+         AND lgp.cdagenci  = p_cdagenci
+         AND lgp.cdbccxlt  = p_cdbccxlt
+         AND lgp.nrdolote  = p_nrdolote
+         AND lgp.cdidenti2 = p_cdidenti
+         AND lgp.mmaacomp  = TO_NUMBER(p_mmaacomp)
+         AND lgp.vlrtotal  = p_vlrtotal
+         AND lgp.cddpagto  = p_cddpagto
+         AND lgp.flgpagto  = 1 --TRUE
+         AND lgp.flgativo  = 1;
+    rw_craplgp cr_craplgp%ROWTYPE;
+    
+    cr_craplgp_found BOOLEAN := FALSE;
+
+    vr_cdpagmto NUMBER;
+    vr_dtcompet VARCHAR2(200);
+    vr_dsidenti VARCHAR2(200);
+    vr_vlrtotal NUMBER;
+    
+    vr_nrdolote craplgp.nrdolote%TYPE := 31000 + pr_nrdcaixa;
+
+  BEGIN
+
+    -- Chamada pelo b1wgen0016 -> aprova_trans_pend
+    IF pr_cdtransacao <> 0 THEN
+      FOR R1 IN C1(pr_cdcooper
+                  ,pr_nrdconta
+                  ,pr_cdtransacao) LOOP
+       
+        FOR R2 IN C2(R1.ROWID) LOOP
+          IF 'pr_cdpagmto' = r2.nmdcampo THEN
+            vr_cdpagmto := TO_NUMBER(r2.dsdadatu);
+          ELSIF 'pr_dtcompet' = r2.nmdcampo THEN
+            vr_dtcompet := SUBSTR(r2.dsdadatu,5,2)||SUBSTR(r2.dsdadatu,1,4);
+          ELSIF 'pr_dsidenti' = r2.nmdcampo THEN
+            vr_dsidenti := r2.dsdadatu;
+          ELSIF 'pr_vlrtotal' = r2.nmdcampo THEN
+            vr_vlrtotal := TO_NUMBER(r2.dsdadatu); 
+          END IF;
+        END LOOP;
+          
+      END LOOP;
+    ELSE -- Chamada pelo INSS0002.pc_atualiza_pagamento
+      vr_cdpagmto := pr_cddpagto;
+      vr_dtcompet := pr_mmaacomp;
+      vr_dsidenti := pr_cdidenti;
+      vr_vlrtotal := pr_vlrtotal;
+    END IF;
+
+    -- Verifica se já possui registro na lgp
+    OPEN cr_craplgp(p_cdcooper => pr_cdcooper
+                   ,p_dtmvtolt => pr_dtmvtolt
+                   ,p_cdagenci => pr_cdagenci
+                   ,p_cdbccxlt => 100 -- Fixo
+                   ,p_nrdolote => vr_nrdolote
+                   ,p_cdidenti => vr_dsidenti
+                   ,p_cddpagto => vr_cdpagmto
+                   ,p_mmaacomp => vr_dtcompet
+                   ,p_vlrtotal => vr_vlrtotal);
+    FETCH cr_craplgp
+      INTO rw_craplgp;
+    cr_craplgp_found := cr_craplgp%FOUND;
+    CLOSE cr_craplgp;
+
+    IF cr_craplgp_found THEN
+      -- Montar mensagem de critica
+      pr_cdcritic := 92;
+      RAISE vr_exc_saida;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Busca critica
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+
+    WHEN OTHERS THEN
+      --Monta mensagem de critica
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na INSS0002.pc_gps_verificar_lancamento --> ' ||
+                     SQLERRM;
+  END pc_gps_verificar_lancamento;
   
   PROCEDURE pc_gps_validar(pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE

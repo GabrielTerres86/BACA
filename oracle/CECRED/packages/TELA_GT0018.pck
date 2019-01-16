@@ -114,6 +114,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
         Observacao: -----
 
         Alteracoes:
+        
+        -- Conforme fechado com Diego Vicentini e Eduardo Gasper essa regra deve ser eliminada.        
+        -- Wagner - Sustentação - #INC0028010 - Data: 11/12/2018.
+        
     ..............................................................................*/
       
       ---------->> CURSORES <<--------
@@ -336,7 +340,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
             CLOSE cr_crapcon;
           END IF;
         
-          IF rw_crapcon.tparrecd <> pr_tparrecd THEN
+          -- Wagner - Sustentação
+          -- Data: 11/12/2018
+          -- #INC0028010
+          -- Conforme fechado com Diego Vicentine e Eduardo Gasper essa regra deve ser eliminada.
+          /*IF rw_crapcon.tparrecd <> pr_tparrecd THEN
             vr_dscritic := 'Empresa conveniada e Segmento habilitado apenas para arrecadação '||
                            CASE rw_crapcon.tparrecd
                                 WHEN 1 THEN 'Sicredi'
@@ -346,7 +354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
                             END                                    
                             ||'.';
             RAISE vr_exc_erro; 
-          END IF;
+          END IF;*/
 
         
         END IF;

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Novembro/95                     Ultima atualizacao: 04/04/2018
+       Data    : Novembro/95                     Ultima atualizacao: 20/12/2018
 
        Dados referentes ao programa:
 
@@ -81,6 +81,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
                                 quando o programa roda na CECRED estava retendo a data da última 
                                 cooperativa buscada (Concredi); Na rotina pc_gera_dados_gerais_coop,
                                 retiradas as vars não utilizadas: dtmvtolt e dtmvtopr (Carlos)
+                                
+                   20/12/2018 - Quando o programa crps133 foi paralelizado para VIACREDI deixou de 
+                                inserir os registros dos PAs 90(Internet) e 91(TAA) na crapger e 
+                                por isso estou simulando os dois registros no cursor para que gere 
+                                informações no relatorio 115 (Tiago INC0027107).
     ............................................................................ */
 
     DECLARE
@@ -135,7 +140,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
         WHERE   crapger.cdcooper = pr_cdcooper
         AND     crapger.dtrefere = vr_dtfimmes
         AND     crapger.cdempres = 0
-        AND     crapger.cdagenci > 0;
+        AND     crapger.cdagenci > 0
+        --Quando o programa crps133 foi paralelizado para VIACREDI deixou de inserir os registros 
+        --dos PAs 90(Internet) e 91(TAA) e por isso estou simulando aqui este dois 
+        --registros para que gere informações no relatorio 115.
+        UNION ALL
+        SELECT vr_dtfimmes, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+          FROM dual 
+         WHERE gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
+                                              ,'CRPS133'   --> Código do programa
+                                               ) > 0
+        UNION ALL
+        SELECT vr_dtfimmes, 91, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+          FROM dual 
+         WHERE gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
+                                              ,'CRPS133'   --> Código do programa
+                                               ) > 0;
+
+
       --busca cadastro de informacoes gerais para todos os PAs
       CURSOR cr_crapger2 (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT  dtrefere,

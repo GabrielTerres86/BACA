@@ -1443,6 +1443,18 @@ PROCEDURE gravar-boleto:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
+        IF par_tpemitir = 2 THEN /* 1-Boleto/2-Carne */            
+           DO:
+           
+             IF ((par_vltitulo / par_qttitulo) < 0.01) THEN
+                DO:            
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Valor das parcelas nao pode ser menor que R$0,01".
+              
+                  UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+           END.
+            
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 
         IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
@@ -2463,6 +2475,7 @@ PROCEDURE gera-dados:
                                    INPUT "",
                                    INPUT par_vldsacad,
                                    INPUT FALSE,
+								   INPUT 0,
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-sacados-blt).
                                  
@@ -2897,6 +2910,7 @@ PROCEDURE seleciona-sacados:
     DEF  INPUT PARAM par_nmdsacad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac             NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrconins AS DECI                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-sacados-blt.
@@ -2974,7 +2988,8 @@ PROCEDURE seleciona-sacados:
 
     FOR EACH crapsab WHERE crapsab.cdcooper = par_cdcooper AND
                            crapsab.nrdconta = par_nrdconta AND
-                           crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
+                           crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" AND 
+                           (( par_nrconins > 0 AND STRING(crapsab.nrinssac) MATCHES "*" + STRING( par_nrconins ) + "*" ) OR par_nrconins = 0)
                            NO-LOCK BY crapsab.nmdsacad:
         
         /* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
@@ -3627,6 +3642,14 @@ PROCEDURE gerencia-sacados:
                        
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
+            
+        IF LENGTH(par_dsendsac) > 55 THEN   
+           DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Endereco deve possuir apenas 55 caracteres.".
+                       
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+           END.            
             
         IF  par_nrcepsac <= 0  THEN
             DO:

@@ -180,6 +180,11 @@ DEF        VAR tel_nrlayout LIKE gnconve.nrlayout                    NO-UNDO.
 DEF        VAR tel_nrseqpar LIKE gnconve.nrseqpar                    NO-UNDO.
 DEF        VAR tel_nmarqpar LIKE gnconve.nmarqpar                    NO-UNDO.
 
+DEF        VAR msg_cdhiscxa AS CHAR                                  NO-UNDO.
+DEF        VAR msg_cdhisrep AS CHAR                                  NO-UNDO.
+DEF        VAR msg_cdhisdeb AS CHAR                                  NO-UNDO.
+DEF        VAR msg_msgcdhis AS CHAR                                  NO-UNDO.
+
 DEF        VAR aux_dadosusr AS CHAR                                  NO-UNDO.
 DEF        VAR par_loginusr AS CHAR                                  NO-UNDO.
 DEF        VAR par_nmusuari AS CHAR                                  NO-UNDO.

@@ -6825,7 +6825,81 @@ PROCEDURE aprova_trans_pend:
                               UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
                           END.
+                            
+
+                          IF par_indvalid = 0 AND aux_conttran = 1 THEN
+                          DO:
+                                                      
+                            /* Procedimento do internetbank pc_gps_verificar_lancamento */
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                              RUN STORED-PROCEDURE pc_gps_verificar_lancamento aux_handproc = PROC-HANDLE NO-ERROR
+                                                  (INPUT par_cdcooper,
+                                                   INPUT par_nrdconta,
+                                                   INPUT par_dtmvtolt,
+                                                   INPUT par_cdagenci,
+                                                   INPUT par_nrdcaixa,
+                                                   INPUT tt-tbgen_trans_pend.cdtransacao_pendente,
+                                                   INPUT "",
+                                                   INPUT 0,
+                                                   INPUT "",
+                                                   INPUT 0,
+                                                   OUTPUT 0,
+                                                   OUTPUT "").
+                              CLOSE STORED-PROC pc_gps_verificar_lancamento
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+                            
+                              ASSIGN aux_dscritic = ""
+                                     aux_dscritic = pc_gps_verificar_lancamento.pr_dscritic
+                                                   WHEN pc_gps_verificar_lancamento.pr_dscritic <> ?.
+                            
+                            /* Verificar se retornou critica */
+                            IF aux_dscritic <> "" THEN
+                            DO:        
+                               
+                              /* Gerar log das teds com erro */
+                              RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                       INPUT "pc_gps_verificar_lancamento",
+                                                       INPUT "b1wgen0016",
+                                                       INPUT par_dtmvtolt,
+                                                       INPUT par_nrdconta,
+                                                       INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT "",
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT tt-tbpagto_trans_pend.vlpagamento,
+                                                       INPUT "",
+                                                       INPUT tt-tbgen_trans_pend.tptransacao,
+                                                       INPUT 0,
+                                                       INPUT aux_dscritic).
+    
+                              RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                      INPUT par_cdoperad,
+                                                      INPUT aux_dscritic,
+                                                      INPUT aux_dsorigem,
+                                                      INPUT aux_dstransa,
+                                                      INPUT FALSE,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_nrdconta,
+                                                      INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                      INPUT FALSE,
+                                                      INPUT par_indvalid,
+                                                      INPUT tt-tbpagto_trans_pend.dtdebito,
+                                                      INPUT tt-tbpagto_trans_pend.vlpagamento,
+                                                      INPUT aux_conttran).
+  
+                              UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
+                          END.
+
+
+
+                        END.
                             
                         IF tt-tbpagto_trans_pend.tppagamento = 1 THEN
                             DO:

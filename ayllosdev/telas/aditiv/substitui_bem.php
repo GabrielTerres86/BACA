@@ -73,7 +73,7 @@
                         ,"TELA_ADITIV"
                         ,"GRAVA_ADT_TP5"
                         ,$glbvars["cdcooper"]
-                        ,$glbvars["cdagenci"]
+                        ,$glbvars["cdpactra"]
                         ,$glbvars["nrdcaixa"]
                         ,$glbvars["idorigem"]
                         ,$glbvars["cdoperad"]

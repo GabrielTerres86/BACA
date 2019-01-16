@@ -720,7 +720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 12/04/2018
+  --  Data     : Julho/2014.                   Ultima atualizacao: 13/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -835,6 +835,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             20/08/2018 - Não considerar cheque cancelado como sendo um produto contratado.
   --                          Rotina fn_produto_habilitado, cursor cr_crapfdc (Wagner, INC0021862).  
+  --
+  --             13/12/2018 - Tratamento pra inserção de registro duplicado na TBCADAST_COLABORADOR
+  --                          evitando que na hora de um colaborador contratar credito não passe
+  --                          pelo fluxo correto (Tiago INC0027920)
   ---------------------------------------------------------------------------------------------------------------
   
   vr_tab_retorno    LANC0001.typ_reg_retorno;
@@ -8682,7 +8686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autor   : Marcos Martini
-      Data    : Março/17.                    Ultima atualizacao: 
+      Data    : Março/17.                    Ultima atualizacao: 13/12/2018
       
       Dados referentes ao programa:
       
@@ -8693,7 +8697,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                   do grupo Cecred e Cooperativas filiadas
       Observacao: -----
       
-      Alteracoes: 
+      Alteracoes: 13/12/2018 - Tratamento pra inserção de registro duplicado na TBCADAST_COLABORADOR
+                               evitando que na hora de um colaborador contratar credito não passe
+                               pelo fluxo correto (Tiago INC0027920)
     ..............................................................................*/
   
     DECLARE 
@@ -8898,6 +8904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                               ,vr_dsdemail
                                               ,vr_flgativo);
             EXCEPTION
+              WHEN DUP_VAL_ON_INDEX THEN
+                CONTINUE;
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro na gravacao na tabela TBCADAST_COLABORADOR --> '||SQLERRM;
                 RAISE vr_excsaida;

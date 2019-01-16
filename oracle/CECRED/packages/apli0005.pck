@@ -4490,7 +4490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10106);
+                       ,pr_nrdolote => 9900010106);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4515,7 +4515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,rw_crapdat.dtmvtolt
              ,1
              ,100
-             ,10106
+             ,9900010106 --10106
              ,29
              ,1
              ,1
@@ -4671,7 +4671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10104);
+                       ,pr_nrdolote => 9900010104);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4698,7 +4698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10104
+               ,9900010104 --10104
                ,29
                ,1
                ,1
@@ -4788,7 +4788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
-                       ,pr_nrdolote => 10105);
+                       ,pr_nrdolote => 9900010105);
 
         FETCH cr_craplot INTO rw_craplot;
 
@@ -4815,7 +4815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,rw_crapdat.dtmvtolt
                ,1
                ,100
-               ,10105
+               ,9900010105 --10105
                ,29
                ,1
                ,1
@@ -5624,7 +5624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10106
+              AND craplci.nrdolote = 9900010106
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
 
@@ -5669,7 +5669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10106);
+                         ,pr_nrdolote => 9900010106);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5678,7 +5678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             -- Fecha cursor
             CLOSE cr_craplot;
             -- Descricao de critica por nao ter encontrado registro
-            vr_dscritic := 'Registro de lote 10106 nao encontrado.';
+            vr_dscritic := 'Registro de lote 9900010106 nao encontrado.';
             RAISE vr_exc_saida;
           ELSE
             -- Fecha cursor
@@ -5697,7 +5697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               DELETE FROM craplot WHERE craplot.rowid = rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao deletar regitro de lote 10106. Erro: ' || SQLERRM;
+                vr_dscritic := 'Erro ao deletar regitro de lote 9900010106. Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -5718,7 +5718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro de lote 10106. Erro: ' || SQLERRM;
+                vr_dscritic := 'Erro ao atualizar registro de lote 9900010106. Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -5796,7 +5796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10104
+              AND craplci.nrdolote = 9900010104
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
           EXCEPTION
@@ -5820,7 +5820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               AND craplci.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplci.cdagenci = 1
               AND craplci.cdbccxlt = 100
-              AND craplci.nrdolote = 10105
+              AND craplci.nrdolote = 9900010105
               AND craplci.nrdconta = rw_craprac.nrdconta
               AND craplci.nrdocmto = rw_craprac.nraplica;
           EXCEPTION
@@ -5865,7 +5865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10104);
+                         ,pr_nrdolote => 9900010104);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5918,7 +5918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
                 AND craplot.cdbccxlt = 100
-                AND craplot.nrdolote = 10104;
+                AND craplot.nrdolote = 9900010104;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar registro de lote de debito. Erro: ' || SQLERRM;
@@ -5931,7 +5931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 10105);
+                         ,pr_nrdolote => 9900010105);
 
           FETCH cr_craplot INTO rw_craplot;
 
@@ -5984,7 +5984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
                 AND craplot.cdbccxlt = 100
-                AND craplot.nrdolote = 10105;
+                AND craplot.nrdolote = 9900010105;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar registro de lote de credito. Erro: ' || SQLERRM;

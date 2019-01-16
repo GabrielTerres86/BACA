@@ -4507,7 +4507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 08/02/2018
+      Data     : Dezembro/2006.                   Ultima atualizacao: 04/01/2019
 
 
       Dados referentes ao programa:
@@ -4540,6 +4540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                
                   04/12/2018 - Tratamento para lote em uso quando banco é 85 (Lucas Ranghetti PRB0040456)
                                
+                  04/01/2019 - Adicionado % e upper na comparacao da critica de lote em uso (Tiago PRB0040504)           
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4974,7 +4975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
               ELSE
                 -- Tratamento para lote em uso
-                if vr_dscritic like 'Registro de lote%em uso%' then
+                if UPPER(vr_dscritic) like UPPER('%Registro de lote%em uso%') then
                   
                   vr_idsitlct:= 'L'; -- Deixar L para reprocessar na proxima tentativa
                 

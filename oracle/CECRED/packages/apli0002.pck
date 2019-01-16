@@ -143,6 +143,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 
                  15/08/2018 - Inclusão do código de crítica 1283 na procedure pc_validar_nova_aplicacao,
                               Prj. 427 - URA (Jean Michel)
+                              
+                 10/12/2018 - Adicionando controle de resgate duplo de aplicação. 
+                              INC0025636 - (Guilherme Kuhnen)
+                             
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1473,6 +1477,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 26/10/2018 - Remover chamada da rotina pc_estorna_lancto_conta pois
                              não estava deixando excluir aplicação 
                              PRJ 450 Jaison (Lucas Ranghetti INC0026191)
+                                                           
+                10/12/2018 - Adicionando controle de resgate duplo de aplicação. 
+                             INC0025636 - (Guilherme Kuhnen)
+                             
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -3277,8 +3285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                   
                 15/05/2018 - Inclusão do código de crítica 1283, Prj. 427 - URA (Jean Michel)
 
-				07/12/2018 - Não considerar limite de crédito nas aplicações RDC-PRÉ e PÓS (SCTASK0032965) - Rubens Lima (Mouts)
-
+				07/12/2018 -  Não considerar limite de crédito nas aplicações RDC-PRÉ e PÓS - Rubens Lima (Mouts)
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -4090,7 +4097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             END IF;       
                                      
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-			IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)) 
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp
             AND pr_cdcooper <> 3 THEN
                  
               -- Monta critica
@@ -4104,7 +4111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
           ELSE       
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-			IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)) 
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp 
             AND pr_cdcooper <> 3 THEN
                  
               -- RDCPOS
@@ -4734,7 +4741,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
       -- verifica se data vencimento eh util
       vr_dtvenc := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                              ,pr_dtmvtolt => pr_dtresgat);     
+                                              ,pr_dtmvtolt => pr_dtresgat
+                                              ,pr_tipo     => 'P'     -- valor padrao
+                                              ,pr_feriado  => true    -- valor padrao 
+                                              ,pr_excultdia => true); -- considera 31/12 como util
      
       vr_qtdiaapl := vr_dtvenc - pr_dtmvtolt; -- calcula qt dias com base no novo vencimento
       
@@ -4753,7 +4763,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ELSE
         vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                   ,pr_dtmvtolt => pr_dtresgat
-                                                  ,pr_tipo     => 'A' );       
+                                                  ,pr_tipo     => 'A' 
+                                                  ,pr_feriado  => true    -- valor padrao
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         END IF;
         --SD#543149 fim
         vr_qtdiaapl := vr_dtfimper - pr_dtmvtolt; -- calcula qt dias com base no novo vencimento
@@ -5098,7 +5110,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         LOOP
           -- Validar se a data auxiliar e util e se não for trazer a primeira apos
           vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => vr_dtiniper);
+                                                    ,pr_dtmvtolt => vr_dtiniper
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
           -- Continuar enquanto a data inicial for inferior a final
           EXIT WHEN vr_dtiniper >= vr_dtfimper;
           
@@ -9365,7 +9380,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         LOOP
           -- Validar se a data auxiliar e util e se não for trazer a primeira apos
           vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => vr_dtiniper);
+                                                    ,pr_dtmvtolt => vr_dtiniper
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
           -- Continuar enquanto a data inicial for inferior a final
           EXIT WHEN vr_dtiniper >= vr_dtfimper;
           
@@ -16790,7 +16808,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
                                             pr_dtmvtolt  => pr_dtresgat, 
                                             pr_tipo      => 'P', 
-                                            pr_feriado   => TRUE ) THEN
+                                            pr_feriado   => TRUE,
+                                            pr_excultdia => TRUE ) THEN -- considera 31/12 como dia util
             
             vr_cdcritic := 13;
           END if;
@@ -18903,14 +18922,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         END IF;                                                               
         
         vr_dtiniage := vr_dtiniaar;
-        vr_dtiniaar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
-                                                   pr_dtmvtolt => vr_dtiniaar);
+        vr_dtiniaar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt => vr_dtiniaar
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao 
+                                                  ,pr_excultdia => true); -- considera 31/12 como dia util
         
 		vr_dtvenc :=  vr_dtvencto;
         -- verifica se data vencimento eh util
         IF vr_dtvenc IS NOT NULL THEN
           vr_dtvenc := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                  ,pr_dtmvtolt => vr_dtvencto);    
+                                                  ,pr_dtmvtolt => vr_dtvencto
+                                                  ,pr_tipo     => 'P'     -- valor padrao
+                                                  ,pr_feriado  => true    -- valor padrao
+                                                  ,pr_excultdia => true); -- considera 31/12 como util
         END IF; 
        
         pc_intervalo_dias(vr_dtiniaar, vr_dtvenc, vr_numrdias);
@@ -18923,7 +18948,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          -- buscado a data anterior
           vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                     ,pr_dtmvtolt => vr_dtvencto
-                                                    ,pr_tipo     => 'A' );       
+                                                    ,pr_tipo     => 'A' 
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
           pc_intervalo_dias(vr_dtiniaar, vr_dtvencto, vr_numrdias);
         ELSE
           -- retorna data venc verificada
@@ -19111,8 +19138,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               RAISE vr_exc_saida;
           END;
           
-          vr_dtinivar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
-                                                     pr_dtmvtolt => ADD_MONTHS(vr_dtiniage,vr_contador));
+          vr_dtinivar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                    ,pr_dtmvtolt => ADD_MONTHS(vr_dtiniage,vr_contador)
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
                                                      
           vr_nrseqdig := vr_nrseqdig + 1;
         
@@ -19140,7 +19170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                  Antigo: sistema/generico/procedures/b1wgen0081.p > cadastrar-resgate-aplicacao
    Sigla   : APLI
    Autor   : Renato Darosci.
-   Data    : Agosto/2014                          Ultima atualizacao: 29/12/2017
+   Data    : Agosto/2014                          Ultima atualizacao: 29/12/2018
 
    Dados referentes ao programa:
 
@@ -19259,9 +19289,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND craplap.nrdconta = pr_nrdconta
          AND craplap.nraplica = pr_nraplica;
     
+    -- Buscar resgates duplicados
+    CURSOR cr_craplrg_dup(pr_cdcooper IN craplrg.cdcooper%TYPE
+                      ,pr_nrdconta IN craplrg.nrdconta%TYPE
+                      ,pr_dtmvtocd IN craplrg.dtmvtolt%TYPE
+                      ,pr_vllanmto IN craplrg.vllanmto%TYPE
+                      ,pr_dtresgat IN craplrg.dtresgat%TYPE
+                      ,pr_tpresgat IN craplrg.tpresgat%TYPE
+                      ,pr_nraplica IN craplrg.nraplica%TYPE) IS
+      SELECT MAX(lrg.hrtransa)
+        FROM craplrg lrg
+       WHERE lrg.cdcooper = pr_cdcooper
+         AND lrg.nrdconta = pr_nrdconta
+         AND lrg.dtmvtolt = pr_dtmvtocd
+         AND lrg.vllanmto = pr_vllanmto
+         AND lrg.dtresgat = pr_dtresgat    
+         AND lrg.tpresgat = pr_tpresgat
+         AND lrg.nraplica = pr_nraplica;
+    
     -- Variáveis
     vr_nrseqdig       craplot.nrseqdig%TYPE;
     vr_dsdadatu       craplgi.dsdadatu%TYPE;
+    vr_hrtransa_dup   craplrg.hrtransa%TYPE;
     
     vr_dstransa       VARCHAR2(50); 
     vr_dsorigem       VARCHAR2(100);
@@ -19829,6 +19878,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     
     -- Cria o savepoint
     SAVEPOINT transacao;
+      
+    /*
+      Guilherme Kuhnen - 06/12/18.
+      INC0025636 - Adicionando controle de resgate duplo de aplicação.
+    */
+    OPEN cr_craplrg_dup (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_dtmvtocd => pr_dtmvtolt
+                         ,pr_vllanmto => pr_vlresgat
+                         ,pr_dtresgat => pr_dtresgat
+                         ,pr_tpresgat => vr_tpresgat
+                         ,pr_nraplica => pr_nraplica);
+      --Posicionar no proximo registro
+      FETCH cr_craplrg_dup INTO vr_hrtransa_dup;
+        --Se encontrar
+        IF cr_craplrg_dup%FOUND THEN
+          --Compara os segundos do último lançamento para não haver duplicidade
+          IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrtransa_dup) <= 600 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Resgate duplicado. Consulte seu extrato para verificar o lancamento.';
+            
+            CLOSE cr_craplrg_dup;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+    --Fechar Cursor
+    CLOSE cr_craplrg_dup;
+    /*INC0025636*/
       
     BEGIN -- Transação
     
@@ -20428,8 +20506,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF pr_dtvencto IS NOT NULL THEN
         -- verifica se a data vencimento eh util
-        vr_dtvenc := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
-                                                 pr_dtmvtolt => pr_dtvencto);
+        vr_dtvenc := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                ,pr_dtmvtolt => pr_dtvencto
+                                                ,pr_tipo     => 'P'     -- valor padrao
+                                                ,pr_feriado  => true    -- valor padrao 
+                                                ,pr_excultdia => true); -- considera 31/12 como util
                       
         vr_qtdiaapl := vr_dtvenc - pr_dtiniaar; -- calcula qt dias com base no novo vencimento
         
@@ -20437,7 +20518,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         IF  vr_qtdiaapl > pr_qtdiacar THEN --verifica se periodo tem mais de dias e busca data util anterior        
           pr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                     ,pr_dtmvtolt => pr_dtvencto
-                                                    ,pr_tipo     => 'A' );       
+                                                    ,pr_tipo     => 'A' 
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
         ELSE
           -- retorna data venc verificada
           pr_dtvencto := vr_dtvenc;
@@ -20611,8 +20694,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         IF pr_dtiniaar IS NOT NULL THEN
 
-          vr_dtiniaar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                                     pr_dtmvtolt => pr_dtiniaar);
+          vr_dtiniaar := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                    ,pr_dtmvtolt => pr_dtiniaar
+                                                    ,pr_tipo     => 'P'     -- valor padrao
+                                                    ,pr_feriado  => true    -- valor padrao 
+                                                    ,pr_excultdia => true); -- considera 31/12 como util
         END IF;
 
         vr_flgtipar := pr_flgtipar; /* tipo de agendamento . 0 aplicacao, 1 resgate */

@@ -24,7 +24,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2006                      Ultima alteracao: 25/10/2017
+   Data    : Dezembro/2006                      Ultima alteracao: 19/12/2018
    
    Dados referentes ao programa:
 
@@ -151,7 +151,9 @@
                            (Lucas Ranghetti #500917)
 						   
 			  25/10/2017 - Desabilitando a opcao "B", conforme solicitado no chamado
-						   654712. (Kelvin)	
+						   654712. (Kelvin)
+
+			  19/12/2018 - Realizado limpeza da tabela após o estorno (Marco Amorim - Mout'S)   		   	
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1374,7 +1376,8 @@ PROCEDURE consulta_registros:
   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
   EMPTY TEMP-TABLE craxlcs.
-             
+  EMPTY TEMP-TABLE cratemp.
+               
   FOR EACH craplcs WHERE craplcs.cdcooper = glb_cdcooper
                      AND craplcs.dtmvtolt >= glb_dtmvtoan /* Dia atual ou dia anterior */
                      AND craplcs.cdhistor = aux_cdhistor

@@ -944,6 +944,9 @@ create or replace package body cecred.PAGA0002 is
 				  10/10/2018 - Permitir agendar Teds antes da abertura da grade.
 				               Projeto 475 - Sprint C - Jose Dill (Mouts)
 
+			      26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a finalidade 400 - Tributos Municipais ISS - LCP 157
+                              (Jonata  - Mouts / INC0024119).
+
                    30/10/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
   --                           Correção da quantidade de parâmetros passados para LANC0001 - Heckmann (AMcom)
 
@@ -1040,7 +1043,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 12/07/2018
+      Data    : Abril/2007.                       Ultima atualizacao: 26/10/2018
 
       Dados referentes ao programa:
 
@@ -1159,6 +1162,9 @@ create or replace package body cecred.PAGA0002 is
                                
                   12/07/2018 - Adicionar os parametros que identificam o canal
                                (Prj363 - Douglas Quisinski)
+                               
+                  26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a finalidade 400 - Tributos Municipais ISS - LCP 157
+                              (Jonata  - Mouts / INC0024119).
     .................................................................................*/
     ----------------> CURSORES  <---------------
     CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE,
@@ -1215,6 +1221,7 @@ create or replace package body cecred.PAGA0002 is
   vr_msgofatr   VARCHAR2(500);
   vr_cdempcon   NUMBER;
   vr_cdsegmto   VARCHAR2(500);
+  vr_dstransf   VARCHAR2(25);
 
     vr_idlancto   craplau.idlancto%TYPE;
     vr_dslancto   VARCHAR2(30000);
@@ -1687,6 +1694,29 @@ create or replace package body cecred.PAGA0002 is
   	  RAISE vr_exc_erro;
     END IF; 
 
+    /* Quando informado a finalidade “400 - Tributos Municipais ISS - LCP 157" deve ser validado
+       o código identificador onde pode conter apenas números e ter no máximo 11 posições.*/
+    IF pr_cdfinali = 400 THEN
+      
+      IF NOT gene0002.fn_numerico(pr_dstransf) THEN
+        
+        vr_cdcritic := 0;
+        vr_dscritic := 'Codigo identificador deve conter apenas caracteres numericos.';
+        RAISE vr_exc_erro;
+          
+      ELSIF length(trim(pr_dstransf)) > 11 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Codigo identificador deve conter no maximo 11 posicoes.';
+        RAISE vr_exc_erro;
+        
+      END IF;
+      
+      vr_dstransf := lpad(pr_dstransf,11,'0');
+    
+    ELSE
+      vr_dstransf := pr_dstransf;
+    END IF;
+
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_idseqttl => pr_idseqttl
@@ -2021,7 +2051,7 @@ create or replace package body cecred.PAGA0002 is
                                          ,pr_cdageban => pr_cdageban    --> Codigo da agencia bancaria
                                          ,pr_nrctadst => pr_nrctatrf    --> Conta de destino
                                          ,pr_cdfinali => pr_cdfinali    --> Codigo da finalidade
-                                         ,pr_dstransf => pr_dstransf    --> Descricao da transferencia
+                                         ,pr_dstransf => vr_dstransf    --> Descricao da transferencia
                                          ,pr_dshistor => pr_dshistor    --> Descricao do historico
                                          ,pr_nrispbif => pr_cdispbif    --> Codigo unico do banco
                                          ,pr_idastcjt => vr_idastcjt    --> Indicador que exige Assinatura Multipla
@@ -2143,7 +2173,7 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_inpessoa => pr_inpessoa  --> Tipo de pessoa
                           ,pr_intipcta => pr_intipcta  --> Tipo de conta
                           ,pr_vllanmto => pr_vllanmto  --> Valor do lançamento
-                          ,pr_dstransf => pr_dstransf  --> Identificacao Transf.
+                          ,pr_dstransf => vr_dstransf  --> Identificacao Transf.
                           ,pr_cdfinali => pr_cdfinali  --> Finalidade TED
                           ,pr_dshistor => pr_dshistor  --> Descriçao do Histórico
                           ,pr_cdispbif => pr_cdispbif  --> ISPB Banco Favorecido=
@@ -2409,7 +2439,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_nrcartao => 0            --> Nr Cartao
 
                                 ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
-                                ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
+                                ,pr_dstransf => vr_dstransf  --> Descricao da transferencia
                                 ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
                                 ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
                                 ,pr_cdctrlcs => NULL         
@@ -2510,7 +2540,7 @@ create or replace package body cecred.PAGA0002 is
                                         ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
                                         ,pr_nrcartao => 0            --> Numero Cartao
                                         ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
-                                        ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
+                                        ,pr_dstransf => vr_dstransf  --> Descricao da transferencia
                                         ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
                                         ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
                                         ,pr_iddispos => pr_iddispos  --> Identificador do dispositivo movel 

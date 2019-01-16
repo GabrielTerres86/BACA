@@ -57,6 +57,9 @@ BEGIN
                               transferida para prejuízo.
                               P450 - Reginaldo/AMcom
 
+                 17/12/2018 - Correção para saldo de prejuizo, apos realizar estorno 
+                              do pagamento de prejuízo. (INC0025808 - Gabriel MoutS)
+							  
   ............................................................................. */
 
   DECLARE
@@ -759,7 +762,33 @@ BEGIN
               ELSE
                 vr_flagup := 0;
               END IF;
-            
+			  
+              -- Fazer tratamento de baixas com estorno posterior (Gabriel)
+              IF vr_tab_crapepr(vr_index).vlsdprej > 0 THEN
+
+                BEGIN
+                  UPDATE crapcyb cyb
+                     SET cyb.dtdbaixa = NULL
+                       , cyb.dtmancad = rw_crapdat.dtmvtolt
+                       , cyb.dtmanavl = rw_crapdat.dtmvtolt
+                       , cyb.dtmangar = rw_crapdat.dtmvtolt
+                   WHERE cyb.cdcooper = vr_tab_crapepr(vr_index).cdcooper
+                     AND cyb.cdorigem = vr_cdorigem /* Ou forcar origem 3? */
+                   --AND cyb.cdorigem = 3
+                     AND cyb.nrdconta = vr_tab_crapepr(vr_index).nrdconta
+                     AND cyb.nrctremp = vr_tab_crapepr(vr_index).nrctremp
+                     AND cyb.vlsdprej = 0          /* Se comentar aumenta um registro */
+                     AND cyb.dtdbaixa IS NOT NULL; /* Ou forcar acima de 2018? */
+                   --AND cyb.dtdbaixa > '01/01/2018'
+                     
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    pr_dscritic := 'Erro ao atualizar na tabela CRAPCYB(1): ' || SQLERRM;
+                    RAISE vr_exc_saida;
+                END;
+                
+              END IF;    
+
               -- Atualizar valores do sistema CYBER com informações coletadas do risco e prejuízo calculado
               BEGIN
                 UPDATE crapcyb cyb
