@@ -1,7 +1,7 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_CONLOG AS 
+CREATE OR REPLACE PACKAGE CECRED.TELA_CONLOG AS
 
 /* -------------------------------------------------------------------------------------------------------------
-  Programa: TELA_CONLOG                        
+  Programa: TELA_CONLOG                           
   Autor   : Ana Lúcia E. Volles - Envolti
   Data    : Setembro/2018                Ultima atualizacao: 20/09/2018
 
@@ -9,6 +9,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONLOG AS
 
   Alteracoes: 
  -------------------------------------------------------------------------------------------------------------*/
+  -- Procedure para buscar as cooperativas
+  PROCEDURE pc_buscar_cooperativas(pr_flcecred   IN INTEGER            --> 0- Nao traz CECRED / 1 - Traz cecred 
+                                  ,pr_flgtodas   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS  
+                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
 
   -- Procedure para consultar as ocorrencias de logs
   PROCEDURE pc_consulta_log (pr_cdcoptel  IN tbgen_prglog.cdcooper%TYPE    --Codigo Cooperativa
@@ -77,6 +86,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONLOG AS
                          ,pr_tag_cont IN VARCHAR2            --> Conteúdo da nova TAG
                          ,pr_des_erro OUT VARCHAR2);         --> Erros do processo
 
+  -- Procedure para buscar os nomes de arquivos de log
+  PROCEDURE pc_busca_arqlog(pr_flcecred   IN INTEGER            --> 0- Nao traz CECRED / 1 - Traz cecred 
+                           ,pr_flgtodas   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS  
+                           ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                           ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                           ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                           ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                           ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                           ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
 END TELA_CONLOG;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
@@ -136,6 +154,164 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_gera_log;
 
+  -- Procedure para buscar as cooperativas
+  PROCEDURE pc_buscar_cooperativas(pr_flcecred   IN INTEGER            --> 0- Nao traz CECRED / 1 - Traz cecred 
+                                  ,pr_flgtodas   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS  
+                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2) IS       --> Erros do processo
+    /* .............................................................................
+    Programa: pc_buscar_cooperativas
+    Sistema  : Cred
+    Sigla    : TELA_CONLOG
+    Autor    : Ana Lúcia E. Volles
+    Data     : Setembro/2018              Ultima atualizacao: 20/09/2018
+    Chamado  : REQ0026142
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar as cooperativas ativas 
+    Detalhes  : CRAPACA: Package: "TELA_CONLOG" e Ação: "BUSCA_COOPER"
+
+    Alteracoes:                            
+    ............................................................................. */
+      CURSOR cr_crapcop IS
+      SELECT crapcop.cdcooper
+            ,crapcop.nmrescop
+        FROM crapcop
+       WHERE (crapcop.cdcooper <> 3 AND pr_flcecred = 0)
+          OR pr_flcecred = 1 
+      ORDER BY crapcop.cdcooper;
+      
+      -- Variaveis de locais
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_dsparame VARCHAR2(4000);
+      
+      --Variaveis de Criticas
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+             
+      --Variaveis de Excecoes
+      vr_exc_erro  EXCEPTION;
+      
+  BEGIN
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_buscar_cooperativas');
+
+    vr_dsparame := ' - pr_flcecred:'||pr_flcecred
+                  ||', pr_flgtodas:'||pr_flgtodas
+                  ||', pr_xmllog:'  ||pr_xmllog;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_buscar_cooperativas');
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><cooperativas></cooperativas></Root>');
+      
+    IF pr_flgtodas = 1 AND vr_cdcooper = 3 THEN
+      pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                         ,'/Root/cooperativas'
+                                         ,XMLTYPE('<cooperativa>'
+                                                ||'  <cdcooper>0</cdcooper>'
+                                                ||'  <nmrescop>TODAS</nmrescop>'
+                                                ||'</cooperativa>'));
+    END IF;                                                                                                
+                                                  
+    FOR rw_crapcop IN cr_crapcop LOOP
+      IF vr_cdcooper <> 3                   AND 
+         rw_crapcop.cdcooper <> vr_cdcooper THEN 
+        
+        continue;
+      END IF;         
+          
+      -- Criar nodo filho
+      pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                          ,'/Root/cooperativas'
+                                          ,XMLTYPE('<cooperativa>'
+                                                 ||'  <cdcooper>'||rw_crapcop.cdcooper||'</cdcooper>'
+                                                 ||'  <nmrescop>'||UPPER(rw_crapcop.nmrescop)||'</nmrescop>'
+                                                 ||'</cooperativa>'));
+    END LOOP;
+    
+    -- Retorno OK          
+    pr_des_erro:= 'OK';
+
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+          
+  EXCEPTION
+    WHEN vr_exc_erro THEN 
+
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_nmdcampo := 'cdcooper';
+      pr_des_erro := 'NOK'; 
+
+      --Grava tabela de log
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,0),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');    
+                                                                                                     
+      WHEN OTHERS THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';
+
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+
+        -- Erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_CONLOG.pc_buscar_cooperativas. '||sqlerrm||vr_dsparame;
+
+        --Grava tabela de log
+        pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,0),
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_buscar_cooperativas;
 
   -- Procedure para consultar as ocorrencias de logs - cabeçalhos
   PROCEDURE pc_consulta_log (pr_cdcoptel  IN tbgen_prglog.cdcooper%TYPE    --Codigo Cooperativa
@@ -160,17 +336,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                             ,pr_des_erro     OUT VARCHAR2) IS   --> Erros do processo
   -- ...........................................................................................
   --
-  --  Programa : pc_consulta_log
-  --  Sistema  : Cred
-  --  Sigla    : TELA_CONLOG
-  --  Autor    : Ana Lúcia E. Volles
-  --  Data     : Setembro/2018              Ultima atualizacao: 20/09/2018
-  --  Chamado  : REQ0026142
+  --  Programa: pc_consulta_log
+  --  Sistema : Cred
+  --  Sigla   : TELA_CONLOG
+  --  Autor   : Ana Lúcia E. Volles
+  --  Data    : Setembro/2018              Ultima atualizacao: 20/09/2018
+  --  Chamado : REQ0026142
   --
   --  Dados referentes ao programa:
   --  Frequencia: Sempre que for chamado
-  --  Objetivo  : Procedura para consultar as ocorrências (cabeçalhos) de logs nas tabelas tbgen
-  --  Detalhes: CRAPACA: Package: "CONLOG" e Ação: "CONSULTA_LOG"
+  --  Objetivo  : Procedure para consultar as ocorrências (cabeçalhos) de logs nas tabelas tbgen
+  --  Detalhes  : CRAPACA: Package: "TELA_CONLOG" e Ação: "CONSULTA_LOG"
   --
   --  Alterações:
   --
@@ -186,7 +362,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       vr_cdagenci     VARCHAR2(100);
       vr_nrdcaixa     VARCHAR2(100);
       vr_idorigem     VARCHAR2(100);
-      vr_cdprograma   tbgen_prglog.cdprograma%TYPE;
       -- Variável de críticas
       vr_cdcritic     crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic     VARCHAR2(1000);        --> Desc. Erro
@@ -211,12 +386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
            and prl.cdcooper = decode(pr_cdcoptel,
                                      0, prl.cdcooper,
                                      pr_cdcoptel)
-           and nvl(upper(prl.cdprograma), 'x') = decode(pr_cdprogra,
-                                                 null, nvl(upper(prl.cdprograma), 'x'),
-                                                 upper(pr_cdprogra))
-           and nvl(upper(prl.nmarqlog), 'x') = decode(pr_nmarqlog,
-                                                      null, nvl(upper(prl.nmarqlog), 'x'),
-                                                      upper(pr_nmarqlog))
+           and (pr_cdprogra is null or instr(upper(prl.cdprograma), upper(pr_cdprogra)) > 0)
+           and (pr_nmarqlog is null or instr(prl.nmarqlog, pr_nmarqlog) > 0)
            and nvl(prl.tpexecucao, -1) = decode(pr_tpexecuc,
                                                 null, nvl(prl.tpexecucao, -1),
                                                 pr_tpexecuc)
@@ -229,9 +400,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                                 pr_cdmensag)
            and (   pr_clausula is null
                 or (    pr_clausula = 'IN'
-                    and (pr_dsmensag is null or instr(oco.dsmensagem, pr_dsmensag) > 0))
+                    and (pr_dsmensag is null or instr(upper(oco.dsmensagem), upper(pr_dsmensag)) > 0))
                 or (    pr_clausula = 'NOT IN'
-                    and (pr_dsmensag is null or instr(oco.dsmensagem, pr_dsmensag) = 0)))
+                    and (pr_dsmensag is null or instr(upper(oco.dsmensagem), upper(pr_dsmensag)) = 0)))
            and nvl(oco.cdcriticidade, -1) = decode(pr_cdcriti,
                                                    null, nvl(oco.cdcriticidade, -1),
                                                    pr_cdcriti)
@@ -284,6 +455,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       RAISE vr_exc_erro;
     END IF;                 
 
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_consulta_log');
+
     -- Criar cabeçalho do XML de retorno
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -335,14 +509,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                pr_tag_pai  => 'Log',
                                pr_posicao  => vr_cont,
                                pr_tag_nova => 'DhInicio',
-                               pr_tag_cont => to_char(rw_Ocorrencias.dhinicio,'dd/mm/yyyy'),
+                               pr_tag_cont => to_char(rw_Ocorrencias.dhinicio,'dd/mm/yyyy hh24:mi:ss'),
                                pr_des_erro => pr_dscritic);    
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Log',
                                pr_posicao  => vr_cont,
                                pr_tag_nova => 'DhFim',
-                               pr_tag_cont => to_char(rw_Ocorrencias.dhfim,'dd/mm/yyyy'),
+                               pr_tag_cont => to_char(rw_Ocorrencias.dhfim,'dd/mm/yyyy hh24:mi:ss'),
                                pr_des_erro => pr_dscritic);    
                                
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -396,7 +570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-  END;
+    END;
     
   END pc_consulta_log;
 
@@ -424,18 +598,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                 ,pr_des_erro     OUT VARCHAR2) IS   --> Erros do processo
   -- ...........................................................................................
   --
-  --  Programa : pc_consulta_log_det
-  --  Sistema  : Cred
-  --  Sigla    : TELA_CONLOG
-  --  Autor    : Ana Lúcia E. Volles
-  --  Data     : Setembro/2018              Ultima atualizacao: 20/09/2018
-  --  Chamado  : REQ0026142
+  --  Programa: pc_consulta_log_det
+  --  Sistema : Cred
+  --  Sigla   : TELA_CONLOG
+  --  Autor   : Ana Lúcia E. Volles
+  --  Data    : Setembro/2018              Ultima atualizacao: 20/09/2018
+  --  Chamado : REQ0026142
   --
   --  Dados referentes ao programa:
   --  Frequencia: Sempre que for chamado
-  --  Objetivo  : Procedura para consultar as ocorrências de logs nas tabelas tbgen
-  --  Detalhes: CRAPACA: Package: "CONLOG" e Ação: "CONSULTA_LOG_DET"
-
+  --  Objetivo  : Procedure para consultar as ocorrências de logs nas tabelas tbgen
+  --  Detalhes  : CRAPACA: Package: "TELA_CONLOG" e Ação: "CONSULTA_LOG_DET"
+  --
   --  Alterações:
   --
   -- ...........................................................................................
@@ -450,7 +624,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
     vr_cdagenci     VARCHAR2(100);
     vr_nrdcaixa     VARCHAR2(100);
     vr_idorigem     VARCHAR2(100);
-    vr_cdprograma   tbgen_prglog.cdprograma%TYPE;
     -- Variável de críticas
     vr_cdcritic     crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic     VARCHAR2(1000);        --> Desc. Erro
@@ -467,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
              prl.dhinicio,
              prl.dhfim,
              oco.cdmensagem,
-             oco.dsmensagem,
+             replace(replace(oco.dsmensagem, '<', ' < '),'>', ' > ') dsmensagem,
              oco.nrchamado,
              oco.idocorrencia,
              oco.dhocorrencia,
@@ -484,12 +657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
          and prl.cdcooper = decode(pr_cdcoptel,
                                    0, prl.cdcooper,
                                    pr_cdcoptel)
-         and nvl(upper(prl.cdprograma), 'x') = decode(pr_cdprogra,
-                                               null, nvl(upper(prl.cdprograma), 'x'),
-                                               upper(pr_cdprogra))
-         and nvl(upper(prl.nmarqlog), 'x') = decode(pr_nmarqlog,
-                                                    null, nvl(upper(prl.nmarqlog), 'x'),
-                                                    upper(pr_nmarqlog))
+         and (pr_cdprogra is null or instr(upper(prl.cdprograma), upper(pr_cdprogra)) > 0)
+         and (pr_nmarqlog is null or instr(prl.nmarqlog, pr_nmarqlog) > 0)
          and nvl(prl.tpexecucao, -1) = decode(pr_tpexecuc,
                                               null, nvl(prl.tpexecucao, -1),
                                               pr_tpexecuc)
@@ -502,9 +671,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                               pr_cdmensag)
          and (   pr_clausula is null
               or (    pr_clausula = 'IN'
-                  and (pr_dsmensag is null or instr(oco.dsmensagem, pr_dsmensag) > 0))
+                  and (pr_dsmensag is null or instr(upper(oco.dsmensagem), upper(pr_dsmensag)) > 0))
               or (    pr_clausula = 'NOT IN'
-                  and (pr_dsmensag is null or instr(oco.dsmensagem, pr_dsmensag) = 0)))
+                  and (pr_dsmensag is null or instr(upper(oco.dsmensagem), upper(pr_dsmensag)) = 0)))
          and nvl(oco.cdcriticidade, -1) = decode(pr_cdcriti,
                                                  null, nvl(oco.cdcriticidade, -1),
                                                  pr_cdcriti)
@@ -561,6 +730,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       RAISE vr_exc_erro;
     END IF;                 
 
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_consulta_log_det');
+
     -- Criar cabeçalho do XML de retorno
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -606,7 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                pr_tag_pai  => 'Detalhes',
                                pr_posicao  => vr_cont,
                                pr_tag_nova => 'DhOcorrencia',
-                               pr_tag_cont => to_char(rw_Ocorrencias.dhocorrencia,'dd/mm/yyyy'),
+                               pr_tag_cont => to_char(rw_Ocorrencias.dhocorrencia,'dd/mm/yyyy hh24:mi:ss'),
                                pr_des_erro => pr_dscritic);    
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -686,17 +858,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                               ,pr_des_erro    OUT VARCHAR2) IS   --> Erros do processo
   -- ...........................................................................................
   --
-  --  Programa : pc_consulta_erro
-  --  Sistema  : Cred
-  --  Sigla    : TELA_CONLOG
-  --  Autor    : Ana Lúcia E. Volles
-  --  Data     : Setembro/2018              Ultima atualizacao: 20/09/2018
-  --  Chamado  : REQ0026142
+  --  Programa: pc_consulta_erro
+  --  Sistema : Cred
+  --  Sigla   : TELA_CONLOG
+  --  Autor   : Ana Lúcia E. Volles
+  --  Data    : Setembro/2018              Ultima atualizacao: 20/09/2018
+  --  Chamado : REQ0026142
   --
   --  Dados referentes ao programa:
   --  Frequencia: Sempre que for chamado
   --  Objetivo  : Procedure para consultar os erros Oracle na tabela tbgen_erro_sistema
-  --  Detalhes
+  --  Detalhes  :
   --    $xmlResult = mensageria($xmlCarregaDados
   --              ,"CONLOG"
   --              ,"CONSULTA_ERRO"
@@ -706,6 +878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
   --              ,$glbvars["idorigem"]
   --              ,$glbvars["cdoperad"]
   --              ,"</Root>");
+  --
   --  Alterações:
   --
   -- ...........................................................................................
@@ -720,7 +893,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       vr_cdagenci    VARCHAR2(100);
       vr_nrdcaixa    VARCHAR2(100);
       vr_idorigem    VARCHAR2(100);
-      vr_cdprograma  tbgen_prglog.cdprograma%TYPE;
 
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -731,12 +903,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
 
       -- Variáveis gerais da procedure
       vr_cont INTEGER := 0; -- Contador
-
-      -- Array para guardar o split dos dados contidos na dstexttb
-      TYPE typ_split IS TABLE OF VARCHAR2(32767);
-      vr_vet_texto        typ_split := typ_split();
-      vr_vet_TpOcorrencia typ_split := typ_split();
-      vr_vet_Criticidade  typ_split := typ_split();
 
       CURSOR cr_Erros IS
         select tes.cdcooper,
@@ -750,9 +916,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                                      pr_cdcoptel)
            and (   pr_clausula is null
                 or (    pr_clausula = 'IN'
-                    and (pr_dsmensag is null or instr(tes.dserro, pr_dsmensag) > 0))
+                    and (pr_dsmensag is null or instr(upper(tes.dserro), upper(pr_dsmensag)) > 0))
                 or (    pr_clausula = 'NOT IN'
-                    and (pr_dsmensag is null or instr(tes.dserro, pr_dsmensag) = 0)))
+                    and (pr_dsmensag is null or instr(upper(tes.dserro), upper(pr_dsmensag)) = 0)))
          order by tes.cdcooper, tes.dherro;
 
       rw_Erros cr_Erros%ROWTYPE;
@@ -784,6 +950,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
       RAISE vr_exc_erro;
     END IF;                 
 
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_consulta_erro');
+
     -- Criar cabeçalho do XML de retorno
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -814,7 +983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                              pr_tag_pai  => 'Erro',
                              pr_posicao  => vr_cont,
                              pr_tag_nova => 'Data',
-                             pr_tag_cont => to_char(rw_Erros.dherro,'dd/mm/yyyy'),
+                             pr_tag_cont => to_char(rw_Erros.dherro,'dd/mm/yyyy hh24:mi:ss'),
                              pr_des_erro => pr_dscritic);    
                                
       --Utiliza rotina local para CDATA
@@ -888,12 +1057,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONLOG AS
                          ,pr_des_erro OUT VARCHAR2) IS       --> Erros do processo
   -- ..........................................................................
   --
-  --  Programa : pc_insere_tag
-  --  Sistema  : Rotina de tratamento e interface de dados com sistema Web
-  --  Sigla    : TELA_CONLOG
-  --  Autor    : Ana Lúcia E. Volles
-  --  Data     : Setembro/2018              Ultima atualizacao: 20/09/2018
-  --  Chamado  : REQ0026142
+  --  Programa: pc_insere_tag
+  --  Sistema : Rotina de tratamento e interface de dados com sistema Web
+  --  Sigla   : TELA_CONLOG
+  --  Autor   : Ana Lúcia E. Volles
+  --  Data    : Setembro/2018              Ultima atualizacao: 20/09/2018
+  --  Chamado : REQ0026142
   --
   --  Dados referentes ao programa:
   --
@@ -912,7 +1081,6 @@ BEGIN
     vr_texto     DBMS_XMLDOM.DOMCDATASection;  --> Texto que será incluido para utilização de CDATA
     vr_cdcritic  INTEGER;
     vr_dscritic  VARCHAR2(4000);
-
 
   BEGIN
     -- Inclui nome do modulo logado
@@ -961,8 +1129,151 @@ BEGIN
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
 
-  END;
+    END;
   END pc_insere_tag;
+
+  -- Procedure para buscar os nomes de arquivos de log
+  PROCEDURE pc_busca_arqlog(pr_flcecred   IN INTEGER            --> 0- Nao traz CECRED / 1 - Traz cecred 
+                           ,pr_flgtodas   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS  
+                           ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                           ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                           ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                           ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                           ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                           ,pr_des_erro  OUT VARCHAR2) IS       --> Erros do processo
+  -- ...........................................................................................
+  --
+  --  Programa: pc_busca_arqlog
+  --  Sistema : Cred
+  --  Sigla   : TELA_CONLOG
+  --  Autor   : Ana Lúcia E. Volles
+  --  Data    : Setembro/2018              Ultima atualizacao: 18/10/2018
+  --  Chamado : REQ0026142
+  --
+  --  Dados referentes ao programa:
+  --  Frequencia: Sempre que for chamado
+  --  Objetivo  : Procedure para buscar os nomes de arquivos de logs existentes na tabela tbgen_prglog
+  --  Detalhes  : CRAPACA: Package: "TELA_CONLOG" e Ação: "BUSCA_ARQLOG"
+  --
+  --  Alterações:
+  --
+  -- ...........................................................................................
+    CURSOR cr_nmarqlog IS
+      SELECT DISTINCT a.nmarqlog
+      FROM tbgen_prglog a
+      ORDER BY a.nmarqlog;
+        
+    -- Variaveis de locais
+    vr_nmarqlog tbgen_prglog.nmarqlog%TYPE;
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_dsparame VARCHAR2(4000);
+    vr_cont     INTEGER := 0; -- Contador
+        
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+               
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;
+        
+  BEGIN
+  -- Inclui nome do modulo logado
+  GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_busca_arqlog');
+
+  vr_dsparame := ' - pr_flcecred:'||pr_flcecred
+                ||', pr_flgtodas:'||pr_flgtodas
+                ||', pr_xmllog:'  ||pr_xmllog;
+        
+  -- Recupera dados de log para consulta posterior
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdatela => vr_nmdatela
+                          ,pr_nmeacao  => vr_nmeacao
+                          ,pr_cdagenci => vr_cdagenci
+                          ,pr_nrdcaixa => vr_nrdcaixa
+                          ,pr_idorigem => vr_idorigem
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => vr_dscritic);
+
+  -- Inclui nome do modulo logado
+  GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'TELA_CONLOG.pc_busca_arqlog');
+
+  -- Verifica se houve erro recuperando informacoes de log                              
+  IF vr_dscritic IS NOT NULL THEN
+    RAISE vr_exc_erro;
+  END IF; 
+        
+  -- Criar cabecalho do XML
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Arquivos></Arquivos></Root>');
+        
+  FOR rw_nmarqlog IN cr_nmarqlog LOOP
+          
+    -- Criar nodo filho
+    pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                        ,'/Root/Arquivos'
+                                        ,XMLTYPE('  <nmarqlog>'||rw_nmarqlog.nmarqlog||'</nmarqlog>'));
+
+  END LOOP;
+      
+  -- Retorno OK          
+  pr_des_erro:= 'OK';
+
+  -- Inclui nome do modulo logado
+  GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+            
+  EXCEPTION
+    WHEN vr_exc_erro THEN 
+
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_nmdcampo := 'nmarqlog';
+      pr_des_erro := 'NOK'; 
+
+      --Grava tabela de log
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,0),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');    
+                                                                                                         
+      WHEN OTHERS THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';
+
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+
+        -- Erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_CONLOG.pc_busca_arqlog. '||sqlerrm||vr_dsparame;
+
+        --Grava tabela de log
+        pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,0),
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_arqlog;
 	
 END TELA_CONLOG;
 /
