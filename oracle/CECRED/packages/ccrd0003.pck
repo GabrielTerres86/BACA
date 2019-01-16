@@ -112,6 +112,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             21/12/2018 - Efetuado ajuste para caso seja efetuado um upgrade ele atualize
   --                          todos os cartões que vieram no arquivo com o tipo 4 do ccr3
   --                          (Lucas Ranghetti #INC0029505)
+  --                         - Incluir a critica 143 - conta duplicada junto da critica 080
+  --                           para não prosseguirmos com a inclusão do cartão pois o mesmo
+  --                           ja possui cartão (Lucas Ranghetti #PRB0040493)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -8624,6 +8627,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    21/12/2018 - Efetuado ajuste para caso seja efetuado um upgrade ele atualize
                                 todos os cartões que vieram no arquivo com o tipo 4 do ccr3
                                 (Lucas Ranghetti #INC0029505)
+                              - Incluir a critica 143 - conta duplicada junto da critica 080
+                                para não prosseguirmos com a inclusão do cartão pois o mesmo
+                                ja possui cartão (Lucas Ranghetti #PRB0040493)
     ............................................................................ */
 
     DECLARE
@@ -11082,9 +11088,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         RAISE vr_exc_saida;
                       END;
 
-                    /* nao deve solicitar cartao novamente caso retorne critica 080
-                       (pessoa ja tem cartao nesta conta) */
-                    IF substr(vr_des_text, 211, 3) = '080' THEN
+                    /* nao deve solicitar cartao novamente caso retorne critica 
+                       080 - pessoa ja tem cartao nesta conta 
+                       143 - conta duplicada */
+                    IF substr(vr_des_text, 211, 3) in( '080','143') THEN
                       continue;
                     END IF;
 
@@ -11561,9 +11568,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       RAISE vr_exc_saida;
                     END;
 
-                   /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                  /* nao deve solicitar cartao novamente caso retorne critica 
+                     080 - pessoa ja tem cartao nesta conta 
+                     143 - conta duplicada */
+                  IF substr(vr_des_text, 211, 3) in( '080','143') THEN
                     continue;
                   END IF;
 
