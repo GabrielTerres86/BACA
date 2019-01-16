@@ -274,6 +274,10 @@
                 18/10/2018 - Comentado tratamento para nao permitir solicitacao 
                              ou encerramento de conta ITG devido a migracao do BB. 
                              (Lombardi/Elton)
+			   
+                16/01/2019 - Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Lombardi/Elton)
 
 .............................................................................*/
 
@@ -593,6 +597,16 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
+            
+        /* Tratamento temporario para nao permitir solicitacao
+           ou encerramento de conta ITG devido a migracao do BB */
+        IF  par_cdcooper = 10 AND /* Credcomin */
+            par_dtmvtolt >= 01/17/2019 AND par_dtmvtolt <= 01/25/2019  THEN
+            DO:
+               ASSIGN tt-conta-corr.btencitg = NO
+                      tt-conta-corr.btsolitg = NO.
+            END.
+            
 /*
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
