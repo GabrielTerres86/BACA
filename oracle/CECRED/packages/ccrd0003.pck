@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 13/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -101,6 +101,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             23/11/2018 - Implantacao projeto 421 - Melhorias nas ferramentas contabeis e fiscais, entrega 2.
   --                          Heitor (Mouts) - Prj421
+  --
+  --             13/12/2018 - Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo 
+  --                          arquivo CCB3 (Lucas Ranghetti INC0027563)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6211,7 +6214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 18/07/2018
+    Data    : Maio/14.                    Ultima atualizacao: 13/12/2018
 
     Dados referentes ao programa:
 
@@ -6224,6 +6227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
     Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Novos parametros passados nas chamadas
                              devido paralelismo criado - Andreatta (MOUTs) 
+                             
+                13/12/2018 - Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo 
+                             arquivo (Lucas Ranghetti INC0027563)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6463,7 +6469,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_sexbancoob crapttl.cdsexotl%TYPE;
       vr_cdestcvl   crapavt.cdestcvl%TYPE;
       vr_nrcpfcgc   crapavt.nrcpfcgc%TYPE;
-      vr_inpessoa   crapavt.inpessoa%TYPE;      
+      vr_inpessoa   crapavt.inpessoa%TYPE;     
+      vr_qtdconta   pls_integer; -- Contar quantidade de registros por conta no arquivo
       vr_cdprogra   VARCHAR2(19) := 'CCRD0003.PC_CRPS671';
       
       -- Upgrade no cartao do TITULAR 1
@@ -6579,7 +6586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ass.dtdemiss IS NULL        AND
              age.cdcooper = ass.cdcooper AND
              age.cdagenci = ass.cdagenci AND
-			 pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
+             pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh 
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)             
              ORDER BY pcr.nrdconta   
@@ -7733,12 +7740,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_cdufdttl := ' ';
               vr_titulari := 0;
               vr_tipooper := ' ';
-              
+             
               -- Solicitacao de upgrade/downgrade no cartao do primeiro titular
               IF NVL(vr_nrctaant,0) <> rw_crawcrd.nrdconta THEN
                 vr_flupgrad := FALSE;
                 vr_nrctaant := rw_crawcrd.nrdconta;
+               vr_qtdconta := 0; -- Limpar contagem por conta
               END IF;
+              
+              -- Contar quantidade de registros por conta no arquivo
+              vr_qtdconta := vr_qtdconta + 1;
+
+              -- Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo arquivo
+              -- as que nao forem nesse arquivo vao no arquivo do dia seguinte
+              if vr_qtdconta > 8 then                
+                continue;
+              end if;
               
               -- Busca Administradora de Cartões
               OPEN cr_crapadc(pr_cdcooper => rw_crawcrd.cdcooper,
