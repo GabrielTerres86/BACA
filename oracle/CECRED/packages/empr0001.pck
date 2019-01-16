@@ -1120,8 +1120,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   vr_exc_erro EXCEPTION;
 
   /* Descrição e código da critica */
-  vr_cdcritic crapcri.cdcritic%TYPE;
-  vr_dscritic VARCHAR2(4000);
+  --vr_cdcritic crapcri.cdcritic%TYPE;
+  --vr_dscritic VARCHAR2(4000);
 
   /* Erro em chamadas da pc_gera_erro */
   vr_des_reto VARCHAR2(3);
@@ -2357,6 +2357,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_diavenct INTEGER; --> Dia de vencimento
       vr_mesvenct INTEGER; --> Mes de vencimento
       vr_anovenct INTEGER; --> Ano de vencimento
+      vr_dscritic VARCHAR2(4000);
+      
     BEGIN
       -- Guardar dia, mes e ano separamente do vencimento
       vr_diavenct := to_char(pr_dtvencto, 'dd');
@@ -2435,6 +2437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_diavenct INTEGER; --> Dia de vencimento
       vr_mesvenct INTEGER; --> Mes de vencimento
       vr_anovenct INTEGER; --> Ano de vencimento
+      vr_dscritic VARCHAR2(4000);
     BEGIN
       -- Guardar dia, mes e ano separamente do vencimento
       vr_diavenct := to_char(pr_dtvencto, 'dd');
@@ -2613,6 +2616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_flgimune pls_integer;
       vr_vlbaseiof number;
       vr_qtdiaiof NUMBER;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
 
     BEGIN
       -- Criar um bloco para faciliar o tratamento de erro
@@ -3091,6 +3096,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_flgimune pls_integer;
     vr_vlbaseiof number;
     vr_qtdiaiof NUMBER;
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
 
   BEGIN
 
@@ -3562,7 +3569,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        AND TO_CHAR(lem.dtmvtolt, 'MMRRRR') = TO_CHAR(pr_dtmvtolt, 'MMRRRR');
 
       rw_craplem cr_craplem%ROWTYPE;
-
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
     BEGIN
       --Limpar Tabelas Memoria
       pr_tab_erro.DELETE;
@@ -4284,6 +4292,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_nrdiames INTEGER; --> Número de dias para o cálculo no mês corrente
       vr_nrdiaprx INTEGER; --> Número de dias para o cálculo no próximo mês
       vr_exc_erro2 EXCEPTION; --> Exception especifica quando já existe erro na tab_erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      
     BEGIN
       -- Busca dados específicos do empréstimo para a rotina
       OPEN cr_crapepr;
@@ -5408,6 +5419,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       vr_nrctremp_migrado crawepr.nrctremp%type := 0;
       vr_exibe_migrado    BOOLEAN := FALSE;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);      
+      
 
     BEGIN
       -- Buscar a configuração de empréstimo cfme a empresa da conta
@@ -6458,6 +6472,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_des_xml         CLOB;
     vr_texto_completo  VARCHAR2(32600);
     vr_index           VARCHAR2(100);
+    
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic crapcri.cdcritic%TYPE;
     -------------------------------  CURSORES  -------------------------------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
                        pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -6861,6 +6878,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_vlmtapar        NUMBER;
       vr_vlmrapar        NUMBER;
       vr_vliofcpl        NUMBER;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);     
+      
     BEGIN
       -- Buscar a configuração de empréstimo cfme a empresa da conta
       pc_config_empresti_empresa(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
@@ -7109,6 +7129,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_vliofcpl crappep.vliofcpl%TYPE; --> IOF atraso
       vr_vlprvenc NUMBER; --> Valor Vencido
       vr_vlpraven NUMBER; --> Valor a Vencer
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);      
 
       -- Busca dos dados do emprestimo passado ou de todos os emprestimos da conta quando nrctremp = 0
       CURSOR cr_crapepr IS
@@ -8237,7 +8259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
-
+      vr_dscritic VARCHAR2(4000);
     BEGIN
       pr_des_reto := 'OK';
       empr0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -13572,7 +13594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     vr_exc_erro  EXCEPTION;
-
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
     -- Variaveis gerais
     vr_dslcremp VARCHAR2(2000); --> Contem as linhas de microcredito que sao permitidos para o produto TR
   BEGIN

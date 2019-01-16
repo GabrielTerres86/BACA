@@ -5429,7 +5429,71 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
          and ct.nrcpfcgc = cs.nrcpfcgc
          and g.cdestcvl  = ct.cdestcvl
          and co.cdcooper = cs.cdcooper
-         and co.cdoperad = pr_cdoperad;
+         and co.cdoperad = pr_cdoperad
+         AND NOT EXISTS (SELECT 1
+                           FROM crapseg se
+                          WHERE cs.cdcooper = se.cdcooper
+                            AND cs.nrdconta = se.nrdconta
+                            AND cs.nrctrseg = se.nrctrseg)
+         UNION 
+      SELECT 
+             cc.nmextcop, -- Nome da cooperativa
+             trim(gene0002.fn_mask_conta(ca.nrdconta)) nrdconta, -- Número da conta
+             cs.nrctrseg, -- Número da Proposta de Seguro de Vida Prestamista             
+             cg.cdagenci, -- Número do PA
+             cs.nmdsegur, -- Nome do segurado
+             cs.nrcpfcgc, -- Cpf do segurado
+             g.rsestcvl , -- Estado Civil
+             cs.dtnascsg, -- Data de nascimento
+             decode(cs.cdsexosg,1,'MASCULINO','FEMININO') cdsexosg, -- Sexo
+             cs.dsendres||' '||cs.nrendres Endereco,
+             cs.nmbairro, -- Nome do Bairro
+             cs.nmcidade, -- Nome da Cidade
+             cs.cdufresd, -- UF
+             cs.nrcepend, -- CEP
+             cs.nrctrato, -- Número do Contrato             
+             lpad(cs.tpplaseg,3,'0') tpplaseg, -- Plano
+             0 vl_saldo_devedor, --cs.vl_saldo_devedor
+             1 id_imprime_DPS, -- Indicador se imprime DPS ou não
+             cs.dtinivig,
+             cs.dtmvtolt,
+             cs.nmdsegur Cooperado, -- Cooperado
+             trim(gene0002.fn_mask_conta(ca.nrdconta)) nrdconta2, -- Número da conta
+             co.nmoperad -- Nome do operador
+      FROM 
+             crawseg cs,
+             crapcop cc,
+             crapass ca,
+             crapage cg,
+             crapttl ct,
+             gnetcvl g,
+             crapope co,
+             crapseg se
+      WHERE 
+             cs.cdcooper = pr_cdcooper 
+         AND cs.nrdconta = pr_nrdconta 
+         AND (cs.nrctrseg = pr_nrctrseg or cs.nrctrato = pr_nrctremp)
+         AND cs.cdcooper = cc.cdcooper
+         AND cs.cdcooper = ca.cdcooper
+         AND cs.nrdconta = ca.nrdconta
+         AND ca.cdcooper = cg.cdcooper
+         AND ca.cdagenci = cg.cdagenci
+         AND ct.cdcooper = cs.cdcooper
+         AND ct.nrdconta = cs.nrdconta
+         AND ct.nrcpfcgc = cs.nrcpfcgc
+         AND g.cdestcvl  = ct.cdestcvl
+         AND co.cdcooper = cs.cdcooper
+         AND co.cdoperad = pr_cdoperad
+         AND EXISTS (SELECT 1
+                       FROM crapseg se1
+                      WHERE cs.cdcooper = se1.cdcooper
+                        AND cs.nrdconta = se1.nrdconta
+                        AND cs.nrctrseg = se1.nrctrseg)
+         AND cs.cdcooper = se.cdcooper
+         AND cs.nrdconta = se.nrdconta
+         AND cs.nrctrseg = se.nrctrseg         
+         AND se.cdsitseg  NOT IN (2,4)
+         ;    
 
     rw_crawseg cr_crawseg%ROWTYPE;   
       
