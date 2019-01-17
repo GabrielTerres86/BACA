@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 17/01/2019
   --
   --  Dados referentes ao programa:
   --
@@ -326,7 +326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 29/05/2017
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 17/01/2019
   --
   --  Dados referentes ao programa:
   --
@@ -388,6 +388,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --             18/12/2017 - Inclusão da procedure pc_consulta_situacao_cdc, Prj. 402 (Jean Michel)
   --
   --             22/02/2018 - Inclusão de Logs nas procedures pc_gravames_baixa_manual, pc_gravames_cancelar, pc_gravames_inclusao_manual
+  --
+  --             17/01/2019 - Tratamento de dados do endereco do cooperado com valores nulos
+  --                          (Andre - MoutS) - PRB0040537
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Cursor para verificar se ha algum BEM alienável
@@ -1590,13 +1594,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       CURSOR cr_crapenc(pr_cdcooper crapenc.cdcooper%TYPE
                        ,pr_nrdconta crapenc.nrdconta%TYPE
                        ,pr_inpessoa crapass.inpessoa%TYPE) IS
-        SELECT enc.dsendere
-              ,enc.nrendere
-              ,enc.complend
-              ,enc.nmbairro
-              ,enc.cdufende
-              ,enc.nrcepend
-              ,enc.nmcidade
+        SELECT nvl(enc.dsendere, ' ') dsendere
+              ,nvl(enc.nrendere, 0) nrendere
+              ,nvl(enc.complend, ' ') complend
+              ,nvl(enc.nmbairro, ' ') nmbairro
+              ,nvl(enc.cdufende, ' ') cdufende
+              ,nvl(enc.nrcepend, 0) nrcepend
+              ,nvl(enc.nmcidade, ' ') nmcidade
           FROM crapenc enc
         WHERE enc.cdcooper = pr_cdcooper
           AND enc.nrdconta = pr_nrdconta
