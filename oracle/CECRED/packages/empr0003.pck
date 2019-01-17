@@ -1046,6 +1046,9 @@ BEGIN
             	   27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
 				   Chamado INC0027935 - Gabriel (Mouts).
 
+                   20/12/2018 - Correção da taxa CET para buscar da tabela de CET quando existir registro
+								INC0029082 (Douglas Pagel / AMcom).
+
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -1243,6 +1246,16 @@ BEGIN
                AND t.nrctrpro = pr_nrctremp;
          rw_crapbpr cr_crapbpr%ROWTYPE;
        
+         
+      -- Verificar se dados do CET já foram gravados
+      CURSOR cr_tbepr_calculo_cet is
+        SELECT *
+          FROM tbepr_calculo_cet t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.nrctremp = pr_nrctremp;
+      rw_tbepr_calculo_cet cr_tbepr_calculo_cet%ROWTYPE;
+       
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
@@ -1272,6 +1285,7 @@ BEGIN
       vr_qrcode         VARCHAR2(100);             --> QR Code para uso da digitalizacao
       vr_cdtipdoc       INTEGER;                   --> Codigo do tipo de documento
       vr_dstextab       craptab.dstextab%TYPE;     --> Descritivo da tab
+      vr_txanocet       NUMBER := 0;               --> taxa anual do cet
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
       vr_dscatbem       varchar2(1000);
       vr_vlemprst       number;
@@ -1365,6 +1379,18 @@ BEGIN
 				CLOSE cr_cobertura;
 			END IF;								
 
+      -- Checar se existe informações de CET gerado na efetivação
+      OPEN cr_tbepr_calculo_cet;
+      FETCH cr_tbepr_calculo_cet 
+       INTO rw_tbepr_calculo_cet;
+      IF cr_tbepr_calculo_cet%FOUND THEN
+        -- Usaremos as informações da tabela
+        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
+      ELSE
+        vr_txanocet := rw_crawepr.percetop;
+      END IF;						
+      CLOSE cr_tbepr_calculo_cet;
+      
       -- Busca os dados do cadastro de linhas de credito
       OPEN cr_craplcr(rw_crawepr.cdlcremp);
       FETCH cr_craplcr INTO rw_craplcr;
@@ -2025,7 +2051,7 @@ BEGIN
                                  '<qttolatr>'||rw_crawepr.qttolatr||' dias corridos, contados do vencimento da parcela não paga'||'</qttolatr>'|| -- Dias de tolerancia de atraso
                                  '<origem>'  ||rw_crawepr.nmcidade||'-'||rw_crawepr.cdufdcop ||'</origem>'  || -- Local Origem
                                  '<destino>' ||rw_crawepr.nmcidade||'-'||rw_crawepr.cdufdcop ||'</destino>' || -- Local destino
-                                 '<percetop>'||to_char(rw_crawepr.percetop,'fm990d00')||' %' ||'</percetop>'|| -- Custo efetivo total ao ano
+                                 '<percetop>'||to_char(vr_txanocet,'fm990d00')||' %' ||'</percetop>'|| -- Custo efetivo total ao ano
                                  '<emitente>'||vr_emitente                                   ||'</emitente>'||
                                  '<coment01>'||vr_coment01                                   ||'</coment01>'||
                                  '<nrtelura>'||rw_crapcop.nrtelura                           ||'</nrtelura>'|| -- Telefone Atendimento
@@ -2120,6 +2146,10 @@ BEGIN
 
                   27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
 				  Chamado INC0027935 - Gabriel (Mouts).
+                  
+                   20/12/2018 - Correção da taxa CET para buscar da tabela de CET quando existir registro
+								INC0029082 (Douglas Pagel / AMcom).
+
                   
     ............................................................................. */
 
@@ -2322,6 +2352,15 @@ BEGIN
                AND t.nrctrpro = pr_nrctremp;
          rw_crapbpr cr_crapbpr%ROWTYPE;
               
+     -- Verificar se dados do CET já foram gravados
+      CURSOR cr_tbepr_calculo_cet is
+        SELECT *
+          FROM tbepr_calculo_cet t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.nrctremp = pr_nrctremp;
+      rw_tbepr_calculo_cet cr_tbepr_calculo_cet%ROWTYPE;
+              
       -- Tabela temporaria para o descritivo dos avais
       TYPE typ_reg_avl IS RECORD(descricao VARCHAR2(4000));
       TYPE typ_tab_avl IS TABLE OF typ_reg_avl INDEX BY PLS_INTEGER;
@@ -2362,6 +2401,7 @@ BEGIN
       vr_perjurmo       NUMBER;                       --> Juro mora
 	  vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
 	  vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
+      vr_txanocet       NUMBER := 0;               --> taxa anual do cet
 
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
       vr_vlpreclc       NUMBER := 0;                -- Parcela calcula
@@ -2458,6 +2498,18 @@ BEGIN
         OPEN  cr_crapnac(pr_cdnacion => rw_crawepr.cdnacion);
         FETCH cr_crapnac INTO rw_crapnac;
         CLOSE cr_crapnac;
+
+        -- Checar se existe informações de CET gerado na efetivação
+      OPEN cr_tbepr_calculo_cet;
+      FETCH cr_tbepr_calculo_cet 
+       INTO rw_tbepr_calculo_cet;
+      IF cr_tbepr_calculo_cet%FOUND THEN
+        -- Usaremos as informações da tabela
+        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
+      ELSE
+        vr_txanocet := rw_crawepr.percetop;
+      END IF;						
+      CLOSE cr_tbepr_calculo_cet;
 
         -- monta descricao para o relatorio com os dados do emitente
         vr_emitente := rw_crawepr.nmprimtl || ', ' 
@@ -2815,7 +2867,7 @@ BEGIN
                              '<dtmvtolt>'     || to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')               || '</dtmvtolt>' ||
                              '<txminima>'     || to_char(rw_crawepr.txminima,'FM990D00') || ' %'         || '</txminima>' || -- % juros remuneratorios ao mes
                              '<prjurano>'     || to_char(rw_crawepr.prjurano,'FM990D00') || ' %'         || '</prjurano>' || -- % juros remuneratorios ao ano
-                             '<percetop>'     || to_char(rw_crawepr.percetop,'fm990d00') || ' %'         || '</percetop>' || -- Custo efetivo total ao ano
+                             '<percetop>'     || to_char(vr_txanocet,'fm990d00') || ' %'         || '</percetop>' || -- Custo efetivo total ao ano
                              '<ultvenct>'     || to_char(add_months(rw_crawepr.dtvencto,rw_crawepr.qtpreemp -1),'dd/mm/yyyy')     || '</ultvenct>' ||
                              '<perjurmo>'     || to_char(vr_perjurmo,'FM990D00') || ' % ao mês sobre o valor em atraso'   || '</perjurmo>' || -- % juros moratorios
                              '<prdmulta>'     || to_char(vr_prmulta,'fm990d00')          || ' % sobre o valor da parcela vencida' || '</prdmulta>' || -- % Multa sobre o valor da parcela vencida
