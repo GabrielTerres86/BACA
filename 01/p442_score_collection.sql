@@ -4,7 +4,7 @@ BEGIN
      SET prm.cdacesso = 'DBLINK_SAS_DESEN_RO' 
    WHERE prm.cdacesso = 'DBLINK_SAS_DESEN';
   UPDATE crapprm prm 
-     SET prm.cdacesso = 'DBLINK_SAS_PROD_RO' 
+     SET prm.cdacesso = 'DBLINK_SAS_PROD_RO'  
         ,prm.dsvlrprm = 'SASRO'
    WHERE prm.cdacesso = 'DBLINK_SAS_PROD';
   
