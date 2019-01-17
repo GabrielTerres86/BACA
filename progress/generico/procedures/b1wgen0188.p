@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 15/06/2018
+    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
     
     Dados referentes ao programa:
 
@@ -118,6 +118,9 @@
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
         
         13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+                
+                08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
+                             INC0028548 (Douglas Pagel / AMcom).
                 
 ..............................................................................*/
 
@@ -2923,7 +2926,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  capitalizados  "
                    "mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m.  estipulada  na  quantidade  de  "
                    par_qtpreemp  FORMAT "z9" "  parcelas,  no  valor  de  R$ " 
                    par_vlpreemp  FORMAT "zzz,zz9.99" " "
@@ -3011,7 +3014,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  "
                    "capitalizados  mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m. estipulada na quantidade de "
                    par_qtpreemp FORMAT "z9"
                    " parcelas, no valor de R$  " 
