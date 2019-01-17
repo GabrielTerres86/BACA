@@ -12,6 +12,10 @@
                 reenviar o cheque para regularizacao. Gravando log para 
                 verlog (Carlos)
 
+     14/01/2019 - Alteracoes para balizar novo botao de inclusao de
+                  devolucoes pela alinea 12. 
+                  Chamado PRB0040458 - Gabriel (Mouts).
+
 ............................................................................*/
 
 
@@ -35,6 +39,8 @@ DEF VAR aux_nmoperad  AS CHAR                                        NO-UNDO.
 DEF VAR aux_dtfimest  AS DATE                                        NO-UNDO.
 DEF VAR aux_flgctitg  AS INTE                                        NO-UNDO.
 DEF VAR aux_dsseqdig  AS CHAR                                        NO-UNDO.
+DEF VAR aux_nrcheque  AS INTE                                        NO-UNDO.
+DEF VAR aux_vlcheque  AS DECI                                        NO-UNDO.
 
 DEF VAR aux_nmprimtl  AS CHAR                                        NO-UNDO.
 DEF VAR aux_msgconfi  AS CHAR                                        NO-UNDO.
@@ -67,11 +73,10 @@ PROCEDURE valores_entrada:
             WHEN "nrseqdig"  THEN aux_nrseqdig = INTE(tt-param.valorCampo).
             WHEN "idseqttl"  THEN aux_idseqttl = INTE(tt-param.valorCampo).
             WHEN "nmoperad"  THEN aux_nmoperad = tt-param.valorCampo.
-            
             WHEN "dtfimest"  THEN aux_dtfimest = DATE(tt-param.valorCampo).
             WHEN "flgctitg"  THEN aux_flgctitg = INTE(tt-param.valorCampo).
-                 
-                 
+            WHEN "nrcheque"  THEN aux_nrcheque = INTE(tt-param.valorCampo).
+            WHEN "vlcheque"  THEN aux_vlcheque = DECI(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -310,6 +315,52 @@ PROCEDURE Refaz_Regulariza:
         END.
 
 END PROCEDURE. /* Refaz_Regulariza */
+
+PROCEDURE Inclui_CCF:
+
+    RUN Inclui_CCF IN hBO
+                       ( INPUT aux_cdcooper,
+                         INPUT aux_nrdconta,
+                         INPUT aux_nrcheque,
+                         INPUT aux_vlcheque,
+                         INPUT aux_cdoperad,
+                         INPUT aux_dtmvtolt,
+                         INPUT aux_nmoperad,
+                         INPUT aux_dtfimest,
+                         INPUT aux_flgctitg,
+                        OUTPUT aux_msgconfi, 
+                        OUTPUT aux_nmoperad, 
+                        OUTPUT aux_dtfimest,
+                        OUTPUT aux_flgctitg,
+                        OUTPUT TABLE tt-erro).
+    
+    IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel incluir no " +
+                                              "CCF o cheque selecionado.".
+                END.
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
+                             INPUT "Erro").
+            RUN piXmlSave.
+           
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "msgconfi", INPUT aux_msgconfi).
+            RUN piXmlAtributo (INPUT "nmoperad", INPUT aux_nmoperad).
+            RUN piXmlAtributo (INPUT "dtfimest", INPUT STRING(aux_dtfimest,'99/99/9999')).
+            RUN piXmlAtributo (INPUT "flgctitg", INPUT aux_flgctitg).
+            RUN piXmlSave.
+        END.
+
+END PROCEDURE. /* inclui_CCF */
 
 /* ------------------------------------------------------------------------- */
 /*                           GERA IMPRESSÃO DAS CARTAS                       */

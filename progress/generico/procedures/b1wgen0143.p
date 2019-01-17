@@ -33,7 +33,11 @@
 							 
                 24/04/2018 - #853017 Permitir realizar o Refaz Regularização para 
 				             qualquer situação diferente de 0 (ainda não enviado). 
-							 (Wagner/Sustenção).							 
+							 (Wagner/Sustenção).			
+							 
+                14/01/2019 - Alteracoes para balizar novo botao de inclusao de
+                             devolucoes pela alinea 12. 
+                             Chamado PRB0040458 - Gabriel (Mouts).				 
                              
 ............................................................................*/
 
@@ -42,6 +46,7 @@
 { sistema/generico/includes/b1wgen0143tt.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -315,12 +320,12 @@ PROCEDURE Busca_Dados:
 
         END.    /*   Fim do for each crapneg   */
 
-        IF  NOT TEMP-TABLE cratneg:HAS-RECORDS THEN
+        /*IF  NOT TEMP-TABLE cratneg:HAS-RECORDS THEN
             DO:
                 ASSIGN aux_cdcritic = 530
                        aux_dscritic = "".
                 LEAVE Busca.
-            END.
+            END.*/
 
         LEAVE Busca.
 
@@ -1022,7 +1027,197 @@ PROCEDURE Refaz_Regulariza:
       
 END PROCEDURE.
 
+/* ------------------------------------------------------------------------- */
+/*             REALIZA A GRAVACAO NO CCF             						 */
+/* ------------------------------------------------------------------------- */
+PROCEDURE Inclui_CCF:
 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcheque AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlcheque AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtfimest AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgctitg AS INTE                           NO-UNDO.
+
+    DEF OUTPUT PARAM aux_msgconfi AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM aux_nmoperad AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM aux_dtfimest AS DATE                           NO-UNDO.
+    DEF OUTPUT PARAM aux_flgctitg AS INTE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_contador_11 AS INTE                                 	NO-UNDO.
+    DEF VAR aux_contador_12 AS INTE                                 	NO-UNDO.
+	DEF VAR aux_nrseqneg    AS INTE                                     NO-UNDO.
+	
+	DEF BUFFER crabneg FOR crapneg.
+   
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_dscritic = ""
+           aux_dsorigem = ""
+           aux_dstransa = "Inclusao no CCF"
+           aux_cdcritic = 0
+           aux_returnvl = "NOK"
+		   aux_contador_11 = 0
+		   aux_contador_12 = 0.
+
+	FOR FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK: END.
+
+	IF  NOT AVAILABLE crapcop  THEN
+		DO: 
+			ASSIGN aux_cdcritic = 651
+				   aux_dscritic = "Cooperativa nao encontrada.".
+		END.
+
+	FIND crapass WHERE crapass.cdcooper = par_cdcooper  AND
+					   crapass.nrdconta = par_nrdconta  NO-LOCK
+				  USE-INDEX crapass1 NO-ERROR.
+
+	IF  NOT AVAILABLE crapass THEN
+		DO:
+			ASSIGN aux_cdcritic = 009
+				   aux_dscritic = "Associado nao encontrado.".
+		END.
+
+	FOR EACH crapneg WHERE crapneg.cdcooper = par_cdcooper AND
+						   crapneg.nrdconta = par_nrdconta AND
+						   crapneg.nrdocmto = par_nrcheque AND
+						   crapneg.vlestour = par_vlcheque AND
+						   CAN-DO("11,12", STRING(crapneg.cdobserv)) NO-LOCK:
+		
+		IF crapneg.cdobserv = 11 THEN
+			DO: ASSIGN aux_contador_11 = aux_contador_11 + 1. END.
+		 
+		IF crapneg.cdobserv = 12 THEN 
+			DO: ASSIGN aux_contador_12 = aux_contador_12 + 1. END.
+	END.
+	
+	IF aux_contador_11 = 0 AND aux_contador_12 = 0 THEN
+		DO:
+			ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Cheque nao localizado.".
+			
+		END.
+	
+	IF aux_contador_11 < 2 AND aux_dscritic = "" THEN
+		DO:
+			ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Inclusao nao permitida, cheque nao foi devolvido " +
+								  "duas vezes pela alinea 11.".
+		END.
+	
+	IF aux_contador_12 >= 1 AND aux_dscritic = "" THEN
+		DO:
+			ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Inclusao nao permitida, cheque ja incluso" +
+								  " no CCF pela alinea 12.".
+		END.
+		
+	 /* Cursor que cddepart parametrizado */
+    FIND FIRST crapprm WHERE crapprm.cdcooper = 0
+                         AND crapprm.nmsistem = "CRED"
+                         AND crapprm.cdacesso = "EXCLUIR_DEVOLU_CDDEPART"
+                             NO-LOCK NO-ERROR.
+
+    /* Se nao encontrar aborta operacao */
+    IF NOT AVAILABLE crapprm AND aux_dscritic = "" THEN
+		DO:
+			ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Parametrizacao de departamento nao encontrada.".
+		END.
+
+    /* Cursor que busca operadores */
+    FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                         AND crapope.cdoperad = par_cdoperad
+                         AND crapope.cdsitope = 1 
+                             NO-LOCK NO-ERROR.
+
+    /* Se operador nao possui permissoes retorna critica */
+    IF NOT AVAILABLE crapope AND aux_dscritic = "" THEN
+      DO:
+			ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Operador nao existe ou esta inativo.".
+		END.
+    ELSE
+      DO:
+            /* Inicialmente departamentos 4 e 20 sao permitidos */
+            IF NOT CAN-DO(crapprm.dsvlrprm,STRING(crapope.cddepart)) AND aux_dscritic = "" THEN
+				DO:
+					ASSIGN aux_cdcritic = 0
+						   aux_dscritic = "Inclusao nao permitida, somente operadores do departamento da compensacao.".
+				END.
+      END.
+		
+	IF aux_dscritic = "" THEN
+		DO:
+			RUN STORED-PROCEDURE pc_sequence_progress
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPNEG"
+												,INPUT "NRSEQDIG"
+												,INPUT STRING(par_cdcooper) + ";" + STRING(par_nrdconta)
+												,INPUT "N"
+												,"").
+			  
+			CLOSE STORED-PROC pc_sequence_progress
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+						
+			ASSIGN aux_nrseqneg = INTE(pc_sequence_progress.pr_sequence)
+								  WHEN pc_sequence_progress.pr_sequence <> ?.
+
+			FIND FIRST crabneg WHERE crabneg.cdcooper = par_cdcooper AND
+								     crabneg.nrdconta = par_nrdconta AND
+								     crabneg.nrdocmto = par_nrcheque AND
+								     crabneg.cdobserv = 11
+									 NO-LOCK NO-ERROR.
+			
+			CREATE crapneg.
+			ASSIGN crapneg.nrdconta = crabneg.nrdconta
+				   crapneg.dtiniest = crabneg.dtiniest
+				   crapneg.nrseqdig = aux_nrseqneg
+				   crapneg.cdhisest = crabneg.cdhisest
+				   crapneg.cdobserv = 12
+				   crapneg.nrdctabb = crabneg.nrdctabb
+				   crapneg.nrdocmto = crabneg.nrdocmto
+				   crapneg.vlestour = crabneg.vlestour
+				   crapneg.qtdiaest = crabneg.qtdiaest
+				   crapneg.vllimcre = crabneg.vllimcre
+				   crapneg.cdbanchq = crabneg.cdbanchq
+				   crapneg.cdtctant = crabneg.cdtctant
+				   crapneg.cdagechq = crabneg.cdagechq
+				   crapneg.cdtctatu = crabneg.cdtctatu
+				   crapneg.nrctachq = crabneg.nrctachq
+				   crapneg.dtfimest = crabneg.dtfimest
+				   crapneg.cdoperad = crabneg.cdoperad
+				   crapneg.cdcooper = crabneg.cdcooper
+				   crapneg.flgctitg = 0
+				   crapneg.dtectitg = ?
+				   crapneg.dtimpreg = crabneg.dtimpreg
+				   crapneg.cdopeimp = crabneg.cdopeimp.
+				   
+			ASSIGN aux_msgconfi = "Inclusao realizada!".
+		END.
+	
+	IF aux_dscritic <> "" THEN
+		DO:
+			ASSIGN aux_returnvl = "NOK".
+		END.
+	ELSE
+		DO:
+			ASSIGN aux_returnvl = "OK".
+		END.
+		
+	IF aux_dscritic <> "" THEN
+		DO:
+			CREATE tt-erro.
+			ASSIGN tt-erro.dscritic = aux_dscritic.
+		END.
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Inclui_CCF */
 
 /* ------------------------------------------------------------------------- */
 /*                           GERA IMPRESSÃO DAS CARTAS                       */
