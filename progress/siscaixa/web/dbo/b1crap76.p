@@ -28,6 +28,9 @@
                15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
                             de dentro da b1wgen0200 
                             (Renato AMcom)
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 */
                             
 {dbo/bo-erro1.i}

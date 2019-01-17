@@ -36,6 +36,9 @@
 
                 14/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                               norturno rodando (Douglas Pagel - AMcom).
+                              
+                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ----------------------------------------------------------------------------- **/
 
 { dbo/bo-erro1.i}

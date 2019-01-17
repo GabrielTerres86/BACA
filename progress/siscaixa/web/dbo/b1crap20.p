@@ -272,6 +272,9 @@
 
 				13/11/2018 - Adicionada parametros a procedure 
 							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+        
+        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}

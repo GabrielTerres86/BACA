@@ -58,8 +58,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --             21/07/2018 - (Proj. 411.2) (CIS Corporate)
   --                          Não desfaz todas as transações em pc_obtem_taxa_modalidade
   --
-	--             04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
-	--                          dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
+  --             04/12/2018 - Trocar a chamada da gene0001.pc_gera_log pela gene.0001.pc_gera_log_auto e retirada
+  --                          dos commits que estão impactando na rotina diária (Adriano Nagasava - Supero)
+  --
+  --             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+  --                   Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos

@@ -102,6 +102,9 @@ BEGIN
 			                em paralelo por Agência - Andreatta (MOUTs)
 
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs)
+			   
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ............................................................................. */
   DECLARE

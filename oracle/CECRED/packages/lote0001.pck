@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
    
                26/02/2018 - Inclusao do campo cdcooper no returning do cursor
                             da craplot. (Chamado 856240) - (Fabricio)
+			   
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
   ..............................................................................*/
 
   --Testar se o lote esta em lock

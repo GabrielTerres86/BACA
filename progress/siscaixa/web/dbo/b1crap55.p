@@ -82,6 +82,9 @@
 
                07/06/2018 - P450 - Regulatório de crédito - Substituiçao do insert na 
                             craplcm pela rotina gerar_lancamento_conta   Josiane Stiehler AMcom
+                            
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ............................................................................. **/                           
  

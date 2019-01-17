@@ -131,6 +131,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             Everton Souza - Mouts
                01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                             Marcelo Telles Coelho - Mouts
+							
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ..............................................................................*/
   --  antigo tt-protocolo-ted

@@ -85,6 +85,9 @@
 							
 				13/11/2018 - Alteraçoes para Prj. 435 Cobranca de tarifas avulsas.
 						(Fabio Stein - Supero).
+            
+            16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                             
 ............................................................................ **/
 

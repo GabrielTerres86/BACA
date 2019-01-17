@@ -39,7 +39,10 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --             15/12/2017 - Com a eliminação das descrições fixas na PAGA0001
 --                          Ajuste da descrição fixa incluindo o codigo junto
 --                          (Belli - Envolti - Chamado 779415)  
-   
+--
+--             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+--                     Heitor (Mouts)
+-- 
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno

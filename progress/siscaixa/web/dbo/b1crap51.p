@@ -186,6 +186,9 @@
                
                13/07/2018 - Correcao na procedure autentica_cheques que estava gerando
                             10 autenticoes para cada deposito de cheque (Tiago/Fabricio)
+                            
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/

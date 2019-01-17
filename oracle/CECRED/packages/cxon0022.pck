@@ -48,6 +48,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
 
                27/06/2017 - Removida separacao de cheques Maior e Menor, Praça e Fora Praça,
                             e utilizado historico único 1523. PRJ367 - Compe Sessao Unica (Lombardi)
+							
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ..............................................................................*/
 

@@ -19,6 +19,8 @@ create or replace package cecred.CXON0088 is
   --             20/06/2016 - Correcao para o uso da procedure fn_busca_dstextabem da TABE0001 em 
   --                          varias procedures desta package.(Carlos Rafael Tanholi). 
   --
+  --             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+  --                   Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Retona o lancamento para exibir na tela conforme o nro do documento */

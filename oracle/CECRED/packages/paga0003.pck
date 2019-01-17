@@ -431,6 +431,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 										
 			 18/10/2018 - Ajustado nome dos arquivos de arrecadação do Bancoob para AILOS. 
 			            - Alterado layout dos arquivos de arrecadação do Bancoob. (Reinert)
+						
+	     16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 			 
   ---------------------------------------------------------------------------------------------------------------*/
 

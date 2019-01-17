@@ -71,6 +71,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
                19/12/2018 - Adicionados busca do nome do preposto para retornar juntamente com o CPF que já existe.
                             PJ 285.2 - Pacote 12 > (Guilherme Kuhnen).
+							
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                                                    
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE

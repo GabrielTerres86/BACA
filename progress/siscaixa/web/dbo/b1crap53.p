@@ -99,7 +99,10 @@
                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
 
                10/08/2018 - Adicionado funcao para verificar necessidade de  senha. 
-                            PRJ 420 (Mateus Z - Mouts)       
+                            PRJ 420 (Mateus Z - Mouts)      
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                              
 ............................................................................ */
 /*----------------------------------------------------------------------*/

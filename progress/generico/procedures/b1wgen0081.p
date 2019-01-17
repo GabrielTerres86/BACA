@@ -216,7 +216,9 @@
 			   
                18/10/2018 - PJ450 Regulatório de Credito - Substituído o delete na craplcm pela chamada 
                             da rotina h-b1wgen0200.estorna_lancamento_conta. (Heckmann - AMcom)
-			   
+			         
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }

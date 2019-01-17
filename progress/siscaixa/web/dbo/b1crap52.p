@@ -33,6 +33,9 @@
 
                 05/06/2018 - Alterado a incluso na CRAPLCM para a Centralizadora de 
                              Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom 
+                             
+                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ---------------------------------------------------------------------------- **/
 

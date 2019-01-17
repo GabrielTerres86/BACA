@@ -91,6 +91,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                              Marcelo Telles Coelho - Mouts
 
 				19/10/2018 - Ajuste na rotina para prever erro de alocamento de lote (Andrey Formigari - Mouts)
+				
+				16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ..............................................................................*/
 

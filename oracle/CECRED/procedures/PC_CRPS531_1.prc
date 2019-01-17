@@ -337,6 +337,9 @@ end;
  
              14/01/2019 - Tratamento para STR0006R2, contas 10000003 e 20000006, agencia 100 = Pagto de boletos
                           em cartorio (Lucas Afonso/Cechet)
+						  
+			 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,

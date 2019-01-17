@@ -176,6 +176,9 @@ create or replace package cecred.PAGA0002 is
   
 			   14/11/2018 - Incluido tratamento para agendamento de pagamentos DDA no OFSAA.
 							(Reinert)
+			   
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD

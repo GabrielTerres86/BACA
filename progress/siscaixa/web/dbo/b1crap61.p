@@ -59,7 +59,10 @@
 			   04/05/2018 - Possibilidade de utilizar o caixa on-line mesmo com o processo 
                             batch (noturno) executando (Fabio Adriano - AMcom)
 
-               12/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente - Rangel Decker AMcom       
+               12/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente - Rangel Decker AMcom     
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ............................................................................ */
 

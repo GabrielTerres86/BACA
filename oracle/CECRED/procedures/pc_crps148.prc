@@ -51,7 +51,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                             
                02/04/2018 - Ajuste para não gravar lote quando não existirem lançamentos
                             de poupança programada - Projeto Ligeirinho -
-                            Jonatas Jaqmam (AMcom)                            
+                            Jonatas Jaqmam (AMcom)        
+
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)							
 ............................................................................. */
 
   -- Agências por cooperativa, com poupança programada

@@ -99,7 +99,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --              Proc. pc_acumula_aplicacoes
   -- 19/07/2018 - Recuperar código do produto (CRAPCPC) na proc. pc_calc_poupanca
   --               
-
+  -- 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+  --                   Heitor (Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes

@@ -115,7 +115,10 @@
                             Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom      
 							
 			   14/11/2018 - Remoção de comandos MESSAGE deixados no código após testes
-			                Reginaldo/AMcom/P450                
+			                Reginaldo/AMcom/P450 
+                      
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                            
 -----------------------------------------------------------------------------*/
 

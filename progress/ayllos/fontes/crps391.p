@@ -151,6 +151,9 @@
                            do campo "nrctactl" da tabela "crapcop". PRJ366 (Lombardi).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+        
+        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 .............................................................................*/
                         

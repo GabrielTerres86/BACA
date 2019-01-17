@@ -32,6 +32,9 @@
                 22/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
                              como data de referencia - Everton Deserto(AMCOM).
                              
+                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
+                             
 ------------------------------------------------------------------------------ **/
 {dbo/bo-erro1.i}
 

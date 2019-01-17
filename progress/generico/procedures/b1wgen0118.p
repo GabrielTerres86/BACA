@@ -27,6 +27,9 @@
                                           
                26/09/2018 - P450 - Correção mensagem de erro no retorno da rotina 0200 - gera lançamento
 			                Renato Cordeiro (AMcom)
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ............................................................................ */
 
 { sistema/generico/includes/var_internet.i } 

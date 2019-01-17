@@ -98,6 +98,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 								 18/05/2018 - Validar bloqueio de poupança programada (SM404)            
                  03/07/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
                               
+				 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------

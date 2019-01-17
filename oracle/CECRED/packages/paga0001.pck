@@ -302,6 +302,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --          29/10/2018 - Ajuste critica/ mensagem / continuação do processo
   --                      ( Belli - Envolti - PRB0040400)
   --
+  --          16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+  --                   Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento

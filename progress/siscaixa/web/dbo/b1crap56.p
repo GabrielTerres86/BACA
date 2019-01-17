@@ -105,6 +105,9 @@
                       norturno rodando (Douglas Pagel - AMcom).
 
                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/

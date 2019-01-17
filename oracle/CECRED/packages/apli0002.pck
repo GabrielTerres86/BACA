@@ -146,6 +146,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                               
                  10/12/2018 - Adicionando controle de resgate duplo de aplicação. 
                               INC0025636 - (Guilherme Kuhnen)
+							  
+				 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                              
   ............................................................................*/
 
