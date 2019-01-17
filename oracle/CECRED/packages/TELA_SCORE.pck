@@ -112,6 +112,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_score AS
       vr_idorigem VARCHAR2(100);    
     
       -- Variáveis para criação de cursor dinâmico
+      vr_nom_owner     VARCHAR2(100) := risc0005.fn_get_owner_sas;
       vr_nom_dblink    VARCHAR2(100);
       vr_num_cursor    number;
       vr_num_retor     number;
@@ -157,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_score AS
       END IF;       
       
       -- Buscar dblink
-      vr_nom_dblink := risc0005.fn_get_dblink_sas;
+      vr_nom_dblink := risc0005.fn_get_dblink_sas('R');
       IF vr_nom_dblink IS NULL THEN
         vr_dscritic := 'Nao foi possivel retornar o DBLink do SAS, verifique!';
         RAISE vr_exc_saida;
@@ -169,9 +170,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_score AS
                     || '      ,sco.dtbase '
                     || '      ,sco.tppessoa '
                     || '      ,COUNT(1) qtpessoa '
-                    || '  FROM sas_score_modelo@'||vr_nom_dblink||' smo '
-                    || '      ,sas_score@'||vr_nom_dblink||'        sco '
+                    || '  FROM '||vr_nom_owner||'sas_score_modelo@'||vr_nom_dblink||' smo '
+                    || '      ,'||vr_nom_owner||'sas_score@'||vr_nom_dblink||'        sco '
+                    || '      ,'||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink||' car '
                     || ' WHERE smo.cdmodelo = sco.cdmodelo '
+                    || '   AND car.skcarga = sco.skcarga '
+                    || '   AND car.skprocesso = '||risc0005.fn_get_skprocesso_behavi
+                    || '   AND car.qtregistroprocessado > 0 '
+                    || '   AND car.dthorafiminclusao is not null '
+                    || '   AND car.dthorainicioprocesso is null '
                     || '   AND NOT EXISTS(SELECT 1 '
                     || '                    FROM tbcrd_carga_score cso '
                     || '                   WHERE cso.cdmodelo = smo.cdmodelo '
