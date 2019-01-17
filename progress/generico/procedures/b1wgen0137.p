@@ -340,6 +340,9 @@
                              no dia (Carlos)
 
 				08/01/2019 - Inclusao do documento 207 (Andrey Formigari - Mouts)
+
+			    08/01/2019 - Incluso tratativa para não gerar pendencia de emprestimos do novo CDC (Daniel).				  
+
 .............................................................................*/
 
 
@@ -5018,7 +5021,7 @@ PROCEDURE retorna_docs_liberados:
     /************************************************************
      * Documentos a utilizar ate o momento nesta procedure      *
      ************************************************************
-
+     
      84 - Cadastro de limite de credito
      85 - Limite de desconto de titulos
      86 - Limite de desconto de cheques
@@ -5052,7 +5055,7 @@ PROCEDURE retorna_docs_liberados:
                 aux_flgok = FALSE.
                 LEAVE.
             END.
-		
+
 		/* Documentos de contratos de Procap do cooperado */
 		IF par_tpdocmto = 207 THEN 
 			DO: 
@@ -5084,6 +5087,10 @@ PROCEDURE retorna_docs_liberados:
                                 NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                            STRING(crapepr.cdlcremp)) 
                                 NO-LOCK:
+        
+                    /* Nao deve gerar pendencia para emprestimos efetuados no novo CDC */
+                    IF crapepr.cdopeori = 'AUTOCDC' THEN
+                        NEXT. 
         
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 89

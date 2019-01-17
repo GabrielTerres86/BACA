@@ -40,6 +40,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --
   --  Alteracoes: 09/05/2018 Criação (Douglas Quisinski)
   --
+  --              06/06/2018 Adicionado nova opção 4 - Desconto Titulos (Paulo Penteado (GFT)) 
+  --    
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina para devolver os itens que devem ser exibidos/escondidos no menu dos canais
@@ -83,6 +85,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
     
     Alteracoes: 09/05/2018 - Criação (Douglas Quisinski)
     
+                06/06/2018 - Adicionado nova opção 4 - Desconto Titulos (Paulo Penteado (GFT)) 
                 
                 10/07/2018 - Adicionado nova opção 5 - Plano de Previdencia Privada (PRJ468 - Lombardi)
                 
@@ -248,10 +251,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       END;
 
       --------------------------------------------------------------------------------------
-      ----------------- VERIFICAR SE O DESCONTO DE TIUTLOS ESTÁ HABILITADA NA CONTA --------
+      ----------------- VERIFICAR SE O DESCONTO DE TITULOS ESTÁ HABILITADA NA CONTA --------
       --------------------------------------------------------------------------------------
       -- Inicializar como desabilitado do menu
       vr_flgdscti := 0;
+      
+      BEGIN 
+        -- Verificar se o cooperado possui contrato de limite ativo
+        vr_flgdscti := CASE WHEN cada0003.fn_produto_habilitado(pr_cdcooper  => pr_cdcooper
+                                                               ,pr_nrdconta  => pr_nrdconta
+                                                               ,pr_cdproduto => 37 --> Contrato de Limite de desconto de titulo
+                                                               ) = 'S' THEN 1 
+                            ELSE 0 
+                       END;
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                      ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Desconto de Títulos.');
+      END;
 
       --------------------------------------------------------------------------------------
       ----------- VERIFICAR SE O PLANO DE PREVIDENCIA PRIVADA ESTÁ HABILITADA NA CONTA -----

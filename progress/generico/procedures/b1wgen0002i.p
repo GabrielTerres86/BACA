@@ -287,6 +287,9 @@
                
                19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
                                                    
+               03/12/2018 - P410 - Ajuste no valor do campo Valor Operacao do item 3 na impressao 
+                            da proposta (Douglas Pagel / AMcom).
+                                                   
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -3914,6 +3917,7 @@ PROCEDURE impressao-prnf:
    DEF VAR rel_vlrenavl        AS DECI                               NO-UNDO.
    DEF VAR rel_dsdrendi        AS CHAR                               NO-UNDO.
                                                                      
+   DEF VAR rel_vldopera        as DECI    FORMAT "zzz,zzz,zz9.99-"   NO-UNDO.
    DEF VAR aux_linhacje        AS CHAR                               NO-UNDO.
    DEF VAR rel_vldendiv        AS DECI                               NO-UNDO.
    DEF VAR rel_dsavalde        AS CHAR                               NO-UNDO.
@@ -4369,7 +4373,7 @@ PROCEDURE impressao-prnf:
          "Linha de Credito"        AT 93
          SKIP(1)
          crawepr.nrctremp            FORMAT "zz,zzz,zz9" 
-         crawepr.vlemprst    AT 12   FORMAT "zzz,zzz,zz9.99" 
+         rel_vldopera        AT 12   FORMAT "zzz,zzz,zz9.99" 
          crawepr.qtpreemp    AT 28 
          "de"
          crawepr.vlpreemp            FORMAT "zzz,zz9.99"
@@ -6179,7 +6183,8 @@ PROCEDURE impressao-prnf:
          
             ASSIGN rel_dslcremp = ""
                    rel_dsfinemp = ""
-                   aux_garantia = "".
+                   aux_garantia = ""
+                   rel_vldopera = 0.
             
             /*** Garantia ***/       
             IF  crapass.inpessoa = 1 THEN
@@ -6327,6 +6332,146 @@ PROCEDURE impressao-prnf:
                
                 END.
             
+            /**Campo Valor Operacao*/
+            IF crawepr.idfiniof > 0 THEN
+              DO:
+                /*Se Financiou IOF*/
+                FIND  crapepr WHERE crapepr.cdcooper = crawepr.cdcooper   AND
+                                    crapepr.nrdconta = crawepr.nrdconta   AND
+                                    crapepr.nrctremp = crawepr.nrctremp
+                                    NO-LOCK NO-ERROR.
+
+                IF  AVAIL crapepr THEN
+                    ASSIGN rel_vldopera = crawepr.vlemprst + crapepr.vliofepr + crapepr.vltarifa.
+                ELSE
+                  DO:
+                    /*Nao tem o registro na CRAPEPR ainda, teremos que calcular o IOF e TAXA para adicionar no valor total*/
+                    
+                    /* Busca os bens em garantia */
+                    ASSIGN aux_dscatbem = "".
+                    FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
+                                           crapbpr.nrdconta = crawepr.nrdconta  AND
+                                           crapbpr.nrctrpro = crawepr.nrctremp  AND 
+                                           crapbpr.tpctrpro = 90 NO-LOCK:
+                        ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+                    END.
+                    
+                    /*Busca a tarifa*/
+                    RUN sistema/generico/procedures/b1wgen0097.p 
+                           
+                    PERSISTENT SET h-b1wgen0097.               
+                    RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  crawepr.cdcooper,
+                                                                INPUT  crawepr.cdlcremp,
+                                                                INPUT  crawepr.vlemprst,
+                                                                INPUT  crawepr.nrdconta,
+                                                                INPUT  crawepr.nrctremp,
+                                                                INPUT  aux_dscatbem,
+                                                                OUTPUT aux_vlrtarif,
+                                                                OUTPUT TABLE tt-erro).                                
+                    DELETE PROCEDURE h-b1wgen0097.
+                           
+                    IF RETURN-VALUE = "NOK" THEN
+                      RETURN "NOK".
+                    
+                    IF  AVAIL crapepr THEN
+                      ASSIGN aux_dtlibera = crapepr.dtmvtolt.
+                    ELSE
+                      ASSIGN aux_dtlibera = crawepr.dtlibera. 
+                   
+                   ASSIGN aux_dsctrliq = "".
+                   
+                   DO i = 1 TO 10:
+
+                     IF  crawepr.nrctrliq[i] > 0  THEN
+                       aux_dsctrliq = aux_dsctrliq +
+                          (IF  aux_dsctrliq = ""  THEN
+                               TRIM(STRING(crawepr.nrctrliq[i],
+                                           "z,zzz,zz9"))
+                           ELSE
+                               ", " +
+                               TRIM(STRING(crawepr.nrctrliq[i],
+                                           "z,zzz,zz9"))).
+
+                   END. /** Fim do DO ... TO **/
+                   
+                   /*Busca a carencia para usar na busca do IOF*/
+                   ASSIGN aux_qtdias_carencia = 0.
+                   IF crawepr.idcarenc > 0 THEN
+                   DO:
+                   
+                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     
+                     /* Efetuar a chamada a rotina Oracle  */
+                     RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcarenc,
+                                                             OUTPUT 0,   /* pr_qtddias */
+                                                             OUTPUT 0,   /* pr_cdcritic */
+                                                             OUTPUT ""). /* pr_dscritic */  
+
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_busca_qtd_dias_carencia
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                     ASSIGN aux_cdcritic = 0
+                            aux_dscritic = ""
+                            aux_cdcritic = INT(pc_busca_qtd_dias_carencia.pr_cdcritic) 
+                                           WHEN pc_busca_qtd_dias_carencia.pr_cdcritic <> ?
+                            aux_dscritic = pc_busca_qtd_dias_carencia.pr_dscritic
+                                           WHEN pc_busca_qtd_dias_carencia.pr_dscritic <> ?
+                            aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
+                                                  WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
+                    END.
+                    
+                    /*Buscar o valor do IOF da operacao*/
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    RUN STORED-PROCEDURE pc_calcula_iof_epr
+                    aux_handproc = PROC-HANDLE NO-ERROR(INPUT crawepr.cdcooper
+                                                       ,INPUT crawepr.nrdconta
+                                                       ,INPUT crawepr.nrctremp
+                                                       ,INPUT crawepr.dtmvtolt
+                                                       ,INPUT crapass.inpessoa
+                                                       ,INPUT crawepr.cdlcremp
+                                                       ,INPUT crawepr.cdfinemp                                                       
+                                                       ,INPUT crawepr.qtpreemp
+                                                       ,INPUT crawepr.vlpreemp
+                                                       ,INPUT crawepr.vlemprst
+                                                       ,INPUT crawepr.dtdpagto
+                                                       ,INPUT aux_dtlibera
+                                                       ,INPUT crawepr.tpemprst
+                                                       ,INPUT crawepr.dtcarenc /* Data de carencia */
+                                                       ,INPUT aux_qtdias_carencia /* dias de carencia */
+                                                       ,INPUT aux_dscatbem     /* Bens em garantia */
+                                                       ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
+                                                       ,INPUT aux_dsctrliq /* pr_dsctrliq */
+                                                       ,INPUT "N" /* Nao gravar valor nas parcelas */
+                                                       ,OUTPUT 0 /* Valor calculado da Parcel */
+                                                       ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
+                                                       ,OUTPUT 0 /* Valor calculado do iof principal */
+                                                       ,OUTPUT 0 /* Valor calculado do iof adicional */
+                                                       ,OUTPUT 0 /* Imunidade tributária */
+                                                       ,OUTPUT "").
+            
+                    CLOSE STORED-PROC pc_calcula_iof_epr 
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                           
+                    ASSIGN aux_vliofope = 0
+                           aux_vliofope = pc_calcula_iof_epr.pr_valoriof 
+                                                      WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
+               
+                    ASSIGN rel_vldopera = crawepr.vlemprst + aux_vliofope + aux_vlrtarif.
+
+                  END.  
+                END.
+              ELSE
+              DO:
+                /*Se NAO Financiou IOF*/
+                rel_vldopera = crawepr.vlemprst.
+              END.
+            
             /* Verificar se ja  ultrapassou o limite de linhas
               do relatorio e reiniciar pagina SD 296491
               Controlar para manter na mesma pagina as linhas da opçao 3*/
@@ -6346,7 +6491,7 @@ PROCEDURE impressao-prnf:
             
             DISPLAY  STREAM str_1
                      crawepr.nrctremp 
-                     crawepr.vlemprst 
+                     rel_vldopera 
                      crawepr.qtpreemp 
                      crawepr.vlpreemp
                      rel_dslcremp

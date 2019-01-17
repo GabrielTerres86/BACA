@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 19/10/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 09/01/2019
 
     Dados referentes ao programa:
 
@@ -325,6 +325,7 @@
 
               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
                            
+			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -4408,7 +4409,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = aux_vltarifa
               crapepr.vlaqiofc = aux_vlaqiofc
               /*P438 Incluir a tratativa para PP*/
-              crapepr.vltariof = (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof)
+              crapepr.vltariof = aux_vltotiof /* (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof) */
               crapepr.iddcarga = aux_idcarga
               crapepr.idfiniof = crawepr.idfiniof
               crapepr.dtinicio_atraso_refin = aux_dtrisref.
