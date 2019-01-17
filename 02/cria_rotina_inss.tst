@@ -179,7 +179,7 @@ begin
                   ,0
                   ,'COD_TOKEN_API_INSS'
                   ,'Codigo token para acesso ao WebService SICREDI'
-                  ,'aE1hM2MwanJIOVJhUTJTSEk1cEt5cmZ6Ymx3YTpuR3Y0dXFuNU42N3FUYW9MVGFWT3ZFZ0RiX0Fh');        
+                  ,'RVU5MWlmQlJQTGx5Nkp2SjdGVnJlQUZFVVJBYTpEbXFUTGZYTXVudDBMRWR2c0E5YzVxU3Y4ZWdh');        
     
     EXCEPTION
       WHEN OTHERS THEN
