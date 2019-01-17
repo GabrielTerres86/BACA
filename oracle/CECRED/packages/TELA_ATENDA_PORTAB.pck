@@ -69,6 +69,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
                                     ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
+                                    
+  PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numero da cooperativa
+                                    ,pr_nrdconta IN crapenc.nrdconta%TYPE --> Numero da conta
+                                    ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);
 
 END TELA_ATENDA_PORTAB;
 /
@@ -2038,6 +2047,364 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_imprimir_termo_portab;
+
+PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numero da cooperativa
+          	      ,pr_nrdconta IN crapenc.nrdconta%TYPE --> Numero da conta
+									,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                  ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                  ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                  ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                  ,pr_des_erro OUT VARCHAR2) IS
+    /* .............................................................................
+    
+    Programa: pc_imprimir_termo_conta
+    Sistema : Ayllos Web
+    Autor   : Lucas Schneider (Supero)
+    Data    : Janeiro/2019                 Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Rotina para retornar os dados para o termo de abertura de conta salário
+    
+    Alteracoes:
+    ..............................................................................*/
+  
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_tab_erro gene0001.typ_tab_erro;
+    vr_des_reto VARCHAR2(10);
+  
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+  
+    -- Variaveis
+    vr_xml_temp    VARCHAR2(32726) := '';
+    vr_clob        CLOB;
+	
+    vr_nrcpfcgc_cop   VARCHAR2(200);
+    vr_nrcpfcgc_ass   VARCHAR2(200);	
+    vr_nrcpfcgc_resp   VARCHAR2(200); 
+    vr_nrcpfcgc_emp   VARCHAR2(200);
+	  vr_ds_responsavel VARCHAR2(10000) := ''; 
+    nr_clausula_empregador number(1) := 2;
+    nr_clausula_conta number(1) := 3;
+    nr_clausula_pa number(1) := 4;
+    
+  
+    vr_nom_direto VARCHAR2(200); --> Diretório para gravação do arquivo
+    vr_dsjasper   VARCHAR2(100); --> nome do jasper a ser usado
+    vr_nmarqim    VARCHAR2(50); --> nome do arquivo PDF
+  
+	  	  
+	  -- Selecionar dados da cooperativa
+      CURSOR cr_crapcop(pr_cdcooper IN crapenc.cdcooper%TYPE) IS
+        SELECT crapcop.nmextcop as nmextcop
+              ,crapcop.nmrescop as nmrescop
+              ,crapcop.nrdocnpj as nrdocnpj
+              ,crapcop.nmcidade as nmcidade
+              ,crapcop.dsendcop as dsendcop
+              ,crapcop.cdufdcop as cdufdcop
+              ,crapcop.nrcepend as nrcepend
+              ,crapcop.dsendweb as dsendweb
+              ,crapcop.nrtelura as nrtelura
+              ,crapcop.nrtelouv as nrtelouv
+              ,crapcop.nmcidade||', '||to_char(to_date(SYSDATE),'dd" de "FMMonth" de "YYYY','nls_date_language=portuguese') as dataextenso
+          FROM crapcop 
+         WHERE crapcop.cdcooper = pr_cdcooper;		   
+      rw_crapcop cr_crapcop%ROWTYPE;
+	  
+	  -- Selecionar dados do cooperado
+	  CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+					   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT crapass.nrdconta as nrdconta
+            ,crapass.cdcooper as cdcooper
+            ,crapass.nmprimtl as nmprimtl
+            ,crapass.nrcpfcgc as nrcpfcgc
+            ,crapnac.dsnacion as dsnacion
+            ,gnetcvl.dsestcvl as dsestcvl
+            ,tbcadast_pessoa_fisica_resp.idpessoa_resp_legal
+            ,crapage.nmresage as nmresage
+            ,crapenc.dsendere as dsendere
+            ,crapenc.nrendere as nrendere
+            ,crapenc.nmbairro as nmbairro
+            ,crapenc.nmcidade as nmcidade
+            ,crapenc.cdufende as cdufende
+            ,crapenc.nrcepend as nrcepend
+          FROM crapass
+            ,crapenc
+            ,crapage
+            ,tbcadast_pessoa
+            ,tbcadast_pessoa_fisica
+            ,tbcadast_pessoa_fisica_resp
+            ,crapnac
+            ,gnetcvl
+         WHERE crapass.cdcooper = pr_cdcooper
+           AND crapass.nrdconta = pr_nrdconta
+           AND crapenc.cdcooper = crapass.cdcooper
+           AND crapenc.nrdconta = crapass.nrdconta
+           AND crapenc.idseqttl = 1
+           AND crapenc.tpendass = 10
+           AND crapage.cdcooper = crapass.cdcooper
+           AND crapage.cdagenci = crapass.cdagenci
+           AND tbcadast_pessoa.nrcpfcgc = crapass.nrcpfcgc
+           AND tbcadast_pessoa_fisica_resp.idpessoa(+) = tbcadast_pessoa.idpessoa
+           AND tbcadast_pessoa.idpessoa = tbcadast_pessoa_fisica.idpessoa
+           AND crapnac.cdnacion = tbcadast_pessoa_fisica.cdnacionalidade
+           AND gnetcvl.cdestcvl = tbcadast_pessoa_fisica.cdestado_civil;		   
+          rw_crapass cr_crapass%ROWTYPE;
+      	   
+	  -- Selecionar dados do responsável do cooperado
+      CURSOR cr_crapass_resp(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS      
+          SELECT tbcadast_pessoa.nmpessoa as nmpessoa
+            ,tbcadast_pessoa.nrcpfcgc as nrcpfcgc
+            ,crapnac.dsnacion as dsnacion
+            ,gnetcvl.dsestcvl as dsestcvl    
+            ,tbcadast_pessoa_endereco.nmlogradouro as nmlogradouro
+            ,tbcadast_pessoa_endereco.nrlogradouro as nrlogradouro
+            ,tbcadast_pessoa_endereco.nmbairro as nmbairro
+            ,crapmun.dscidade as dscidade
+            ,crapmun.cdestado as cdestado
+            ,tbcadast_pessoa_endereco.nrcep as nrcep
+          FROM  tbcadast_pessoa
+            ,tbcadast_pessoa_fisica
+            ,tbcadast_pessoa_endereco
+            ,crapnac
+            ,gnetcvl
+            ,crapmun
+         WHERE tbcadast_pessoa.idpessoa = pr_idpessoa
+          AND tbcadast_pessoa.idpessoa = tbcadast_pessoa_fisica.idpessoa
+          AND tbcadast_pessoa_endereco.idcidade = crapmun.idcidade
+          AND tbcadast_pessoa_endereco.idpessoa = tbcadast_pessoa_fisica.idpessoa
+          AND tbcadast_pessoa_endereco.tpendereco = 10
+          AND tbcadast_pessoa_endereco.nrseq_endereco = 1      
+          AND crapnac.cdnacion = tbcadast_pessoa_fisica.cdnacionalidade
+          AND gnetcvl.cdestcvl = tbcadast_pessoa_fisica.cdestado_civil;
+          rw_crapass_resp cr_crapass_resp%ROWTYPE; 
+	   	    
+	  -- Selecionar dados da empresa do cooperado
+      CURSOR cr_crapttl(pr_cdcooper IN crapenc.cdcooper%TYPE
+                       ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
+          SELECT crapttl.nmextemp as nmextemp,
+                 crapttl.nrcpfemp as nrcpfemp,
+                 crapemp.dsendemp as dsendemp,
+                 crapemp.nrcepend as nrcepend,
+                 crapemp.nmcidade as nmcidade
+            FROM crapttl, crapemp
+           WHERE crapttl.cdcooper = pr_cdcooper
+             AND crapttl.nrdconta = pr_nrdconta
+             AND crapttl.idseqttl = 1
+             AND crapttl.cdcooper = crapemp.cdcooper
+             AND crapemp.cdempres = crapttl.cdempres;
+          rw_crapttl cr_crapttl%ROWTYPE;
+  
+  BEGIN
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+  
+    -- Abre o cursor de data
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat
+      INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+  
+    -- Abre o cursor com os dados da cooperativa
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop
+      INTO rw_crapcop;
+  
+    IF cr_crapcop%NOTFOUND THEN
+      CLOSE cr_crapcop;
+      vr_dscritic := 'Cooperativa nao encontrada.';
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crapcop;
+	
+	-- Abre o cursor com os dados do cooperado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+					pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass
+      INTO rw_crapass; 
+	  
+	  IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_dscritic := 'Cooperado nao encontrado.';
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crapass;
+    
+    IF (rw_crapass.idpessoa_resp_legal IS NOT NULL) THEN
+      -- Abre o cursor com os dados do responsável legal do cooperado
+      OPEN cr_crapass_resp(pr_idpessoa => rw_crapass.idpessoa_resp_legal);
+      FETCH cr_crapass_resp
+        INTO rw_crapass_resp;
+  		
+      IF cr_crapass_resp%NOTFOUND THEN
+          CLOSE cr_crapass_resp;  
+      ELSE         
+          nr_clausula_empregador := 3;
+          nr_clausula_conta := 4;
+          nr_clausula_pa := 5;     	 		
+          vr_ds_responsavel := '1.2. RESPONSÁVEL LEGAL: ' || nvl(trim(rw_crapass_resp.nmpessoa), '') || ', ' ||
+                 nvl(trim(rw_crapass_resp.dsnacion), '') || ', ' || nvl(trim(rw_crapass_resp.dsestcvl), '') || 
+                 ', inscrito(a) no CPF sob nº ' || vr_nrcpfcgc_resp || ', ' ||
+                 'com residência na Rua ' || nvl(trim(rw_crapass_resp.nmlogradouro), '') || 
+                 ', nº ' || nvl(trim(rw_crapass_resp.nrlogradouro), '') || 
+                 ', bairro ' || nvl(trim(rw_crapass_resp.nmbairro), '') || 
+                 ', cidade de ' || nvl(trim(rw_crapass_resp.dscidade), '') || '/' || 
+                 nvl(trim(rw_crapass_resp.cdestado), '') || ', CEP ' || gene0002.fn_mask_cep(rw_crapass_resp.nrcep); 		
+      END IF;
+      CLOSE cr_crapass_resp;    
+    END IF;
+
+    -- Abre o cursor com os dados da empresa empregadora do cooperado
+    OPEN cr_crapttl(pr_cdcooper => pr_cdcooper,
+					pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapttl
+      INTO rw_crapttl;   
+    CLOSE cr_crapttl;
+
+    vr_nrcpfcgc_cop := gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj, 2);
+    vr_nrcpfcgc_ass := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc, 1);
+    vr_nrcpfcgc_resp := gene0002.fn_mask_cpf_cnpj(rw_crapass_resp.nrcpfcgc, 1);
+    vr_nrcpfcgc_emp := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 2);
+
+    --busca diretorio padrao da cooperativa
+    vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                          ,pr_cdcooper => vr_cdcooper
+                                          ,pr_nmsubdir => 'rl');
+  
+    -- Monta documento XML de Dados
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+  
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><protocolo>');
+    		
+		gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<cop_nmextcop>' || rw_crapcop.nmextcop || '</cop_nmextcop>' ||
+												 '<cop_nmrescop>' || rw_crapcop.nmrescop || '</cop_nmrescop>' ||
+                         '<cop_nrdocnpj>' || vr_nrcpfcgc_cop ||'</cop_nrdocnpj>' || 
+                         '<cop_nmcidade>' || rw_crapcop.nmcidade ||'</cop_nmcidade>' || 
+                         '<cop_dsendcop>' || rw_crapcop.dsendcop ||'</cop_dsendcop>' || 
+                         '<cop_cdufdcop>' || rw_crapcop.cdufdcop ||'</cop_cdufdcop>' || 
+                         '<cop_nrcepend>' || gene0002.fn_mask_cep(rw_crapcop.nrcepend) ||'</cop_nrcepend>' || 
+                         '<cop_dsendweb>' || rw_crapcop.dsendweb ||'</cop_dsendweb>' || 
+                         '<cop_dataextenso>' || rw_crapcop.dataextenso ||'</cop_dataextenso>' || 
+                         '<cop_nrtelura>' || nvl(trim(rw_crapcop.nrtelura), ' ') ||'</cop_nrtelura>' || 
+                         '<cop_nrtelouv>' || nvl(trim(rw_crapcop.nrtelouv), ' ') ||'</cop_nrtelouv>' ||  												 
+                         '<tit_nrdconta>' || gene0002.fn_mask_conta(rw_crapass.nrdconta) ||'</tit_nrdconta>' ||  
+                         '<tit_nmprimtl>' || nvl(trim(rw_crapass.nmprimtl), ' ') ||'</tit_nmprimtl>' ||  
+                         '<tit_nrcpfcgc>' || vr_nrcpfcgc_ass ||'</tit_nrcpfcgc>' ||  
+                         '<tit_xxx_dsnacion>' || nvl(trim(rw_crapass.dsnacion), ' ') ||'</tit_xxx_dsnacion>' ||  
+                         '<tit_xxx_dsregcas>' || nvl(trim(rw_crapass.dsestcvl), ' ') ||'</tit_xxx_dsregcas>' ||  
+                         '<tit_dsendere>' || nvl(trim(rw_crapass.dsendere), ' ') ||'</tit_dsendere>' ||  
+                         '<tit_nrendere>' || nvl(trim(rw_crapass.nrendere), ' ') ||'</tit_nrendere>' ||  
+                         '<tit_nmbairro>' || nvl(trim(rw_crapass.nmbairro), ' ') ||'</tit_nmbairro>' ||  
+                         '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
+                         '<tit_cdufende>' || nvl(trim(rw_crapass.cdufende), ' ') ||'</tit_cdufende>' ||  
+                         '<tit_nrcepend>' || gene0002.fn_mask_cep(rw_crapass.nrcepend) ||'</tit_nrcepend>' ||  
+                         '<tit_nmresage>' || rw_crapass.nmresage ||'</tit_nmresage>' ||                          
+                         '<ds_responsavel>' || vr_ds_responsavel ||'</ds_responsavel>' ||                            
+                         '<emp_nmextemp>' || nvl(trim(rw_crapttl.nmextemp), ' ') ||'</emp_nmextemp>' ||  
+                         '<emp_nrcpfemp>' || vr_nrcpfcgc_emp ||'</emp_nrcpfemp>' ||  
+                         '<emp_dsendere>' || nvl(trim(rw_crapttl.dsendemp), ' ') ||'</emp_dsendere>' ||
+                         '<emp_nrcepend>' || gene0002.fn_mask_cep(rw_crapttl.nrcepend) ||'</emp_nrcepend>' ||
+                         '<emp_nmcidade>' || nvl(trim(rw_crapttl.nmcidade), ' ') ||'</emp_nmcidade>'||
+                         '<nr_clausula_empregador>' || nr_clausula_empregador || '</nr_clausula_empregador>' ||
+                         '<nr_clausula_conta>' || nr_clausula_conta || '</nr_clausula_conta>' ||
+                         '<nr_clausula_pa>' || nr_clausula_pa || '</nr_clausula_pa>'
+                         );
+  
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '</protocolo>',
+                            pr_fecha_xml      => TRUE);
+  
+    vr_dsjasper := 'termo_abertura_conta_salario.jasper';
+    vr_nmarqim  := '/TermoAberturaContaSalario' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
+  
+    -- Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper,
+                                pr_cdprogra  => 'ATENDA',
+                                pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                                pr_dsxml     => vr_clob,
+                                pr_dsxmlnode => '/protocolo',
+                                pr_dsjasper  => vr_dsjasper,
+                                pr_dsparams  => NULL,
+                                pr_dsarqsaid => vr_nom_direto || vr_nmarqim,
+                                pr_cdrelato  => 740,
+                                pr_flg_gerar => 'S',
+                                pr_qtcoluna  => 80,
+                                pr_sqcabrel  => 1,
+                                pr_flg_impri => 'N',
+                                pr_nmformul  => ' ',
+                                pr_nrcopias  => 1,
+                                pr_parser    => 'R',
+                                pr_nrvergrl  => 1,
+                                pr_des_erro  => vr_dscritic);
+  
+    -- copia contrato pdf do diretorio da cooperativa para servidor web
+    gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper,
+                                 pr_cdagenci => NULL,
+                                 pr_nrdcaixa => NULL,
+                                 pr_nmarqpdf => vr_nom_direto || vr_nmarqim,
+                                 pr_des_reto => vr_des_reto,
+                                 pr_tab_erro => vr_tab_erro);
+  
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+  
+    -- Criar XML de retorno
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
+                                   vr_nmarqim || '</nmarqpdf>');
+  
+    COMMIT;
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em pc_imprimir_termo_conta: ' || SQLERRM;
+      ROLLBACK;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_imprimir_termo_conta;
+
 
 END TELA_ATENDA_PORTAB;
 /

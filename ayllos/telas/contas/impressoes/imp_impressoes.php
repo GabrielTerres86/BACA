@@ -12,9 +12,11 @@
  *
  *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS
  *							   PRJ 414 (Mateus Z - Mouts)
+ 
+ *				  16/01/2019 - Adicionado novo relatorio de Termo de Abertura de Conta Salario - P485 (Lucas Schneider - Supero)
  */	 
 ?>
-
+ 
 <?	
 	session_cache_limiter('private');
 	session_start();
@@ -23,6 +25,12 @@
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/dompdf/dompdf_config.inc.php');		
 	require_once('../../../class/xmlfile.php');
+	
+	// Fun??es para exibir erros na tela atrav?s de javascript
+	function exibeErro($msgErro) { 
+		echo '<script>alert("'.$msgErro.'");</script>';	
+		exit();
+	}
 ?>
 
 <?	
@@ -46,62 +54,106 @@
 	$impchave = $GLOBALS['tprelato'].$nrdconta.$idseqttl;
 	setcookie('impchave', $impchave, time()+60 );
 	
-	// Monta o xml de requisição
-	$xmlSetPesquisa  = "";
-	$xmlSetPesquisa .= "<Root>";
-	$xmlSetPesquisa .= "	<Cabecalho>";
-	$xmlSetPesquisa .= "		<Bo>b1wgen0063.p</Bo>";
-	$xmlSetPesquisa .= "		<Proc>busca_impressao</Proc>";
-	$xmlSetPesquisa .= "	</Cabecalho>";
-	$xmlSetPesquisa .= "	<Dados>";
-	$xmlSetPesquisa .= "        <cdcooper>".$cdcooper."</cdcooper>";
-	$xmlSetPesquisa .= "		<cdagenci>".$cdagenci."</cdagenci>";
-	$xmlSetPesquisa .= "		<nrdcaixa>".$nrdcaixa."</nrdcaixa>";
-	$xmlSetPesquisa .= "		<cdoperad>".$cdoperad."</cdoperad>";
-	$xmlSetPesquisa .= "		<nmdatela>".$nmdatela."</nmdatela>";	
-	$xmlSetPesquisa .= "		<idorigem>".$idorigem."</idorigem>";	
-	$xmlSetPesquisa .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlSetPesquisa .= "		<idseqttl>".$idseqttl."</idseqttl>";
-    $xmlSetPesquisa .= "		<tprelato>".$GLOBALS['tprelato']."</tprelato>";
-    $xmlSetPesquisa .= "		<flgpreen>".$flgpreen."</flgpreen>";
-	$xmlSetPesquisa .= "	</Dados>";
-	$xmlSetPesquisa .= "</Root>";		
 	
-	// Pega informações retornada do PROGRESS
-	$xmlResult  = getDataXML($xmlSetPesquisa);	
-	$xmlObjeto  = getObjectXML($xmlResult);		
-		
-	// Guarda as informações em uma variável GLOBAL
-	$GLOBALS['xmlObjeto'] = $xmlObjeto;
-	
-	$navegador = CheckNavigator();
-	$tipo = $navegador['navegador'] == 'chrome' ? 0 : 1;
-	
-	// Definindo parâmetro para o método "stream"
-	$opcoes['Attachment'	] = $tipo; 
-	$opcoes['Accept-Ranges'	] = 0;
-	$opcoes['compress'		] = 0;	
-	
-	$GLOBALS['totalLinha'	] = 69;
-	$GLOBALS['numLinha'		] = 0;
-	$GLOBALS['numPagina'	] = 1;	
-	$GLOBALS['flagRepete'	] = false;	
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
 
-	// Gera o relatório em PDF através do DOMPDF
-	$dompdf = new DOMPDF();	
-	
-	if($GLOBALS['tprelato'] == 'declaracao_fatca_crs'){
-		$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_html.php' );
-	} else {
-		if ( $inpessoa == '1' ) {
-			$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pf_html.php' );
-		} else {
-			$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pj_html.php' );
-		}
+	// craprdr / crapaca 
+	$xmlResult = mensageria($xml, "CADA0006", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra cr?tica
+	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	
-	$dompdf->set_paper('a4');
-	$dompdf->render();
-	$dompdf->stream('impressoes_'.$impchave.'.pdf', $opcoes );
+
+	//Obtem o tipo da conta do associado
+	$cdtipoconta = $xmlObjeto->roottag->tags[0]->cdata;	
+	 
+	if($cdtipoconta == '2'){ //2 - Conta tipo Salario
 		
+		// craprdr / crapaca 
+		$xmlResult = mensageria($xml, "CONTAS", "IMPRIME_TERMO_CONTA_SALARIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra cr?tica
+		if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+			exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		}
+
+		//Obt?m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+		$nmarqpdf = $xmlObjeto->roottag->cdata;
+
+		//Chama fun??es para mostrar PDF do impresso gerado no browser	 
+		visualizaPDF($nmarqpdf);	
+
+	
+	} else {		
+		
+		// Monta o xml de requisição
+		$xmlSetPesquisa  = "";
+		$xmlSetPesquisa .= "<Root>";
+		$xmlSetPesquisa .= "	<Cabecalho>";
+		$xmlSetPesquisa .= "		<Bo>b1wgen0063.p</Bo>";
+		$xmlSetPesquisa .= "		<Proc>busca_impressao</Proc>";
+		$xmlSetPesquisa .= "	</Cabecalho>";
+		$xmlSetPesquisa .= "	<Dados>";
+		$xmlSetPesquisa .= "        <cdcooper>".$cdcooper."</cdcooper>";
+		$xmlSetPesquisa .= "		<cdagenci>".$cdagenci."</cdagenci>";
+		$xmlSetPesquisa .= "		<nrdcaixa>".$nrdcaixa."</nrdcaixa>";
+		$xmlSetPesquisa .= "		<cdoperad>".$cdoperad."</cdoperad>";
+		$xmlSetPesquisa .= "		<nmdatela>".$nmdatela."</nmdatela>";	
+		$xmlSetPesquisa .= "		<idorigem>".$idorigem."</idorigem>";	
+		$xmlSetPesquisa .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlSetPesquisa .= "		<idseqttl>".$idseqttl."</idseqttl>";
+		$xmlSetPesquisa .= "		<tprelato>".$GLOBALS['tprelato']."</tprelato>";
+		$xmlSetPesquisa .= "		<flgpreen>".$flgpreen."</flgpreen>";
+		$xmlSetPesquisa .= "	</Dados>";
+		$xmlSetPesquisa .= "</Root>";		
+		
+		// Pega informações retornada do PROGRESS
+		$xmlResult  = getDataXML($xmlSetPesquisa);	
+		$xmlObjeto  = getObjectXML($xmlResult);		
+			
+		// Guarda as informações em uma variável GLOBAL
+		$GLOBALS['xmlObjeto'] = $xmlObjeto;
+		
+		$navegador = CheckNavigator();
+		$tipo = $navegador['navegador'] == 'chrome' ? 0 : 1;
+		
+		// Definindo parâmetro para o método "stream"
+		$opcoes['Attachment'	] = $tipo; 
+		$opcoes['Accept-Ranges'	] = 0;
+		$opcoes['compress'		] = 0;	
+		
+		$GLOBALS['totalLinha'	] = 69;
+		$GLOBALS['numLinha'		] = 0;
+		$GLOBALS['numPagina'	] = 1;	
+		$GLOBALS['flagRepete'	] = false;	
+
+		// Gera o relatório em PDF através do DOMPDF
+		$dompdf = new DOMPDF();	
+		
+		if($GLOBALS['tprelato'] == 'declaracao_fatca_crs'){
+			$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_html.php' );
+		} else {
+			if ( $inpessoa == '1' ) {
+				$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pf_html.php' );
+			} else {
+				$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pj_html.php' );
+			}
+		}
+		
+		$dompdf->set_paper('a4');
+		$dompdf->render();
+		$dompdf->stream('impressoes_'.$impchave.'.pdf', $opcoes );
+				
+	}	
+
+	
 ?>
