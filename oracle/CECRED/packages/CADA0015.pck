@@ -5050,7 +5050,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4); 
+                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4),
+                decode(atl.nmtabela,'CRAPCEM',atl.dschave,'CRAPTFC',atl.dschave,decode(substr(atl.dschave,1,1),'S',1,2)) ; 
 
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
