@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-62
+42
 -- Created on 18/01/2019 by F0030367 
 declare 
 
@@ -40,27 +40,7 @@ begin
   
   dbms_output.put_line('Fim da execução do CRPS618');
   
-  -- Alterar data de emissão para a original
-  update crapcob b 
-     set b.dtmvtolt = to_date('17/12/2018','dd/mm/rrrr')
-   where cdcooper = 1
-     and nrdconta = 3047733
-     and dtmvtolt = trunc(sysdate)
-     and b.nrcnvcob = 10131
-     and b.nrdocmto between 46435 and 46446
-     and b.incobran = 0;
-     
-  -- Volvar data de emissão para a original
-  update crapcob b 
-     set b.dtmvtolt = to_date('17/12/2018','dd/mm/rrrr')
-   where cdcooper = 1
-     and nrdconta = 3047733
-     and dtmvtolt = trunc(sysdate)
-     and nrcnvcob = 10131
-     and nrdocmto between 46411 and 46422
-     and b.incobran = 0; 
-     
-  commit;     
+  commit;
 end;
 0
 0
