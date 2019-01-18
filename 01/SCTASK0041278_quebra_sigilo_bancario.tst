@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-5213
+5249
 /* Baca para gerar os arquivos de quebra de sigilo bancário
  * Arquivos que serão gerados: AGENCIAS, CONTAS, TITULARES, ESXTRATO, ORIGEM_DESTINO
  *
@@ -2675,27 +2675,33 @@ DECLARE
     -- Credito de Cobranca - Histórico 1089
     CURSOR cr_crapret_1089(pr_cdcooper IN INTEGER
                           ,pr_nrdconta IN INTEGER
-                          ,pr_dtcredit IN crapret.dtcredit%TYPE) IS
-      SELECT ret.*
-        FROM crapret ret, crapcco cco
-       WHERE cco.cdcooper = ret.cdcooper 
-         AND cco.nrconven = ret.nrcnvcob
-         AND cco.cddbanco = 85 -- Apenas convenio CECRED
-         AND ret.cdcooper = pr_cdcooper
-         AND ret.nrdconta = pr_nrdconta
-         AND ( ( --- Liberação do FLOAT
-                     pr_dtcredit >= to_date('21/10/2014','dd/mm/yyyy') 
-                 AND ret.dtcredit = pr_dtcredit
-                 AND ret.flcredit = 1
-                 AND ret.cdocorre IN (17,77)
-               ) OR (
-                     pr_dtcredit < to_date('21/10/2014','dd/mm/yyyy') 
-                 AND ret.dtcredit IS NULL
-                 AND ret.flcredit = 0
-                 AND ret.dtocorre = pr_dtcredit
-                 AND ret.cdocorre IN (17,77)
-               )
-             );
+                          ,pr_dtcredit IN crapret.dtcredit%TYPE
+                          ,pr_vltitulo IN crapret.vltitulo%TYPE) IS
+      
+      SELECT *
+        FROM (SELECT ret.*
+                    ,SUM(ret.vltitulo) OVER (PARTITION BY ret.cdoperad) totalret
+                FROM crapret ret, crapcco cco
+               WHERE cco.cdcooper = ret.cdcooper 
+                 AND cco.nrconven = ret.nrcnvcob
+                 AND cco.cddbanco = 85 -- Apenas convenio CECRED
+                 AND ret.cdcooper = pr_cdcooper
+                 AND ret.nrdconta = pr_nrdconta      
+                 AND ( ( --- Liberação do FLOAT
+                             pr_dtcredit >= to_date('21/10/2014','dd/mm/yyyy') 
+                         AND ret.dtcredit = pr_dtcredit
+                         AND ret.flcredit = 1
+                         AND ret.cdocorre IN (17,77)
+                       ) OR (
+                             pr_dtcredit < to_date('21/10/2014','dd/mm/yyyy') 
+                         AND ret.dtcredit IS NULL
+                         AND ret.flcredit = 0
+                         AND ret.dtocorre = pr_dtcredit
+                         AND ret.cdocorre IN (17,77)
+                       )
+                     )
+                    )
+       WHERE totalret = pr_vltitulo;
     
     -- Buscar os dados do pagador
     CURSOR cr_pagador(pr_cdcooper IN INTEGER
@@ -3450,7 +3456,8 @@ DECLARE
             -- Abrir cursor da crapret 
             FOR rw_crapret IN cr_crapret_1089(pr_cdcooper => rw_lancamento.cdcooper 
                                              ,pr_nrdconta => rw_lancamento.nrdconta
-                                             ,pr_dtcredit => rw_lancamento.dtmvtolt) LOOP
+                                             ,pr_dtcredit => rw_lancamento.dtmvtolt
+                                             ,pr_vltitulo => rw_lancamento.vllanmto) LOOP
                                              
               vr_vldpagto := 0;
               -- Buscar os dados do boleto que esta sendo pago
@@ -5241,7 +5248,6 @@ EXCEPTION
                                   dbms_utility.format_error_stack,'"', NULL));
     -- Não altera nenhum dado    
     ROLLBACK;
-END;
-    
+END;                           
 0
 0
