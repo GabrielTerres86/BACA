@@ -2108,27 +2108,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0014 IS
       vr_idalteracao:= fn_sequence(pr_nmtabela => 'TBCADAST_PESSOA_COMUNIC_SOA',
                                    pr_nmdcampo => 'IDALTERACAO',
                                    pr_dsdchave => '0)');
-                                   
-      INSERT INTO CECRED.TBCADAST_PESSOA_COMUNIC_SOA(idalteracao,
+    BEGIN
+      INSERT INTO CECRED.TBCADAST_PESSOA_COMUNIC_SOA
+        (idalteracao,
                                                      nmtabela_oracle,
                                                      idpessoa,
                                                      nrsequencia,
                                                      dhalteracao,
-                                                     tpoperacao
-                                                    )
-     VALUES (vr_idalteracao,
+         tpoperacao)
+     VALUES 
+         (vr_idalteracao,
              pr_nmdatela,
              pr_idpessoa,
              pr_nrsequen,
              pr_dhaltera,
-             pr_tpoperacao
-            );
-
+          pr_tpoperacao);
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Nao foi possivel inserir na TBCADAST_PESSOA_COMUNIC_SOA: '||SQLERRM;
+        RETURN;
   END;
   
+    -- se for uma inclusao ou exclusao de representante ou responsavel legal
+    IF pr_nmdatela IN ('TBCADAST_PESSOA_JURIDICA_REP','TBCADAST_PESSOA_FISICA_RESP') AND
+       pr_tpoperacao IN (1,3) THEN
+      -- Insere a associacao da pessoa com as contas
+      cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
+                                    wp_intabela    => 0,
+                                    wp_idpessoa    => pr_idpessoa,
+                                    wp_cdcooper => 0,
+                                    wp_nrdconta => 0);
+    END IF;
+    
+    
+  END;
 BEGIN  
   
   --> Tipo de rendimento
