@@ -130,12 +130,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
   PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
                                      pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online
                                      pr_dscritic   OUT VARCHAR2);          --> Retorno de Erro
-/*  -- Rotina para criar a associacao da conta com a pessoa de representante e 
+  -- Rotina para criar a associacao da conta com a pessoa de representante e 
   -- responsavel legal
   PROCEDURE pc_cria_pessoa_conta(wp_idalteracao tbhistor_pessoa_conta.idalteracao%TYPE,
                                  wp_intabela    tbhistor_pessoa_conta.intabela%TYPE,
-                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE);
-*/
+                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
+                                 wp_cdcooper    crapass.cdcooper%TYPE,
+                                 wp_nrdconta    crapass.nrdconta%TYPE);
+
 
 END CADA0015;
 /
@@ -179,9 +181,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
   -- Rotina para criar a associacao da conta com a pessoa de representante e 
   -- responsavel legal
-/*  PROCEDURE pc_cria_pessoa_conta(wp_idalteracao tbhistor_pessoa_conta.idalteracao%TYPE,
+  PROCEDURE pc_cria_pessoa_conta(wp_idalteracao tbhistor_pessoa_conta.idalteracao%TYPE,
                                  wp_intabela    tbhistor_pessoa_conta.intabela%TYPE,
-                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE) IS
+                                 wp_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
+                                 wp_cdcooper    crapass.cdcooper%TYPE,
+                                 wp_nrdconta    crapass.nrdconta%TYPE) IS
     -- Cursor para buscar as contas com base no idpessoa
     CURSOR cr_conta IS
       SELECT b.cdcooper,
@@ -191,13 +195,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE a.idpessoa = wp_idpessoa
          AND b.nrcpfcgc = a.nrcpfcgc
          AND b.inpessoa <> 1
+         AND (b.cdcooper <> wp_cdcooper
+          OR  b.nrdconta <> wp_nrdconta)
        UNION
       SELECT b.cdcooper,
              b.nrdconta
         FROM crapttl b,
              tbcadast_pessoa a
        WHERE a.idpessoa = wp_idpessoa
-         AND b.nrcpfcgc = a.nrcpfcgc;
+         AND b.nrcpfcgc = a.nrcpfcgc
+         AND (b.cdcooper <> wp_cdcooper
+          OR  b.nrdconta <> wp_nrdconta);
   BEGIN
     FOR rw_conta IN cr_conta LOOP
       BEGIN
@@ -216,7 +224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           NULL;
       END;
     END LOOP;
-  END;                                 */
+  END;                                 
 
   -- Rotina para criar registro na tbhistor_conta_comunic_soa
   FUNCTION cria_conta_comunic_soa(pr_cdcooper tbhistor_conta_comunic_soa.cdcooper%TYPE,
@@ -5643,6 +5651,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND substr(a.dschave,1,1) = 'S'
          AND a.insit_atualiza IN (1,4);
 
+    CURSOR cr_atualiza_opi(pr_cdcooper crapass.cdcooper%TYPE,
+                           pr_nrdconta crapass.nrdconta%TYPE,
+                           pr_dschave  tbcadast_pessoa_atualiza.dschave%TYPE) IS
+      SELECT COUNT(*) qt_registro
+        FROM tbcadast_pessoa_atualiza a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND a.nmtabela = 'CRAPOPI'
+         AND a.dschave = pr_dschave
+         AND a.insit_atualiza = 1;
+     rw_atualiza_opi cr_atualiza_opi%ROWTYPE;
+
 
     ---------------> VARIAVEIS <-----------------
 
@@ -6098,11 +6118,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                     RAISE vr_exc_erro;
                 END;
                 
-/*                -- Insere a associacao da pessoa com as contas
+                -- Insere a associacao da pessoa com as contas
                 cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
                                               wp_intabela    => 1,
-                                              wp_idpessoa    => vr_idpessoa);
-*/
+                                              wp_idpessoa    => vr_idpessoa,
+                                              wp_cdcooper    => rw_crapass.cdcooper,
+                                              wp_nrdconta    => rw_crapass.nrdconta);
+
               END IF;
             END IF;
                 
@@ -6260,10 +6282,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END;
 
               -- Insere a associacao da pessoa com as contas
-/*              cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
+              cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
                                             wp_intabela    => 1,
-                                            wp_idpessoa    => vr_idpessoa);
-*/
+                                            wp_idpessoa    => vr_idpessoa,
+                                            wp_cdcooper    => rw_crapass.cdcooper,
+                                            wp_nrdconta    => rw_crapass.nrdconta);
+
             END IF;
           -- Se teve alteracao da data da demissao ou 
           ELSIF substr(nvl(rw_pessoa_atlz.dschave,'   '),3,1) = 'S' THEN
@@ -6338,13 +6362,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                   RAISE vr_exc_erro;
               END;
               
-/*              IF vr_tpalteracao = 1 THEN
+              IF vr_tpalteracao = 1 THEN
                 -- Insere a associacao da pessoa com as contas
                 cada0015.pc_cria_pessoa_conta(wp_idalteracao => vr_idalteracao,
                                               wp_intabela    => 1,
-                                              wp_idpessoa    => vr_idpessoa);
+                                              wp_idpessoa    => vr_idpessoa,
+                                              wp_cdcooper    => rw_crapass.cdcooper,
+                                              wp_nrdconta    => rw_crapass.nrdconta);
               END IF;
-*/              
+              
             END IF;
 
           END IF;
@@ -6409,6 +6435,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
+          -- Verifica se existe mais de um registro para processar. Em caso
+          -- positivo, ignora o registro atual, pois sera processado somente no ultimo
+          -- registro pendente da TBCADAST_PESSOA_ATUALIZA.
+          -- Isso se faz necessário para nao inserir duas vezes o mesmo registro, 
+          -- gerando assim erro no SOA
+          OPEN cr_atualiza_opi(rw_pessoa_atlz.cdcooper,
+                               rw_pessoa_atlz.nrdconta,
+                               rw_pessoa_atlz.dschave);
+          FETCH cr_atualiza_opi INTO rw_atualiza_opi;
+          CLOSE cr_atualiza_opi;
+
+          IF rw_atualiza_opi.qt_registro < 2 THEN
+
           -- Buscar registro de avalista terceiro, contato (PF) ou referencia comercial/bancaria (PJ)
           OPEN cr_crapopi( pr_cdcooper => rw_pessoa_atlz.cdcooper,
 													 pr_nrdconta => rw_pessoa_atlz.nrdconta,
@@ -6437,6 +6476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
+          END IF;                                
         ELSE
           vr_dscritic := 'Tabela nao configurada.';
 
