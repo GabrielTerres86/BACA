@@ -1584,7 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
  
     -- Se contas forem iguais, a conta que mudou de PA
     -- estava locada em um grupo (era a mais antiga)
-    elsif rw_crapass.nrdconta = rw_buscar_cooperado.nrdconta then
+    elsif rw_crapass.cdagenci <> rw_buscar_cooperado.cdagenci then
 
       -- Retira da tabela de grupos
       begin
