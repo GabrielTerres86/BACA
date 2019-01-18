@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 23/11/2018
+   Data    : Novembro/98                     Ultima atualizacao: 18/01/2019
 
    Dados referentes ao programa:
 
@@ -651,6 +651,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                23/11/2018 - Adicionado na procedure pc_proc_cbl_mensal a utilização do cursor cr_lancbortot para considerar o valor da 
                             apropriação do juros de mora do desconto de titulos da tabela de lançamento do borderô ao invês dos valores 
                             gravados na craptdb, pois na craptdb grava a mora calculada pro dia seguinte (Paulo Penteado GFT)
+                            
+         18/01/2019 - PRB0040545 (INC0030676) Correção de cursores para usarem os índices corretamente (Carlos)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -1812,7 +1814,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select crapscn.cdempres,
            crapscn.dsnomcnv
       from crapscn
-     where crapscn.cdempres = pr_cdempres;
+     where UPPER(crapscn.cdempres) = pr_cdempres;
   rw_crapscn2     cr_crapscn2%rowtype;
 
   -- Debito Automatico Sicredi
@@ -1824,7 +1826,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       WHERE craplcm.cdcooper = craplau.cdcooper
         AND craplcm.nrdconta = craplau.nrdconta
         AND craplcm.cdhistor = craplau.cdhistor
-        AND craplau.cdempres = crapscn.cdempres
+        AND craplau.cdempres = UPPER(crapscn.cdempres)
         AND craplcm.nrdocmto = craplau.nrdocmto
         AND craplcm.cdcooper = pr_cdcooper
         AND craplcm.dtmvtolt = pr_dtmvtolt
@@ -1847,7 +1849,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       WHERE craplcm.cdcooper = craplau.cdcooper
         AND craplcm.nrdconta = craplau.nrdconta
         AND craplcm.cdhistor = craplau.cdhistor
-        AND craplau.cdempres = crapscn.cdempres
+        AND craplau.cdempres = UPPER(crapscn.cdempres)
         AND craplcm.cdcooper = crapass.cdcooper
         AND craplcm.nrdconta = crapass.nrdconta
         AND craplcm.nrdocmto = craplau.nrdocmto
@@ -1905,7 +1907,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where craprej.cdcooper = pr_cdcooper
        and craprej.cdpesqbb = pr_cdprogra
        and craprej.dtmvtolt = pr_dtmvtolt
-       and crapscn.cdempres = craprej.dtrefere
+       AND UPPER(crapscn.cdempres) = craprej.dtrefere
        AND ((craprej.nraplica = pr_nraplica -- Buscar Total Geral (0-Geral/1-Total por PF/2-Total por PJ)
        AND  pr_nraplica = 0)
         OR (craprej.nraplica IN (1,2)
@@ -4101,8 +4103,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        order by craprpp.nrdconta;
     -- Subscrição de capital a realizar
     cursor cr_crapsdc3 (pr_cdcooper in crapsdc.cdcooper%type) is
-      select /*+ index (crapsdc crapsdc##crapsdc2)*/
-             nrdconta,
+      select nrdconta,
              vllanmto
         from crapsdc
        where crapsdc.cdcooper = pr_cdcooper
@@ -9775,7 +9776,7 @@ BEGIN
              else
              -- Inicializa o array com o valor inicial de pessoa fisica
                vr_tab_vlr_age_fis(rw_craplcm9.cdagenci) := rw_craplcm9.nrseqdig * vr_vltarifa;
-    end if;
+             end if;
           else
             if vr_tab_vlr_age_jur.EXISTS(rw_craplcm9.cdagenci) then
                -- Soma os valores por agencia de pessoa jurídica
@@ -9784,7 +9785,7 @@ BEGIN
              -- Inicializa o array com o valor inicial de pessoa fisica
                vr_tab_vlr_age_jur(rw_craplcm9.cdagenci) := rw_craplcm9.nrseqdig * vr_vltarifa;
              end if;
-    end if;
+          end if;
           
           --Totalizar valores por tipo de pessoa
           if vr_tab_vlr_descbr_pes.EXISTS(rw_craplcm9.inpessoa) then
@@ -9794,7 +9795,7 @@ BEGIN
             -- Inicializa o array com o valor inicial de cada tipo de pessoa
             vr_tab_vlr_descbr_pes(rw_craplcm9.inpessoa) := rw_craplcm9.nrseqdig * vr_vltarifa;
           end if;
-  end loop;
+        end loop;
       end if;
     end if;
     vr_agencia_ant:= rw_craprej2.cdagenci;
