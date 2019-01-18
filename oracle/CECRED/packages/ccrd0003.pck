@@ -10760,7 +10760,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.ccrd0003 AS
                                         --Levantar Excecao
                                         RAISE vr_exc_saida;
                                 END;
-                            
+
                                 vr_cdlimcrd := 0;
                                 -- Agencia do banco
                                 BEGIN
@@ -10977,25 +10977,21 @@ CREATE OR REPLACE PACKAGE BODY cecred.ccrd0003 AS
                                 vr_nrdconta := vr_nrctatp2;
                             
                                 IF vr_tipooper IN (1, 4) THEN
-                                    -- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
-                                    OPEN cr_crawcrd_encerra(vr_cdcooper --pr_cdcooper
-                                                           ,vr_nrdconta --pr_nrdconta
-                                                           ,vr_nrdctitg --pr_nrcctitg
-                                                           ,vr_nrcrcard); --pr_nrcrcard
-                                    FETCH cr_crawcrd_encerra
-                                        INTO rw_crawcrd_encerra;
-                                    -- Se encontrar o cartão como encerrado (cancelado)
-                                    IF cr_crawcrd_encerra%FOUND THEN
-                                        -- fecha o cursor
-                                        CLOSE cr_crawcrd_encerra;
-                                        continue; -- Ignora o registro
-                                    END IF;
-                                    CLOSE cr_crawcrd_encerra;
-                                
-                                END IF;
+																	-- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
+																	OPEN cr_crawcrd_encerra(vr_cdcooper --pr_cdcooper
+																												 ,vr_nrdconta --pr_nrdconta
+																												 ,vr_nrdctitg --pr_nrcctitg
+																												 ,vr_nrcrcard); --pr_nrcrcard
+																	FETCH cr_crawcrd_encerra
+																			INTO rw_crawcrd_encerra;
+																	-- Se encontrar o cartão como encerrado (cancelado)
+																	IF cr_crawcrd_encerra%FOUND THEN
+																			-- fecha o cursor
+																			CLOSE cr_crawcrd_encerra;
+																			continue; -- Ignora o registro
+																	END IF;
+																	CLOSE cr_crawcrd_encerra;
 
-                                -- Caso a operação for "Inclusao de Adicional"
-                                IF vr_tipooper = 4 THEN
 																	--
 																	IF nvl(vr_tpdocmto, 0) = 1 THEN
                                      vr_cpf := to_number(nvl(substr(vr_des_text, 95, 11), 0)); --> CPF é extraido
