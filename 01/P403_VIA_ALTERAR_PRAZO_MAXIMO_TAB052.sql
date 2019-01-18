@@ -6,7 +6,7 @@
     Objetivo    : Alterar o conteúdo cadastrado para a opção "Prazo Máximo" das colunas Operacional e CECRED de PF e PJ
                   para a cooperativa Viacredi
 
-    SELECT INSTR(tab.dstextab,';',1,25)
+    SELECT INSTR(tab.dstextab,';',1,25) 
           ,SUBSTR(tab.dstextab, 1, INSTR(tab.dstextab,';',1,9))||
            '180'|| -- Operacional - Prazo Máximo
            SUBSTR(tab.dstextab, INSTR(tab.dstextab,';',1,10), (INSTR(tab.dstextab,';',1,24) - INSTR(tab.dstextab,';',1,10))+1)||
