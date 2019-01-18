@@ -24,7 +24,7 @@ BEGIN
                     SUBSTR(tab.dstextab, INSTR(tab.dstextab,';',1,10), (INSTR(tab.dstextab,';',1,24) - INSTR(tab.dstextab,';',1,10))+1)||
                     '180'|| -- CECRED - Prazo Máximo
                     SUBSTR(tab.dstextab, INSTR(tab.dstextab,';',1,25))
-   WHERE tab.cdacesso IN ('LIMDESCTITCRPJ','LIMDESCTITCRPF')
+   WHERE UPPER(tab.cdacesso) IN ('LIMDESCTITCRPJ','LIMDESCTITCRPF')
      AND tab.cdcooper = 1;
 
   COMMIT;
