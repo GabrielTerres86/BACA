@@ -1433,6 +1433,8 @@ PROCEDURE pc_atualizar_bordero_dsct_tit(pr_cdcooper  IN craptdb.cdcooper%TYPE --
   -- Variável de críticas
   vr_dscritic VARCHAR2(10000);
 
+  vr_contas crapprm.dsvlrprm%TYPE;
+
   -- Tratamento de erros
   vr_exc_erro EXCEPTION;
   

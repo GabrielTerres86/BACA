@@ -3918,6 +3918,15 @@ PROCEDURE impressao-prnf:
    DEF VAR rel_dsdrendi        AS CHAR                               NO-UNDO.
                                                                      
    DEF VAR rel_vldopera        as DECI    FORMAT "zzz,zzz,zz9.99-"   NO-UNDO.
+   DEF VAR aux_dscatbem        AS CHAR                               NO-UNDO.
+   DEF VAR aux_vlrtarif        AS DECI                               NO-UNDO.
+   DEF VAR aux_vliofope        AS DECI                               NO-UNDO.
+   DEF VAR aux_dsctrliq        AS CHAR                               NO-UNDO.
+   DEF VAR aux_qtdias_carencia AS INTE                               NO-UNDO.
+   DEF VAR i                   AS INTE                               NO-UNDO.
+   
+   DEF VAR h-b1wgen0097        AS HANDLE                             NO-UNDO.
+                                                                     
    DEF VAR aux_linhacje        AS CHAR                               NO-UNDO.
    DEF VAR rel_vldendiv        AS DECI                               NO-UNDO.
    DEF VAR rel_dsavalde        AS CHAR                               NO-UNDO.
