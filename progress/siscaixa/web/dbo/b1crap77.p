@@ -282,6 +282,7 @@ PROCEDURE valida-cheque-com-captura:
         RETURN "NOK".
     END.
 
+    /* Revitalizacao - Remocao de lotes
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
                        craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
@@ -300,6 +301,7 @@ PROCEDURE valida-cheque-com-captura:
                            INPUT YES).
             RETURN "NOK".
         END.
+    */
 
     IF  p-valor-cheque > 0  THEN 
         DO:
@@ -570,6 +572,7 @@ PROCEDURE estorna-cheque-com-captura:
         END.
 
     ASSIGN in99 = 0.
+    /* Revitalizacao - Remocao de lotes
     DO  WHILE TRUE:
 
         ASSIGN in99 = in99 + 1.
@@ -616,7 +619,8 @@ PROCEDURE estorna-cheque-com-captura:
             END.
         END.
         LEAVE.
-    END.  /*  DO WHILE */
+    END.*/
+    /*  DO WHILE */
  
     IF  p-valor-dinheiro > 0 THEN 
         DO: 
@@ -766,10 +770,13 @@ PROCEDURE estorna-cheque-com-captura:
                DELETE PROCEDURE h-b1wgen0200.
              LEAVE.
         END.  /*  DO WHILE */
+        
+        /* Revitalizacao - Remocao de lotes
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-dinheiro
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-dinheiro.
+        */
     END.
 
 
@@ -872,10 +879,12 @@ PROCEDURE estorna-cheque-com-captura:
         
         END.  /*  DO WHILE */
     
+        /* Revitalizacao - Remocao de lotes
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-cheque
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-cheque.
+        */
     END.
 
     IF  p-valor-cheque > 0      AND 
@@ -992,12 +1001,15 @@ PROCEDURE estorna-cheque-com-captura:
                 LEAVE.
             END.  /*  DO WHILE */
     
+        /* Revitalizacao - Remocao de lotes
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-cheque
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-cheque.
+        */
     END.
 
+    /* Revitalizacao - Remocao de lotes
     IF  craplot.vlcompdb = 0    AND
         craplot.vlinfodb = 0    AND
         craplot.vlcompcr = 0    AND
@@ -1005,6 +1017,7 @@ PROCEDURE estorna-cheque-com-captura:
         DELETE craplot.
     ELSE
         RELEASE craplot.                   
+    */
 
     ASSIGN  p-valor  = p-valor-dinheiro + p-valor-cheque.
 

@@ -1553,6 +1553,7 @@ PROCEDURE atualiza-deposito-com-captura:
     DEF VAR aux_dtrefere AS DATE                            NO-UNDO.
     DEF VAR aux_flcrialot AS LOGICAL INIT NO                 NO-UNDO.
     DEF VAR aux_contador  AS INTEGER                         NO-UNDO.
+    DEF VAR aux_nrseqdig  AS INTE                            NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
     
@@ -1725,54 +1726,14 @@ PROCEDURE atualiza-deposito-com-captura:
   
     ASSIGN c-docto-salvo = STRING(TIME).
   
-     DO aux_contador = 1 TO 10:
-    
-        c-desc-erro = "".
-        
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
                        craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
-                           EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                       NO-LOCK NO-ERROR.
                        
         IF  NOT AVAILABLE craplot  THEN
-         DO:
-                IF  LOCKED craplot  THEN
-                    DO:
-                        c-desc-erro = "Lote " + STRING(i-nro-lote) + " ja esta sendo alterado. " +
-                                      "Tente novamente.".
-                        PAUSE 1 NO-MESSAGE.
-                        NEXT.
-                    END.
-                ELSE
-                    DO:
-                        aux_flcrialot = TRUE. 
-                        LEAVE.
-                    END.
-            END.
-    
-        aux_flcrialot = FALSE.
-    
-        LEAVE.
-        
-     END. /* Fim do DO ... TO */
-
-     IF  c-desc-erro <> "" THEN      
-         DO:
-              ASSIGN i-cod-erro  = 0.
-         
-              RUN cria-erro (INPUT p-cooper,
-                             INPUT p-cod-agencia,
-                             INPUT p-nro-caixa,
-                             INPUT i-cod-erro,
-                             INPUT c-desc-erro,
-                             INPUT YES).
-              RETURN "NOK".
-          
-         END.
-
-     IF aux_flcrialot = TRUE THEN  
          DO:
              CREATE craplot.
              ASSIGN craplot.cdcooper = crapcop.cdcooper
@@ -1838,6 +1799,23 @@ PROCEDURE atualiza-deposito-com-captura:
                   DO:
                       ASSIGN c-docto = c-docto-salvo + "1".
                       
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                      /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                      RUN STORED-PROCEDURE pc_sequence_progress
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                        ,INPUT "NRSEQDIG"
+                                        ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                        ,INPUT "N"
+                                        ,"").
+
+                      CLOSE STORED-PROC pc_sequence_progress
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                      ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                  WHEN pc_sequence_progress.pr_sequence <> ?.
                       
                       /* BLOCO DA INSERÇAO DA CRAPLCM */
                       IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
@@ -1904,14 +1882,6 @@ PROCEDURE atualiza-deposito-com-captura:
                           
                         IF  VALID-HANDLE(h-b1wgen0200) THEN
                             DELETE PROCEDURE h-b1wgen0200.
-
-                      ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1 
-                             craplot.qtcompln = craplot.qtcompln + 1
-                             craplot.qtinfoln = craplot.qtinfoln + 1
-                             craplot.vlcompcr = craplot.vlcompcr +  
-                                                crapmrw.vldepdin
-                             craplot.vlinfocr = craplot.vlinfocr +  
-                                                crapmrw.vldepdin.
                   END.
      
              IF   crapmrw.vlchqipr <> 0   THEN 
@@ -1924,6 +1894,22 @@ PROCEDURE atualiza-deposito-com-captura:
                               IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
                                 RUN sistema/generico/procedures/b1wgen0200.p 
                                   PERSISTENT SET h-b1wgen0200.
+
+                      /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                      RUN STORED-PROCEDURE pc_sequence_progress
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                        ,INPUT "NRSEQDIG"
+                                        ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                        ,INPUT "N"
+                                        ,"").
+
+                      CLOSE STORED-PROC pc_sequence_progress
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                      ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                  WHEN pc_sequence_progress.pr_sequence <> ?.
 
                               RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
                                 (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
@@ -1998,7 +1984,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                       craplci.nrdocmto = INTE(c-docto)
                                       craplci.vllanmto = crapmrw.vlchqipr
                                       craplci.cdhistor = 487
-                                      craplci.nrseqdig = craplot.nrseqdig + 1.
+                                      craplci.nrseqdig = aux_nrseqdig.
                                VALIDATE craplci.
       
                                /*----- Atualizar Saldo Conta Investimento */
@@ -2030,14 +2016,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                VALIDATE crapsli.
                            END.
             
-                      ASSIGN i-sequencia      = craplot.nrseqdig + 1
-                             craplot.nrseqdig = craplot.nrseqdig + 1 
-                             craplot.qtcompln = craplot.qtcompln + 1
-                             craplot.qtinfoln = craplot.qtinfoln + 1
-                             craplot.vlcompcr = craplot.vlcompcr + 
-                                                 crapmrw.vlchqipr
-                             craplot.vlinfocr = craplot.vlinfocr + 
-                                                crapmrw.vlchqipr.
+                      ASSIGN i-sequencia      = aux_nrseqdig.
                   END.
        
          END. /* IF  AVAIL crapmrw */

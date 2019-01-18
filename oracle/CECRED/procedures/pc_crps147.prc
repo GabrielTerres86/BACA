@@ -373,25 +373,6 @@ BEGIN
     TYPE typ_tbgen_relwrk_trd IS TABLE OF cr_work_trd%ROWTYPE INDEX BY PLS_INTEGER;
     vr_tab_work_trd typ_tbgen_relwrk_trd; 
             
-                
-    --Cursor para buscar valores e atualizar a capa do lote na tabela l            
-    cursor cr_work_lot(pr_cdcooper    tbgen_batch_relatorio_wrk.cdcooper%type  
-                      ,pr_cdprograma  tbgen_batch_relatorio_wrk.cdprograma%type 
-                      ,pr_dsrelatorio tbgen_batch_relatorio_wrk.dsrelatorio%type
-                      ,pr_dtmvtolt    tbgen_batch_relatorio_wrk.dtmvtolt%type) is
-      select sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) vlinfocr,
-             sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vlcompcr,
-             sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) vlinfodb,
-             sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vlcompdb,
-             sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))) qtinfoln,
-             sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtcompln
-        from tbgen_batch_relatorio_wrk a
-       where a.cdcooper    = pr_cdcooper
-         and a.cdprograma  = pr_cdprograma
-         and a.dsrelatorio = pr_dsrelatorio
-         and a.dtmvtolt    = pr_dtmvtolt;    
-    vr_tab_work_lot cr_work_lot%rowtype;            
-      
     -- Dados das tabela de trabalho de PRAZOS
     cursor cr_work_prazos(pr_cdcooper    tbgen_batch_relatorio_wrk.cdcooper%type  
                          ,pr_cdprograma  tbgen_batch_relatorio_wrk.cdprograma%type 
@@ -751,68 +732,6 @@ BEGIN
     OPEN btch0001.cr_crapdat (pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_dat;
     CLOSE btch0001.cr_crapdat;
-    
-    -- Apenas quando for o programa principal  
-    if nvl(pr_idparale,0) = 0 then
-
-      -- Grava LOG de ocorrência final de atualização da craplot
-      pc_log_programa(pr_dstiplog           => 'O',
-                      pr_cdprograma         => vr_cdprogra,
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => 1,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Inicio inserção ou atualização lote 8383 padrão',
-                      pr_idprglog           => vr_idlog_ini_ger); 
-      
-      begin
-        update craplot
-           set craplot.tplotmov = 14,
-               craplot.nrseqdig = CRAPLOT_8383_SEQ.NEXTVAL
-         where craplot.cdcooper = pr_cdcooper
-           and craplot.dtmvtolt = rw_dat.dtmvtolt
-           and craplot.cdagenci = 1
-           and craplot.cdbccxlt = 100
-           and craplot.nrdolote = 8383;              
-      exception
-        when others then
-          vr_dscritic := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
-          vr_cdcritic := 0;
-          raise vr_exc_saida;
-      END;
-      if sql%rowcount = 0 then
-        begin
-          insert into craplot (dtmvtolt,
-                               cdagenci,
-                               cdbccxlt,
-                               nrdolote,
-                               tplotmov,
-                               cdcooper,
-                               nrseqdig)
-          values (rw_dat.dtmvtolt,
-                  1,
-                  100,
-                  8383,
-                  14,
-                  pr_cdcooper,
-                  CRAPLOT_8383_SEQ.NEXTVAL);
-        exception
-          when others then
-            vr_dscritic := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
-            vr_cdcritic := 0;
-            raise vr_exc_saida;
-        end;
-      end if; 
-      -- Grava LOG de ocorrência final da atualização da craplot
-      pc_log_programa(pr_dstiplog           => 'O',
-                      pr_cdprograma         => vr_cdprogra,
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => 1,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Fim inserção ou atualização lote 8383 padrão',
-                      pr_idprglog           => vr_idlog_ini_ger); 
-      
-      commit;
-    end if;
     
     -- Buscar quantidade parametrizada de Jobs
     vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper   --> Código da coopertiva
@@ -1718,58 +1637,6 @@ BEGIN
                       pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_tpocorrencia       => 4,
                       pr_dsmensagem         => 'Fim - Atualiza tabela craptrd.',
-                      PR_IDPRGLOG           => vr_idlog_ini_ger); 
-      
-      -- Grava LOG de ocorrência inicial de atualização da tabela craplot
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Inicio - Atualiza tabela craplot.',
-                      PR_IDPRGLOG           => vr_idlog_ini_ger); 
-
-      -- Cursor com registros a serem atualizados na tabela craplot    
-      open cr_work_lot(pr_cdcooper    => pr_cdcooper
-                      ,pr_cdprograma  => vr_cdprogra
-                      ,pr_dsrelatorio => 'CRAPLOT' 
-                      ,pr_dtmvtolt    => rw_dat.dtmvtolt);
-      -- Realiza fetch no cursor
-      fetch cr_work_lot into vr_tab_work_lot;
-      -- Verifica se existem registros
-      if cr_work_lot%found then
-        begin
-          update craplot
-             set craplot.vlinfocr = vr_tab_work_lot.vlinfocr,
-                 craplot.vlcompcr = vr_tab_work_lot.vlcompcr,
-                 craplot.qtinfoln = vr_tab_work_lot.qtinfoln,
-                 craplot.qtcompln = vr_tab_work_lot.qtcompln,
-                 craplot.vlinfodb = vr_tab_work_lot.vlinfodb,
-                 craplot.vlcompdb = vr_tab_work_lot.vlcompdb,
-                 craplot.nrseqdig = CRAPLOT_8383_SEQ.NEXTVAL
-           where craplot.dtmvtolt = rw_dat.dtmvtolt
-             and craplot.cdagenci = 1
-             and craplot.cdbccxlt = 100
-             and craplot.nrdolote = 8383
-             and craplot.tplotmov = 14
-             and craplot.cdcooper = pr_cdcooper;             
-        exception
-          when others then
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao atualizar tabela craplot: '||sqlerrm;
-            raise vr_exc_saida;            
-        END;
-      end if;    
-      --Fecha cursor
-      close cr_work_lot;
-        
-      -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Fim - Atualiza tabela craplot.',
                       PR_IDPRGLOG           => vr_idlog_ini_ger); 
       
       -- Grava LOG de ocorrência inicial de atualização da tabela craptrd

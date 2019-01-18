@@ -37,7 +37,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgen0118tt.i }
 { sistema/generico/includes/b1wgen0200tt.i }
-
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                         NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                         NO-UNDO.
@@ -74,6 +74,8 @@ PROCEDURE tranf-salario-intercooperativa:
     DEF  VAR         aux_flgtrans AS LOGI                           NO-UNDO.
 
     DEF  VAR         b1crap22     AS HANDLE                         NO-UNDO.
+
+    DEF VAR          aux_nrseqdig AS INTE                           NO-UNDO.
 
     DEF BUFFER crablcs FOR craplcs.
     DEF BUFFER crabcop FOR crapcop.
@@ -146,7 +148,7 @@ PROCEDURE tranf-salario-intercooperativa:
                            craplot.cdagenci = 1                  AND
                            craplot.cdbccxlt = 85                 AND
                            craplot.nrdolote = 10115
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                           NO-LOCK NO-ERROR.
 
         IF   NOT AVAIL craplot   THEN
              DO:
@@ -175,6 +177,24 @@ PROCEDURE tranf-salario-intercooperativa:
                  aux_cdcritic = 92.
                  LEAVE Transf.
              END.
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                            ,INPUT "NRSEQDIG"
+                                            ,STRING(crabcop.cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";1;85;10115" 
+                                            ,INPUT "N"
+                                            ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
 
         /* BLOCO DA INSERÇAO DA CRAPLCM */
         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
@@ -241,12 +261,6 @@ PROCEDURE tranf-salario-intercooperativa:
         IF  VALID-HANDLE(h-b1wgen0200) THEN
             DELETE PROCEDURE h-b1wgen0200.
 
-        ASSIGN craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
-               craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-              
-               craplot.nrseqdig = craplot.nrseqdig + 1
-               craplot.qtcompln = craplot.qtcompln + 1
-               craplot.qtinfoln = craplot.qtinfoln + 1.
         VALIDATE craplot.
                             
         RUN sistema/siscaixa/web/dbo/b1crap22.p PERSISTENT SET b1crap22.

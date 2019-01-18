@@ -249,45 +249,16 @@ PROCEDURE Impressao:
                    i-nrlote3 = 28000 + p-nro-lote
                    i-nrlote4 = 30000 + p-nro-lote.
         
-            FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                                    craplot.cdagenci = p-cod-agencia    AND
-                                    craplot.cdbccxlt = 11               AND
-                                    craplot.nrdolote = i-nrlote1        AND
-                                    craplot.nrdcaixa = p-nro-lote) OR
-                                    
-                                   (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                                    craplot.cdagenci = p-cod-agencia    AND
-                                    craplot.cdbccxlt = 11               AND
-                                    craplot.nrdolote = i-nrlote2        AND
-                                    craplot.nrdcaixa = p-nro-lote) OR
-                                    
-                                   (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                                    craplot.cdagenci = p-cod-agencia    AND
-                                    craplot.cdbccxlt = 11               AND
-                                    craplot.nrdolote = i-nrlote3        AND
-                                    craplot.nrdcaixa = p-nro-lote) OR
-                                    
-                                   (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                                    craplot.cdagenci = p-cod-agencia    AND
-                                    craplot.cdbccxlt = 11               AND
-                                    craplot.nrdolote = i-nrlote4        AND
-                                    craplot.nrdcaixa = p-nro-lote) OR
-                                    
-                                   (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                                    craplot.cdagenci = p-cod-agencia    AND
-                                    craplot.cdbccxlt = 500              AND
-                                    craplot.nrdcaixa = p-nro-lote) NO-LOCK,
-            EACH crapchd WHERE
+            /* Revitalizacao - Remocao de Lotes */
+            FOR EACH crapchd WHERE
                  crapchd.cdcooper = crapcop.cdcooper    AND
-                 crapchd.dtmvtolt = craplot.dtmvtolt    AND
-                 crapchd.cdagenci = craplot.cdagenci    AND
-                 crapchd.nrdolote = craplot.nrdolote    AND
-                 crapchd.cdbccxlt = craplot.cdbccxlt    AND
+                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+                 crapchd.cdagenci = p-cod-agencia       AND
+                (crapchd.nrdolote = i-nrlote1           OR
+                 crapchd.nrdolote = i-nrlote2           OR
+                 crapchd.nrdolote = i-nrlote3           OR
+                 crapchd.nrdolote = i-nrlote4           OR
+                 crapchd.cdbccxlt = 500)                AND
                  crapchd.inchqcop = 0                   AND
                  crapchd.insitchq <> 3
                  USE-INDEX crapchd3 NO-LOCK
@@ -422,23 +393,23 @@ PROCEDURE Impressao:
                tot_qtcheque = 0
                tot_vlcheque = 0.
         
-        FOR EACH craplot WHERE 
-                 craplot.cdcooper = crapcop.cdcooper    AND
-                 craplot.dtmvtolt = crapdat.dtmvtocd    AND  /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
-                 craplot.cdagenci = p-cod-agencia       AND
-                 craplot.nrdcaixa = p-nro-lote          AND  /* Nro Caixa */
-                (craplot.nrdolote = i-nrlote1           OR
-                 craplot.nrdolote = i-nrlote2           OR
-                 craplot.nrdolote = i-nrlote3           OR
-                 craplot.nrdolote = i-nrlote4           OR
-                 craplot.cdbccxlt = 500)                NO-LOCK,
-            EACH crapchd WHERE
+        /* Revitalizacao - Remocao de Lotes */
+        FOR EACH crapchd WHERE
                  crapchd.cdcooper = crapcop.cdcooper    AND
-                 crapchd.dtmvtolt = craplot.dtmvtolt    AND
-                 crapchd.cdagenci = craplot.cdagenci    AND
-                 crapchd.nrdolote = craplot.nrdolote    AND
-                 crapchd.cdbccxlt = craplot.cdbccxlt
-                 USE-INDEX crapchd3 NO-LOCK:
+                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+                 crapchd.cdagenci = p-cod-agencia       AND
+                (crapchd.nrdolote = i-nrlote1           OR
+                 crapchd.nrdolote = i-nrlote2           OR
+                 crapchd.nrdolote = i-nrlote3           OR
+                 crapchd.nrdolote = i-nrlote4           OR
+                 crapchd.cdbccxlt = 500)                AND
+                 crapchd.inchqcop = 0                   AND
+                 crapchd.insitchq <> 3
+                 USE-INDEX crapchd3 NO-LOCK
+                 BREAK BY crapchd.tpdmovto
+                          BY crapchd.cdagenci
+                             BY crapchd.cdbccxlt
+                                BY crapchd.nrdolote:
 
            IF  crapchd.inchqcop = 1  THEN 
                DO:   /*  Cheque da Cooperativa  */
@@ -452,17 +423,12 @@ PROCEDURE Impressao:
 
         END.  /*  for each crapchd */
 
-        
-
         IF   tot_qtcheque > 0  THEN   DO:
              DISPLAY STREAM str_1
                      /* res_qtchqcop */
-                     
                      /* res_vlchqcop */
-                     
                      tot_qtcheque 
                      tot_vlcheque 
-                     
                      /* res_dschqcop */
                      WITH FRAME f_resumo.
         END.

@@ -444,6 +444,7 @@ PROCEDURE valida-cheque-com-captura:
              RETURN "NOK".
          END.
 
+    /* Revitalizacao - Remocao de lotes
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper      AND
                        craplot.dtmvtolt = crapdat.dtmvtocd      AND /*15/06/2018 - Alterado para o campo dtmvctocd - Everton Deserto(AMCOM)*/
                        craplot.cdagenci = p-cod-agencia         AND
@@ -463,6 +464,7 @@ PROCEDURE valida-cheque-com-captura:
                             INPUT YES).
              RETURN "NOK".
          END.
+    */
 
     IF   l-achou-horario-corte  = YES   THEN
          DO:
@@ -764,6 +766,7 @@ PROCEDURE estorna-cheque-com-captura:
         END. /* FIM Verifica Horario de Corte */
 
     ASSIGN in99 = 0.
+    /* Revitalizacao - Remocao de lotes
     DO   WHILE TRUE:
          ASSIGN in99 = in99 + 1.
 
@@ -810,7 +813,8 @@ PROCEDURE estorna-cheque-com-captura:
                        END.
               END.
          LEAVE.
-    END.  /*  DO WHILE */
+    END.*/
+    /*  DO WHILE */
 
     IF   p-valor-dinheiro > 0   THEN
          DO:
@@ -962,10 +966,13 @@ PROCEDURE estorna-cheque-com-captura:
 
                   LEAVE.
              END.  /*  DO WHILE */
+             
+             /* Revitalizacao - Remocao de lotes
              ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                     craplot.qtinfoln  = craplot.qtinfoln - 1
                     craplot.vlcompcr  = craplot.vlcompcr - p-valor-dinheiro
                     craplot.vlinfocr  = craplot.vlinfocr - p-valor-dinheiro.
+             */
          END.
 
     IF  p-valor-cooperativa > 0  THEN
@@ -1058,10 +1065,12 @@ PROCEDURE estorna-cheque-com-captura:
                          RETURN "NOK".
                      END.
 
+                /* Revitalizacao - Remocao de lotes
                 ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                        craplot.qtinfoln  = craplot.qtinfoln - 1
                        craplot.vlcompcr  = craplot.vlcompcr - craplcm.vllanmto
                        craplot.vlinfocr  = craplot.vlinfocr - craplcm.vllanmto.
+                */
 
                 IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
                    RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
@@ -1223,11 +1232,13 @@ PROCEDURE estorna-cheque-com-captura:
                         RETURN "NOK".
                     END.
 
+                /* Revitalizacao - Remocao de lotes
                 ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                        craplot.qtinfoln  = craplot.qtinfoln - 1
                        craplot.vlcompcr  = craplot.vlcompcr - craplcm.vllanmto
                        craplot.vlinfocr  = craplot.vlinfocr - craplcm.vllanmto
                        p-valor           = p-valor + craplcm.vllanmto.
+                */
 
                 DELETE b-craplcm.
                 DELETE crapdpb.
@@ -1235,6 +1246,7 @@ PROCEDURE estorna-cheque-com-captura:
             END.
     END.
 
+    /* Revitalizacao - Remocao de lotes
     IF  craplot.vlcompdb = 0  AND
         craplot.vlinfodb = 0  AND
         craplot.vlcompcr = 0  AND
@@ -1242,6 +1254,7 @@ PROCEDURE estorna-cheque-com-captura:
         DELETE craplot.
     ELSE
         RELEASE craplot.
+    */
 
     RETURN "OK".
 
@@ -1467,12 +1480,14 @@ PROCEDURE verifica-crapchd:
                        END.
                   ELSE
                        DO:
+                           /*
                            ASSIGN craplot.qtcompln = craplot.qtcompln - 1
                                   craplot.qtinfoln = craplot.qtinfoln - 1
                                   craplot.vlcompdb = craplot.vlcompdb -
                                                      crablcm.vllanmto
                                   craplot.vlinfodb = craplot.vlinfodb -
                                                      crablcm.vllanmto.
+                           */
                            DELETE crablcm.
                        END.
               END.
@@ -1882,13 +1897,15 @@ PROCEDURE verifica-crapchd-coop:
 
                                   DELETE craplcx.
 
-                                  ASSIGN crabbcx.qtcompln = crabbcx.qtcompln - 1
+                                  ASSIGN crabbcx.qtcompln = crabbcx.qtcompln - 1.
+                                         /*
                                          craplot.qtcompln = craplot.qtcompln - 1
                                          craplot.qtinfoln = craplot.qtinfoln - 1
                                          craplot.vlcompdb = craplot.vlcompdb -
                                                             crablcm.vllanmto
                                          craplot.vlinfodb = craplot.vlinfodb -
                                                             crablcm.vllanmto.
+										 */
                                   DELETE crablcm.
 
                               END.
@@ -1969,13 +1986,15 @@ PROCEDURE verifica-crapchd-coop:
 
                                   DELETE craplcx.
 
-                                  ASSIGN crabbcx.qtcompln = crabbcx.qtcompln - 1
+                                  ASSIGN crabbcx.qtcompln = crabbcx.qtcompln - 1.
+                                         /*
                                          craplot.qtcompln = craplot.qtcompln - 1
                                          craplot.qtinfoln = craplot.qtinfoln - 1
                                          craplot.vlcompdb = craplot.vlcompdb -
                                                             crablcm.vllanmto
                                          craplot.vlinfodb = craplot.vlinfodb -
                                                             crablcm.vllanmto.
+										 */
                                   DELETE crablcm.
 
                               END.
@@ -1990,12 +2009,14 @@ PROCEDURE verifica-crapchd-coop:
                   ELSE
                   DO:
 
+                      /*
                       ASSIGN craplot.qtcompln = craplot.qtcompln - 1
                              craplot.qtinfoln = craplot.qtinfoln - 1
                              craplot.vlcompdb = craplot.vlcompdb -
                                                 crablcm.vllanmto
                              craplot.vlinfodb = craplot.vlinfodb -
                                                 crablcm.vllanmto.
+                      */
                       DELETE crablcm.
                   END.
               END.

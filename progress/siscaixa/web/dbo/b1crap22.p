@@ -1226,6 +1226,7 @@ PROCEDURE realiza-transferencia:
     DEF VAR aux_cdhisest                 AS INTE                NO-UNDO.
     DEF VAR aux_cdfvlcop                 AS INTE                NO-UNDO.
     DEF VAR h-b1wgen0153                 AS HANDLE              NO-UNDO.
+	DEF VAR aux_nrseqdig                 AS INTE                NO-UNDO.
 
     DEF BUFFER crabhis FOR craphis.
     DEF BUFFER crabcop FOR crapcop.
@@ -1385,7 +1386,7 @@ PROCEDURE realiza-transferencia:
                                   craplot.cdagenci = p-cod-agencia     AND
                                   craplot.cdbccxlt = 11                AND 
                                   craplot.nrdolote = i-nro-lote
-                                  EXCLUSIVE-LOCK NO-ERROR.
+                                  NO-LOCK NO-ERROR.
                     
                IF   NOT AVAIL craplot   THEN 
                      DO: 
@@ -1400,7 +1401,25 @@ PROCEDURE realiza-transferencia:
                                craplot.cdopecxa = p-cod-operador.
                     END.
 
-               ASSIGN p-nro-docto = craplot.nrseqdig + 1.               
+			   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+				/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+				RUN STORED-PROCEDURE pc_sequence_progress
+				aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+													,INPUT "NRSEQDIG"
+													,STRING(crabcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+													,INPUT "N"
+													,"").
+
+				CLOSE STORED-PROC pc_sequence_progress
+				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+				ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+									  WHEN pc_sequence_progress.pr_sequence <> ?.
+			   
+               ASSIGN p-nro-docto = aux_nrseqdig.
 
                /*--- Grava Autenticacao PG --*/
                RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
@@ -1438,7 +1457,7 @@ PROCEDURE realiza-transferencia:
                                   craplcm.cdagenci = INTE(p-cod-agencia)     AND
                                   craplcm.cdbccxlt = 11                      AND
                                   craplcm.nrdolote = i-nro-lote              AND
-                                  craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                  craplcm.nrseqdig = aux_nrseqdig
                                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
                
                IF   AVAIL craplcm   THEN 
@@ -1532,14 +1551,23 @@ PROCEDURE realiza-transferencia:
                IF  VALID-HANDLE(h-b1wgen0200) THEN
                    DELETE PROCEDURE h-b1wgen0200.
 
-               ASSIGN   craplot.nrseqdig = craplot.nrseqdig + 1
-                        craplot.qtcompln = craplot.qtcompln + 1
-                        craplot.qtinfoln = craplot.qtinfoln + 1
-                        craplot.vlcompdb = craplot.vlcompdb + p-valor
-                        craplot.vlinfodb = craplot.vlinfodb + p-valor
-                        aux_cdhisdeb     = 1014.
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+				/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+				RUN STORED-PROCEDURE pc_sequence_progress
+				aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+													,INPUT "NRSEQDIG"
+													,STRING(crabcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+													,INPUT "N"
+													,"").
+
+				CLOSE STORED-PROC pc_sequence_progress
+				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                
-               VALIDATE craplot.
+				ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+									  WHEN pc_sequence_progress.pr_sequence <> ?.
 
                /**** Lancamento conta destino ****/
                FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper        AND
@@ -1547,7 +1575,7 @@ PROCEDURE realiza-transferencia:
                                   craplcm.cdagenci = INTE(p-cod-agencia)     AND
                                   craplcm.cdbccxlt = 11                      AND
                                   craplcm.nrdolote = i-nro-lote              AND
-                                  craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                  craplcm.nrseqdig = aux_nrseqdig
                                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
                
                IF   AVAIL craplcm   THEN 
@@ -1670,11 +1698,6 @@ PROCEDURE realiza-transferencia:
                IF VALID-HANDLE(h-b1wgen0200) THEN
                   DELETE PROCEDURE h-b1wgen0200.
 
-               ASSIGN   craplot.nrseqdig  = craplot.nrseqdig + 1
-                        craplot.qtcompln  = craplot.qtcompln + 1
-                        craplot.qtinfoln  = craplot.qtinfoln + 1
-                        craplot.vlcompcr  = craplot.vlcompcr + p-valor
-                        craplot.vlinfocr  = craplot.vlinfocr + p-valor.
                VALIDATE craplot.
 
                RUN gera-log (INPUT p-cooper,

@@ -416,6 +416,7 @@ PROCEDURE valida-cheque-sem-captura.
         RETURN "NOK".
     END.
 
+    /* Revitalizacao - Remocao de lotes
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
                        craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
@@ -433,6 +434,7 @@ PROCEDURE valida-cheque-sem-captura.
                         INPUT YES).
           RETURN "NOK".
     END.
+    */
 
     RETURN "OK".
 
@@ -472,6 +474,7 @@ PROCEDURE estorna-cheque-sem-captura.
                              NO-LOCK NO-ERROR.
                
     ASSIGN in99 = 0.
+    /* Revitalizacao - Remocao de lotes
     DO  WHILE TRUE:
 
         ASSIGN in99 = in99 + 1.
@@ -515,7 +518,8 @@ PROCEDURE estorna-cheque-sem-captura.
              END.
         END.
         LEAVE.
-    END.  /*  DO WHILE */
+    END.*/
+    /*  DO WHILE */
 
     IF  p-valor-menor-praca > 0  THEN DO:
         ASSIGN c-docto = string(p-nrdocto) + "1".
@@ -654,10 +658,12 @@ PROCEDURE estorna-cheque-sem-captura.
             LEAVE.
         END.  /*  DO WHILE */
    
+        /* Revitalizacao - Remocao de lotes - 
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-menor-praca
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-menor-praca.
+        */
     END.
 
     IF  p-valor-maior-praca > 0 THEN DO: 
@@ -796,10 +802,12 @@ PROCEDURE estorna-cheque-sem-captura.
             LEAVE.
         END.  /*  DO WHILE */
      
+        /* Revitalizacao - Remocao de lotes
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-maior-praca
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-maior-praca.
+        */
     END.
 
     IF  p-valor-menor-fpraca > 0  THEN DO:
@@ -940,10 +948,12 @@ PROCEDURE estorna-cheque-sem-captura.
             LEAVE.
         END.  /*  DO WHILE */
     
+        /* Revitalizacao - Remocao de lotes
         ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                craplot.qtinfoln  = craplot.qtinfoln - 1
                craplot.vlcompcr  = craplot.vlcompcr - p-valor-menor-fpraca
                craplot.vlinfocr  = craplot.vlinfocr - p-valor-menor-fpraca.
+        */
     END.
 
     IF  p-valor-maior-fpraca > 0  THEN DO:
@@ -1087,12 +1097,15 @@ PROCEDURE estorna-cheque-sem-captura.
              LEAVE.
          END.  /*  DO WHILE */
            
+         /* Revitalizacao - Remocao de lotes
          ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
                 craplot.qtinfoln  = craplot.qtinfoln - 1
                 craplot.vlcompcr  = craplot.vlcompcr - p-valor-maior-fpraca
                 craplot.vlinfocr  = craplot.vlinfocr - p-valor-maior-fpraca.
+         */
    END.
 
+   /* Revitalizacao - Remocao de lotes
    IF  craplot.vlcompdb = 0 and
        craplot.vlinfodb = 0 and
        craplot.vlcompcr = 0 and
@@ -1100,6 +1113,7 @@ PROCEDURE estorna-cheque-sem-captura.
        DELETE craplot.
    ELSE
       RELEASE craplot.
+   */
 
    ASSIGN  p-valor    = p-valor-menor-praca  + 
                         p-valor-maior-praca  +

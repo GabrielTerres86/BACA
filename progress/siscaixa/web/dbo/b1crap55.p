@@ -1323,6 +1323,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
     DEF VAR flg_ci       AS LOG INIT NO         NO-UNDO.
     DEF VAR i-tplotmov   LIKE craplot.tplotmov  NO-UNDO.
     DEF VAR aux_dtrefere AS DATE                NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                NO-UNDO.
     /* P450 - Regulatório de crédito */
     DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
     DEF VAR aux_incrineg AS INT     NO-UNDO.
@@ -1471,7 +1472,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
-                       EXCLUSIVE-LOCK NO-ERROR.
+                       NO-LOCK NO-ERROR.
                        
     IF   NOT AVAIL craplot   THEN 
          DO:
@@ -1530,6 +1531,25 @@ PROCEDURE atualiza-pagto-cheque-liberado:
              RUN fontes/digbbx.p (INPUT  p-nro-conta,
                                   OUTPUT glb_dsdctitg,
                                   OUTPUT glb_stsnrcal).
+
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+              RUN STORED-PROCEDURE pc_sequence_progress
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                ,INPUT "NRSEQDIG"
+                                ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                ,INPUT "N"
+                                ,"").
+
+              CLOSE STORED-PROC pc_sequence_progress
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                          WHEN pc_sequence_progress.pr_sequence <> ?.
+
              /* P450 - Credito unificado */
              RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                         ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
@@ -1586,11 +1606,6 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 												INPUT YES).
 									RETURN "NOK".
                             END. 
-         
-               ASSIGN
-                    craplot.nrseqdig  = craplot.nrseqdig + 1 
-                    craplot.qtcompln  = craplot.qtcompln + 1
-                    craplot.qtinfoln  = craplot.qtinfoln + 1.
          END.
          
     IF   p-valor <> 0  AND      /* Cheque */
@@ -1603,6 +1618,25 @@ PROCEDURE atualiza-pagto-cheque-liberado:
              RUN fontes/digbbx.p (INPUT  p-nro-conta,
                                   OUTPUT glb_dsdctitg,
                                   OUTPUT glb_stsnrcal).
+             
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+              RUN STORED-PROCEDURE pc_sequence_progress
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                ,INPUT "NRSEQDIG"
+                                ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                ,INPUT "N"
+                                ,"").
+
+              CLOSE STORED-PROC pc_sequence_progress
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                          WHEN pc_sequence_progress.pr_sequence <> ?.
+             
              /* P450 - Credito unificado */                    
              RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                         ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
@@ -1660,14 +1694,8 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 									RETURN "NOK".
                                 
                             END. 
-                           
-             ASSIGN
-                    craplot.nrseqdig  = craplot.nrseqdig + 1 
-                    craplot.qtcompln  = craplot.qtcompln + 1
-                    craplot.qtinfoln  = craplot.qtinfoln + 1.
          END.
 
-       
         DELETE PROCEDURE h-b1wgen0200. 
 
     IF   p-valor <> 0   AND      /* Cheque */
@@ -1675,6 +1703,24 @@ PROCEDURE atualiza-pagto-cheque-liberado:
          DO:  /* Conta investimento */
              ASSIGN c-docto = c-docto-salvo + "2" /* deposito cheque liberado */
                     p-nrdocmto = INTE(c-docto).
+ 
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+              RUN STORED-PROCEDURE pc_sequence_progress
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                ,INPUT "NRSEQDIG"
+                                ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                ,INPUT "N"
+                                ,"").
+
+              CLOSE STORED-PROC pc_sequence_progress
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                          WHEN pc_sequence_progress.pr_sequence <> ?.
  
              CREATE craplci.
              ASSIGN craplci.cdcooper = crapcop.cdcooper
@@ -1686,10 +1732,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                     craplci.nrdocmto = p-nrdocmto
                     craplci.vllanmto = p-valor
                     craplci.cdhistor = 487
-                    craplci.nrseqdig = craplot.nrseqdig + 1 
-                    craplot.nrseqdig = craplot.nrseqdig + 1 
-                    craplot.qtcompln = craplot.qtcompln + 1
-                    craplot.qtinfoln = craplot.qtinfoln + 1.
+                    craplci.nrseqdig = aux_nrseqdig.
              VALIDATE craplci.
      
              /*----- Atualizar Saldo Conta Investimento */
@@ -1716,9 +1759,6 @@ PROCEDURE atualiza-pagto-cheque-liberado:
              VALIDATE crapsli.
          END.
           
-    ASSIGN craplot.vlcompcr  = craplot.vlcompcr + p-valor + p-valor1
-           craplot.vlinfocr  = craplot.vlinfocr + p-valor + p-valor1.
-
     FOR EACH w-compel  :
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper

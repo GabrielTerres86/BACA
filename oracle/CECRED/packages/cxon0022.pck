@@ -975,51 +975,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         vr_nro_lote:= 11000 + pr_nro_caixa;
         vr_flg_vertexto:= FALSE;
 
-        if not paga0001.fn_exec_paralelo then 
-        --Selecionar informacoes do lote ou cria-lo caso nao exista
-        pc_insere_lote (pr_cdcooper => rw_crabcop.cdcooper,
-                        pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                        pr_cdagenci => pr_cod_agencia,
-                        pr_cdbccxlt => 11,
-                        pr_nrdolote => vr_nro_lote,
-                        pr_cdoperad => pr_cod_operador,
-                        pr_nrdcaixa => pr_nro_caixa,
-                        pr_tplotmov => 1,
-                        pr_cdhistor => 0,
-                        pr_craplot  => rw_craplot_ori,
-                        pr_dscritic => vr_dscritic);
-                        
-        else
-          paga0001.pc_insere_lote_wrk(pr_cdcooper => rw_crabcop.cdcooper,
-                                      pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                      pr_cdagenci => pr_cod_agencia,
-                                      pr_cdbccxlt => 11,
-                                      pr_nrdolote => vr_nro_lote,
-                                      pr_cdoperad => pr_cod_operador,
-                                      pr_nrdcaixa => pr_nro_caixa,
-                                      pr_tplotmov => 1,
-                                      pr_cdhistor => 0,
-                                      pr_cdbccxpg => null,
-                                      pr_nmrotina => 'CXON0022.PC_REALIZA_TRANSFERENCIA');
-          
-          rw_craplot_ori.dtmvtolt := rw_crapdat.dtmvtocd;
-          rw_craplot_ori.cdagenci := pr_cod_agencia;
-          rw_craplot_ori.cdbccxlt := 11;
-          rw_craplot_ori.nrdolote := vr_nro_lote;
-          rw_craplot_ori.cdoperad := pr_cod_operador;
-               
-          rw_craplot_ori.nrseqdig := paga0001.fn_seq_parale_craplcm; 
-        end if;                                             
-        -- se encontrou erro ao buscar lote, abortar programa
-        IF vr_dscritic IS NOT NULL THEN
-          -- Desfaz as alterações
-          ROLLBACK TO real_trans;
-          --Levantar Excecao
+        /* Projeto Revitalizacao - Remocao de lote */
+        lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_crabcop.cdcooper
+                                  , pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                  , pr_cdagenci => pr_cod_agencia
+                                  , pr_cdbccxlt => 11
+                                  , pr_nrdolote => vr_nro_lote
+                                  , pr_cdoperad => pr_cod_operador
+                                  , pr_nrdcaixa => pr_nro_caixa
+                                  , pr_tplotmov => 1
+                                  , pr_cdhistor => 0
+                                  , pr_craplot => rw_craplot_rvt
+                                  , pr_dscritic => vr_dscritic);
+
+        if vr_dscritic is not null then
           RAISE vr_exc_erro;
-        END IF;
-                        
+        end if;
+
+        vr_nrseqdig := fn_sequence('CRAPLOT'
+						                      ,'NRSEQDIG'
+						                      ,''||rw_craplot_rvt.cdcooper||';'
+							                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_rvt.cdagenci||';'
+							                     ||rw_craplot_rvt.cdbccxlt||';'
+							                     ||rw_craplot_rvt.nrdolote);
+
         --Determinar numero documento
-        pr_nro_docto:= nvl(rw_craplot_ori.nrseqdig,0);
+        pr_nro_docto := vr_nrseqdig;
                                 
         /*--- Grava Autenticacao PG --*/
         CXON0000.pc_grava_autenticacao_internet (pr_cooper       => pr_cooper      --Codigo Cooperativa
@@ -1058,7 +1040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         ,pr_cdagenci => To_Number(pr_cod_agencia)
                         ,pr_cdbccxlt => 11
                         ,pr_nrdolote => vr_nro_lote
-                        ,pr_nrseqdig => nvl(rw_craplot_ori.nrseqdig,0) );
+                        ,pr_nrseqdig => vr_nrseqdig);
         --Posicionar no proximo registro
         FETCH cr_craplcm INTO rw_craplcm;
         --Se nao encontrar
@@ -1088,8 +1070,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_nrdocmto => pr_nro_docto,
                pr_vllanmto => pr_valor,
                pr_cdhistor => 1014,
-               pr_nrseqdig => nvl(rw_craplot_ori.nrseqdig,0),
-               pr_nrsequni => nvl(rw_craplot_ori.nrseqdig,0),
+               pr_nrseqdig => vr_nrseqdig,
+               pr_nrsequni => vr_nrseqdig,
                pr_nrdctabb => pr_nrdcontapara,
                pr_nrautdoc => nvl(vr_ult_sequencia_lcm,0),
                pr_cdpesqbb => 'CRAP22',
@@ -1187,50 +1169,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         
         -- Selecionar informacoes do lote ou cria-lo caso nao exista
         -- Necessario para incrementar nrseqdig
-        if not paga0001.fn_exec_paralelo then
-        pc_insere_lote (pr_cdcooper => rw_crabcop.cdcooper,
-                        pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                        pr_cdagenci => pr_cod_agencia,
-                        pr_cdbccxlt => 11,
-                        pr_nrdolote => vr_nro_lote,
-                        pr_cdoperad => pr_cod_operador,
-                        pr_nrdcaixa => pr_nro_caixa,
-                        pr_tplotmov => 1,
-                        pr_cdhistor => 0,
-                        pr_craplot  => rw_craplot_dst,
-                        pr_dscritic => vr_dscritic);
-         else
-                        
-           paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crabcop.cdcooper,
-                                        pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                        pr_cdagenci => pr_cod_agencia,
-                                        pr_cdbccxlt => 11,
-                                        pr_nrdolote => vr_nro_lote,
-                                        pr_cdoperad => pr_cod_operador,
-                                        pr_nrdcaixa => pr_nro_caixa,
-                                        pr_tplotmov => 1,
-                                        pr_cdhistor => 0,
-                                        pr_cdbccxpg => null,
-                                        pr_nmrotina => 'CXON0022.PC_REALIZA_TRANSFERENCIA');
-        
-           rw_craplot_dst.dtmvtolt := rw_crapdat.dtmvtocd;
-           rw_craplot_dst.cdagenci := pr_cod_agencia;
-           rw_craplot_dst.cdbccxlt := 11;
-           rw_craplot_dst.nrdolote := vr_nro_lote;
-           rw_craplot_dst.cdoperad := pr_cod_operador;
-           rw_craplot_dst.tplotmov := 1;
-           rw_craplot_dst.cdhistor := 0;
-           
-           rw_craplot_dst.nrseqdig := paga0001.fn_seq_parale_craplcm; 
-         end if;
-                        
-        -- se encontrou erro ao buscar lote, abortar programa
-        IF vr_dscritic IS NOT NULL THEN
-          -- Desfaz as alterações
-          ROLLBACK TO real_trans;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
+        vr_nrseqdig := fn_sequence('CRAPLOT'
+						                      ,'NRSEQDIG'
+						                      ,''||rw_craplot_rvt.cdcooper||';'
+							                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_rvt.cdagenci||';'
+							                     ||rw_craplot_rvt.cdbccxlt||';'
+							                     ||rw_craplot_rvt.nrdolote);
         
         --Selecionar informacoes lancamentos
         OPEN cr_craplcm (pr_cdcooper => rw_crapcop.cdcooper
@@ -1238,7 +1183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         ,pr_cdagenci => To_Number(pr_cod_agencia)
                         ,pr_cdbccxlt => 11
                         ,pr_nrdolote => vr_nro_lote
-                        ,pr_nrseqdig => Nvl(rw_craplot_dst.nrseqdig,0));
+                        ,pr_nrseqdig => vr_nrseqdig);
         --Posicionar no proximo registro
         FETCH cr_craplcm INTO rw_craplcm;
         --Se nao encontrar
@@ -1299,8 +1244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_nrdocmto => pr_nro_docto,
                pr_vllanmto => pr_valor,
                pr_cdhistor => 1015,
-               pr_nrseqdig => Nvl(rw_craplot_dst.nrseqdig,0),
-               pr_nrsequni => Nvl(rw_craplot_dst.nrseqdig,0),
+               pr_nrseqdig => vr_nrseqdig,
+               pr_nrsequni => vr_nrseqdig,
                pr_nrdctabb => pr_nrdcontade,
                pr_nrautdoc => nvl(vr_ult_sequencia,0),
                pr_cdpesqbb => 'CRAP22',
@@ -2301,6 +2246,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       END;
       
       -------> ATUALIZAR LOTES <--------- 
+	  if vr_nro_lote between 11000 and 11999 then
+        null;
+      else
       IF not PAGA0001.fn_exec_paralelo then 
       IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot_ori.rowid) = 1 THEN
         vr_dscritic:= 'Registro de lote '||rw_craplot_ori.nrdolote||' em uso. Tente novamente.';  
@@ -2354,6 +2302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           RAISE vr_exc_erro;
       END;
       END IF;
+	  end if;
+	  
   IF pr_flmobile = 1 THEN
     vr_cdorigem := 10; --> MOBILE
   ELSE 
@@ -3914,60 +3864,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
      
-     -- Verifica se existe lote
-     OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                       ,rw_dat_cop.dtmvtolt
-                       ,pr_cod_agencia   /* FIXO */
-                       ,11 /* FIXO */
-                       ,vr_i_nro_lote);
-     FETCH cr_existe_lot INTO rw_existe_lot;
-        IF cr_existe_lot%NOTFOUND THEN
-           -- Se nao existir cria a capa de lote
-           BEGIN
-              INSERT INTO craplot(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,tplotmov
-                                 ,nrdcaixa
-                                 ,cdopecxa
-                                 ,cdhistor
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_orig.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,pr_cod_agencia
-                     ,11
-                     ,vr_i_nro_lote
-                     ,1
-                     ,pr_nro_caixa
-                     ,pr_cod_operador
-                     ,0
-                     ,pr_cod_operador);
-           EXCEPTION
-              WHEN OTHERS THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Erro ao inserir na CRAPLOT: '||sqlerrm;
-                                  
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
+     /* Projeto Revitalizacao - Remocao de lote */
+     lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                               , pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                               , pr_cdagenci => pr_cod_agencia
+                               , pr_cdbccxlt => 11
+                               , pr_nrdolote => vr_i_nro_lote
+                               , pr_cdoperad => pr_cod_operador
+                               , pr_nrdcaixa => pr_nro_caixa
+                               , pr_tplotmov => 1
+                               , pr_cdhistor => 0
+                               , pr_craplot => rw_craplot_rvt
+                               , pr_dscritic => vr_dscritic);
 
-                 RAISE vr_exc_erro;
-           END;
-        END IF;
-     CLOSE cr_existe_lot;
+     if vr_dscritic is not null then
+       RAISE vr_exc_erro;
+     end if;
           
      /*** Criacao da CHD - Cheques Acolhidos  ***/
      FOR rw_verifica_mdw IN cr_verifica_mdw(rw_cod_coop_orig.cdcooper
@@ -4403,6 +4315,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
               vr_aux_cdhistor := 26;
             END IF;
             
+			vr_nrseqdig := fn_sequence('CRAPLOT'
+                                         ,'NRSEQDIG'
+                                         ,''||rw_craplot_rvt.cdcooper||';'
+                                          ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+                                          ||rw_craplot_rvt.cdagenci||';'
+                                          ||rw_craplot_rvt.cdbccxlt||';'
+                                          ||rw_craplot_rvt.nrdolote);
+			
             -- Chamada a LANC0001 -- 3
             /* Pagamento Cheque */
             LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
@@ -4415,7 +4335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                               ,pr_nrdocmto => TO_NUMBER(rw_verifica_mdw.nrcheque||rw_verifica_mdw.nrddigc3)
                                               ,pr_vllanmto => rw_verifica_mdw.vlcompel
                                               ,pr_cdhistor => vr_aux_cdhistor
-                                              ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                              ,pr_nrseqdig => vr_nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                                               ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
                                               ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                               ,pr_cdpesqbb => TO_CHAR('CRAP22,'||rw_verifica_mdw.cdopelib)
@@ -4448,54 +4368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
               RAISE vr_exc_erro;
 
             END IF;
-                        
-            -- Verifica se existe lote
-            OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,pr_cod_agencia /* FIXO */
-                              ,11 /* FIXO */
-                              ,vr_i_nro_lote);
-            FETCH cr_existe_lot INTO rw_existe_lot;
-               IF cr_existe_lot%FOUND THEN
-                  BEGIN
-                     UPDATE craplot lot
-                        SET lot.nrseqdig = lot.nrseqdig + 1
-                           ,lot.qtcompln = lot.qtcompln + 1
-                           ,lot.qtinfoln = lot.qtinfoln + 1
-                           ,lot.vlcompdb = lot.vlcompdb + rw_verifica_mdw.vlcompel
-                           ,lot.vlinfodb = lot.vlinfodb + rw_verifica_mdw.vlcompel
-                      WHERE lot.cdcooper = rw_cod_coop_orig.cdcooper
-                        AND lot.dtmvtolt = rw_dat_cop.dtmvtolt
-                        AND lot.cdagenci = pr_cod_agencia
-                        AND lot.cdbccxlt = 11
-                        AND lot.nrdolote = vr_i_nro_lote;             
-                  EXCEPTION
-                     WHEN OTHERS THEN
-                        pr_cdcritic := 0;
-                        pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                   
-                        cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                             ,pr_cdagenci => pr_cod_agencia
-                                             ,pr_nrdcaixa => pr_nro_caixa
-                                             ,pr_cod_erro => pr_cdcritic
-                                             ,pr_dsc_erro => pr_dscritic
-                                             ,pr_flg_erro => TRUE
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic); 
-                        -- Levantar excecao
-                        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                           pr_cdcritic := vr_cdcritic;
-                           pr_dscritic := vr_dscritic;
-                           RAISE vr_exc_erro;
-                        END IF;
-
-                        RAISE vr_exc_erro;
-                  END;               
-               END IF;
-            CLOSE cr_existe_lot;
-
          END IF;
-
      END LOOP; -- Fim do FOR CRAPMDW
      
      IF vr_de_valor_total = 0 THEN
@@ -6270,59 +6143,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
      
-     -- Verifica se existe lote
-     OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                       ,rw_dat_cop.dtmvtocd
-                       ,pr_cod_agencia   /* FIXO */
-                       ,11 /* FIXO */
-                       ,vr_i_nro_lote);
-     FETCH cr_existe_lot INTO rw_existe_lot;
-        IF cr_existe_lot%NOTFOUND THEN
-           -- Se nao existir cria a capa de lote
-           BEGIN
-              INSERT INTO craplot(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,tplotmov
-                                 ,nrdcaixa
-                                 ,cdopecxa
-                                 ,cdhistor
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_orig.cdcooper
-                     ,rw_dat_cop.dtmvtocd
-                     ,pr_cod_agencia
-                     ,11
-                     ,vr_i_nro_lote
-                     ,1
-                     ,pr_nro_caixa
-                     ,pr_cod_operador
-                     ,0
-                     ,pr_cod_operador);
-           EXCEPTION
-              WHEN OTHERS THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Erro ao inserir na CRAPLOT: '||sqlerrm;
-                                  
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
+     /* Projeto Revitalizacao - Remocao de lote */
+     lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                               , pr_dtmvtolt => rw_dat_cop.dtmvtocd
+                               , pr_cdagenci => pr_cod_agencia
+                               , pr_cdbccxlt => 11
+                               , pr_nrdolote => vr_i_nro_lote
+                               , pr_cdoperad => pr_cod_operador
+                               , pr_nrdcaixa => pr_nro_caixa
+                               , pr_tplotmov => 1
+                               , pr_cdhistor => 0
+                               , pr_craplot => rw_craplot_rvt
+                               , pr_dscritic => vr_dscritic);
 
-                 RAISE vr_exc_erro;
-           END;
-        END IF;
-     CLOSE cr_existe_lot;
+     if vr_dscritic is not null then
+       RAISE vr_exc_erro;
+     end if;
      
      /*** Criacao da CHD - Cheques Acolhidos  ***/
      FOR rw_verifica_mdw IN cr_verifica_mdw(rw_cod_coop_orig.cdcooper
@@ -6730,6 +6566,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   ELSE
                     vr_aux_cdhistor := 26;
                   END IF;
+				  
+				  vr_nrseqdig := fn_sequence('CRAPLOT'
+                                               ,'NRSEQDIG'
+                                               ,''||rw_craplot_rvt.cdcooper||';'
+                                                ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+                                                ||rw_craplot_rvt.cdagenci||';'
+                                                ||rw_craplot_rvt.cdbccxlt||';'
+                                                ||rw_craplot_rvt.nrdolote);
                   
                   -- Chamada a LANC0001 -- 6
                   LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
@@ -6742,7 +6586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                     ,pr_nrdocmto => TO_NUMBER(rw_verifica_mdw.nrcheque||rw_verifica_mdw.nrddigc3)
                                                     ,pr_vllanmto => rw_verifica_mdw.vlcompel
                                                     ,pr_cdhistor => vr_aux_cdhistor
-                                                    ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                    ,pr_nrseqdig => vr_nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                                                     ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
                                                     ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                     ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
@@ -6774,53 +6618,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                     RAISE vr_exc_erro;
                               
                   END IF;
-                  
-                  -- Verifica se existe lote
-                  OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                                    ,rw_dat_cop.dtmvtocd
-                                    ,pr_cod_agencia   /* FIXO */
-                                    ,11 /* FIXO */
-                                    ,vr_i_nro_lote);
-                  FETCH cr_existe_lot INTO rw_existe_lot;
-                     IF cr_existe_lot%FOUND THEN
-                        BEGIN
-                           UPDATE craplot lot
-                              SET lot.nrseqdig = lot.nrseqdig + 1
-                                 ,lot.qtcompln = lot.qtcompln + 1
-                                 ,lot.qtinfoln = lot.qtinfoln + 1
-                                 ,lot.vlcompdb = lot.vlcompdb + rw_verifica_mdw.vlcompel
-                                 ,lot.vlinfodb = lot.vlinfodb + rw_verifica_mdw.vlcompel
-                            WHERE lot.cdcooper = rw_cod_coop_orig.cdcooper
-                              AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                              AND lot.cdagenci = pr_cod_agencia
-                              AND lot.cdbccxlt = 11
-                              AND lot.nrdolote = vr_i_nro_lote;             
-                        EXCEPTION
-                           WHEN OTHERS THEN
-                              pr_cdcritic := 0;
-                              pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                               
-                              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                   ,pr_cdagenci => pr_cod_agencia
-                                                   ,pr_nrdcaixa => pr_nro_caixa
-                                                   ,pr_cod_erro => pr_cdcritic
-                                                   ,pr_dsc_erro => pr_dscritic
-                                                   ,pr_flg_erro => TRUE
-                                                   ,pr_cdcritic => vr_cdcritic
-                                                   ,pr_dscritic => vr_dscritic);
-                                                   
-                              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                 pr_cdcritic := vr_cdcritic;
-                                 pr_dscritic := vr_dscritic; 
-                                 RAISE vr_exc_erro;
-                              END IF;
-
-                              RAISE vr_exc_erro;
-                        END;                 
-                           
-                     END IF;
-                  CLOSE cr_existe_lot;
-                  
                ELSE -- Nao encontrou regsitro fdc
                  
                   IF cr_verifica_fdc%ISOPEN THEN
@@ -6899,14 +6696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                     RAISE vr_exc_erro;
                               END;
                               
-                              -- Verifica se existe lote
-                              OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                                                ,rw_dat_cop.dtmvtocd
-                                                ,pr_cod_agencia   /* FIXO */
-                                                ,11 /* FIXO */
-                                                ,vr_i_nro_lote);
-                              FETCH cr_existe_lot INTO rw_existe_lot;
-                                 IF cr_existe_lot%FOUND THEN
+                              
                                    
                                     /* Pagamento Cheque */
                                     IF  rw_verifica_fdc.tpcheque = 1  THEN
@@ -6914,6 +6704,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                     ELSE
                                       vr_aux_cdhistor := 26;
                                     END IF;
+									
+									vr_nrseqdig := fn_sequence('CRAPLOT'
+                                               ,'NRSEQDIG'
+                                               ,''||rw_craplot_rvt.cdcooper||';'
+                                                ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+                                                ||rw_craplot_rvt.cdagenci||';'
+                                                ||rw_craplot_rvt.cdbccxlt||';'
+                                                ||rw_craplot_rvt.nrdolote);
                                     
                                     -- Chamada a LANC0001 -- 7
                                     LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
@@ -6926,7 +6724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                       ,pr_nrdocmto => TO_NUMBER(rw_verifica_mdw.nrcheque||rw_verifica_mdw.nrddigc3)
                                                                       ,pr_vllanmto => rw_verifica_mdw.vlcompel
                                                                       ,pr_cdhistor => vr_aux_cdhistor
-                                                                      ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                                      ,pr_nrseqdig => vr_nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                                                                       ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
                                                                       ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                                       ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
@@ -6959,48 +6757,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                       RAISE vr_exc_erro;
                                                 
                                     END IF;                                    
-                                    
-                                    BEGIN
-                                       UPDATE craplot lot
-                                          SET lot.nrseqdig = lot.nrseqdig + 1
-                                             ,lot.qtcompln = lot.qtcompln + 1
-                                             ,lot.qtinfoln = lot.qtinfoln + 1
-                                             ,lot.vlcompdb = lot.vlcompdb + rw_verifica_mdw.vlcompel
-                                             ,lot.vlinfodb = lot.vlinfodb + rw_verifica_mdw.vlcompel
-                                        WHERE lot.cdcooper = rw_cod_coop_orig.cdcooper
-                                          AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                                          AND lot.cdagenci = pr_cod_agencia
-                                          AND lot.cdbccxlt = 11
-                                          AND lot.nrdolote = vr_i_nro_lote
-                                          AND lot.tplotmov = 1
-                                          AND lot.nrdcaixa = pr_nro_caixa
-                                          AND lot.cdopecxa = pr_cod_operador;             
-                                    EXCEPTION
-                                       WHEN OTHERS THEN
-                                          pr_cdcritic := 0;
-                                          pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                                           
-                                          cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                               ,pr_cdagenci => pr_cod_agencia
-                                                               ,pr_nrdcaixa => pr_nro_caixa
-                                                               ,pr_cod_erro => pr_cdcritic
-                                                               ,pr_dsc_erro => pr_dscritic
-                                                               ,pr_flg_erro => TRUE
-                                                               ,pr_cdcritic => vr_cdcritic
-                                                               ,pr_dscritic => vr_dscritic);
-
-                                          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                             pr_cdcritic := vr_cdcritic;
-                                             pr_dscritic := vr_dscritic; 
-                                             RAISE vr_exc_erro;
-                                          END IF;
-
-                                          RAISE vr_exc_erro;
-                                    END;                 
-                                       
-                                 END IF;
-                              CLOSE cr_existe_lot;
-                           
                            END IF;                       
                         CLOSE cr_verifica_tco;
                      
@@ -8809,60 +8565,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
      
-     -- Verifica se existe lote
-     OPEN cr_existe_lot(rw_cod_coop_orig.cdcooper
-                       ,rw_dat_cop.dtmvtolt
-                       ,pr_cod_agencia   /* FIXO */
-                       ,11 /* FIXO */
-                       ,vr_i_nro_lote);
-     FETCH cr_existe_lot INTO rw_existe_lot;
-        IF cr_existe_lot%NOTFOUND THEN
-           -- Se nao existir cria a capa de lote
-           BEGIN
-              INSERT INTO craplot(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,tplotmov
-                                 ,nrdcaixa
-                                 ,cdopecxa
-                                 ,cdhistor
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_orig.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,pr_cod_agencia
-                     ,11
-                     ,vr_i_nro_lote
-                     ,1
-                     ,pr_nro_caixa
-                     ,pr_cod_operador
-                     ,0
-                     ,pr_cod_operador);
-           EXCEPTION
-              WHEN OTHERS THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Erro ao inserir na CRAPLOT: '||sqlerrm;
-                                  
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic);
+     /* Projeto Revitalizacao - Remocao de lote */
+     lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                               , pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                               , pr_cdagenci => pr_cod_agencia
+                               , pr_cdbccxlt => 11
+                               , pr_nrdolote => vr_i_nro_lote
+                               , pr_cdoperad => pr_cod_operador
+                               , pr_nrdcaixa => pr_nro_caixa
+                               , pr_tplotmov => 1
+                               , pr_cdhistor => 0
+                               , pr_craplot => rw_craplot_rvt
+                               , pr_dscritic => vr_dscritic);
 
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-           END;
-        END IF;
-     CLOSE cr_existe_lot;
+     if vr_dscritic is not null then
+       RAISE vr_exc_erro;
+     end if;
      
      /*** Criacao da CHD - Cheques Acolhidos  ***/
      FOR rw_verifica_mdw IN cr_verifica_mdw(rw_cod_coop_orig.cdcooper
@@ -9591,6 +9309,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                          ELSE
                            vr_aux_cdhistor := 26;
                          END IF;
+						 
+						 vr_nrseqdig := fn_sequence('CRAPLOT'
+                                                      ,'NRSEQDIG'
+                                                      ,''||rw_craplot_rvt.cdcooper||';'
+                                                       ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+                                                       ||rw_craplot_rvt.cdagenci||';'
+                                                       ||rw_craplot_rvt.cdbccxlt||';'
+                                                       ||rw_craplot_rvt.nrdolote);
                          
                          -- Chamada a LANC0001 -- 11
                          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
@@ -9603,7 +9329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,pr_nrdocmto => TO_NUMBER(TO_CHAR(rw_verifica_mdw.nrcheque)||TO_CHAR(rw_verifica_mdw.nrddigc3)) 
                                                            ,pr_vllanmto => rw_verifica_mdw.vlcompel
                                                            ,pr_cdhistor => vr_aux_cdhistor
-                                                           ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                           ,pr_nrseqdig => vr_nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                                                            ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
                                                            ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                            ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
@@ -9634,41 +9360,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                            RAISE vr_exc_erro;
                          END IF;
-                         
-                         BEGIN
-                            UPDATE craplot lot
-                               SET lot.nrseqdig = lot.nrseqdig + 1
-                                  ,lot.qtcompln = lot.qtcompln + 1
-                                  ,lot.qtinfoln = lot.qtinfoln + 1
-                                  ,lot.vlcompdb = lot.vlcompdb + rw_verifica_mdw.vlcompel
-                                  ,lot.vlinfodb = lot.vlinfodb + rw_verifica_mdw.vlcompel
-                             WHERE lot.cdcooper = rw_cod_coop_orig.cdcooper
-                               AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                               AND lot.cdagenci = pr_cod_agencia
-                               AND lot.cdbccxlt = 11
-                               AND lot.nrdolote = vr_i_nro_lote;  
-                         EXCEPTION
-                            WHEN OTHERS THEN
-                               pr_cdcritic := 0;
-                               pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                                        
-                               cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                    ,pr_cdagenci => pr_cod_agencia
-                                                    ,pr_nrdcaixa => pr_nro_caixa
-                                                    ,pr_cod_erro => pr_cdcritic
-                                                    ,pr_dsc_erro => pr_dscritic
-                                                    ,pr_flg_erro => TRUE
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic); 
-                               IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                  pr_cdcritic := vr_cdcritic;
-                                  pr_dscritic := vr_dscritic; 
-                                  RAISE vr_exc_erro;
-                               END IF;
-
-                               RAISE vr_exc_erro;
-                         END;                 
-                                                    
                       END IF;                       
                    CLOSE cr_verifica_tco;
                      

@@ -401,6 +401,8 @@ PROCEDURE atualiza-cheque-sem-captura:
     DEF OUTPUT PARAM p-literal-autentica       AS CHAR.
     DEF OUTPUT PARAM p-ult-sequencia-autentica AS INTE.
     DEF OUTPUT PARAM p-nro-docto               AS INTE.
+
+    DEF VAR aux_nrseqdig                       AS INTE.
     DEF VAR h-b1wgen0200                       AS HANDLE NO-UNDO.
     DEF VAR aux_incrineg                       AS INT NO-UNDO.
     DEF VAR aux_cdcritic                       AS INT NO-UNDO.
@@ -511,13 +513,31 @@ PROCEDURE atualiza-cheque-sem-captura:
         DO:
             ASSIGN c-docto = c-docto-salvo + "1".
 
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                              ,INPUT "NRSEQDIG"
+                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                              ,INPUT "N"
+                              ,"").
+
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                        WHEN pc_sequence_progress.pr_sequence <> ?.
+
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
                                craplcm.dtmvtolt = crapdat.dtmvtocd      AND
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
-                               craplcm.nrseqdig = craplot.nrseqdig + 1 
+                               craplcm.nrseqdig = aux_nrseqdig
                                USE-INDEX craplcm3 NO-ERROR.
 
             IF  AVAIL craplcm THEN 
@@ -636,17 +656,29 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.nrdolote = i-nro-lote
                    crapdpb.vllanmto = p-valor-menor-praca
                    crapdpb.inlibera = 1.
-
-            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1 
-                   craplot.qtcompln = craplot.qtcompln + 1
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.vlcompcr = craplot.vlcompcr + p-valor-menor-praca
-                   craplot.vlinfocr = craplot.vlinfocr + p-valor-menor-praca.
         END.
         
     IF  p-valor-maior-praca > 0  THEN 
         DO:
             ASSIGN c-docto = c-docto-salvo + "2".
+        
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                              ,INPUT "NRSEQDIG"
+                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                              ,INPUT "N"
+                              ,"").
+
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                        WHEN pc_sequence_progress.pr_sequence <> ?.
         
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
@@ -654,7 +686,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
-                               craplcm.nrseqdig = craplot.nrseqdig + 1 
+                               craplcm.nrseqdig = aux_nrseqdig
                                USE-INDEX craplcm3 NO-ERROR.
                                                                         
             IF  AVAIL craplcm THEN 
@@ -773,17 +805,28 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.nrdolote = i-nro-lote
                    crapdpb.vllanmto = p-valor-maior-praca
                    crapdpb.inlibera = 1.
-   
-            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1 
-                   craplot.qtcompln = craplot.qtcompln + 1
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.vlcompcr = craplot.vlcompcr + p-valor-maior-praca
-                   craplot.vlinfocr = craplot.vlinfocr + p-valor-maior-praca.
         END.
 
     IF  p-valor-menor-fpraca > 0  THEN 
         DO:
             ASSIGN c-docto = c-docto-salvo + "3".
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                              ,INPUT "NRSEQDIG"
+                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                              ,INPUT "N"
+                              ,"").
+
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                        WHEN pc_sequence_progress.pr_sequence <> ?.
             
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
@@ -791,7 +834,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
-                               craplcm.nrseqdig = craplot.nrseqdig + 1 
+                               craplcm.nrseqdig = aux_nrseqdig
                                USE-INDEX craplcm3 NO-ERROR.
                                
             IF  AVAIL craplcm THEN 
@@ -910,17 +953,29 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.nrdolote = i-nro-lote
                    crapdpb.vllanmto = p-valor-menor-fpraca
                    crapdpb.inlibera = 1.
-   
-            ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
-                   craplot.qtcompln  = craplot.qtcompln + 1
-                   craplot.qtinfoln  = craplot.qtinfoln + 1
-                   craplot.vlcompcr  = craplot.vlcompcr + p-valor-menor-fpraca
-                   craplot.vlinfocr  = craplot.vlinfocr + p-valor-menor-fpraca.
         END.
         
     IF  p-valor-maior-fpraca > 0  THEN 
         DO:
             ASSIGN c-docto = c-docto-salvo + "4".
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                              ,INPUT "NRSEQDIG"
+                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                              ,INPUT "N"
+                              ,"").
+
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                        WHEN pc_sequence_progress.pr_sequence <> ?.
 
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
@@ -928,7 +983,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
-                               craplcm.nrseqdig = craplot.nrseqdig + 1 
+                               craplcm.nrseqdig = aux_nrseqdig
                                USE-INDEX craplcm3 NO-ERROR.
                                
             IF  AVAIL craplcm THEN 
@@ -1046,12 +1101,6 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.nrdolote = i-nro-lote
                    crapdpb.vllanmto = p-valor-maior-fpraca
                    crapdpb.inlibera = 1.
-   
-            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1 
-                   craplot.qtcompln = craplot.qtcompln + 1
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.vlcompcr = craplot.vlcompcr + p-valor-maior-fpraca
-                   craplot.vlinfocr = craplot.vlinfocr + p-valor-maior-fpraca.
         END.
 
    /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/

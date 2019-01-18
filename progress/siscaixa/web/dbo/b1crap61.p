@@ -710,6 +710,7 @@ PROCEDURE deposita_envelope_dinheiro:
     DEF VAR c-nome-titular2         AS CHAR                   NO-UNDO.
     DEF VAR in99                    AS INTE                   NO-UNDO.
     DEF VAR aux_returnvl            AS CHAR INIT "NOK"        NO-UNDO.
+    DEF VAR aux_nrseqdig            AS INTE                   NO-UNDO.
     
     DEF VAR h-b1wgen0200 AS HANDLE                                        NO-UNDO.
     DEF VAR aux_incrineg AS INT NO-UNDO.
@@ -910,7 +911,7 @@ PROCEDURE deposita_envelope_dinheiro:
                                       craplot.cdagenci = p-cod-agencia     AND
                                       craplot.cdbccxlt = 11                AND /* Fixo */
                                       craplot.nrdolote = i-nro-lote 
-                                      EXCLUSIVE-LOCK NO-ERROR.
+                                      NO-LOCK NO-ERROR.
                   
              IF NOT AVAIL craplot THEN 
                 DO: 
@@ -994,6 +995,24 @@ PROCEDURE deposita_envelope_dinheiro:
                                     "01" + 
                                     "1".
                 
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                    RUN STORED-PROCEDURE pc_sequence_progress
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                      ,INPUT "NRSEQDIG"
+                                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                      ,INPUT "N"
+                                      ,"").
+
+                    CLOSE STORED-PROC pc_sequence_progress
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                WHEN pc_sequence_progress.pr_sequence <> ?.
+                
                    /*--- Verifica se Lancamento ja Existe ---*/
                    FIND FIRST craplcm WHERE
                               craplcm.cdcooper = crapcop.cdcooper    AND
@@ -1001,7 +1020,7 @@ PROCEDURE deposita_envelope_dinheiro:
                               craplcm.cdagenci = p-cod-agencia       AND
                               craplcm.cdbccxlt = 11                  AND
                               craplcm.nrdolote = i-nro-lote          AND
-                              craplcm.nrseqdig = craplot.nrseqdig + 1 
+                              craplcm.nrseqdig = aux_nrseqdig
                               USE-INDEX craplcm3 NO-LOCK NO-ERROR.
                 
                    IF AVAIL craplcm THEN   
@@ -1086,15 +1105,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    
                    DELETE PROCEDURE h-b1wgen0200.      
                      
-                
-                   ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-                          craplot.qtcompln  = craplot.qtcompln + 1
-                          craplot.qtinfoln  = craplot.qtinfoln + 1
-                          craplot.vlcompcr  = craplot.vlcompcr + 
-                                              p-vlcomput
-                          craplot.vlinfocr  = craplot.vlinfocr +  
-                                              p-vlcomput
-                          crapenl.cdsitenv = 1 /* Liberado */
+                   ASSIGN crapenl.cdsitenv = 1 /* Liberado */
                           crapenl.nrautdoc = p-ult-sequencia
                           crapenl.vldincmp = p-vlcomput. /*craplcm.vllanmto.*/
 
