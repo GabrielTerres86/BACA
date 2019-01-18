@@ -1,0 +1,238 @@
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa    : Tela ATENDA->DESCONTOS->TITULOS->BORDEROS - Script de carga
+    Projeto     : 403 - Desconto de Títulos - Release 6
+    Autor       : (Paulo Penteado GFT) 
+    Data        : 17/01/2019
+    Objetivo    : Realiza o cadastro das novas funcionalidades da tela ATENDA->DESCONTOS->TÍTULOS->BORDERÔS para as
+                  ações N = ANALISE, R = REJEITAR e L = LIBERACAO
+
+    SELECT * FROM craptel WHERE nmrotina = 'DSC TITS - BORDERO' AND nmdatela = 'ATENDA' AND cdcooper = 1
+    cdopptel: @     ,N      ,C       ,E       ,M        ,L        ,D       ,P    ,I      ,R       ,A      ,E      ,X
+    lsopptel: ACESSO,ANALISE,CONSULTA,EXCLUSAO,IMPRESSAO,LIBERACAO,PREJUIZO,PAGAR,INCLUIR,REJEITAR,ALTERAR,EXCLUIR,EXTRATO
+  ---------------------------------------------------------------------------------------------------------------------*/ 
+DECLARE 
+  TYPE Cooperativas IS TABLE OF integer;
+  coop Cooperativas := Cooperativas(1,5,10,13,14); -- EX: Cooperativas(1,3,7,11);
+  
+  pr_cdcooper INTEGER;
+BEGIN
+  FOR i IN coop.FIRST .. coop.LAST
+  LOOP
+    pr_cdcooper := coop(i);
+
+    INSERT INTO crapace
+        (nmdatela,
+         cddopcao,
+         cdoperad,   
+         nmrotina,   
+         cdcooper,   
+         nrmodulo,   
+         idevento,   
+         idambace)
+        SELECT 'ATENDA', 
+               'N', -- ANALISE
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               2
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND acn.cddopcao = 'I'
+           AND acn.nmdatela = 'LANBDT'
+           AND acn.idambace = 1
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'N'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 )
+         UNION    
+        SELECT 'ATENDA', 
+               'N', -- ANALISE
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               acn.idambace
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND trim(upper(ope.cdoperad)) IN ('F0030584', 'F0030978') -- permissões para a área de negócio 
+           AND acn.cddopcao = '@'
+           AND acn.nmdatela = 'ATENDA'
+           AND acn.nmrotina = 'DSC TITS - BORDERO'
+           AND acn.idambace = 2
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'N'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 );
+
+    INSERT INTO crapace
+        (nmdatela,
+         cddopcao,
+         cdoperad,   
+         nmrotina,   
+         cdcooper,   
+         nrmodulo,   
+         idevento,   
+         idambace)
+        SELECT 'ATENDA', 
+               'R', -- REJEITAR
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               2
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND acn.cddopcao = 'I'
+           AND acn.nmdatela = 'LANBDT'
+           AND acn.idambace = 1
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'R'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 )
+         UNION    
+        SELECT 'ATENDA', 
+               'R', -- REJEITAR
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               acn.idambace
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND trim(upper(ope.cdoperad)) IN ('F0030584', 'F0030978') -- permissões para a área de negócio 
+           AND acn.cddopcao = '@'
+           AND acn.nmdatela = 'ATENDA'
+           AND acn.nmrotina = 'DSC TITS - BORDERO'
+           AND acn.idambace = 2
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'R'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 );
+
+    INSERT INTO crapace
+        (nmdatela,
+         cddopcao,
+         cdoperad,   
+         nmrotina,   
+         cdcooper,   
+         nrmodulo,   
+         idevento,   
+         idambace)
+        SELECT 'ATENDA', 
+               'L', -- LIBERACAO
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               2
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND acn.cddopcao = 'I'
+           AND acn.nmdatela = 'LANBDT'
+           AND acn.idambace = 1
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'L'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 )
+         UNION    
+        SELECT 'ATENDA', 
+               'L', -- LIBERACAO
+               ope.cdoperad,
+               'DSC TITS - BORDERO',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               acn.idambace
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.cdcooper IN (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND trim(upper(ope.cdoperad)) IN ('F0030584', 'F0030978') -- permissões para a área de negócio 
+           AND acn.cddopcao = '@'
+           AND acn.nmdatela = 'ATENDA'
+           AND acn.nmrotina = 'DSC TITS - BORDERO'
+           AND acn.idambace = 2
+           AND NOT EXISTS( SELECT 1
+                             FROM crapace ace
+                            WHERE ace.nmdatela = 'ATENDA'
+                              AND ace.cddopcao = 'L'
+                              AND ace.cdoperad = acn.cdoperad
+                              AND ace.nmrotina = 'DSC TITS - BORDERO'
+                              AND ace.cdcooper = acn.cdcooper
+                              AND ace.nrmodulo = acn.nrmodulo
+                              AND ace.idevento = acn.idevento
+                              AND ace.idambace = 2 );
+  END LOOP;
+
+  COMMIT;
+end;
