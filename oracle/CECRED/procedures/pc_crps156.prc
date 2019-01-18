@@ -650,17 +650,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 
                   
             -- PRJ450 - 03/07/2018.
-            lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
-                                             , pr_cdagenci => rw_craplot.cdagenci
-                                             , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                             , pr_nrdolote => rw_craplot.nrdolote
+            lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                                             , pr_cdagenci => rw_craplot_rvt.cdagenci
+                                             , pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                                             , pr_nrdolote => rw_craplot_rvt.nrdolote
                                              , pr_nrdconta => rw_craprpp.nrdconta
-                                             , pr_nrdocmto => rw_craplot.nrseqdig
+                                             , pr_nrdocmto => vr_nrseqdig
                                              , pr_cdhistor => (CASE rw_craprpp.flgctain 
                                WHEN 1 /* true */ THEN 501 -- TRANSF. RESGATE POUP.PROGRAMADA DA C/I PARA C/C
                                ELSE 159 -- CR.POUP.PROGR
                                                                END)      
-                                             , pr_nrseqdig => rw_craplot.nrseqdig
+                                             , pr_nrseqdig => vr_nrseqdig
                                              , pr_vllanmto => vr_vlresgat
                                              , pr_nrdctabb => rw_craprpp.nrdconta
                                              --, pr_cdpesqbb => NVL(vr_cdpesqbb,0)
