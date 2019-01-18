@@ -374,7 +374,9 @@ end;
     vr_des_erro     VARCHAR2(1000);
     vr_tab_retorno  lanc0001.typ_reg_retorno;
     vr_incrineg     INTEGER;
-
+	
+	rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+    vr_nrseqdig    craplot.nrseqdig%type;
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS

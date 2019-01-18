@@ -5649,8 +5649,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 							                     ||100||';'
 							                     ||vr_nrdolote);
            
-           -- Gerar lancamento de Debito - Saldo da CC **/
-           BEGIN
         -- PRJ450 - 27/06/2018.
         select DECODE(pr_tpaplica,3,114,4,145,5,177,7,472,8,527,106)
           into vr_tpaplica_lcm 

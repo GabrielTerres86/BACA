@@ -683,6 +683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       vr_dscritic VARCHAR2(4000);
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
+	  
+	  rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+      vr_nrseqdig    craplot.nrseqdig%type;
       
       -- Procedimento para inserir o lote e não deixar tabela lockada
       PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -2868,6 +2871,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
   -- Guardar registro dstextab
   vr_dstextab craptab.dstextab%TYPE;
+  
+  rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+  vr_nrseqdig    craplot.nrseqdig%type;
 
   BEGIN
 
@@ -5141,6 +5147,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   
   -- Guardar registro dstextab  
   vr_dstextab craptab.dstextab%TYPE;
+  
+  rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+  vr_nrseqdig    craplot.nrseqdig%type;
 
   BEGIN
 
@@ -7581,7 +7590,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_nmtabela          VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
   vr_incrineg          INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
   vr_tabretor          LANC0001.typ_reg_retorno; --> Tabela de retorno 
-    
+  
+  rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+  vr_nrseqdig    craplot.nrseqdig%type;
+
   BEGIN
     
      -- Busca Cod. Coop de DESTINO
