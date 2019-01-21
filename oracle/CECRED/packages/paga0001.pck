@@ -5037,6 +5037,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_dtvigenc DATE;
       vr_cdfvlcop INTEGER;
       vr_flghbtrf NUMBER;
+      vr_nrseqdig craplcm.nrseqdig%TYPE :=0;
       
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -5120,7 +5121,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   ,craplot.cdagenci
                   ,craplot.cdbccxlt
                   ,craplot.nrdolote
-                  ,craplot.nrseqdig
                   ,craplot.tplotmov
                   ,craplot.cdoperad
                   ,craplot.cdhistor
@@ -5131,7 +5131,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   ,pr_cdagenci
                   ,pr_cdbccxlt
                   ,pr_nrdolote
-                  ,1  -- craplot.nrseqdig
                   ,pr_tplotmov
                   ,pr_cdoperad
                   ,pr_cdhistor
@@ -5139,7 +5138,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   ,pr_cdoperad)
              RETURNING  craplot.ROWID
                        ,craplot.nrdolote
-                       ,craplot.nrseqdig
                        ,craplot.cdbccxlt
                        ,craplot.tplotmov
                        ,craplot.dtmvtolt
@@ -5152,7 +5150,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                        ,craplot.vlinfocr
                    INTO rw_craplot_ctl.ROWID
                       , rw_craplot_ctl.nrdolote
-                      , rw_craplot_ctl.nrseqdig
                       , rw_craplot_ctl.cdbccxlt
                       , rw_craplot_ctl.tplotmov
                       , rw_craplot_ctl.dtmvtolt
@@ -5184,27 +5181,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                             '. ' ||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;                                                        
-          END;
-        ELSE
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          BEGIN
-          -- ou atualizar o nrseqdig para reservar posição
-          UPDATE craplot
-             SET craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-           WHERE craplot.ROWID = rw_craplot_ctl.ROWID
-           RETURNING craplot.nrseqdig INTO rw_craplot_ctl.nrseqdig;
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-              pr_cdcritic := 1035;
-              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                            'CRAPLOT(5):' ||
-                            ' NVL(craplot.nrseqdig,0) + 1' ||
-                            ' com ROWID:'    || rw_craplot_ctl.ROWID ||
-                            '. ' ||sqlerrm;
-              --Levantar Excecao
-              RAISE vr_exc_erro;                            
           END;
         END IF;
 
@@ -5358,6 +5334,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
 
+       vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                   ||to_char(pr_dtmvtocd,'DD/MM/RRRR')||';'
+                                   ||pr_cdagenci||';'
+                                   ||pr_cdbccxlt||';'
+                                   ||pr_nrdolote);
+
       if not fn_exec_paralelo then
       -- Procedimento para inserir o lote e não deixar tabela lockada
       pc_insere_lote (pr_cdcooper => pr_cdcooper,
@@ -5393,8 +5377,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         rw_craplot.cdoperad := pr_cdoperad;                   
         rw_craplot.tplotmov := 1;                   
         rw_craplot.cdhistor := 0;
-        rw_craplot.nrseqdig := fn_seq_parale_craplcm;                
-      
       end if;                        
 
       -- se encontrou erro ao buscar lote, abortar programa
@@ -5413,7 +5395,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_nro_caixa    => pr_nrdcaixa   --Numero do caixa
                                        ,pr_cod_operador => pr_cdoperad   --Codigo Operador
                                        ,pr_valor        => pr_vllanmto   --Valor da transacao
-                                       ,pr_docto        => rw_craplot.nrseqdig   --Numero documento
+                                       ,pr_docto        => vr_nrseqdig   --Numero documento
                                        ,pr_operacao     => TRUE           --Indicador Operacao Debito
                                        ,pr_status       => '1'            --Status da Operacao - Online
                                        ,pr_estorno      => FALSE          --Indicador Estorno
@@ -5532,8 +5514,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
              ,pr_nrdconta => pr_nrdconta
              ,pr_nrdctabb => pr_nrdconta
              ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
-             ,pr_nrdocmto => rw_craplot.nrseqdig
-             ,pr_nrseqdig => rw_craplot.nrseqdig
+             ,pr_nrdocmto => vr_nrseqdig
+             ,pr_nrseqdig => vr_nrseqdig
              ,pr_cdhistor => pr_cdhisdeb
              ,pr_vllanmto => pr_vllanmto
              ,pr_cdcoptfn => pr_cdcoptfn
@@ -5567,8 +5549,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                          ', nrdconta:' || pr_nrdconta || 
                          ', nrdctabb:' || pr_nrdconta || 
                          ', nrdctitg:' || gene0002.fn_mask(pr_nrdconta,'99999999') || 
-                         ', nrdocmto:' || rw_craplot.nrseqdig || 
-                         ', nrseqdig:' || rw_craplot.nrseqdig || 
+                         ', nrdocmto:' || vr_nrseqdig ||
+                         ', nrseqdig:' || vr_nrseqdig ||
                          ', cdhistor:' || pr_cdhisdeb || 
                          ', vllanmto:' || pr_vllanmto || 
                          ', cdcoptfn:' || pr_cdcoptfn || 
@@ -5581,13 +5563,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       END IF;   
       
       --Numero documento debito recebe sequencia lote
-      pr_nrdocdeb:= rw_craplot.nrseqdig;
+      pr_nrdocdeb:= vr_nrseqdig;
 
       /* Para INTERNET ou em caso de TAA executando em BATCH */
       IF  pr_cdorigem = 3 OR (pr_cdorigem = 4 AND pr_nrterfin = 0) THEN
 
         BEGIN
-          UPDATE craplcm SET craplcm.nrsequni = rw_craplot.nrseqdig
+          UPDATE craplcm SET craplcm.nrsequni = vr_nrseqdig
                             ,craplcm.nrautdoc = nvl(vr_nrautdoc,0)
           WHERE craplcm.ROWID = vr_rowid
           RETURNING craplcm.cdcooper
@@ -5610,7 +5592,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_cdcritic := 1035;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                            'CRAPLCM(6):' ||
-                           ' nrsequni:'  || rw_craplot.nrseqdig || 
+                           ' nrsequni:'  || vr_nrseqdig ||
                            ', nrautdoc:' || nvl(vr_nrautdoc,0) || 
                            ' com ROWID:' || vr_rowid || 
                            '. ' ||sqlerrm;
@@ -5663,6 +5645,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
+     
+     vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                   ||to_char(pr_dtmvtocd,'DD/MM/RRRR')||';'
+                                   ||pr_cdagenci||';'
+                                   ||pr_cdbccxlt||';'
+                                   ||pr_nrdolote);  
+     
      if not fn_exec_paralelo then
 
         -- Procedimento para reservar o nrseqdig
@@ -5699,7 +5690,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         rw_craplot.cdoperad := pr_cdoperad;                                    
         rw_craplot.tplotmov := 1;                   
         rw_craplot.cdhistor := 0;
-        rw_craplot.nrseqdig := fn_seq_parale_craplcm;                        
      end if;
 
 	    -- Incluido tratamento - 15/12/2017 - Chamado 779415
@@ -5952,7 +5942,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_nro_caixa    => pr_nrdcaixa   --Numero do caixa
                                        ,pr_cod_operador => pr_cdoperad   --Codigo Operador
                                        ,pr_valor        => pr_vllanmto   --Valor da transacao
-                                       ,pr_docto        => rw_craplot.nrseqdig   --Numero documento
+                                       ,pr_docto        => vr_nrseqdig   --Numero documento
                                        ,pr_operacao     => FALSE           --Indicador Operacao Debito
                                        ,pr_status       => '1'            --Status da Operacao - Online
                                        ,pr_estorno      => FALSE          --Indicador Estorno
@@ -6047,8 +6037,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
              ,pr_nrdconta => To_Number(pr_nrctatrf)
              ,pr_nrdctabb => To_Number(pr_nrctatrf)
              ,pr_nrdctitg => gene0002.fn_mask(pr_nrctatrf,'99999999')
-             ,pr_nrseqdig => rw_craplot.nrseqdig
-             ,pr_nrdocmto => rw_craplot.nrseqdig
+             ,pr_nrseqdig => vr_nrseqdig
+             ,pr_nrdocmto => vr_nrseqdig
              ,pr_cdhistor => pr_cdhiscre
              ,pr_vllanmto => pr_vllanmto
              ,pr_cdcoptfn => pr_cdcoptfn
@@ -6090,8 +6080,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                            ', nrdconta:'  || To_Number(pr_nrctatrf) ||
                            ', nrdctabb:'  || To_Number(pr_nrctatrf) ||
                            ', nrdctitg:'  || gene0002.fn_mask(pr_nrctatrf,'99999999') ||
-                           ', nrseqdig:'  || rw_craplot.nrseqdig ||
-                           ', nrdocmto:'  || rw_craplot.nrseqdig ||
+                           ', nrseqdig:'  || vr_nrseqdig ||
+                           ', nrdocmto:'  || vr_nrseqdig ||
                            ', cdhistor:'  || pr_cdhiscre ||
                            ', vllanmto:'  || pr_vllanmto ||
                            ', cdcoptfn:'  || pr_cdcoptfn ||
@@ -6103,14 +6093,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           RAISE vr_exc_erro;
       END;
       --Numero documento credito recebe sequencia lote
-      pr_nrdoccre:= rw_craplot.nrseqdig;
+      pr_nrdoccre:= vr_nrseqdig;
 
       /* Para INTERNET ou em caso de TAA executando em BATCH */
       IF  pr_cdorigem = 3 OR (pr_cdorigem = 4 AND pr_nrterfin = 0) THEN
 
         --Atualizar tabela lancamentos
         BEGIN
-          UPDATE craplcm SET craplcm.nrsequni = rw_craplot.nrseqdig
+          UPDATE craplcm SET craplcm.nrsequni = vr_nrseqdig
                             ,craplcm.nrautdoc = nvl(vr_nrautdoc,0)
           WHERE craplcm.ROWID = vr_rowid
           RETURNING craplcm.cdcooper
@@ -6133,7 +6123,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_cdcritic := 1035;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                            'CRAPLCM(10):' ||
-                           ' nrsequni:'   || rw_craplot.nrseqdig ||
+                           ' nrsequni:'   || vr_nrseqdig ||
                            ', nrautdoc:'  || nvl(vr_nrautdoc,0) ||
                            ' com ROWID:'  || vr_rowid|| 
                            '. ' ||sqlerrm;
@@ -6335,10 +6325,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                           ,pr_cdbccxlt      => 100
                                           ,pr_nrdolote      => 10299
                                           ,pr_tpdolote      => 18
-                                          ,pr_nrdocmto      => rw_craplot.nrseqdig
+                                          ,pr_nrdocmto      => vr_nrseqdig
                                           ,pr_nrdctabb      => pr_nrdconta
                                           ,pr_nrdctitg      => GENE0002.fn_mask(pr_nrdconta,'99999999')
-                                          ,pr_cdpesqbb      => 'Fato gerador tarifa:' || TO_CHAR(rw_craplot.nrseqdig)
+                                          ,pr_cdpesqbb      => 'Fato gerador tarifa:' || TO_CHAR(vr_nrseqdig)
                                           ,pr_cdbanchq      => 0
                                           ,pr_cdagechq      => 0
                                           ,pr_nrctachq      => 0
@@ -6371,43 +6361,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         END IF; 
 
       END IF;
-
-      -- Verificar se lote esta em lock
-      IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot.rowid) = 1 THEN
-        vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Atualiza o lote na craplot por ultimo na tentativa de diminuir tempo de lock
-      BEGIN
-        UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 2
-                          ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 2
-                          ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + pr_vllanmto
-                          ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + pr_vllanmto
-                          ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + pr_vllanmto
-                          ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + pr_vllanmto
-        WHERE craplot.ROWID = rw_craplot.ROWID
-        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-    EXCEPTION
-        WHEN OTHERS THEN
-          -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          vr_cdcritic := 1035;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'CRAPLOT(13):' ||
-                           ' qtinfoln:'   || 'Nvl(craplot.qtinfoln,0) + 2' ||
-                           ', qtcompln:'  || 'Nvl(craplot.qtcompln,0) + 2' ||
-                           ', vlinfodb:'  || 'Nvl(craplot.vlinfodb,0) + ' || pr_vllanmto ||
-                           ', vlcompdb:'  || 'Nvl(craplot.vlcompdb,0) + ' || pr_vllanmto ||
-                           ', vlinfocr:'  || 'Nvl(craplot.vlinfocr,0) + ' || pr_vllanmto ||
-                           ', vlcompcr:'  || 'Nvl(craplot.vlcompcr,0) + ' || pr_vllanmto ||
-                           ' com ROWID:'  || rw_craplot.ROWID || 
-                           '. ' ||sqlerrm;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      END;
 
 		IF pr_flmobile = 1 THEN
 			vr_cdorigem := 9;
