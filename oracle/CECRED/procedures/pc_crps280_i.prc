@@ -2360,6 +2360,9 @@ BEGIN
                        'wpr_cdcritic,' || chr(13) ||
                       'wpr_dscritic' || chr(13) ||
                       ');' || chr(13) ||
+                      '   if nvl(wpr_cdcritic,0) > 0 or trim(wpr_dscritic) is not null then' || chr(13) ||
+                      '      raise_application_error(-20500,wpr_cdcritic||''-''||wpr_dscritic);' || chr(13) ||
+                      '   END IF;'  || chr(13) ||
                       'end;';
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper --> Código da cooperativa
@@ -2883,6 +2886,7 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).vljura60 := rw_craptdb.vljura60;
               vr_tab_craptdb(vr_indice_tdb).vlpagiof := rw_craptdb.vlpagiof;
               vr_tab_craptdb(vr_indice_tdb).vlpagmta := rw_craptdb.vlpagmta;
+              vr_tab_craptdb(vr_indice_tdb).vlpagmra := rw_craptdb.vlpagmra;
               vr_tab_craptdb(vr_indice_tdb).nrctrdsc := vr_nrctrdsc_tdb;
               vr_tab_craptdb(vr_indice_tdb).vlatraso := rw_craptdb.vlatraso;
               vr_tab_craptdb(vr_indice_tdb).vlsaldodev := rw_craptdb.vlsaldodev;
@@ -3229,6 +3233,7 @@ BEGIN
                       vr_tab_craptdb(vr_indice_dados_tdb).vljura60 || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).vlpagiof || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).vlpagmta || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlpagmra || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).vlatraso || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev || ds_character_separador ||
@@ -3239,7 +3244,7 @@ BEGIN
         pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
                                        pr_nmtabmemoria => 'VR_TAB_CRAPTDB',
                                        pr_dtmvtolt     => pr_rw_crapdat.dtmvtolt,
-                                       pr_cdagenci     => vr_tab_dados_epr(vr_indice_dados_tdb).cdagenci,
+                                       pr_cdagenci     => 99999,
                                        pr_vlindice     => vr_indice_dados_tdb,
                                        pr_dscritic     => vr_ds_xml,
                                        pr_des_erro     => vr_dscritic);
@@ -3249,7 +3254,7 @@ BEGIN
       WHEN OTHERS THEN
         pr_des_erro := 'Erro PC_GRAVA_TAB_WRK_DADOS_TDB: ' || sqlerrm;
         dbms_output.put_line('erro :' || sqlerrm);
-
+        pc_internal_exception(pr_compleme => vr_indice_dados_tdb);
     END pc_grava_tab_wrk_dados_tdb;
 
     --awae: rotina para tabela mem de Titulos de Borderô
@@ -3311,9 +3316,13 @@ BEGIN
                    and wrk.cdagenci = 99999
                    and wrk.nrdconta = 9999999999) tab;
 
+       r_dados_tdb cr_dados_tdb%ROWTYPE;
+       vr_indice_tdbtmp r_dados_tdb.vr_indice%TYPE;
+
     BEGIN
       BEGIN
         FOR r_dados_tdb IN cr_dados_tdb LOOP
+          vr_indice_tdbtmp := r_dados_tdb.vr_indice;
           --Criar registro na vr_tab_craptdb
           vr_tab_craptdb(r_dados_tdb.vr_indice).nrdconta := r_dados_tdb.nrdconta;
           vr_tab_craptdb(r_dados_tdb.vr_indice).dtvencto := r_dados_tdb.dtvencto;
@@ -3351,7 +3360,8 @@ BEGIN
           vr_tab_craptdb(r_dados_tdb.vr_indice).vljura60 := r_dados_tdb.vljura60;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagiof := r_dados_tdb.vlpagiof;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmta := r_dados_tdb.vlpagmta;
-          vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmra := r_dados_tdb.nrctrdsc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmra := r_dados_tdb.vlpagmra;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrctrdsc := r_dados_tdb.nrctrdsc;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlatraso := r_dados_tdb.vlatraso;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlsaldodev := r_dados_tdb.vlsaldodev;
           vr_tab_craptdb(r_dados_tdb.vr_indice).cddlinha := r_dados_tdb.cddlinha;
@@ -3362,7 +3372,7 @@ BEGIN
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro pc_grava_tab_men_dados_tdb: ' || sqlerrm;
-
+          pc_internal_exception(pr_compleme => vr_indice_tdbtmp);
       END;
     END pc_grava_tab_men_dados_tdb;
 
@@ -4816,6 +4826,18 @@ BEGIN
                                                         ,pr_dscritic => pr_dscritic);
 
                      IF pr_dscritic IS NOT NULL  THEN
+                      pc_log_programa(PR_DSTIPLOG     => 'O',
+                                      PR_CDPROGRAMA   => pr_cdprogra,
+                                      pr_cdcooper     => pr_cdcooper,
+                                      pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                      pr_tpocorrencia => 4,
+                                      pr_dsmensagem   => 'ERRO01 - CYBER'||vr_tab_crapris(vr_des_chave_crapris).nrdconta||' '||
+                                                         vr_tab_crapris(vr_des_chave_crapris).nrctremp||' '||
+                                                         vr_cdorigem||' '||
+                                                         TO_CHAR(pr_rw_crapdat.dtmvtolt,'DD/MM/RRRR'),
+                                      PR_IDPRGLOG     => vr_idlog_ini_ger);
+                        
+                     
                     RAISE vr_exc_erro;
                   END IF;
                 END IF;
@@ -4878,6 +4900,17 @@ BEGIN
                                                       ,pr_dscritic => pr_dscritic);
 
                   IF pr_dscritic IS NOT NULL  THEN
+                      pc_log_programa(PR_DSTIPLOG     => 'O',
+                                      PR_CDPROGRAMA   => pr_cdprogra,
+                                      pr_cdcooper     => pr_cdcooper,
+                                      pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                      pr_tpocorrencia => 4,
+                                      pr_dsmensagem   => 'ERRO01 - CYBER'||vr_tab_crapris(vr_des_chave_crapris).nrdconta||' '||
+                                                         vr_tab_crapris(vr_des_chave_crapris).nrctremp||' '||
+                                                         1||' '||
+                                                         TO_CHAR(pr_rw_crapdat.dtmvtolt,'DD/MM/RRRR'),
+                                      PR_IDPRGLOG     => vr_idlog_ini_ger);
+                    
                   RAISE vr_exc_erro;
                 END IF;
               END IF;
@@ -4934,6 +4967,17 @@ BEGIN
                                                          ,pr_nrtitulo => vr_tab_craptdb(vr_indice_dados_tdb).nrtitulo  --> Numero do titulo em atraso no cyber
                                                          ,pr_dscritic => pr_dscritic);
                     IF pr_dscritic IS NOT NULL  THEN
+                      pc_log_programa(PR_DSTIPLOG     => 'O',
+                                      PR_CDPROGRAMA   => pr_cdprogra,
+                                      pr_cdcooper     => pr_cdcooper,
+                                      pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                      pr_tpocorrencia => 4,
+                                      pr_dsmensagem   => 'ERRO01 - CYBER'||vr_tab_crapris(vr_des_chave_crapris).nrdconta||' '||
+                                                         vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc||' '||
+                                                         4||' '||
+                                                         TO_CHAR(pr_rw_crapdat.dtmvtolt,'DD/MM/RRRR'),
+                                      PR_IDPRGLOG     => vr_idlog_ini_ger);
+                      
                       RAISE vr_exc_erro;
             END IF;
                   END IF;
