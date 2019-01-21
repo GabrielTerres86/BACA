@@ -664,7 +664,8 @@ BEGIN
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                         
           end if;
                                        
-          IF nvl(vr_cdalinea,0) = 0 THEN
+         /* Não verificar saldo por solicitação da área de negócio 17/01/2019
+           IF nvl(vr_cdalinea,0) = 0 THEN
             OPEN cr_crapass(pr_cdcooper => pr_cdcoopch
                            ,pr_nrdconta => pr_nrctachq);
             FETCH cr_crapass INTO rw_crapass;
@@ -692,7 +693,7 @@ BEGIN
             ELSE   
                CLOSE cr_crapass;                            
             END IF;                              
-          END IF; 
+          END IF; */
         
           IF nvl(vr_cdalinea,0) > 0 THEN
             -- Lança movimento Devolução na conta do emitente

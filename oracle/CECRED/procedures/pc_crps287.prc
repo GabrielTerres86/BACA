@@ -420,6 +420,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_cop_vlchqcop NUMBER:= 0;
        vr_cop_vlchqban NUMBER:= 0;
        vr_cop_vlchqdev NUMBER:= 0;
+       vr_cop_vlchdvau NUMBER:= 0;
+       vr_cop_vlchqdpb NUMBER:= 0;
        vr_cop_vlcheque NUMBER:= 0;
        vr_cop_vlcredit NUMBER:= 0;
        vr_cop_vlsldant NUMBER:= 0;
@@ -1202,7 +1204,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              IF rw_crapcst.inchqcop = 1 THEN
                --Incrementa Valor Cheque
                 vr_tot_vlchqcrh:= Nvl(vr_tot_vlchqcrh,0) + rw_crapcst.vlcheque;
-                
+                vr_cop_vlchdvau:= Nvl(vr_cop_vlchdvau,0) + rw_crapcst.vlcheque;
                 pc_tabela_cheqdev(pr_cdcooper, 
                                   rw_crapcst.cdbanchq, 
                                   rw_crapcst.cdagechq, 
@@ -1489,39 +1491,43 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                      RAISE vr_last_chq;
                  END;
                  
-                 --Inserir tabela crapdpb (bloqueio do lançamento)
-                 BEGIN
-                   INSERT INTO crapdpb
-                   (crapdpb.nrdconta
-                   ,crapdpb.dtliblan
-                   ,crapdpb.cdhistor
-                   ,crapdpb.nrdocmto
-                   ,crapdpb.dtmvtolt
-                   ,crapdpb.cdagenci
-                   ,crapdpb.cdbccxlt
-                   ,crapdpb.nrdolote
-                   ,crapdpb.vllanmto
-                   ,crapdpb.inlibera
-                   ,crapdpb.cdcooper)
-                   VALUES
-                   (rw_craplcm.nrdconta
-                   ,vr_dtlibchq
-                   ,rw_craplcm.cdhistor
-                   ,rw_craplcm.nrdocmto
-                   ,rw_craplcm.dtmvtolt
-                   ,rw_craplcm.cdagenci
-                   ,rw_craplcm.cdbccxlt
-                   ,rw_craplcm.nrdolote
-                   ,rw_craplcm.vllanmto
-                   ,1
-                   ,pr_cdcooper);
-                 EXCEPTION
-                   WHEN others THEN
-                     vr_cdcritic:= 0;
-                     vr_des_erro:= 'Erro ao inserir na tabela crapdpb (cdhistor 356). '||SQLERRM;
-                     --Levantar Excecao
-					   RAISE vr_last_chq;
-                 END;
+                 vr_cop_vlchqdpb := rw_craplcm.vllanmto - Nvl(vr_cop_vlchdvau,0);
+                 
+                 IF nvl(vr_cop_vlchqdpb,0) > 0 THEN
+                   --Inserir tabela crapdpb (bloqueio do lançamento)
+                   BEGIN
+                     INSERT INTO crapdpb
+                     (crapdpb.nrdconta
+                     ,crapdpb.dtliblan
+                     ,crapdpb.cdhistor
+                     ,crapdpb.nrdocmto
+                     ,crapdpb.dtmvtolt
+                     ,crapdpb.cdagenci
+                     ,crapdpb.cdbccxlt
+                     ,crapdpb.nrdolote
+                     ,crapdpb.vllanmto
+                     ,crapdpb.inlibera
+                     ,crapdpb.cdcooper)
+                     VALUES
+                     (rw_craplcm.nrdconta
+                     ,vr_dtlibchq
+                     ,rw_craplcm.cdhistor
+                     ,rw_craplcm.nrdocmto
+                     ,rw_craplcm.dtmvtolt
+                     ,rw_craplcm.cdagenci
+                     ,rw_craplcm.cdbccxlt
+                     ,rw_craplcm.nrdolote
+                     ,vr_cop_vlchqdpb
+                     ,1
+                     ,pr_cdcooper);
+                   EXCEPTION
+                     WHEN others THEN
+                       vr_cdcritic:= 0;
+                       vr_des_erro:= 'Erro ao inserir na tabela crapdpb (cdhistor 356). '||SQLERRM;
+                       --Levantar Excecao
+               RAISE vr_last_chq;
+                   END;
+                 END IF;
                  
                END IF;
 
