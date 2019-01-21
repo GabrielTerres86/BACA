@@ -67,6 +67,34 @@ FUNCTION gzipDecompress(pr_dsmsgzip  IN VARCHAR2) RETURN VARCHAR2
   AS
   LANGUAGE JAVA NAME 'CipGZIPCompress.getDecompress(java.lang.String) return java.lang.String';
   
+-- Rotina para Criptografar e Compactar o arquivo CIP, gerado pela Ailos
+FUNCTION escritaArquivoPCPS(pr_nrserieCIP   IN VARCHAR2
+                           ,pr_nrserieAilos IN VARCHAR2
+                           ,pr_dschaveprv   IN VARCHAR2
+                           ,pr_dschavepub   IN VARCHAR2
+                           ,pr_dsarquivoXML IN VARCHAR2
+                           ,pr_dsarquivoCip IN VARCHAR2) RETURN VARCHAR2 AS 
+  LANGUAGE JAVA NAME 'CipRSAUtil.escritaArquivoPCPS(java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String) return java.lang.String';
+
+-- Rotina para Descriptografar e Descompactar o arquivo CIP, gerando um arquivo XML para leitura
+FUNCTION leituraArquivoPCPS(pr_nrserieCIP   IN VARCHAR2
+                           ,pr_nrserieAilos IN VARCHAR2
+                           ,pr_dschaveprv   IN VARCHAR2
+                           ,pr_dschavepub   IN VARCHAR2
+                           ,pr_dsarquivoCip IN VARCHAR2
+                           ,pr_dsarquivoXML IN VARCHAR2) RETURN VARCHAR2 AS 
+  LANGUAGE JAVA NAME 'CipRSAUtil.leituraArquivoPCPS(java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String
+                                                   ,java.lang.String) return java.lang.String';
+                           
 
 END CRYP0003;
 /
