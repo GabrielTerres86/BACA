@@ -573,6 +573,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                    ,pr_nrctrrpp => nvl(vr_nrctares,0)
                                    ,pr_dtdebito => rw_crapdat.dtmvtolt) 
       LOOP
+		-- Limpa variaveis de critica
+		vr_cdcritic := NULL;
+        vr_dscritic := NULL;
+
         --armazenando a situacao poupanca programada 
         vr_cdsitrpp := rw_craprpp.cdsitrpp;
 
@@ -704,9 +708,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
           IF rw_craprpp.vlprerpp <= vr_vlsldtot THEN
                 -- Inserir nova aplicação 
-              -- Leitura de carencias do produto informado
-              vr_cdcritic := NULL;
-              vr_dscritic := NULL;
+              -- Leitura de carencias do produto informado              
               apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                          ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
