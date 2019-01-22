@@ -3290,6 +3290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                             (Adriano).             
                   
                 15/05/2018 - Inclusão do código de crítica 1283, Prj. 427 - URA (Jean Michel)
+
+				07/12/2018 -  Não considerar limite de crédito nas aplicações RDC-PRÉ e PÓS - Rubens Lima (Mouts)
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -4101,7 +4103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             END IF;       
                                      
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-            IF pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp
             AND pr_cdcooper <> 3 THEN
                  
               -- Monta critica
@@ -4115,7 +4117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
           ELSE       
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-            IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre))  
+            IF pr_vllanmto > vr_tab_sald(vr_ind_sald).vlsddisp 
             AND pr_cdcooper <> 3 THEN
                  
               -- RDCPOS
