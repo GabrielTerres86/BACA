@@ -12316,7 +12316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             cdadmcrd,
                             tpcartao,
                             dtcancel,
-                            flgdebit)
+                            flgdebit,
+														flgprovi)
                         VALUES
                            (rw_crawcrd.cdcooper,
                             rw_crawcrd.nrdconta,
@@ -12332,7 +12333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.cdadmcrd,
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+														vr_flgprovi)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
