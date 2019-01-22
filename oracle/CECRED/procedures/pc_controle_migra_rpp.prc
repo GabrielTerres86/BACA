@@ -239,10 +239,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
           GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
           -- Executa a migraçao
           
-          cecred.pc_sleep(pr_cdcooper => pr_cdcooper
-                         ,pr_segundo  => 600);
-          
-          
           pc_crps156_migracao_rpp (pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => 0 -- todas
                                   ,pr_flgresta => 0 -- não
