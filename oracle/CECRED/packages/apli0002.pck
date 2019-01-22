@@ -4101,7 +4101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             END IF;       
                                      
             -- Verifica se o valor de lançamento é maior que o saldo disponível
-            IF (pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)
+            IF pr_vllanmto > (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre)
             AND pr_cdcooper <> 3 THEN
                  
               -- Monta critica
@@ -12517,7 +12517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   , pr_cdagenci => rw_craplot_rvt.cdagenci
                                                   , pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
                                                   , pr_nrdolote => rw_craplot_rvt.nrdolote
-                                                  , pr_nrdconta => rw_craplot_rvt.nrdconta
+                                                  , pr_nrdconta => rw_craprda.nrdconta
                                                   , pr_nrdocmto => vr_nrseqdig
                                                   , pr_cdhistor => NVL(vr_cdhistor,0)
                                                   , pr_nrseqdig => vr_nrseqdig
