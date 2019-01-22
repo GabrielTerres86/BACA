@@ -17,7 +17,7 @@ declare
 	
 	rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 	
-	vr_dtmvtolt DATE := to_date('10/01/2019', 'DD/MM/YYYY'); -- ******* DATA DOS LANÇAMENTOS ******
+	vr_dtmvtolt DATE := to_date('18/01/2019', 'DD/MM/YYYY'); -- ******* DATA DOS LANÇAMENTOS ******
 	vr_cdcritic NUMBER;
 	vr_dscritic VARCHAR(2000);
 begin
