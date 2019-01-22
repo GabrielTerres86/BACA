@@ -115,6 +115,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                         - Incluir a critica 143 - conta duplicada junto da critica 080
   --                           para não prosseguirmos com a inclusão do cartão pois o mesmo
   --                           ja possui cartão (Lucas Ranghetti #PRB0040493)
+	--
+  --             22/01/2019 - Implementação para contemplar cartão provisório na crps672 (Augusto Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -8660,6 +8662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_vllimcrd   crawcrd.vllimcrd%TYPE;                             --> Valor de limite de credito
       vr_tpdpagto   NUMBER          := 0;                              --> Tp de Pagto do cartão
       vr_flgdebcc   NUMBER          := 0;                              --> flg para debitar em conta
+			vr_flgprovi   crapcrd.flgprovi%TYPE;                             --> flg para cartão provisorio
       vr_flgprcrd   NUMBER          := 0;                              --> Primeiro cartão dessa Modalidade
       vr_nmextttl   crapttl.nmextttl%TYPE;                             --> Nome Titular
       vr_vlsalari   crapttl.vlsalari%TYPE;                             --> Salario
@@ -10820,6 +10823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END;
                 
                 vr_cdlimcrd := 0;
+								vr_flgprovi := 0; -- Inicialmente definimos como não provisorio
                 -- Agencia do banco
                 BEGIN 
                   vr_cdagebcb := to_number(substr(vr_des_text,333,4));
@@ -11032,6 +11036,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END IF;
                 
                 vr_nrdconta := vr_nrctatp2;
+								
+								vr_nmtitcrd := substr(vr_des_text, 57, 23);
+								-- Validamos se o nome do titular é 'CARTAO PROVISORIO'
+								IF nvl(TRIM(upper(vr_nmtitcrd)), ' ') = 'CARTAO PROVISORIO' THEN
+									vr_flgprovi := 1; -- Caso for, definimos o flag como provisorio
+								END IF;
                 
                 IF vr_tipooper IN (1,4) THEN
                   -- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
@@ -11950,7 +11960,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           cdadmcrd,
                           tpcartao,
                           dtcancel,
-                          flgdebit)
+                          flgdebit,
+													flgprovi)
                       VALUES
                          (rw_crawcrd.cdcooper,
                           rw_crawcrd.nrdconta,
@@ -11966,7 +11977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           rw_crawcrd.cdadmcrd,
                           rw_crawcrd.tpcartao,
                           rw_crawcrd.dtcancel,
-                          rw_crawcrd.flgdebit)
+                          rw_crawcrd.flgdebit,
+													vr_flgprovi)
                           RETURNING ROWID INTO rw_crapcrd.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -12062,7 +12074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             cdadmcrd,
                             tpcartao,
                             dtcancel,
-                            flgdebit)
+                            flgdebit,
+														flgprovi)
                         VALUES
                            (rw_crawcrd.cdcooper,
                             rw_crawcrd.nrdconta,
@@ -12078,7 +12091,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.cdadmcrd,
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+														vr_flgprovi)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
