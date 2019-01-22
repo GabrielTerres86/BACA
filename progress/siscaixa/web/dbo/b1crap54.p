@@ -797,8 +797,8 @@ PROCEDURE atualiza-cheque-avulso:
     DEF VAR aux_nrcartao AS DECI NO-UNDO.
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
     DEF VAR aux_indopera AS INTE NO-UNDO.
-	DEF VAR aux_dscampos AS CHAR NO-UNDO.
-	DEF VAR aux_tiposaque AS DECI NO-UNDO.
+	  DEF VAR aux_dscampos AS CHAR NO-UNDO.
+	  DEF VAR aux_tiposaque AS DECI NO-UNDO.
     DEF VAR aux_nrseqdig AS INTE NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
@@ -1531,7 +1531,8 @@ PROCEDURE atualiza-cheque-avulso-prejuizo:
     DEF VAR aux_idtipcar AS INTE NO-UNDO.
     DEF VAR aux_nrcartao AS DECI NO-UNDO.
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
-	DEF VAR aux_dscampos AS CHAR NO-UNDO.
+	  DEF VAR aux_dscampos AS CHAR NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
