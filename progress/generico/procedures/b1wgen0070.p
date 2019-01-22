@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0070.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
+    Data      : Abril/2010                  Ultima Atualizacao: 22/01/2019
     
     Dados referentes ao programa:
 
@@ -52,6 +52,10 @@
 				              que quando já exista o telefone informado apenas atualize 
 							  o registro existente assim como o sequencial e não deleta-lo 
 							  e inseri-lo novamente. (SD 854018 - Kelvin)
+				
+				 22/01/2019 - Ajuste realizado para que caso o telefone nao exista, seja
+							  criado um novo. (INC0030971 - Kelvin)
+							  
 .............................................................................*/
 
 
@@ -902,48 +906,72 @@ PROCEDURE gerenciar-telefone:
 								   craptfc.tptelefo = par_tptelefo
 								   craptfc.cdseqtfc = aux_cdseqtfc.
 						END.
+					ELSE
+						DO:						
+							CREATE craptfc.
+							ASSIGN craptfc.cdcooper = par_cdcooper
+								   craptfc.nrdconta = par_nrdconta
+								   craptfc.idseqttl = par_idseqttl
+								   craptfc.cdseqtfc = aux_cdseqtfc
+								   craptfc.tptelefo = par_tptelefo
+								   craptfc.cdopetfn = IF  par_tptelefo = 2  THEN
+														  par_cdopetfn
+													  ELSE
+														  0
+								   craptfc.nrdddtfc = par_nrdddtfc
+								   craptfc.nrtelefo = par_nrtelefo
+								   craptfc.nrdramal = par_nrdramal
+								   craptfc.secpscto = CAPS(par_secpscto)
+								   craptfc.nmpescto = IF  par_tptelefo = 3  OR 
+														  par_tptelefo = 4  THEN 
+														  CAPS(par_nmpescto)
+													  ELSE
+														  ""
+								   craptfc.prgqfalt = par_prgqfalt
+								   craptfc.idsittfc = par_idsittfc
+								   craptfc.idorigem = par_idorigee.
+							VALIDATE craptfc.
+						END.
 
                 END. /* FIM par_idorigem = 4 */
-
-               
-                IF  par_idorigem <> 4 THEN 
+				ELSE 
 					DO:
-                CREATE craptfc.
-                ASSIGN craptfc.cdcooper = par_cdcooper
-                       craptfc.nrdconta = par_nrdconta
-                       craptfc.idseqttl = par_idseqttl
-                       craptfc.cdseqtfc = aux_cdseqtfc
-                       craptfc.tptelefo = par_tptelefo
-                       craptfc.cdopetfn = IF  par_tptelefo = 2  THEN
-                                              par_cdopetfn
-                                          ELSE
-                                              0
-                       craptfc.nrdddtfc = par_nrdddtfc
-                       craptfc.nrtelefo = par_nrtelefo
-                       craptfc.nrdramal = par_nrdramal
-                       craptfc.secpscto = CAPS(par_secpscto)
-                       craptfc.nmpescto = IF  par_tptelefo = 3  OR 
-                                              par_tptelefo = 4  THEN 
-                                              CAPS(par_nmpescto)
-                                          ELSE
-                                              ""
-                       craptfc.prgqfalt = par_prgqfalt
-                       craptfc.idsittfc = par_idsittfc
-                       craptfc.idorigem = par_idorigee.
-                VALIDATE craptfc.
+						CREATE craptfc.
+						ASSIGN craptfc.cdcooper = par_cdcooper
+							   craptfc.nrdconta = par_nrdconta
+							   craptfc.idseqttl = par_idseqttl
+							   craptfc.cdseqtfc = aux_cdseqtfc
+							   craptfc.tptelefo = par_tptelefo
+							   craptfc.cdopetfn = IF  par_tptelefo = 2  THEN
+													  par_cdopetfn
+												  ELSE
+													  0
+							   craptfc.nrdddtfc = par_nrdddtfc
+							   craptfc.nrtelefo = par_nrtelefo
+							   craptfc.nrdramal = par_nrdramal
+							   craptfc.secpscto = CAPS(par_secpscto)
+							   craptfc.nmpescto = IF  par_tptelefo = 3  OR 
+													  par_tptelefo = 4  THEN 
+													  CAPS(par_nmpescto)
+												  ELSE
+													  ""
+							   craptfc.prgqfalt = par_prgqfalt
+							   craptfc.idsittfc = par_idsittfc
+							   craptfc.idorigem = par_idorigee.
+						VALIDATE craptfc.
 
-                /** Cria registro vazio para executar buffer-compare **/
-                CREATE tt-craptfc-old. 
-                CREATE tt-craptfc-new.
-                BUFFER-COPY craptfc TO tt-craptfc-new. 
+						/** Cria registro vazio para executar buffer-compare **/
+						CREATE tt-craptfc-old. 
+						CREATE tt-craptfc-new.
+						BUFFER-COPY craptfc TO tt-craptfc-new. 
 
-                IF  par_nmdatela = "CONTAS"  AND
-                    par_flgerlog             THEN
-                    DO:
-                        { sistema/generico/includes/b1wgenalog.i }
-                        { sistema/generico/includes/b1wgenllog.i }
-                    END.
-            END.
+						IF  par_nmdatela = "CONTAS"  AND
+							par_flgerlog             THEN
+							DO:
+								{ sistema/generico/includes/b1wgenalog.i }
+								{ sistema/generico/includes/b1wgenllog.i }
+							END.
+					END.
             END.
         ELSE
             DO: 
