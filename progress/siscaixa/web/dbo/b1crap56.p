@@ -1577,7 +1577,7 @@ PROCEDURE atualiza-outros:
             ,INPUT aux_nrdconta                   /* par_nrdconta */
             ,INPUT p-nro-docto                    /* par_nrdocmto */
             ,INPUT p-cdhistor                     /* par_cdhistor */
-            ,INPUT craplot.nrseqdig + 1          /* par_nrseqdig */
+            ,INPUT aux_nrseqdig                   /* par_nrseqdig */
             ,INPUT p-valor                        /* par_vllanmto */
             ,INPUT aux_nrdconta                   /* par_nrdctabb */
             ,INPUT "CRAP056," + p-cod-liberador   /* par_cdpesqbb */

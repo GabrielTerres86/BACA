@@ -1559,7 +1559,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                          ,INPUT aux_nrdconta          /* par_nrdconta */
                          ,INPUT p-nrdocmto            /* par_nrdocmto */
                          ,INPUT 1                     /* par_cdhistor */
-                         ,INPUT craplot.nrseqdig + 1  /* par_nrseqdig */
+                         ,INPUT aux_nrseqdig          /* par_nrseqdig */
                          ,INPUT p-valor1              /* par_vllanmto */
                          ,INPUT p-nro-conta           /* par_nrdctabb */
                          ,INPUT "CRAP55"              /* par_cdpesqbb */
@@ -1646,7 +1646,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                          ,INPUT aux_nrdconta          /* par_nrdconta */
                          ,INPUT p-nrdocmto            /* par_nrdocmto */
                          ,INPUT 372                   /* par_cdhistor */
-                         ,INPUT craplot.nrseqdig + 1  /* par_nrseqdig */
+                         ,INPUT aux_nrseqdig          /* par_nrseqdig */
                          ,INPUT p-valor               /* par_vllanmto */
                          ,INPUT p-nro-conta           /* par_nrdctabb */
                          ,INPUT "CRAP55"              /* par_cdpesqbb */

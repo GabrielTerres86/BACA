@@ -1472,7 +1472,7 @@ PROCEDURE realiza-transferencia:
                       vr-cdcoptfn = crapcop.cdcooper 
                       vr-cdagetfn = p-cod-agencia
                       vr-nrterfin = 0
-                      vr-nrsequni = craplot.nrseqdig + 1
+                      vr-nrsequni = aux_nrseqdig
                       vr-nrautdoc = p-ult-sequencia-lcm.
                
                
@@ -1505,7 +1505,7 @@ PROCEDURE realiza-transferencia:
                   ,INPUT p-nrdcontade                   /* par_nrdconta */
                   ,INPUT p-nro-docto                    /* par_nrdocmto */
                   ,INPUT 1014  /*  Débito */            /* par_cdhistor */
-                  ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                  ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                   ,INPUT p-valor                        /* par_vllanmto */
                   ,INPUT p-nrdcontapara                 /* par_nrdctabb */
                   ,INPUT vr-cdpesqbb                    /* par_cdpesqbb */
@@ -1619,7 +1619,7 @@ PROCEDURE realiza-transferencia:
                       vr-cdcoptfn = crapcop.cdcooper 
                       vr-cdagetfn = p-cod-agencia
                       vr-nrterfin = 0
-                      vr-nrsequni = craplot.nrseqdig + 1
+                      vr-nrsequni = aux_nrseqdig
                       vr-nrautdoc = p-ult-sequencia.
                
                
@@ -1652,7 +1652,7 @@ PROCEDURE realiza-transferencia:
                   ,INPUT p-nrdcontapara                 /* par_nrdconta */
                   ,INPUT p-nro-docto                    /* par_nrdocmto */
                   ,INPUT 1015     /* Crédito */         /* par_cdhistor */
-                  ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                  ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                   ,INPUT p-valor                        /* par_vllanmto */
                   ,INPUT p-nrdcontade                   /* par_nrdctabb */
                   ,INPUT vr-cdpesqbb                    /* par_cdpesqbb */

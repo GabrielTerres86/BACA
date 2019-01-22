@@ -1614,20 +1614,38 @@ PROCEDURE atualiza-cheque-avulso-prejuizo:
                        INPUT YES).
         RETURN "NOK".
     END.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+    RUN STORED-PROCEDURE pc_sequence_progress
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                      ,INPUT "NRSEQDIG"
+                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                      ,INPUT "N"
+                      ,"").
+
+    CLOSE STORED-PROC pc_sequence_progress
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                WHEN pc_sequence_progress.pr_sequence <> ?.
 
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
                              craplcm.dtmvtolt = crapdat.dtmvtocd    AND 
                              craplcm.cdagenci = p-cod-agencia       AND
                              craplcm.cdbccxlt = 11                  AND
                              craplcm.nrdolote = i-nro-lote          AND
-                             craplcm.nrseqdig = craplot.nrseqdig + 1  
+                             craplcm.nrseqdig = aux_nrseqdig
                              USE-INDEX craplcm3 NO-ERROR.   
          
     IF  AVAIL craplcm  THEN DO:
         ASSIGN i-cod-erro  = 0
                c-desc-erro = "CRAPLCM(2)Existe - Avise INF " + 
                              STRING(i-nro-lote) + " - " + 
-                             STRING(craplot.nrseqdig + 1).
+                             STRING(aux_nrseqdig).
                              
         RUN cria-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -1651,22 +1669,11 @@ PROCEDURE atualiza-cheque-avulso-prejuizo:
                        22
                    ELSE  
                                    1030
-           craplcm.nrseqdig = craplot.nrseqdig + 1 
+           craplcm.nrseqdig = aux_nrseqdig
            craplcm.nrdctabb = p-nro-conta
            craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
            craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
    
-    ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
-           craplot.qtcompln  = craplot.qtcompln + 1
-           craplot.qtinfoln  = craplot.qtinfoln + 1
-           craplot.vlcompdb  = craplot.vlcompdb + p-valor
-           craplot.vlinfodb  = craplot.vlinfodb + p-valor.
-
-
-
-   
-
-
     /* ATUALIZA SALDO DA CONTA PREJUIZO */
     RUN STORED-PROCEDURE pc_atualiza_sld_lib_prj
         aux_handproc = PROC-HANDLE NO-ERROR

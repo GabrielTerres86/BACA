@@ -2646,7 +2646,7 @@ PROCEDURE atualiza-pagto-cheque:
           ,INPUT aux_nrdconta                   /* par_nrdconta */
           ,INPUT i_cheque                       /* par_nrdocmto */
           ,INPUT i-cdhistor                     /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT p-valor                        /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP53," + p-cod-liberador    /* par_cdpesqbb */
@@ -3247,10 +3247,10 @@ PROCEDURE atualiza-pagto-cheque-migrado:
           ,INPUT p-cod-agencia                  /* par_cdagenci */
           ,INPUT 11                             /* par_cdbccxlt */
           ,INPUT i-nro-lote                     /* par_nrdolote */
-          ,INPUT p-nro-conta-nova                   /* par_nrdconta */
+          ,INPUT p-nro-conta-nova               /* par_nrdconta */
           ,INPUT i_cheque                       /* par_nrdocmto */
           ,INPUT i-cdhistor                     /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT p-valor                        /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP53," + p-cod-liberador    /* par_cdpesqbb */

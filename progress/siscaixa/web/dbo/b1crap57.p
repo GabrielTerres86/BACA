@@ -1830,7 +1830,7 @@ PROCEDURE atualiza-deposito-com-captura:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INTE(c-docto)                  /* par_nrdocmto */
                         ,INPUT 1 /* Dinheiro */               /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vldepdin               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP57"                       /* par_cdpesqbb */
@@ -1919,7 +1919,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                 ,INPUT aux_nrdconta                   /* par_nrdconta */
                                 ,INPUT INTE(c-docto)                  /* par_nrdocmto */
                                 ,INPUT 372                            /* par_cdhistor */
-                                ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                                ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                                 ,INPUT crapmrw.vlchqipr               /* par_vllanmto */
                                 ,INPUT p-nro-conta                    /* par_nrdctabb */
                                 ,INPUT "CRAP57"                       /* par_cdpesqbb */

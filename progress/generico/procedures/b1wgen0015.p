@@ -4851,19 +4851,19 @@ PROCEDURE estorna-transferencia:
 
       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
         (INPUT par_dtmvtocd                   /* par_dtmvtolt */
-        ,INPUT craplot.cdagenci               /* par_cdagenci */
-        ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-        ,INPUT craplot.nrdolote               /* par_nrdolote */
+        ,INPUT par_cdagenci                   /* par_cdagenci */
+        ,INPUT 11                             /* par_cdbccxlt */
+        ,INPUT (11000 + par_nrdcaixa)         /* par_nrdolote */
         ,INPUT par_nrdconta                   /* par_nrdconta */
-        ,INPUT craplot.nrseqdig               /* par_nrdocmto */
+        ,INPUT aux_nrseqdig                   /* par_nrdocmto */
         ,INPUT aux_cdhistor                   /* par_cdhistor */
-        ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
         ,INPUT craplcm.vllanmto               /* par_vllanmto */
         ,INPUT par_nrdconta                   /* par_nrdctabb */
         ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrctadst,"99999999") /* par_cdpesqbb */
         ,INPUT 0                              /* par_vldoipmf */
         ,INPUT aux_sequenci                   /* par_nrautdoc */
-        ,INPUT craplot.nrseqdig               /* par_nrsequni */
+        ,INPUT aux_nrseqdig                   /* par_nrsequni */
         ,INPUT 0                              /* par_cdbanchq */
         ,INPUT 0                              /* par_cdcmpchq */
         ,INPUT 0                              /* par_cdagechq */
@@ -4994,19 +4994,19 @@ PROCEDURE estorna-transferencia:
 
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
             (INPUT par_dtmvtocd                   /* par_dtmvtolt */
-            ,INPUT craplot.cdagenci               /* par_cdagenci */
-            ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-            ,INPUT craplot.nrdolote               /* par_nrdolote */
+            ,INPUT par_cdagenci                   /* par_cdagenci */
+            ,INPUT 11                             /* par_cdbccxlt */
+            ,INPUT (11000 + par_nrdcaixa)         /* par_nrdolote */
             ,INPUT par_nrctadst                   /* par_nrdconta */
-            ,INPUT craplot.nrseqdig               /* par_nrdocmto */
+            ,INPUT aux_nrseqdig                   /* par_nrdocmto */
             ,INPUT aux_cdhistor                   /* par_cdhistor */
-            ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+            ,INPUT aux_nrseqdig                   /* par_nrseqdig */
             ,INPUT craplcm.vllanmto               /* par_vllanmto */
             ,INPUT par_nrctadst                   /* par_nrdctabb */
             ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrdconta,"99999999")/* par_cdpesqbb */
             ,INPUT 0                              /* par_vldoipmf */
-            ,INPUT aux_sequenci                 /* par_nrautdoc */
-            ,INPUT craplot.nrseqdig               /* par_nrsequni */
+            ,INPUT aux_sequenci                   /* par_nrautdoc */
+            ,INPUT aux_nrseqdig                   /* par_nrsequni */
             ,INPUT 0                              /* par_cdbanchq */
             ,INPUT 0                              /* par_cdcmpchq */
             ,INPUT 0                              /* par_cdagechq */

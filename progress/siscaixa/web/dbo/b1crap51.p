@@ -4423,7 +4423,7 @@ PROCEDURE atualiza-deposito-com-captura:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INTE(c-docto)                  /* par_nrdocmto */
                         ,INPUT 1                              /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vldepdin               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -4571,7 +4571,7 @@ PROCEDURE atualiza-deposito-com-captura:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INT(c-docto)                   /* par_nrdocmto */
                         ,INPUT 386                            /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -4734,7 +4734,7 @@ PROCEDURE atualiza-deposito-com-captura:
           ,INPUT aux_nrdconta                   /* par_nrdconta */
           ,INPUT INT(c-docto)                   /* par_nrdocmto */
           ,INPUT 2433                           /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -5724,7 +5724,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INTE(c-docto)                  /* par_nrdocmto */
                         ,INPUT 1                              /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vldepdin               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -5874,7 +5874,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INT(c-docto)                   /* par_nrdocmto */
                         ,INPUT 386                            /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -6037,7 +6037,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
           ,INPUT aux_nrdconta                   /* par_nrdconta */
           ,INPUT INT(c-docto)                   /* par_nrdocmto */
           ,INPUT 2433                           /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -6425,9 +6425,9 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
                      ASSIGN crablcm.cdcooper = crapcop.cdcooper
                             crablcm.dtmvtolt = crapdat.dtmvtocd
-                            crablcm.cdagenci = craplot.cdagenci
-                            crablcm.cdbccxlt = craplot.cdbccxlt
-                            crablcm.nrdolote = craplot.nrdolote
+                            crablcm.cdagenci = p-cod-agencia
+                            crablcm.cdbccxlt = 11
+                            crablcm.nrdolote = i-nro-lote
                             crablcm.dsidenti = p-identifica
                             crablcm.nrdconta = craptco.nrdconta
                             crablcm.nrdocmto = INT(STRING(crapmdw.nrcheque,"999999") +
@@ -7161,7 +7161,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INTE(c-docto)                  /* par_nrdocmto */
                         ,INPUT 1                              /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vldepdin               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -7309,7 +7309,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                         ,INPUT aux_nrdconta                   /* par_nrdconta */
                         ,INPUT INT(c-docto)                   /* par_nrdocmto */
                         ,INPUT 386                            /* par_cdhistor */
-                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
                         ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
                         ,INPUT p-nro-conta                    /* par_nrdctabb */
                         ,INPUT "CRAP51"                       /* par_cdpesqbb */
@@ -7469,7 +7469,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
           ,INPUT aux_nrdconta                   /* par_nrdconta */
           ,INPUT INT(c-docto)                   /* par_nrdocmto */
           ,INPUT 2433                           /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP51"                       /* par_cdpesqbb */

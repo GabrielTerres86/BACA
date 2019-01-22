@@ -5660,7 +5660,7 @@ END pc_trata_arquivo_ldl;
               -- Montar email
               vr_aux_dsdemail := 'Ola, houve rejeicao na cabine da seguinte operacao TEC Salario: <br><br>'
                               || ' Conta/Dv: ' || vr_aux_nrctacre || ' <br>'
-                              || ' PA: ' || rw_craplot.cdagenci || ' <br>'
+                              || ' PA: ' || rw_craplot_rvt.cdagenci || ' <br>'
                               || ' Dt.Credito: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
                               || ' <br>'
                               || ' Dt.Transferencia: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
@@ -6473,9 +6473,9 @@ END pc_trata_arquivo_ldl;
           vr_aux_vllanmto := NULL;
           OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_mensag.cdcooper
                               ,pr_dtmvtolt => vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                              ,pr_cdagenci => rw_craplot.cdagenci
-                              ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                              ,pr_nrdolote => rw_craplot.nrdolote
+                              ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                              ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                              ,pr_nrdolote => rw_craplot_rvt.nrdolote
                               ,pr_nrdctabb => vr_aux_nrctacre
                               ,pr_nrdocmto => vr_aux_nrdocmto);
           FETCH cr_craplcm_exis
@@ -6487,7 +6487,7 @@ END pc_trata_arquivo_ldl;
             IF vr_aux_CodMsg in ('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
               -- Montar textos de logs
               vr_log_msgderro := 'Lancamento ja existe! Conta: ' || vr_aux_nrctacre
-                              || ', Lote: ' || rw_craplot.nrdolote
+                              || ', Lote: ' || rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
               -- Conforme cabine
               IF vr_aux_tagCABInf THEN
@@ -6499,7 +6499,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               -- Montar textos de logs
               vr_tipolog := 'RECEBIDA';
-              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot.nrdolote
+              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
             END IF;
             -- Cria registro das movimentacoes no SPB
@@ -6527,7 +6527,7 @@ END pc_trata_arquivo_ldl;
               /* Verifica se a TED é destinada a uma conta administradora de recursos */
               OPEN cr_tbfin_rec_con(pr_cdcooper => rw_crapcop_mensag.cdcooper
                                     ,pr_nrdconta => vr_aux_nrctacre
-                                    ,pr_cdagenci => rw_craplot.cdagenci);
+                                    ,pr_cdagenci => rw_craplot_rvt.cdagenci);
               FETCH cr_tbfin_rec_con
               INTO rw_tbfin_rec_con;
 
@@ -6580,18 +6580,26 @@ END pc_trata_arquivo_ldl;
               vr_tab_retorno := NULL;
               vr_incrineg := 0;
               
+              vr_nrseqdig := fn_sequence('CRAPLOT'
+			                      ,'NRSEQDIG'
+			                      ,''||rw_crapcop_mensag.cdcooper||';'
+				                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+				                     ||rw_craplot_rvt.cdagenci||';'
+				                     ||rw_craplot_rvt.cdbccxlt||';'
+				                     ||rw_craplot_rvt.nrdolote);
+
               -- -- Gerar lançamento em conta
               LANC0001.pc_gerar_lancamento_conta
                             ( pr_cdcooper => rw_crapcop_mensag.cdcooper
-                             ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                             ,pr_cdagenci => rw_craplot.cdagenci
-                             ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                             ,pr_nrdolote => rw_craplot.nrdolote
+                             ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                             ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                             ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                             ,pr_nrdolote => rw_craplot_rvt.nrdolote
                              ,pr_nrdconta => vr_aux_nrctacre
                              ,pr_nrdctabb => vr_aux_nrctacre
                              ,pr_nrdocmto => vr_aux_nrdocmto
                              ,pr_cdhistor => vr_aux_cdhistor
-                             ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                             ,pr_nrseqdig => vr_nrseqdig
                              ,pr_cdpesqbb => vr_aux_cdpesqbb
                              ,pr_vllanmto => vr_aux_VlrLanc
                              ,pr_cdoperad => '1'
@@ -6613,24 +6621,8 @@ END pc_trata_arquivo_ldl;
                  -- Sair da rotina
                  RAISE vr_exc_saida;
                 END IF; 
-              
               END IF;  
 
-              -- Atualizar capa do Lote
-              BEGIN
-                UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                  ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                  ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                  ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-                WHERE craplot.ROWID = rw_craplot.ROWID;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
-                  -- Sair da rotina
-                  RAISE vr_exc_saida;
-              END;
-              --
               -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
               -- Estornar a tarifa da TED, somente se for devolução/rejeição de TED gerada no Ailos
               IF vr_aux_tagCABInfCCL

@@ -5654,14 +5654,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           into vr_tpaplica_lcm 
           from dual;
 		
-        lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
-                                         , pr_cdagenci => rw_Craplot.cdagenci
-                                         , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                         , pr_nrdolote => rw_craplot.nrdolote
+        lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                                         , pr_cdagenci => rw_craplot_rvt.cdagenci
+                                         , pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                                         , pr_nrdolote => rw_craplot_rvt.nrdolote
                                          , pr_nrdconta => pr_nrdconta
                                          , pr_nrdocmto => vr_nrdocmto
                                          , pr_cdhistor => vr_tpaplica_lcm -- 3(RDCA30) = 114 - 4(UNIFICACAO) = 145 - 5(RDCA60) = 177 - 7(RDCPRE) = 472 - 8(RDCPOS) = 527  
-                                         , pr_nrseqdig => rw_craplot.nrseqdig
+                                         , pr_nrseqdig => vr_nrseqdig
                                          , pr_vllanmto => pr_vllanmto
                                          , pr_nrdctabb => pr_nrdconta
                                          --, pr_cdpesqbb => lt_d_nmaprese
@@ -12515,15 +12515,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                  END IF;  
 
 		         -- PRJ450 - 27/06/2018.
-				 vr_nrseqdig := (rw_craplot.nrseqdig + 1);
-                 lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
-                                                  , pr_cdagenci => rw_craplot.cdagenci
-                                                  , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                                  , pr_nrdolote => rw_craplot.nrdolote
-                                                  , pr_nrdconta => rw_craprda.nrdconta
-                                                  , pr_nrdocmto => (rw_craplot.nrseqdig + 1)
+                 lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                                                  , pr_cdagenci => rw_craplot_rvt.cdagenci
+                                                  , pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                                                  , pr_nrdolote => rw_craplot_rvt.nrdolote
+                                                  , pr_nrdconta => rw_craplot_rvt.nrdconta
+                                                  , pr_nrdocmto => vr_nrseqdig
                                                   , pr_cdhistor => NVL(vr_cdhistor,0)
-                                                  , pr_nrseqdig => (rw_craplot.nrseqdig + 1)
+                                                  , pr_nrseqdig => vr_nrseqdig
                                                   , pr_vllanmto => NVL(vr_vlresgat,0)
                                                   , pr_nrdctabb => rw_craprda.nrdconta
                                                   , pr_cdpesqbb => NVL(vr_cdpesqbb,0)

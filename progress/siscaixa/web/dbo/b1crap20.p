@@ -1594,6 +1594,8 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    craplot.cdopecxa = p-cod-operador.
          
         END.
+        
+    ASSIGN aux_nrseqdig = craplot.nrseqdig + 1.
 
     IF i-cdhistor = 523 THEN
 		DO:

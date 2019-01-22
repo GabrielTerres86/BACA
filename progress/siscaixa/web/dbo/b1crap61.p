@@ -1060,7 +1060,7 @@ PROCEDURE deposita_envelope_dinheiro:
                                        ,INPUT aux_nrdconta            /* par_nrdconta */
                                        ,INPUT DECI(c-docto)           /* par_nrdocmto */
                                        ,INPUT 1                       /* par_cdhistor */
-                                       ,INPUT craplot.nrseqdig + 1    /* par_nrseqdig */
+                                       ,INPUT aux_nrseqdig            /* par_nrseqdig */
                                        ,INPUT p-vlcomput              /* par_vllanmto */
                                        ,INPUT p-nro-conta             /* par_nrdctabb */
                                        ,INPUT "CRAP51"                /* par_cdpesqbb */

@@ -588,7 +588,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               ,INPUT p-nro-conta                    /* par_nrdconta */
               ,INPUT inte(c-docto)                  /* par_nrdocmto */
               ,INPUT 403                            /* par_cdhistor */
-              ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+              ,INPUT aux_nrseqdig                   /* par_nrseqdig */
               ,INPUT p-valor-menor-praca            /* par_vllanmto */
               ,INPUT p-nro-conta                    /* par_nrdctabb */
               ,INPUT "CRAP52"                       /* par_cdpesqbb */
@@ -737,7 +737,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               ,INPUT p-nro-conta                    /* par_nrdconta */
               ,INPUT inte(c-docto)                  /* par_nrdocmto */
               ,INPUT 403                            /* par_cdhistor */
-              ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+              ,INPUT aux_nrseqdig                   /* par_nrseqdig */
               ,INPUT p-valor-maior-praca            /* par_vllanmto */
               ,INPUT p-nro-conta                    /* par_nrdctabb */
               ,INPUT "CRAP52"                       /* par_cdpesqbb */
@@ -885,7 +885,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               ,INPUT p-nro-conta                    /* par_nrdconta */
               ,INPUT inte(c-docto)                  /* par_nrdocmto */
               ,INPUT 404                            /* par_cdhistor */
-              ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+              ,INPUT aux_nrseqdig                   /* par_nrseqdig */
               ,INPUT p-valor-menor-fpraca           /* par_vllanmto */
               ,INPUT p-nro-conta                    /* par_nrdctabb */
               ,INPUT "CRAP52"                       /* par_cdpesqbb */
@@ -1034,7 +1034,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               ,INPUT p-nro-conta                    /* par_nrdconta */
               ,INPUT inte(c-docto)                  /* par_nrdocmto */
               ,INPUT 404                            /* par_cdhistor */
-              ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+              ,INPUT aux_nrseqdig                   /* par_nrseqdig */
               ,INPUT p-valor-maior-fpraca           /* par_vllanmto */
               ,INPUT p-nro-conta                    /* par_nrdctabb */
               ,INPUT "CRAP52"                       /* par_cdpesqbb */
