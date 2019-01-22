@@ -14341,7 +14341,7 @@ BEGIN
 
    end if;
 
- /* Historicos serao gerados pelo programa de forma dinamica
+ /* Historicos serao gerados pelo programa de forma dinamica */
 
  vr_cdhistor := 2726;
  vr_vllanmto :=0;
