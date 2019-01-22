@@ -1633,4 +1633,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         ROLLBACK;
       END IF;
   END pc_crps156;
-/
