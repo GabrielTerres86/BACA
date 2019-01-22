@@ -126,22 +126,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra||'.pc_agrupa_comandos_saida_erro', pr_action => NULL);
 
       -- Se aconteceu erro, gera o log e envia o erro por e-mail
-      pc_controla_log_batch(pr_cdcooper => pr_cdcooper
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
                            
       -- buscar destinatarios do email
-      vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_JOB');
+      vr_email_dest := gene0001.fn_param_sistema('CRED',vr_cdcooper,'ERRO_EMAIL_JOB');
 
       -- Gravar conteudo do email, controle com substr para não estourar campo texto
       vr_conteudo := substr('ERRO NA EXECUCAO JOB: '|| pr_dsjobnam          ||
-                     '<br>Cooperativa: '     || to_char(pr_cdcooper, '990')||
+                     '<br>Cooperativa: '     || to_char(vr_cdcooper, '990')||
                      '<br>Critica: '         || vr_dscritic,1,4000);
 
       vr_dscritic := NULL;
       
       -- Envia e-mail para o Operador
-      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+      gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
                                 ,pr_cdprogra        => vr_cdprogra
                                 ,pr_des_destino     => vr_email_dest
                                 ,pr_des_assunto     => 'ERRO NA EXECUCAO JOB: '|| pr_dsjobnam
@@ -154,11 +154,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
       IF TRIM(vr_dscritic) is not null THEN
         -- Ajuste codigo e descrição de critica - Chmd REQ0011757 - 13/04/2018
         vr_cdcritic := 1197;  -- change me
-        pc_controla_log_batch(pr_cdcooper => pr_cdcooper
+        pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
                                                                        ' - ' || vr_dscritic ||
-                                                                       '. pr_cdcooper:' || pr_cdcooper ||
+                                                                       '. pr_cdcooper:' || vr_cdcooper ||
                                                                        ', pr_dsjobnam:' || pr_dsjobnam);
       END IF;                                
       -- Retorna nome do módulo logado
@@ -172,7 +172,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
   END pc_agrupa_comandos_saida_erro;
    
   BEGIN --Principal   
-    -- Incluido nome do módulo logado - Chmd REQ0011757 - 13/04/2018
+    
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
     vr_cdcooper := pr_cdcooper;
@@ -180,6 +180,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
        vr_cdcooper := 3;
     -- Log de inicio de execucao
     END IF;
+
+	GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'Cooper: ' || vr_cdcooper);
+
     pc_controla_log_batch(pr_dstiplog => 'I'
                          ,pr_cdcooper => vr_cdcooper);
 
@@ -194,11 +197,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
                                                           ', pr_dsjobnam => '''||vr_jobname||'''); end;';
 
            -- Faz a chamada ao programa paralelo atraves de JOB
-           gene0001.pc_submit_job (pr_cdcooper  => rw_crapprm.cdcooper                            --> Código da cooperativa
+           gene0001.pc_submit_job (pr_cdcooper  => rw_crapprm.cdcooper                    --> Código da cooperativa
                                   ,pr_cdprogra  => vr_cdprogra                            --> Código do programa
                                   ,pr_dsplsql   => vr_dsplsql                             --> Bloco PLSQL a executar
-                                  ,pr_dthrexe   => TO_TIMESTAMP(TO_CHAR(SYSDATE + (NVL(rw_crapprm.cdcooper,0) / 24 / 60 / 60)
-                                                               ,'DD/MM/RRRR HH24:MI:SS')) --> Incrementar mais 1 segundo
+                                  ,pr_dthrexe   => SYSDATE + (10 / 24 / 60 / 60)          --> Incrementar mais 10 segundos
                                   ,pr_interva   => NULL                                   --> apenas uma vez
                                   ,pr_jobname   => vr_jobname                             --> Nome composto criado
                                   ,pr_des_erro  => vr_dscritic);
@@ -216,7 +218,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
               RAISE vr_exc_email;
            END IF;
            -- Retorna nome do módulo logado
-           GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
+           GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'Cooper: ' || vr_cdcooper);
       END LOOP;
     ELSE
        -- Execução da Job em si
@@ -236,7 +238,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
        IF TRIM(vr_dscritic) IS NULL THEN
 
           -- Retorna nome do módulo logado
-          GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
+          GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'Cooper: ' || vr_cdcooper);  
           -- Executa a migraçao
           
           pc_crps156_migracao_rpp (pr_cdcooper => pr_cdcooper
