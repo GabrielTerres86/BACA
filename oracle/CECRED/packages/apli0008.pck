@@ -115,6 +115,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
                                        ,pr_idorigem IN INTEGER                   --> Identificador da Origem
                                        ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE     --> Numero do contrato 
                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE     --> Data do movimento atual
+                                       ,pr_inrendim IN PLS_INTEGER default 1     --> Carrega o rendimento (pr_vlrebtap) [1 - Sim, 0 - Nao]
                                        ,pr_vlbascal OUT NUMBER                   --> Valor Base Total
                                        ,pr_vlsdtoap OUT NUMBER                   --> Valor de Saldo Total
                                        ,pr_vlsdrgap OUT NUMBER                   --> Valor do saldo disponível para resgate
@@ -1064,6 +1065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                        ,pr_idorigem IN INTEGER                   --> Identificador da Origem
                                        ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE     --> Numero do contrato 
                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE     --> Data do movimento atual
+                                       ,pr_inrendim IN PLS_INTEGER default 1     --> Carrega o rendimento (pr_vlrebtap) [1 - Sim, 0 - Nao]
                                        ,pr_vlbascal OUT NUMBER                   --> Valor Base Total
                                        ,pr_vlsdtoap OUT NUMBER                   --> Valor de Saldo Total
                                        ,pr_vlsdrgap OUT NUMBER                   --> Valor do saldo disponível para resgate
@@ -1084,7 +1086,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   -- Objetivo  : Procedure para calcular diversos valores de uma aplicacao programada a partir da RPP
   --             Ela é invocada a partir de outras procs. então não revalida cooperativa, cooperado, etc.
   -- Alteracoes:
-  -- 
+  --             16/01/2019 - Alterado para receber o parametro flag inrendim indicando se deve buscar
+  --             o rendimento, pois o processo pode ser lento e nem sempre sera utilizado (Anderson).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1231,34 +1234,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
           INTO rw_crapcpc;
       CLOSE cr_crapcpc;
       
-      -- Calcula o rendimento bruto total
-      pc_buscar_extrato_apl_prog (pr_cdcooper => pr_cdcooper
-                                 ,pr_cdoperad => pr_cdoperad
-                                 ,pr_nmdatela => pr_cdprogra
-                                 ,pr_idorigem => pr_idorigem
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_idseqttl => pr_idseqttl
-                                 ,pr_nrctrrpp => pr_nrctrrpp
-                                 ,pr_dtmvtolt_ini => rw_crapcpc.dtinirpp
-                                 ,pr_dtmvtolt_fim => pr_dtmvtolt
-                                 ,pr_idlstdhs => 1
-                                 ,pr_idgerlog => 0
-                                 ,pr_tab_extrato => vr_tab_extrato
-                                 ,pr_vlresgat => vr_vlresgat
-                                 ,pr_vlrendim => vr_vlrendim
-                                 ,pr_vldoirrf => vr_vlrdirrf
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-      IF pr_des_erro is null THEN
-          IF vr_tab_extrato.count >0 THEN
-            FOR vr_idx_extrato in vr_tab_extrato.first .. vr_tab_extrato.last LOOP
-                IF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsprap,rw_crapcpc.cdhsrdap) THEN -- Provisao do mês e rendimento
-                   pr_vlrebtap := pr_vlrebtap + vr_tab_extrato(vr_idx_extrato).vllanmto;  
-                ELSIF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsirap,rw_crapcpc.cdhsrvap) THEN -- IRRF e Ajuste Previsão
-                   pr_vlrebtap := pr_vlrebtap - vr_tab_extrato(vr_idx_extrato).vllanmto;  
-                END IF;
-            END LOOP;
-          END IF;
+      /* Se solicitado, busca o rendimento */
+      IF pr_inrendim = 1 THEN
+        -- Calcula o rendimento bruto total
+        pc_buscar_extrato_apl_prog (pr_cdcooper => pr_cdcooper
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_nmdatela => pr_cdprogra
+                                   ,pr_idorigem => pr_idorigem
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => pr_idseqttl
+                                   ,pr_nrctrrpp => pr_nrctrrpp
+                                   ,pr_dtmvtolt_ini => rw_crapcpc.dtinirpp
+                                   ,pr_dtmvtolt_fim => pr_dtmvtolt
+                                   ,pr_idlstdhs => 1
+                                   ,pr_idgerlog => 0
+                                   ,pr_tab_extrato => vr_tab_extrato
+                                   ,pr_vlresgat => vr_vlresgat
+                                   ,pr_vlrendim => vr_vlrendim
+                                   ,pr_vldoirrf => vr_vlrdirrf
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+        IF pr_des_erro is null and vr_dscritic is null THEN
+            IF vr_tab_extrato.count >0 THEN
+              FOR vr_idx_extrato in vr_tab_extrato.first .. vr_tab_extrato.last LOOP
+                  IF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsprap,rw_crapcpc.cdhsrdap) THEN -- Provisao do mês e rendimento
+                     pr_vlrebtap := pr_vlrebtap + vr_tab_extrato(vr_idx_extrato).vllanmto;  
+                  ELSIF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsirap,rw_crapcpc.cdhsrvap) THEN -- IRRF e Ajuste Previsão
+                     pr_vlrebtap := pr_vlrebtap - vr_tab_extrato(vr_idx_extrato).vllanmto;  
+                  END IF;
+              END LOOP;
+            END IF;
+        END IF;
       END IF;
     END;
   END pc_posicao_saldo_apl_prog;
@@ -1287,7 +1293,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   -- Objetivo  : Procedure para calcular o saldo de uma aplicacao programada a partir da RPP
   --             Ela é invocada a partir de outras procs. então não revalida cooperativa, cooperado, etc.
   -- Alteracoes:
-  -- 
+  --             16/01/2019 - Alterado para passar a flag inrendim = 0 para nao carregar o rendimento, pois nao 
+  --             o campo nao eh nem retornado no output desta procedure (Anderson).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1299,12 +1306,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
     BEGIN
       pc_posicao_saldo_apl_prog(pr_cdcooper => pr_cdcooper
                                ,pr_cdprogra => pr_cdprogra
-                                               ,pr_cdoperad => pr_cdoperad
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_idseqttl => pr_idseqttl
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_idseqttl => pr_idseqttl
                                ,pr_idorigem => pr_idorigem
                                ,pr_nrctrrpp => pr_nrctrrpp
-                                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_inrendim => 0             -- Nao precisa carregar rendimento
                                ,pr_vlbascal => vr_vlbascal
                                ,pr_vlsdtoap => vr_vlsdtoap
                                ,pr_vlsdrgap => pr_vlsdrdpp
@@ -1808,7 +1816,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 16/01/2019 - Remocao da chamada das procedures apli0006.pc_taxa_acumul_aplic_pos e _pre
+	                          pois seu output nao eh utilizado (Anderson).
     ..............................................................................*/                
       
       DECLARE
@@ -1842,8 +1851,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       vr_qtdiasir PLS_INTEGER := 0; -- Qtd de dias para calculo de faixa de IR
       vr_percirrf NUMBER;
       vr_txlancto NUMBER;
-      vr_txacumul NUMBER;
-      vr_txacumes NUMBER;
       
       vr_saldo_imp PLS_INTEGER := 0;   -- Saldo anterior impresso?
       vr_vlsdrdpp_ant NUMBER := 0;     -- Valor Saldo anterior
@@ -1915,39 +1922,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                          ,pr_nrdconta => pr_nrdconta       --> Nr. da conta
                                          ,pr_nrctrrpp => pr_nrctrrpp)      --> Nr. do contrato (RPP)
            LOOP
-                IF rw_craplac.idtippro = 1 THEN -- Pré-fixada
-                    -- Buscar as taxas acumuladas da aplicação
-                    apli0006.pc_taxa_acumul_aplic_pre(pr_cdcooper => pr_cdcooper,              --> Código da Cooperativa
-                                                      pr_txaplica => rw_craplac.txaplica,      --> Taxa da Aplicação
-                                                      pr_idtxfixa => rw_craplac.idtxfixa,      --> Taxa Fixa (1-SIM/2-NAO)
-                                                      pr_cddindex => rw_craplac.cddindex,      --> Código do Indexador
-                                                      pr_dtinical => rw_craplac.dtmvtolt_rac,  --> Data Inicial Cálculo
-                                                      pr_dtfimcal => pr_dtmvtolt_fim,          --> Data Final Cálculo 
-                                                      pr_txacumul => vr_txacumul,              --> Taxa acumulada durante o período total da aplicação
-                                                      pr_txacumes => vr_txacumes,              --> Taxa acumulada durante o mês vigente
-                                                      pr_cdcritic => vr_cdcritic,              --> Código da crítica
-                                                      pr_dscritic => vr_dscritic);             --> Descrição da crítica
-                                                                                                    
-                    IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                       RAISE vr_exc_saida;
-                    END IF;
-                ELSIF rw_craplac.idtippro = 2 THEN -- Pós-fixada
-                    -- Buscar as taxas acumuladas da aplicação
-                    apli0006.pc_taxa_acumul_aplic_pos(pr_cdcooper => pr_cdcooper,              --> Código da Cooperativa
-                                                      pr_txaplica => rw_craplac.txaplica,      --> Taxa da Aplicação
-                                                      pr_idtxfixa => rw_craplac.idtxfixa,      --> Taxa Fixa (1-SIM/2-NAO)
-                                                      pr_cddindex => rw_craplac.cddindex,      --> Código do Indexador
-                                                      pr_dtinical => rw_craplac.dtmvtolt_rac,  --> Data Inicial Cálculo 
-                                                      pr_dtfimcal => pr_dtmvtolt_fim,          --> Data Final Cálculo 
-                                                      pr_txacumul => vr_txacumul,              --> Taxa acumulada durante o período total da aplicação
-                                                      pr_txacumes => vr_txacumes,              --> Taxa acumulada durante o mês vigente
-                                                      pr_cdcritic => vr_cdcritic,              --> Código da crítica
-                                                      pr_dscritic => vr_dscritic);             --> Descrição da crítica
-
-                    IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                       RAISE vr_exc_saida;
-                    END IF;                                   
-                END IF;
                 -- Se parâmetro pr_idlstdhs for igual 1, listar todos os históricos
                 IF pr_idlstdhs = 1 THEN
                     vr_lshistor := to_char(rw_craplac.cdhsraap) || ',' || -- CR. Plano poup
