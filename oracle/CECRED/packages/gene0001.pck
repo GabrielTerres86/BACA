@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -38,6 +38,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --               e por programa - Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)
   --  18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
   --               Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)  
+	--
+	--  04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
+	--               commit da operacao (Adriano Nagasava - Supero)
+	--
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -111,6 +115,16 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   TYPE typ_tab_locktab IS
     TABLE OF typ_reg_locktab
     INDEX BY BINARY_INTEGER;
+
+  --> Grava log na tabela tbgen_prglog
+  PROCEDURE pc_grava_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                        ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                        ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                        ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                        ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                        ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                        ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL);
+
 
   /* Informação do modulo em execução na sessão */
   PROCEDURE pc_informa_acesso(pr_module IN VARCHAR2
@@ -260,6 +274,21 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                        ,pr_nmdatela IN craplgm.nmdatela%TYPE
                        ,pr_nrdconta IN craplgm.nrdconta%TYPE
                        ,pr_nrdrowid OUT ROWID);
+
+  /* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														);
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */
@@ -504,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -552,6 +581,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
   --                          pc_controle_exec                   
   --                          ( Belli - Envolti - REQ0027434 )
+	--
+	--             04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
+	--                          commit da operacao (Adriano Nagasava - Supero)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -564,6 +596,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /* Tratamento de erro */
   vr_des_erro VARCHAR2(32000);
   vr_exc_erro EXCEPTION;
+  --REQ0011019
+  vr_cdprogra      tbgen_prglog.cdprograma%type := 'GENE0001';
+
+  --> Grava log na tabela tbgen_prglog
+  PROCEDURE pc_grava_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                        ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                        ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                        ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                        ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                        ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                        ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL) IS
+    ------------------- ----------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Dezembro/2018           Ultima atualizacao: 06/12/2018
+    --  Chamado  : REQ0011019
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => 1, --cadeia
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_grava_log;
 
   /* Informação do modulo em execução na sessão */
   PROCEDURE pc_informa_acesso(pr_module IN VARCHAR2
@@ -670,7 +747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Junho/2014.                   Ultima atualizacao: --/--/----
+    --  Data     : Junho/2014.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -678,7 +755,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Objetivo  : Retornar a lista de usuários que estão lockando a tabela ou
     --               tabela e registro solicitados
     --
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
     DECLARE
       -- Busca dos locks
@@ -699,39 +777,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Retorno da OSCOmmand
       vr_typ_saida VARCHAR2(100);
       vr_des_saida VARCHAR2(4000);
+      vr_dsparame  VARCHAR2(2000);
+      vr_cdcritic  INTEGER;
+      vr_dscritic  VARCHAR2(4000);
+      
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_ver_lock');
+
+      vr_dsparame := ' pr_nmtabela:'||pr_nmtabela||
+                     ', pr_nrdrecid:'||pr_nrdrecid;
+
       -- Varrear a tabela de lock
       FOR rw_lock IN cr_lock LOOP
         -- Para cada registro:
         -- 1º Gerar novo sequenciador
         vr_cont := pt_tab_locktab.COUNT+1;
+
         -- 2º Gravar os dados basicos
         pt_tab_locktab(vr_cont).loginusr := rw_lock.loginusr;
         pt_tab_locktab(vr_cont).dsdevice := rw_lock.dsdevice;
         pt_tab_locktab(vr_cont).dtconnec := rw_lock.dtconnec;
+
         -- 3º Usar pwget para buscar o nome do usuario
         pc_OScommand_Shell(pr_des_comando => GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'SCRIPT_EXEC_SHELL') || ' pwget ' || rw_lock.loginusr
                           ,pr_typ_saida   => vr_typ_saida
                           ,pr_des_saida   => vr_des_saida);
+
         -- Se houve retorno OUT
         IF vr_typ_saida = 'OUT' THEN
           -- Copiar o username
           pt_tab_locktab(vr_cont).nmusuari := gene0002.fn_busca_entrada(1,gene0002.fn_busca_entrada(5,vr_des_saida,':'),'-');
-
         ELSE
           -- Usar vazio
           pt_tab_locktab(vr_cont).nmusuari := ' ';
         END IF;
       END LOOP;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_ver_lock');
+
       -- Se houver algum registro na tabela de lock
       IF pt_tab_locktab.count > 0 THEN
         pr_des_reto := 'OK';
       ELSE
         pr_des_reto := 'NOK';
       END IF;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         pr_des_reto := 'NOK';
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+        -- Erro
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_ver_lock. '||sqlerrm;
+        
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_ver_lock;
 
@@ -747,7 +855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Marcos(Supero)
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 11/12/2012
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -756,8 +864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Observações : Quando um parâmetro é independente de cooperativa,
     --                 ele possui o valor 0 neste campo
     --
-    --   Alteracoes:
-    --
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
     DECLARE
       -- Efetuar a busca do valor na tabela
@@ -769,13 +877,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
            AND prm.cdacesso = pr_cdacesso
          ORDER BY prm.cdcooper DESC; --> Trará a cooperativa passada primeiro, e caso não encontre nela, trará da 0(zero)
       vr_dsvlrprm crapprm.dsvlrprm%TYPE;
+      
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_param_sistema');
+      
       -- Busca descrição da critica cfme parâmetro passado
       OPEN cr_crapprm;
       FETCH cr_crapprm
        INTO vr_dsvlrprm;
       -- Apenas fechar o cursor
       CLOSE cr_crapprm;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       -- Retornar o valor encontrado
       RETURN vr_dsvlrprm;
     END;
@@ -792,7 +907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Janeiro/2015.                   Ultima atualizacao: 23/01/2015
+    --  Data     : Janeiro/2015.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -801,14 +916,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Observações : Procedimento criado para ser chamado via progress devido
     --                 a limitação para utilização de functions
     --
-    --   Alteracoes:
-    --
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
   BEGIN
-     pr_dsvlrprm := fn_param_sistema(pr_nmsistem => pr_nmsistem
-                                    ,pr_cdcooper => pr_cdcooper
-                                    ,pr_cdacesso => pr_cdacesso);
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_param_sistema');
+      
+    pr_dsvlrprm := fn_param_sistema(pr_nmsistem => pr_nmsistem
+                                   ,pr_cdcooper => pr_cdcooper
+                                   ,pr_cdacesso => pr_cdacesso);
 
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_param_sistema;
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
@@ -821,7 +941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Deborah/Edson
-    --  Data     : Setembro/1991.                   Ultima atualizacao: 12/01/2017
+    --  Data     : Setembro/1991.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -837,6 +957,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --
     --               12/01/2017 - #551192 Mudança para parâmetros opcionais cd e dscritic para centralizar
     --                            a lógica de captura dos erros (Carlos) 
+    --
+    --               06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
 
     DECLARE
@@ -847,28 +970,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          WHERE cri.cdcritic = pr_cdcritic;
       vr_dscritic crapcri.dscritic%TYPE;
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_busca_critica');
+       
       -- Se veio código de crítica e não veio descrição
       IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
     
-      -- Busca descrição da critica cfme parâmetro passado
-      OPEN cr_crapcri;
-      FETCH cr_crapcri
-       INTO vr_dscritic;
-      -- Se não encontrou nenhum registro
-      IF cr_crapcri%NOTFOUND THEN
-        -- Montar descrição padrão
-        vr_dscritic := pr_cdcritic || ' - Critica nao cadastrada!';
-      END IF;
-      -- Apenas fechar o cursor
-      CLOSE cr_crapcri;
-      -- Retornar a string montada
-      RETURN vr_dscritic;
+        -- Busca descrição da critica cfme parâmetro passado
+        OPEN cr_crapcri;
+        FETCH cr_crapcri
+         INTO vr_dscritic;
+        -- Se não encontrou nenhum registro
+        IF cr_crapcri%NOTFOUND THEN
+          -- Montar descrição padrão
+          vr_dscritic := pr_cdcritic || ' - Critica nao cadastrada!';
+        END IF;
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcri;
+        -- Retornar a string montada
+        RETURN vr_dscritic;
 
       END IF;      
-      
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
       -- Retorna apenas as descrição
       RETURN pr_dscritic;
-      
     END;
   END fn_busca_critica;
 
@@ -881,26 +1008,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Novembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: ---
     --   Objetivo  : Enviar texto ao DBMS_OUTPUT
     --
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
 
     DECLARE
       vr_string long default PR_DES_MENSAG;
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_print');
       -- Imprimir na tela quebrando o texto em 100 caracteres
       -- para evitar estouro de buffer definido por linha
       loop
        exit when vr_string is null;
        dbms_output.put_line( substr( vr_string, 1, 100 ) );
        vr_string := substr( vr_string, 101 );
-     end loop;
+      end loop;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         NULL;
@@ -918,7 +1050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Novembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -932,6 +1064,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --
     --   Alteracoes: 11/11/2016 - Ajustado para garantir não ficar lixo na variavel 
     --                            vr_dsdircop. (Odirlei-AMcom)
+    --
+    --               06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
     DECLARE
       -- Diretório base
@@ -941,6 +1076,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_dsdircop crapcop.dsdircop%TYPE;
       
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_diretorio');
+  
       -- Preencher Diretório base conforme tipo diretório passado
       IF upper(pr_tpdireto) = 'C' THEN
         vr_nmdireto_base := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_DIRCOOP');
@@ -955,7 +1093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       END IF;
       
       vr_dsdircop := NULL;
-      
+
       -- Buscar nome do diretório no cadastro da cooperativa
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop
@@ -974,6 +1112,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         -- Adicionar o caminho processado ao caminho completo
         vr_nmdireto_base := vr_nmdireto_base || '/' || vr_nmsubdir;
       END IF;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       -- Retornar o caminho montado
       RETURN vr_nmdireto_base;
     END;
@@ -1002,7 +1143,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    de pesquisa.
 
        Alteracoes:
-
     ..............................................................................*/
 
   /* Procedure para listar arquivos com controle de erros */
@@ -1014,7 +1154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: PC_LISTA_ARQUIVOS
        Autor   : Petter (Supero)
-       Data    : Dezembro/2013                      Ultima atualizacao:
+       Data    : Dezembro/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1022,14 +1162,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    Banco de Dados para realizar listagem de arquivos do path
                    informado, com a opção de utilizar filtros de pesquisa.
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_lista_arquivos');
+
     BEGIN
       -- Acionar função de interface para classe Java
       pr_listarq := fn_lista_arquivos(pr_path => pr_path, pr_pesq => pr_pesq);
-
       -- Tratar saída para identificar erro ou sucesso no processo
       IF substr(pr_listarq, 1, 2) = '1-' THEN
         pr_listarq := substr(pr_listarq, 3, length(pr_listarq));
@@ -1038,6 +1180,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_listarq := NULL;
       END IF;
     END;
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_lista_arquivos;
 
   /* Procedimento para listar arquivos contidos em uma pasta - interface para classe Java com opção de filtro */
@@ -1049,7 +1194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: PC_LISTA_ARQUIVOS
        Autor   : Petter (Supero)
-       Data    : Março/2015                           Ultima atualizacao:
+       Data    : Março/2015                           Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1059,15 +1204,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    Irá retornar um ArrayList com a listagem de arquivos.
 
        Alteracoes:
-
     ..............................................................................*/
 
   /* Função para validar os tipos de comando passado */
   FUNCTION fn_type_comando(pr_typ_comando IN VARCHAR2
                           ,pr_des_erro   OUT VARCHAR2) RETURN VARCHAR2 IS
+    -- ...........................................................................
+    --  Alteracoes: 07/10/2013 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --
+    --              06/12/2018 - Revitalização
+    --                           REQ0011019 - Ana - Envolti
+    -- ...........................................................................
     -- Var para testar o tipo pois podemos enviar o prefixo apenas
     vr_typ_comando VARCHAR2(100);
+    vr_cdcritic    INTEGER;
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_type_comando');
+
     -- Testar se foi enviado alguma opção válida
     IF UPPER(pr_typ_comando) IN ('P','PERL') THEN
       vr_typ_comando := 'perl';
@@ -1081,7 +1235,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_typ_comando := 'mv_grid';
     ELSE
       -- Gerar erro
-      pr_des_erro := 'PT_TYP_COMANDO :'||pr_typ_comando||' não suportado';
+      vr_cdcritic := 1435;  --'PT_TYP_COMANDO :'||pr_typ_comando||' não suportado'
+      pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||pr_typ_comando||'.';
       vr_typ_comando := null;
     END IF;
     -- Retornar
@@ -1093,7 +1248,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                          ,pr_dsarqdes IN VARCHAR2
                          ,pr_typ_saida  OUT VARCHAR2
                          ,pr_des_saida  OUT VARCHAR2) IS
+  -- ...........................................................................
+  --  Alteracoes: 06/12/2018 - Revitalização
+  --                           REQ0011019 - Ana - Envolti
+  -- ...........................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_mv_arquivo');
     BEGIN
       pc_OScommand(pr_typ_comando => 'mv'
                   ,pr_des_comando => pr_dsarqori || ' ' || pr_dsarqdes
@@ -1104,9 +1265,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         WHEN OTHERS THEN
           cecred.pc_internal_exception;
     END;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_mv_arquivo;
 
-    /* Rotina para executar o comando solicitado  */
+  /* Rotina para executar o comando solicitado  */
   PROCEDURE pc_executa_OSCommand(pr_nrseqsol    IN crapcso.nrseqsol%TYPE    --> Sequencia da solicitação
                                 ,pr_typ_saida  OUT VARCHAR2
                                 ,pr_des_saida  OUT VARCHAR2) IS
@@ -1117,7 +1280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Andrino Carlos de Souza Junior - RKAM
-    --  Data     : Outubro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1125,6 +1288,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Objetivo  : Executar o comando informado da tabela CRAPCSO
     --
     --  Alteracoes: 07/10/2013 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --
+    --              06/12/2018 - Revitalização
+    --                           REQ0011019 - Ana - Envolti
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -1139,13 +1305,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Var para testar o tipo pois podemos enviar o prefixo apenas
       vr_typ_comando VARCHAR2(100);
       -- Busca da saída na DBMS_OUTPUT
-      vr_dsout DBMS_OUTPUT.chararr;
-      vr_qtlin INTEGER := 1000;
-
+      vr_dsout     DBMS_OUTPUT.chararr;
+      vr_qtlin     INTEGER := 1000;
+      vr_cdcritic  INTEGER;
+      vr_dscritic  VARCHAR2(4000);
+      vr_dsparame  VARCHAR2(2000);
+      
       -- Variavel responsavel em armazenar o inicio da execucao
       vr_dtiniexe DATE;
 
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_executa_OSCommand');
+
+      vr_dsparame := '. pr_nrseqsol:'||pr_nrseqsol;
+
       -- Busca das informaçoes do relatório solicitado
       OPEN cr_crapcso;
       FETCH cr_crapcso
@@ -1168,10 +1342,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
             IF vr_des_erro IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
+            -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_executa_OSCommand');
+
             -- Efetuar a instrução passada diretamente no shell
             pc_interface_OScommand(gene0001.fn_param_sistema('CRED',0,'SCRIPT_EXEC_SHELL'),vr_typ_comando,rw_crapcso.dscomand);
+
             -- Armazenar o retorno
             DBMS_OUTPUT.get_lines(vr_dsout,vr_qtlin);
+
             -- Processar o retorno
             FOR vr_ind IN 1..vr_qtlin LOOP
               -- Na primeira interação
@@ -1193,14 +1372,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
             END LOOP;
           EXCEPTION
             WHEN vr_exc_erro THEN
+              -- Gerar Log
               pr_typ_saida := 'ERR';
-              pr_des_saida := 'Erro gene0001.pc_executa_OSCommand: '||vr_des_erro;
+              pr_des_saida := vr_des_erro;
+
+              --Grava tabela de log - Ch REQ0011019
+              pc_grava_log(pr_cdcooper      => 0,
+                           pr_dstiplog      => 'E',
+                           pr_dscritic      => pr_des_saida||vr_dsparame,
+                           pr_cdcriticidade => 1,
+                           pr_cdmensagem    => nvl(vr_cdcritic,0),
+                           pr_ind_tipo_log  => 1);
+
             WHEN OTHERS THEN
-              cecred.pc_internal_exception;
+              CECRED.pc_internal_exception;
+
+              -- Erro
+              vr_cdcritic := 9999;
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_executa_OSCommand. '||sqlerrm;
+
               pr_typ_saida := 'ERR';
-              pr_des_saida := 'Erro geral gene0001.pc_executa_OSCommand: '||SQLERRM;
+              pr_des_saida := vr_dscritic;
+
+              --Grava tabela de log - Ch REQ0011019
+              pc_grava_log(pr_cdcooper      => 0,
+                           pr_dstiplog      => 'E',
+                           pr_dscritic      => pr_des_saida||vr_dsparame,
+                           pr_cdcriticidade => 2,
+                           pr_cdmensagem    => nvl(vr_cdcritic,0),
+                           pr_ind_tipo_log  => 2);
+
           END;
-        ELSE
+
+        ELSE                   -- rw_crapcso.flgsaida = 'N'
+
           BEGIN
             -- Validar o typo de comando passado
             vr_typ_comando := fn_type_comando(rw_crapcso.tpcomand,vr_des_erro);
@@ -1208,16 +1413,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
             IF vr_des_erro IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
+
+            -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_executa_OSCommand');
             -- Efetuar a instrução passada diretamente no shell
             pc_interface_OScommand(gene0001.fn_param_sistema('CRED',0,'SCRIPT_EXEC_SHELL'),vr_typ_comando,rw_crapcso.dscomand);
+            -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_executa_OSCommand');
           EXCEPTION
             WHEN vr_exc_erro THEN
               pr_typ_saida := 'ERR';
-              pr_des_saida := 'Erro gene0001.pc_executa_OSCommand: '||vr_des_erro;
+              pr_des_saida := vr_des_erro;
+
+              --Grava tabela de log - Ch REQ0011019
+              pc_grava_log(pr_cdcooper      => 0,
+                           pr_dstiplog      => 'E',
+                           pr_dscritic      => pr_des_saida||vr_dsparame,
+                           pr_cdcriticidade => 1,
+                           pr_cdmensagem    => nvl(vr_cdcritic,0),
+                           pr_ind_tipo_log  => 1);
+
             WHEN OTHERS THEN
-              cecred.pc_internal_exception;
+              CECRED.pc_internal_exception;
+
+              -- Erro
+              vr_cdcritic := 9999;
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_executa_OSCommand. '||sqlerrm;
+
               pr_typ_saida := 'ERR';
-              pr_des_saida := 'Erro geral gene0001.pc_executa_OSCommand: '||SQLERRM;
+              pr_des_saida := vr_dscritic;
+
+              --Grava tabela de log - Ch REQ0011019
+              pc_grava_log(pr_cdcooper      => 0,
+                           pr_dstiplog      => 'E',
+                           pr_dscritic      => pr_des_saida||vr_dsparame,
+                           pr_cdcriticidade => 2,
+                           pr_cdmensagem    => nvl(vr_cdcritic,0),
+                           pr_ind_tipo_log  => 2);
           END;
 
         END IF;
@@ -1233,23 +1465,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
            WHERE crapcso.nrseqsol = pr_nrseqsol;
         EXCEPTION
           WHEN OTHERS THEN
+            --REQ0011019
+            CECRED.pc_internal_exception (pr_cdcooper => 0);
+
             pr_typ_saida := 'ERR';
-            pr_des_saida := 'Erro atualizacao tabela crapcso: '||SQLERRM;
+            vr_cdcritic  := 1035;  --Erro ao atualizar 
+            pr_des_saida := gene0001.fn_busca_critica(vr_cdcritic)||'crapcso:'||
+                          ' dtiniexe:'||vr_dtiniexe||
+                          ', dtfimexe:'||SYSDATE||
+                          ', flgexecu:S'||
+                          ', dssaidac:'||pr_des_saida||
+                          ', tpsaidac:'||pr_typ_saida||
+                          ' com nrseqsol:'||pr_nrseqsol||
+                          '. '||sqlerrm;
+
+            --Grava tabela de log - Ch REQ0011019
+            pc_grava_log(pr_cdcooper      => 0,
+                         pr_dstiplog      => 'E',
+                         pr_dscritic      => pr_des_saida||vr_dsparame,
+                         pr_cdcriticidade => 2,
+                         pr_cdmensagem    => nvl(vr_cdcritic,0),
+                         pr_ind_tipo_log  => 2);
         END;
       ELSE
         CLOSE cr_crapcso;
       END IF;
     END;
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_executa_OSCommand;
 
   --> valida se o comando deve ser executado conforme o modo do parametro MODOEXECSHELL
   FUNCTION fn_valid_comando_mod (pr_des_comando IN VARCHAR2) RETURN BOOLEAN  IS
-    
+  -- .............................................................................
+  --   Alteracoes: 
+  --               06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
+   
     vr_lscmdmod     crapprm.dsvlrprm%TYPE;
     vr_tab_lscmdmod gene0002.typ_split;
     vr_flgachou     BOOLEAN := FALSE; 
-  BEGIN
-    
+    vr_cdcritic     INTEGER;
+    vr_dscritic     VARCHAR2(4000);
+ BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_valid_comando_mod');
+      
     --> Buscar a lista de comandos que devem ser executados conforme o modo definido no parametro MODOEXECSHELL
     vr_lscmdmod := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                              pr_cdcooper => 0, 
@@ -1257,6 +1520,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     
     vr_tab_lscmdmod := gene0002.fn_quebra_string(pr_string => vr_lscmdmod ,pr_delimit => ';');
       
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_valid_comando_mod');
+
     --> Varrer a lista de comando
     IF vr_tab_lscmdmod.count > 0 THEN
        
@@ -1270,11 +1536,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       END LOOP;        
     END IF;    
       
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
     --> Retornar  boolean
     RETURN vr_flgachou;
-      
   EXCEPTION
     WHEN OTHERS THEN
+      -- Erro
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.fn_valid_comando_mod. '||sqlerrm;
+        
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => vr_dscritic||' pr_des_comando:'||pr_des_comando,
+                   pr_cdcriticidade => 2,
+                   pr_cdmensagem    => nvl(vr_cdcritic,0),
+                   pr_ind_tipo_log  => 2);
+
       RETURN  FALSE; 
   END fn_valid_comando_mod;
   
@@ -1288,7 +1568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Andrino Carlos de Souza Juniot
-    --  Data     : Outubro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1301,12 +1581,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Obs: A rotina nao para o processo em caso de erro na solicitaçao, pois todas devem ser processadas
     --
     --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --
+    --               06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
     DECLARE
       -- Guardar quantidade de dias a manter os emails
       vr_qtddiacommand NUMBER;
       -- Quantidade de de emails a processar no Job
       vr_qtdcommandjob NUMBER;
+      --Críticas
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+      vr_dsparame VARCHAR2(2000);
+      
       -- Busca dos comandos pendentes de execução
       CURSOR cr_crapcso IS
         SELECT crapcso.nrseqsol
@@ -1315,6 +1603,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
            AND ROWNUM <= vr_qtdcommandjob --> Somente qtde parametrizada por Job
          ORDER BY crapcso.nrseqsol; --> Os mais antigos primeiro
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_process_OScommand_pendend');
+
+      vr_dsparame := '. pr_nrseqsol:'||pr_nrseqsol;
+      
       -- Se estiver rodando no processo automatizado
       IF pr_nrseqsol IS NULL THEN
         -- Buscar quantidade de dias que os comandos devem ficar armazenados
@@ -1333,11 +1626,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
              AND crapcso.flgexecu = 'S';
         EXCEPTION
           WHEN OTHERS THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 0
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || 'GENE0001.pc_process_OScommand_pendend ' || ' --> ATENCAO !! '
-                                                     || 'Erro ao excluir CRAPCSO: '||SQLERRM);
+            --REQ0011019
+            CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+            vr_cdcritic := 1037;  --Erro ao excluir 
+            vr_dscritic := gene0001.fn_busca_critica(1037)||'crapcso:'||
+                          ' com dtsolici < '||TRUNC(SYSDATE)||' - '||vr_qtddiacommand||
+                          ', flgexecu:S'||
+                          '. '||sqlerrm;
+            --Grava tabela de log - Ch REQ0011019
+            pc_grava_log(pr_cdcooper      => 0,
+                         pr_dstiplog      => 'E',
+                         pr_dscritic      => vr_dscritic||vr_dsparame,
+                         pr_cdcriticidade => 2,
+                         pr_cdmensagem    => nvl(vr_cdcritic,0),
+                         pr_ind_tipo_log  => 2);
         END;
         -- Buscar quantidade de comandos a processar no Job
         BEGIN
@@ -1362,13 +1665,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                              pr_typ_saida => pr_typ_saida,
                              pr_des_saida => pr_des_saida); -- Se existit erro voltará para a rotina chamadora
       END IF;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_process_OScommand_pendend');
     EXCEPTION
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        -- Erro
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_process_OSCommand_penden. '||sqlerrm;
+
         -- Gerar Log
         pr_typ_saida := 'ERR';
-        pr_des_saida := 'Erro GENE0001.pc_process_OScommand_penden: '||SQLERRM;
+        pr_des_saida := vr_dscritic;
         -- Gravar pois não podemos reexecutar os comandos
         COMMIT;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
     END;
   END pc_process_OSCommand_penden;
 
@@ -1378,19 +1699,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                         ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S' -- O processo deverá aguardar a execução do comando
                         ,pr_typ_saida  OUT VARCHAR2
                         ,pr_des_saida  OUT VARCHAR2) IS
+    -- .............................................................................
+    --   Alterações: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
+    -- .............................................................................
     vr_nrseqsol crapcso.nrseqsol%TYPE;
     vr_dsexshel VARCHAR2(100);
     vr_tpcomand crapcso.tpcomand%TYPE; 
-    
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_dsparame VARCHAR2(2000);
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand 1');
+
+    vr_dsparame := 'pr_typ_comando:'||pr_typ_comando||
+                   ', pr_des_comando:'||pr_des_comando||
+                   ', pr_flg_aguard:'||pr_flg_aguard;
+
     -- Inicializar variavel com o valor do parametro
     vr_tpcomand := pr_typ_comando;
-    
+
     -- Se for shell 
     IF nvl(upper(pr_typ_comando),'S') = 'S' THEN 
-      
       --> Buscar qual forma deve ser executado o comando 
-      vr_dsexshel := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+      vr_dsexshel := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                                pr_cdcooper => 0, 
                                                pr_cdacesso => 'MODOEXECSHELL');
 
@@ -1399,7 +1732,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       IF vr_dsexshel IN (2,0)  THEN 
         -- e estiver executando um comando definido no parametro COMANDOS_MODOEXECSHELL
         IF fn_valid_comando_mod(pr_des_comando) THEN
-              
           --> Definir como shell remoto    
           IF vr_dsexshel = 2 THEN
             vr_tpcomand := 'SR';
@@ -1412,7 +1744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       END IF;  
     -- 1 ou nulo - seria Shell, logo nao necessario realizar alteracao                                                     
     END IF;
-    
+
     -- Insere na tabela de solicitacao de comando com indicador FLGSAIDA igual a S, onde obriga retorno
     BEGIN
       INSERT INTO crapcso
@@ -1429,8 +1761,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          'S') RETURNING nrseqsol INTO vr_nrseqsol;
     EXCEPTION
       WHEN OTHERS THEN
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapcso 1:'||
+                      ' dtsolici:'||SYSDATE||
+                      ', tpcomand:'||vr_tpcomand||
+                      ', dscomand:'||pr_des_comando||
+                      ', flgexecu:'||'N'||
+                      ', flgsaida:'||'S'||
+                      '. '||SQLERRM;
+        
         pr_typ_saida := 'ERR';
-        pr_des_saida := 'Erro ao inserir CRAPCSO: '||SQLERRM;
+        pr_des_saida := vr_dscritic;  --'Erro ao inserir CRAPCSO: '||SQLERRM;
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
         RETURN;
     END;
 
@@ -1440,6 +1788,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                  ,pr_typ_saida => pr_typ_saida
                                  ,pr_des_saida => pr_des_saida);
     END IF;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
   END pc_OScommand;
 
@@ -1447,14 +1797,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   PROCEDURE pc_OScommand(pr_typ_comando IN VARCHAR2
                         ,pr_des_comando IN VARCHAR2
                         ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S') IS -- O processo deverá aguardar a execução do comando
+    -- .............................................................................
+    --   Alterações: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
+    -- .............................................................................
     vr_nrseqsol  crapcso.nrseqsol%TYPE;
     vr_typ_saida VARCHAR2(03);
     vr_des_saida VARCHAR2(4000);
-    vr_dsexshel VARCHAR2(100);
-    vr_tpcomand crapcso.tpcomand%TYPE; 
+    vr_dsexshel  VARCHAR2(100);
+    vr_tpcomand  crapcso.tpcomand%TYPE; 
+    vr_cdcritic  INTEGER;
+    vr_dscritic  VARCHAR2(4000);
+    vr_dsparame  VARCHAR2(2000);
     
   BEGIN
-    
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand 1');
+
+    vr_dsparame := 'pr_typ_comando:'||pr_typ_comando||
+                   ', pr_des_comando:'||pr_des_comando||
+                   ', pr_flg_aguard:'||pr_flg_aguard;
+
     -- Inicializar variavel com o valor do parametro
     vr_tpcomand := pr_typ_comando;
     
@@ -1501,8 +1864,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          'N') RETURNING nrseqsol INTO vr_nrseqsol;
     EXCEPTION
       WHEN OTHERS THEN
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapcso 2:'||
+                      ' dtsolici:'||SYSDATE||
+                      ', tpcomand:'||vr_tpcomand||
+                      ', dscomand:'||pr_des_comando||
+                      ', flgexecu:'||'N'||
+                      ', flgsaida:'||'N'||
+                      '. '||SQLERRM;
+        
         vr_typ_saida := 'ERR';
-        vr_des_saida := 'Erro ao inserir CRAPCSO: '||SQLERRM;
+        vr_des_saida := vr_dscritic;  --'Erro ao inserir CRAPCSO: '||SQLERRM;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
         RETURN;
     END;
 
@@ -1517,11 +1897,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /* Executar um comando no Host usando a interface sem saída */
   PROCEDURE pc_OScommand_Perl(pr_des_comando IN VARCHAR2
                              ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S') IS -- O processo deverá aguardar a execução do comando
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_Perl 1');
     -- Apenas faz overload da OScomand e já sugere o Type=Perl
     pc_OScommand(pr_typ_comando => 'P'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard);
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Executar um comando no Host usando a interface com saída */
@@ -1529,23 +1917,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                              ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S' -- O processo deverá aguardar a execução do comando
                              ,pr_typ_saida  OUT VARCHAR2
                              ,pr_des_saida  OUT VARCHAR2) IS
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_Perl 2');
     -- Apenas faz overload da OScomand e já sugere o Type=Perl
     pc_OScommand(pr_typ_comando => 'P'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard
                 ,pr_typ_saida   => pr_typ_saida
                 ,pr_des_saida   => pr_des_saida);
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Executar um comando no Host usando a interface sem saída */
   PROCEDURE pc_OScommand_Shell(pr_des_comando IN VARCHAR2
                               ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S') IS -- O processo deverá aguardar a execução do comando
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_Shell 1');
+
     -- Apenas faz overload da OScomand e já sugere o Type=Shell
     pc_OScommand(pr_typ_comando => 'S'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard);
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Executar um comando no Host usando a interface com saída */
@@ -1553,23 +1959,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                               ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S' -- O processo deverá aguardar a execução do comando
                               ,pr_typ_saida  OUT VARCHAR2
                               ,pr_des_saida  OUT VARCHAR2) IS
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_Shell 2');
+
     -- Apenas faz overload da OScomand e já sugere o Type=Shell
     pc_OScommand(pr_typ_comando => 'S'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard
                 ,pr_typ_saida   => pr_typ_saida
                 ,pr_des_saida   => pr_des_saida);
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Executar o comando LP no Host usando a interface sem saída */
   PROCEDURE pc_OScommand_LP(pr_des_comando IN VARCHAR2
                            ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S') IS -- O processo deverá aguardar a execução do comando
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_LP 1');
     -- Apenas faz overload da OScomand e já sugere o Type=LP
     pc_OScommand(pr_typ_comando => 'LP'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard);
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Executar o comando LP no Host usando a interface com saída */
@@ -1577,13 +2001,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                            ,pr_flg_aguard  IN VARCHAR2 DEFAULT 'S' -- O processo deverá aguardar a execução do comando
                            ,pr_typ_saida  OUT VARCHAR2
                            ,pr_des_saida  OUT VARCHAR2) IS
+  -- .............................................................................
+  --   Alterações: 06/12/2018 - Revitalização
+  --                            REQ0011019 - Ana - Envolti
+  -- .............................................................................
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_OScommand_LP 2');
     -- Apenas faz overload da OScomand e já sugere o Type=LP
     pc_OScommand(pr_typ_comando => 'LP'
                 ,pr_des_comando => pr_des_comando
                 ,pr_flg_aguard  => pr_flg_aguard
                 ,pr_typ_saida   => pr_typ_saida
                 ,pr_des_saida   => pr_des_saida);
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
 
   /* Retorno de erro da BO */
@@ -1599,7 +2031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_gera_erro (Antigo gera_erro.i)
        Autor   : David
-       Data    : Outubro/2007                      Ultima atualizacao: 03/12/2012
+       Data    : Outubro/2007                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1609,13 +2041,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes: 08/11/2007 - Output no parametro par_dscritic (David).
                    03/12/2012 - Conversão da rotina de Progress > Oracle PLSQL
-
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       vr_seq BINARY_INTEGER;
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_erro');
       -- Guardar a próxima sequencia para gravação na tabela de erros
       vr_seq := pr_tab_erro.COUNT;
+                  
       -- Criar o registro de erro (Rowtype da CRAPERR)
       pr_tab_erro(vr_seq).cdcooper := pr_cdcooper;
       pr_tab_erro(vr_seq).cdagenci := pr_cdagenci;
@@ -1630,6 +2066,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_tab_erro(vr_seq).dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         pr_dscritic         := pr_tab_erro(vr_seq).dscritic;
       END IF;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_gera_erro;
 
@@ -1643,7 +2081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_xml_tab_erro
        Autor   : Odirlei-AMcom
-       Data    : Julho/2014                      Ultima atualizacao: 30/07/2014
+       Data    : Julho/2014                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1654,9 +2092,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                      1 - Gerar XML: Ler o parametro pr_tab_erro e retornar XML no parametro pr_xml_erro
                      2 - Gerar pltable: Ler o XML no parametro pr_xml_erro e retornar temptable no parametro pr_tab_erro
 
-   ..............................................................................*/
-
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
+    ..............................................................................*/
     vr_xml_temp  VARCHAR2(32100);
     -- Variáveis para tratamento do XML
     vr_node_list xmldom.DOMNodeList;
@@ -1666,11 +2104,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_node_name VARCHAR2(100);
     vr_item_node xmldom.DOMNode;
     vr_idx       PLS_INTEGER;
-
+    vr_cdcritic  INTEGER;
+    vr_dsparame  VARCHAR2(2000);
+    
     -- Arq XML
     vr_xmltype   sys.xmltype;
 
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_xml_tab_erro');
+    
+    vr_dsparame := ' pr_xml_erro:'||pr_xml_erro||
+                   ', pr_tipooper:'||pr_tipooper;
+
     -- Gerar xml apartir da temp-table
     IF pr_tipooper = 1 THEN
       -- Criar documento XML dbms_lob.createtemporary(pr_clobxml, TRUE);
@@ -1753,12 +2199,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         END IF;
       END LOOP;
     ELSE
-      pr_dscritic := 'Opção invalida para o procedimento pc_xml_tab_erro';
+      vr_cdcritic := 1457;  --Opção invalida para o procedimento pc_xml_tab_erro
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 0,
+                   pr_cdmensagem    => nvl(vr_cdcritic,0),
+                   pr_ind_tipo_log  => 4);
+
     END IF;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro no procedimento GENE0001.pc_xml_tab_erro: '||SQLErrm;
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_xml_tab_erro. '||SQLERRM;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
   END pc_xml_tab_erro;
 
   /* Inclusão de log com retorno do rowid */
@@ -1774,12 +2242,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                        ,pr_nmdatela IN craplgm.nmdatela%TYPE
                        ,pr_nrdconta IN craplgm.nrdconta%TYPE
                        ,pr_nrdrowid OUT ROWID) IS
+
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+
   BEGIN
     /*..............................................................................
 
        Programa: gera_log (Antigo gera_log.i>proc_gerar_log.i)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 03/08/2018
+       Data    : Novembro/2007                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1798,7 +2270,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
                    03/08/2018 - Ajuste do tamanho do nome do programa no insert do LOG -- Projeto Debitador Unico 03/08/2018 - AMcom Fabiano B. Dias.
 
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log');
     BEGIN
       -- Criar registro do LOG guardando o Rowid
       INSERT INTO craplgm(cdcooper
@@ -1824,8 +2300,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                          ,substr(pr_nmdatela,1,12)
                          ,pr_nrdconta)
                 RETURNING ROWID INTO pr_nrdrowid;
+    --REQ0011019
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplgm:'||
+                      ' cdcooper:'||pr_cdcooper||
+                      ', cdoperad:'||pr_cdoperad||
+                      ', dscritic:'||substr(pr_dscritic,1,245)||
+                      ', dsorigem:'||pr_dsorigem||
+                      ', dstransa:'||pr_dstransa||
+                      ', dttransa:'||pr_dttransa||
+                      ', flgtrans:'||pr_flgtrans||
+                      ', hrtransa:'||pr_hrtransa||
+                      ', idseqttl:'||pr_idseqttl||
+                      ', nmdatela:'||substr(pr_nmdatela,1,12)||
+                      ', nrdconta:'||pr_nrdconta||
+                      '. '||SQLERRM;
+        
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+        
     END;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_gera_log;
+
+	/* Inclusao de log com retorno do rowid utilizxando autonomous_transaction com commit da operacao */
+	PROCEDURE pc_gera_log_auto(pr_cdcooper IN craplgm.cdcooper%TYPE
+														,pr_cdoperad IN craplgm.cdoperad%TYPE
+														,pr_dscritic IN craplgm.dscritic%TYPE
+														,pr_dsorigem IN craplgm.dsorigem%TYPE
+														,pr_dstransa IN craplgm.dstransa%TYPE
+														,pr_dttransa IN craplgm.dttransa%TYPE
+														,pr_flgtrans IN craplgm.flgtrans%TYPE
+														,pr_hrtransa IN craplgm.hrtransa%TYPE
+														,pr_idseqttl IN craplgm.idseqttl%TYPE
+														,pr_nmdatela IN craplgm.nmdatela%TYPE
+														,pr_nrdconta IN craplgm.nrdconta%TYPE
+														,pr_nrdrowid OUT ROWID
+														) IS
+	/*..............................................................................
+
+       Programa: pc_gera_log_auto
+       Autor   : David
+       Data    : Dezembro/2018                      Ultima atualizacao: 06/12/2018
+
+       Dados referentes ao programa:
+
+       Objetivo  : Geracao de log utilizando autonomous_transaction com commit da operacao
+
+       Alteracoes: 04/12/2018 - Criar procedure pc_gera_log_auto (Adriano Nagasava - Supero)
+
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
+    ..............................................................................*/
+		--
+		PRAGMA AUTONOMOUS_TRANSACTION;
+		--
+	BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_auto');
+		-- Chama a rotina para inserir o log
+		pc_gera_log(pr_cdcooper => pr_cdcooper -- IN
+							 ,pr_cdoperad => pr_cdoperad -- IN
+							 ,pr_dscritic => pr_dscritic -- IN
+							 ,pr_dsorigem => pr_dsorigem -- IN
+							 ,pr_dstransa => pr_dstransa -- IN
+							 ,pr_dttransa => pr_dttransa -- IN
+							 ,pr_flgtrans => pr_flgtrans -- IN
+							 ,pr_hrtransa => pr_hrtransa -- IN
+							 ,pr_idseqttl => pr_idseqttl -- IN
+							 ,pr_nmdatela => pr_nmdatela -- IN
+							 ,pr_nrdconta => pr_nrdconta -- IN
+							 ,pr_nrdrowid => pr_nrdrowid -- OUT
+							 );
+		--
+		COMMIT;
+		--
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  END pc_gera_log_auto;
 
   /* Chamada para ser usada no progress
      Inclusão de log com retorno do rowid */
@@ -1845,15 +2405,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_gera_log_prog   (Antigo gera_log.i>proc_gerar_log.i)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 17/04/2014
+       Data    : Novembro/2007                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Chamada para ser usada no progress
                    Include para geracao de log
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     --------------> CURSORES <-------------
     CURSOR cr_craplgm (pr_nrdrowid ROWID) IS
@@ -1864,8 +2424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     ------------> VARIAVEIS <--------------
     vr_nrdrowid   ROWID;
 
-
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log');
 
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -1882,11 +2443,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                         ,pr_nrdrowid => vr_nrdrowid);
 
     pr_nrrecid := NULL;
+
     -- buscar progress recid para retornar para o progress
     OPEN cr_craplgm (pr_nrdrowid => vr_nrdrowid);
     FETCH cr_craplgm INTO pr_nrrecid;
     CLOSE cr_craplgm;
 
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_gera_log_prog;
 
   /* Inclusão de log a nível de item  */
@@ -1899,7 +2463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_gera_log_item (Antigo gera_log.i>>proc_gerar_log_item)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 06/02/2013
+       Data    : Novembro/2007                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1908,6 +2472,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes: 06/02/2013 - Conversão da rotina de Progress > Oracle PLSQL
 
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       -- Busca as informações no cabeçalho de Log
@@ -1934,7 +2500,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          ORDER BY lgi.nrseqcmp DESC;
       -- Sequencia para inserção
       vr_nrseqcmp craplgi.nrseqcmp%TYPE;
+
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_item');
+      
       -- Busca as informações no cabeçalho de Log
       OPEN cr_craplgm;
       FETCH cr_craplgm
@@ -1955,29 +2527,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         END IF;
         -- Fechar o cursor
         CLOSE cr_craplgi;
-        -- Criar registro do LOG guardando o Rowid
-        INSERT INTO craplgi(cdcooper
-                           ,dsdadant
-                           ,dsdadatu
-                           ,nmdcampo
-                           ,dttransa
-                           ,hrtransa
-                           ,idseqttl
-                           ,nrdconta
-                           ,nrsequen
-                           ,nrseqcmp)
-                     VALUES(rw_craplgm.cdcooper
-                           ,pr_dsdadant
-                           ,pr_dsdadatu
-                           ,pr_nmdcampo
-                           ,rw_craplgm.dttransa
-                           ,rw_craplgm.hrtransa
-                           ,rw_craplgm.idseqttl
-                           ,rw_craplgm.nrdconta
-                           ,rw_craplgm.nrsequen
-                           ,vr_nrseqcmp);
+        BEGIN
+          -- Criar registro do LOG guardando o Rowid
+          INSERT INTO craplgi(cdcooper
+                             ,dsdadant
+                             ,dsdadatu
+                             ,nmdcampo
+                             ,dttransa
+                             ,hrtransa
+                             ,idseqttl
+                             ,nrdconta
+                             ,nrsequen
+                             ,nrseqcmp)
+                       VALUES(rw_craplgm.cdcooper
+                             ,pr_dsdadant
+                             ,pr_dsdadatu
+                             ,pr_nmdcampo
+                             ,rw_craplgm.dttransa
+                             ,rw_craplgm.hrtransa
+                             ,rw_craplgm.idseqttl
+                             ,rw_craplgm.nrdconta
+                             ,rw_craplgm.nrsequen
+                             ,vr_nrseqcmp);
+        --REQ0011019
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplgi:'||
+                          ' cdcooper:'||rw_craplgm.cdcooper||
+                          ', dsdadant:'||pr_dsdadant||
+                          ', dsdadatu:'||pr_dsdadatu||
+                          ', nmdcampo:'||pr_nmdcampo||
+                          ', dttransa:'||rw_craplgm.dttransa||
+                          ', hrtransa:'||rw_craplgm.hrtransa||
+                          ', idseqttl:'||rw_craplgm.idseqttl||
+                          ', nrdconta:'||rw_craplgm.nrdconta||
+                          ', nrsequen:'||rw_craplgm.nrsequen||
+                          ', nrseqcmp:'||vr_nrseqcmp||
+                          '. '||SQLERRM;
+            
+            --Grava tabela de log - Ch REQ0011019
+            pc_grava_log(pr_cdcooper      => rw_craplgm.cdcooper,
+                         pr_dstiplog      => 'E',
+                         pr_dscritic      => vr_dscritic,
+                         pr_cdcriticidade => 2,
+                         pr_cdmensagem    => nvl(vr_cdcritic,0),
+                         pr_ind_tipo_log  => 2);
+        END;
       END IF;
     END;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_gera_log_item;
 
   /* Chamada para ser usada no progress
@@ -1988,10 +2588,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                   ,pr_dsdadatu IN craplgi.dsdadatu%TYPE) IS
 
     /*..............................................................................
-
        Programa: pc_gera_log_item_prog (Antigo gera_log.i>>proc_gerar_log_item)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 06/02/2013
+       Data    : Novembro/2007                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -2000,6 +2599,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes: 06/02/2013 - Conversão da rotina de Progress > Oracle PLSQL
 
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     --------------> CURSORES <-------------
     CURSOR cr_craplgm (pr_nrrecid craplgm.progress_recid%TYPE) IS
@@ -2011,16 +2612,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_nrdrowid   ROWID;
 
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_item_prog');
     -- buscar rowid
     OPEN cr_craplgm (pr_nrrecid => pr_nrrecid);
     FETCH cr_craplgm INTO vr_nrdrowid;
     CLOSE cr_craplgm;
-
     pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                     ,pr_nmdcampo => pr_nmdcampo
                     ,pr_dsdadant => pr_dsdadant
                     ,pr_dsdadatu => pr_dsdadatu);
 
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_gera_log_item_prog;
 
   /* Procedimento para gravar log na tabela craplog */
@@ -2029,28 +2633,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                            ,pr_cdoperad IN craplog.cdoperad%TYPE
                            ,pr_dstransa IN craplog.dstransa%TYPE
                            ,pr_cdprogra IN craplog.cdprogra%TYPE) IS
-  BEGIN
     /*..............................................................................
 
        Programa: pc_gera_craplog   (Antigo Fontes/gera_log.p)
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Edson
-       Data    : Maio/2005.                          Ultima atualizacao: 05/12/2013
+       Data    : Maio/2005.                         Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que for chamado.
        Objetivo  : Gerar log da transacao - DEVE HAVER UMA TRANSACAO DECLARADA NO
-                   PROGRAMA QUE FEZ A CHAMADA.
+                   PROGRAMA QUE FEZ A CHAMADA. 
 
        Alteracoes: 05/12/2013 - Inclusao de VALIDATE craplog (Carlos)
 
                    08/04/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
 
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+  BEGIN
     -- Loop utilizado para ficar tentando inserir, visto que o time
     -- faz parte da chave da tabela, logo necessario virar o segundo para tentar novamente
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_craplog');
     LOOP
       BEGIN
       -- Criar registro do LOG
@@ -2074,10 +2684,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           -- aguardar 1 seg. antes de tentar novamente
           sys.dbms_lock.sleep(1);
           continue;
+
+        WHEN OTHERS THEN
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplog:'||
+                        ' dttransa:'||trunc(SYSDATE)||
+                        ', hrtransa:'||GENE0002.fn_busca_time||
+                        ', cdoperad:'||pr_cdoperad||
+                        ', cdcooper:'||pr_cdcooper||
+                        ', dstransa:'||pr_dstransa||
+                        ', nrdconta:'||pr_nrdconta||
+                        ', cdprogra:'||pr_cdprogra||
+                        '. '||SQLERRM;
+            
+          --Grava tabela de log - Ch REQ0011019
+          pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                       pr_dstiplog      => 'E',
+                       pr_dscritic      => vr_dscritic,
+                       pr_cdcriticidade => 2,
+                       pr_cdmensagem    => nvl(vr_cdcritic,0),
+                       pr_ind_tipo_log  => 2);
+
       END;
       -- se conseguiu inserir sair do loop
       EXIT;
     END LOOP;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_gera_craplog;
 
   /* Procedimento que separa o path e o nome do arquivo de um path completo */
@@ -2089,19 +2722,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_separa_arquivo_path
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 05/12/2012
+       Data    : Dezembro/2012                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Efetuar a separação do diretório e do nome do arquivo a partir de um caminho completo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_separa_arquivo_path');
       -- Nome do arquivo está após a ultima ocorrência do '/'
       pr_arquivo := SUBSTR(pr_caminho,INSTR(pr_caminho,'/',-1)+1);
       pr_direto  := SUBSTR(pr_caminho,1,INSTR(pr_caminho,'/',-1)-1);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_separa_arquivo_path;
 
@@ -2113,10 +2750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2) IS       --> Saída de erros
     /*..............................................................................
-
        Programa: pc_abre_arquivo (Caminho e nome do arquivos passados separadamente)
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 30/08/2017
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -2136,13 +2772,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    30/08/2017 - Ajuste para verificar se deve mudar permissões do arquivo ou não
                                (Adriano - SD 734960).             
                    
-
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    vr_cdcritic INTEGER;
+    vr_dsparame VARCHAR2(2000);
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_abre_arquivo 1');
     BEGIN
+      vr_dsparame := '. pr_nmdireto:'||pr_nmdireto||
+                     ', pr_nmarquiv:'||pr_nmarquiv||
+                     ', pr_tipabert:'||pr_tipabert||
+                     ', pr_flaltper:'||pr_flaltper;
+      
       -- Testar modo de abertura enviado
       IF pr_tipabert NOT IN('R','W','A') THEN
-        pr_des_erro := 'Modo de abertura "'||pr_tipabert||'" inválido, opções disponíveis: "R", "W" e "A"';
+        vr_cdcritic := 1459;  --'Modo de abertura "'||pr_tipabert||'" inválido, opções disponíveis: "R", "W" e "A"'
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' - pr_tipabert: '||pr_tipabert;
         RAISE vr_exc_erro;
       END IF;
       -- Tenta abrir o arquivo no modo solicitado
@@ -2150,25 +2797,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_utlfileh := UTL_FILE.fopen(pr_nmdireto,pr_nmarquiv,pr_tipabert,32767);
       EXCEPTION
         WHEN OTHERS THEN
-          pr_des_erro := 'Problema ao abrir o arquivo <'||pr_nmdireto||'/'||pr_nmarquiv||'>: ' || sqlerrm;
+          vr_cdcritic := 1038;  --'Problema ao abrir o arquivo <'||pr_nmdireto||'/'||pr_nmarquiv||'>: '
+          pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' <'||pr_nmdireto||'/'||pr_nmarquiv||'>: '||sqlerrm;
           RAISE vr_exc_erro;
       END;
-      
+
       IF pr_flaltper = 1                                                    AND 
          NVL(gene0001.fn_param_sistema('CRED',0,'ALTERA_PERMIS_ARQ'),0) = 1 THEN
-         
-      -- Ao final, tenta setar as propriedades para garantir que o arquivo seja acessível por outros usuários
-      pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_nmdireto||'/'||pr_nmarquiv);
-        
+        -- Ao final, tenta setar as propriedades para garantir que o arquivo seja acessível por outros usuários
+        pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_nmdireto||'/'||pr_nmarquiv);
       END IF;
-      
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        -- Montar o erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_abre_arquivo --> '||pr_des_erro;
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_des_erro||vr_dsparame,
+                     pr_cdcriticidade => 1,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 1);
       WHEN OTHERS THEN
-        -- Montar o erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_abre_arquivo --> Erro ao abrir o arquivo: '||sqlerrm;
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+        -- Erro
+        vr_cdcritic := 9999;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_abre_arquivo 1. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_des_erro||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_abre_arquivo;
 
@@ -2178,10 +2840,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2) IS       --> Saída de erros
     /*..............................................................................
-
        Programa: pc_abre_arquivo (Caminho completo)
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 06/05/2012
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -2189,8 +2850,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    o diretório e nome do arquivo separadamente, pois nesta rotina
                    é recebido o caminho completo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -2198,16 +2859,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_nmdireto VARCHAR2(4000);
       vr_nmarquiv VARCHAR2(4000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_abre_arquivo 2');
       -- Chamar rotina de separação do caminho do nome
       pc_separa_arquivo_path(pr_caminho => pr_nmcaminh
                             ,pr_direto  => vr_nmdireto
                             ,pr_arquivo => vr_nmarquiv);
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_abre_arquivo 2');
+
       -- Enfim, chamar a rotina de abertura do arquivo
       pc_abre_arquivo(pr_nmdireto => vr_nmdireto
                      ,pr_nmarquiv => vr_nmarquiv
                      ,pr_tipabert => pr_tipabert
                      ,pr_utlfileh => pr_utlfileh
                      ,pr_des_erro => pr_des_erro);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_abre_arquivo;
 
@@ -2217,19 +2886,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_fecha_arquivo
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 06/05/2012
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Centralizar o fechamento de arquivos fisicos abertos pelo Oracle.
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_fecha_arquivo');
       -- Libera o arquivo
       UTL_FILE.fclose(pr_utlfileh);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_fecha_arquivo;
 
@@ -2240,20 +2913,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_escr_linha_arquivo
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 06/05/2012
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Centralizar escrita em arquivos abertos pelo Oracle
                    ao final do envio, é enviado uma quebra de linha
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_escr_linha_arquivo');
       -- Escreve o texto enviado no arquivo
       UTL_FILE.put_line(pr_utlfileh,pr_des_text);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_escr_linha_arquivo;
 
@@ -2264,43 +2941,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_escreve_arquivo_semqueb
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 06/05/2012
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Centralizar escrita em arquivos abertos pelo Oracle
                    sem enviar quebra de linha no arquivo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_escr_texto_arquivo');
       -- Escreve o texto enviado no arquivo
       UTL_FILE.put(pr_utlfileh,pr_des_text);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_escr_texto_arquivo;
 
   /* Rotina para leitura de arquivo fisico */
   PROCEDURE pc_le_linha_arquivo(pr_utlfileh  IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
-                              ,pr_des_text OUT VARCHAR2) IS                  --> Texto lido
+                               ,pr_des_text OUT VARCHAR2) IS                  --> Texto lido
     /*..............................................................................
 
        Programa: pc_leitura_arquivo
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 06/05/2012
+       Data    : Maio/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Centralizar leitura em arquivos abertos pelo Oracle
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_le_linha_arquivo');
       -- Ler a linha atual posicionada do arquivo
       UTL_FILE.get_line(pr_utlfileh,pr_des_text);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN no_data_found THEN
         -- Levantar novamente a exceção pois a rotina chamadora
@@ -2315,14 +3000,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: fn_exis_arquivo
        Autor   : Petter (Supero)
-       Data    : Setembro/2013                    Ultima atualizacao:
+       Data    : Setembro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Verificar se o arquivo informado existe no path.
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -2331,14 +3016,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_arq_handle utl_file.file_type;
 
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_exis_arquivo');
       -- Busca somente o nome do arquivo a partir do path completo passado
       pc_separa_arquivo_path(pr_caminho => pr_caminho
                             ,pr_direto  => vr_arq_path
                             ,pr_arquivo => vr_arq_name);
+
       -- Testa se o arquivo foi criado com sucesso
       -- Abre arquivo somente para leitura
       vr_arq_handle := utl_file.fopen(vr_arq_path, vr_arq_name, 'r');
       utl_file.fclose(vr_arq_handle);
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       RETURN TRUE;
     EXCEPTION
       WHEN no_data_found THEN
@@ -2358,25 +3048,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: fn_exis_arquivo
        Autor   : Odirlei (AMcom)
-       Data    : Junho/2014                    Ultima atualizacao:
+       Data    : Junho/2014                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Verificar se o diretorio.
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
   BEGIN
     DECLARE
       -- Saída do Shell
       vr_typ_saida VARCHAR2(3);
-      vr_des_erro      VARCHAR2(4000);
+      vr_des_erro  VARCHAR2(4000);
+      vr_cdcritic  INTEGER;
+      vr_dscritic  VARCHAR2(4000);
 
     BEGIN
-
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_exis_diretorio');
+  
       -- Efetuar a execução do comando ls, para verificar se existe diretorio
-      gene0001.pc_OScommand(pr_typ_comando  => 'S'
+      GENE0001.pc_OScommand(pr_typ_comando  => 'S'
                             ,pr_des_comando => 'ls -ltr '||pr_caminho
                             ,pr_typ_saida   => vr_typ_saida
                             ,pr_des_saida   => vr_des_erro);
@@ -2398,9 +3092,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         RETURN FALSE;
       END IF;
 
-
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
+        -- Erro
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.fn_exis_diretorio. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||'. pr_caminho: '||pr_caminho,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
         RETURN FALSE;
     END;
   END fn_exis_diretorio;
@@ -2412,46 +3118,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: fn_tamanho_arquivo
        Autor   : Marcos (Supero)
-       Data    : Outubro/2013                      Ultima atualizacao:
+       Data    : Outubro/2013                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Verificar se o arquivo passado existe
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       -- Diretório e nome do arquivo
-      vr_direto VARCHAR2(4000);
-      vr_arquivo VARCHAR2(4000);
+      vr_direto   VARCHAR2(4000);
+      vr_arquivo  VARCHAR2(4000);
       -- Teste no arquivo gerado
-      vr_exists BOOLEAN;
-      vr_tamanh NUMBER;
-      vr_bsize  NUMBER;
+      vr_exists   BOOLEAN;
+      vr_tamanh   NUMBER;
+      vr_bsize    NUMBER;
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_tamanho_arquivo');
+
       -- Busca somente o nome do arquivo a partir do path completo passado
       pc_separa_arquivo_path(pr_caminho => pr_caminho
                             ,pr_direto  => vr_direto
                             ,pr_arquivo => vr_arquivo);
+                            
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_tamanho_arquivo');
+
       -- Testa se o arquivo foi criado com sucesso
       utl_file.fgetattr(vr_direto,vr_arquivo,vr_exists,vr_tamanh,vr_bsize);
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
       -- Retornar o tamanho
       RETURN NVL(vr_tamanh,0);
     EXCEPTION
       WHEN OTHERS THEN
+        -- Erro
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.fn_tamanho_arquivo. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||'. pr_caminho: '||pr_caminho,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
         RETURN 0;
     END;
   END fn_tamanho_arquivo;
 
   /* Função para retornar a extensão de um arquivo */
   FUNCTION fn_extensao_arquivo(pr_arquivo IN VARCHAR2) RETURN VARCHAR2 IS
+
   BEGIN
     /*..............................................................................
 
        Programa: fn_extensao_arquivo
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 05/12/2012
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -2461,19 +3192,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
           21/01/2014 - Ajustar rotina para retornar null, quando o arquivo não
                        possuir extensão. ( Renato - Supero )
+
+          06/12/2018 - Revitalização
+                       REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    DECLARE
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_extensao_arquivo');
+
       -- Verifica se há a presença de "." no nome do arquivo
       IF INSTR(pr_arquivo,'.') > 0 THEN
         -- Retornar todo o texto após o ultimo "."
         RETURN(SUBSTR(pr_arquivo,INSTR(pr_arquivo,'.',-1)+1));
       END IF;
 
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
       -- Retornar null
       RETURN NULL;
-
     EXCEPTION
       WHEN OTHERS THEN
+        -- Erro
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.fn_extensao_arquivo. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||'. pr_arquivo: '||pr_arquivo,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
         RETURN '';
     END;
   END fn_extensao_arquivo;
@@ -2485,15 +3238,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: fn_gera_ID_paralelo (Antiga sistema/generico/procedures/bo_paralelo.p --> geraID)
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 05/12/2012
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Função que gera um identificador randomico para cada programa que
                    executara em paralelo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       -- Variável para saída
@@ -2504,7 +3257,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           FROM crappar par
          WHERE par.idparale = vr_id;
       vr_achou VARCHAR2(1) := 'N';
+
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_gera_ID_paralelo');
+
       -- Criar um laço pois precisamos buscar um ID único
       LOOP
         -- Gerar um Randômico entre 1 e 999999
@@ -2519,10 +3278,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         -- Podemos sair do laço se não encontrou
         EXIT WHEN vr_achou = 'N';
       END LOOP;
+        
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       -- Retornar o ID encontrado
       RETURN vr_id;
     EXCEPTION
       WHEN OTHERS THEN
+        -- Erro
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.fn_gera_ID_paralelo. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic||'. vr_id: '||vr_id,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
         RETURN 0; --> Retorno com erro
     END;
   END fn_gera_ID_paralelo;
@@ -2539,17 +3316,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_ativa_paralelo (Antiga sistema/generico/procedures/bo_paralelo.p --> ativa_paralelo)
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 05/12/2012
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure que inicializa os controles de um programa em paralelo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    DECLARE
+
+      vr_cdcritic INTEGER;
 
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_ativa_paralelo');
       -- Inserir registro na tabela de controle de paralelismo
       INSERT INTO crappar par
                  (par.idparale
@@ -2560,12 +3342,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                  ,1); -- 'Sim'
       -- Gravar o Insert
       COMMIT;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- Efetuar rollback
         ROLLBACK;
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
         -- Montar o erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_ativa_paralelo --> Erro ao inserir CRAPPAR: '||sqlerrm;
+        vr_cdcritic := 1034;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crappar:'||
+                      ' idparale:' ||pr_idparale||
+                      ', idprogra:'||pr_idprogra||
+                      ', flcontro:'||'1'||
+                      '. '||SQLERRM;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_des_erro,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_ativa_paralelo;
 
@@ -2578,14 +3378,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_aguarda_paralelo (Antiga sistema/generico/procedures/bo_paralelo.p --> aguarda_paralelos)
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 05/12/2012
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para aguardar a finalizacao dos programas em paralelo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       -- Buscar qtde em execução
@@ -2595,7 +3395,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          WHERE par.idparale = pr_idparale
            AND par.flcontro = 1; --> Em execução
       vr_qtdproce NUMBER;
+      vr_cdcritic INTEGER;
+      vr_dsparame VARCHAR2(1000);
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_aguarda_paralelo');
+
+      vr_dsparame := ' pr_idparale:'||pr_idparale||
+                     ', pr_qtdproce:'||pr_qtdproce;
+
       -- Efetuar laço para deixar o processo em aguardo
       -- até atingir determinada condição cfme o parâmetro
       -- pr_qtdproce passado e a qtde em execução
@@ -2615,12 +3423,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           EXIT WHEN vr_qtdproce < pr_qtdproce;
         END IF;
       END LOOP;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- Efetuar rollback
         ROLLBACK;
+
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
         -- Montar o erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_aguarda_paralelo: '||sqlerrm;
+        vr_cdcritic := 9999;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_aguarda_paralelo. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_des_erro||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_aguarda_paralelo;
 
@@ -2631,34 +3454,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
      -- Cria uma nova seção para commitar
      -- somente esta escopo de alterações
      PRAGMA AUTONOMOUS_TRANSACTION;
+
   BEGIN
     /*..............................................................................
 
        Programa: pc_encerra_paralelo (Antiga sistema/generico/procedures/bo_paralelo.p --> finaliza_paralelo)
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 05/12/2012
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure que inicializa os controles de um programa em paralelo
 
-       Alteracoes:
-
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
+    DECLARE
+      vr_cdcritic INTEGER;
+    
     BEGIN
-      -- Inserir registro na tabela de controle de paralelismo
-      DELETE crappar par
-       WHERE par.idparale = pr_idparale
-         AND par.idprogra = pr_idprogra
-         AND par.flcontro = 1; -- 'Sim'
-      -- Gravar
-      COMMIT;
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Efetuar rollback
-        ROLLBACK;
-        -- Montar o erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_encerra_paralelo --> Erro ao eliminar CRAPPAR: '||sqlerrm;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_encerra_paralelo');
+      BEGIN
+        -- Inserir registro na tabela de controle de paralelismo
+        DELETE crappar par
+         WHERE par.idparale = pr_idparale
+           AND par.idprogra = pr_idprogra
+           AND par.flcontro = 1; -- 'Sim'
+        -- Gravar
+        COMMIT;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Efetuar rollback
+          ROLLBACK;
+          --REQ0011019
+          CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+          vr_cdcritic := 1037;  --Erro ao excluir 
+          pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crappar:'||
+                        ' com idparale:'||pr_idparale||
+                        ', idprogra:'||pr_idparale||
+                        ', flcontro:'||'1'||
+                        '. '||sqlerrm;
+          --Grava tabela de log - Ch REQ0011019
+          pc_grava_log(pr_cdcooper      => 0,
+                       pr_dstiplog      => 'E',
+                       pr_dscritic      => pr_des_erro,
+                       pr_cdcriticidade => 2,
+                       pr_cdmensagem    => nvl(vr_cdcritic,0),
+                       pr_ind_tipo_log  => 2);
+      END;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_encerra_paralelo;
 
@@ -2672,7 +3519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Janeiro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2013.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2681,26 +3528,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --
     --   Alteracoes: 31/10/2013 - Troca do arquivo de log para salvar a partir
     --                            de agora no diretório log das Cooperativas (Marcos-Supero)
+    --
+    --               06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
-
     DECLARE
-      vr_ind_arqlog UTL_FILE.file_type; -- Handle para o arquivo de log
-      vr_des_erro VARCHAR2(4000); -- Descrição de erro
-      vr_exc_saida EXCEPTION; -- Saída com exception
+      vr_ind_arqlog  UTL_FILE.file_type; -- Handle para o arquivo de log
+      vr_des_erro    VARCHAR2(4000); -- Descrição de erro
+      vr_exc_saida   EXCEPTION; -- Saída com exception
       vr_des_complet VARCHAR2(100);
       vr_des_diretor VARCHAR2(100);
       vr_des_arquivo VARCHAR2(100);
+      vr_cdcritic    INTEGER;
+      vr_idgrvlog    VARCHAR2(1) := 'S';
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_job');
+
       -- Busca o diretório de log da Cooperativa
       vr_des_complet := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => 'log');
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_job');
+
       -- Buscar o nome de arquivo de log cfme parâmetros de sistema, se não vier nada, usa o default
       vr_des_complet := vr_des_complet ||'/'|| NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_JOBS'),'proc_job.log');
+
       -- Separa o diretório e o nome do arquivo
       gene0001.pc_separa_arquivo_path(pr_caminho => vr_des_complet
                                      ,pr_direto  => vr_des_diretor
                                      ,pr_arquivo => vr_des_arquivo);
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_job');
+
       -- Tenta abrir o arquivo de log em modo append
       gene0001.pc_abre_arquivo(pr_nmdireto => vr_des_diretor   --> Diretório do arquivo
                               ,pr_nmarquiv => vr_des_arquivo   --> Nome do arquivo
@@ -2708,35 +3571,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                               ,pr_utlfileh => vr_ind_arqlog    --> Handle do arquivo aberto
                               ,pr_des_erro => vr_des_erro);
       IF vr_des_erro IS NOT NULL THEN
+        vr_idgrvlog := 'N';
         RAISE vr_exc_saida;
       END IF;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_job');
+
       -- Adiciona a linha de log
       BEGIN
         pc_escr_linha_arquivo(vr_ind_arqlog,pr_des_log);
       EXCEPTION
         WHEN OTHERS THEN
           -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-          vr_des_erro := 'Problema ao escrever no arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
+          vr_cdcritic := 1458; --Erro ao escrever no arquivo
+          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)|| ' <'||vr_des_diretor||'/'||vr_des_arquivo||'>: '||sqlerrm;
           RAISE vr_exc_saida;
       END;
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_gera_log_job');
+
       -- Libera o arquivo
       BEGIN
         pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
       EXCEPTION
         WHEN OTHERS THEN
           -- Gerar erro
-          vr_des_erro := 'Problema ao fechar o arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
+          vr_cdcritic := 1039; --Erro ao escrever no arquivo
+          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)|| ' <'||vr_des_diretor||'/'||vr_des_arquivo||'>: '||sqlerrm;
           RAISE vr_exc_saida;
       END;
+        
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         -- Enviar a mensagem de erro ao DMBS_OUTPUT e ignorar o log
-        gene0001.pc_print(to_char(sysdate,'hh24:mi:ss')||' - '|| 'GENE0002.pc_gera_log_job --> '||vr_des_erro);
+        gene0001.pc_print(to_char(sysdate,'hh24:mi:ss')||' - '||'GENE0001.pc_gera_log_job --> '||vr_des_erro);
+
+        IF vr_idgrvlog = 'S' THEN --Algumas rotinas chamadas aqui gravam log
+          --Grava tabela de log - Ch REQ0011019
+          pc_grava_log(pr_cdcooper      => 0,
+                       pr_dstiplog      => 'E',
+                       pr_dscritic      => vr_des_erro,
+                       pr_cdcriticidade => 1,
+                       pr_cdmensagem    => nvl(vr_cdcritic,0),
+                       pr_ind_tipo_log  => 1);
+        END IF;
       WHEN OTHERS THEN
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        -- Montar o erro
+        vr_cdcritic := 9999;
+        vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_gera_log_job. '||sqlerrm;
+
         -- Temporariamente apenas imprimir na tela
-        gene0001.pc_print(pr_des_mensag => to_char(sysdate,'hh24:mi:ss')||' - '
-                                           || 'GENE0002.pc_gera_log_job'
-                                           || ' --> Erro não tratado : ' || sqlerrm);
+        gene0001.pc_print(pr_des_mensag => to_char(sysdate,'hh24:mi:ss')||' - '||
+                                           vr_des_erro);
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_des_erro,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_gera_log_job;
 
@@ -2752,12 +3653,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- somente esta escopo de alterações
     PRAGMA AUTONOMOUS_TRANSACTION;
     
+    vr_cdcritic     INTEGER;
+    vr_dsparame     VARCHAR2(2000);
+    
   BEGIN
     /*..............................................................................
 
        Programa: pc_submit_job
        Autor   : Marcos (Supero)
-       Data    : Janeiro/2013                    Ultima atualizacao: 17/06/2016
+       Data    : Janeiro/2013                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -2777,19 +3681,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 nome do job, para garantir a execução e caso ocorra erro, execute o rollback, 
                                 devido a rotina ser autonoma. (Odirlei-AMcom)             
                                 
+                   06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
-    
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_submit_job');
+
       -- Efetuar geração de nome para o JOB
       pr_jobname := pr_jobname;
-      
+
+      vr_dsparame := '. pr_cdcooper:'||pr_cdcooper||
+                     ', pr_cdprogra:'||pr_cdprogra||
+                     ', pr_dthrexe:'||pr_dthrexe||
+                     ', pr_interva:'||pr_interva||
+                     ', pr_jobname:'||pr_jobname;
+  
       --Caso o job não possuir intervalo, significa que é um job paralelo.
       -- que será executado e destruido.
       -- para isso devemos garantir que o nome não se repita
       IF TRIM(pr_interva) IS NULL THEN
         pr_jobname := dbms_scheduler.generate_job_name(substr(pr_jobname,1,18));
+
+        -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_submit_job');
       END IF;      
-      
+
       -- Chamar a rotina padrão do banco (dbms_scheduler.create_job)
       dbms_scheduler.create_job(job_name        => pr_jobname
                                ,job_type        => 'PLSQL_BLOCK' --> Indica que é um bloco PLSQL
@@ -2798,6 +3715,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                ,repeat_interval => pr_interva    --> Função para calculo da próxima execução, ex: 'sysdate+1'
                                ,auto_drop       => TRUE          --> Quando não houver mais agendamentos, "dropar"
                                ,enabled         => TRUE);        --> Criar o JOB já ativando-o
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_submit_job');
                                
       -- Gerar LOG do Job que será executado
       -- Obs. Utilizamos um arquivo chamado (ProcJob)
@@ -2808,17 +3728,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                     ||' - Prox Exec: '||pr_interva|| chr(13) ||'Bloco PLSQL: '||chr(13)||pr_dsplsql||chr(13)
                     ||' Nenhum registro de erro no momento da submissao '||chr(13)
                     ||'*******************************************************************************************************');
-                    
+
       COMMIT;
-      
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-      cecred.pc_internal_exception(pr_compleme => 'Job:'||pr_jobname);  
-      
         ROLLBACK;
-        -- Preparar saída com erro
-        pr_des_erro := 'Erro na rotina gene0001.pc_submit_job --> '||sqlerrm;
-        
+
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => 'Job:'||pr_jobname);
+
+        -- Montar o erro
+        vr_cdcritic := 9999;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_submit_job. '||sqlerrm;
+
         -- Adiciona também o erro no LOG
         pc_gera_log_job(pr_cdcooper
                       ,'*******************************************************************************************************'||chr(13)
@@ -2827,6 +3752,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                       ||' - Prox Exec: '||pr_interva|| chr(13) ||'Bloco PLSQL: '||chr(13)||pr_dsplsql||chr(13)
                       ||' Erro encontrado: '||pr_des_erro||chr(13)
                       ||'*******************************************************************************************************');
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_des_erro||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+      
       COMMIT;
     END;
   END pc_submit_job;
@@ -2843,22 +3777,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_grava_campos_log_item
        Autor   : Jean Michel (CECRED)
-       Data    : Agosto/2014                    Ultima atualizacao: 15/08/2014
+       Data    : Agosto/2014                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Rotina referente a gravação de log's de itens campo a campo
 
-       Alteracoes:
+       Alteracoes: 06/12/2018 - Revitalização
+                              - Eliminada a exception vr_exec_saida - não é utilizada
+                                REQ0011019 - Ana - Envolti
+       
     ..............................................................................*/
     DECLARE
-
-      -- Variaveis de ERRO
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic crapcri.dscritic%TYPE;
-
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
 
       -- Variaveis locais
       vr_indconta NUMBER := 0;
@@ -2870,6 +3800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_fetchlop NUMBER; --> Identificação do FETCH (iteração do LOOP)
       vr_dscampos VARCHAR2(1000);
       vr_dsconsul VARCHAR2(5000); -- Variavel de consulta SQL
+      vr_dsparame VARCHAR2(2000);
 
       -- Temp table para armazenar registros de log
       type typ_reg_campos is record
@@ -2889,7 +3820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         FROM
           user_tab_columns utc
         WHERE
-              utc.TABLE_NAME = pr_nmtabela
+           utc.TABLE_NAME = pr_nmtabela
           AND UPPER(utc.DATA_TYPE) in ('VARCHAR2','DATE','NUMBER','CHAR')
           AND UPPER(utc.column_name) <> 'PROGRESS_RECID'
           ORDER BY column_id;
@@ -2897,12 +3828,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       rw_ustacol cr_ustacol%ROWTYPE;
 
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_grava_campos_log_item');
+
+      vr_dsparame := '. pr_nmtabela:'||pr_nmtabela||
+                     ', pr_rowidlgm:'||pr_rowidlgm||
+                     ', pr_rowidtab:'||pr_rowidtab;
 
       -- Buscar os campos da tabela
       OPEN cr_ustacol(pr_nmtabela => pr_nmtabela);
 
       LOOP
-
         FETCH cr_ustacol INTO rw_ustacol;
 
         -- Sai do loop quando chegar ao final dos regsitros
@@ -2915,20 +3851,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         vr_tab_campos(vr_indconta).dscampo :=  rw_ustacol.column_name;
         vr_tab_campos(vr_indconta).cdtipo  :=  rw_ustacol.data_type;
         vr_tab_campos(vr_indconta).qtchar  :=  rw_ustacol.data_length;
-
         -- Monta estrutura de campos para consulta
         IF vr_indconta > 1 THEN
           vr_dscampos := vr_dscampos || ',' || vr_tab_campos(vr_indconta).dscampo;
         ELSE
           vr_dscampos := vr_dscampos || vr_tab_campos(vr_indconta).dscampo;
         END IF;
-
       END LOOP;
 
       -- Buscar ID da execução DBMS
       vr_dscursor := dbms_sql.open_cursor;
 
       vr_dsconsul := 'SELECT ' || vr_dscampos || ' FROM ' || pr_nmtabela || ' WHERE rowid = ''' || pr_rowidtab || '''';
+
       -- Parser do SQL dinâmico
       -- Definir a query a ser executada
       dbms_sql.parse(vr_dscursor,  vr_dsconsul, 1);
@@ -2950,7 +3885,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
       -- Realizar FETCH sob os resultados retornados
       LOOP
-
         vr_fetchlop := dbms_sql.fetch_rows(vr_dscursor);
 
         EXIT WHEN vr_fetchlop = 0;
@@ -2959,7 +3893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         FOR i IN vr_tab_campos.first..vr_tab_campos.last LOOP
 
           vr_campchar := NULL;
-          vr_campnume  := NULL;
+          vr_campnume := NULL;
 
           -- Verifica qual o tipo de dados
           IF vr_tab_campos(i).cdtipo IN ('CHAR','VARCHAR2') THEN
@@ -2977,21 +3911,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                    ,pr_dsdadant => ''
                                    ,pr_dsdadatu => nvl(vr_campchar, vr_campnume));
 
+
+          -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_grava_campos_log_item');
         END LOOP;
+      END LOOP;
 
-      END LOOP ;
-
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
-      WHEN vr_exc_saida THEN
+/*      WHEN vr_exc_saida THEN  --Retirada -- nao é utilizada - REQ0011019
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
-      WHEN OTHERS THEN
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 1,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 1);
 
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina GENE0001.pc_grava_campos_log_item --> ' || SQLERRM;
+*/      WHEN OTHERS THEN
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
 
+        -- Montar o erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_grava_campos_log_item. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
   END pc_grava_campos_log_item;
 
@@ -3002,30 +3958,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_lista_cooperativas
        Autor   : Marcos Martini (Supero)
-       Data    : Setembro/2014                    Ultima atualizacao: 24/09/2014
+       Data    : Setembro/2014                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Rotina que gera uma lista das cooperativas trazendo seu código,
                    nome e agência centralizadora.
 
-       Alteracoes:
+       Alteracoes: 06/12/2018 - Revitalização
+                   REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
   	  CURSOR cr_crapcop IS
   	    SELECT cdcooper
               ,nmrescop
-  			  ,cdagectl
-  		  FROM crapcop
+  			      ,cdagectl
+  	 	    FROM crapcop
   	     WHERE flgativo = 1
   	     ORDER BY cdcooper;
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_lista_cooperativas');
   	  FOR rw_cop IN cr_crapcop LOOP
   	    IF pr_des_lista IS NOT NULL THEN
           pr_des_lista := pr_des_lista || '#';
   	    END IF;
   	    pr_des_lista := pr_des_lista || rw_cop.cdcooper||';'||rw_cop.nmrescop||';'||lpad(rw_cop.cdagectl,4,'0');
   	  END LOOP;
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END;
   END pc_lista_cooperativas;
 
@@ -3046,14 +4007,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_verifica_batch_controle
        Autor   : Jaison
-       Data    : Agosto/2017                    Ultima atualizacao: 
+       Data    : Agosto/2017                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo: Verifica o controle do batch por agencia ou convenio.
 
-       Alteracoes: 
-
+       Alteracoes: 06/12/2018 - Revitalização
+                   REQ0011019 - Ana - Envolti
     ..............................................................................*/
     DECLARE
       -- Busca a existencia do registro
@@ -3071,8 +4032,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
       -- Variavel
       vr_flgachou BOOLEAN;
+      vr_dsparame VARCHAR2(2000);
 
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_verifica_batch_controle');
+
+      vr_dsparame := '. pr_cdcooper:'   ||pr_cdcooper|| 
+                     ', pr_cdprogra:'   ||pr_cdprogra||   
+                     ', pr_dtmvtolt:'   ||pr_dtmvtolt|| 
+                     ', pr_tpagrupador:'||pr_tpagrupador||
+                     ', pr_cdagrupador:'||pr_cdagrupador||
+                     ', pr_nrexecucao:' ||pr_nrexecucao;
+
       -- Inicializa
       pr_cdrestart  := 0;
       pr_insituacao := 1;
@@ -3089,12 +4061,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_insituacao := NVL(rw_controle.insituacao,1);
       END IF;
 
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina GENE0001.pc_verifica_batch_controle: ' || SQLERRM;
-    END;
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
 
+        -- Montar o erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_verifica_batch_controle. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
+        --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
+        pr_cdcritic := 0;
+    END;
   END pc_verifica_batch_controle;
 
   /* Grava o controle do batch por agencia ou convenio */
@@ -3115,63 +4103,149 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_grava_batch_controle
        Autor   : Jaison
-       Data    : Agosto/2017                    Ultima atualizacao: 
+       Data    : Agosto/2017                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo: Grava o controle do batch por agencia ou convenio.
 
-       Alteracoes: 
-
+       Alteracoes: 06/12/2018 - Revitalização
+                   REQ0011019 - Ana - Envolti
     ..............................................................................*/
-    BEGIN
-      -- Atualiza registro na tabela de controle
-      UPDATE tbgen_batch_controle tbc
-         SET tbc.cdrestart   = pr_cdrestart
-       WHERE tbc.cdcooper    = pr_cdcooper
-         AND tbc.cdprogra    = pr_cdprogra
-         AND tbc.dtmvtolt    = pr_dtmvtolt
-         AND tbc.tpagrupador = pr_tpagrupador
-         AND tbc.cdagrupador = pr_cdagrupador
-         AND tbc.nrexecucao  = pr_nrexecucao
-   RETURNING tbc.idcontrole 
-        INTO pr_idcontrole;
+    DECLARE
 
+      vr_dsparame VARCHAR2(2000);
+    
+    BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_verifica_batch_controle');
+      
+      vr_dsparame := '. pr_cdcooper:'   ||pr_cdcooper||
+                     ', pr_cdprogra:'   ||pr_cdprogra|| 
+                     ', pr_dtmvtolt:'   ||pr_dtmvtolt|| 
+                     ', pr_tpagrupador:'||pr_tpagrupador||
+                     ', pr_cdagrupador:'||pr_cdagrupador||
+                     ', pr_cdrestart:'  ||pr_cdrestart||
+                     ', pr_nrexecucao:' ||pr_nrexecucao;
+
+      BEGIN
+        -- Atualiza registro na tabela de controle
+        UPDATE tbgen_batch_controle tbc
+           SET tbc.cdrestart   = pr_cdrestart
+         WHERE tbc.cdcooper    = pr_cdcooper
+           AND tbc.cdprogra    = pr_cdprogra
+           AND tbc.dtmvtolt    = pr_dtmvtolt
+           AND tbc.tpagrupador = pr_tpagrupador
+           AND tbc.cdagrupador = pr_cdagrupador
+           AND tbc.nrexecucao  = pr_nrexecucao
+     RETURNING tbc.idcontrole 
+          INTO pr_idcontrole;
       -- Caso NAO tenha alterado, inclui
       IF SQL%ROWCOUNT = 0 THEN
-        -- Insere registro na tabela de controle
-        INSERT INTO tbgen_batch_controle tbc
-                   (tbc.cdcooper
-                   ,tbc.cdprogra
-                   ,tbc.dtmvtolt
-                   ,tbc.tpagrupador
-                   ,tbc.cdagrupador
-                   ,tbc.cdrestart
-                   ,tbc.insituacao
-                   ,tbc.nrexecucao)
-             VALUES(pr_cdcooper
-                   ,pr_cdprogra
-                   ,pr_dtmvtolt
-                   ,pr_tpagrupador
-                   ,pr_cdagrupador
-                   ,0
-                   ,1 -- Executado com erro
-                   ,pr_nrexecucao)
-          RETURNING tbc.idcontrole 
-               INTO pr_idcontrole;
-      END IF;
+        BEGIN
+          -- Insere registro na tabela de controle
+          INSERT INTO tbgen_batch_controle tbc
+                     (tbc.cdcooper
+                     ,tbc.cdprogra
+                     ,tbc.dtmvtolt
+                     ,tbc.tpagrupador
+                     ,tbc.cdagrupador
+                     ,tbc.cdrestart
+                     ,tbc.insituacao
+                     ,tbc.nrexecucao)
+               VALUES(pr_cdcooper
+                     ,pr_cdprogra
+                     ,pr_dtmvtolt
+                     ,pr_tpagrupador
+                     ,pr_cdagrupador
+                     ,0
+                     ,1 -- Executado com erro
+                     ,pr_nrexecucao)
+            RETURNING tbc.idcontrole 
+                 INTO pr_idcontrole;
+        EXCEPTION
+          WHEN OTHERS THEN
+            --REQ0011019
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
+            pr_cdcritic := 1034;  --Erro ao atualizar 
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'tbgen_batch_controle:'||
+                            ' com cdcooper:'||pr_cdcooper||
+                            ', cdprogra:'   ||pr_cdprogra||
+                            ', dtmvtolt:'   ||pr_dtmvtolt||
+                            ', tpagrupador:'||pr_tpagrupador||
+                            ', cdagrupador:'||pr_cdagrupador||
+                            ', cdrestart:0' ||
+                            ', insituacao:1'||
+                            ', nrexecucao:' ||pr_nrexecucao||
+                            '. '||sqlerrm;
+
+            --Grava tabela de log - Ch REQ0011019
+            pc_grava_log(pr_cdcooper      => 0,
+                         pr_dstiplog      => 'E',
+                         pr_dscritic      => pr_dscritic||vr_dsparame,
+                         pr_cdcriticidade => 2,
+                         pr_cdmensagem    => nvl(pr_cdcritic,0),
+                         pr_ind_tipo_log  => 2);
+
+          --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
+          pr_cdcritic := 0;
+        END;
+      END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        pr_cdcritic := 1035;  --Erro ao atualizar 
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'tbgen_batch_controle:'||
+                        ' cdrestart:'   ||pr_cdrestart||
+                        ' com cdcooper:'||pr_cdcooper||
+                        ', cdprogra:'   ||pr_cdprogra||
+                        ', dtmvtolt:'   ||pr_dtmvtolt||
+                        ', tpagrupador:'||pr_tpagrupador||
+                        ', cdagrupador:'||pr_cdagrupador||
+                        ', nrexecucao:' ||pr_nrexecucao||
+                        '. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
+        --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina GENE0001.pc_grava_batch_controle: ' || SQLERRM;
+      END;
+      --
+      COMMIT;   
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+    EXCEPTION
+     WHEN OTHERS THEN
+      --REQ0011019
+      CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+      -- Montar o erro
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_grava_batch_controle. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 2,
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
+                   pr_ind_tipo_log  => 2);
+
+      --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
+      pr_cdcritic := 0;
     END;
-    --
-    COMMIT;   
     --
   END pc_grava_batch_controle;
 
-  
   --> Validar conclusao do processo do controle do batch
   PROCEDURE pc_valid_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
                                    ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
@@ -3183,14 +4257,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_valid_batch_controle
        Autor   : Odirlei Busana - AMcom
-       Data    : Janeiro/2018                    Ultima atualizacao: 
+       Data    : Janeiro/2018                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo: Validar conclusao do processo do controle do batch
 
-       Alteracoes: 
-
+       Alteracoes: 06/12/2018 - Revitalização
+                   REQ0011019 - Ana - Envolti
     ..............................................................................*/
     ---->> CURSORES <<----    
     --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
@@ -3210,9 +4284,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_exec_erro EXCEPTION;
     vr_dscritic  VARCHAR2(3000);
     vr_cdcritic  NUMBER;
+    vr_dsparame  VARCHAR2(2000);
     
   BEGIN
-    
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_valid_batch_controle');
+      
+    vr_dsparame := '. pr_cdcooper:'  ||pr_cdcooper||
+                   ', pr_cdprogra:'  ||pr_cdprogra||
+                   ', pr_dtmvtolt:'  ||pr_dtmvtolt||
+                   ', pr_nrexecucao:'||pr_nrexecucao;
+
     --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
     OPEN cr_tbbtch ( pr_cdcooper => pr_cdcooper,
                      pr_cdprogra => pr_cdprogra,
@@ -3221,22 +4303,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     FETCH cr_tbbtch INTO rw_tbbtch;
     IF cr_tbbtch%FOUND THEN 
       CLOSE cr_tbbtch;
-      
-      vr_dscritic := 'Rotina paralela '||pr_cdprogra||' terminou com ERRO.';
+      vr_cdcritic := 1460;  --Rotina paralela '||pr_cdprogra||' terminou com ERRO.;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||pr_cdprogra;
+
       RAISE vr_exec_erro;
     ELSE
       CLOSE cr_tbbtch;
     END IF;
     
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exec_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;    
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro na rotina GENE0001.pc_valid_batch_controle: ' || SQLERRM;
-  END pc_valid_batch_controle;
 
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 1,
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
+                   pr_ind_tipo_log  => 1);
+
+    WHEN OTHERS THEN
+      --REQ0011019
+      CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+      -- Montar o erro
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_valid_batch_controle. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 2,
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
+                   pr_ind_tipo_log  => 2);
+
+      --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
+      pr_cdcritic := 0;
+  END pc_valid_batch_controle;
 
   /* Finaliza o controle do batch por agencia ou convenio */
   PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
@@ -3245,22 +4353,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   
 
     PRAGMA AUTONOMOUS_TRANSACTION;   
+    vr_dsparame  VARCHAR2(2000);
 
   BEGIN
     /*..............................................................................
 
        Programa: pc_finaliza_batch_controle
        Autor   : Jaison
-       Data    : Agosto/2017                    Ultima atualizacao: 
+       Data    : Agosto/2017                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo: Finaliza o controle do batch por agencia ou convenio.
 
-       Alteracoes: 
-
+       Alteracoes: 06/12/2018 - Revitalização
+                   REQ0011019 - Ana - Envolti
     ..............................................................................*/
-
+  BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_finaliza_batch_controle');
+      
+    vr_dsparame := '. pr_idcontrole:'||pr_idcontrole;
+  
     BEGIN
       -- Atualiza registro na tabela de controle
       UPDATE tbgen_batch_controle tbc
@@ -3269,13 +4383,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
        WHERE tbc.idcontrole = pr_idcontrole;
     EXCEPTION
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina GENE0001.pc_finaliza_batch_controle: ' || SQLERRM;
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        pr_cdcritic := 1035;  --Erro ao atualizar 
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'tbgen_batch_controle:'||
+                      ' insituacao:2'||
+                      ', cdrestart:0'||
+                      ' com idcontrole:'||pr_idcontrole||
+                      '. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
     END;
-    --
+
     COMMIT;
     --
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
+    WHEN OTHERS THEN
+      --REQ0011019
+      CECRED.pc_internal_exception (pr_cdcooper => 0);
 
+      -- Montar o erro
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_finaliza_batch_controle. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => 0,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 2,
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
+                   pr_ind_tipo_log  => 2);
+
+      --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
+      pr_cdcritic := 0;
+    END;
+    --
   END pc_finaliza_batch_controle;
 
 /* Retorno do cadastro de critica crapcri */
@@ -3290,13 +4441,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: pc_le_crapcri
        Autor   : Belli (Envolti)
-       Data    : Junho/2017                    Ultima atualizacao: 08/06/2017
+       Data    : Junho/2017                    Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
        Objetivo  : Rotina que retorna ás informações do cadastro de critica.
 
-       Alteracoes:
+       Alteracoes: 06/12/2018 - Revitalização
+                                Eliminada variável vr_teste I(vr_teste number (1) := 0)
+                                - não era utilizada
+                                REQ0011019 - Ana - Envolti
     ..............................................................................*/
 
     DECLARE
@@ -3306,14 +4460,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
               ,tpcritic
               ,flgchama 
   		  FROM crapcri
-  	     WHERE cdcritic = pr_cdcritic;
+  	    WHERE cdcritic = pr_cdcritic;
          
       vr_dscritic         crapcri.dscritic%TYPE := NULL;
       vr_progress_recid   crapcri.progress_recid%TYPE := NULL;
       vr_tpcritic         crapcri.tpcritic%TYPE := NULL;
       vr_flgchama         crapcri.flgchama%TYPE := NULL;
       vr_seq              BINARY_INTEGER;
-      vr_teste            number (1) := 0;
+      vr_dsparame         VARCHAR2(2000);
+      vr_cdcritic         INTEGER;
+      vr_dscritic_2       VARCHAR2(2000);
       
     PROCEDURE MONTA_TYPE 
       IS
@@ -3330,6 +4486,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --
     --   INICIO  PROCESSO
     BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_le_crapcri');
+        
+      vr_dsparame := '. pr_cdcritic:'||pr_cdcritic;
       
       pr_cdretorno   := 0;
       pr_dsretorno   := 'Inicio';
@@ -3351,7 +4511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
             ,vr_tpcritic
             ,vr_flgchama
             ;
-      
+
             IF cr_crapcri%NOTFOUND THEN
                -- Se não encontrou nenhum registro
                pr_cdretorno      := 2; 
@@ -3364,21 +4524,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
+              --REQ0011019
+              CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+              -- Montar o erro
+              vr_cdcritic   := 9999;
+              vr_dscritic_2 := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_le_crapcri FETCH. '||sqlerrm;
+
+              --Grava tabela de log - Ch REQ0011019
+              pc_grava_log(pr_cdcooper      => 0,
+                           pr_dstiplog      => 'E',
+                           pr_dscritic      => vr_dscritic_2||vr_dsparame,
+                           pr_cdcriticidade => 2,
+                           pr_cdmensagem    => nvl(vr_cdcritic,0),
+                           pr_ind_tipo_log  => 2);
+
               pr_cdretorno := 8;
-              pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FETCH --> ' || SQLERRM;
+              pr_dsretorno := vr_dscritic_2;
           END;
          
           -- Apenas fechar o cursor
           CLOSE cr_crapcri;    
       END IF; 
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       
     EXCEPTION
       WHEN OTHERS THEN
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
+
+        -- Montar o erro
+        vr_cdcritic   := 9999;
+        vr_dscritic_2 := gene0001.fn_busca_critica(vr_cdcritic)||'GENE0001.pc_le_crapcri FINAL. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => 0,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => vr_dscritic_2||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(vr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
         pr_cdretorno := 9;
-        pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FINAL --> ' || SQLERRM;
+        pr_dsretorno := vr_dscritic_2;
     END;
   END pc_le_crapcri;
-
   /* Informação do modulo em execução na sessão */
   PROCEDURE pc_set_modulo    (pr_module IN VARCHAR2
                              ,pr_action IN VARCHAR2 DEFAULT NULL) IS
@@ -3386,7 +4578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : pc_set_modulo
    Autor    : Cesar Belli
-   Data     : 09/06/2017                        Ultima atualizacao: 29/06/2017   
+   Data     : 09/06/2017                        Ultima atualizacao: 06/12/2018   
    Chamado  : 660327
 
    Dados referentes ao programa:
@@ -3422,14 +4614,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 		/*..............................................................................
 			 Programa: pc_valida_senha_AD
 			 Autor   : Lucas Reinert
-			 Data    : Agosto/2017                        Ultima atualizacao: --/--/----
+			 Data    : Agosto/2017                        Ultima atualizacao: 06/12/2018
 
 			 Dados referentes ao programa:
 
 			 Objetivo  : Rotina responsável em fazer a validação da senha dos operadores 
 									 no AD (Active Directory).
 
-			 Alteracoes:
+       Alteracoes: 06/12/2018 - Revitalização
+                                REQ0011019 - Ana - Envolti
 		..............................................................................*/
 		-- Tratamento de erros
 		vr_exc_erro  EXCEPTION;
@@ -3439,9 +4632,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 		
 		-- Variáveis auxiliares
 		vr_dscomando VARCHAR2(1000);
+    vr_dsparame  VARCHAR2(2000);
+
 	  BEGIN
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_valida_senha_AD');
+        
+      vr_dsparame := ' pr_cdcooper:'||pr_cdcooper||
+                     ', pr_cdoperad:'||pr_cdoperad||
+                     ', pr_nrdsenha:'||pr_nrdsenha;
+
 			-- Montar comando UNIX
 			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /usr/local/bin/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
+
 			-- Executar o comando UNIX
 			GENE0001.pc_Oscommand_Shell(pr_des_comando => vr_dscomando
 																 ,pr_flg_aguard => 'S'
@@ -3454,25 +4657,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 				vr_dscritic := '';
 				RAISE vr_exc_erro;
 			END IF;    
-			
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        -- Se possui código da crítica
-        IF vr_cdcritic > 0  AND TRIM(vr_dscritic) IS NULL THEN
-					-- Busca a descrição da crítica
-					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-				END IF;
+        -- Busca a descrição da crítica
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 				-- Retornar críticas parametrizadas
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||vr_dsparame,
+                     pr_cdcriticidade => 1,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 1);
+
       WHEN OTHERS THEN
+        --REQ0011019
+        CECRED.pc_internal_exception (pr_cdcooper => 0);
 
+        -- Montar o erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_valida_senha_AD. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0011019
+        pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                     pr_dstiplog      => 'E',
+                     pr_dscritic      => pr_dscritic||'.'||vr_dsparame,
+                     pr_cdcriticidade => 2,
+                     pr_cdmensagem    => nvl(pr_cdcritic,0),
+                     pr_ind_tipo_log  => 2);
+
+        --Foi mantido pr_cdccritic = 0 para evitar erros nas rotinas chamadoras
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina GENE0001.pc_valida_senha_AD --> ' || SQLERRM;
-
 	END pc_valida_senha_AD;
-
 
   /* Procedimento para verificar/controlar a execução de programas */
   PROCEDURE pc_controle_exec ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
@@ -3488,8 +4710,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Belli - Envolti
-  --   Data    : Agosto/2017                       Ultima atualizacao: 20/09/2018
---  
+  --   Data    : Agosto/2017                       Ultima atualizacao: 06/12/2018
+  --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que chamado
@@ -3499,22 +4721,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   -- Observação: Rotina Copiada/Refeita da SICR0001 pc_controle_exec_deb, sendo atualizada para ser genérica
   --
-  --  Alteracoes:  
+  --  Alteracoes:
   --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
   --                          pc_controle_exec                   
   --                          ( Belli - Envolti - REQ0027434 )
   --
+  --             06/12/2018 - Revitalização
+  --                          vr_exc_mensagem não gravava log - agora grava como Alerta apenas
+  --                          substituída rotina pc_controla_log_programa pela pc_grava_log
+  --                          REQ0011019 - Ana - Envolti
   --------------------------------------------------------------------------------------------------------------------*/
     ------------- Variaveis ---------------
-    vr_exc_mensagem EXCEPTION;
-    vr_exc_erro  EXCEPTION;
-    vr_dscritic  VARCHAR2(1000);
+    vr_exc_mensagem  EXCEPTION;
+    vr_exc_erro      EXCEPTION;
+    vr_dscritic      VARCHAR2(1000);
 
-    vr_cdprogra  crapprg.cdprogra%TYPE;
-    vr_tbdados   gene0002.typ_split;
-    vr_dtctlexc  DATE   := NULL;
-    vr_qtctlexc  INTEGER := 0;
-    vr_qtdexec   INTEGER := 0;
+    vr_cdprogra      crapprg.cdprogra%TYPE;
+    vr_tbdados       gene0002.typ_split;
+    vr_dtctlexc      DATE   := NULL;
+    vr_qtctlexc      INTEGER := 0;
+    vr_qtdexec       INTEGER := 0;
 
     --
     vr_nmsistem        crapprm.nmsistem%TYPE := 'CRED';
@@ -3522,43 +4748,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_dsvlrprm_ctl    crapprm.dsvlrprm%TYPE;
     vr_dsvlrprm_qtd    crapprm.dsvlrprm%TYPE;
     vr_cdacesso_qtd    crapprm.dsvlrprm%TYPE;
-
-    -- Controla Controla log em banco de dados
-    PROCEDURE pc_controla_log_programa
-    IS
-      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
-      vr_tpocorrencia       tbgen_prglog_ocorrencia.tpocorrencia%type;
-      vr_dstipoocorrencia   VARCHAR2   (10);    
-    BEGIN         
-      vr_dstipoocorrencia := 'ERRO: '; 
-      vr_tpocorrencia     := 2; 
-      --> Controlar geração de log de execução dos jobs                                
-      CECRED.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE0001', 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 2, --job
-                             pr_tpocorrencia  => vr_tpocorrencia,
-                             pr_cdcriticidade => 0, --baixa
-                             pr_dsmensagem    => to_char(sysdate,'hh24:mi:ss') ||' - ' || 'GENE0001' || 
-                                                         ' --> ' || vr_dstipoocorrencia || pr_dscritic ||
-                                                         ' - pr_dtmvtolt: ' || pr_dtmvtolt ||
-                                                         ' ,pr_cdcooper: ' || pr_cdcooper ||
-                                                         ' ,pr_cdtipope: ' || pr_cdtipope ||
-                                                         ' ,pr_cdprogra: ' || pr_cdprogra,
-                             pr_idprglog      => vr_idprglog);
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- No caso de erro de programa gravar tabela especifica de log  
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
-    END pc_controla_log_programa;
-    
+    vr_dsparame        VARCHAR2(2000);
+    vr_cdcritic        INTEGER;
+    --
   BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_controle_exec');
+        
+    vr_dsparame := '. pr_cdcooper:'||pr_cdcooper||
+                   ', pr_cdtipope:'||pr_cdtipope||
+                   ', pr_dtmvtolt:'||pr_dtmvtolt||
+                   ', pr_cdprogra:'||pr_cdprogra;
+                   
     --Limpar parametros saida
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
-    
-    -- Incluir nome do modulo logado
-    GENE0001.pc_set_modulo(pr_module => 'GENE0001', pr_action => 'pc_controle_exec');
     
     --Posiciona variaveis      
     vr_cdprogra     := pr_cdprogra;    
@@ -3570,16 +4774,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          pr_cdtipope IS NULL OR
          pr_dtmvtolt IS NULL OR
          pr_cdprogra IS NULL   THEN
-        vr_dscritic := 'Todos parâmetros devem ser preenchidos.';
+        vr_cdcritic := 1461;  --Todos parâmetros devem ser preenchidos
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
         RAISE vr_exc_mensagem;
       END IF;
-                             
+                     
       --> buscar parametro de controle de execução
       pc_param_sistema(pr_nmsistem  => vr_nmsistem      --> Nome do sistema
                       ,pr_cdcooper  => pr_cdcooper      --> Zero é utilizado para todas as COOPs
                       ,pr_cdacesso  => vr_cdacesso_ctl  --> Chave de acesso do parametro
                       ,pr_dsvlrprm  => vr_dsvlrprm_ctl  --> Deescrição do valor do parâmetro
                       );
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_controle_exec');
     EXCEPTION
       WHEN vr_exc_mensagem THEN  
         RAISE vr_exc_mensagem;
@@ -3587,21 +4796,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido  
-        vr_dscritic := 'Retorno pc_param_sistema - ' ||
-                       ' vr_nmsistem: ' || vr_nmsistem ||
-                       ' ,pr_cdcooper: ' || pr_cdcooper ||
-                       ' ,vr_cdacesso_ctl: ' || vr_cdacesso_ctl ||
+        vr_dscritic := 'Retorno pc_param_sistema -' ||
+                       ' vr_nmsistem:'     || vr_nmsistem ||
+                       ', pr_cdcooper:'    || pr_cdcooper ||
+                       ', vr_cdacesso_ctl:'|| vr_cdacesso_ctl ||
                        ' - ' || SQLERRM;
+
         RAISE vr_exc_erro;
     END;
+
     IF vr_dsvlrprm_ctl IS NULL THEN
-      vr_dscritic := 'Parâmetro de sistema '|| vr_cdacesso_ctl || ' não encontrado.';
+      vr_cdcritic := 1132;  --Parâmetro de sistema '|| vr_cdacesso_ctl || ' não encontrado.
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||vr_cdacesso_ctl;
       RAISE vr_exc_mensagem;
     END IF;
         
     -- tratar dados do parametro
     vr_tbdados := gene0002.fn_quebra_string(pr_string  => vr_dsvlrprm_ctl,
                                             pr_delimit => '#');
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_controle_exec');
+
     vr_dtctlexc := NULL;
     vr_qtctlexc := 0;
     --> Buscar data
@@ -3612,9 +4828,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     IF vr_tbdados.exists(2) THEN
       vr_qtctlexc := vr_tbdados(2);
     END IF;
-    
+
     -- Monta chave para cessar quantidade máxima de execuções por dia
     vr_cdacesso_qtd := 'QTD_EXEC_'||upper(vr_cdprogra);
+
     BEGIN
       --> buscar parametro de qtd de execução
       pc_param_sistema(pr_nmsistem  => vr_nmsistem      --> Nome do sistema
@@ -3622,6 +4839,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                       ,pr_cdacesso  => vr_cdacesso_qtd  --> Chave de acesso do parametro
                       ,pr_dsvlrprm  => vr_dsvlrprm_qtd  --> Deescrição do valor do parâmetro
                       );
+
+      -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_controle_exec');
     EXCEPTION
       WHEN vr_exc_mensagem THEN  
         RAISE vr_exc_mensagem;
@@ -3629,16 +4849,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido  
-        vr_dscritic := 'Retorno pc_param_sistema - ' ||
+        vr_dscritic := 'Retorno pc_param_sistema -' ||
                        ' vr_nmsistem: ' || vr_nmsistem ||
-                       ' ,pr_cdcooper: ' || pr_cdcooper ||
-                       ' ,vr_cdacesso_qtd: ' || vr_cdacesso_qtd ||
+                       ', pr_cdcooper: ' || pr_cdcooper ||
+                       ', vr_cdacesso_qtd: ' || vr_cdacesso_qtd ||
                        ' - ' || SQLERRM;
         RAISE vr_exc_erro;
     END;
+
     -- Critica se não tem registro
     IF vr_dsvlrprm_qtd IS NULL THEN
-      vr_dscritic := 'Parâmetro de sistema ' || vr_cdacesso_qtd || ' não encontrado.';
+      vr_cdcritic := 1132;  --Parâmetro de sistema '|| vr_cdacesso_ctl || ' não encontrado.
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||vr_cdacesso_qtd;
       RAISE vr_exc_mensagem;
     END IF;
 
@@ -3648,39 +4870,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       IF nvl(vr_dtctlexc,to_date('01/01/2001','DD/MM/RRRR')) <> pr_dtmvtolt THEN
         vr_qtdexec := 1;
       ELSIF vr_qtctlexc >= vr_dsvlrprm_qtd THEN
-        vr_dscritic := 'Processo '||vr_cdprogra||' já ultrapassou o limite diario de execução.';
+        vr_cdcritic := 1133;  --Processo '||vr_cdprogra||' já ultrapassou o limite diario de execução.
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||vr_cdprogra;
         RAISE vr_exc_mensagem;
       ELSE
         vr_qtdexec := nvl(vr_qtctlexc,0) + 1;
       END IF;            
-		
-	    BEGIN
+
+      BEGIN
         UPDATE crapprm
            SET crapprm.dsvlrprm = to_char(pr_dtmvtolt,'DD/MM/RRRR')||'#'||vr_qtdexec
          WHERE nmsistem =  vr_nmsistem
            AND cdcooper IN (pr_cdcooper,0) --> Busca tanto da passada, quanto da geral (se existir)
-           AND cdacesso =  vr_cdacesso_ctl;
-	                         
+           AND cdacesso = vr_cdacesso_ctl;
+        
         IF SQL%ROWCOUNT <> 1 THEN
-          vr_dscritic := 'Não foi possível atualizar parâmetro , SQL%ROWCOUNT: '||SQL%ROWCOUNT;
+            --REQ0011019
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 1035;  --Erro ao atualizar 
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapprm:'||
+                          ' dsvlrprm:'||to_char(pr_dtmvtolt,'DD/MM/RRRR')||'#'||vr_qtdexec||
+                          ' com nmsistem:' ||vr_nmsistem||
+                          ', cdcooper:'    ||pr_cdcooper||
+                          ', cdacesso:'    ||vr_cdacesso_ctl||
+                          ', SQL%ROWCOUNT:'||SQL%ROWCOUNT;
+
           RAISE vr_exc_erro;
         END IF;
       EXCEPTION
+        --REQ0011019
+        WHEN vr_exc_erro THEN
+          RAISE vr_exc_erro;
         WHEN vr_exc_mensagem THEN  
           RAISE vr_exc_mensagem;
         WHEN OTHERS THEN
           -- No caso de erro de programa gravar tabela especifica de log  
+          --REQ0011019
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
-          vr_dscritic := 'Não foi possível atualizar parâmetro '||vr_cdacesso_ctl||':'||SQLERRM;
-				RAISE vr_exc_erro;
+          vr_cdcritic := 1035;  --Erro ao atualizar 
+          vr_dscritic :=  gene0001.fn_busca_critica(vr_cdcritic)||'crapprm:'||
+                        ' dsvlrprm:'||to_char(pr_dtmvtolt,'DD/MM/RRRR')||'#'||vr_qtdexec||
+                        ' com nmsistem:' ||vr_nmsistem||
+                        ', cdcooper:'    ||pr_cdcooper||
+                        ', cdacesso:'    ||vr_cdacesso_ctl||
+                        ', SQL%ROWCOUNT:'||SQL%ROWCOUNT||
+                        '. '||sqlerrm;
+          RAISE vr_exc_erro;
       END;
+
     --> Validar
     ELSIF pr_cdtipope = 'V' THEN
       -- Se mudou a data, deve reiniciar o parametro
       IF nvl(vr_dtctlexc,to_date('01/01/2001','DD/MM/RRRR')) <> nvl(pr_dtmvtolt,to_date('01/01/2001','DD/MM/RRRR')) THEN
         vr_qtdexec := 1;
       ELSIF vr_qtctlexc >= vr_dsvlrprm_qtd THEN
-        vr_dscritic := 'Processo '||vr_cdprogra||' já ultrapassou o limite diario de execução.';
+        vr_cdcritic := 1133;  --Processo '||vr_cdprogra||' já ultrapassou o limite diario de execução.
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||vr_cdprogra;
         RAISE vr_exc_mensagem;
       ELSE
         vr_qtdexec := nvl(vr_qtctlexc,0) + 1;
@@ -3688,16 +4933,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     ELSE --> Consulta
       vr_qtdexec := vr_qtctlexc;
     END IF;
-    
+
     --> Verificar se é a ultima execucao
     IF vr_qtdexec >= vr_dsvlrprm_qtd THEN
       pr_flultexe := 1;
     ELSE
       pr_flultexe := 0;
-		END IF;      
-			
-    pr_qtdexec := vr_qtdexec; 
-    
+    END IF;
+
+    pr_qtdexec := vr_qtdexec;
+
     -- Consulta 2 - levando em conta a data de parâmetro - 20/09/2018 - REQ0027434
     IF pr_cdtipope = 'C2' THEN        
       IF nvl(vr_dtctlexc,to_date('01/01/2001','DD/MM/RRRR')) <> 
@@ -3708,29 +4953,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       END IF;
     END IF; 
 
-    EXCEPTION
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
     WHEN vr_exc_mensagem THEN  
       -- Efetuar retorno do erro tratado
       pr_dscritic := vr_dscritic;
-      WHEN vr_exc_erro THEN
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 0,
+                   pr_cdmensagem    => nvl(vr_cdcritic,0),
+                   pr_ind_tipo_log  => 3);
+
+    WHEN vr_exc_erro THEN  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 9999;
       pr_dscritic := vr_dscritic;
-      -- Controla Controla log em banco de dados
-      pc_controla_log_programa;
+      --REQ0011019
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_controle_exec. '||vr_dscritic;
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 1,
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
+                   pr_ind_tipo_log  => 1);
+
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 9999;
-      pr_dscritic := SQLERRM;
-      -- Controla Controla log em banco de dados
-      pc_controla_log_programa;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GENE0001.pc_controle_exec. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011019
+      pc_grava_log(pr_cdcooper      => pr_cdcooper,
+                   pr_dstiplog      => 'E',
+                   pr_dscritic      => pr_dscritic||vr_dsparame,
+                   pr_cdcriticidade => 2,
+                   pr_cdmensagem    => nvl(vr_cdcritic,0),
+                   pr_ind_tipo_log  => 2);
   END;
 
   -- Retornar quantidade de threads paralelas disponíveis para o Programa ou JOB
-  FUNCTION fn_retorna_qt_paralelo(pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
-                                 ,pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+  FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                 , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtparalelo%TYPE IS
  
     -- ..........................................................................
@@ -3739,7 +5010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jonatas Jaqmam(AMcom)
-    --  Data     : Dezembro/2017.                   Ultima atualizacao: 16/07/2018
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -3751,6 +5022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Checagem de quantidade de Paralelos
     --                            quando programa passado for um JOB - Andreatta (MOUTs)
     --
+    --               06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
   
     -- Busca na tabela de Programas
@@ -3764,17 +5037,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     CURSOR cr_jobs IS
       SELECT j.nmjob
         FROM tbgen_batch_jobs j
-       WHERE j.nmjob = pr_cdprogra;
+       WHERE j.nmjob = pr_cdprogra; 
     v_nmjob tbgen_batch_jobs.nmjob%TYPE;
 
     --Separacao de valores por hora para vetor
     vr_txhorarios   gene0002.typ_split;
-
     -- Variavel padrão
     vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE := 0;
 
   BEGIN
-
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_retorna_qt_paralelo');
+        
     OPEN cr_prog;
     FETCH cr_prog
      INTO vr_qtparalelo;
@@ -3788,9 +5062,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         CLOSE cr_jobs;
         -- Buscar nos parâmetros de sistema de acordo com o horário atual
         -- qual a quantidade de threads liberadas por hora por JOB
-        vr_txhorarios
-               := gene0002.fn_quebra_string
-                           (gene0001.fn_param_sistema('CRED',0,'QT_JB_HORA_BATCH_MASTER'), ';');
+        vr_txhorarios := gene0002.fn_quebra_string
+                         (gene0001.fn_param_sistema('CRED',0,'QT_JB_HORA_BATCH_MASTER'), ';');
 
         -- Usar a Hora atual e a mesma servira como posicionador no array
         -- ou seja, 12:00 irá buscar a posição 12 do Array, onde está a quantidde
@@ -3803,12 +5076,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       CLOSE cr_prog;
     END IF;
 
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
     RETURN vr_qtparalelo;
   EXCEPTION
     WHEN OTHERS THEN
       RETURN 0;
   END fn_retorna_qt_paralelo;                                 
   --
+
   FUNCTION fn_retorna_qt_reg_commit( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                    , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtreg_transacao%TYPE IS
@@ -3819,7 +5096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jonatas Jaqmam(AMcom)
-    --  Data     : Dezembro/2017.                   Ultima atualizacao: 18/12/2017
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -3827,15 +5104,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Objetivo    : Buscar o parâmetro de quantidade de registro para realizar commit
     --   Observações : Projeto Ligeirinho
     --                 
-    --
-    --   Alteracoes:
-    --
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................
   
     vr_registro tbgen_batch_param.qtreg_transacao%TYPE;
                                 
   BEGIN
-    
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_retorna_qt_reg_commit');
+        
     BEGIN
       SELECT t.qtreg_transacao
         INTO vr_registro
@@ -3847,10 +5125,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         vr_registro := 0;  
     END;
 
-    RETURN vr_registro;
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
+    RETURN vr_registro;
   END fn_retorna_qt_reg_commit;      
   -- 
+
   FUNCTION fn_retorna_restart(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE,
                               pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE,
                               pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE,
@@ -3863,7 +5144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jonatas Jaqmam(AMcom)
-    --  Data     : Dezembro/2017.                   Ultima atualizacao: 18/12/2017
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 06/12/2018
     --
     --  Dados referentes ao programa:
     --
@@ -3872,10 +5153,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --   Observações : Projeto Ligeirinho
     --                 
     --
-    --   Alteracoes:
-    --
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
     -- .............................................................................   
-  
    CURSOR cr_controle IS
       SELECT tbc.cdrestart
         FROM tbgen_batch_controle tbc
@@ -3893,28 +5173,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_cdrestart tbgen_batch_controle.cdrestart%TYPE;
     
   BEGIN
-    
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_retorna_restart');
+        
     OPEN cr_controle;
     FETCH cr_controle INTO vr_cdrestart;
     IF cr_controle%NOTFOUND THEN  
       vr_cdrestart := 0;
-				END IF;
+		END IF;
     CLOSE cr_controle;
+
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
     RETURN vr_cdrestart; 
-    
+
   END fn_retorna_restart;
-  
+
   FUNCTION fn_ret_qt_erro_paralelo(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
                                   ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
                                   ) RETURN NUMBER IS
-    
-    v_qt_erro NUMBER := 0;
-  BEGIN
 
+    -- ..........................................................................
+    --
+    --  Programa : fn_ret_qt_erro_paralelo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     :                                  Ultima atualizacao: 06/12/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : 
+    --   Objetivo    : 
+    --   Observações : 
+    --                 
+    --   Alteracoes: 06/12/2018 - Revitalização
+    --                            REQ0011019 - Ana - Envolti
+    -- .............................................................................   
+    
+    v_qt_erro    NUMBER := 0;
+  BEGIN
+    -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.fn_ret_qt_erro_paralelo');
+        
     BEGIN
       select count(*)
         into v_qt_erro
@@ -3930,9 +5235,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          v_qt_erro := 0;
      END; 
 
+     -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
+     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
      RETURN v_qt_erro; 
 
-  END;  
+  END fn_ret_qt_erro_paralelo;  
 															 
 END GENE0001;
 /
