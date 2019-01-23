@@ -3,7 +3,6 @@ declare
   -- Local variables here
   i integer;
 begin
-  -- Test statements here
   begin
     update crapceb set insitceb = 1 where cdcooper = 16 and nrconven = 115070 and nrdconta = 159700 and insitceb = 2;
     update crapceb set insitceb = 1 where cdcooper = 16 and nrconven = 115070 and nrdconta = 157910 and insitceb = 2;
