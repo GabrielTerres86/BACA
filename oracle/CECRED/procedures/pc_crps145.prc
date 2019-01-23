@@ -97,18 +97,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                 
                    20/03/2014 - Conversão Progress >> PLSQL (Edison-AMcom).
 
-				   24/04/2017 - Nao considerar valores bloqueados para composicao do saldo disponivel
-				                Heitor (Mouts) - Melhoria 440
+                   24/04/2017 - Nao considerar valores bloqueados para composicao do saldo disponivel
+                                Heitor (Mouts) - Melhoria 440
 
                    24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-         			                  crapass, crapttl, crapjur 
-                  							(Adriano - P339).
+                                       crapass, crapttl, crapjur 
+                                              (Adriano - P339).
                    
                    09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
                                 Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                                 
 
-                   02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).																
+                   02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).        
 
+                   12/10/2018 - Relatório crrl1120 publicado na intranet - pr_flg_impri = "S" - Proj. 411.2 (CIS Corporate)    
+
+                   12/10/2018 - Tratamento de Flag de Teimosinha e Debito Parcial - Proj. 411.2 (CIS Corporate)    
     ............................................................................. */
 
     DECLARE
@@ -158,6 +161,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
               ,craprpp.vlprerpp
               ,craprpp.nrctrrpp
               ,craprpp.vlprepag
+              ,craprpp.vlsppant
               ,craprpp.qtprepag
               ,craprpp.vlabcpmf
               ,craprpp.vlabdiof
@@ -168,8 +172,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
               ,craprpp.flgctain
               ,craprpp.cdbccxlt
               ,craprpp.cdprodut
+              ,(SELECT tbcapt_config_planos_apl_prog.flgteimosinha 
+              FROM tbcapt_config_planos_apl_prog 
+              WHERE tbcapt_config_planos_apl_prog.cdcooper = craprpp.cdcooper 
+              AND tbcapt_config_planos_apl_prog.cdprodut = craprpp.cdprodut) flgteimosinha
+              ,(SELECT tbcapt_config_planos_apl_prog.flgdebito_parcial 
+              FROM tbcapt_config_planos_apl_prog 
+              WHERE tbcapt_config_planos_apl_prog.cdcooper = craprpp.cdcooper 
+              AND tbcapt_config_planos_apl_prog.cdprodut = craprpp.cdprodut) flgdebito_parcial
+              ,(SELECT tbcapt_config_planos_apl_prog.vlminimo 
+              FROM tbcapt_config_planos_apl_prog 
+              WHERE tbcapt_config_planos_apl_prog.cdcooper = craprpp.cdcooper 
+              AND tbcapt_config_planos_apl_prog.cdprodut = craprpp.cdprodut) vlminimo
               ,craprpp.rowid
-        FROM   craprpp 
+        FROM   craprpp
         WHERE  craprpp.cdcooper  = pr_cdcooper 
         AND    craprpp.nrdconta >= pr_nrctares 
         AND    craprpp.nrctrrpp  > pr_nrctrrpp 
@@ -373,6 +389,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dtiniabo     DATE;
       vr_cdsitrpp     craprpp.cdsitrpp%TYPE;
       vr_vlsldtot     NUMBER;
+      vr_vlprerpp     NUMBER;
+      vr_vlaplica     NUMBER;
+
       vr_cdhistor     NUMBER;
       vr_inhistor     craphis.inhistor%TYPE;
       vr_indoipmf     craphis.indoipmf%TYPE;
@@ -573,8 +592,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                    ,pr_nrctrrpp => nvl(vr_nrctares,0)
                                    ,pr_dtdebito => rw_crapdat.dtmvtolt) 
       LOOP
-		-- Limpa variaveis de critica
-		vr_cdcritic := NULL;
+        -- Limpa variaveis de critica
+        vr_cdcritic := NULL;
         vr_dscritic := NULL;
 
         --armazenando a situacao poupanca programada 
@@ -705,10 +724,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;  
           END LOOP;  /* For each craplcm */
 
+          -- valdia se existe saldo pendente de aporte
+          IF (rw_craprpp.vlsppant > 0) THEN
+              vr_vlprerpp :=  rw_craprpp.vlsppant;
+          ELSE
+              vr_vlprerpp := rw_craprpp.vlprerpp;
+          END IF;
+      
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
-          IF rw_craprpp.vlprerpp <= vr_vlsldtot THEN
-                -- Inserir nova aplicação 
-              -- Leitura de carencias do produto informado              
+          IF vr_vlprerpp <= vr_vlsldtot THEN
+             vr_vlaplica := vr_vlprerpp;
+          ELSE
+             IF ((rw_craprpp.flgdebito_parcial = 1) AND (rw_craprpp.vlminimo <= vr_vlsldtot)) THEN
+                vr_vlaplica := vr_vlsldtot;
+             ELSE
+                vr_vlaplica := 0;
+             END IF;
+          END IF;
+
+          IF vr_vlaplica > 0 THEN
+              -- Inserir nova aplicação 
+              -- Leitura de carencias do produto informado
               apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                          ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
@@ -730,7 +766,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                               pr_dtvencto => rw_crapdat.dtmvtolt + vr_tab_care(1).qtdiaprz,
                                               pr_qtdiacar => vr_tab_care(1).qtdiacar,
                                               pr_qtdiaprz => vr_tab_care(1).qtdiaprz,
-                                              pr_vlaplica => rw_craprpp.vlprerpp,
+                                              pr_vlaplica => vr_vlaplica,
                                               pr_iddebcti => 0,
                                               pr_idorirec => 0,
                                               pr_idgerlog => 0,
@@ -756,12 +792,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                   END IF;
               END IF;  
             END IF;  
+            END IF;  
 
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
-          IF ((rw_craprpp.vlprerpp <= vr_vlsldtot) AND (vr_dscritic IS NULL)) THEN
+          IF ((vr_vlaplica > 0) AND (vr_dscritic IS NULL)) THEN
             --atualiza a tabela craprpp
             BEGIN
-              UPDATE craprpp SET vlprepag = rw_craprpp.vlprepag + rw_craprpp.vlprerpp
+              UPDATE craprpp SET vlprepag = rw_craprpp.vlprepag + vr_vlaplica
                                 ,qtprepag = rw_craprpp.qtprepag + 1
                                 ,vlabcpmf = vr_vlabcpmf
                                 ,vlabdiof = vr_vlabdiof
@@ -811,7 +848,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                         ,145                                          --craprej.cdbccxlt
                         ,rw_craprpp.nrdconta                          --craprej.nrdconta
                         ,rw_craprpp.nrctrrpp                          --craprej.nraplica
-                        ,rw_craprpp.vlprerpp                          --craprej.vllanmto
+                        ,vr_vlprerpp                         --craprej.vllanmto
                         ,485                                          --craprej.cdcritic
                         ,pr_cdcooper                                  --craprej.cdcooper
               ); 
@@ -823,7 +860,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                 RAISE vr_exc_saida;
             END;  
 
-          END IF;  --IF rw_ craprpp.vlprerpp <= vr_vlsldtot THEN
+          END IF;  --IF vr_vlprerpp <= vr_vlsldtot THEN
         END IF; -- Poupanca ativa
 
         IF TO_NUMBER(TO_CHAR(rw_craprpp.dtinirpp, 'DD')) < 11 THEN 
@@ -852,7 +889,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_dscritic := 'Erro ao atualizar crapavs. '||SQLERRM;
                 --aborta a execucao
                 RAISE vr_exc_saida;
-	          END; 
+              END; 
                
           ELSE
             --fecha o cursor  
@@ -873,19 +910,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;   
         
         --atualizado a tabela de poupanca programada
-		IF vr_dscritic IS NULL THEN
+        IF vr_dscritic IS NULL THEN
         BEGIN
-          UPDATE craprpp SET indebito = vr_indebito
-                            ,cdsitrpp = vr_cdsitrpp
-                            ,dtdebito = add_months(dtdebito, 1)
-          WHERE craprpp.rowid = rw_craprpp.rowid;                    
+          IF ((rw_crapdat.dtmvtolt < add_months(rw_craprpp.dtdebito , 1)) AND
+          ((rw_craprpp.flgteimosinha = 1) AND (vr_vlaplica < vr_vlprerpp))
+          ) THEN
+              UPDATE craprpp SET dtaltrpp = rw_crapdat.dtmvtolt
+                           ,vlsppant = vr_vlprerpp - vr_vlaplica
+              WHERE craprpp.rowid = rw_craprpp.rowid;                    
+          ELSE
+              UPDATE craprpp SET indebito = vr_indebito
+                                ,cdsitrpp = vr_cdsitrpp
+                                ,dtdebito = add_months(dtdebito, 1)
+                                ,vlsppant = 0
+              WHERE craprpp.rowid = rw_craprpp.rowid;                    
+          END IF;
         EXCEPTION
           WHEN OTHERS THEN
             --gerando a critica
             vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
             --abortando o sistema
             RAISE vr_exc_saida;
-        END;                  
+          END;                  
         END IF;
         
         --se o programa controla restart, atualiza o numero da conta processada
@@ -1016,7 +1062,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_flg_gerar => 'N'
                                  ,pr_qtcoluna  => 132
                                  ,pr_sqcabrel  => 1
-                                 ,pr_flg_impri => 'N'
+                                 ,pr_flg_impri => 'S'
                                  ,pr_nmformul  => ''
                                  ,pr_nrcopias  => 1
                                  ,pr_des_erro  => vr_dscritic);

@@ -11,7 +11,11 @@
 	//***						   (Jorge)								   ***//
 	//***			                                                       ***//
 	//***			  27/07/2018 - Derivação para Aplicação Programada     ***//
-	//***			                                                       ***//	
+	//***			                                                       ***//
+	//***             05/09/2018 - Permite alterar finalidade, valor       ***//
+	//***             			   e dia de débito       				   ***//
+	//***                          (Proj. 411.2 - CIS Corporate)           ***//
+	//***			                                                       ***//
 	//************************************************************************//
 	
 	session_start();
@@ -32,7 +36,8 @@
 	}	
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrrpp"]) || !isset($_POST["vlprerpp"])) {
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrrpp"]) || !isset($_POST["vlprerpp"])
+		|| !isset($_POST["cdprodut"]) || !isset($_POST["indebito"])  || !isset($_POST["dtprxdeb"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
@@ -40,7 +45,10 @@
 	$nrctrrpp = $_POST["nrctrrpp"];	
 	$vlprerpp = $_POST["vlprerpp"];
 	$cdprodut = $_POST["cdprodut"];	
-	
+	$indebito = $_POST["indebito"];	
+	$dsfinali = $_POST["dsfinali"];	
+	$dtdebito = $_POST["dtprxdeb"];	
+
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -55,40 +63,45 @@
 	if (!validaDecimal($vlprerpp)) {
 		exibeErro("Valor de presta&ccedil;&atilde;o inv&aacute;lido.");
 	}
-	
+
+	// Verifica se o produto e um inteiro válido
+	if (!validaInteiro($cdprodut)) {
+		exibeErro("C&oacute;digo do produto inv&aacute;lido.");
+	}
+
+	// Verifica se o dia do debito e um inteiro válido
+
+	if (!validaInteiro($indebito)) {
+		exibeErro("Data de d&eacute;bito inv&aacute;lida.");
+	}
+
+	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
+
 	// Monta o xml de requisição
 	$xmlAlterar  = "";
 	$xmlAlterar .= "<Root>";
-	$xmlAlterar .= "	<Cabecalho>";
-	$xmlAlterar .= "		<Bo>b1wgen0006.p</Bo>";
-	$xmlAlterar .= "		<Proc>alterar-poupanca-programada</Proc>";
-	$xmlAlterar .= "	</Cabecalho>";
 	$xmlAlterar .= "	<Dados>";
-	$xmlAlterar .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlAlterar .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlAlterar .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlAlterar .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlAlterar .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlAlterar .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
 	$xmlAlterar .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlAlterar .= "		<idseqttl>1</idseqttl>";
 	$xmlAlterar .= "		<nrctrrpp>".$nrctrrpp."</nrctrrpp>";	
 	$xmlAlterar .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
-	$xmlAlterar .= "		<vlprerpp>".$vlprerpp."</vlprerpp>";	
+	$xmlAlterar .= "		<vlprerpp>".$vlcontra."</vlprerpp>";	
+	$xmlAlterar .= "        <indebito>".$indebito."</indebito>"; 
+	$xmlAlterar .= "        <dtdebito>".$dtdebito."</dtdebito>"; 
+	$xmlAlterar .= "        <dsfinali>".$dsfinali."</dsfinali>"; 
+	$xmlAlterar .= "        <flgerlog>1</flgerlog>"; 
 	$xmlAlterar .= "	</Dados>";
 	$xmlAlterar .= "</Root>";	
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlAlterar);
-	
-	// Cria objeto para classe de tratamento de XML
+
+	$xmlResult = mensageria($xmlAlterar, "APLI0008", "ALTERA_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjAlterar = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
+
+	// Se ocorrer um erro, mostra crï¿½tica
 	if (strtoupper($xmlObjAlterar->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
-	
+		$msgErro = $xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+	}
+
 	$nrdrowid = $xmlObjAlterar->roottag->tags[0]->attributes["NRDROWID"];
 	
 	// Procura índice da opção "@"
@@ -106,8 +119,8 @@
 	
 	echo "callafterPoupanca = \"".$acessaaba."\";";
 	
-	// Efetua a impressão do termo de entrega
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\');","'.$acessaaba.'","sim.gif","nao.gif");';	
+	// Efetua a impressï¿½o do termo de entrega
+	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\',\''.$cdprodut.'\');","'.$acessaaba.'","sim.gif","nao.gif");';	
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

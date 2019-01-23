@@ -16,6 +16,10 @@
 	//***                                                                  ***//
 	//***             27/07/2018 - Derivação para Aplicação Programada     ***//
 	//***                          (Proj. 411.2 - CIS Corporate)           ***// 
+	//***                                                                  ***//	
+	//***             21/09/2018 - Alterações Aplicação Programada         ***//
+	//***                          (Proj. 411.2 - CIS Corporate)           ***// 
+	//***                                                                  ***//	
 	//************************************************************************//
 	
 	session_start();
@@ -60,13 +64,14 @@
 	}	
 
     /*Nao reconhecia valor que tivesse milhar com '.' na string*/	
-    $vlresgat = trim(str_replace('.','',(string)$vlresgat));
+    //$vlresgat = trim(str_replace('.','',(string)$vlresgat));
+	$vlresgat =str_replace('.',',',$vlresgat);
 
 	// Verifica se o valor de resgate é um decimal válido
 	if (!validaDecimal($vlresgat)) {
-		exibeErro("Valor de resgate inv&aacute;lido. ");
+		exibeErro("Valor de resgate inv&aacute;lido.=".$vlresgat);
 	}
-	
+
 	// Verifica se a data de resgate é válida
 	if (!validaData($dtresgat)) {
 		exibeErro("Data de resgate inv&aacute;lida.");
@@ -76,7 +81,8 @@
 	if ($flgctain <> "yes" && $flgctain <> "no") {
 		exibeErro("Identificador de resgate inv&aacute;lido.");
 	}
-			
+
+	/*			
 	// Monta o xml de requisição
 	$xmlResgate  = "";
 	$xmlResgate .= "<Root>";
@@ -102,13 +108,31 @@
 	$xmlResgate .= "		<flgctain>".$flgctain."</flgctain>";
 	$xmlResgate .= "	</Dados>";
 	$xmlResgate .= "</Root>";	
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlResgate);
-	
-	// Cria objeto para classe de tratamento de XML
+	*/
+
+	// Volta ao formato americano
+	$vlresgat = str_replace(',','.',$vlresgat);
+
+	// Montar o xml de Requisicao
+	$xmlResgate = "<Root>";
+	$xmlResgate .= " <Dados>";
+	$xmlResgate .= "	<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlResgate .= "	<idseqttl>1</idseqttl>";
+	$xmlResgate .= "	<nrctrrpp>".$nrctrrpp."</nrctrrpp>";
+	$xmlResgate .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlResgate .= "	<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+	$xmlResgate .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	$xmlResgate .= "	<tpresgat>".$tpresgat."</tpresgat>"; 
+	$xmlResgate .= "	<vlresgat>".$vlresgat."</vlresgat>"; 
+	$xmlResgate .= "	<dtresgat>".$dtresgat."</dtresgat>";
+	$xmlResgate .= "	<flgctain>".$flgctain."</flgctain>";
+	$xmlResgate .= "   <flgerlog>1</flgerlog>";
+	$xmlResgate .= " </Dados>";
+	$xmlResgate .= "</Root>";
+
+	$xmlResult = mensageria($xmlResgate, "APLI0008", "EFETIVA_RESGATE_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjResgate = getObjectXML($xmlResult);
-	
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);

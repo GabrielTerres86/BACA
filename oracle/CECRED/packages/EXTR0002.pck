@@ -180,6 +180,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
        ,cdagenci INTEGER
        ,cdbccxlt INTEGER
        ,nrdolote INTEGER
+       ,dsfinali VARCHAR2(20)
        ,dsextrat VARCHAR2(100));    
     TYPE typ_tab_extrato_rpp IS TABLE OF typ_reg_extrato_rpp INDEX BY PLS_INTEGER;
     
@@ -803,9 +804,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/08/2018 - sctask0012764 Inclusão de module e action nas subrotinas da rotina
                      pc_gera_impressao_car para fracionar as execuções no log do BD (Carlos)
         
-				14/11/2018 - Alteração na procedure "pc_consulta_lancamento" para incluir o valor provisionado
-				             de juros remuneratórios do prejuízo de conta corrente na tela LAUTOM.
-										 (Reginaldo/AMcom/P450)
+		18/09/2018 - Remoção da data de vencimento e inclusão da finalidade das APs - PRJ 411.2 - CIS Corporate
+
+		14/11/2018 - Alteração na procedure "pc_consulta_lancamento" para incluir o valor provisionado
+                     de juros remuneratórios do prejuízo de conta corrente na tela LAUTOM.
+                     (Reginaldo/AMcom/P450)
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -2008,6 +2011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.inpessoa
               ,crapass.nrcpfcgc
               ,craprpp.cdprodut
+              ,craprpp.dsfinali
           FROM craprpp
               ,crapass
          WHERE craprpp.cdcooper = pr_cdcooper
@@ -2079,9 +2083,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         SELECT lac.cdhistor
               ,cpc.cdhsprap
               ,cpc.cdhsrgap
-			  ,cpc.cdhsrvap
-		      ,cpc.cdhsrdap
-			  ,cpc.cdhsirap
+			        ,cpc.cdhsrvap
+		          ,cpc.cdhsrdap
+			        ,cpc.cdhsirap
               ,lac.vllanmto
               ,lac.dtmvtolt
               ,NULL dtrefere
@@ -2108,7 +2112,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       -- Históricos do Produto
       
       CURSOR cr_crapcpc (pr_cdprodut IN crapcpc.cdprodut%type) IS
-             SELECT cdhscacc
+             SELECT nmprodut 
+                   ,cdhscacc
                    ,cdhsvrcc
                    ,cdhsraap
                    ,cdhsnrap
@@ -2140,6 +2145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dstransa VARCHAR2(100);
       vr_dsorigem VARCHAR2(100);
       vr_nrdrowid ROWID;
+      vr_dsfinali VARCHAR2(20);
       --Variaveis de indices
       vr_index PLS_INTEGER;
       --Variaveis de Erro
@@ -2265,6 +2271,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END IF; 
       --Selecionar Lancamentos da Poupanca
       IF vr_apl_prog = 0 THEN
+          -- Finalidade poupança programada - fixa
+          vr_dsfinali := 'Poupança Programada';
       --Tela for ATENDA
       IF pr_nmdatela = 'ATENDA' THEN
         --Usuario TI
@@ -2281,44 +2289,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_listahis:= '150,151,158,496,863,870,925,1115';
         END IF;        
       END IF;  
-        -- RPP 
-        OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
+          -- RPP 
+          OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrrpp => pr_nrctrrpp
                                    ,pr_dtiniper => vr_dtiniper
                                    ,pr_dtfimper => pr_dtfimper
-                        ,pr_listahis => vr_listahis); 
+                          ,pr_listahis => vr_listahis); 
       ELSE
           -- Aplicacao Programada
-        OPEN cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
-        FETCH cr_crapcpc INTO rw_crapcpc;
-        CLOSE cr_crapcpc;  -- Se não existisse o produto, um erro já teria estourado antes. 
-
-        IF pr_nmdatela = 'ATENDA' THEN
-          --Usuario TI
-          IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
-            vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
+          OPEN cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
+          FETCH cr_crapcpc INTO rw_crapcpc;
+          CLOSE cr_crapcpc;  -- Se não existisse o produto, um erro já teria estourado antes. 
+          -- Verifica finalidade
+        IF (rw_craprpp.dsfinali IS NULL) OR (TRIM(rw_craprpp.dsfinali) IS NULL) THEN
+             vr_dsfinali := rw_crapcpc.nmprodut;
           ELSE
+             vr_dsfinali := rw_craprpp.dsfinali;
+          END IF;
+          IF pr_nmdatela = 'ATENDA' THEN
+            --Usuario TI
+            IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
+              vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
+            ELSE
               vr_listahis:= '150,151,158,496,863,925,1115'; 
-          END IF; 
-        ELSE
-          --Usuario TI
-          IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
-            vr_listahis:= '150,151,152,154,155,158,496,863,869,870,925,1115';
+            END IF; 
           ELSE
-            vr_listahis:= '150,151,158,496,863,870,925,1115'; 
-          END IF;        
-        END IF;
-        vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+            --Usuario TI
+            IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
+              vr_listahis:= '150,151,152,154,155,158,496,863,869,870,925,1115';
+            ELSE
+              vr_listahis:= '150,151,158,496,863,870,925,1115'; 
+            END IF;        
+          END IF;
+          vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsnrap || ',' || rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;  
           vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
 											     
-        vr_dtiniper := pr_dtiniper;
-        OPEN cr_craplac (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrctrrpp => pr_nrctrrpp
-                        ,pr_dtiniper => vr_dtiniper
-                        ,pr_dtfimper => pr_dtfimper
-                        ,pr_listahis => vr_listahis); 
+          vr_dtiniper := pr_dtiniper;
+          OPEN cr_craplac (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctrrpp => pr_nrctrrpp
+                          ,pr_dtiniper => vr_dtiniper
+                          ,pr_dtfimper => pr_dtfimper
+                          ,pr_listahis => vr_listahis); 
                         
       END IF;                                     
       LOOP
@@ -2422,13 +2435,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_tab_extrato_rpp(vr_index).cdbccxlt:= rw_lancam.cdbccxlt;
         vr_tab_extrato_rpp(vr_index).nrdolote:= rw_lancam.nrdolote;
         vr_tab_extrato_rpp(vr_index).cdhistor:= rw_lancam.cdhistor;
+        vr_tab_extrato_rpp(vr_index).dsfinali:= vr_dsfinali;
         -- Agrupar no extrato (apenas novas)
         IF rw_craphis.cdhistor IN 
-                (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
-                ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
+          (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
+          ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
           ,rw_lancam.cdhsirap) 
           AND vr_apl_prog = 1 THEN
-           vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
+              vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
         ELSE
            vr_tab_extrato_rpp(vr_index).aghistor := 0; -- Nao Acumula
         END IF;
@@ -2471,8 +2485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
-                pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
-            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                ELSE
                    pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 END IF;
             ELSE
@@ -2490,11 +2504,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).txaplmes:= vr_tab_extrato_rpp(vr_index_temp).txaplmes;
                 pr_tab_extrato_rpp(vr_index).txaplica:= vr_tab_extrato_rpp(vr_index_temp).txaplica;
                 pr_tab_extrato_rpp(vr_index).dsextrat:= vr_tab_extrato_rpp(vr_index_temp).dsextrat;
+                pr_tab_extrato_rpp(vr_index).dsfinali:= vr_tab_extrato_rpp(vr_index_temp).dsfinali;
              END IF;
         END LOOP;
-        ELSE 
+      ELSE 
         pr_tab_extrato_rpp := vr_tab_extrato_rpp;
-        END IF; 
+      END IF;
       -- Se foi solicitado geração de LOG
       IF pr_flgerlog THEN
         -- Chamar geração de LOG
@@ -2735,7 +2750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
              WHERE cdprodut=pr_cdprodut;
              
        rw_crapcpc cr_crapcpc%ROWTYPE;     
-
+      
       --Variaveis Locais
       vr_flgfirst BOOLEAN;
       vr_flgimune BOOLEAN;
@@ -2923,7 +2938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_listahis:= '150,151,158,496,863,870,925,1115'; 
           END IF;        
         END IF;
-        vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+        vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsnrap || ',' || rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;  
         vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
         vr_dtiniper := pr_dtiniper;
         OPEN cr_craplac (pr_cdcooper => pr_cdcooper
@@ -3079,8 +3094,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
-                pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
-            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                ELSE
                    pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 END IF;
             ELSE
@@ -4629,7 +4644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
   --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
-  --
+  -- 
   --              20/04/2018 - Remover a validação de CASH - FOTON (Douglas - PRJ363 Novo Caixa Eletrônico)
   --
   --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
@@ -6047,7 +6062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Sair com erro
         RAISE vr_exc_erro;
       END IF;  
-      
+           
       
       IF pr_dtiniper IS NOT NULL THEN 
          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');    
@@ -6583,7 +6598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;     
         END IF;    
       END LOOP;
-      
+            
       IF pr_dtiniper IS NOT NULL THEN  
          --buscar dia ultil anterior
 	       vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');
@@ -7144,13 +7159,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             --Acumular valor Credito
             vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vlsldtit;
           ELSE
-            pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vltitulo;
-            --Acumular valor automatico
-            vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vltitulo;
-            --Acumular valor Credito
-            vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vltitulo;
-          
-          END IF;  
+          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craptdb.vltitulo;
+          --Acumular valor automatico
+          vr_vllautom:= nvl(vr_vllautom,0) - rw_craptdb.vltitulo;
+          --Acumular valor Credito
+          vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craptdb.vltitulo;
+
+        END IF;                                                 
 
           IF rw_craptdb.flverbor = 1 THEN
             IF rw_craptdb.sdmtatit > 0 THEN
@@ -7328,7 +7343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
       WHEN OTHERS THEN
-
+         
         -- Retorno não OK
         pr_des_reto:= 'NOK';
         -- Chamar rotina de gravação de erro
@@ -7355,7 +7370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
-        END IF;  
+        END IF; 
       END;
     END pc_consulta_lancamento; 
 
@@ -13497,7 +13512,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlsaldo1 NUMBER;
         vr_vlsaldo2 NUMBER;
         vr_flginfor BOOLEAN:= FALSE;
-				vr_flginfor2 BOOLEAN:= FALSE;
+        vr_flginfor2 BOOLEAN:= FALSE;
         vr_flginfor3 BOOLEAN:= FALSE;
         vr_diapagto INTEGER;
         vr_mespagto INTEGER;
@@ -17589,7 +17604,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 02/03/2018
+  --  Data     : Julho/2014                           Ultima atualizacao: 03/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -17608,6 +17623,9 @@ END pc_consulta_ir_pj_trim;
   --                           (Lucas Skroch - Supero TI)
   --
   --              20/08/2018 - Suporte a aplicações programadas (Extrato sintético APs)
+  --                           Proj. 411.2 - CIS Corporate
+  --
+  --              03/10/2018 - Inclusao novas informações no cabeçalho das APs
   --                           Proj. 411.2 - CIS Corporate
 
   ---------------------------------------------------------------------------------------------------------------
@@ -17644,9 +17662,11 @@ END pc_consulta_ir_pj_trim;
           WHERE crapage.cdcooper = pr_cdcooper 
           AND   crapage.cdagenci = pr_cdagenci;
         rw_crapage cr_crapage%ROWTYPE;
+        
         --Tabelas de Memoria
         vr_tab_extrato_rpp typ_tab_extrato_rpp;
         vr_tab_dados_rpp   apli0001.typ_tab_dados_rpp;
+        vr_tab_det_rpp     apli0008.typ_tab_dados_rpp;
         --Indices para temp-tables
         vr_index_dados_rpp   PLS_INTEGER;
         vr_index_extrato_rpp PLS_INTEGER;
@@ -17680,7 +17700,8 @@ END pc_consulta_ir_pj_trim;
         --CLOB de Dados
         vr_clobxml209  CLOB;
         vr_dstexto    VARCHAR2(32600);
-        vr_dstexto209  VARCHAR2(32600);
+        vr_dstexto209 VARCHAR2(32600);
+        vr_dstexto_ap VARCHAR2(5000); -- Apl. programada - Campos extras
         --Variaveis Erro
         vr_cdcritic INTEGER;
         vr_dscritic VARCHAR2(4000);
@@ -17727,7 +17748,6 @@ END pc_consulta_ir_pj_trim;
           RAISE vr_exc_erro;
         END IF; 
          
-
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
         --Atribuir Descricao da Transacao
@@ -17839,7 +17859,7 @@ END pc_consulta_ir_pj_trim;
           END IF;  
           -- Fechar o cursor
           CLOSE cr_crapage;
-
+          
           gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
           -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
@@ -17905,6 +17925,34 @@ END pc_consulta_ir_pj_trim;
                 IF (pr_tpapprog = 0) OR -- Processar tudo
                    (pr_tpapprog = 1 AND vr_tab_dados_rpp(vr_index_dados_rpp).cdprodut<1) OR -- Apenas RPP
                    (pr_tpapprog = 2 AND vr_tab_dados_rpp(vr_index_dados_rpp).cdprodut>0) THEN  -- Apenas Novas
+                        IF vr_tab_dados_rpp(vr_index_dados_rpp).cdprodut<1 THEN -- Poupança antiga
+                           vr_dstexto_ap:= '" aplprogr="N';      -- total resgatado 
+                        ELSE
+                           --Recuperar as informações da Aplicacao Programada 
+                           apli0008.pc_buscar_detalhe_apl_prog (pr_cdcooper => pr_cdcooper
+                                                               ,pr_cdoperad => pr_cdoperad
+                                                               ,pr_nmdatela => pr_nmdatela
+                                                               ,pr_idorigem => pr_idorigem
+                                                               ,pr_nrdconta => pr_nrdconta
+                                                               ,pr_idseqttl => pr_idseqttl
+                                                               ,pr_nrctrrpp => vr_tab_dados_rpp(vr_index_dados_rpp).nrctrrpp
+                                                               ,pr_dtmvtolt => pr_dtmvtolt
+                                                               ,pr_tab_dados_rpp => vr_tab_det_rpp
+                                                               ,pr_cdcritic => vr_cdcritic
+                                                               ,pr_dscritic => vr_dscritic);
+                         
+                           IF vr_dscritic IS NOT NULL THEN
+                              RAISE vr_exc_sair;            
+                           END IF;
+                           vr_dstexto_ap:= '" aplprogr="S'||                                                                        -- Ap. Programada
+                                           '" diadebit="'|| to_char(vr_tab_det_rpp(1).indiadeb,'00')||                              -- Valor parcela
+                                           '" vlprerpp="'|| to_char(nvl(vr_tab_det_rpp(1).vlprerpp,0),'fm999g999g999g990d00')||     -- vl. bruto 
+                                           '" vlsldbru="'|| to_char(nvl(vr_tab_det_rpp(1).vlsdtoap,0),'fm999g999g999g990d00')||     -- vl. bruto 
+                                           '" vlsldliq="'|| to_char(nvl(vr_tab_det_rpp(1).vlsdrdpp,0),'fm999g999g999g990d00')||     -- vl. liq.
+                                           '" vltotapl="'|| to_char(nvl(vr_tab_det_rpp(1).vlprepag,0),'fm999g999g999g990d00')||     -- total aplicado
+                                           '" vltotrgt="'|| to_char(nvl(vr_tab_det_rpp(1).vlrgtacu,0),'fm999g999g999g990d00');      -- total resgatado 
+                                           
+                        END IF;
             --Limpar tabela Memoria
             vr_tab_extrato_rpp.DELETE;
             --Consultar Extrato Poupanca
@@ -17972,8 +18020,12 @@ END pc_consulta_ir_pj_trim;
                          '" nmprimtl="'||rw_crapass.nmprimtl||
                          '" nrctrrpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).nrctrrpp,'fm99g999g990')||
                          '" dtvctopp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtvctopp,'DD/MM/YYYY')||
+                                     '" dtaderpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtmvtolt,'DD/MM/YYYY')||
+                                     '" dsfinali="'||UPPER(CONVERT(vr_tab_dados_rpp(vr_index_dados_rpp).dsfinali, 'US7ASCII'))||
+                                     '" dssituac="'|| UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dssitrpp)|| -- Situacao 
                          '" dtiniper="'||to_char(pr_dtiniper,'DD/MM/YYYY')||
                          '" dtfimper="'||to_char(pr_dtfimper,'DD/MM/YYYY')||
+                                     vr_dstexto_ap ||            -- Texto das APs
                          '" flgmensag="N" dscmensag=""'||vr_dsblqjud||'>'||vr_dsextrat;
             --Escrever no Arquivo
             gene0002.pc_escreve_xml(pr_clobxml, pr_dstexto,vr_dstexto);

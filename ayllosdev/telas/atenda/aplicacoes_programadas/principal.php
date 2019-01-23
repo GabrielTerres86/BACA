@@ -57,8 +57,42 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
+
 	
-	// Monta o xml de requisição
+	//Monta o xml de requisição - Via mensageria 
+	$xmlLstPoupancas = "<Root>";
+	$xmlLstPoupancas .= " <Dados>";
+	$xmlLstPoupancas .= "	<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlLstPoupancas .= "	<idseqttl>1</idseqttl>";
+	$xmlLstPoupancas .= "	<nrctrrpp>0</nrctrrpp>";
+	$xmlLstPoupancas .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlLstPoupancas .= "	<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+	$xmlLstPoupancas .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	$xmlLstPoupancas .= "   <flgerlog>1</flgerlog>";
+	$xmlLstPoupancas .= "   <percenir>0</percenir>";
+	$xmlLstPoupancas .= "   <tpapprog>0</tpapprog>";
+	$xmlLstPoupancas .= " </Dados>";
+	$xmlLstPoupancas .= "</Root>";
+	$xmlResultLst = mensageria($xmlLstPoupancas, "APLI0008", "LISTA_CONTAS_POUPANCA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+
+	$xmlObjPoupancas = getObjectXML($xmlResultLst);
+	if (strtoupper($xmlObjPoupancas->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjPoupancas->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		if ($msgErro == "") {
+			$msgErro = $xmlObjPoupancas->roottag->tags[0]->cdata;
+		}
+		exibeErro($msgErro);
+		exit();
+	}
+	
+	
+	$poupancas   = $xmlObjPoupancas->roottag->tags[0]->tags;	
+	$qtPoupancas = count($poupancas);
+
+	/*
+	
+	// Monta o xml de requisição - antigo
 	$xmlGetPoupancas  = "";
 	$xmlGetPoupancas .= "<Root>";
 	$xmlGetPoupancas .= "	<Cabecalho>";
@@ -95,8 +129,8 @@
 	
 	$poupancas   = $xmlObjPoupancas->roottag->tags[0]->tags;	
 	$qtPoupancas = count($poupancas);
-	
-	//Traz as informações atualizadas nas novas captacoes 
+
+	//Traz as informações atualizadas nas novas captacoes - verificar se não podemos melhorar o desempenho - remover
 	for ($i = 0; $i < $qtPoupancas; $i++) { 
 		if ($poupancas[$i]->tags[27]->cdata>0) {
 			// Nova aplicacao programada 
@@ -121,6 +155,7 @@
 			$poupancas[$i]->tags[11]->cdata=$xmlObjDet->roottag->tags[0]->tags[0]->tags[0]->cdata; //Saldo
 		}
 	}
+	*/
 	
 	// Procura indíce da opção "@"
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
@@ -198,7 +233,7 @@
 			<thead>
 				<tr>
 					<th>Data</th>
-					<th>Vcto</th>
+					<th>Finalidade</th>
 					<th>Contrato</th>
 					<th>Dia</th>
 					<th>Presta&ccedil;&atilde;o</th>
@@ -219,7 +254,7 @@
 						
 						<td><?php echo $poupancas[$i]->tags[4]->cdata; ?></td>
 						
-						<td><?php echo $poupancas[$i]->tags[5]->cdata; ?></td>
+						<td><?php echo $poupancas[$i]->tags[28]->cdata; ?></td>
 						
 						<td align="right"><?php echo number_format($poupancas[$i]->tags[0]->cdata,0,",","."); ?></td>
 						
@@ -258,7 +293,7 @@
 		<input type="image" id="btnAlterar" name="btnAlterar" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoAlterar();return false;"'; } ?> />
 		<input type="image" id="btnCancelar" name="btnCancelar" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoCancelar();return false;"'; } ?> />
 		<input type="image" id="btnConsultar" name="btnConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="consultarPoupanca();return false;"'; } ?> />
-		<input type="image" id="btnImprimir" name="btnImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="imprimirAutorizacao(\'\',\'\');return false;"'; } ?> />
+		<input type="image" id="btnImprimir" name="btnImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="imprimirAutorizacao(\'\',\'\',\'\');return false;"'; } ?> />
 		
 		<?php if(!($sitaucaoDaContaCrm == '4' || 
 				   $sitaucaoDaContaCrm == '7' || 

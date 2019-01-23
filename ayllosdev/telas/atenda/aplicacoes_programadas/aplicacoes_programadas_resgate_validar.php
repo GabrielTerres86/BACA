@@ -21,6 +21,9 @@
 	//***            27/07/2018 - Derivação para Aplicação Programada      ***//
 	//***                         (Proj. 411.2 - CIS Corporate)            ***// 
 	//***                                                                  ***//	
+	//***            21/09/2018 - Alterações Aplicação Programada      	   ***//
+	//***                         (Proj. 411.2 - CIS Corporate)            ***// 
+	//***                                                                  ***//	
 	//************************************************************************//
 	
 	session_start();
@@ -54,7 +57,7 @@
 	$flgctain = $_POST["flgctain"];
 	$cdoperad = (!isset($_POST['cdopera2'])) ? '' : $_POST['cdopera2']; 
 	$cddsenha = (!isset($_POST['cddsenha'])) ? '' : $_POST['cddsenha']; 
-  $fvisivel = $_POST["fvisivel"];
+    $fvisivel = $_POST["fvisivel"];
 	$flgsenha = 0;
 	
 	if($cdoperad != '' && $fvisivel == 1){
@@ -90,94 +93,35 @@
 		exibeErro("Identificador de resgate inv&aacute;lido.");
 	}
 
-	// Monta o xml de requisição
-	$xmlResgate  = ""; 
-	$xmlResgate .= "<Root>";
-	$xmlResgate .= "	<Cabecalho>";
-	$xmlResgate .= "		<Bo>b1wgen0006.p</Bo>";
-	$xmlResgate .= "		<Proc>valida-resgate</Proc>";
-	$xmlResgate .= "	</Cabecalho>";	
-	$xmlResgate .= "	<Dados>";
-	$xmlResgate .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlResgate .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlResgate .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlResgate .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlResgate .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlResgate .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlResgate .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlResgate .= "		<idseqttl>1</idseqttl>";
-	$xmlResgate .= "		<nrctrrpp>".$nrctrrpp."</nrctrrpp>"; 	
-	$xmlResgate .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
-	$xmlResgate .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
-	$xmlResgate .= "		<inproces>".$glbvars["inproces"]."</inproces>";
-	$xmlResgate .= "		<cdprogra>".$glbvars["nmdatela"]."</cdprogra>"; 
-	$xmlResgate .= "		<tpresgat>".$tpresgat."</tpresgat>"; 
-	$xmlResgate .= "		<vlresgat>".$vlresgat."</vlresgat>"; 
-	$xmlResgate .= "		<dtresgat>".$dtresgat."</dtresgat>"; 	
-	$xmlResgate .= "		<flgoprgt>no</flgoprgt>";	
-	$xmlResgate .= "	</Dados>";	
+	$vlresgat = str_replace(',','.',str_replace('.','',$vlresgat));
+	// Montar o xml de Requisicao
+	$xmlResgate = "<Root>";
+	$xmlResgate .= " <Dados>";
+	$xmlResgate .= "	<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlResgate .= "	<idseqttl>1</idseqttl>";
+	$xmlResgate .= "	<nrctrrpp>".$nrctrrpp."</nrctrrpp>";
+	$xmlResgate .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlResgate .= "	<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+	$xmlResgate .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	$xmlResgate .= "	<tpresgat>".$tpresgat."</tpresgat>"; 
+	$xmlResgate .= "	<vlresgat>".$vlresgat."</vlresgat>"; 
+	$xmlResgate .= "	<dtresgat>".$dtresgat."</dtresgat>";
+	$xmlResgate .= "	<flgoprgt>0</flgoprgt>";	
+	$xmlResgate .= "	<cdopeaut>".$cdoperad."</cdopeaut>";	
+	$xmlResgate .= "	<cddsenha>".$cddsenha."</cddsenha>";	
+	$xmlResgate .= "	<flgsenha>".$flgsenha."</flgsenha>";
+	$xmlResgate .= "   <flgerlog>1</flgerlog>";
+	$xmlResgate .= " </Dados>";
 	$xmlResgate .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlResgate);
-	
-	// Cria objeto para classe de tratamento de XML
+
+	$xmlResult = mensageria($xmlResgate, "APLI0008", "VALIDA_RESGATE_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjResgate = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
-	
-	if($tpresgat == 'T'){
-	
-		$vltotres = $xmlObjResgate->roottag->tags[0]->attributes["VLRESGAT"];
-		
-		if(!isset($vltotres)){
-			$vltotres = 0;
-		}
 
-		if($vltotres > 0){
-			$vlresgat = $vltotres;
-		}
-		
-	} 
-
-/* segunda chamada */
-	// Monta o xml de requisição
-	$xmlResgate  = ""; 
-	$xmlResgate .= "<Root>";
-	$xmlResgate .= "	<Cabecalho>";
-	$xmlResgate .= "		<Bo>b1wgen0006.p</Bo>";
-	$xmlResgate .= "		<Proc>validar-limite-resgate</Proc>";
-	$xmlResgate .= "	</Cabecalho>";	
-	$xmlResgate .= "	<Dados>";
-	$xmlResgate .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";		
-	$xmlResgate .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlResgate .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlResgate .= "		<idseqttl>1</idseqttl>";
-	$xmlResgate .= "		<nrdconta>".$nrdconta."</nrdconta>";	
-	$xmlResgate .= "		<vlrrsgat>".$vlresgat."</vlrrsgat>";	
-	$xmlResgate .= "		<cdoperad>".$cdoperad."</cdoperad>";	
-	$xmlResgate .= "		<cddsenha>".$cddsenha."</cddsenha>";	
-	$xmlResgate .= "		<flgsenha>".$flgsenha."</flgsenha>";		
-	$xmlResgate .= "	</Dados>";	
-	$xmlResgate .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlResgate);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjResgate = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
-	if (isset($xmlObjResgate->roottag->tags[0]->name) && strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
-
-/* fim segunda chamada */
-
-	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';	
 	

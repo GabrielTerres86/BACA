@@ -8,7 +8,10 @@
 	 Objetivo  : Script para incluir aplicação programada              
 	                                                                  
 	 Alterações:  27/07/2018 - Derivação para Aplicação Programada              
-                              (Proj. 411.2 - CIS Corporate)                     
+                               (Proj. 411.2 - CIS Corporate)      
+							   
+				  09/09/2018 - Inclusão Finalidade             
+                               (Proj. 411.2 - CIS Corporate)      
 							   
 	***************************************************************************/
 	
@@ -44,7 +47,9 @@
 	$vlprerpp = $_POST["vlprerpp"];	
 	$tpemiext = $_POST["tpemiext"];
 	$cdprodut = $_POST["cdprodut"];
+	$dsfinali = $_POST["dsfinali"];
 
+	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -113,7 +118,7 @@
 	$xmlIncluir .= "		<vlprerpp>".$vlprerpp."</vlprerpp>"; 	
 	$xmlIncluir .= "		<tpemiext>".$tpemiext."</tpemiext>";
 	$xmlIncluir .= "		<cdprodut>".$cdprodut."</cdprodut>";	
-	$xmlIncluir .= "		<dsfinali></dsfinali>"; 	
+	$xmlIncluir .= "		<dsfinali>".$dsfinali."</dsfinali>"; 	
 	$xmlIncluir .= "		<flgteimo>0</flgteimo>";
 	$xmlIncluir .= "		<flgdbpar>0</flgdbpar>";
 	$xmlIncluir .= "	</Dados>";	
@@ -131,8 +136,8 @@
 	}
 
 	$nrdrowid = $xmlObjIncluir->roottag->tags[0]->attributes["NRDROWID"];	
+	$nrrdcapp = $xmlObjIncluir->roottag->tags[0]->attributes["NRRDCAPP"];	
 
-	
 	// Procura índice da opção "@"
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);	
 	
@@ -150,15 +155,12 @@
 	
 	//Se esta tela foi chamada pela rotina "Produtos" então encerra a tela, do contrário, chama uma opção da tela. 	
 	echo "(executandoProdutos == true) ? callafterPoupanca = \"encerraRotina(true)\" : callafterPoupanca = \"".$acessaaba."\";";	
-	
+
+	echo "nrctrrpp=".$nrrdcapp.";";
+
 	// Efetua a impressão do termo de entrega
+	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\',\''.$cdprodut.'\');","'.$acessaaba.'","sim.gif","nao.gif");';	
 
-// Comentado temporariamente - pois a impressao por aqui, acaba pegando o registro selecionado no grid
-// echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\');","'.$acessaaba.'","sim.gif","nao.gif");';	
- echo 'showError("inform","Para visualizar o termo de ades&atilde;o utilize o bot&atilde;o Imprimir.","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
- echo $acessaaba;
-
-	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
