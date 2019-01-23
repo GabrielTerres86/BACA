@@ -19,7 +19,10 @@
                07/12/2018 - Melhoria no processo de devoluções de cheques.
                             Alcemir Mout's (INC0022559).
 							
-   
+               23/01/2019 - Alteracao na rotina de alteracao de alinea e
+                            melhoria na gravacao do log na verlog.
+                            Chamado - PRB0040476 - Gabriel Marcos (Mouts).
+
 ............................................................................ */
 
 DEF VAR aux_cdcooper LIKE crapcop.cdcooper                             NO-UNDO.
@@ -521,7 +524,9 @@ PROCEDURE altera-alinea:
                              INPUT aux_cdbandep,
 							 INPUT aux_cdagedep,
 							 INPUT aux_nrctadep,
-							 INPUT aux_vllanmto,								 
+							 INPUT aux_vllanmto,		
+                             INPUT aux_dtmvtolt,
+                             INPUT aux_nmdatela,						 
                              OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
