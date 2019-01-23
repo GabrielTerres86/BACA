@@ -175,6 +175,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
   --> Rotina responsavel por gerar a inclusao da proposta para a estra
   PROCEDURE pc_incluir_proposta_est_wb(pr_nrdconta  IN crawcrd.nrdconta%TYPE
                                       ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                      ,pr_dsiduser  IN VARCHAR2              --> ID sessao do usuario
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -294,6 +295,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                       ,pr_vllimite_anterior IN tbcrd_limite_atualiza.vllimite_anterior%TYPE
                                       ,pr_vllimite_alterado IN tbcrd_limite_atualiza.vllimite_alterado%TYPE
                                       ,pr_dsjustificativa   IN tbcrd_limite_atualiza.dsjustificativa%TYPE
+                                      ,pr_dsiduser  IN VARCHAR2              --> ID sessao do usuario
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -1266,7 +1268,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                    4,'Erro',
                    5,'Rejeitada Manual',
                    6,'Refazer',
-                   7,'Expirada','') dssitdec
+                   7,'Expirada',
+                   8,'Efetivado',
+                   '') dssitdec
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
@@ -1331,7 +1335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     ELSE
       vr_dssitdec := rw_crawcrd.dssitdec;
    
-      IF rw_crawcrd.insitdec IN (2,3,4,5,6) THEN
+      IF rw_crawcrd.insitdec IN (2,3,4,5,6,8) THEN
         vr_dssitest := 'Analise Finalizada';
       ELSIF rw_crawcrd.insitdec = 1 AND rw_crawcrd.insitcrd IN (1,8) THEN
         vr_dssitest := 'Enviada Analise Manual';
@@ -1887,10 +1891,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     --Verifica se Proposta já possui Justificativa
     CURSOR cr_crawcrd IS
       SELECT dsjustif
+            ,vllimcrd
         FROM crawcrd
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%rowtype;
+    
+    CURSOR cr_limite(pr_cdcooper tbcrd_limite_atualiza.cdcooper%TYPE
+                        ,pr_nrdconta tbcrd_limite_atualiza.nrdconta%TYPE
+                        ,pr_nrctrcrd tbcrd_limite_atualiza.nrctrcrd%TYPE) IS
+            SELECT nrctrcrd
+                  ,tpsituacao
+                  ,insitdec
+                  ,rno
+              FROM (SELECT lim.nrctrcrd
+                          ,lim.tpsituacao
+                          ,lim.insitdec
+                          ,row_number() over(ORDER BY lim.dtalteracao DESC) rno
+                      FROM tbcrd_limite_atualiza lim
+                     WHERE lim.cdcooper = pr_cdcooper
+                       AND lim.nrdconta = pr_nrdconta
+                       AND lim.nrctrcrd = pr_nrctrcrd
+                     ORDER BY lim.dtalteracao DESC)
+             WHERE rownum <= 1;
+        rw_limite cr_limite%ROWTYPE;
     
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1902,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     
     --Gerais
     vr_contador NUMBER := 0;
-    vr_dsjustif crawcrd.dsjustif%TYPE;
+    vr_tipo     NUMBER := 0;
     
     -- Variaveis retornadas da gene0004.pc_extrai_dados
     vr_cdcooper INTEGER;
@@ -1926,8 +1951,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                              pr_dscritic => vr_dscritic);
     
     OPEN cr_crawcrd;
-    FETCH cr_crawcrd INTO vr_dsjustif;
+    FETCH cr_crawcrd INTO rw_crawcrd;
     CLOSE cr_crawcrd;
+	
+    OPEN cr_limite(vr_cdcooper, pr_nrdconta, pr_nrctrcrd);
+    FETCH cr_limite INTO rw_limite;
+    
+    vr_tipo := 1; -- novo
+    IF cr_limite%FOUND THEN
+        -- (1 - Sem aprovação / 6 - Refazer) // -- (6 - Em análise)
+        IF rw_limite.insitdec = 6 AND rw_limite.tpsituacao = 6 THEN
+            vr_tipo := 2; -- Limite 
+        END IF;
+    END IF;
+    CLOSE cr_limite;
 	
 	IF pr_idproces = 'S' THEN --Solicitação/Alteração
       -- Atualiza Contrato 
@@ -1938,7 +1975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          
         UPDATE crawcrd
            SET dsprotoc = pr_dsprotoc
-              ,dsjustif = nvl(pr_dsjustif,vr_dsjustif)
+              ,dsjustif = nvl(pr_dsjustif,rw_crawcrd.dsjustif)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrcrd = pr_nrctrcrd;
@@ -1958,13 +1995,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           pr_cdcritic => vr_cdcritic,   --> Codigo da critica
                                           pr_dscritic => vr_dscritic);  --> Descricao da critica
 
-      -- Se houve erro
+      vr_insitdec := 1;
       IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_insitdec := 2; --- se estiver em contigencia aprova direto
+      ELSIF vr_tipo=1 AND rw_crawcrd.vllimcrd=0 THEN 
         vr_insitdec := 2; --- se estiver em contigencia aprova direto
       END IF;
 
       --Se vai para a esteira então deixa como insitcrd = 1 e insitdec = 1
-      IF NVL(pr_dsjustif,vr_dsjustif) IS NOT NULL THEN
+      IF NVL(pr_dsjustif,rw_crawcrd.dsjustif) IS NOT NULL THEN
         --Se informado 
         -- Atualiza Status
         BEGIN
@@ -2689,6 +2728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
   PROCEDURE pc_incluir_proposta_est_wb(pr_nrdconta  IN crawcrd.nrdconta%TYPE
                                       ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                      ,pr_dsiduser  IN VARCHAR2              --> ID sessao do usuario
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -2702,13 +2742,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 28/11/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a inclusao da proposta para a esteira    
-      Alteração : 
+      
+      Alteração : 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
                   
     ..........................................................................*/
     
@@ -2762,6 +2803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_cdorigem => vr_idorigem
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctrcrd => pr_nrctrcrd
+                                    ,pr_nmarquiv => pr_dsiduser
                                      ---- OUT ----
                                     ,pr_dsmensag => vr_dsmensag
                                     ,pr_cdcritic => vr_cdcritic
@@ -3024,6 +3066,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
             ,a.vllimite_anterior
             ,a.tpsituacao
             ,a.cdoperad
+            ,a.dtenvest
+            ,a.dtenefes
         FROM tbcrd_limite_atualiza a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
@@ -3112,7 +3156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                        ,dsprotocolo
                                        ,dsjustificativa
                                        ,nrctrcrd
-                                       ,nrproposta_est)
+                                       ,nrproposta_est
+                                       ,dtenvest
+                                       ,dtenefes)
                                  VALUES(pr_cdcooper
                                        ,pr_nrdconta
                                        ,rw_crawcrd.nrcctitg
@@ -3129,7 +3175,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                        ,nvl(pr_dsjustif,rw_limatu.dsjustificativa)
                                        ,pr_nrctrcrd
                                        ,vr_propoest
-                                       );
+                                       ,rw_limatu.dtenvest
+                                       ,rw_limatu.dtenefes);
     EXCEPTION
       WHEN dup_val_on_index THEN
         vr_dscritic := 'Proposta de Alteração de Limite já existente para essas condições.';
@@ -4422,6 +4469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                       ,pr_vllimite_anterior IN tbcrd_limite_atualiza.vllimite_anterior%TYPE
                                       ,pr_vllimite_alterado IN tbcrd_limite_atualiza.vllimite_alterado%TYPE
                                       ,pr_dsjustificativa   IN tbcrd_limite_atualiza.dsjustificativa%TYPE
+                                      ,pr_dsiduser  IN VARCHAR2              --> ID sessao do usuario
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -4435,13 +4483,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Rafael Faria (Supero)
-      Data     : Setembro/2018.                   Ultima atualizacao: 
+      Data     : Setembro/2018.                   Ultima atualizacao: 28/11/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Chama rotina para criar proposta de Alteração de Limite
-      Alteração : 
+      
+      Alteração : 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
                   
     ..........................................................................*/
     
@@ -4538,6 +4587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_nrdconta => pr_nrdconta  
                                     ,pr_nrctrcrd => pr_nrctrcrd
                                     ,pr_flreiflx => vr_flreiflx
+                                    ,pr_nmarquiv => pr_dsiduser
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
 

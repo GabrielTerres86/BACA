@@ -15,6 +15,11 @@
  *
  *                24/04/2018 - #853017 Permitir realizar o Refaz Regularização para qualquer situação
  *                             diferente de 0 (ainda não enviado). (Wagner/Sustenção).
+ *
+ *                14/01/2019 - Alteracoes para balizar novo botao de inclusao de
+ *                             devolucoes pela alinea 12. 
+ *                             Chamado PRB0040458 - Gabriel (Mouts).	
+ * 
  * --------------
  */
 var nometela;
@@ -27,6 +32,7 @@ var divTabela;
 var dsdircop;
 var linha;
 var registro;
+var popup;
 
 var aux_mensagem;
 
@@ -47,7 +53,6 @@ $(document).ready(function() {
 	divTabela		= $('#divTabela');
 	estadoInicial();			
 	return false;
-		
 });
 
 function carregaDados(){
@@ -208,16 +213,16 @@ function btnVoltar() {
 	return false;
 }
 
-function buscaContrato() {
+function buscaContrato(param) {
 
 	showMsgAguardo('Aguarde, consultando Cheques...');
     
 	carregaDados();
 	
-	buscaContrato2();
+	buscaContrato2(param);
 }
 
-function buscaContrato2() {	
+function buscaContrato2(param) {	
 	
 	msgconta = "";
 			
@@ -235,7 +240,10 @@ function buscaContrato2() {
 					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nrdconta\',\'#frmCab\').focus();');
 				},
 		success : function(response) { 
-					hideMsgAguardo();
+					
+					if (param != 'CCF'){
+						hideMsgAguardo();
+					}
 					
 					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 						try {
@@ -521,7 +529,7 @@ function manterRotina( operacao ) {
 	    case 'regulariza': mensagem = 'Aguarde, gravando dados ...'; cddopcao = 'R'; break;
 	    case 'refazRegulariza': mensagem = 'Aguarde, gravando dados ...'; cddopcao = 'R'; break;
 		default		      : return false; 	break;
-	}	
+	}
 	
 	showMsgAguardo( mensagem );	
 	
@@ -537,6 +545,7 @@ function manterRotina( operacao ) {
                 nmoperad: nmoperad,
                 dtfimest: dtfimest,
                 flgctitg: flgctitg,
+				nrdocmto: nrdocmtosrt,
                 redirect: 'script_ajax'
             },
             error: function(objAjax, responseError, objExcept) {
@@ -556,4 +565,89 @@ function manterRotina( operacao ) {
         });
 
 	return false;		                     
+}
+
+function Inclusao_CCF(confirm){
+	
+	var nrcheque = converteMoedaFloat($('#nrcheque').val());
+	var vlcheque = $('#vlcheque').val();
+		
+	if (nrcheque == 0){
+		showError('error', 'Numero do cheque incorreto.', 'Alerta - Aimaro', 'bloqueiaFundo($(\'#divRotina\'));$(\'#nrcheque\').focus();');
+		return false;
+	}
+	
+	if (vlcheque == 0){
+		showError('error', 'Valor do cheque incorreto.', 'Alerta - Aimaro', 'bloqueiaFundo($(\'#divRotina\'));$(\'#vlcheque\').focus();');
+		return false;
+	}
+	
+	if (!confirm){
+		aux_mensagem = 'Confirma inclus&atilde;o no CCF?';
+		showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Aimaro', 'Inclusao_CCF(true);', 'bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');
+	}else{
+		
+		showMsgAguardo( 'Aguarde.. Validando Cheque...' );
+	
+        $.ajax({
+            type: 'POST',
+            url: UrlSite + 'telas/' + nometela + '/manter_rotina.php',
+            data: {
+                cddopcao: 'R',
+                operacao: 'incluiCCF',
+                nrdconta: nrdconta,
+                nrseqdig: nrseqdig,
+                idseqttl: idseqttl,
+                nmoperad: nmoperad,
+                dtfimest: dtfimest,
+                flgctitg: flgctitg,
+				nrcheque: nrcheque,
+				vlcheque: vlcheque,
+                redirect: 'script_ajax'
+            },
+            error: function(objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
+            },
+            success: function(response) {
+                try {
+                    eval(response);
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
+                }
+            }
+        });
+	}
+
+    return false;
+}
+
+function Inclusao_CCF_PopUp(){
+	$.ajax({
+		type: "POST",
+		async: false,
+		dataType: 'html',
+		url: UrlSite + "telas/manccf/confirm_cheque.php",
+		data: {
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCab').focus()");
+		},
+		beforeSend: function () {
+			showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+		},
+		success: function (response) {
+			$('#divRotina').html(response);
+			exibeRotina($('#divRotina'));
+			hideMsgAguardo();
+			layoutPadrao();
+			$('#nrcheque').focus();
+		}
+	});
+	
+	bloqueiaFundo($('#divRotina'));
 }

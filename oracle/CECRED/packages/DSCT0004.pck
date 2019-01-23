@@ -12,6 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0004 is
                   As rotinas com nome finalizado em "_ib" são as chamadas pelo Internet Banking
 
       Alteracoes: 10/05/2018 Criaçao (Paulo Penteado (GFT))
+                  10/10/2018 - Ajuste para mensagem de estouro do parametro da TAB052 na pc_criar_bordero_desc_tit (Andrew Albuquerque - GFT)
+                  11/10/2018 - Ajuste para retornar a situação dos títulos na pc_obtem_titulos_resumo_ib e na
+                               pc_obtem_detalhes_bordero_ib (Andrew Albuquerque - GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -50,6 +53,7 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
 PROCEDURE pc_finalizar_bordero_dscto_tit(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa
                                         ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Nr. da Conta
                                         ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Número do Titular
+                                        ,pr_fltranspend  IN NUMBER                --> Transação pendente 0-Nao 1-Sim
                                         ,pr_cdbandoc_lst	IN CLOB		                --> Código do banco
                                         ,pr_nrdctabb_lst	IN CLOB		                --> Número da conta base no banco
                                         ,pr_nrcnvcob_lst	IN CLOB		                --> Número do convênio de cobrança
@@ -101,6 +105,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0004 IS
                   As rotinas com nome finalizado em "_ib" são as chamadas pelo Internet Banking
 
       Alteracoes: 10/05/2018 Criaçao (Paulo Penteado (GFT))
+                  10/10/2018 - Ajuste para mensagem de estouro do parametro da TAB052 na pc_criar_bordero_desc_tit (Andrew Albuquerque - GFT)
+                  11/10/2018 - Ajuste para retornar a situação dos títulos na pc_obtem_titulos_resumo_ib e na
+                               pc_obtem_detalhes_bordero_ib (Andrew Albuquerque - GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Variáveis para armazenar as informações em XML
@@ -284,6 +291,143 @@ EXCEPTION
        pr_dscritic := 'Erro em dsct0004.pc_extrai_dados_xml_libera: ' || SQLERRM;
 END pc_extrai_dados_xml_libera;
 
+
+PROCEDURE pc_busca_parametros_dscto_tit(pr_cdcooper         IN  crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                       ,pr_nrdconta         IN  crapass.nrdconta%TYPE --> Número da Conta
+                                       ,pr_tab_dados_dsctit OUT DSCT0002.typ_tab_dados_dsctit --> Tabela contendo os parametros da cooperativa
+                                       ,pr_cdcritic         OUT PLS_INTEGER          --> Codigo da critica
+                                       ,pr_dscritic         OUT VARCHAR2             --> Descricao da critica
+                                       ) IS
+  /*---------------------------------------------------------------------------------------------------------
+    Programa : pc_busca_parametros_dscto_tit
+    Sistema  : Ayllos
+    Sigla    : 
+    Autor    : Paulo Penteado (GFT)
+    Data     : 13/11/2018
+
+    Objetivo  : Buscar parâmetros de desconto de titulo da TAB052
+
+    Alteração : 13/11/2018 - Criação (Paulo Penteado (GFT))
+
+  ----------------------------------------------------------------------------------------------------------*/
+  vr_tab_dados_dsctit  dsct0002.typ_tab_dados_dsctit;
+  vr_tab_cecred_dsctit dsct0002.typ_tab_cecred_dsctit;
+
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_dscritic crapcri.dscritic%TYPE;
+
+  -- Tratamento de erros
+  vr_exc_erro EXCEPTION;
+  
+  CURSOR cr_crapass IS
+  SELECT inpessoa
+  FROM   crapass
+  WHERE  cdcooper = pr_cdcooper
+  AND    nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
+   
+BEGIN
+  OPEN  cr_crapass;
+  FETCH cr_crapass INTO rw_crapass;
+  IF    cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic := 9;
+        RAISE vr_exc_erro;
+  END   IF;
+  CLOSE cr_crapass;
+
+  dsct0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                     ,pr_cdagenci          => NULL -- sem utilidade
+                                     ,pr_nrdcaixa          => NULL -- sem utilidade
+                                     ,pr_cdoperad          => NULL -- sem utilidade
+                                     ,pr_dtmvtolt          => NULL -- sem utilidade
+                                     ,pr_idorigem          => NULL -- sem utilidade
+                                     ,pr_tpcobran          => 1                    --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                     ,pr_inpessoa          => rw_crapass.inpessoa  --> Indicador de tipo de pessoa
+                                     ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
+                                     ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                     ,pr_cdcritic          => vr_cdcritic
+                                     ,pr_dscritic          => vr_dscritic);
+
+  IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exc_erro;
+  END IF;
+  
+  pr_tab_dados_dsctit := vr_tab_dados_dsctit;
+EXCEPTION
+  WHEN vr_exc_erro then
+    IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    END IF;
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+    pr_cdcritic := nvl(vr_cdcritic,0);
+    pr_dscritic := 'Erro geral na rotina DSCT0004.pc_busca_parametros_dscto_tit: '||SQLERRM;
+END pc_busca_parametros_dscto_tit;
+
+
+PROCEDURE pc_valida_qtde_maxima_titulo(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_qttitulo  IN NUMBER                --> Quantidade de Titulos
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      ) IS
+  /*---------------------------------------------------------------------------------------------------------
+    Programa : pc_valida_qtde_maxima_titulo
+    Sistema  : Ayllos
+    Sigla    : 
+    Autor    : Paulo Penteado (GFT)
+    Data     : 14/11/2018
+
+    Objetivo  : Validar que a quandidade de titulos selecionados no borderô não ultrapasse a quantidade máxima permitida para o IB
+
+    Alteração : 14/11/2018 - Criação (Paulo Penteado (GFT))
+
+  ----------------------------------------------------------------------------------------------------------*/
+  vr_tab_dados_dsctit  dsct0002.typ_tab_dados_dsctit;
+
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_dscritic crapcri.dscritic%TYPE;
+
+  -- Tratamento de erros
+  vr_exc_erro EXCEPTION;
+   
+BEGIN
+  IF nvl(pr_qttitulo,0) > 0 THEN
+    pc_busca_parametros_dscto_tit(pr_cdcooper         => pr_cdcooper
+                                 ,pr_nrdconta         => pr_nrdconta
+                                 ,pr_tab_dados_dsctit => vr_tab_dados_dsctit
+                                 ,pr_cdcritic         => vr_cdcritic
+                                 ,pr_dscritic         => vr_dscritic);
+
+    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF pr_qttitulo > vr_tab_dados_dsctit(1).qtmxtbib THEN
+      vr_dscritic := 'A quantidade dos títulos selecionados para desconto não pode ultrapassar '||vr_tab_dados_dsctit(1).qtmxtbib||' Títulos';
+      RAISE vr_exc_erro;
+    END IF;
+  END IF;
+  
+EXCEPTION
+  WHEN vr_exc_erro then
+    IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    END IF;
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+    pr_cdcritic := nvl(vr_cdcritic,0);
+    pr_dscritic := 'Erro geral na rotina DSCT0004.pc_valida_qtde_maxima_titulo: '||SQLERRM;
+END pc_valida_qtde_maxima_titulo; 
+
+
 PROCEDURE pc_calcula_limite_disponivel(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Nr. da Conta
                                       ,pr_vllimdis OUT craplim.vllimite%TYPE --> Valor disponivel
@@ -339,7 +483,6 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_dados_dsctit  dsct0002.typ_tab_dados_dsctit;
-  vr_tab_cecred_dsctit dsct0002.typ_tab_cecred_dsctit;
   
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -347,13 +490,6 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
 
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
-  
-  CURSOR cr_crapass IS
-  SELECT inpessoa
-  FROM   crapass
-  WHERE  cdcooper = pr_cdcooper
-  AND    nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE;
   
   CURSOR cr_crapbdt IS
   SELECT bdt.dtmvtolt
@@ -397,7 +533,8 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
   WHERE  bdt.insitbdt = decode(pr_insitbdt, 0, bdt.insitbdt, pr_insitbdt)
   AND    bdt.dtmvtolt BETWEEN pr_dtmvtini AND pr_dtmvtfin
   AND    bdt.nrdconta = pr_nrdconta
-  AND    bdt.cdcooper = pr_cdcooper;
+  AND    bdt.cdcooper = pr_cdcooper
+  ORDER  BY bdt.dtmvtolt DESC, bdt.nrborder DESC;
   rw_crapbdt_cons cr_crapbdt%ROWTYPE;
   
 BEGIN
@@ -407,15 +544,6 @@ BEGIN
       RAISE vr_exc_saida; 
   END IF;
 
-  OPEN  cr_crapass;
-  FETCH cr_crapass INTO rw_crapass;
-  IF    cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
-        vr_cdcritic := 9;
-        RAISE vr_exc_saida;
-  END   IF;
-  CLOSE cr_crapass;
-  
   pc_inicia_xml;
   pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>');
 
@@ -425,16 +553,9 @@ BEGIN
   IF    cr_craplim%FOUND THEN
         CLOSE cr_craplim;
 
-        dsct0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
-                                           ,pr_cdagenci          => NULL -- sem utilidade
-                                           ,pr_nrdcaixa          => NULL -- sem utilidade
-                                           ,pr_cdoperad          => NULL -- sem utilidade
-                                           ,pr_dtmvtolt          => NULL -- sem utilidade
-                                           ,pr_idorigem          => NULL -- sem utilidade
-                                           ,pr_tpcobran          => 1                    --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                           ,pr_inpessoa          => rw_crapass.inpessoa  --> Indicador de tipo de pessoa
-                                           ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
-                                           ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+        pc_busca_parametros_dscto_tit(pr_cdcooper         => pr_cdcooper
+                                     ,pr_nrdconta         => pr_nrdconta
+                                     ,pr_tab_dados_dsctit => vr_tab_dados_dsctit
                                            ,pr_cdcritic          => vr_cdcritic
                                            ,pr_dscritic          => vr_dscritic);
 
@@ -451,9 +572,9 @@ BEGIN
                                     '<dtmvtolt>'||to_char(rw_crapbdt_cons.dtmvtolt,'DD/MM/RRRR')||'</dtmvtolt>'||
                                     '<nrborder>'||rw_crapbdt_cons.nrborder||'</nrborder>'||
                                     '<qttitulo>'||rw_crapbdt_cons.qttitulo||'</qttitulo>'||
-                                    '<vltitulo>'||to_char(rw_crapbdt_cons.vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
+                                    '<vltitulo>'||trim(to_char(rw_crapbdt_cons.vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
                                     '<qttitapr>'||rw_crapbdt_cons.qttitapr||'</qttitapr>'||
-                                    '<vltitapr>'||to_char(rw_crapbdt_cons.vltitapr,'FM999G999G999G990D00')||'</vltitapr>'||
+                                    '<vltitapr>'||trim(to_char(rw_crapbdt_cons.vltitapr,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitapr>'||
                                     '<insitbdt>'||rw_crapbdt_cons.insitbdt||'</insitbdt>'||
                                     '<dssitbdt>'||rw_crapbdt_cons.dssitbdt||'</dssitbdt>'||
                                     '<dtlibbdt>'||to_char(rw_crapbdt_cons.dtlibbdt,'DD/MM/RRRR')||'</dtlibbdt>'||
@@ -462,7 +583,8 @@ BEGIN
         CLOSE cr_crapbdt;
           
         pc_escreve_xml('<Dados qtregist="'||nvl(rw_crapbdt_cons.qtregist,0)||'" >');
-        pc_escreve_xml('<vlmxassi>'||to_char(vr_tab_dados_dsctit(1).vlmxassi,'FM999G999G999G990D00')||'</vlmxassi>'||
+        pc_escreve_xml('<vlmxassi>'||trim(to_char(vr_tab_dados_dsctit(1).vlmxassi,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vlmxassi>'||
+                       '<qtmxtbib>'||vr_tab_dados_dsctit(1).qtmxtbib||'</qtmxtbib>'||
                        '<flglimit>1</flglimit>'||
                        '<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
                        '<inproces>'||rw_crapdat.inproces||'</inproces>');
@@ -525,6 +647,8 @@ PROCEDURE pc_obtem_titulos_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE --> 
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_dados_titulos tela_atenda_dscto_tit.typ_tab_dados_titulos;
+  vr_dtmvtolt          crapdat.dtmvtolt%TYPE;
+  vr_dtvencto          crapcob.dtvencto%TYPE;
   
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -544,22 +668,32 @@ BEGIN
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_vllimdis => vr_vllimdis);
 
+  vr_dtmvtolt := NULL;
+  IF pr_dtmvtolt IS NOT NULL THEN
+    vr_dtmvtolt := to_date(pr_dtmvtolt,'DD/MM/RRRR');
+  END IF;
+
+  vr_dtvencto := NULL;
+  IF pr_dtvencto IS NOT NULL THEN
+    vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+  END IF;
+
   tela_atenda_dscto_tit.pc_buscar_titulos_bordero(pr_cdcooper          => pr_cdcooper
                                                  ,pr_nrdconta          => pr_nrdconta
                                                  ,pr_cdagenci          => NULL -- sem utilidade
                                                  ,pr_nrdcaixa          => NULL -- sem utilidade
                                                  ,pr_cdoperad          => NULL -- sem utilidade
-                                                 ,pr_dtmvtolt          => to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')
+                                                 ,pr_dtmvtolt          => rw_crapdat.dtmvtolt
                                                  ,pr_idorigem          => NULL -- sem utilidade
                                                  ,pr_nrinssac          => pr_nrinssac
                                                  ,pr_vltitulo          => 0 -- filtro
-                                                 ,pr_dtvencto          => pr_dtvencto
+                                                 ,pr_dtvencto          => vr_dtvencto
                                                  ,pr_nrnosnum          => 0 -- filtro
                                                  ,pr_nrctrlim          => NULL -- sem utilidade
                                                  ,pr_insitlim          => NULL -- sem utilidade
                                                  ,pr_tpctrlim          => NULL -- sem utilidade
                                                  ,pr_nrborder          => NULL -- grava na type somente se ainda não estiver nela
-                                                 ,pr_dtemissa          => CASE WHEN pr_dtmvtolt IS NULL THEN NULL ELSE to_date(pr_dtmvtolt,'DD/MM/RRRR') END
+                                                 ,pr_dtemissa          => vr_dtmvtolt
                                                  ,pr_nriniseq          => pr_nriniseq
                                                  ,pr_nrregist          => pr_nrregist
                                                  ,pr_qtregist          => vr_qtregist
@@ -576,8 +710,8 @@ BEGIN
                  '<Root><Dados qtregist="' || vr_qtregist ||'" >');
                  
   pc_escreve_xml('<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
-		               '<vllimite>'||to_char(rw_craplim.vllimite,'FM999G999G999G990D00')||'</vllimite>'||
-		               '<vllimdis>'||to_char(vr_vllimdis,'FM999G999G999G990D00')||'</vllimdis>');
+                 '<vllimite>'||trim(to_char(rw_craplim.vllimite,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimite>'||
+                 '<vllimdis>'||trim(to_char(vr_vllimdis,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimdis>');
                      
   pc_escreve_xml('<titulos>');
                      
@@ -589,7 +723,7 @@ BEGIN
                          '<nrborder>'||vr_tab_dados_titulos(vr_index).nrdocmto||'</nrborder>'|| -- numero do boleto na tela
                          '<nmdsacad>'||vr_tab_dados_titulos(vr_index).nmdsacad||'</nmdsacad>'||
                          '<dtvencto>'||to_char(vr_tab_dados_titulos(vr_index).dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
-                         '<vltitulo>'||to_char(vr_tab_dados_titulos(vr_index).vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
+                         '<vltitulo>'||trim(to_char(vr_tab_dados_titulos(vr_index).vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
                          '<inpreapr>'||CASE WHEN vr_tab_dados_titulos(vr_index).dssituac = 'N' THEN 1 ELSE 0 END||'</inpreapr>'|| 
                          '<cdbandoc>'||vr_tab_dados_titulos(vr_index).cdbandoc||'</cdbandoc>'||
                          '<nrdctabb>'||vr_tab_dados_titulos(vr_index).nrdctabb||'</nrdctabb>'||
@@ -645,21 +779,26 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
                 Lista de valores separados pelo caracter | (pipe)
 
     Objetivo  : Mostrar um resumo listando os títulos selecionados para inclusão do borderô
-    SOA       : Recebiveis.obterTitulosPorPagador
+    SOA       : Recebiveis.obterTitulosParaDesconto
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
+                11/10/2018 - Ajuste para retornar a situação dos títulos (Andrew Albuquerque - GFT)
+                08/11/2018 - Removida verificação de erro da procedure tela_atenda_dscto_tit.pc_solicita_biro_bordero para não estourar erro em tela(Cássia de Oliveira - GFT)
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_cdbandoc gene0002.typ_split;
   vr_tab_nrdctabb gene0002.typ_split;
   vr_tab_nrcnvcob gene0002.typ_split;
   vr_tab_nrdocmto gene0002.typ_split;
-  vr_situacao     VARCHAR2(1);
+  vr_tab_criticas dsct0003.typ_tab_critica;
+  vr_inpreapr     VARCHAR2(1); -- Indicado Titulo Pré-Aprovado: 0 Não, 1 Sim
   vr_cdbircon     crapbir.cdbircon%TYPE;
   vr_dsbircon     crapbir.dsbircon%TYPE;
   vr_cdmodbir     crapmbr.cdmodbir%TYPE;
   vr_dsmodbir     crapmbr.dsmodbir%TYPE;
   vr_qtpagina     INTEGER; -- contador para controlar a paginacao
+  vr_tot_titulos  NUMBER;
+  vr_index        NUMBER;
   
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -686,6 +825,15 @@ BEGIN
   vr_tab_nrdocmto := gene0002.fn_quebra_string(pr_nrdocmto_lst,'|');
 
   IF  vr_tab_nrdocmto.count() > 0 THEN
+      pc_valida_qtde_maxima_titulo(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_qttitulo => vr_tab_nrdocmto.count()
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
       pc_busca_crapdat(pr_cdcooper => pr_cdcooper
                       ,pr_dscritic => vr_dscritic );
       IF  vr_dscritic IS NOT NULL THEN
@@ -696,7 +844,40 @@ BEGIN
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_vllimdis => vr_vllimdis);
 
-      vr_qtpagina := 0;
+      vr_qtpagina    := 1;
+      vr_tot_titulos := 0;
+      vr_inpreapr    := '0';
+
+      -- Verificar críticas do borderô
+      dsct0003.pc_calcula_restricao_bordero(pr_cdcooper     => pr_cdcooper
+                                           ,pr_nrdconta     => pr_nrdconta
+                                           ,pr_tot_titulos  => vr_tot_titulos
+                                           ,pr_tab_criticas => vr_tab_criticas
+                                           ,pr_cdcritic     => vr_cdcritic
+                                           ,pr_dscritic     => vr_dscritic );
+
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_tab_criticas.count = 0 THEN
+        -- Verificar crítica do cedente
+        dsct0003.pc_calcula_restricao_cedente(pr_cdcooper     => pr_cdcooper
+                                             ,pr_nrdconta     => pr_nrdconta
+                                             ,pr_cdagenci     => 90
+                                             ,pr_nrdcaixa     => 900
+                                             ,pr_cdoperad     => 996
+                                             ,pr_nmdatela     => 'INTERNETBANK'
+                                             ,pr_idorigem     => 3
+                                             ,pr_idseqttl     => 1
+                                             ,pr_tab_criticas => vr_tab_criticas
+                                             ,pr_cdcritic     => vr_cdcritic
+                                             ,pr_dscritic     => vr_dscritic );
+
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
 
       pc_inicia_xml;
       pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>');
@@ -705,6 +886,9 @@ BEGIN
       WHILE vr_index IS NOT NULL
       LOOP
         IF (pr_nriniseq + pr_nrregist) = 0 OR (vr_qtpagina >= pr_nriniseq AND vr_qtpagina < (pr_nriniseq + pr_nrregist)) THEN
+            IF tela_atenda_dscto_tit.cr_crapcob%ISOPEN THEN
+              CLOSE tela_atenda_dscto_tit.cr_crapcob;
+            END IF;
             OPEN  tela_atenda_dscto_tit.cr_crapcob(pr_cdcooper => pr_cdcooper
                                                   ,pr_nrdconta => pr_nrdconta
                                                   ,pr_nrdocmto => vr_tab_nrdocmto(vr_index)
@@ -714,6 +898,24 @@ BEGIN
             FETCH tela_atenda_dscto_tit.cr_crapcob INTO tela_atenda_dscto_tit.rw_crapcob;
             IF    tela_atenda_dscto_tit.cr_crapcob%FOUND THEN
 
+                  IF vr_tab_criticas.count = 0 THEN
+                    -- Verificar se o Título possui critica
+                    dsct0003.pc_calcula_restricao_titulo(pr_cdcooper     => pr_cdcooper
+                                                        ,pr_nrdconta     => pr_nrdconta
+                                                        ,pr_nrdocmto     => tela_atenda_dscto_tit.rw_crapcob.nrdocmto
+                                                        ,pr_nrcnvcob     => tela_atenda_dscto_tit.rw_crapcob.nrcnvcob
+                                                        ,pr_nrdctabb     => tela_atenda_dscto_tit.rw_crapcob.nrdctabb
+                                                        ,pr_cdbandoc     => tela_atenda_dscto_tit.rw_crapcob.cdbandoc
+                                                        ,pr_tab_criticas => vr_tab_criticas
+                                                        ,pr_cdcritic     => vr_cdcritic
+                                                        ,pr_dscritic     => vr_dscritic);
+
+                    IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;
+
+                  IF vr_tab_criticas.count = 0 THEN
                   -- Efetuar análise do pagador, verificando situação no Ayllos e Ibratan
                   tela_atenda_dscto_tit.pc_solicita_biro_bordero(pr_cdcooper => pr_cdcooper
                                                                 ,pr_nrdconta => pr_nrdconta
@@ -726,43 +928,61 @@ BEGIN
                                                                 ,pr_cdcritic => vr_cdcritic
                                                                 ,pr_dscritic => vr_dscritic);
 
-                  --     Verifica resultado da análise do pagador
-                  SELECT nvl((SELECT decode(inpossui_criticas,1,'S','N')
-                              FROM   tbdsct_analise_pagador tap 
-                              WHERE  tap.cdcooper = pr_cdcooper 
-                              AND    tap.nrdconta = pr_nrdconta 
-                              AND    tap.nrinssac = tela_atenda_dscto_tit.rw_crapcob.nrinssac),'N') 
-                  INTO   vr_situacao
-                  FROM   DUAL; 
-
-                  --  Somente se na analise do pagador não resultou nenhuma crítica, então verificar o resultado do Ibratan, pois caso 
-                  --  já tenha alguma critica na analise do pagador, então já considera como não pre-aprovado.
-                  IF  vr_situacao = 'N' THEN
                       --    Verifica resultado do Ibratan
                       OPEN  cr_crapcbd(tela_atenda_dscto_tit.rw_crapcob.nrinssac);
                       FETCH cr_crapcbd INTO rw_crapcbd;
                       IF    cr_crapcbd%NOTFOUND THEN
-                            vr_situacao := 'N';
+                      vr_inpreapr := '0';
                       ELSE
+                      -- Verifica se existe alguma negativa na consulta do biro. Retorna S ou N
                             SSPC0001.pc_verifica_situacao(rw_crapcbd.nrconbir
                                                          ,rw_crapcbd.nrseqdet
                                                          ,vr_cdbircon
                                                          ,vr_dsbircon
                                                          ,vr_cdmodbir
                                                          ,vr_dsmodbir
-                                                         ,vr_situacao);
+                                                   ,vr_inpreapr);
+                      IF vr_inpreapr = 'S' THEN
+                        vr_inpreapr := '1';
+                      ELSE
+                        vr_inpreapr := '0';
+                      END IF;
                       END IF;
                       CLOSE cr_crapcbd;
+
+                    IF vr_inpreapr = '0' THEN
+                      -- Verifica criticas do Pagador, caso não tenha retornado nenhuma crítica/pendencia da consulta do Ibratan
+                      dsct0003.pc_calcula_restricao_pagador(pr_cdcooper     => pr_cdcooper
+                                                           ,pr_nrdconta     => pr_nrdconta
+                                                           ,pr_nrinssac     => tela_atenda_dscto_tit.rw_crapcob.nrinssac
+                                                           ,pr_cdbandoc     => tela_atenda_dscto_tit.rw_crapcob.cdbandoc
+                                                           ,pr_nrdctabb     => tela_atenda_dscto_tit.rw_crapcob.nrdctabb
+                                                           ,pr_nrcnvcob     => tela_atenda_dscto_tit.rw_crapcob.nrcnvcob
+                                                           ,pr_nrdocmto     => tela_atenda_dscto_tit.rw_crapcob.nrdocmto
+                                                           ,pr_tab_criticas => vr_tab_criticas
+                                                           ,pr_cdcritic     => vr_cdcritic
+                                                           ,pr_dscritic     => vr_dscritic);
+
+                      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                         RAISE vr_exc_saida;
+                  END IF;
+                    END IF;
+                  END IF;
+
+                  IF vr_tab_criticas.count = 0 THEN
+                    vr_inpreapr := '1';
                   END IF;
 
                   vr_det_xml := vr_det_xml||
                                 '<titulo>'||
                                   '<nrcnvcob>'||tela_atenda_dscto_tit.rw_crapcob.nrcnvcob||'</nrcnvcob>'||
                                   '<nrborder>'||tela_atenda_dscto_tit.rw_crapcob.nrdocmto||'</nrborder>'||-- numero do boleto
+                                  '<nrdocmto>'||tela_atenda_dscto_tit.rw_crapcob.nrdocmto||'</nrdocmto>'||-- numero do boleto
                                   '<nmdsacad>'||tela_atenda_dscto_tit.rw_crapcob.nmdsacad||'</nmdsacad>'||
                                   '<dtvencto>'||to_char(tela_atenda_dscto_tit.rw_crapcob.dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
-                                  '<vltitulo>'||to_char(tela_atenda_dscto_tit.rw_crapcob.vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
-                                  '<inpreapr>'||CASE WHEN vr_situacao = 'N' THEN 1 ELSE 0 END||'</inpreapr>'|| 
+                                  '<vltitulo>'||trim(to_char(tela_atenda_dscto_tit.rw_crapcob.vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
+                                  '<inpreapr>'||vr_inpreapr||'</inpreapr>'|| -- Indicado Titulo Pré-Aprovado: 0 Não, 1 Sim
+                                  '<dssittit>'||tela_atenda_dscto_tit.rw_crapcob.dssittit||'</dssittit>'||
                                 '</titulo>';
             END   IF;
             CLOSE tela_atenda_dscto_tit.cr_crapcob;
@@ -775,8 +995,8 @@ BEGIN
           
       pc_escreve_xml('<Dados qtregist="'||nvl(vr_tab_nrdocmto.count,0)||'" >');
       pc_escreve_xml('<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
-                     '<vllimite>'||to_char(rw_craplim.vllimite,'FM999G999G999G990D00')||'</vllimite>'||
-                     '<vllimdis>'||to_char(vr_vllimdis,'FM999G999G999G990D00')||'</vllimdis>');
+                     '<vllimite>'||trim(to_char(rw_craplim.vllimite,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimite>'||
+                     '<vllimdis>'||trim(to_char(vr_vllimdis,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimdis>');
       pc_escreve_xml('<titulos>');
       pc_escreve_xml(vr_det_xml);
       pc_escreve_xml('</titulos></Dados></Root>', TRUE);
@@ -841,7 +1061,7 @@ BEGIN
   IF  vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-  /*    
+      
   inet0002.pc_cria_trans_pend_dscto_tit(pr_cdcooper          => pr_cdcooper
                                        ,pr_nrdconta          => pr_nrdconta
                                        ,pr_idseqttl          => pr_idseqttl
@@ -864,7 +1084,7 @@ BEGIN
   IF  nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-  */
+
   vr_qttitulo := 0;
   vr_vltitulo := 0;
   FOR idx IN pr_tab_dados_titulos.first..pr_tab_dados_titulos.last LOOP
@@ -998,7 +1218,7 @@ END pc_libera_bordero_dscto_tit;
 PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Cooperativa
                                     ,pr_nrdconta          IN crapass.nrdconta%TYPE --> Nr. da conta
                                     ,pr_idseqttl          IN crapttl.idseqttl%TYPE --> Número do Titular
-                                    ,pr_inpreapr          IN NUMBER --> Indicador de titulos pre-aprovado (1 se todos titulos da lista estiverem pre-aprovados, senão 0)
+                                    ,pr_inmxassi          IN NUMBER                --> Indicador de valor dos titulos excedido o valor maximo da assinatura
                                     ,pr_tab_dados_titulos IN tela_atenda_dscto_tit.typ_tab_dados_titulos --> Titulos para desconto
                                     ,pr_dsmensag         OUT VARCHAR2              --> Mensagem
                                     ,pr_dscritic         OUT VARCHAR2              --> Descrição da crítica
@@ -1013,6 +1233,7 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
     Objetivo  : Realizar a criação do borderô de desconto de títulos com os titulos selecionados
 
     Alteração : 18/05/2018 - Criação (Paulo Penteado (GFT))
+                10/10/2018 - Ajuste para mensagem de estouro do parametro da TAB052 (Andrew Albuquerque - GFT)
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_borderos tela_atenda_dscto_tit.typ_tab_borderos;
@@ -1024,6 +1245,10 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
   vr_nrborder NUMBER;
   vr_nrautdoc craplcm.nrautdoc%type;
   vr_dsprotoc crappro.dsprotoc%TYPE;
+  vr_nrdrecid    ROWID;
+  vr_historico   INTEGER;
+  vr_literal     VARCHAR2(1000);
+  vr_flbdtlibera BOOLEAN;
           
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1045,10 +1270,6 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
   AND    TRIM(age.dsmailbd) IS NOT NULL;
   rw_crapage cr_crapage%ROWTYPE;
   
-  vr_nrdrecid  ROWID;
-  vr_historico INTEGER;
-  vr_literal   VARCHAR2(1000);
-      
 BEGIN
   pc_busca_crapdat(pr_cdcooper => pr_cdcooper
                   ,pr_dscritic => vr_dscritic );
@@ -1081,8 +1302,19 @@ BEGIN
 
   vr_nrborder := vr_tab_borderos(1).nrborder;
   vr_historico := 0;
-  --  se todos os titulos selecionados para o borderô estiverem pré-aprovados, então aprovar automaticamente e liberar o borderô
-  IF  pr_inpreapr = 1 THEN
+  vr_flbdtlibera := FALSE;
+
+  --> AWAE: Totalizando quantidade de títulos e valor dos títulos no bordero.
+  vr_qttitulo := 0;
+  vr_vltitulo := 0;
+  FOR idx IN pr_tab_dados_titulos.first..pr_tab_dados_titulos.last LOOP
+      vr_qttitulo := vr_qttitulo + 1;
+      vr_vltitulo := vr_vltitulo + pr_tab_dados_titulos(idx).vltitulo;
+  END LOOP;
+
+  -- se todos os titulos selecionados para o borderô estiverem pré-aprovados e se o valor dos titulos selecionados não exceder o
+  -- valor máximo da dispenda da assinatura da tab052, então aprovar automaticamente e liberar o borderô
+  IF vr_tab_borderos(1).flrestricao = 0 AND pr_inmxassi = 0 THEN
       pc_libera_bordero_dscto_tit(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_nrborder => vr_nrborder
@@ -1093,14 +1325,8 @@ BEGIN
           RAISE vr_exc_saida; 
       END IF;
       vr_historico := 2665;
+    vr_flbdtlibera := TRUE;
   END IF;
-  
-  vr_qttitulo := 0;
-  vr_vltitulo := 0;
-  FOR idx IN pr_tab_dados_titulos.first..pr_tab_dados_titulos.last LOOP
-      vr_qttitulo := vr_qttitulo + 1;
-      vr_vltitulo := vr_vltitulo + pr_tab_dados_titulos(idx).vltitulo;
-  END LOOP;
   
    /* Grava uma autenticacao para a transferencia */
   CXON0000.pc_grava_autenticacao (pr_cooper       => pr_cdcooper   --Codigo Cooperativa
@@ -1156,18 +1382,7 @@ BEGIN
   IF  TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-  /*
-  -- Insere o protocolo de geração do borderô
-  GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper
-                            ,pr_dsinfor1 => 'Desconto de Titulo'
-                            ,pr_cdtippro => 22 -- Desconto de Titulo
-                            ,pr_nrdocmto => vr_nrborder
-                            ,pr_dsinfor2 => vr_qttitulo -- Quantidade de títulos
-                            ,pr_vllanmto => vr_vltitulo -- Valor total do borderô
-                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                            ,pr_hrtransa => 
-                            ,
-  */    
+
   -- Gerar log
   gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                       ,pr_cdoperad => 996
@@ -1214,6 +1429,8 @@ BEGIN
                                ,pr_dsdadatu => pr_tab_dados_titulos(idx).nrnosnum);
   END LOOP;
       
+  -- enviar e-mail somente se o borderô não foi liberado automaticamente.
+  IF not(vr_flbdtlibera) THEN
   --    Busca e-mail da empresa
   OPEN  cr_crapage;
   FETCH cr_crapage INTO rw_crapage;
@@ -1248,6 +1465,7 @@ BEGIN
         END IF;
   END   IF;
   CLOSE cr_crapage;
+  END IF;
 
   COMMIT;
   
@@ -1268,6 +1486,7 @@ END;
 PROCEDURE pc_finalizar_bordero_dscto_tit(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa
                                         ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Nr. da Conta
                                         ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Número do Titular
+                                        ,pr_fltranspend  IN NUMBER                --> Transação pendente 0-Nao 1-Sim
                                         ,pr_cdbandoc_lst	IN CLOB		                --> Código do banco
                                         ,pr_nrdctabb_lst	IN CLOB		                --> Número da conta base no banco
                                         ,pr_nrcnvcob_lst	IN CLOB		                --> Número do convênio de cobrança
@@ -1292,15 +1511,18 @@ PROCEDURE pc_finalizar_bordero_dscto_tit(pr_cdcooper     IN crapcop.cdcooper%TYP
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_dados_titulos tela_atenda_dscto_tit.typ_tab_dados_titulos;
+  vr_tab_dados_dsctit  DSCT0002.typ_tab_dados_dsctit;
   vr_tab_cdbandoc      gene0002.typ_split;
   vr_tab_nrdctabb      gene0002.typ_split;
   vr_tab_nrcnvcob      gene0002.typ_split;
   vr_tab_nrdocmto      gene0002.typ_split;
-  vr_inpreapr          NUMBER; -- indicador pre-aprovado
   vr_idastcjt          crapass.idastcjt%TYPE;
   vr_nrcpfcgc          crapass.nrcpfcgc%TYPE;
   vr_nmprimtl          crapass.nmprimtl%TYPE;
   vr_flcartma          INTEGER;
+  vr_aux               NUMBER;
+  vr_vltitulo          craptdb.vltitulo%TYPE;
+  vr_inmxassi          NUMBER;
 
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1310,13 +1532,22 @@ PROCEDURE pc_finalizar_bordero_dscto_tit(pr_cdcooper     IN crapcop.cdcooper%TYP
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
 BEGIN
+  vr_vltitulo     := 0;
+  vr_inmxassi     := 0;
   vr_tab_cdbandoc := gene0002.fn_quebra_string(pr_cdbandoc_lst,'|');
   vr_tab_nrdctabb := gene0002.fn_quebra_string(pr_nrdctabb_lst,'|');
   vr_tab_nrcnvcob := gene0002.fn_quebra_string(pr_nrcnvcob_lst,'|');
   vr_tab_nrdocmto := gene0002.fn_quebra_string(pr_nrdocmto_lst,'|');
 
   IF  vr_tab_nrdocmto.count() > 0 THEN
-      vr_inpreapr := 1;
+      pc_valida_qtde_maxima_titulo(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_qttitulo => vr_tab_nrdocmto.count()
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
       -- percorrer a lista dos parâmetros de entrada e gravar seus valores na lista de titulos
       vr_index := vr_tab_nrdocmto.first;
@@ -1348,9 +1579,43 @@ BEGIN
             vr_tab_dados_titulos(vr_index).vltitulo := tela_atenda_dscto_tit.rw_crapcob.vltitulo;
             vr_tab_dados_titulos(vr_index).nmdsacad := tela_atenda_dscto_tit.rw_crapcob.nmdsacad;
             vr_tab_dados_titulos(vr_index).dssituac := tela_atenda_dscto_tit.rw_crapcob.dssituac;
+            vr_tab_dados_titulos(vr_index).cdcooper := tela_atenda_dscto_tit.rw_crapcob.cdcooper;
+            vr_tab_dados_titulos(vr_index).nrctremp := tela_atenda_dscto_tit.rw_crapcob.nrctremp;
+            vr_tab_dados_titulos(vr_index).dtmvtolt := tela_atenda_dscto_tit.rw_crapcob.dtmvtolt;
+            vr_tab_dados_titulos(vr_index).flgregis := tela_atenda_dscto_tit.rw_crapcob.flgregis;
+            vr_tab_dados_titulos(vr_index).cdtpinsc := tela_atenda_dscto_tit.rw_crapcob.cdtpinsc;
+            vr_tab_dados_titulos(vr_index).vldpagto := tela_atenda_dscto_tit.rw_crapcob.vldpagto;
+            vr_tab_dados_titulos(vr_index).dtdpagto := tela_atenda_dscto_tit.rw_crapcob.dtdpagto;
+            vr_tab_dados_titulos(vr_index).nrborder := tela_atenda_dscto_tit.rw_crapcob.nrborder;
+
+            /*Faz calculo de liquidez e concentracao e atualiza as criticas*/
+            DSCT0002.pc_atualiza_calculos_pagador(pr_cdcooper => tela_atenda_dscto_tit.rw_crapcob.cdcooper
+                                                 ,pr_nrdconta => tela_atenda_dscto_tit.rw_crapcob.nrdconta
+                                                 ,pr_nrinssac => tela_atenda_dscto_tit.rw_crapcob.nrinssac
+                                                 --------------> OUT <--------------
+                                                 ,pr_pc_cedpag  => vr_aux
+                                                 ,pr_qtd_cedpag => vr_aux
+                                                 ,pr_pc_conc    => vr_aux
+                                                 ,pr_qtd_conc   => vr_aux
+                                                 ,pr_pc_geral   => vr_aux
+                                                 ,pr_qtd_geral  => vr_aux
+                                                 ,pr_cdcritic   => vr_cdcritic
+                                                 ,pr_dscritic   => vr_dscritic );
+
+            vr_vltitulo := vr_vltitulo + vr_tab_dados_titulos(vr_index).vltitulo;
 
             vr_index := vr_tab_nrdocmto.next(vr_index);
       END LOOP;
+
+      pc_busca_parametros_dscto_tit(pr_cdcooper         => pr_cdcooper
+                                   ,pr_nrdconta         => pr_nrdconta                                                   
+                                   ,pr_tab_dados_dsctit => vr_tab_dados_dsctit
+                                   ,pr_cdcritic         => vr_cdcritic
+                                   ,pr_dscritic         => vr_dscritic);
+
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
       
       -- Verifica se a conta exige assinatura multipla
       INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
@@ -1368,8 +1633,14 @@ BEGIN
           RAISE vr_exc_saida; 
       END IF;
       
+      --> AWAE: Se a soma do valor de todos os títulos do borderô for maior que o parametro VLMXASSI dos parãmetros da TAB052, emitir mensagem
+      --        para realizar a assinatural manual.
+      IF vr_vltitulo > vr_tab_dados_dsctit(1).vlmxassi THEN
+        vr_inmxassi := 1;
+      END IF;
+
       --  Se precisar de multiplas assinaturas
-      IF  vr_idastcjt = 1 THEN
+      IF  (vr_idastcjt = 1) AND (pr_fltranspend = 1) THEN
           -- Cadastra transacao pendente
           pc_gera_trans_pend_dscto_tit(pr_cdcooper          => pr_cdcooper
                                       ,pr_nrdconta          => pr_nrdconta
@@ -1384,22 +1655,10 @@ BEGIN
               RAISE vr_exc_saida; 
           END IF;
       ELSE
-          vr_index := vr_tab_dados_titulos.first;
-          WHILE vr_index IS NOT NULL 
-          LOOP
-                --  verificar se algum dos títulos selecionados não estão pré-aprovados
-                IF  vr_tab_dados_titulos(vr_index).dssituac IN ('S','A') THEN
-                    vr_inpreapr := 0;
-                    EXIT;
-                END IF;
-
-                vr_index := vr_tab_dados_titulos.next(vr_index);
-          END   LOOP;
-      
           pc_criar_bordero_dscto_tit(pr_cdcooper          => pr_cdcooper
                                     ,pr_nrdconta          => pr_nrdconta
                                     ,pr_idseqttl          => pr_idseqttl
-                                    ,pr_inpreapr          => vr_inpreapr
+                                    ,pr_inmxassi          => vr_inmxassi
                                     ,pr_tab_dados_titulos => vr_tab_dados_titulos
                                     ,pr_dsmensag          => vr_dsmensag
                                     ,pr_dscritic          => vr_dscritic );
@@ -1409,6 +1668,10 @@ BEGIN
           END IF;
       END IF;
       
+      IF vr_inmxassi = 1 THEN
+        vr_dsmensag := vr_dsmensag ||' Valor somente será liberado mediante assinatura do borderô no Posto de Atendimento da Cooperativa.';
+      END IF;
+
       pr_retxml := vr_dsmensag;
 
   END IF;
@@ -1468,7 +1731,6 @@ PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> C
   vr_exc_saida EXCEPTION;
 BEGIN
   -- efetuar a validação do token informado
-  /*
   inet0003.pc_utiliza_autenticacao_ib(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_tokenib  => pr_tokenib
@@ -1477,10 +1739,11 @@ BEGIN
   IF trim(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;
   END IF; 
-  */
+
   pc_finalizar_bordero_dscto_tit(pr_cdcooper     => pr_cdcooper
                                 ,pr_nrdconta     => pr_nrdconta
                                 ,pr_idseqttl     => pr_idseqttl
+                                ,pr_fltranspend  => 1
                                 ,pr_cdbandoc_lst => pr_cdbandoc_lst
                                 ,pr_nrdctabb_lst => pr_nrdctabb_lst
                                 ,pr_nrcnvcob_lst => pr_nrcnvcob_lst
@@ -1531,7 +1794,7 @@ PROCEDURE pc_obtem_detalhes_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE -->
     SOA       : Recebiveis.obterListaTitulosBordero
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
-
+                11/10/2018 - Ajuste para retornar a situação dos títulos (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_tit_bordero tela_atenda_dscto_tit.typ_tab_tit_bordero;
   
@@ -1585,8 +1848,8 @@ BEGIN
                  '<Root><Dados qtregist="'|| vr_qtregist ||'" >');
                  
   pc_escreve_xml('<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
-		               '<vllimite>'||to_char(rw_craplim.vllimite,'FM999G999G999G990D00')||'</vllimite>'||
-		               '<vllimdis>'||to_char(vr_vllimdis,'FM999G999G999G990D00')||'</vllimdis>');
+                 '<vllimite>'||trim(to_char(rw_craplim.vllimite,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimite>'||
+                 '<vllimdis>'||trim(to_char(vr_vllimdis,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vllimdis>');
                      
   pc_escreve_xml('<titulos>');
   vr_index := vr_tab_tit_bordero.first;
@@ -1598,7 +1861,7 @@ BEGIN
                          '<nrborder>'||pr_nrborder||'</nrborder>'||
                          '<nmdsacad>'||vr_tab_tit_bordero(vr_index).nmsacado||'</nmdsacad>'||
                          '<dtvencto>'||to_char(vr_tab_tit_bordero(vr_index).dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
-                         '<vltitulo>'||to_char(vr_tab_tit_bordero(vr_index).vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
+                         '<vltitulo>'||trim(to_char(vr_tab_tit_bordero(vr_index).vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
                          '<inpreapr>'||CASE WHEN vr_tab_tit_bordero(vr_index).dssituac = 'N' THEN 1 ELSE 0 END||'</inpreapr>'||
                          '<insitbdt>'||rw_crapbdt.insitbdt||'</insitbdt>'||
                          '<insittit>'||vr_tab_tit_bordero(vr_index).insittit||'</insittit>'||
@@ -1606,7 +1869,7 @@ BEGIN
                          '<nrdconta>'||rw_crapbdt.nrdconta||'</nrdconta>'||
                          '<cdbandoc>'||vr_tab_tit_bordero(vr_index).cdbandoc||'</cdbandoc>'||
                          '<nrdctabb>'||vr_tab_tit_bordero(vr_index).nrdctabb||'</nrdctabb>'||
-                         '<nrcnvcob>'||vr_tab_tit_bordero(vr_index).nrcnvcob||'</nrcnvcob>'||
+                         '<dssittit>'||vr_tab_tit_bordero(vr_index).dssittit||'</dssittit>'||
                        '</titulo>'
                       );
         vr_index := vr_tab_tit_bordero.next(vr_index);
@@ -1698,6 +1961,7 @@ BEGIN
                                     ,pr_dsiduser => to_char(pr_nrdconta)
                                     ,pr_flgemail => 0
                                     ,pr_flgerlog => 0
+                                    ,pr_flgrestr => 0
                                     ,pr_nmarqpdf => vr_nmarqpdf
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);

@@ -176,6 +176,9 @@ create or replace package cecred.PAGA0002 is
   
 			   14/11/2018 - Incluido tratamento para agendamento de pagamentos DDA no OFSAA.
 							(Reinert)
+			   
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -940,6 +943,8 @@ create or replace package body cecred.PAGA0002 is
                                Others, Modulo/Action, PC Internal Exception, PC Log Programa
                                Inserts, Updates, Deletes e SELECT's, Parâmetros
                                (Envolti - Belli - REQ0011727)
+																		  
+                  03/09/2018 - Correção para remover lote (Jonata - Mouts).
 
 				  10/10/2018 - Permitir agendar Teds antes da abertura da grade.
 				               Projeto 475 - Sprint C - Jose Dill (Mouts)
@@ -6927,7 +6932,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2015.                   Ultima atualizacao: 05/08/2016
+    --  Data     : Maio/2015.                   Ultima atualizacao: 03/09/2018
     --
     --  Dados referentes ao programa:
     --
@@ -6950,6 +6955,7 @@ create or replace package body cecred.PAGA0002 is
     --                           para verificar se o tipo de conta permite a contratação 
     --                           do produto. PRJ366 (Lombardi).
     --
+	--              03/09/2018 - Correção para remover lote (Jonata - Mouts).
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7188,6 +7194,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfpre NUMBER;
     vr_flgachou BOOLEAN;
     vr_dscritic_aux VARCHAR2(200);
+    vr_nrseqdig craplcm.nrseqdig%TYPE := 0;
 
     vr_idorigem INTEGER;
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
@@ -7412,6 +7419,14 @@ create or replace package body cecred.PAGA0002 is
     SAVEPOINT TRANSACAO;
 
     BEGIN
+    
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                 ||to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'
+                                 ||pr_cdagenci||';'
+                                 ||100||';'
+                                 ||vr_nrdolote);
       -- Tentar criar registro de lote ate 10 vezes
       -- senao abortar
       FOR i IN 1..10 LOOP
@@ -7480,22 +7495,7 @@ create or replace package body cecred.PAGA0002 is
 
       END LOOP;
 
-      -- Atualizar informações no lote
-      BEGIN
-        UPDATE craplot
-           SET craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-               craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-               craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1,
-               /* DEBITO */
-               craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vllanaut,
-               craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vllanaut
-         WHERE craplot.rowid = rw_craplot.rowid
-         RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar o craplot: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
+      
 
       vr_nmprepos := NULL;
       vr_nrcpfpre := 0;
@@ -7826,8 +7826,8 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_cdagenci               -- craplau.cdagenci
                      ,rw_craplot.cdbccxlt       -- craplau.cdbccxlt
                      ,rw_craplot.nrdolote       -- craplau.nrdolote
-                     ,rw_craplot.nrseqdig       -- craplau.nrseqdig
-                     ,rw_craplot.nrseqdig       -- craplau.nrdocmto
+                     ,vr_nrseqdig               -- craplau.nrseqdig
+                     ,vr_nrseqdig               -- craplau.nrdocmto
                      ,pr_cdhistor               -- craplau.cdhistor
                      ,pr_dsorigem               -- craplau.dsorigem
                      ,1  /** PENDENTE  **/      -- craplau.insitlau
@@ -8708,7 +8708,9 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdocmto = pr_nrdocmto;
      rw_craplcm cr_craplcm%ROWTYPE;     
      
-     rw_craplot lote0001.cr_craplot%ROWTYPE;
+     rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+     vr_nrseqdig    craplot.nrseqdig%type;
+
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -8847,28 +8849,36 @@ create or replace package body cecred.PAGA0002 is
           END;
 
 
-        LOTE0001.pc_insere_lote(pr_cdcooper => rw_crapcop.cdcooper
-                               ,pr_dtmvtolt => pr_dtmvtolt
-                               ,pr_cdagenci => 1
-                               ,pr_cdbccxlt => 85
-                               ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
-                               ,pr_cdoperad => pr_cdoperad
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_tplotmov => 1
-                               ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
-                               ,pr_craplot  => rw_craplot
-                               ,pr_dscritic => vr_dscritic);
+        LOTE0001.pc_insere_lote_rvt(pr_cdcooper => rw_crapcop.cdcooper
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdagenci => 1
+                                   ,pr_cdbccxlt => 85
+                                   ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_tplotmov => 1
+                                   ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
+                                   ,pr_craplot  => rw_craplot_rvt
+                                   ,pr_dscritic => vr_dscritic);
 
         -- se encontrou erro ao buscar lote, abortar programa
         IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
         END IF;
+		
+		vr_nrseqdig := fn_sequence('CRAPLOT'
+						                      ,'NRSEQDIG'
+						                      ,''||rw_craplot_rvt.cdcooper||';'
+							                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_rvt.cdagenci||';'
+							                     ||rw_craplot_rvt.cdbccxlt||';'
+							                     ||rw_craplot_rvt.nrdolote);
 
-        OPEN cr_craplcm(pr_cdcooper => rw_craplot.cdcooper,
-                        pr_dtmvtolt => rw_craplot.dtmvtolt,
-                        pr_cdagenci => rw_craplot.cdagenci,
-                        pr_cdbccxlt => rw_craplot.cdbccxlt,
-                        pr_nrdolote => rw_craplot.nrdolote,
+        OPEN cr_craplcm(pr_cdcooper => rw_craplot_rvt.cdcooper,
+                        pr_dtmvtolt => rw_craplot_rvt.dtmvtolt,
+                        pr_cdagenci => rw_craplot_rvt.cdagenci,
+                        pr_cdbccxlt => rw_craplot_rvt.cdbccxlt,
+                        pr_nrdolote => rw_craplot_rvt.nrdolote,
                         pr_nrdctabb => rw_crapccs.nrctatrf,
                         pr_nrdocmto => rw_craplcs.nrdocmto);
         FETCH cr_craplcm INTO rw_craplcm;
@@ -8888,18 +8898,18 @@ create or replace package body cecred.PAGA0002 is
 
        BEGIN
             -- Inserir lancamento
-              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt -- dtmvtolt
-                                                ,pr_cdagenci =>rw_craplot.cdagenci -- cdagenci
-                                                ,pr_cdbccxlt =>rw_craplot.cdbccxlt -- cdbccxlt
-                                                ,pr_nrdolote =>rw_craplot.nrdolote -- nrdolote
+              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot_rvt.dtmvtolt -- dtmvtolt
+                                                ,pr_cdagenci =>rw_craplot_rvt.cdagenci -- cdagenci
+                                                ,pr_cdbccxlt =>rw_craplot_rvt.cdbccxlt -- cdbccxlt
+                                                ,pr_nrdolote =>rw_craplot_rvt.nrdolote -- nrdolote
                                                 ,pr_nrdconta =>rw_crapccs.nrctatrf -- nrdconta                                                                                                
                                                 ,pr_nrdctabb =>rw_crapccs.nrdconta -- nrdctabb   
                                                 ,pr_nrdctitg =>gene0002.fn_mask(rw_crapccs.nrctatrf,'99999999') -- nrdctitg
                                                 ,pr_nrdocmto => rw_craplcs.nrdocmto -- nrdocmto                                              
                                                 ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')                  -- cdhistor                                                
                                                 ,pr_vllanmto => rw_craplcs.vllanmto -- vllanmto                                                
-                                                ,pr_nrseqdig => rw_craplot.nrseqdig -- nrseqdig
-                                                ,pr_cdcooper => rw_craplot.cdcooper
+                                                ,pr_nrseqdig => vr_nrseqdig -- nrseqdig
+                                                ,pr_cdcooper => rw_craplot_rvt.cdcooper
 												,pr_cdpesqbb => vr_dadosdeb -- Remetente 
                                                 ,pr_cdoperad => pr_cdoperad          
 												,pr_hrtransa => TO_CHAR(SYSDATE, 'SSSSS')
@@ -8923,18 +8933,11 @@ create or replace package body cecred.PAGA0002 is
           WHEN OTHERS THEN
                 vr_dscritic := 'Não foi possivel atualizar lancamento (craplcm)'
                                ||' nrdconta: '|| rw_crapccs.nrctatrf
-                               ||' nrdolote: '|| rw_craplot.nrdolote|| ' :'||SQLERRM;
+                               ||' nrdolote: '|| rw_craplot_rvt.nrdolote|| ' :'||SQLERRM;
             RAISE vr_exc_erro;
         END;
 
-
-        --Atualizar dados do lote no rowtype
-        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-        rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-        rw_craplot.vlcompdb := rw_craplot.vlcompdb + rw_craplcm.vllanmto;
-        rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
-
-        pr_rw_craplot := rw_craplot;
+        pr_rw_craplot := rw_craplot_rvt;
          
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia

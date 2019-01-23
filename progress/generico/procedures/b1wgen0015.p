@@ -434,6 +434,9 @@
 			  08/09/2018 - Pagina na tela Contas de Outras IFs (Andrey Formigari - Mouts)
 
               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+              
+              16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2999,6 +3002,7 @@ PROCEDURE executa_transferencia:
     DO TRANSACTION ON ERROR UNDO, RETURN "NOK":
     
        /* Leitura do lote */
+       /* Revitalizacao - Remocao de lotes
        DO aux_contador = 1 TO 10:
            
           par_dscritic = "".
@@ -3068,6 +3072,7 @@ PROCEDURE executa_transferencia:
        IF   par_dscritic <> ""   THEN
             UNDO, RETURN "NOK".
        
+       
        /* Atualiza a sequencia do digito do lote e libero o lock do craplot */
        ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
               aux_nrseqdig     = craplot.nrseqdig.
@@ -3075,6 +3080,25 @@ PROCEDURE executa_transferencia:
        EMPTY TEMP-TABLE cratlot.
        FIND CURRENT craplot NO-LOCK NO-ERROR.
        RELEASE craplot.
+       */
+       
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                          ,INPUT "NRSEQDIG"
+                          ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";" + STRING(par_cdbccxlt) + ";" + STRING(par_nrdolote)
+                          ,INPUT "N"
+                          ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                    WHEN pc_sequence_progress.pr_sequence <> ?.
        
        IF   par_cdorigem = 3   OR     /* INTERNET */
             par_cdorigem = 4   THEN   /* TAA */
@@ -3412,6 +3436,7 @@ PROCEDURE executa_transferencia:
 
 
        /* Leitura do lote - novamente */
+       /* Revitalizacao - Remocao de lotes
        DO aux_contador = 1 TO 10:
            
           par_dscritic = "".
@@ -3458,7 +3483,25 @@ PROCEDURE executa_transferencia:
 
        FIND CURRENT craplot NO-LOCK NO-ERROR.
        RELEASE craplot.
+       */
+       
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                          ,INPUT "NRSEQDIG"
+                          ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";" + STRING(par_cdbccxlt) + ";" + STRING(par_nrdolote)
+                          ,INPUT "N"
+                          ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                    WHEN pc_sequence_progress.pr_sequence <> ?.
        
        IF   par_cdorigem = 3   OR    /* INTERNET */
             par_cdorigem = 4   THEN    /* TAA */
@@ -3638,6 +3681,7 @@ PROCEDURE executa_transferencia:
             END.
        
        /* Leitura do lote - novamente */
+       /* Revitalizacao - Remocao de lotes
        DO aux_contador = 1 TO 10:
            
           par_dscritic = "".
@@ -3681,6 +3725,25 @@ PROCEDURE executa_transferencia:
 
        FIND CURRENT craplot NO-LOCK NO-ERROR.
        RELEASE craplot.
+       */
+       
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                          ,INPUT "NRSEQDIG"
+                          ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";" + STRING(par_cdbccxlt) + ";" + STRING(par_nrdolote)
+                          ,INPUT "N"
+                          ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                    WHEN pc_sequence_progress.pr_sequence <> ?.
 
        IF par_cdorigem = 3 THEN /* INTERNET */
             DO:
@@ -4504,6 +4567,8 @@ PROCEDURE estorna-transferencia:
     DEF VAR h-b1crap00   AS HANDLE                                  NO-UNDO.
     DEF VAR h-bo_algoritmo_seguranca AS HANDLE                      NO-UNDO.
     
+    DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
+    
     DEF BUFFER crablcm FOR craplcm.
     
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -4526,6 +4591,7 @@ PROCEDURE estorna-transferencia:
     DO TRANSACTION ON ERROR UNDO, RETURN "NOK":
     
         /** Busca registro do lote das transferencias **/
+        /* Revitalizacao - Remocao de Lotes
         DO aux_contador = 1 TO 10:
 
             ASSIGN par_dscritic = "".
@@ -4554,7 +4620,8 @@ PROCEDURE estorna-transferencia:
                                
             LEAVE.
                               
-        END. /** Fim do DO ... TO **/
+        END.*/
+        /** Fim do DO ... TO **/
                                       
         IF  par_dscritic <> ""  THEN
             UNDO, RETURN "NOK".
@@ -4583,8 +4650,8 @@ PROCEDURE estorna-transferencia:
 
         /** Grava autenticacao do estorno do debito da transferencia **/
         RUN grava-autenticacao IN h-b1crap00 (INPUT crapcop.nmrescop,
-                                              INPUT craplot.cdagenci,
-                                              INPUT craplot.nrdcaixa,
+                                              INPUT par_cdagenci,
+                                              INPUT par_nrdcaixa,
                                               INPUT par_cdoperad,
                                               INPUT craplcm.vllanmto,
                                               INPUT craplcm.nrdocmto, 
@@ -4741,12 +4808,32 @@ PROCEDURE estorna-transferencia:
             UNDO, RETURN "NOK".
             
         /** Atualiza registro do lote **/
+        /* Revitalizacao - Remocao de Lotes
         ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                craplot.qtcompln = craplot.qtcompln + 1
                craplot.nrseqdig = craplot.nrseqdig + 1
                /** CREDITO ESTORNO **/
                craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
+        */
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                            ,INPUT "NRSEQDIG"
+                                            ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";11;" + STRING(11000 + par_nrdcaixa)
+                                            ,INPUT "N"
+                                            ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
         
         /** Cria lancamento para credito do estorno da transferencia **/
         IF  par_cdhisdeb = 537  THEN
@@ -4764,19 +4851,19 @@ PROCEDURE estorna-transferencia:
 
       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
         (INPUT par_dtmvtocd                   /* par_dtmvtolt */
-        ,INPUT craplot.cdagenci               /* par_cdagenci */
-        ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-        ,INPUT craplot.nrdolote               /* par_nrdolote */
+        ,INPUT par_cdagenci                   /* par_cdagenci */
+        ,INPUT 11                             /* par_cdbccxlt */
+        ,INPUT (11000 + par_nrdcaixa)         /* par_nrdolote */
         ,INPUT par_nrdconta                   /* par_nrdconta */
-        ,INPUT craplot.nrseqdig               /* par_nrdocmto */
+        ,INPUT aux_nrseqdig                   /* par_nrdocmto */
         ,INPUT aux_cdhistor                   /* par_cdhistor */
-        ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+        ,INPUT aux_nrseqdig                   /* par_nrseqdig */
         ,INPUT craplcm.vllanmto               /* par_vllanmto */
         ,INPUT par_nrdconta                   /* par_nrdctabb */
         ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrctadst,"99999999") /* par_cdpesqbb */
         ,INPUT 0                              /* par_vldoipmf */
         ,INPUT aux_sequenci                   /* par_nrautdoc */
-        ,INPUT craplot.nrseqdig               /* par_nrsequni */
+        ,INPUT aux_nrseqdig                   /* par_nrsequni */
         ,INPUT 0                              /* par_cdbanchq */
         ,INPUT 0                              /* par_cdcmpchq */
         ,INPUT 0                              /* par_cdagechq */
@@ -4841,8 +4928,8 @@ PROCEDURE estorna-transferencia:
 
         /** Grava autenticacao do estorno do debito da transferencia **/
         RUN grava-autenticacao IN h-b1crap00 (INPUT crapcop.nmrescop,
-                                              INPUT craplot.cdagenci,
-                                              INPUT craplot.nrdcaixa,
+                                              INPUT par_cdagenci,
+                                              INPUT par_nrdcaixa,
                                               INPUT par_cdoperad,
                                               INPUT craplcm.vllanmto,
                                               INPUT craplcm.nrdocmto, 
@@ -4868,15 +4955,32 @@ PROCEDURE estorna-transferencia:
             END.            
 
         /** Atualiza registro do lote **/
+        /* Revitalizacao - Remocao de Lotes
         ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                craplot.qtcompln = craplot.qtcompln + 1
                craplot.nrseqdig = craplot.nrseqdig + 1
                /** DEBITO ESTORNO **/
                craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
                craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
+        */
         
-        /** Cria lancamento para debito do estorno da transferencia **/
-        /* Verificar se pode realizar o debito debitar  */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                            ,INPUT "NRSEQDIG"
+                                            ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtocd,"99/99/9999") + ";" + STRING(par_cdagenci) + ";11;" + STRING(11000 + par_nrdcaixa)
+                                            ,INPUT "N"
+                                            ,"").
+ 
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
         
         IF  par_cdhiscre = 539  THEN
                   ASSIGN aux_cdhistor = 569.
@@ -4890,19 +4994,19 @@ PROCEDURE estorna-transferencia:
 
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
             (INPUT par_dtmvtocd                   /* par_dtmvtolt */
-            ,INPUT craplot.cdagenci               /* par_cdagenci */
-            ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-            ,INPUT craplot.nrdolote               /* par_nrdolote */
+            ,INPUT par_cdagenci                   /* par_cdagenci */
+            ,INPUT 11                             /* par_cdbccxlt */
+            ,INPUT (11000 + par_nrdcaixa)         /* par_nrdolote */
             ,INPUT par_nrctadst                   /* par_nrdconta */
-            ,INPUT craplot.nrseqdig               /* par_nrdocmto */
+            ,INPUT aux_nrseqdig                   /* par_nrdocmto */
             ,INPUT aux_cdhistor                   /* par_cdhistor */
-            ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+            ,INPUT aux_nrseqdig                   /* par_nrseqdig */
             ,INPUT craplcm.vllanmto               /* par_vllanmto */
             ,INPUT par_nrctadst                   /* par_nrdctabb */
             ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrdconta,"99999999")/* par_cdpesqbb */
             ,INPUT 0                              /* par_vldoipmf */
-            ,INPUT aux_sequenci                 /* par_nrautdoc */
-            ,INPUT craplot.nrseqdig               /* par_nrsequni */
+            ,INPUT aux_sequenci                   /* par_nrautdoc */
+            ,INPUT aux_nrseqdig                   /* par_nrsequni */
             ,INPUT 0                              /* par_cdbanchq */
             ,INPUT 0                              /* par_cdcmpchq */
             ,INPUT 0                              /* par_cdagechq */

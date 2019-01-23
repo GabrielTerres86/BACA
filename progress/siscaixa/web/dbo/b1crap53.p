@@ -99,7 +99,10 @@
                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
 
                10/08/2018 - Adicionado funcao para verificar necessidade de  senha. 
-                            PRJ 420 (Mateus Z - Mouts)       
+                            PRJ 420 (Mateus Z - Mouts)      
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
                              
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -2241,6 +2244,7 @@ PROCEDURE atualiza-pagto-cheque:
 
     DEF VAR aux_cdbccxlt AS INTEGER                                     NO-UNDO.
     DEF VAR aux_lsdigctr AS CHAR                                        NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                                        NO-UNDO.
     
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
     
@@ -2407,7 +2411,7 @@ PROCEDURE atualiza-pagto-cheque:
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
-                       EXCLUSIVE-LOCK NO-ERROR.
+                       NO-LOCK NO-ERROR.
                        
     IF   NOT AVAIL craplot   THEN 
          DO:
@@ -2561,13 +2565,31 @@ PROCEDURE atualiza-pagto-cheque:
            crapfdc.cdoperad = p-cod-operador
            crapfdc.vlcheque = p-valor.
     
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+    RUN STORED-PROCEDURE pc_sequence_progress
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                      ,INPUT "NRSEQDIG"
+                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                      ,INPUT "N"
+                      ,"").
+
+    CLOSE STORED-PROC pc_sequence_progress
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                WHEN pc_sequence_progress.pr_sequence <> ?.
+    
     /*--- Verifica se Lancamento ja Existe ---*/
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper        AND
                              craplcm.dtmvtolt = crapdat.dtmvtocd        AND
                              craplcm.cdagenci = p-cod-agencia           AND
                              craplcm.cdbccxlt = 11                      AND
                              craplcm.nrdolote = i-nro-lote              AND
-                             craplcm.nrseqdig = craplot.nrseqdig + 1 
+                             craplcm.nrseqdig = aux_nrseqdig
                              USE-INDEX craplcm3 NO-LOCK NO-ERROR.
                              
     IF   AVAIL craplcm   THEN 
@@ -2624,7 +2646,7 @@ PROCEDURE atualiza-pagto-cheque:
           ,INPUT aux_nrdconta                   /* par_nrdconta */
           ,INPUT i_cheque                       /* par_nrdocmto */
           ,INPUT i-cdhistor                     /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT p-valor                        /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP53," + p-cod-liberador    /* par_cdpesqbb */
@@ -2684,14 +2706,7 @@ PROCEDURE atualiza-pagto-cheque:
     IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
 
-    ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
-           craplot.qtcompln  = craplot.qtcompln + 1
-           craplot.qtinfoln  = craplot.qtinfoln + 1
-           craplot.vlcompdb  = craplot.vlcompdb + p-valor
-           craplot.vlinfodb  = craplot.vlinfodb + p-valor. 
- 
     ASSIGN p-histor = i-cdhistor.
-    
     
     IF   p-aux-indevchq = 0  THEN
          DO:
@@ -2822,6 +2837,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
 
     DEF VAR aux_cdbccxlt AS INTEGER                                     NO-UNDO.
     DEF VAR aux_lsdigctr AS CHAR                                        NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                                        NO-UNDO.
 
     DEF BUFFER crabcop FOR crapcop.
     
@@ -3135,7 +3151,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
-                       EXCLUSIVE-LOCK NO-ERROR.
+                       NO-LOCK NO-ERROR.
                        
     IF   NOT AVAIL craplot   THEN 
          DO:
@@ -3152,13 +3168,31 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                     craplot.cdcooper = crapcop.cdcooper.
          END.
     
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+    RUN STORED-PROCEDURE pc_sequence_progress
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                      ,INPUT "NRSEQDIG"
+                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                      ,INPUT "N"
+                      ,"").
+
+    CLOSE STORED-PROC pc_sequence_progress
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                WHEN pc_sequence_progress.pr_sequence <> ?.
+    
     /*--- Verifica se Lancamento ja Existe na cooperativa atual ---*/
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper        AND
                              craplcm.dtmvtolt = crapdat.dtmvtocd        AND
                              craplcm.cdagenci = p-cod-agencia           AND
                              craplcm.cdbccxlt = 11                      AND
                              craplcm.nrdolote = i-nro-lote              AND
-                             craplcm.nrseqdig = craplot.nrseqdig + 1 
+                             craplcm.nrseqdig = aux_nrseqdig
                              USE-INDEX craplcm3 NO-LOCK NO-ERROR.
                              
     IF   AVAIL craplcm   THEN 
@@ -3213,10 +3247,10 @@ PROCEDURE atualiza-pagto-cheque-migrado:
           ,INPUT p-cod-agencia                  /* par_cdagenci */
           ,INPUT 11                             /* par_cdbccxlt */
           ,INPUT i-nro-lote                     /* par_nrdolote */
-          ,INPUT p-nro-conta-nova                   /* par_nrdconta */
+          ,INPUT p-nro-conta-nova               /* par_nrdconta */
           ,INPUT i_cheque                       /* par_nrdocmto */
           ,INPUT i-cdhistor                     /* par_cdhistor */
-          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT aux_nrseqdig                   /* par_nrseqdig */
           ,INPUT p-valor                        /* par_vllanmto */
           ,INPUT p-nro-conta                    /* par_nrdctabb */
           ,INPUT "CRAP53," + p-cod-liberador    /* par_cdpesqbb */
@@ -3276,12 +3310,6 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
 
-    ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
-           craplot.qtcompln  = craplot.qtcompln + 1
-           craplot.qtinfoln  = craplot.qtinfoln + 1
-           craplot.vlcompdb  = craplot.vlcompdb + p-valor
-           craplot.vlinfodb  = craplot.vlinfodb + p-valor. 
- 
     ASSIGN p-histor = i-cdhistor.
     
     

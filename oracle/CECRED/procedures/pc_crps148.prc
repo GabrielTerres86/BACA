@@ -51,7 +51,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                             
                02/04/2018 - Ajuste para não gravar lote quando não existirem lançamentos
                             de poupança programada - Projeto Ligeirinho -
-                            Jonatas Jaqmam (AMcom)                            
+                            Jonatas Jaqmam (AMcom)        
+
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)							
 ............................................................................. */
 
   -- Agências por cooperativa, com poupança programada
@@ -110,31 +113,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
        and a.dsrelatorio = 'CRAPTRD'
        and a.dtmvtolt    = pr_dtmvtolt; 
               
-  --Cursor para buscar valores e atualizar a capa do lote na tabela craplot            
-  cursor cr_tbgen_relwrk_lot(pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type) is
-    select nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))),0) vlinfocr,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))),0) vlcompcr,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))),0) vlinfodb,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))),0) vlcompdb,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))),0) qtinfoln,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))),0) qtcompln,
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))),0) +
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))),0) +
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))),0) +
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))),0) +
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))),0) +
-           nvl(sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))),0) vltotal
-      from tbgen_batch_relatorio_wrk a
-     where a.cdcooper    = pr_cdcooper
-       and a.cdprograma  = 'CRPS148'
-       and a.dsrelatorio = 'CRAPLOT'
-       and a.dtmvtolt    = pr_dtmvtolt;  
-       
   --PL TABLE para armazenar indice para realizar update forall
   TYPE typ_tbgen_relwrk IS TABLE OF cr_tbgen_relwrk_trd%ROWTYPE INDEX BY PLS_INTEGER;
   vr_typ_tbgen_relwrk   typ_tbgen_relwrk; 
   
-  vr_tbgen_relwrk_lot cr_tbgen_relwrk_lot%rowtype;
   -- Registro para armazenar as datas
   rw_crapdat     btch0001.cr_crapdat%rowtype;
   -- Exception para tratamento de erros tratáveis sem abortar a execução
@@ -471,109 +453,6 @@ begin
                     PR_IDPRGLOG           => vr_idlog_ini_ger); 
 
 
-    -- Grava LOG de ocorrência inicial de atualização da tabela craplot
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra, --||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Inicio - Atualiza tabela craplot.',
-                    PR_IDPRGLOG           => vr_idlog_ini_ger); 
-
-    --Cursor com registros a serem atualizados na tabela craplot    
-    open cr_tbgen_relwrk_lot(rw_crapdat.dtmvtolt);
-    --Realiza fetch no cursor
-    fetch cr_tbgen_relwrk_lot into vr_tbgen_relwrk_lot;
-    --Verifica se existem registros
-    if cr_tbgen_relwrk_lot%found then
-      if vr_tbgen_relwrk_lot.vltotal <> 0 then
-      begin
-        update craplot
-           set craplot.vlinfocr = vr_tbgen_relwrk_lot.vlinfocr,
-               craplot.vlcompcr = vr_tbgen_relwrk_lot.vlcompcr,
-               craplot.qtinfoln = vr_tbgen_relwrk_lot.qtinfoln,
-               craplot.qtcompln = vr_tbgen_relwrk_lot.qtcompln,
-               craplot.vlinfodb = vr_tbgen_relwrk_lot.vlinfodb,
-               craplot.vlcompdb = vr_tbgen_relwrk_lot.vlcompdb,
-               craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
-         where craplot.dtmvtolt = rw_crapdat.dtmvtopr
-           and craplot.cdagenci = 1
-           and craplot.cdbccxlt = 100
-           and craplot.nrdolote = 8384
-           and craplot.tplotmov = 14
-           and craplot.cdcooper = pr_cdcooper;
-      exception
-        when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao atualizar tabela craplot: '||sqlerrm;
-          raise vr_exc_saida;            
-      end;
-        
-        --Insere lote quando o mesmo não existe.
-        if sql%rowcount = 0 then
-          begin
-            insert into craplot (dtmvtolt,
-                                 cdagenci,
-                                 cdbccxlt,
-                                 nrdolote,
-                                 tplotmov,
-                                 nrseqdig,
-                                 cdcooper,
-                                 vlinfocr,
-                                 vlcompcr,
-                                 qtinfoln,
-                                 qtcompln,
-                                 vlinfodb,
-                                 vlcompdb)
-            values (rw_crapdat.dtmvtopr,
-                    1,
-                    100,
-                    8384,
-                    14,
-                    CRAPLOT_8384_SEQ.NEXTVAL,
-                    pr_cdcooper,
-                    vr_tbgen_relwrk_lot.vlinfocr,
-                    vr_tbgen_relwrk_lot.vlcompcr,
-                    vr_tbgen_relwrk_lot.qtinfoln,
-                    vr_tbgen_relwrk_lot.qtcompln,
-                    vr_tbgen_relwrk_lot.vlinfodb,
-                    vr_tbgen_relwrk_lot.vlcompdb);
-          exception
-            when others then
-              vr_dscritic := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
-              vr_cdcritic := 0;
-              raise vr_exc_erro;
-          end;
-        end if;
-      end if;      
-      
-  end if;    
-    --Fecha cursor
-    close cr_tbgen_relwrk_lot;
-    
-    begin                        
-      --Limpa os registros da tabela de trabalho 
-      delete from tbgen_batch_relatorio_wrk
-        where cdcooper   = pr_cdcooper
-          and cdprograma like 'CRPS148%'
-          and dtmvtolt   = rw_crapdat.dtmvtolt;    
-    exception
-      when others then
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao deletar tabela tbgen_batch_relatorio_wrk: '||sqlerrm;
-        raise vr_exc_saida;            
-    end;    
-  
-    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra, --||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Fim - Atualiza tabela craplot.',
-                    PR_IDPRGLOG           => vr_idlog_ini_ger); 
-
- 
     -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                               ,pr_cdprogra => vr_cdprogra

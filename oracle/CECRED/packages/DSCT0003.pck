@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --
   --  Programa:  DSCT0003                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : André Ávila - GFT
-  --  Data    : Abril/2018                     Ultima Atualizacao: 18/09/2018
+  --  Data    : Abril/2018                     Ultima Atualizacao: 14/01/2019
   --
   --  Dados referentes ao programa:
   --
@@ -28,6 +28,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --              18/09/2018 - pc_pagar_titulo: Adicionar nova origem 4 - Acordos. Alterações na procedure para suprir esta origem. (Andrew Albuquerque (GFT))
   --
   --              23/11/2018 - Criada procedure para verificar a situacao do pagador no biro
+  --
+  --              14/01/2019 - Incluso nova procedure pc_verifica_impressao (Daniel)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
@@ -649,6 +651,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                          ,pr_nmdcampo     OUT VARCHAR2             --> Nome do campo com erro
                                          ,pr_des_erro     OUT VARCHAR2
                                         );
+PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
+                              pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              );
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -1421,6 +1433,8 @@ PROCEDURE pc_atualizar_bordero_dsct_tit(pr_cdcooper  IN craptdb.cdcooper%TYPE --
   -- Variável de críticas
   vr_dscritic VARCHAR2(10000);
 
+  vr_contas crapprm.dsvlrprm%TYPE;
+
   -- Tratamento de erros
   vr_exc_erro EXCEPTION;
   
@@ -1449,6 +1463,19 @@ BEGIN
   vr_vltxmult_prm := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_cdacesso => 'PERCENTUAL_MULTA_DSCT');
+
+  
+  IF gene0001.fn_param_sistema('CRED',pr_cdcooper,'ZERAR_MULTA_DSCT') IS NOT NULL THEN
+   
+    vr_contas := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ZERAR_MULTA_DSCT');
+  
+    -- Condicao para verificar se deve zerar multa
+    IF ((INSTR(',' || vr_contas || ',',',' || pr_nrdconta || ',') > 0)) THEN
+      vr_vltxmult_prm := 0;
+    END IF;
+    
+  END IF;  
+
 
   -- Altera o status do borderô para 'LIBERADO'
   pc_altera_status_bordero(pr_cdcooper => pr_cdcooper
@@ -9373,5 +9400,137 @@ EXCEPTION
       CLOSE cr_craptdb;
 
   END pc_buscar_borderos_liberados;
+PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
+                              pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              ) IS
+    /* .............................................................................
+      Programa: pc_verifica_impressao
+      Sistema : AyllosWeb
+      Sigla   : CRED
+      Autor   : Daniel Zimmermann
+      Data    : 07/12/2018                        Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Retorna se pode ser efetuada a impressão da proposta de limite de desconto
+      Alterações:
+       
+
+    ............................................................................. */
+    -- Tratamento de erros
+    vr_exc_erro exception;
+    vr_cdcritic number;
+    vr_dscritic VARCHAR2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+    
+    
+    CURSOR cr_crapnrc(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE) IS
+    SELECT nrc.tpctrrat
+          ,nrc.nrctrrat
+          ,nrc.dtmvtolt
+          ,nrc.insitrat
+          ,nrc.progress_recid
+      FROM crapnrc nrc
+     WHERE nrc.cdcooper = pr_cdcooper
+       AND nrc.nrdconta = pr_nrdconta
+       AND nrc.nrctrrat = pr_nrctrrat
+       AND nrc.tpctrrat = 3;
+    rw_crapnrc cr_crapnrc%ROWTYPE;
+    
+    BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+      -- Extrair dados do xml de entrada
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
+                                ,pr_action => vr_nmeacao);
+                                
+                                
+                                OPEN cr_crapnrc(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctrrat => pr_nrctrlim);  
+                      FETCH cr_crapnrc INTO rw_crapnrc;     
+                      
+            
+          
+        
+         IF cr_crapnrc%NOTFOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_crapnrc; 
+          vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crapnrc;   
+        END IF;
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+
+      -- Passou nas validações do bordero, do contrato e listou titulos. Começa a montar o xml
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados>');
+
+      pc_escreve_xml('<cdcooper>'  || vr_cdcooper  || '</cdcooper>');
+
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      -- liberando a memória alocada pro clob
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+    exception
+      when vr_exc_erro then
+           --  se foi retornado apenas código
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               -- buscar a descriçao
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           -- variavel de erro recebe erro ocorrido
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      when others then
+           -- montar descriçao de erro não tratado
+           pr_dscritic := 'erro não tratado na DSCT0003.pc_verifica_impressao ' ||sqlerrm;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_verifica_impressao;
 END DSCT0003;
 /

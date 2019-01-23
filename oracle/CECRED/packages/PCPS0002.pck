@@ -577,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       END IF;
       
     END LOOP;
-    
+        
     -- Retorna o XML do arquivo
     pr_dsxmlarq := vr_dsxmlarq;
     
@@ -1505,7 +1505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     
     -- Indicar que não foram inclusos dados
     pr_inddados := FALSE;
-
+    
     -- Indica que todos os registros foram processados
     pr_idfimreg := TRUE;
     
@@ -1818,13 +1818,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
     BEGIN
       -- Inserir os casos de erro registrados
-      /*INSERT INTO tbcc_portabilidade_rcb_erros(nrnu_portabilidade
+      INSERT INTO tbcc_portabilidade_rcb_erros(nrnu_portabilidade
                                               ,dsdominio_motivo
                                               ,cdmotivo)
                                        VALUES (pr_nrnuport      -- nrnu_portabilidade
                                               ,vr_dsdominioerro -- dsdominio_motivo
-                                              ,pr_cddoerro); */   -- cdmotivo
-                                              NULL;
+                                              ,pr_cddoerro);    -- cdmotivo
+
     EXCEPTION
       WHEN OTHERS THEN
         -- Não deve dar erro para na inclusão
@@ -2360,7 +2360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     
     -- Indicar que não foram inclusos dados
     pr_inddados := FALSE;
-  
+    
     -- Indica que todos os registros foram processados
     pr_idfimreg := TRUE;
   
@@ -3074,7 +3074,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_nmarqERR    VARCHAR2(50);
     vr_nmarqRET    VARCHAR2(50);
 
-    vr_dsarqBIN    BLOB; -- Arquivo criptografado enviado pela CIP
     vr_dsarqLOB    CLOB; -- Dados descriptografados do arquivo
     
     -- Variável de críticas
@@ -3268,14 +3267,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             NULL;
         END;
       
-        -- Carregar o BLOB do arquivo
-        vr_dsarqBIN := GENE0002.fn_arq_para_blob(pr_caminho => pr_dsdirarq||'/recebe' -- Ler pasta RECEBE
-                                                ,pr_arquivo => vr_nmarqERR);
-        
-        
         -- Executar a descriptografia do arquivo
-        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_dsconteu => vr_dsarqBIN
-                                    ,pr_dsarqcmp => vr_dsarqLOB
+        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqERR
+                                    ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqERR||'.xml'
                                     ,pr_dscritic => vr_dscritic);
         
         -- Em caso de erro
@@ -3283,16 +3277,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           RAISE vr_exc_erro;
         END IF;
         
-        -- Registrar o arquivo XML descriptografado para consulta caso necessário
-        GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsarqLOB
-                                     ,pr_caminho  => pr_dsdirarq||'/recebidos'
-                                     ,pr_arquivo  => vr_nmarqERR||'.xml'  -- XML extraído
-                                     ,pr_des_erro => vr_dscritic);
-        
-        -- Em caso de erro
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
+        -- Carregar o conteúdo extraído do arquivo criptografado
+        vr_dsarqLOB := GENE0002.fn_arq_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
+                                                ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -3444,26 +3431,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           
         END IF; -- Arquivo RET
         
-        -- Carregar o BLOB do arquivo
-        vr_dsarqBIN := GENE0002.fn_arq_para_blob(pr_caminho => pr_dsdirarq||'/recebe' -- Ler pasta RECEBE
-                                                ,pr_arquivo => vr_nmarqPRO);
-        
-        
         -- Executar a descriptografia do arquivo
-        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_dsconteu => vr_dsarqBIN
-                                    ,pr_dsarqcmp => vr_dsarqLOB
+        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqPRO
+                                    ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqPRO||'.xml'
                                     ,pr_dscritic => vr_dscritic);
-        
-        -- Em caso de erro
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-        
-        -- Registrar o arquivo XML descriptografado para consulta caso necessário
-        GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsarqLOB
-                                     ,pr_caminho  => pr_dsdirarq||'/recebidos'
-                                     ,pr_arquivo  => vr_nmarqPRO||'.xml'  -- XML extraído
-                                     ,pr_des_erro => vr_dscritic);
         
         -- Em caso de erro
         IF vr_dscritic IS NOT NULL THEN
@@ -3537,13 +3508,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             NULL;
         END;
       
-        -- Carregar o BLOB do arquivo
-        vr_dsarqBIN := GENE0002.fn_arq_para_blob(pr_caminho => pr_dsdirarq||'/recebe' -- Ler pasta RECEBE
-                                                ,pr_arquivo => vr_nmarqRET);
-        
         -- Executar a descriptografia do arquivo
-        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_dsconteu => vr_dsarqBIN
-                                    ,pr_dsarqcmp => vr_dsarqLOB
+        PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqRET
+                                    ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqRET||'.xml'
                                     ,pr_dscritic => vr_dscritic);
         
         -- Em caso de erro
@@ -3551,16 +3518,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           RAISE vr_exc_erro;
         END IF;
         
-        -- Registrar o arquivo XML descriptografado para consulta caso necessário
-        GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsarqLOB
-                                     ,pr_caminho  => pr_dsdirarq||'/recebidos'
-                                     ,pr_arquivo  => vr_nmarqRET||'.xml'  -- XML extraído
-                                     ,pr_des_erro => vr_dscritic);
-        
-        -- Em caso de erro
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
+        -- Carregar o conteúdo extraído do arquivo criptografado
+        vr_dsarqLOB := GENE0002.fn_arq_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
+                                                ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -3721,7 +3681,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     rg_crapscb    cr_crapscb%ROWTYPE;
       
     -- VARIÁVEIS
-    vr_dsarqBIN      BLOB; -- Arquivo devidamente criptografado para ser enviado a CIP
     vr_dsarqLOB      CLOB; -- Arquivo com os dados gerados para ser criptografado e enviado a CIP
     
     vr_dsxmlarq      XMLTYPE;
@@ -3868,8 +3827,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     END IF;
     
     /********** CRIPTOGRAFAR O ARQUIVO PARA ENVIAR A CIP **************/
-    PCPS0003.PC_ESCRITA_ARQ_PCPS(pr_dsconteu => vr_dsarqLOB
-                                ,pr_dsarqcmp => vr_dsarqBIN
+    PCPS0003.PC_ESCRITA_ARQ_PCPS(pr_nmarqori => rg_crapscb.dsdirarq||'/enviados/'||vr_nmarquiv||'.xml'
+                                ,pr_nmarqout => rg_crapscb.dsdirarq||'/envia/'||vr_nmarquiv
                                 ,pr_dscritic => vr_dscritic);
                                 
     -- Se houver retorno de erro
@@ -3877,16 +3836,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       RAISE vr_exc_erro;
     END IF;
     
-    -- Gerar o arquivo CRIPTOGRAFADO no diretório de envio a CIP
-    GENE0002.pc_blob_para_arquivo(pr_blob     => vr_dsarqBIN
-                                 ,pr_caminho  => rg_crapscb.dsdirarq||'/envia'
-                                 ,pr_arquivo  => vr_nmarquiv
-                                 ,pr_des_erro => vr_dscritic);
-    
-    -- Se houver retorno de erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
        
     -- LOG DE EXECUCAO
     BEGIN
@@ -4113,7 +4062,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_typsaida      VARCHAR2(10);
     vr_dsmsglog      VARCHAR2(1000);
     vr_dspesqfl      VARCHAR2(30);
-    vr_dsbinarq      BLOB;
     vr_dsxmlarq      CLOB;
         
     vr_exc_erro      EXCEPTION;
@@ -4202,13 +4150,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           NULL;
       END;
       
-      -- Carregar o conteúdo do arquivo para um CLOB
-      vr_dsbinarq := GENE0002.fn_arq_para_blob(pr_caminho => rg_crapscb.dsdirarq||'/recebe' -- Ler pasta RECEBE
-                                              ,pr_arquivo => vr_tbarquiv(vr_index));
-      
       -- Realizar a descompactação do arquivo
-      PCPS0003.PC_LEITURA_ARQ_PCPS(pr_dsconteu => vr_dsbinarq
-                                  ,pr_dsarqcmp => vr_dsxmlarq
+      PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => rg_crapscb.dsdirarq||'/recebe/'||vr_tbarquiv(vr_index)
+                                  ,pr_nmarqout => rg_crapscb.dsdirarq||'/recebidos/'||vr_tbarquiv(vr_index)||'.xml'
                                   ,pr_dscritic => vr_dscritic);
       
       -- Se houver retorno de erro
@@ -4216,16 +4160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         RAISE vr_exc_erro;
       END IF;
       
-      -- Registrar o arquivo XML descriptografado para consulta caso necessário
-      GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsxmlarq
-                                   ,pr_caminho  => rg_crapscb.dsdirarq||'/recebidos'
-                                   ,pr_arquivo  => vr_tbarquiv(vr_index)||'.xml'  -- XML extraído
-                                   ,pr_des_erro => vr_dscritic);
-        
-      -- Em caso de erro
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
+      -- Carregar o arquivo XML descriptografado 
+      vr_dsxmlarq := GENE0002.fn_arq_para_clob(pr_caminho => rg_crapscb.dsdirarq||'/recebidos'
+                                              ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
       
       -- Verifica qual o conteúdo de arquivo deve ser gerado
       CASE rg_crapscb.dsdsigla
@@ -4584,6 +4521,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
+            
+            -- Verificar se percorreu todas as agencias da coop
+            EXIT WHEN vr_cdagatual = vr_tbddados.LAST();
             
             -- Próximo registro
             CONTINUE;

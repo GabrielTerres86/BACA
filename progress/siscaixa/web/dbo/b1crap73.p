@@ -66,6 +66,9 @@
                15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
                             de dentro da b1wgen0200 
                             (Renato AMcom)
+                            
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
               
 ............................................................................ **/
 /*----------------------------------------------------------------------*/
@@ -2110,6 +2113,8 @@ PROCEDURE valida-estorno-pagto-cheque:
          END.
          ELSE
          DO:
+             .
+             /* Revitalizacao - Remocao de lotes
              ASSIGN i-cod-erro  = 60
                     c-desc-erro = " ".           
              RUN cria-erro (INPUT p-cooper,
@@ -2119,6 +2124,7 @@ PROCEDURE valida-estorno-pagto-cheque:
                             INPUT c-desc-erro,
                             INPUT YES).
              RETURN "NOK".
+             */
          END.
      END.
 
@@ -2375,7 +2381,8 @@ PROCEDURE estorna-pagto-cheque:
                             craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia     AND
                             craplot.cdbccxlt = 11                AND /* Fixo */
-                            craplot.nrdolote = i-nro-lote 
+                            craplot.nrdolote = i-nro-lote        AND
+                            1 = 2 /* Revitalizacao - Remocao de lotes - Nao deve retornar o lote nessa busca */
                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
          IF   NOT AVAIL craplot   THEN 
@@ -2541,6 +2548,7 @@ PROCEDURE estorna-pagto-cheque:
                       END.
                       ELSE
                       DO:
+                          /* Revitalizacao - Remocao de lotes
                           ASSIGN i-cod-erro  = 60
                                  c-desc-erro = " ".           
                           RUN cria-erro (INPUT p-cooper,
@@ -2550,6 +2558,7 @@ PROCEDURE estorna-pagto-cheque:
                                          INPUT c-desc-erro,
                                          INPUT YES).
                           RETURN "NOK".
+                          */
                       END.
                   END.
               END.
@@ -3217,18 +3226,21 @@ PROCEDURE estorna-pagto-cheque:
     IF  VALID-HANDLE(h-b1wgen0200) THEN
       DELETE PROCEDURE h-b1wgen0200.
   
+  IF AVAIL craplot THEN
+  DO:
     ASSIGN craplot.qtcompln  = craplot.qtcompln  - 1
            craplot.qtinfoln  = craplot.qtinfoln  - 1
            craplot.vlcompdb  = craplot.vlcompdb  - p-valor
            craplot.vlinfodb  = craplot.vlinfodb  - p-valor.
         
-   IF   craplot.vlcompdb = 0 AND
-        craplot.vlinfodb = 0 AND
-        craplot.vlcompcr = 0 AND
-        craplot.vlinfocr = 0 THEN
-        DELETE craplot.
-   ELSE
-        RELEASE craplot.
+     IF   craplot.vlcompdb = 0 AND
+          craplot.vlinfodb = 0 AND
+          craplot.vlcompcr = 0 AND
+          craplot.vlinfocr = 0 THEN
+          DELETE craplot.
+     ELSE
+          RELEASE craplot.
+   END.
 
     RELEASE crapfdc.    
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 26/05/2018
+   Data    : Marco/2010                        Ultima atualizacao: 29/11/2018
 
    Dados referentes ao programa:
 
@@ -51,6 +51,13 @@
 							é diferente que a data do movimento anterior, se for, gerar a critica: 
 							"Data invalida no arquivo" e enviar um e-mail para a COMPE. Chamado PRB0040283 (Douglas - Mouts)
 
+               28/11/2018 - SCTASK0029243 - Inclusão da data de regularizaçao e limpeza do relatório.
+                            INC0027500 - Inclusao da cdobserv no FIND da crapneg para retornar
+                              linha exata em casos de lançamento manual. (Jefferson - Mouts)
+                            
+               
+              
+
 ..............................................................................*/
 
 { includes/var_batch.i }
@@ -74,6 +81,7 @@ DEF TEMP-TABLE cratrej                                                 NO-UNDO
     FIELD dsmotivo AS CHAR
     FIELD nrcpfcgc AS DECI
     FIELD dtocorre AS DATE
+    FIELD dtfimest AS DATE
     FIELD vlcheque AS DECI
     FIELD nmextttl AS CHAR
     FIELD cdderros AS CHAR.
@@ -117,6 +125,7 @@ DEF VAR aux_flgrejei AS LOGI                                           NO-UNDO.
 DEF VAR aux_dscooper AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_dtiniest LIKE crapneg.dtiniest                             NO-UNDO.
+DEF VAR aux_dtfimest LIKE crapneg.dtfimest                             NO-UNDO.
 
 DEF VAR rel_nmempres AS CHAR     FORMAT "x(15)"                        NO-UNDO.
 DEF VAR rel_nmrelato AS CHAR     FORMAT "x(40)" EXTENT 5               NO-UNDO.
@@ -135,7 +144,8 @@ FORM
     cratrej.nrcheque  AT 51  FORMAT "999999"          NO-LABEL
     cratrej.vlcheque  AT 58  FORMAT "zzz,zz9.99"      NO-LABEL
     cratrej.dtocorre  AT 69  FORMAT "99/99/9999"      NO-LABEL
-    aux_dsdoerro      AT 80  FORMAT "x(50)"           NO-LABEL
+    cratrej.dtfimest  AT 80  FORMAT "99/99/9999"      NO-LABEL
+    aux_dsdoerro      AT 91  FORMAT "x(41)"           NO-LABEL
     WITH NO-BOX NO-LABELS DOWN WIDTH 132 FRAME f_rejeitados.
 
 FORM
@@ -144,8 +154,9 @@ FORM
     "SEQ.TTL"                  AT 43
     "CHEQUE"                   AT 51
     "VALOR"                    AT 63
-    "DATA"                     AT 69
-    "DESCRICAO DO(S) ERRO(S)"  AT 80
+    "DATA DEV."                AT 69
+    "DATA REG."                AT 80
+    "DESCRICAO DO(S) ERRO(S)"  AT 91
     WITH NO-BOX NO-LABELS WIDTH 132 FRAME f_cab_rejeitados.
 
 FORM 
@@ -540,6 +551,7 @@ PROCEDURE proc_processa_arquivo:
                              crapneg.cdbanchq = crapcop.cdbcoctl AND
                              crapneg.nrdconta = aux_nrdconta     AND
                              crapneg.dtiniest = aux_dtiniest     AND
+                             crapneg.cdobserv = aux_cdmotivo     AND
                              INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))
                                               = aux_nrcheque 
                              USE-INDEX crapneg1 EXCLUSIVE-LOCK NO-ERROR.
@@ -716,12 +728,19 @@ PROCEDURE proc_processa_arquivo:
                              crapneg.nrdconta = aux_nrdconta     AND 
                              crapneg.flgctitg = 1                AND 
                              crapneg.dtiniest = aux_dtiniest     AND
+                             crapneg.cdobserv = aux_cdmotivo     AND
                              INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))
                                               = aux_nrcheque 
                              USE-INDEX crapneg1 EXCLUSIVE-LOCK NO-ERROR.
                                           
                         IF  AVAILABLE crapneg  THEN
+                            DO:
+                                ASSIGN aux_dtfimest = crapneg.dtfimest.
+                                IF crapneg.dtiniest >= (glb_dtmvtolt - 60) THEN
                             ASSIGN crapneg.flgctitg = 4.
+                                ELSE
+                                    ASSIGN crapneg.flgctitg = 2.
+                            END.
                             
                         RUN cria_rejeitado.
                         
@@ -764,6 +783,7 @@ PROCEDURE cria_rejeitado:
                                   ""
            cratrej.nrcpfcgc = aux_nrcpfcgc
            cratrej.dtocorre = aux_dtiniest
+           cratrej.dtfimest = aux_dtfimest
            cratrej.vlcheque = aux_vlcheque
            cratrej.nmextttl = aux_nmextttl
            cratrej.cdderros = aux_cdderros.
@@ -828,6 +848,7 @@ PROCEDURE rel_rejeitados:
                        cratrej.nrcheque
                        cratrej.vlcheque
                        cratrej.dtocorre
+                       cratrej.dtfimest
                        aux_dsdoerro
                        WITH FRAME f_rejeitados.
                       
@@ -838,6 +859,7 @@ PROCEDURE rel_rejeitados:
                        cratrej.nrcheque
                        cratrej.vlcheque
                        cratrej.dtocorre
+                       cratrej.dtfimest
                        aux_dsdoerro
                        WITH FRAME f_rejeitados.               
                        

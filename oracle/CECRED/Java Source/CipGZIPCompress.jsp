@@ -6,14 +6,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
 import javax.xml.bind.DatatypeConverter;
 
 /**
-* Classe dedicada a compressão de conteúdos em formato GZIP
-* 
-* @author Renato Darosci - Supero
-*/
+ * Classe dedicada a compressão de conteúdos em formato GZIP
+ * 
+ * @author Renato Darosci - Supero
+ */
 public class CipGZIPCompress {
 
   // Realizar a compressão da string retornando o array de bytes
@@ -21,7 +20,6 @@ public class CipGZIPCompress {
     if ((str == null) || (str.length() == 0)) {
       return null;
     }
-    System.out.println(GZIPInputStream.GZIP_MAGIC);
     ByteArrayOutputStream obj = new ByteArrayOutputStream();
     GZIPOutputStream gzip = new GZIPOutputStream(obj);
     gzip.write(str.getBytes("UTF-16"));
@@ -30,11 +28,12 @@ public class CipGZIPCompress {
     return obj.toByteArray();
   }
 
-    // Chamar a rotina de compressão, convertendo o retorno para o mesmo que seja String
+  // Chamar a rotina de compressão, convertendo o retorno para o mesmo que seja
+  // String
   public static String getCompress(final String str) {
 
     try {
-      return DatatypeConverter.printHexBinary( compress(str) );
+      return DatatypeConverter.printHexBinary(compress(str));
     } catch (IOException e) {
       e.printStackTrace();
       return "Erro ao comprimir o arquivo.";
@@ -46,7 +45,7 @@ public class CipGZIPCompress {
   public static String getDecompress(final String str) {
 
     try {
-      return decompress( DatatypeConverter.parseHexBinary(str) ) ;
+      return decompress(DatatypeConverter.parseHexBinary(str));
     } catch (IOException e) {
       e.printStackTrace();
       return "Erro ao descomprimir o arquivo.";
@@ -61,27 +60,26 @@ public class CipGZIPCompress {
       return "";
     }
     if (isCompressed(compressed)) {
-      
-      
+
       final GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
       final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, "UTF-16"));
 
       String line;
       while ((line = bufferedReader.readLine()) != null) {
-        outStr.append(line);
+        outStr.append(line + "\n");
       }
     } else {
       outStr.append(compressed);
     }
-    
+
     return outStr.toString();
   }
 
   // Verifica se o conteúdo está comprimido no formato GZIP
   public static boolean isCompressed(final byte[] compressed) {
-    return (compressed[0] == (byte) (GZIPInputStream.GZIP_MAGIC)) && (compressed[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8));
+    return (compressed[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
+				&& (compressed[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8));
 	}
-
 
 }
 /

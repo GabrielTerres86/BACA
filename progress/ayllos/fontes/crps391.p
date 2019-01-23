@@ -151,6 +151,9 @@
                            do campo "nrctactl" da tabela "crapcop". PRJ366 (Lombardi).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+        
+        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 .............................................................................*/
                         
@@ -1336,6 +1339,8 @@ PROCEDURE enviar-ted:
 
     DEF VAR aux_cdagefav AS INTE FORMAT "9999"           NO-UNDO.
 
+    DEF VAR aux_nrseqdig AS INTE                         NO-UNDO.
+
     DEF BUFFER crabhis FOR craphis. 
 
     ASSIGN aux_nrcxaope = par_nrcxaope.
@@ -1392,8 +1397,6 @@ PROCEDURE enviar-ted:
                aux_tpdolote = 25
                aux_cdhistor = 523. 
         
-        DO aux_contador = 1 TO 10:
-    
             FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper AND
                                craplot.dtmvtolt = crapdat.dtmvtocd AND
                                craplot.cdagenci = par_cdageope     AND
@@ -1401,24 +1404,10 @@ PROCEDURE enviar-ted:
                                   lote processo */
                                craplot.cdbccxlt = 100              AND 
                                craplot.nrdolote = aux_nrdolote     
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                           NO-LOCK NO-ERROR.
                                
             IF  NOT AVAIL craplot  THEN 
                 DO: 
-                    IF  LOCKED craplot  THEN 
-                        DO:
-                            IF  aux_contador = 10  THEN
-                                DO:
-                                    ASSIGN glb_dscritic = "Tabela CRAPLOT em uso.".
-
-                                    UNDO TRANS_TED, LEAVE TRANS_TED.
-                                END.
-                                
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                    ELSE
-                        DO:
                             CREATE craplot.
                             ASSIGN craplot.cdcooper = crapcop.cdcooper
                                    craplot.dtmvtolt = crapdat.dtmvtocd
@@ -1433,11 +1422,6 @@ PROCEDURE enviar-ted:
                                    craplot.nrdcaixa = par_nrcxaope
                                    craplot.cdopecxa = par_cdoperad.
                         END.
-                END.
-    
-            LEAVE.
-    
-        END. /** Fim do DO ... TO **/
         
         /* Busca a proxima sequencia do campo crapmat.nrseqted */
         RUN STORED-PROCEDURE pc_sequence_progress
@@ -1473,6 +1457,24 @@ PROCEDURE enviar-ted:
                 UNDO TRANS_TED, LEAVE TRANS_TED.
             END.
         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                          ,INPUT "NRSEQDIG"
+                          ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(par_cdageope) + ";100;" + STRING(aux_nrdolote)
+                          ,INPUT "N"
+                          ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                    WHEN pc_sequence_progress.pr_sequence <> ?.
+        
         CREATE craptvl.
         ASSIGN craptvl.cdcooper = crapcop.cdcooper
                craptvl.tpdoctrf = 3
@@ -1493,7 +1495,7 @@ PROCEDURE enviar-ted:
                craptvl.cdagenci = par_cdageope
                craptvl.cdbccxlt = 11 /* mantido como 11 por compatibilidade */ 
                craptvl.nrdocmto = par_nrdocmto
-               craptvl.nrseqdig = craplot.nrseqdig + 1   
+               craptvl.nrseqdig = aux_nrseqdig  
                craptvl.nrcctrcb = par_nrctafav
                craptvl.cdfinrcb = par_cdfinali
                craptvl.tpdctacr = par_tpctafav
@@ -1515,11 +1517,6 @@ PROCEDURE enviar-ted:
         ELSE 
             ASSIGN craptvl.flgpescr = NO.
                    
-        ASSIGN craplot.qtcompln = craplot.qtcompln + 1
-               craplot.vlcompcr = craplot.vlcompcr + par_vldocmto
-               craplot.qtinfoln = craplot.qtinfoln + 1
-               craplot.vlinfocr = craplot.vlinfocr + par_vldocmto
-               craplot.nrseqdig = craptvl.nrseqdig.
         VALIDATE craplot.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    

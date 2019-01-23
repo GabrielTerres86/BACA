@@ -29,6 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarquiv IN VARCHAR2               --> Identificacao da sessao do usuario
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -46,6 +47,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarquiv IN VARCHAR2               --> Identificacao da sessao do usuario
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -54,6 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
   --> Rotina para geração do Termo de Adesão  - Ayllos Web
   PROCEDURE pc_impres_termo_adesao_pf_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
                                          ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> Identificacao da sessao do usuario
                                          ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                          ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -63,6 +66,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
 
   PROCEDURE pc_impres_termo_adesao_pj_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
                                          ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> Identificacao da sessao do usuario
                                          ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                          ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -1064,6 +1068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarquiv IN VARCHAR2               --> Identificacao da sessao do usuario
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -1074,13 +1079,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      Sistema : Rotinas referentes ao cartão de crédito
      Sigla   : CRED
      Autor   : Paulo Silva - Supero
-     Data    : Março/2018.                    Ultima atualizacao: 28/03/2018
+     Data    : Março/2018.                    Ultima atualizacao: 28/11/2018
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para geração do Termo de Adesão PF
-     Alteracoes: 
+     
+     Alteracoes: 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
      
     ..............................................................................*/
     
@@ -1095,7 +1101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_exc_erro        EXCEPTION;
     
     vr_dsorigem        craplgm.dsorigem%TYPE;
-    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE := 'Impressao do termo de adesao PF do carta de credito Ailos';
     vr_nrdrowid        ROWID;
 
     vr_idseqttl        crapttl.idseqttl%TYPE;
@@ -1141,8 +1147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
-                                         
-    vr_nmendter := vr_dsdireto ||'/rl/tapf001';
+                                        
+    vr_nmendter := vr_dsdireto ||'/rl/' || pr_nmarquiv;
     
     vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
     
@@ -1158,7 +1164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END IF; 
     
     --> Montar nome do arquivo
-    pr_nmarqpdf := 'tapf001'|| gene0002.fn_busca_time || '.pdf';
+    pr_nmarqpdf := pr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
       
     --> Buscar dados para impressao do Termo de Adesão PF
     pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> Código da Cooperativa 
@@ -1399,6 +1405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_nmarquiv IN VARCHAR2               --> Identificacao da sessao do usuario
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -1409,13 +1416,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      Sistema : Rotinas referentes ao cartão de crédito
      Sigla   : CRED
      Autor   : Carlos Lima - Supero
-     Data    : Abril/2018.                    Ultima atualizacao: 11/04/2018
+     Data    : Abril/2018.                    Ultima atualizacao: 28/11/2018
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para geração do Termo de Adesão PJ
-     Alteracoes: 
+     
+     Alteracoes: 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
      
     ..............................................................................*/
     
@@ -1430,7 +1438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_exc_erro        EXCEPTION;
     
     vr_dsorigem        craplgm.dsorigem%TYPE;
-    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE := 'Impressao do termo de adesao PJ do carta de credito Ailos';
     vr_nrdrowid        ROWID;
 
     vr_idseqttl        crapttl.idseqttl%TYPE;
@@ -1477,7 +1485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
                                          
-    vr_nmendter := vr_dsdireto ||'/rl/tapj001';
+    vr_nmendter := vr_dsdireto ||'/rl/' || pr_nmarquiv;
     
     vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
     
@@ -1493,7 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END IF; 
     
     --> Montar nome do arquivo
-    pr_nmarqpdf := 'tapj001'|| gene0002.fn_busca_time || '.pdf';
+    pr_nmarqpdf := pr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
       
     --> Buscar dados para impressao do Termo de Adesão PF
     pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> Código da Cooperativa 
@@ -1763,6 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
   --> Rotina para geração do Termo de Adesão PF  - Ayllos Web
   PROCEDURE pc_impres_termo_adesao_pf_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
                                          ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> Identificacao da sessao do usuario
                                          ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                          ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -1776,7 +1785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     Programa: pc_impres_termo_adesao_pf_web
     Sistema : Ayllos Web
     Autor   : Paulo Silva - Supero
-    Data    : Março/2018                 Ultima atualizacao: 28/03/2018
+    Data    : Março/2018                 Ultima atualizacao: 28/11/2018
 
     Dados referentes ao programa:
 
@@ -1784,7 +1793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
 
     Objetivo  : Rotina para chamar as impressoes pelo Ayllos Web
 
-    Alteracoes: -----
+    Alteracoes: 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -1841,6 +1850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data de Movimento
                                ,pr_nrctrlim => pr_nrctrcrd  --> Contrato
                                ,pr_flgerlog => 1            --> True 
+                               ,pr_nmarquiv => pr_dsiduser
                                --------> OUT <--------
                                ,pr_nmarqpdf => vr_nmarqpdf       --> Retornar quantidad de registros                           
                                ,pr_cdcritic => vr_cdcritic       --> Código da crítica
@@ -1895,6 +1905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
   --> Rotina para geração do Termo de Adesão PJ  - Ayllos Web
   PROCEDURE pc_impres_termo_adesao_pj_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
                                          ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> Identificacao da sessao do usuario
                                          ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                          ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -1908,7 +1919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     Programa: pc_impres_termo_adesao_pj_web
     Sistema : Ayllos Web
     Autor   : Carlos Lima - Supero
-    Data    : Abril/2018                 Ultima atualizacao: 11/04/2018
+    Data    : Abril/2018                 Ultima atualizacao: 28/11/2018
 
     Dados referentes ao programa:
 
@@ -1916,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
 
     Objetivo  : Rotina para chamar as impressoes pelo Ayllos Web
 
-    Alteracoes: -----
+    Alteracoes: 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -1973,6 +1984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data de Movimento
                                ,pr_nrctrlim => pr_nrctrcrd  --> Contrato
                                ,pr_flgerlog => 1            --> True 
+                               ,pr_nmarquiv => pr_dsiduser
                                --------> OUT <--------
                                ,pr_nmarqpdf => vr_nmarqpdf       --> Retornar quantidad de registros                           
                                ,pr_cdcritic => vr_cdcritic       --> Código da crítica

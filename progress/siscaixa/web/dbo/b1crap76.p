@@ -28,6 +28,9 @@
                15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
                             de dentro da b1wgen0200 
                             (Renato AMcom)
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 */
                             
 {dbo/bo-erro1.i}
@@ -143,6 +146,7 @@ PROCEDURE valida-outros:
 
             ASSIGN i-nro-lote = 11000 + p-nro-caixa.
 
+            /* Revitalizacao - Remocao de lotes
             FIND FIRST craplot WHERE
                        craplot.cdcooper = crapcop.cdcooper  AND
                        craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
@@ -161,7 +165,7 @@ PROCEDURE valida-outros:
                                 INPUT YES).
                  RETURN "NOK".
             END.
-
+            */
             
             FIND FIRST craplcm WHERE
                        craplcm.cdcooper = crapcop.cdcooper   AND
@@ -591,9 +595,8 @@ PROCEDURE estorna-outros.
                            RETURN "NOK".
                         END.
                  END.
-         END.
-    
  
+              /* Revitalizacao - Remocao de lotes */
     ASSIGN  in99 = 0.
     DO  WHILE TRUE:
        
@@ -640,6 +643,7 @@ PROCEDURE estorna-outros.
         END.
         LEAVE.
     END.  /*  DO WHILE */
+         END.
 
     IF  p-cdhistor <> 561 THEN      /* Contas Cooperados */
         DO:
@@ -974,6 +978,14 @@ PROCEDURE estorna-outros.
        END.
    
    IF  craphis.indebcre = "D" THEN 
+		ASSIGN p-pg              = YES.
+   ELSE
+        ASSIGN p-pg              = NO.
+   
+   /* Revitalizacao - Remocao de lotes*/
+   IF AVAIL craplot THEN
+   DO:
+   IF  craphis.indebcre = "D" THEN 
        ASSIGN craplot.vlcompdb  = craplot.vlcompdb - p-valor
               craplot.vlinfodb  = craplot.vlinfodb - p-valor
               p-pg              = YES.
@@ -993,6 +1005,7 @@ PROCEDURE estorna-outros.
        DELETE craplot.
    ELSE
       RELEASE craplot.
+   END.
       
    RETURN "OK".
 END PROCEDURE.

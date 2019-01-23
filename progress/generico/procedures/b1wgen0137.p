@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 16/10/2018
+    Data      : Abril/2012                      Ultima Atualizacao: 08/01/2019
     
     Dados referentes ao programa:
 
@@ -338,6 +338,11 @@
 
                 16/10/2018 - sctask0016914 Reativado o batimento dos termos, porém quando chamado pelo crps620, verifica apenas os termos digitalizados
                              no dia (Carlos)
+
+				08/01/2019 - Inclusao do documento 207 (Andrey Formigari - Mouts)
+
+			    08/01/2019 - Incluso tratativa para não gerar pendencia de emprestimos do novo CDC (Daniel).				  
+
 .............................................................................*/
 
 
@@ -5024,6 +5029,7 @@ PROCEDURE retorna_docs_liberados:
      88 - Contrato de bordero de tutulos
      89 - Contrato de emprestimo/financiamento
      102 - Aditivo de contrato de emprestimo
+     207 - Contratos Procap
      
     *************************************************************/
 
@@ -5034,7 +5040,7 @@ PROCEDURE retorna_docs_liberados:
 
         /* Validar a chave de acesso e tipos de documentos */
         IF  par_key <> "Ck3tBzyhxp8dWzq" OR 
-            NOT CAN-DO("84,85,86,87,88,89,102",STRING(par_tpdocmto)) THEN
+            NOT CAN-DO("84,85,86,87,88,89,102,207",STRING(par_tpdocmto)) THEN
             DO:
                 aux_flgok = FALSE.
                 LEAVE.
@@ -5050,6 +5056,28 @@ PROCEDURE retorna_docs_liberados:
                 LEAVE.
             END.
 
+		/* Documentos de contratos de Procap do cooperado */
+		IF par_tpdocmto = 207 THEN 
+			DO: 
+				FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper AND
+									   craplct.dtmvtolt = par_dtlibera AND
+									   craplct.cdhistor = 930 		   AND
+									   craplct.dtlibera = ?
+									   NO-LOCK:
+
+					CREATE tt-documentos-liberados.
+					ASSIGN tt-documentos-liberados.tpdocmto = 207
+						   tt-documentos-liberados.nrdconta = craplct.nrdconta
+						   tt-documentos-liberados.cdcooper = craplct.cdcooper
+						   tt-documentos-liberados.cdagenci = craplct.cdagenci
+						   tt-documentos-liberados.nrctrato = craplct.nrdocmto
+						   tt-documentos-liberados.nrborder = 0
+						   tt-documentos-liberados.nraditiv = 0
+						   tt-documentos-liberados.dtlibera = craplct.dtmvtolt
+						   tt-documentos-liberados.vllanmto = craplct.vllanmto.
+				END.
+			END.
+
         /* Documentos de contratos de emprestimos ativos do cooperado */
         IF  par_tpdocmto = 89 THEN                                      
             DO:    
@@ -5059,6 +5087,10 @@ PROCEDURE retorna_docs_liberados:
                                 NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                            STRING(crapepr.cdlcremp)) 
                                 NO-LOCK:
+        
+                    /* Nao deve gerar pendencia para emprestimos efetuados no novo CDC */
+                    IF crapepr.cdopeori = 'AUTOCDC' THEN
+                        NEXT. 
         
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 89

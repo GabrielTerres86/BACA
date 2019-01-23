@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 13/12/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 14/01/2019
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
    
    13/12/2018 - Ajuste na passagem de parametros do header dos arquivos de desistencia 
                 e cancelamento de protesto (Fábio/Supero).
+   
+   14/01/2019 - Ajuste no campo t13 - nrdocmto para dsdoccop. 
+              - Adicionado campo de complemento de endereço no endereço do pagador. (Cechet).
    
   ............................................................................. */
   
@@ -502,7 +505,7 @@
             ,rpad(crapenc.cdufende, 2, ' ') cdufende                                                      -- Campo 10 - Transação
             ,lpad(crapcob.nrcnvcob, 6, '0') || lpad(crapcob.nrdocmto, 9, '0') nrnosnum                    -- Campo 11 - Transação
             ,decode(crapcob.cddespec, 1, 'DMI', 2, 'DSI', '   ') cddespec                                 -- Campo 12 - Transação
-            ,rpad(crapcob.nrdocmto, 11, ' ') nrdocmto                                                     -- Campo 13 - Transação
+            ,rpad(crapcob.dsdoccop, 11, ' ') dsdoccop                                                     -- Campo 13 - Transação
             --,to_char(crapcob.dtemiexp, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
             ,to_char(crapcob.dtdocmto, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
             ,to_char(crapcob.dtvencto, 'DDMMYYYY') dtvencto                                               -- Campo 15 - Transação
@@ -512,7 +515,8 @@
             ,rpad(substr(crapsab.nmdsacad, 0, 45), 45, ' ') nmdsacad                                      -- Campo 23 - Transação
             ,lpad(decode(crapsab.cdtpinsc, 1, 2, 2, 1, 0), 3, '0') cdtpinsc                               -- Campo 24 - Transação
             ,lpad(crapsab.nrinssac, 14, '0') nrinssac                                                     -- Campo 25 - Transação
-            ,rpad(substr(crapsab.dsendsac || CASE WHEN NVL(crapsab.nrendsac,0) > 0 THEN ' ' || to_char(crapsab.nrendsac) END
+            ,rpad(substr(crapsab.dsendsac || CASE WHEN NVL(crapsab.nrendsac,0) > 0 THEN ' ' || to_char(crapsab.nrendsac) END ||
+                                             CASE WHEN TRIM(crapsab.complend) IS NOT NULL THEN ' ' || TRIM(crapsab.complend) END
                                          , 0, 45), 45, ' ') dsendsac                                      -- Campo 27 - Transação
             ,lpad(crapsab.nrcepsac, 8, '0') nrcepsac                                                      -- Campo 28 - Transação
             ,rpad(substr(crapsab.nmcidsac, 0, 20), 20, ' ') nmcidsac                                      -- Campo 29 - Transação
@@ -686,7 +690,7 @@
                               ,pr_cdufende => rw_craprem.cdufende -- IN
                               ,pr_nrnosnum => rw_craprem.nrnosnum -- IN
                               ,pr_cddespec => rw_craprem.cddespec -- IN
-                              ,pr_nrdocmto => rw_craprem.nrdocmto -- IN
+                              ,pr_nrdocmto => rw_craprem.dsdoccop -- IN
                               ,pr_dtemiexp => rw_craprem.dtemiexp -- IN
                               ,pr_dtvencto => rw_craprem.dtvencto -- IN
                               ,pr_vltitulo => rw_craprem.vltitulo -- IN
@@ -759,10 +763,10 @@
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Incluído controle de Log
-      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' não processado devido ao ERRO: ' || pr_dscritic);
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrnosnum || ' não processado devido ao ERRO: ' || pr_dscritic);
     WHEN OTHERS THEN
       -- Incluído controle de Log
-      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' não processado devido ao ERRO: ' || SQLERRM);
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrnosnum || ' não processado devido ao ERRO: ' || SQLERRM);
   END pc_gera_remessa;
   
   -- Gera o arquivo de remessa

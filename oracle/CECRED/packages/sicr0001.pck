@@ -341,6 +341,7 @@ create or replace package body cecred.SICR0001 is
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 				                      ( Belli - Envolti - Chamado REQ0014479 )
 							  
+                              
                  29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
                               (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
@@ -1626,7 +1627,7 @@ create or replace package body cecred.SICR0001 is
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Lucas Ranghetti
-    --   Data    : Maio/2014                       Ultima atualizacao: 15/05/2018 - Chd REQ0014479
+    --   Data    : Maio/2014                       Ultima atualizacao: 03/09/2018
     --
     -- Dados referentes ao programa:
     --
@@ -1679,6 +1680,7 @@ create or replace package body cecred.SICR0001 is
     --                          Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 	  --			                    ( Belli - Envolti - Chd REQ0014479 )
     --          
+	 --              03/09/2018 - Correção para remover lote (Jonata - Mouts).      
     --------------------------------------------------------------------------------------------------------------------
   BEGIN
   
@@ -1703,6 +1705,7 @@ create or replace package body cecred.SICR0001 is
       vr_dsinfor2     crappro.dsinform##1%TYPE;
       vr_dsinfor3     crappro.dsinform##1%TYPE;
       vr_dsprotoc     crappro.dsprotoc%TYPE;
+	  vr_nrseqdig     craplcm.nrseqdig%TYPE := 0;
       --vr_nrdolote_sms NUMBER;
     
       -- Autenticação
@@ -1942,6 +1945,7 @@ create or replace package body cecred.SICR0001 is
         
        rw_crapscn cr_crapscn%ROWTYPE;
     
+    
       -- Procedimento para inserir o lote e não deixar tabela lockada
       PROCEDURE pc_insere_lote(pr_cdcooper IN craplot.cdcooper%TYPE
                               ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
@@ -1994,14 +1998,12 @@ create or replace package body cecred.SICR0001 is
                   craplot.dtmvtolt,
                   craplot.cdagenci,
                   craplot.cdbccxlt,
-                  craplot.nrdolote,
-                  craplot.nrseqdig
+                  craplot.nrdolote
              INTO rw_craplot.rowid,
                   rw_craplot.dtmvtolt,
                   rw_craplot.cdagenci,
                   rw_craplot.cdbccxlt,
-                  rw_craplot.nrdolote,
-                  rw_craplot.nrseqdig;
+                  rw_craplot.nrdolote;
         COMMIT;
 
         -- Retira Inclui nome do modulo logado - 15/12/2017 - Ch 788828
@@ -2497,6 +2499,13 @@ create or replace package body cecred.SICR0001 is
           RAISE vr_exc_saida;
         END IF;
       
+	    vr_nrseqdig := fn_sequence('CRAPLOT'
+									,'NRSEQDIG'
+									,''||rw_craplau.cdcooper||';'
+										||to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'
+										||vr_cdagenci||';'
+										||vr_cdbccxlt||';'
+										||vr_nrdolote);
         -- Buscar lote
         OPEN cr_craplot(pr_cdcooper => rw_craplau.cdcooper,
                         pr_dtmvtolt => pr_dtmvtolt,
@@ -2524,7 +2533,7 @@ create or replace package body cecred.SICR0001 is
           END IF;
           -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_efetua_debito_automatico');
-          rw_craplot.nrseqdig := 0;
+          
         END IF;
         -- Fechar cursor de lote
         CLOSE cr_craplot;
@@ -2631,31 +2640,6 @@ create or replace package body cecred.SICR0001 is
           -- Fechar cursor de lançamento
           CLOSE cr_craplcm;
         
-          -- > Verificar chave unica CRAPLCM##3 NRSEQDIG
-          LOOP
-            IF cr_craplcm_dig%ISOPEN THEN
-              CLOSE cr_craplcm_dig;
-            END IF;
-            -- verificar existencia de lançamento
-            OPEN cr_craplcm_dig (pr_cdcooper => pr_cdcooper
-                                ,pr_dtmvtolt => pr_dtmvtolt
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_cdbccxlt => vr_cdbccxlt
-                                ,pr_nrdolote => vr_nrdolote
-                                ,pr_nrseqdig => rw_craplot.nrseqdig);
-                                  
-            FETCH cr_craplcm_dig INTO rw_craplcm_dig;
-            -- se existir lançamento então o numero da sequencia do lote é incrementado
-            IF cr_craplcm_dig%FOUND THEN
-                
-               -- Atualiza o sequencial da capa do lote
-               rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
-
-              CONTINUE;
-            END IF;
-            CLOSE cr_craplcm_dig;
-            EXIT;
-          END LOOP;
         
           ---> Gerar autenticação do pagamento
           CXON0000.pc_grava_autenticacao_internet 
@@ -2720,7 +2704,7 @@ create or replace package body cecred.SICR0001 is
               ,rw_craplau.vllanaut
               ,vr_nrdconta
               ,rw_craplau.cdhistor
-              ,rw_craplot.nrseqdig
+              ,vr_nrseqdig
               ,rw_craplau.nrdctabb
               ,vr_nrautdoc
               ,'Lote ' || to_char(rw_craplau.dtmvtolt, 'dd')              || '/' ||
@@ -2744,7 +2728,7 @@ create or replace package body cecred.SICR0001 is
                           ', vllanmto:'||rw_craplau.vllanaut||
                           ', nrdconta:'||vr_nrdconta||
                           ', cdhistor:'||rw_craplau.cdhistor||
-                          ', nrseqdig:'||rw_craplot.nrseqdig||' + 1'||
+                          ', nrseqdig:'||vr_nrseqdig||
                           ', nrdctitg:'||rw_craplau.nrdctabb||
                           ', nrautdoc:'||vr_nrautdoc||
                           ', cdpesqbb:'||to_char(rw_craplau.dtmvtolt,'dd')              || '/' ||
@@ -2761,31 +2745,7 @@ create or replace package body cecred.SICR0001 is
               RAISE vr_exc_erro;
           END;
         
-          -- Atualiza a capa do lote
-          BEGIN
-            UPDATE craplot
-               SET nrseqdig = rw_craplot.nrseqdig
-                  ,qtcompln = qtcompln + 1
-                  ,qtinfoln = qtinfoln + 1
-                  ,vlcompdb = vlcompdb + rw_craplau.vllanaut
-                  ,vlinfodb = vlcompdb + rw_craplau.vllanaut
-             WHERE ROWID = rw_craplot.rowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplot: '||
-                            'nrseqdig:'||rw_craplot.nrseqdig||
-                            ', qtcompln:qtcompln + 1'||
-                            ', qtinfoln:qtinfoln + 1'||
-                            ', vlcompdb:vlcompdb + '||rw_craplau.vllanaut||
-                            ', vlinfodb:vlcompdb + '||rw_craplau.vllanaut||
-                            ' com rowid:'||rw_craplot.rowid||
-                            '. '||sqlerrm;
 
-              -- No caso de erro de programa gravar tabela especifica de log  
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
-              RAISE vr_exc_erro;
-          END;
         
           -- Atualiza registro de Lançamento Automático
           BEGIN

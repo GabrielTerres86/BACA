@@ -63,49 +63,16 @@ setVarSession("opcoesTela",$opcoesTela);
                                     <table border="0" cellspacing="0" cellpadding="0">
                                         <tr>
                                             <?php
-                                            $contador = 0;
+                                            $nameOpcao = "Principal";
                                             $idPrincipal = 0;
-
-                                            // Mostrar opções da rotina de capital no layer conforme permissão do operador
-                                            for ($i = 0; $i < count($opcoesTela); $i++) {
-                                                // Estas opções não aparecem na aba, são os botões
-                                                // referentes a um cartão de crédito já existente
-                                                if ($opcoesTela[$i] == "2" ||
-                                                        $opcoesTela[$i] == "C" ||
-                                                        $opcoesTela[$i] == "E" ||
-                                                        $opcoesTela[$i] == "F" ||
-                                                        $opcoesTela[$i] == "L" ||
-                                                        $opcoesTela[$i] == "M" ||
-                                                        $opcoesTela[$i] == "R" ||
-                                                        $opcoesTela[$i] == "T" ||
-                                                        $opcoesTela[$i] == "A" ||
-                                                        $opcoesTela[$i] == "X" ||
-                                                        $opcoesTela[$i] == "N" ||
-                                                        $opcoesTela[$i] == "H" ||
-                                                        $opcoesTela[$i] == "Z" ||
-                                                        $opcoesTela[$i] == "D" ||
-                                                        $opcoesTela[$i] == "O" ||
-                                                        $opcoesTela[$i] == "B" ||
-                                                        $opcoesTela[$i] == "S" ||
-                                                        $opcoesTela[$i] == "G" ||
-                                                        $opcoesTela[$i] == "U") {
-                                                    continue;
-                                                }
-
-                                                switch ($opcoesTela[$i]) {
-                                                    case "@": $nameOpcao = "Principal";
-                                                        $idPrincipal = $i;
-                                                        break;
-                                                }
-                                                $contador++;
                                                 ?>
+
+
                                                 <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq<?php echo $i; ?>"></td>
                                                 <td align="center" style="background-color: #C6C8CA;" id="imgAbaCen<?php echo $i; ?>"><a href="#" id="linkAba<?php echo $i; ?>" onClick="acessaOpcaoAba(<?php echo count($opcoesTela); ?>,<?php echo $i; ?>, '<?echo $opcoesTela[$i]; ?>'); return false;" class="txtNormalBold"><?echo $nameOpcao; ?></a></td>
                                                 <td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir<?php echo $i; ?>"></td>
                                                 <td width="1"></td>
-                                                <?php
-                                            } // Fim do for
-                                            ?>	
+
                                         </tr>
                                     </table>
                                 </td>

@@ -1094,7 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 11/10/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 19/12/2018
       
         Dados referentes ao programa:
       
@@ -1115,7 +1115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                     24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                  Campo documentoAval - Diego Simas - AMcom
-
+                                 
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
                                irá buscar (Paulo Penteado GFT)
 
@@ -1124,6 +1124,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
 										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
 										             (Reginaldo/AMcom)
+
+                   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)     
 
     ..........................................................................*/
     DECLARE
@@ -1153,6 +1155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_flprjcop BOOLEAN;
 			vr_fl800900 BOOLEAN;
 			vr_vladtdep crapsda.vllimcre%TYPE;
+			vr_qtdiaest INTEGER;
 			vr_flggrupo INTEGER;
 			vr_nrdgrupo crapgrp.nrdgrupo%TYPE;
 			vr_gergrupo VARCHAR2(100);
@@ -1669,6 +1672,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                             AND epr.nrctremp = wpr.nrctremp);
       rw_crawepr_outras cr_crawepr_outras%ROWTYPE;
       
+      -- Busca saldo
+      CURSOR cr_crapsld IS
+        SELECT crapsld.qtddsdev
+          FROM crapsld
+         WHERE crapsld.cdcooper = pr_cdcooper
+           AND crapsld.nrdconta = pr_nrdconta;
+      rw_crapsld cr_crapsld%ROWTYPE;
+      
       -- Buscar Contrato Limite Crédito
       CURSOR cr_craplim_chqesp IS
         SELECT lim.dtinivig
@@ -1964,7 +1975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND lim.insitlim IN (2,3)
            AND nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
       rw_craplim cr_craplim%ROWTYPE;
-			
+      
       -- Busca dos scores do Cooperado
       CURSOR cr_tbcrd_score(pr_cdcooper crapcop.cdcooper%TYPE
                            ,pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -1974,6 +1985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,sco.nrscore_alinhado
               ,sco.dsclasse_score
               ,sco.flvigente
+              ,sco.dsexclusao_principal
               ,row_number() over (partition By sco.cdmodelo
                                       order by sco.flvigente DESC, sco.dtbase DESC) nrseqreg 
           FROM crapass     ass
@@ -2791,15 +2803,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           OPEN cr_crapepr_preju(pr_cdcooper => pr_cdcooper 
                                ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta
                                ,pr_inliquid => 1);
-          FETCH cr_crapepr_preju
-           INTO rw_crapepr_preju;
-          
+      FETCH cr_crapepr_preju
+        INTO rw_crapepr_preju;
+    
           IF cr_crapepr_preju%FOUND THEN
              vr_flesprej := TRUE;
-          END IF;
+      END IF;
           
-          CLOSE cr_crapepr_preju;
-          
+      CLOSE cr_crapepr_preju;
+    
           -- Conta Corrente                   
           OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper 
                           ,pr_nrdconta => rw_crapass_cpf_cnpj.nrdconta);
@@ -2818,7 +2830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('causouPrejuizoCoop', vr_flesprej);
       -- Enviar estaEmPrejuizoCoop
       vr_obj_generic2.put('estaEmPrejuizoCoop', vr_flemprej);
-         
+    
       -- FIM      
       -- PJ 450 - Diego Simas (AMcom)
       -- Causou Prejuizo / Esta em Prejuizo
@@ -2857,9 +2869,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         ELSE
           vr_vladtdep := 0;
         END IF;
+        -- Buscar dados do Saldo para enviar quantos dias está em estouro
+        OPEN cr_crapsld;
+        FETCH cr_crapsld INTO rw_crapsld;
+        CLOSE cr_crapsld;
+        vr_qtdiaest := nvl(rw_crapsld.qtddsdev,0);
       ELSE
         vr_vladtdep := 0;
+        vr_qtdiaest := 0;
       END IF;
+    
+      -- Enviar dados do Estouro
+      vr_obj_generic2.put('quantDiaEstouroVigente',vr_qtdiaest);
     
       -- Enviar o valorAdiantDeposit
       vr_obj_generic2.put('valorAdiantDeposit'
@@ -3743,7 +3764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		vr_qtmeschqal11 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DC_A11_DESC');
 		vr_qtmeschqal12 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DC_A12_DESC');
       ELSE
-		vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');		
+			vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');		
 		vr_qtmeschqal11 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');
 		vr_qtmeschqal12 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');			
       END IF;
@@ -3786,7 +3807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_qtdopliq := SUBSTR(vr_dstextab, 52, 3);
       END IF;
-        
+      
       -- Montar objeto para scoreBehaviour
       vr_lst_generic3 := json_list();
     
@@ -3802,8 +3823,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3.put('cdModelo', rw_score.cdmodelo);
         vr_obj_generic3.put('dsModelo',rw_score.dsmodelo);
         vr_obj_generic3.put('dtBase ', to_char(rw_score.dtbase,'dd/mm/rrrr'));
-        vr_obj_generic3.put('dsClasseScore ', rw_score.dsclasse_score);
-        vr_obj_generic3.put('nrScoreAlinhado ', rw_score.nrscore_alinhado);
+        vr_obj_generic3.put('dsClasseScore', rw_score.dsclasse_score);
+        vr_obj_generic3.put('nrScoreAlinhado', rw_score.nrscore_alinhado);
+        vr_obj_generic3.put('dsExclusaoPrinc', rw_score.dsexclusao_principal);
         vr_obj_generic3.put('flSituacao ', rw_score.flvigente);
         -- Adicionar Score na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
@@ -3811,7 +3833,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Adicionar o array seguro no objeto informações adicionais
       vr_obj_generic2.put('scoreBehaviour', vr_lst_generic3);      
-        
+
+      -- Montar objeto para opCred
+      vr_lst_generic3 := json_list();
+    
       -- Efetuar laço para trazer todos os registros 
       FOR rw_crapepr IN cr_crapepr LOOP
       

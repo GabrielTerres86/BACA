@@ -2,13 +2,17 @@
 	/*********************************************************************
 	 Fonte: manter_rotina.php                                                 
 	 Autor: Lucas/Gabriel                                                     
-	 Data : Nov/2011                Última Alteração:  
+	 Data : Nov/2011                Última Alteração:  03/12/2018
 	                                                                  
 	 Objetivo  : Tratar as requisicoes da tela TAB036.                                  
 	                                                                  
 	 Alterações: 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
                               departamento como parametros e passar o o código (Renato Darosci)		
 
+				 03/12/2018 - A operacao de alteracao tem duas fases 'P' e 'A' mas a opcao 'P'
+				              nao esta cadastrada para a tela tornando impossivel um operador 
+							  utilizar a opcao 'A' da tela mesmo com permissao na PERMIS
+							  (Tiago - PRB0040436)
 	**********************************************************************/
 	
 	session_start();
@@ -24,13 +28,13 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");	
 		
-				
 	$cddopcao = $_POST["cddopcao"]; /* Opcao */
+	$vldopcao = ($_POST["cddopcao"] == 'P' ? 'A' : $_POST["cddopcao"]); /* Opcao para validacao de permissao*/
 	$vlrating = $_POST["vlrating"];  /*Vl vlrating para Atualização dos dados */
 	$vlgrecon = $_POST["vlgrecon"]; /* Vl GE para Atualização dos dados */
 	
 	// Verifica Permissão
-	if (($msgError = validaPermissao($glbvars["nmdatela"],"",substr($cddopcao,0,1))) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],"",substr($vldopcao,0,1))) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos','voltar()',false);
 	}	
 			
@@ -120,3 +124,4 @@
 	echo 'hideMsgAguardo();';	
 		
 ?>
+

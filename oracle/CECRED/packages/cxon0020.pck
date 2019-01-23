@@ -131,6 +131,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             Everton Souza - Mouts
                01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                             Marcelo Telles Coelho - Mouts
+							
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ..............................................................................*/
   --  antigo tt-protocolo-ted
@@ -1479,10 +1482,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craplot.dtmvtolt = pr_dtmvtolt
          AND craplot.cdagenci = pr_cdageope
          AND craplot.cdbccxlt = pr_cdbccxlt
-         AND craplot.nrdolote = pr_nrdolote
-       FOR UPDATE NOWAIT;
+         AND craplot.nrdolote = pr_nrdolote;
+
     rw_craplot_tvl cr_craplot%ROWTYPE;
     rw_craplot_lcm cr_craplot%ROWTYPE;
+    vr_nrseqdig    craplot.nrseqdig%type;
 
     --> Buscar dados da tarifa
     CURSOR cr_craplat (pr_rowid ROWID) IS
@@ -1581,8 +1585,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     BEGIN
       vr_nrdolote := pr_nrdolote;
 
-      FOR vr_contador IN 1..100 LOOP
-        BEGIN
           -- verificar lote
           OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
                            pr_dtmvtolt  => pr_dtmvtolt,
@@ -1590,28 +1592,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            pr_cdbccxlt  => pr_cdbccxlt,
                            pr_nrdolote  => vr_nrdolote);
           FETCH cr_craplot INTO rw_craplot;
-          -- se não deu erro no fecth é pq o registro não esta em lock
-          EXIT;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            IF cr_craplot%ISOPEN THEN
-              CLOSE cr_craplot;
-            END IF;
-
-            -- se for a ultima tentativa, guardar a critica
-            IF vr_contador = 100 THEN
-              pr_dscritic := 'Tabela CRAPLOT em uso(lote: '||vr_nrdolote||').';
-            END IF;
-            sys.dbms_lock.sleep(0.1);
-        END;
-      END LOOP;
-
-      -- se encontrou erro ao buscar lote, abortar programa
-      IF pr_dscritic IS NOT NULL THEN
-        ROLLBACK;
-        RETURN;
-      END IF;
 
       IF cr_craplot%NOTFOUND THEN
         -- criar registros de lote na tabela
@@ -1651,19 +1631,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                      rw_craplot.cdbccxlt,
                      rw_craplot.nrdolote,
                      rw_craplot.nrseqdig;
-
-      ELSE
-        -- Atualizar lote para reservar nrseqdig
-        UPDATE craplot
-           SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-         WHERE craplot.rowid = rw_craplot.rowid
-        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-
+        COMMIT;
       END IF;
+
       CLOSE cr_craplot;
       pr_craplot := rw_craplot;
-
-      COMMIT;
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -2026,6 +1998,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	--Fim Bacenjud - SM 1
 
     BEGIN
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+						                    ,'NRSEQDIG'
+						                    ,''||rw_crapcop.cdcooper||';'
+							                     ||to_char(rw_craplot_tvl.dtmvtolt,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_tvl.cdagenci||';'
+							                     ||rw_craplot_tvl.cdbccxlt||';'
+							                     ||rw_craplot_tvl.nrdolote);
+
       INSERT INTO craptvl
                 (craptvl.cdcooper
                 ,craptvl.tpdoctrf
@@ -2085,7 +2065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,pr_cdageope             --> craptvl.cdagenci
                 ,11                      --> craptvl.cdbccxlt
                 ,pr_nrdocmto             --> craptvl.nrdocmto
-                ,rw_craplot_tvl.nrseqdig     --> craptvl.nrseqdig
+                ,vr_nrseqdig             --> craptvl.nrseqdig 
                 ,pr_nrctafav             --> craptvl.nrcctrcb
                 ,pr_cdfinali             --> craptvl.cdfinrcb
                 ,pr_tpctafav             --> craptvl.tpdctacr
@@ -2235,6 +2215,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+						                    ,'NRSEQDIG'
+						                    ,''||rw_crapcop.cdcooper||';'
+							                     ||to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_lcm.cdagenci||';'
+							                     ||rw_craplot_lcm.cdbccxlt||';'
+							                     ||rw_craplot_lcm.nrdolote);
+    
       INSERT INTO craplcm
                   (craplcm.cdcooper
                   ,craplcm.dtmvtolt
@@ -2263,7 +2251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     ,to_char(pr_nrdconta,'fm00000000') --> craplcm.nrdctitg
                   ,pr_nrdocmto                       --> craplcm.nrdocmto
                   ,rw_craphis.cdhistor               --> craplcm.cdhistor
-                    ,rw_craplot_lcm.nrseqdig             --> craplcm.nrseqdig
+                  ,vr_nrseqdig             --> craplcm.nrseqdig
                   ,pr_vldocmto                       --> craplcm.vllanmto
                   ,0                                 --> craplcm.vldoipmf
                   ,vr_ultsqlcm                       --> craplcm.nrautdoc
@@ -2401,7 +2389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                         ,pr_cdagetfn => rw_crapass.cdagenci  --Codigo Agencia Terminal
                                         ,pr_nrterfin => 0                    --Numero Terminal Financeiro
                                         ,pr_nrsequni => 0                    --Numero Sequencial Unico
-                                        ,pr_nrautdoc => rw_craplot_lcm.nrseqdig + 1 --Numero Autenticacao Documento
+                                        ,pr_nrautdoc => vr_nrseqdig + 1      --Numero Autenticacao Documento
                                         ,pr_dsidenti => NULL                 --Descricao Identificacao
                                         ,pr_cdfvlcop => vr_cdfvlcop          --Codigo Faixa Valor Cooperativa
                                         ,pr_inproces => rw_crapdat.inproces  --Indicador Processo
@@ -2612,35 +2600,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     --Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
-    -- verificar se lote esta lockado
-    IF fn_verifica_lote_uso(pr_rowid => rw_craplot_tvl.rowid ) = 1 THEN
-      vr_dscritic:= 'Registro de lote '||rw_craplot_tvl.nrdolote||' em uso. Tente novamente.';
-      -- apensa jogar critica em log
-      RAISE vr_exc_log;
-    END IF;
-
-    -- Atualizar lote para craptvl
-    BEGIN
-      UPDATE craplot
-         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-             craplot.vlcompcr = nvl(craplot.vlcompcr,0) + pr_vldocmto,
-             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-             craplot.vlinfocr = nvl(craplot.vlinfocr,0) + pr_vldocmto
-       WHERE craplot.rowid = rw_craplot_tvl.rowid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_tvl.nrdolote||' :'||SQLERRM;
-        -- apensa jogar critica em log
-        RAISE vr_exc_log;
-    END;
-
-    -- verificar se lote esta lockado
-    IF fn_verifica_lote_uso(pr_rowid => rw_craplot_lcm.rowid ) = 1 THEN
-      vr_dscritic:= 'Registro de lote '||rw_craplot_lcm.nrdolote||' em uso. Tente novamente.';
-      -- apensa jogar critica em log
-      RAISE vr_exc_log;
-    END IF;
-
 		IF pr_flmobile = 1 THEN
 			vr_idorigem := 10; --> MOBILE
 		ELSE
@@ -2676,21 +2635,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
-    -- Atualizar lote para craplcm
-    BEGIN
-      UPDATE craplot
-         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-             craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vldocmto,
-             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-             craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vldocmto
-       WHERE craplot.rowid = rw_craplot_lcm.rowid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_lcm.nrdolote||' :'||SQLERRM;
-        -- apensa jogar critica em log
-        RAISE vr_exc_log;
-    END;
     END IF;
 	--Fim Bacenjud - SM 1
 

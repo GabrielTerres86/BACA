@@ -145,6 +145,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
 				              (Jonata - RKAM / M311). 
                               
                  18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
+                 
+                 15/01/2019 - Ajustar cursor cr_craplau_2, para não considerar registros cancelados (<> 3),
+                              desconsiderava apenas <> 1. (Wagner - Sustentação - PRB0040543).
+                              
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -231,7 +235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     AND   lau.dtmvtopg = pr_dtmvtolt
     AND   lau.cdhistor = pr_cdhistor
     AND   lau.nrdocmto = pr_nrdocmto
-    AND   lau.insitlau <> 1
+    AND   lau.insitlau NOT IN (1,3) -- Pendente ou Cancelado.
     AND   lau.dtdebito IS NOT NULL
     AND   lau.vllanaut = pr_vllanaut;
     rw_craplau_2 cr_craplau_2%ROWTYPE;

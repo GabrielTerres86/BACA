@@ -20,6 +20,9 @@ Alteracoes: 02/03/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
             15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
                          de dentro da b1wgen0200 
                          (Renato AMcom) 
+                         
+            16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ........................................................................... **/
 
 {dbo/bo-erro1.i}
@@ -137,6 +140,7 @@ PROCEDURE valida-cheque-avulso.
         END.
         ASSIGN p-valor = craplcm.vllanmto.
 
+        /* Revitalizacao - Remocao de lotes
         FIND craplot WHERE
              craplot.cdcooper = crapcop.cdcooper  AND
              craplot.dtmvtolt = crapdat.dtmvtocd  AND
@@ -156,6 +160,7 @@ PROCEDURE valida-cheque-avulso.
                         INPUT YES).
           RETURN "NOK".
     END.
+    */
 
     ASSIGN p-historico = craplcm.cdhistor.
 
@@ -189,6 +194,7 @@ PROCEDURE estorna-cheque-avulso.
                              NO-LOCK NO-ERROR.
    
     ASSIGN in99 = 0.
+    /* Revitalizacao - Remocao de lotes
     DO  WHILE TRUE:
         ASSIGN in99 = in99 + 1.
 
@@ -234,7 +240,8 @@ PROCEDURE estorna-cheque-avulso.
              END.
           END.
         LEAVE.
-    END.  /*  DO WHILE */
+    END.*/
+    /*  DO WHILE */
      
     ASSIGN in99 = 0.
     DO  WHILE TRUE:
@@ -343,10 +350,12 @@ PROCEDURE estorna-cheque-avulso.
              DELETE crapcme.
          END. 
                     
+    /* Remocao lotes
     ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
            craplot.qtinfoln  = craplot.qtinfoln - 1
            craplot.vlcompdb  = craplot.vlcompdb - p-valor
            craplot.vlinfodb  = craplot.vlinfodb - p-valor.
+    */
 
 		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 		RUN STORED-PROCEDURE pc_estorno_tarifa_saque  aux_handproc = PROC-HANDLE NO-ERROR
@@ -403,7 +412,7 @@ PROCEDURE estorna-cheque-avulso.
     IF  VALID-HANDLE(h-b1wgen0200) THEN
       DELETE PROCEDURE h-b1wgen0200.
    
-
+   /* Remocao lotes
    IF  craplot.vlcompdb = 0 and
        craplot.vlinfodb = 0 and
        craplot.vlcompcr = 0 and
@@ -411,6 +420,7 @@ PROCEDURE estorna-cheque-avulso.
        DELETE craplot.
    ELSE
       RELEASE craplot.
+   */
 
    RETURN "OK".
 END PROCEDURE.

@@ -32,7 +32,7 @@ end;
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/01/2019
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/01/2019
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -332,8 +332,14 @@ end;
                           
              17/10/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT C
                           Jose Dill - Mouts
-                          
+ 
              02/01/2019 - Tratamento para STR0006R2 - Pagto de boletos em cartório (Lucas Afonso/Cechet)                          
+ 
+             14/01/2019 - Tratamento para STR0006R2, contas 10000003 e 20000006, agencia 100 = Pagto de boletos
+                          em cartorio (Lucas Afonso/Cechet)
+						  
+			 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -368,7 +374,9 @@ end;
     vr_des_erro     VARCHAR2(1000);
     vr_tab_retorno  lanc0001.typ_reg_retorno;
     vr_incrineg     INTEGER;
-
+	
+	rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+    vr_nrseqdig    craplot.nrseqdig%type;
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -5002,32 +5010,31 @@ END pc_trata_arquivo_ldl;
       END IF;
 
       -- Buscar / Criar Lote
-      OPEN cr_craplot(pr_cdcooper => rw_b_crapcop.cdcooper
-                     ,pr_dtmvtolt => vr_aux_dtmvtolt
-                     ,pr_cdagenci => vr_glb_cdagenci
-                     ,pr_cdbccxlt => rw_b_crapcop.cdbcoctl
-                     ,pr_nrdolote => vr_glb_nrdolote);
-      FETCH cr_craplot INTO rw_b_craplot;
-      -- Se não encontrou capa do lote
-      IF cr_craplot%NOTFOUND THEN
-        -- Fecha Cursor
-        CLOSE cr_craplot;
-        -- Gerar erro
-        vr_dscritic := 'Lote nao encontrado.';
+      /* Projeto Revitalizacao - Remocao de lote */
+      lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_b_crapcop.cdcooper
+                                , pr_dtmvtolt => vr_aux_dtmvtolt
+                                , pr_cdagenci => vr_glb_cdagenci
+                                , pr_cdbccxlt => rw_b_crapcop.cdbcoctl
+                                , pr_nrdolote => vr_glb_nrdolote
+                                , pr_cdoperad => '1'
+                                , pr_nrdcaixa => 0
+                                , pr_tplotmov => 1
+                                , pr_cdhistor => 0
+                                , pr_craplot => rw_craplot_rvt
+                                , pr_dscritic => vr_dscritic);
+
+      if vr_dscritic is not null then
         RAISE vr_exc_saida;
-      ELSE
-        -- Apenas Fecha Cursor
-        CLOSE cr_craplot;
-      END IF;
+      end if;
 
       -- Verificar se ja existe Lancamento
       vr_aux_existlcm := 0;
       vr_aux_vllanmto := NULL;
-      OPEN cr_craplcm_exis(pr_cdcooper => rw_b_crapcop.cdcooper
-                          ,pr_dtmvtolt => rw_b_craplot.dtmvtolt
-                          ,pr_cdagenci => rw_b_craplot.cdagenci
-                          ,pr_cdbccxlt => rw_b_craplot.cdbccxlt
-                          ,pr_nrdolote => rw_b_craplot.nrdolote
+      OPEN cr_craplcm_exis(pr_cdcooper => rw_craplot_rvt.cdcooper
+                          ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                          ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                          ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                          ,pr_nrdolote => rw_craplot_rvt.nrdolote
                           ,pr_nrdctabb => rw_craptco.nrdconta
                           ,pr_nrdocmto => vr_aux_nrdocmto);
       FETCH cr_craplcm_exis
@@ -5036,19 +5043,26 @@ END pc_trata_arquivo_ldl;
 
       -- Se encontrar
       IF vr_aux_existlcm = 1 THEN
-        vr_dscritic := 'Lancamento ja existe! Lote: ' ||rw_b_craplot.nrdolote||', Doc.: ' || vr_aux_nrdocmto;
+        vr_dscritic := 'Lancamento ja existe! Lote: ' ||rw_craplot_rvt.nrdolote||', Doc.: ' || vr_aux_nrdocmto;
       ELSE
-        
+        vr_nrseqdig := fn_sequence('CRAPLOT'
+			                      ,'NRSEQDIG'
+			                      ,''||rw_b_crapcop.cdcooper||';'
+				                     ||to_char(vr_aux_dtmvtolt,'DD/MM/RRRR')||';'
+				                     ||vr_glb_cdagenci||';'
+				                     ||rw_b_crapcop.cdbcoctl||';'
+				                     ||vr_glb_nrdolote);
+
         vr_tab_retorno := NULL;
         vr_incrineg := 0;
-        
+
         -- Inserir Lancamento somente se não criticou acima
         LANC0001.pc_gerar_lancamento_conta
                       ( pr_cdcooper => rw_b_crapcop.cdcooper
-                       ,pr_dtmvtolt => rw_b_craplot.dtmvtolt
-                       ,pr_cdagenci => rw_b_craplot.cdagenci
-                       ,pr_cdbccxlt => rw_b_craplot.cdbccxlt
-                       ,pr_nrdolote => rw_b_craplot.nrdolote
+                       ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                       ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                       ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                       ,pr_nrdolote => rw_craplot_rvt.nrdolote
                        ,pr_nrdconta => rw_craptco.nrdconta
                        ,pr_nrdctabb => rw_craptco.nrdconta
                        ,pr_nrdocmto => vr_aux_nrdocmto
@@ -5058,7 +5072,7 @@ END pc_trata_arquivo_ldl;
                                            WHEN 'PAG0137R2' THEN 799 --> CREDITO TEC
                                            ELSE 578 --> CREDITO TED
                                         END)
-                       ,pr_nrseqdig => nvl(rw_b_craplot.nrseqdig,0) + 1
+                       ,pr_nrseqdig => vr_nrseqdig
                        ,pr_cdpesqbb => vr_aux_dadosdeb
                        ,pr_vllanmto => pr_vlrlanct
                        ,pr_cdoperad => '1'
@@ -5074,7 +5088,6 @@ END pc_trata_arquivo_ldl;
           --> sem tratativas de critica, criticas serão tratadas no if geral logo abaixo
           NULL;         
         END IF;
-                 
       END IF;
 
       -- Se deu erro na gravação
@@ -5103,21 +5116,6 @@ END pc_trata_arquivo_ldl;
         -- Retornar sem erro
         RETURN;
       END IF;
-
-      -- Atualizar capa do Lote
-      BEGIN
-        UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + pr_vlrlanct
-                          ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + pr_vlrlanct
-                          ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                          ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                          ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-        WHERE craplot.ROWID = rw_b_craplot.ROWID;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
-          -- Sair da rotina
-          RAISE vr_exc_saida;
-      END;
 
       -- Cria registro das movimentacoes no SPB
       pc_cria_gnmvcen(pr_cdagenci => rw_b_crapcop.cdagectl
@@ -5440,62 +5438,23 @@ END pc_trata_arquivo_ldl;
         vr_aux_dtmvtolt := vr_aux_dtintegr;
       END IF;
 
-      -- Marcelo Telles Coelho - Projeto 475
-      -- Verifica se o LOTE já foi criado para a Coperativa em questão
-      OPEN cr_craplot(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                     ,pr_dtmvtolt => vr_aux_dtmvtolt
-                     ,pr_cdagenci => vr_glb_cdagenci
-                     ,pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
-                     ,pr_nrdolote => vr_glb_nrdolote);
-      FETCH cr_craplot
-       INTO rw_craplot;
-      -- Se não encontrar
-      IF cr_craplot%NOTFOUND THEN
-        CLOSE cr_craplot;
-        -- Inserir o registro de lote para utilização posterior
-        BEGIN
-          INSERT INTO craplot (cdcooper
-                              ,dtmvtolt
-                              ,cdagenci
-                              ,cdbccxlt
-                              ,nrdolote
-                              ,tplotmov)
-                        VALUES(rw_crapcop_mensag.cdcooper  -- cdcooper
-                              ,vr_aux_dtmvtolt             -- dtmvtolt
-                              ,vr_glb_cdagenci             -- cdagenci
-                              ,rw_crapcop_mensag.cdbcoctl  -- cdbccxlt
-                              ,vr_glb_nrdolote             -- nrdolote
-                              ,1);                         -- tplotmov
-        EXCEPTION
-          WHEN dup_val_on_index THEN
-            -- Se o lote já existir é porque outra mensagem executou no mesmo momento, criou o ele e comitou.
-            NULL;
-            -- -- Lote já existe, critica 59
-            -- vr_dscritic := gene0001.fn_busca_critica(59) || ' - LOTE = ' || to_char(vr_glb_nrdolote,'fm000g000');
-            -- RAISE vr_exc_saida;
-          WHEN others THEN
-            -- Erro não tratado
-            vr_dscritic := 'Erro na insercao do lote '||vr_glb_nrdolote|| ' --> ' || sqlerrm;
-            RAISE vr_exc_saida;
-        END;
-        -- Buscar o lote criado
-        OPEN cr_craplot(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                       ,pr_dtmvtolt => vr_aux_dtmvtolt
-                       ,pr_cdagenci => vr_glb_cdagenci
-                       ,pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
-                       ,pr_nrdolote => vr_glb_nrdolote);
-        FETCH cr_craplot
-         INTO rw_craplot;
-        IF cr_craplot%NOTFOUND THEN
-        CLOSE cr_craplot;
-        -- Gerar erro
-        vr_dscritic := 'Lote nao encontrado.';
+      -- Buscar / Criar Lote
+      /* Projeto Revitalizacao - Remocao de lote */
+      lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                , pr_dtmvtolt => vr_aux_dtmvtolt
+                                , pr_cdagenci => vr_glb_cdagenci
+                                , pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
+                                , pr_nrdolote => vr_glb_nrdolote
+                                , pr_cdoperad => '1'
+                                , pr_nrdcaixa => 0
+                                , pr_tplotmov => 1
+                                , pr_cdhistor => 0
+                                , pr_craplot => rw_craplot_rvt
+                                , pr_dscritic => vr_dscritic);
+
+      if vr_dscritic is not null then
         RAISE vr_exc_saida;
-        END IF;
-      ELSE
-        CLOSE cr_craplot;
-      END IF;
-      -- Fim Projeto 475
+      end if;
 
       -- Como no campo CodMsg do XML de rejeicao vem o codigo da
       -- mensagem gerada pela cooperativa, sera gravado
@@ -5672,9 +5631,9 @@ END pc_trata_arquivo_ldl;
                  ,vr_aux_cdhistor
                  ,vr_aux_nrdocmto
                  ,vr_aux_VlrLanc
-                 ,rw_craplot.nrdolote
-                 ,rw_craplot.cdbccxlt
-                 ,rw_craplot.cdagenci
+                 ,rw_craplot_rvt.nrdolote
+                 ,rw_craplot_rvt.cdbccxlt
+                 ,rw_craplot_rvt.cdagenci
                  ,vr_aux_flgenvio
                  ,vr_aux_flgopfin
                  ,'1'
@@ -5687,12 +5646,6 @@ END pc_trata_arquivo_ldl;
                  ,0
                  ,vr_aux_nrridflp);
               -- Atualizar capa do Lote
-              UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-              WHERE craplot.ROWID = rw_craplot.ROWID;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar lancamento de devolucao ou na atualizacao do Lote: '||sqlerrm;
@@ -5707,7 +5660,7 @@ END pc_trata_arquivo_ldl;
               -- Montar email
               vr_aux_dsdemail := 'Ola, houve rejeicao na cabine da seguinte operacao TEC Salario: <br><br>'
                               || ' Conta/Dv: ' || vr_aux_nrctacre || ' <br>'
-                              || ' PA: ' || rw_craplot.cdagenci || ' <br>'
+                              || ' PA: ' || rw_craplot_rvt.cdagenci || ' <br>'
                               || ' Dt.Credito: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
                               || ' <br>'
                               || ' Dt.Transferencia: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
@@ -6520,9 +6473,9 @@ END pc_trata_arquivo_ldl;
           vr_aux_vllanmto := NULL;
           OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_mensag.cdcooper
                               ,pr_dtmvtolt => vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                              ,pr_cdagenci => rw_craplot.cdagenci
-                              ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                              ,pr_nrdolote => rw_craplot.nrdolote
+                              ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                              ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                              ,pr_nrdolote => rw_craplot_rvt.nrdolote
                               ,pr_nrdctabb => vr_aux_nrctacre
                               ,pr_nrdocmto => vr_aux_nrdocmto);
           FETCH cr_craplcm_exis
@@ -6534,7 +6487,7 @@ END pc_trata_arquivo_ldl;
             IF vr_aux_CodMsg in ('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
               -- Montar textos de logs
               vr_log_msgderro := 'Lancamento ja existe! Conta: ' || vr_aux_nrctacre
-                              || ', Lote: ' || rw_craplot.nrdolote
+                              || ', Lote: ' || rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
               -- Conforme cabine
               IF vr_aux_tagCABInf THEN
@@ -6546,7 +6499,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               -- Montar textos de logs
               vr_tipolog := 'RECEBIDA';
-              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot.nrdolote
+              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
             END IF;
             -- Cria registro das movimentacoes no SPB
@@ -6574,7 +6527,7 @@ END pc_trata_arquivo_ldl;
               /* Verifica se a TED é destinada a uma conta administradora de recursos */
               OPEN cr_tbfin_rec_con(pr_cdcooper => rw_crapcop_mensag.cdcooper
                                     ,pr_nrdconta => vr_aux_nrctacre
-                                    ,pr_cdagenci => rw_craplot.cdagenci);
+                                    ,pr_cdagenci => rw_craplot_rvt.cdagenci);
               FETCH cr_tbfin_rec_con
               INTO rw_tbfin_rec_con;
 
@@ -6627,18 +6580,26 @@ END pc_trata_arquivo_ldl;
               vr_tab_retorno := NULL;
               vr_incrineg := 0;
               
+              vr_nrseqdig := fn_sequence('CRAPLOT'
+			                      ,'NRSEQDIG'
+			                      ,''||rw_crapcop_mensag.cdcooper||';'
+				                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+				                     ||rw_craplot_rvt.cdagenci||';'
+				                     ||rw_craplot_rvt.cdbccxlt||';'
+				                     ||rw_craplot_rvt.nrdolote);
+
               -- -- Gerar lançamento em conta
               LANC0001.pc_gerar_lancamento_conta
                             ( pr_cdcooper => rw_crapcop_mensag.cdcooper
-                             ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                             ,pr_cdagenci => rw_craplot.cdagenci
-                             ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                             ,pr_nrdolote => rw_craplot.nrdolote
+                             ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                             ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                             ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                             ,pr_nrdolote => rw_craplot_rvt.nrdolote
                              ,pr_nrdconta => vr_aux_nrctacre
                              ,pr_nrdctabb => vr_aux_nrctacre
                              ,pr_nrdocmto => vr_aux_nrdocmto
                              ,pr_cdhistor => vr_aux_cdhistor
-                             ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                             ,pr_nrseqdig => vr_nrseqdig
                              ,pr_cdpesqbb => vr_aux_cdpesqbb
                              ,pr_vllanmto => vr_aux_VlrLanc
                              ,pr_cdoperad => '1'
@@ -6660,24 +6621,8 @@ END pc_trata_arquivo_ldl;
                  -- Sair da rotina
                  RAISE vr_exc_saida;
                 END IF; 
-              
               END IF;  
 
-              -- Atualizar capa do Lote
-              BEGIN
-                UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                  ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                  ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                  ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-                WHERE craplot.ROWID = rw_craplot.ROWID;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
-                  -- Sair da rotina
-                  RAISE vr_exc_saida;
-              END;
-              --
               -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
               -- Estornar a tarifa da TED, somente se for devolução/rejeição de TED gerada no Ailos
               IF vr_aux_tagCABInfCCL
@@ -7976,9 +7921,9 @@ END pc_trata_arquivo_ldl;
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
                   /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
 				  ) THEN
-           -- Se for finalidade 10 com esse cnpj e agencia não gerar erro
+           -- Se conta 10000003 ou 20000006 e Agencia 100, entao é
+           -- TED recebida de boleto pago em cartório
            IF TRIM(vr_aux_CtCredtd) IN ('10000003','20000006') AND
-              vr_aux_CNPJ_CPFCred = '5463212000129' AND
               vr_aux_AgCredtd = '100'               THEN
                NULL;
            ELSE  

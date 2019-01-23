@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 18/04/2017
+   Data    : Marco/2010                        Ultima atualizacao: 28/11/2018
 
    Dados referentes ao programa:
 
@@ -45,6 +45,9 @@
          29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
                       Chamado SCTASK0012791 (Heitor - Mouts)
 
+               28/11/2018 - Inclusão da coluna que lista as datas dos cheques devolvidos pela alinea 12.
+                            Chamado SCTASK0029233 (Marco Amorim - Mouts)		
+
 ..............................................................................*/
                   
 { includes/var_batch.i }
@@ -64,6 +67,7 @@ DEF TEMP-TABLE w_enviados
     FIELD idseqttl LIKE crapttl.idseqttl
     FIELD flginclu AS LOGICAL FORMAT "INCLUSAO NO CCF/EXCLUSAO DO CCF"
     FIELD nmextttl LIKE crapttl.nmextttl 
+	FIELD dtiniest LIKE crapneg.dtiniest
     FIELD dtfimest LIKE crapneg.dtfimest
     FIELD nrcpfcgc LIKE crapttl.nrcpfcgc    
     FIELD nrcheque LIKE crapneg.nrdocmto
@@ -78,6 +82,7 @@ DEF TEMP-TABLE w_criticas
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD idseqttl LIKE crapttl.idseqttl
     FIELD nmextttl LIKE crapttl.nmextttl 
+	FIELD dtiniest LIKE crapneg.dtiniest
     FIELD dtfimest LIKE crapneg.dtfimest
     FIELD nrcpfcgc LIKE crapttl.nrcpfcgc 
     FIELD nrcheque LIKE crapneg.nrdocmto
@@ -137,6 +142,7 @@ FORM w_enviados.nrdconta    AT   5   LABEL "Conta/DV"
      w_enviados.nrcpfcgc             LABEL "CPF/CNPJ" 
      w_enviados.nrcheque             LABEL "Cheque"
      w_enviados.cdobserv             LABEL "Alinea"  
+     w_enviados.dtiniest             LABEL "Data Dev" FORMAT "99/99/99"	 
      w_enviados.dtfimest             LABEL "Data Reg" FORMAT "99/99/99"
      w_enviados.vlcheque             LABEL "Valor"
      WITH DOWN NO-LABELS WIDTH 132 FRAME f_enviados.
@@ -148,7 +154,8 @@ FORM w_criticas.nrdconta    AT   5   LABEL "Conta/DV"
      w_criticas.nrcpfcgc             LABEL "CPF/CNPJ"  
      w_criticas.nrcheque             LABEL "Cheque"
      w_criticas.cdobserv             LABEL "Alinea"   
-     w_enviados.dtfimest             LABEL "Data Reg" FORMAT "99/99/99"
+     w_criticas.dtiniest             LABEL "Data Dev" FORMAT "99/99/99"	 
+     w_criticas.dtfimest             LABEL "Data Reg" FORMAT "99/99/99"
      w_criticas.vlcheque             LABEL "Valor"
      WITH DOWN NO-LABELS WIDTH 132 FRAME f_criticas.     
 
@@ -310,11 +317,16 @@ FOR EACH crapcop
                                         w_criticas.nrdconta = crapass.nrdconta
                                         w_criticas.idseqttl = crapttl.idseqttl 
                                         w_criticas.nmextttl = crapttl.nmextttl
+										w_criticas.dtiniest = crapneg.dtiniest
                                         w_criticas.dtfimest = crapneg.dtfimest
                                         w_criticas.nrcpfcgc = crapttl.nrcpfcgc
                                         w_criticas.nrcheque = crapneg.nrdocmto
                                         w_criticas.cdobserv = crapneg.cdobserv
                                         w_criticas.vlcheque = crapneg.vlestour.
+                                IF  crapneg.cdobserv = 12  THEN
+                                DO:
+                                   ASSIGN w_criticas.dtfimest = crapneg.dtfimest.
+                            END.
                             END.
                     
                     END. /*** Fim do FOR EACH crapttl ***/
@@ -392,6 +404,7 @@ FOR EACH crapcop
                                           w_criticas.nrdconta = crapass.nrdconta
                                           w_criticas.idseqttl = crapttl.idseqttl
                                           w_criticas.nmextttl = crapttl.nmextttl
+										  w_criticas.dtiniest = crapneg.dtiniest
                                           w_criticas.dtfimest = crapneg.dtfimest
                                           w_criticas.nrcpfcgc = crapttl.nrcpfcgc
                                           w_criticas.nrcheque = crapneg.nrdocmto
@@ -539,7 +552,6 @@ PROCEDURE fecha_arquivo:
         
         UNIX SILENT VALUE("rm " + aux_dscooper + "arq/"
                          + aux_nmarqimp + " 2>/dev/null"). 
-        
         RETURN.        
     END.
     
@@ -735,6 +747,7 @@ PROCEDURE registro:
            w_enviados.cdagenci = crapass.cdagenci
            w_enviados.nrdconta = crapass.nrdconta
            w_enviados.idseqttl = aux_idseqttl
+		   w_enviados.dtiniest = crapneg.dtiniest
            w_enviados.dtfimest = crapneg.dtfimest
            w_enviados.flginclu = IF  crapneg.flgctitg = 5   OR
                                     (crapneg.flgctitg = 4   AND
@@ -810,9 +823,10 @@ PROCEDURE rel_enviados:
                 w_enviados.nrdconta  WHEN FIRST-OF(w_enviados.nrdconta)
                 w_enviados.idseqttl  WHEN FIRST-OF(w_enviados.idseqttl)
                 w_enviados.nmextttl  WHEN FIRST-OF(w_enviados.idseqttl)
-                w_enviados.dtfimest  
                 w_enviados.nrcpfcgc  WHEN FIRST-OF(w_enviados.idseqttl)
                 w_enviados.nrcheque
+				w_enviados.dtiniest
+                w_enviados.dtfimest
                 w_enviados.cdobserv   
                 w_enviados.vlcheque
                 WITH FRAME f_enviados.
@@ -891,9 +905,10 @@ PROCEDURE rel_enviados:
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                                w_criticas.nmextttl  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
-                               w_criticas.dtfimest  
                                w_criticas.nrcpfcgc  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
+							   w_criticas.dtiniest						   
+                               w_criticas.dtfimest
                                WITH FRAME f_criticas.
                     END.
                 ELSE
@@ -904,11 +919,12 @@ PROCEDURE rel_enviados:
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                             w_criticas.nmextttl  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
-                            w_criticas.dtfimest  
                             w_criticas.nrcpfcgc  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                             w_criticas.nrcheque
                             w_criticas.cdobserv               
+                            w_criticas.dtiniest                              
+                            w_criticas.dtfimest							
                             w_criticas.vlcheque
                             WITH FRAME f_criticas.
 
@@ -1006,10 +1022,11 @@ PROCEDURE rel_enviados:
                 w_enviados.nrdconta  WHEN FIRST-OF(w_enviados.nrdconta)
                 w_enviados.idseqttl  WHEN FIRST-OF(w_enviados.idseqttl)
                 w_enviados.nmextttl  WHEN FIRST-OF(w_enviados.idseqttl)
-                w_enviados.dtfimest  
                 w_enviados.nrcpfcgc  WHEN FIRST-OF(w_enviados.idseqttl)
                 w_enviados.nrcheque
                 w_enviados.cdobserv                
+                w_enviados.dtiniest
+                w_enviados.dtfimest                
                 w_enviados.vlcheque
                 WITH FRAME f_enviados.
             
@@ -1069,9 +1086,10 @@ PROCEDURE rel_enviados:
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                                    w_criticas.nmextttl  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
-                                   w_criticas.dtfimest  
                                    w_criticas.nrcpfcgc  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
+								   w_criticas.dtiniest              
+                                   w_criticas.dtfimest
                                    WITH FRAME f_criticas.
                         END.
                     ELSE
@@ -1082,11 +1100,12 @@ PROCEDURE rel_enviados:
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                                 w_criticas.nmextttl  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
-                                w_criticas.dtfimest  
                                 w_criticas.nrcpfcgc  
                                                WHEN FIRST-OF(w_criticas.idseqttl)
                                 w_criticas.nrcheque
                                 w_criticas.cdobserv               
+                                w_criticas.dtiniest              
+                                w_criticas.dtfimest								
                                 w_criticas.vlcheque
                                 WITH FRAME f_criticas.
     

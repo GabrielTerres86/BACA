@@ -815,7 +815,7 @@
           19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)             
 
 		  23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
-      
+          
       13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
           
  ..............................................................................*/
@@ -7519,7 +7519,7 @@ PROCEDURE grava-proposta-completa:
            END.
         
         /*Valida a criaçao de seguro prestamista - PRJ438 - Paulo Martins (Mouts)*/
-        IF par_inpessoa = 1 THEN
+        IF par_inpessoa = 1 AND NOT aux_fleprCDC THEN /*INC0026220 não gera para CDC*/
         DO:
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_cria_proposta_sp

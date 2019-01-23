@@ -23,6 +23,9 @@
                08/06/2018 - Alteracao do campo crapdat.dtmvtolt para 
                             crapdat.dtmvtocd - Everton Deserto(AMCOM).
 
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
+
 ----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
@@ -253,6 +256,7 @@ PROCEDURE verifica-crapchd:
     
     /** Posicionar no LOTE de ORIGEM */
     ASSIGN in99 = 0.
+    /* Revitalizacao - Remocao de lotes
     DO  WHILE TRUE:
         ASSIGN in99 = in99 + 1.
     
@@ -296,7 +300,8 @@ PROCEDURE verifica-crapchd:
     
         LEAVE.
     
-    END.  /*  DO WHILE */
+    END.*/
+    /*  DO WHILE */
     
     
     FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper
@@ -458,12 +463,14 @@ PROCEDURE verifica-crapchd:
                 RETURN.
             END.
             ELSE DO:
+                /* Revitalizacao - Remocao de lotes
                 ASSIGN craplot.qtcompln = craplot.qtcompln - 1
                        craplot.qtinfoln = craplot.qtinfoln - 1
                        craplot.vlcompdb = craplot.vlcompdb - 
                                           crablcm.vllanmto
                        craplot.vlinfodb = craplot.vlinfodb - 
                                           crablcm.vllanmto.
+                */
                 DELETE crablcm.
             END.
         END.

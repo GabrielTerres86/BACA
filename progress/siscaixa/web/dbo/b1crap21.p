@@ -36,6 +36,9 @@
 
                 14/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                               norturno rodando (Douglas Pagel - AMcom).
+                              
+                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ----------------------------------------------------------------------------- **/
 
 { dbo/bo-erro1.i}
@@ -778,38 +781,6 @@ PROCEDURE estorna-doc-ted:
                             
                          DELETE craplcm.
 
-                         DO in99 = 1 TO 10:
-
-                            FIND craplot WHERE 
-                                 craplot.cdcooper = crapcop.cdcooper  AND
-                                 craplot.dtmvtolt = crapdat.dtmvtocd  AND
-                                 craplot.cdagenci = p-cod-agencia     AND
-                                 craplot.cdbccxlt = 11   /* Fixo */   AND 
-                                 craplot.nrdolote = i-nro-lote-lcm  
-                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                            IF   NOT AVAIL craplot   THEN
-                                 IF   LOCKED craplot   THEN
-                                      DO:
-                                          ASSIGN i-cod-erro  = 0
-                                                 c-desc-erro = "Tabela CRAPLOT"
-                                                             + " em uso".
-                                          PAUSE 1 NO-MESSAGE.
-                                          NEXT.
-                                      END.
-                                 ELSE
-                                      DO:
-                                          ASSIGN i-cod-erro  = 60
-                                                 c-desc-erro = " ". 
-                                          LEAVE.
-                                      END.
-                                 
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = "".
-                            LEAVE.
-
-                         END. /* DO TO ... */
-
                          IF   i-cod-erro <> 0     OR
                               c-desc-erro <> ""  THEN
                               DO: 
@@ -821,16 +792,6 @@ PROCEDURE estorna-doc-ted:
                                                  INPUT YES).
                                   RETURN "NOK".                          
                               END.
-
-                         ASSIGN craplot.qtcompln = craplot.qtcompln - 1
-                                craplot.vlcompdb = craplot.vlcompdb - 
-                                                   p-val-doc-lcm
-                                craplot.qtinfoln = craplot.qtinfoln - 1
-                                craplot.vlinfodb = craplot.vlinfodb -
-                                                   p-val-doc-lcm.
-                  
-                         RELEASE craplot.
-
                      END.
 
                 ASSIGN i-cod-erro  = 0

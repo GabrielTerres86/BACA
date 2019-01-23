@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -101,6 +101,20 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             23/11/2018 - Implantacao projeto 421 - Melhorias nas ferramentas contabeis e fiscais, entrega 2.
   --                          Heitor (Mouts) - Prj421
+  --
+  --             13/12/2018 - Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo 
+  --                          arquivo CCB3 (Lucas Ranghetti INC0027563)
+  --
+  --             14/12/2018 - Adicionar dup_val_on_index ao inserir registro na crapdcb, caso 
+  --                          utilize o dup_val será adicionado + 1 segundo na hrgmt para evitar
+  --                          problemas referente uk de tarifas (Lucas Ranghetti PRB0040489)
+  --
+  --             21/12/2018 - Efetuado ajuste para caso seja efetuado um upgrade ele atualize
+  --                          todos os cartões que vieram no arquivo com o tipo 4 do ccr3
+  --                          (Lucas Ranghetti #INC0029505)
+  --                         - Incluir a critica 143 - conta duplicada junto da critica 080
+  --                           para não prosseguirmos com a inclusão do cartão pois o mesmo
+  --                           ja possui cartão (Lucas Ranghetti #PRB0040493)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -2541,7 +2555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Andreatta - Mouts
-    Data    : Agosto/18.                    Ultima atualizacao: 
+    Data    : Agosto/18.                    Ultima atualizacao: 14/12/2018
                 
     Dados referentes ao programa:
                 
@@ -2553,7 +2567,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
     Observacao: -----
                              
-    Alteracoes:               
+    Alteracoes: 14/12/2018 - Adicionar dup_val_on_index ao inserir registro na crapdcb, caso 
+                             utilize o dup_val será adicionado + 1 segundo na hrgmt para evitar
+                             problemas referente uk de tarifas (Lucas Ranghetti PRB0040489)
             	 
     ....................................................................................................*/
     DECLARE
@@ -4259,11 +4275,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       ,vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt
                      );
                   EXCEPTION
+                    WHEN dup_val_on_index THEN
+                       -- tentar inserir novamente porém com hrgmt + 1 segundo
+                       BEGIN
+                        INSERT INTO crapdcb
+                           (tpmensag
+                           ,nrnsucap
+                           ,dtdtrgmt
+                           ,hrdtrgmt
+                           ,cdcooper
+                           ,nrdconta
+                           ,nrseqarq
+                           ,nrinstit
+                           ,cdprodut
+                           ,nrcrcard
+                           ,tpdtrans
+                           ,cddtrans
+                           ,cdhistor
+                           ,dtdtrans
+                           ,dtpostag
+                           ,dtcnvvlr
+                           ,vldtrans
+                           ,vldtruss
+                           ,cdautori
+                           ,dsdtrans
+                           ,cdcatest
+                           ,cddmoeda
+                           ,vlmoeori
+                           ,cddreftr
+                           ,cdagenci
+                           ,nridvisa
+                           ,cdtrresp
+                           ,incoopon
+                           ,txcnvuss
+                           ,cdautban
+                           ,idtrterm
+                           ,tpautori
+                           ,cdproces
+                           ,dstrorig
+                           ,nrnsuori
+                           ,dtmvtolt
+                           )
+                        VALUES
+                          (vr_tab_crapdcb(vr_idxdcb).det.tpmensag
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt
+                          ,to_number(to_char(to_date(trim(to_char(vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt,'000000')),'hh24miss')+(1/86400),'hh24miss'))
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrdconta
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrseqarq
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrinstit
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdprodut
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrcrcard
+                          ,vr_tab_crapdcb(vr_idxdcb).det.tpdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdhistor
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtpostag
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtcnvvlr
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vldtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vldtruss
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dsdtrans
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdcatest
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddmoeda
+                          ,vr_tab_crapdcb(vr_idxdcb).det.vlmoeori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cddreftr
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdagenci
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nridvisa
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdtrresp
+                          ,vr_tab_crapdcb(vr_idxdcb).det.incoopon
+                          ,vr_tab_crapdcb(vr_idxdcb).det.txcnvuss
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdautban
+                          ,vr_tab_crapdcb(vr_idxdcb).det.idtrterm
+                          ,vr_tab_crapdcb(vr_idxdcb).det.tpautori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.cdproces
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dstrorig
+                          ,vr_tab_crapdcb(vr_idxdcb).det.nrnsuori
+                          ,vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt
+                         );
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_dscritic := 'Erro ao inserir crapdcb dup_val: '||SQLERRM 
+                          || 'nsu: '|| vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
+                          || 'aut: '|| vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                          || 'cop: '|| vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                          || 'con: '|| vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
+                          RAISE vr_exc_saida;
+                      END;  -- fim dup_val
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro ao inserir crapdcb: '||SQLERRM 
                       || 'nsu: '|| vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
-                      || 'cop: '||vr_tab_crapdcb(vr_idxdcb).det.cdcooper
-                      || 'con: ' ||vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
+                      || 'aut: '|| vr_tab_crapdcb(vr_idxdcb).det.cdautori
+                      || 'cop: '|| vr_tab_crapdcb(vr_idxdcb).det.cdcooper
+                      || 'con: '|| vr_tab_crapdcb(vr_idxdcb).det.nrdconta;
                       RAISE vr_exc_saida;
                   END;
                 ELSE
@@ -6211,7 +6316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 18/07/2018
+    Data    : Maio/14.                    Ultima atualizacao: 13/12/2018
 
     Dados referentes ao programa:
 
@@ -6224,6 +6329,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
     Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Novos parametros passados nas chamadas
                              devido paralelismo criado - Andreatta (MOUTs) 
+                             
+                13/12/2018 - Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo 
+                             arquivo (Lucas Ranghetti INC0027563)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6464,6 +6572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_cdestcvl   crapavt.cdestcvl%TYPE;
       vr_nrcpfcgc   crapavt.nrcpfcgc%TYPE;
       vr_inpessoa   crapavt.inpessoa%TYPE;      
+      vr_qtdconta   pls_integer; -- Contar quantidade de registros por conta no arquivo
       vr_cdprogra   VARCHAR2(19) := 'CCRD0003.PC_CRPS671';
       
       -- Upgrade no cartao do TITULAR 1
@@ -7738,7 +7847,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF NVL(vr_nrctaant,0) <> rw_crawcrd.nrdconta THEN
                 vr_flupgrad := FALSE;
                 vr_nrctaant := rw_crawcrd.nrdconta;
+               vr_qtdconta := 0; -- Limpar contagem por conta
               END IF;
+              
+              -- Contar quantidade de registros por conta no arquivo
+              vr_qtdconta := vr_qtdconta + 1;
+
+              -- Limitar em 8 solicitacoes de cartoes para a mesma conta no mesmo arquivo
+              -- as que nao forem nesse arquivo vao no arquivo do dia seguinte
+              if vr_qtdconta > 8 then                
+                continue;
+              end if;
               
               -- Busca Administradora de Cartões
               OPEN cr_crapadc(pr_cdcooper => rw_crawcrd.cdcooper,
@@ -8345,7 +8464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 09/07/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 21/12/2018
 
        Dados referentes ao programa:
 
@@ -8495,10 +8614,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    09/07/2018 - Validar critica 080 apos a criacao da critica no
                                 relatorio (Lucas Ranghetti INC0018668)
-				   23/10/2018 - Adicionado cursor para encontrar cooperado pelo cpf (Bruno Mouts INC0024859 )
-				   13/11/2018 - Criado uma nova regra onde gera lote a cada mil mensagem sms (Douglas Mouts PRB0040381)
+				   
+                   23/10/2018 - Adicionado cursor para encontrar cooperado pelo cpf 
+                                (Bruno Mouts INC0024859 )
+				   
+                   13/11/2018 - Criado uma nova regra onde gera lote a cada mil mensagem sms 
+                                (Douglas Mouts PRB0040381)
+				   
 				   10/12/2018 - foi feito a validação do codigo de administrador, caso o mesmo esteja zerado
                                 será usado o cdgrafin do arquivo para fazer a validação (Bruno Cardoso,PRB0040377, Mout'S).
+                                
+                   21/12/2018 - Efetuado ajuste para caso seja efetuado um upgrade ele atualize
+                                todos os cartões que vieram no arquivo com o tipo 4 do ccr3
+                                (Lucas Ranghetti #INC0029505)
+                              - Incluir a critica 143 - conta duplicada junto da critica 080
+                                para não prosseguirmos com a inclusão do cartão pois o mesmo
+                                ja possui cartão (Lucas Ranghetti #PRB0040493)
+
+				   16/01/2019 - Adicionar ordenacao no cursor cr_crawcrd (Anderson).
     ............................................................................ */
 
     DECLARE
@@ -8620,6 +8753,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Armazena o indicador de envio de SMS para o produto, por cooperativa
       TYPE typ_tab_enviasms IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
       vr_tab_enviasms      typ_tab_enviasms;
+      
+      -- Dados para upgrade
+      TYPE typ_tab_reg_upgrade IS 
+      TABLE OF VARCHAR2(100) 
+      INDEX BY varchar2(100);
+      
+      vr_tab_reg_upgrade typ_tab_reg_upgrade;
       
       ------------------------------- CURSORES ---------------------------------
      -- Faz a procura do cartão pelo CPF do cooperado
@@ -8757,7 +8897,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              pcr.nrcpftit = pr_nrcpftit  AND
              pcr.cdadmcrd = pr_cdadmcrd  AND
              (pcr.rowid <> pr_rowid OR pr_rowid IS NULL) AND
-             pcr.dtcancel IS NULL;
+             pcr.dtcancel IS NULL
+    /* Dar preferencia para os cartoes insitcrd = [2 - solicitado] pois acabou
+       pegando propostas de cartoes cancelados e outras situacoes indevidas */
+    ORDER BY DECODE(pcr.insitcrd,2,0,9);
       rw_crawcrd cr_crawcrd%ROWTYPE;
 
       -- cursor para busca de proposta de cartões do bancoob por conta
@@ -9239,6 +9382,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           SELECT crawcrd.cdadmcrd,
                  crawcrd.vllimcrd,
                  crawcrd.nrcrcard,
+                 crawcrd.nrcpftit,
+                 crawcrd.nrcctitg,
+                 crawcrd.nrdconta,
+                 crawcrd.cdcooper,
                  row_number() over(partition by crawcrd.cdcooper, crawcrd.nrdconta, crawcrd.cdadmcrd
                                        order by crawcrd.cdcooper, crawcrd.nrdconta, crawcrd.cdadmcrd) nrseqreg,
                  progress_recid
@@ -9497,6 +9644,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             END IF;  
             
           END IF; /* END IF rw_crawcrd_limite.nrseqreg = 1 THEN */
+          
+          if vr_tab_reg_upgrade.exists(rw_crawcrd_limite.nrcpftit||
+                                       rw_crawcrd_limite.nrcctitg||
+                                       rw_crawcrd_limite.nrcrcard) then
+                                    
+            -- Administradora dos cartões   
+            OPEN cr_cdadmcrd(pr_cdgrafin => vr_cdgrafin);
+            FETCH cr_cdadmcrd
+            INTO rw_cdadmcrd;
+          
+            CLOSE cr_cdadmcrd;
+            
+            BEGIN
+              UPDATE crawcrd
+                 SET cdadmcrd = nvl(rw_cdadmcrd.cdadmcrd, 0)
+               where crawcrd.progress_recid = rw_crawcrd_limite.progress_recid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                pr_dscritic := 'Erro ao atualizar crawcrd[1]: ' || SQLERRM;
+                RAISE vr_exc_erro;
+            END;      
+            
+            BEGIN
+              UPDATE crapcrd
+                 SET cdadmcrd = nvl(rw_cdadmcrd.cdadmcrd, 0)
+               where crapcrd.cdcooper = rw_crawcrd_limite.cdcooper
+                 and crapcrd.nrdconta = rw_crawcrd_limite.nrdconta
+                 and crapcrd.nrcrcard = rw_crawcrd_limite.nrcrcard;
+            EXCEPTION
+              WHEN OTHERS THEN
+                pr_dscritic := 'Erro ao atualizar crapcrd[1]: ' || SQLERRM;
+                RAISE vr_exc_erro;
+            END;                                    
+          end if;
           
           -- Vamos verificar se o Limite existe
        /* Anderson - conforme INC0022475 e orientação negócio devemos importar 
@@ -10831,12 +11012,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     CONTINUE;
                     END IF;
                  END IF;
+                    if cr_crawcrd_cpf%isopen then
                     CLOSE cr_crawcrd_cpf; 
+                    end if;
                   ELSE
 
      			   vr_nrctatp2 := rw_crawcrd_outros.nrdconta;
-                 
+                   if cr_crawcrd_outros%isopen then
                     CLOSE cr_crawcrd_outros;                    
+                   end if;             
                   END IF;
                   END IF;
                 END IF;                
@@ -10909,9 +11093,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         RAISE vr_exc_saida;
                       END;
 
-                    /* nao deve solicitar cartao novamente caso retorne critica 080
-                       (pessoa ja tem cartao nesta conta) */
-                    IF substr(vr_des_text, 211, 3) = '080' THEN
+                    /* nao deve solicitar cartao novamente caso retorne critica 
+                       080 - pessoa ja tem cartao nesta conta 
+                       143 - conta duplicada */
+                    IF substr(vr_des_text, 211, 3) in( '080','143') THEN
                       continue;
                     END IF;
 
@@ -11011,6 +11196,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    --Levantar Excecao
                    RAISE vr_exc_saida;
                 END;   
+                
+                if vr_tipooper = 4 then -- adicional
+                  -- cpf + conta cartao + cartao
+                  vr_tab_reg_upgrade(vr_nrcpfcgc||vr_nrdctitg||vr_nrcrcard):= vr_nrdconta;
+                end if;
                 
                 -- Verifica se a operação é de inclusão de adicional, ou seja,
                 -- verifica se a linha anterior processada refere-se a linha atual
@@ -11383,9 +11573,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       RAISE vr_exc_saida;
                     END;
 
-                   /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                  /* nao deve solicitar cartao novamente caso retorne critica 
+                     080 - pessoa ja tem cartao nesta conta 
+                     143 - conta duplicada */
+                  IF substr(vr_des_text, 211, 3) in( '080','143') THEN
                     continue;
                   END IF;
 

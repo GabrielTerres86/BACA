@@ -610,7 +610,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
       
           IF cr_tbevento_pessoa_grupos%NOTFOUND THEN
             CLOSE cr_tbevento_pessoa_grupos;
-            vr_dscritic := 'Conta do cooperado não encontrada. IDPessoa = '||vr_idpessoaint;
+            vr_dscritic := 'Conta do cooperado não encontrada. IDPessoa = '||vr_idpessoaint||' - '||vr_nome;
             RAISE vr_exc_saida;
           ELSE
             vr_conta := rw_tbevento_pessoa_grupos.nrdconta;
@@ -654,12 +654,12 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
           -- relacionado a conta associada ao CFP do sócio na tabela crapavt
           ELSIF vr_tppessoa = 1 THEN-- Pessoa Jurídica
             -- Buscar conta na crapavt
-            OPEN cr_crapavt(vr_cdcooper,vr_conta,vr_idpessoasoc);
+            OPEN cr_crapavt(vr_cdcooper,vr_conta,vr_cpf);
             FETCH cr_crapavt INTO rw_crapavt ;
       
             IF cr_crapavt%NOTFOUND THEN
               CLOSE cr_crapavt;
-              vr_dscritic := 'Dados do sócio não encontrados na tabela CRAPAVT IDSócio = '||vr_idpessoasoc;
+              vr_dscritic := 'Dados do sócio não encontrados na tabela CRAPAVT IDPessoa = '||vr_idpessoaint||' - '||vr_nome;
               RAISE vr_exc_saida;
             ELSE
               vr_conta_socio := rw_crapavt.nrdctato;
@@ -786,9 +786,26 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
       EXCEPTION
         when others then
           vr_sqlerrm := sqlerrm;
-          raise vr_exc_insert;
+          raise vr_exc_saida;
       END;  
         exception
+          WHEN vr_exc_saida THEN
+
+            IF vr_cdcritic <> 0 THEN
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+           ELSE
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+            END IF;        
+
+            -- Carregar XML padrão para variável de retorno não utilizada.
+            -- Existe para satisfazer exigência da interface.
+            pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+            ROLLBACK;
+            raise;            
           when no_data_found then
             -- última linha
           raise;
@@ -817,6 +834,23 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
       commit;
       
       WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;        
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+
+      WHEN vr_exc_insert THEN
 
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;

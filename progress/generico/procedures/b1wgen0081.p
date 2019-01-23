@@ -216,7 +216,9 @@
 			   
                18/10/2018 - PJ450 Regulatório de Credito - Substituído o delete na craplcm pela chamada 
                             da rotina h-b1wgen0200.estorna_lancamento_conta. (Heckmann - AMcom)
-			   
+			         
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -2281,6 +2283,7 @@ PROCEDURE cancelar-resgates-aplicacao:
         IF  craprda.flgctain      AND   /** Nova aplicacao        **/  
             NOT craplrg.flgcreci  THEN  /** Somente Transferencia **/
             DO:
+                /* Revitalizacao - Remocao de Lotes
                 DO aux_contador = 1 TO 10:
 
                     ASSIGN aux_cdcritic = 0
@@ -2306,13 +2309,15 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                     LEAVE.
 
-                END. /** Fim do DO ... TO **/
+                END.
+                */
+                /** Fim do DO ... TO **/
 
                 IF  aux_cdcritic > 0  THEN
                     UNDO TRANSACAO, LEAVE TRANSACAO.
 
-                IF  AVAILABLE crablot  THEN
-                    DO:
+                /*IF  AVAILABLE crablot  THEN
+                    DO:*/
                         DO aux_contador = 1 TO 10:
 
                             ASSIGN aux_cdcritic = 0
@@ -2320,10 +2325,10 @@ PROCEDURE cancelar-resgates-aplicacao:
         
                             FIND craplci WHERE 
                                  craplci.cdcooper = par_cdcooper     AND
-                                 craplci.dtmvtolt = crablot.dtmvtolt AND
-                                 craplci.cdagenci = crablot.cdagenci AND
-                                 craplci.cdbccxlt = crablot.cdbccxlt AND
-                                 craplci.nrdolote = crablot.nrdolote AND
+                                 craplci.dtmvtolt = par_dtmvtolt     AND
+                                 craplci.cdagenci = 1                AND
+                                 craplci.cdbccxlt = 100              AND
+                                 craplci.nrdolote = 10105            AND
                                  craplci.nrdconta = craplrg.nrdconta AND
                                  craplci.nrdocmto = craplrg.nrdocmto 
                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -2347,6 +2352,7 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                         IF  AVAILABLE craplci  THEN
                             DO:
+                                /*
                                 ASSIGN crablot.qtinfoln = 
                                                crablot.qtinfoln - 1
                                        crablot.qtcompln = 
@@ -2356,20 +2362,21 @@ PROCEDURE cancelar-resgates-aplicacao:
                                                craplci.vllanmto
                                        crablot.vlcompdb = 
                                                crablot.vlcompdb - 
-                                               craplci.vllanmto.
+                                               craplci.vllanmto.*/
         
                                 DELETE craplci.
                             END.
 
-                        IF  crablot.qtcompln = 0  AND
+                        /*IF  crablot.qtcompln = 0  AND
                             crablot.qtinfoln = 0  AND
                             crablot.vlcompdb = 0  AND
                             crablot.vlinfodb = 0  AND
                             crablot.vlcompcr = 0  AND
                             crablot.vlinfocr = 0  THEN
                             DELETE crablot.
-                    END.
+                    END.*/
 
+                /* Revitalizacao - Remocao de Lotes
                 DO aux_contador = 1 TO 10:
 
                     ASSIGN aux_cdcritic = 0
@@ -2395,13 +2402,14 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                     LEAVE.
 
-                END. /** Fim do DO ... TO **/
+                END.*/
+                /** Fim do DO ... TO **/
 
                 IF  aux_cdcritic > 0  THEN
                     UNDO TRANSACAO, LEAVE TRANSACAO.
 
-                IF  AVAILABLE crablot  THEN
-                    DO:
+                /*IF  AVAILABLE crablot  THEN
+                    DO:*/
                         DO aux_contador = 1 TO 10:
         
                             ASSIGN aux_cdcritic = 0
@@ -2409,10 +2417,10 @@ PROCEDURE cancelar-resgates-aplicacao:
         
                             FIND craplci WHERE 
                                  craplci.cdcooper = par_cdcooper     AND
-                                 craplci.dtmvtolt = crablot.dtmvtolt AND
-                                 craplci.cdagenci = crablot.cdagenci AND
-                                 craplci.cdbccxlt = crablot.cdbccxlt AND
-                                 craplci.nrdolote = crablot.nrdolote AND
+                                 craplci.dtmvtolt = par_dtmvtolt     AND
+                                 craplci.cdagenci = 1                AND
+                                 craplci.cdbccxlt = 100              AND
+                                 craplci.nrdolote = 10104            AND
                                  craplci.nrdconta = craplrg.nrdconta AND
                                  craplci.nrdocmto = craplrg.nrdocmto 
                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -2436,7 +2444,7 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                         IF  AVAILABLE craplci  THEN
                             DO:
-                                ASSIGN crablot.qtinfoln = 
+                                /*ASSIGN crablot.qtinfoln = 
                                                crablot.qtinfoln - 1
                                        crablot.qtcompln = 
                                                crablot.qtcompln - 1
@@ -2445,11 +2453,12 @@ PROCEDURE cancelar-resgates-aplicacao:
                                                craplci.vllanmto
                                        crablot.vlcompcr = 
                                                crablot.vlcompcr - 
-                                               craplci.vllanmto.
+                                               craplci.vllanmto.*/
                 
                                 DELETE craplci.                        
                             END.       
                                                              
+                        /*
                         IF  crablot.qtcompln = 0  AND
                             crablot.qtinfoln = 0  AND
                             crablot.vlcompdb = 0  AND
@@ -2457,13 +2466,14 @@ PROCEDURE cancelar-resgates-aplicacao:
                             crablot.vlcompcr = 0  AND
                             crablot.vlinfocr = 0  THEN
                             DELETE crablot.    
-                    END.
+                    END.*/
 
-                FIND CURRENT crablot NO-LOCK NO-ERROR.
+                /*FIND CURRENT crablot NO-LOCK NO-ERROR.*/
             END.
 
         IF  craplrg.flgcreci  THEN  /** Saldo CI **/
             DO:                                   
+                /*
                 DO aux_contador = 1 TO 10:
 
                     ASSIGN aux_cdcritic = 0
@@ -2489,13 +2499,14 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                     LEAVE.
 
-                END. /** Fim do DO ... TO **/
+                END.*/
+                /** Fim do DO ... TO **/
 
                 IF  aux_cdcritic > 0  THEN
                     UNDO TRANSACAO, LEAVE TRANSACAO.
 
-                IF  AVAILABLE crablot  THEN
-                    DO:
+                /*IF  AVAILABLE crablot  THEN
+                    DO:*/
                         DO aux_contador = 1 TO 10:
         
                             ASSIGN aux_cdcritic = 0
@@ -2503,10 +2514,10 @@ PROCEDURE cancelar-resgates-aplicacao:
         
                             FIND craplci WHERE 
                                  craplci.cdcooper = par_cdcooper     AND
-                                 craplci.dtmvtolt = crablot.dtmvtolt AND
-                                 craplci.cdagenci = crablot.cdagenci AND
-                                 craplci.cdbccxlt = crablot.cdbccxlt AND
-                                 craplci.nrdolote = crablot.nrdolote AND
+                                 craplci.dtmvtolt = par_dtmvtolt     AND
+                                 craplci.cdagenci = 1                AND
+                                 craplci.cdbccxlt = 100              AND
+                                 craplci.nrdolote = 10106            AND
                                  craplci.nrdconta = craplrg.nrdconta AND
                                  craplci.nrdocmto = craplrg.nrdocmto 
                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -2530,12 +2541,13 @@ PROCEDURE cancelar-resgates-aplicacao:
 
                         IF  AVAILABLE craplci  THEN
                             DO:
+                                /*
                                 ASSIGN crablot.qtinfoln = crablot.qtinfoln - 1
                                        crablot.qtcompln = crablot.qtcompln - 1
                                        crablot.vlinfocr = crablot.vlinfocr - 
                                                           craplci.vllanmto
                                        crablot.vlcompcr = crablot.vlcompcr - 
-                                                          craplci.vllanmto.
+                                                          craplci.vllanmto.*/
                 
                                 DO aux_contador = 1 TO 10:
                 
@@ -2578,16 +2590,16 @@ PROCEDURE cancelar-resgates-aplicacao:
                                 DELETE craplci.
                             END.      
 
-                        IF  crablot.qtcompln = 0  AND
+                        /*IF  crablot.qtcompln = 0  AND
                             crablot.qtinfoln = 0  AND
                             crablot.vlcompdb = 0  AND
                             crablot.vlinfodb = 0  AND
                             crablot.vlcompcr = 0  AND
                             crablot.vlinfocr = 0  THEN
                             DELETE crablot.
-                    END.
+                    END.*/
 
-                FIND CURRENT crablot NO-LOCK NO-ERROR.
+                /*FIND CURRENT crablot NO-LOCK NO-ERROR.*/
                 FIND CURRENT crapsli NO-LOCK NO-ERROR.
             END.
              
@@ -3168,6 +3180,8 @@ PROCEDURE efetua-resgate-online:
 
     DEF VAR h-b1wgen0005 AS HANDLE                                  NO-UNDO.
 
+    DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
+
     DEF VAR aux_cdhistor LIKE  craplcm.cdhistor                     NO-UNDO.
     DEF VAR aux_cdpesqbb LIKE  craplcm.cdpesqbb                     NO-UNDO.
     
@@ -3585,23 +3599,15 @@ PROCEDURE efetua-resgate-online:
                             NOT craplrg.flgcreci  THEN  
                             DO:
                                 /** Gera lancamentos Conta Investimento **/
-                                DO WHILE TRUE:
-        
                                     FIND crablot WHERE 
                                          crablot.cdcooper = par_cdcooper AND
                                          crablot.dtmvtolt = par_dtmvtolt AND
                                          crablot.cdagenci = 1            AND
                                          crablot.cdbccxlt = 100          AND
                                          crablot.nrdolote = 10105
-                                         EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+									 NO-LOCK NO-ERROR.
 
                                     IF  NOT AVAILABLE crablot  THEN
-                                        IF  LOCKED crablot  THEN
-                                            DO:
-                                                PAUSE 1 NO-MESSAGE.
-                                                NEXT.
-                                            END.
-                                        ELSE
                                             DO:
                                                 CREATE crablot.
                                                 ASSIGN crablot.dtmvtolt = 
@@ -3614,9 +3620,23 @@ PROCEDURE efetua-resgate-online:
                                                                par_cdcooper.
                                             END.
                         
-                                    LEAVE.
+								{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                                     
-                                END. /** Fim do DO WHILE TRUE **/
+                                /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                                RUN STORED-PROCEDURE pc_sequence_progress
+                                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                                                    ,INPUT "NRSEQDIG"
+                                                                    ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";1;100;10105" 
+                                                                    ,INPUT "N"
+                                                                    ,"").
+
+                                CLOSE STORED-PROC pc_sequence_progress
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
                                 CREATE craplci.
                                 ASSIGN craplci.cdcooper = par_cdcooper
@@ -3631,36 +3651,21 @@ PROCEDURE efetua-resgate-online:
                                                           ELSE 
                                                              493
                                        craplci.vllanmto = aux_vlresgat
-                                       craplci.nrseqdig = crablot.nrseqdig + 1
-                                       crablot.qtinfoln = crablot.qtinfoln + 1
-                                       crablot.qtcompln = crablot.qtcompln + 1
-                                       crablot.vlinfodb = crablot.vlinfodb + 
-                                                          aux_vlresgat
-                                       crablot.vlcompdb = crablot.vlcompdb + 
-                                                          aux_vlresgat
-                                       crablot.nrseqdig = craplci.nrseqdig.
+                                       craplci.nrseqdig = aux_nrseqdig.
 
                                 VALIDATE crablot.
                                 VALIDATE craplci.
 
                                 /** Gera lancamentos Conta Investmento **/
-                                DO  WHILE TRUE:
-        
                                     FIND crablot WHERE 
                                          crablot.cdcooper = par_cdcooper AND
                                          crablot.dtmvtolt = par_dtmvtolt AND
                                          crablot.cdagenci = 1            AND
                                          crablot.cdbccxlt = 100          AND
                                          crablot.nrdolote = 10104
-                                         EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+									 NO-LOCK NO-ERROR.
 
                                     IF  NOT AVAILABLE crablot  THEN
-                                        IF  LOCKED crablot  THEN
-                                            DO:
-                                                PAUSE 1 NO-MESSAGE.
-                                                NEXT.
-                                            END.
-                                        ELSE
                                             DO:
                                                 CREATE crablot.
                                                 ASSIGN crablot.dtmvtolt = par_dtmvtolt
@@ -3671,9 +3676,23 @@ PROCEDURE efetua-resgate-online:
                                                        crablot.cdcooper = par_cdcooper.
                                             END.
              
-                                    LEAVE.
+								{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-                                END. /** Fim do DO WHILE TRUE **/
+                                /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                                RUN STORED-PROCEDURE pc_sequence_progress
+                                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                                                    ,INPUT "NRSEQDIG"
+                                                                    ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";1;100;10104" 
+                                                                    ,INPUT "N"
+                                                                    ,"").
+
+                                CLOSE STORED-PROC pc_sequence_progress
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
                                 CREATE craplci.
                                 ASSIGN craplci.cdcooper = par_cdcooper
@@ -3685,14 +3704,7 @@ PROCEDURE efetua-resgate-online:
                                        craplci.nrdocmto = craplrg.nrdocmto
                                        craplci.cdhistor = 489  /** Credito **/
                                        craplci.vllanmto = aux_vlresgat
-                                       craplci.nrseqdig = crablot.nrseqdig + 1
-                                       crablot.qtinfoln = crablot.qtinfoln + 1
-                                       crablot.qtcompln = crablot.qtcompln + 1
-                                       crablot.vlinfocr = crablot.vlinfocr + 
-                                                          aux_vlresgat
-                                       crablot.vlcompcr = crablot.vlcompcr + 
-                                                          aux_vlresgat
-                                       crablot.nrseqdig = craplci.nrseqdig.
+                                       craplci.nrseqdig = aux_nrseqdig.
 
                                 VALIDATE crablot.
                                 VALIDATE craplci.
@@ -3701,27 +3713,18 @@ PROCEDURE efetua-resgate-online:
                         /** Resgatar para Conta Investimento **/
                         IF  craplrg.flgcreci  THEN  
                             DO: 
-                                DO WHILE TRUE:
-        
                                     FIND crablot WHERE 
                                          crablot.cdcooper = par_cdcooper AND
                                          crablot.dtmvtolt = par_dtmvtolt AND
                                          crablot.cdagenci = 1            AND
                                          crablot.cdbccxlt = 100          AND
                                          crablot.nrdolote = 10106
-                                         EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+									 NO-LOCK NO-ERROR.
 
                                     IF  NOT AVAILABLE crablot  THEN
-                                        IF  LOCKED crablot  THEN
-                                            DO:
-                                                PAUSE 1 NO-MESSAGE.
-                                                NEXT.
-                                            END.
-                                        ELSE
                                             DO:
                                                 CREATE crablot.
-                                                ASSIGN crablot.dtmvtolt = 
-                                                               par_dtmvtolt
+										ASSIGN crablot.dtmvtolt = par_dtmvtolt
                                                        crablot.cdagenci = 1
                                                        crablot.cdbccxlt = 100
                                                        crablot.nrdolote = 10106
@@ -3729,9 +3732,23 @@ PROCEDURE efetua-resgate-online:
                                                        crablot.cdcooper = par_cdcooper.
                                             END.
                         
-                                    LEAVE.
+								{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-                                END. /** Fim do DO WHILE TRUE **/
+                                /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                                RUN STORED-PROCEDURE pc_sequence_progress
+                                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                                                    ,INPUT "NRSEQDIG"
+                                                                    ,STRING(par_cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";1;100;10106" 
+                                                                    ,INPUT "N"
+                                                                    ,"").
+
+                                CLOSE STORED-PROC pc_sequence_progress
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
                                 CREATE craplci.
                                 ASSIGN craplci.cdcooper = par_cdcooper
@@ -3743,14 +3760,7 @@ PROCEDURE efetua-resgate-online:
                                        craplci.nrdocmto = craplrg.nrdocmto
                                        craplci.cdhistor = 490   
                                        craplci.vllanmto = aux_vlresgat
-                                       craplci.nrseqdig = crablot.nrseqdig + 1
-                                       crablot.qtinfoln = crablot.qtinfoln + 1
-                                       crablot.qtcompln = crablot.qtcompln + 1
-                                       crablot.vlinfocr = crablot.vlinfocr + 
-                                                          aux_vlresgat
-                                       crablot.vlcompcr = crablot.vlcompcr + 
-                                                          aux_vlresgat
-                                       crablot.nrseqdig = craplci.nrseqdig.
+                                       craplci.nrseqdig = aux_nrseqdig.
 
                                 VALIDATE crablot.
                                 VALIDATE craplci. 

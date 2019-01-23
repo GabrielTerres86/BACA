@@ -272,6 +272,9 @@
 
 				13/11/2018 - Adicionada parametros a procedure 
 							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+        
+        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
@@ -1466,6 +1469,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     DEF VAR aux_fliseope AS INTE                  NO-UNDO.
     DEF VAR aux_cdcritic AS INTE                  NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                  NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                  NO-UNDO.
 
     DEF BUFFER crabhis FOR craphis.
 
@@ -1590,6 +1594,29 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    craplot.cdopecxa = p-cod-operador.
          
         END.
+        
+    ASSIGN aux_nrseqdig = craplot.nrseqdig + 1.
+
+    IF i-cdhistor = 523 THEN
+		DO:
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+			RUN STORED-PROCEDURE pc_sequence_progress
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+							,INPUT "NRSEQDIG"
+							,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+							,INPUT "N"
+							,"").
+
+			CLOSE STORED-PROC pc_sequence_progress
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+						WHEN pc_sequence_progress.pr_sequence <> ?.
+		END.
 
     ASSIGN in99 = 0.
 
@@ -1847,7 +1874,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
            craptvl.cdagenci = p-cod-agencia
            craptvl.cdbccxlt = 11 /* Fixo */
            craptvl.nrdocmto = i-nro-docto
-           craptvl.nrseqdig = craplot.nrseqdig + 1   
+           craptvl.nrseqdig = aux_nrseqdig
            craptvl.nrcctrcb = p-nro-conta-para             
            craptvl.cdfinrcb = p-cod-finalidade
            craptvl.tpdctacr = p-tipo-conta-cr
@@ -1880,6 +1907,8 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     ELSE 
         ASSIGN craptvl.flgpescr = NO.
                
+    IF i-cdhistor <> 523 THEN
+    DO:
     ASSIGN craplot.qtcompln = craplot.qtcompln + 1
            craplot.vlcompcr = craplot.vlcompcr + p-val-doc
            craplot.qtinfoln = craplot.qtinfoln + 1
@@ -1888,6 +1917,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
            p-nro-docmto     = craptvl.nrdocmto.
 
     VALIDATE craplot.
+    END.
 
     /*--- Grava Autenticacao Arquivo/Spool --*/
     RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
@@ -1934,6 +1964,24 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                   craplot.nrdcaixa = p-nro-caixa
                   craplot.cdopecxa = p-cod-operador.
         END.
+   
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+    RUN STORED-PROCEDURE pc_sequence_progress
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                      ,INPUT "NRSEQDIG"
+                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote-lcm)
+                      ,INPUT "N"
+                      ,"").
+
+    CLOSE STORED-PROC pc_sequence_progress
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                WHEN pc_sequence_progress.pr_sequence <> ?.
    
     IF   p-nro-conta-rm <> 0   THEN
          DO:
@@ -2108,22 +2156,13 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                    STRING(p-nro-conta-rm,"99999999")
                                               craplcm.nrdocmto = i-nro-docto
                                               craplcm.cdhistor = craphis.cdhistor
-                                              craplcm.nrseqdig = craplot.nrseqdig 
-                                                                 + 1
+                                              craplcm.nrseqdig = aux_nrseqdig
                                               craplcm.vllanmto = aux_vllanmto
                                               craplcm.vldoipmf = 0
                                               craplcm.nrautdoc = 
                                                               p-ult-sequencia-lcm
-                                              craplcm.cdpesqbb = "CRAP020"
+                                              craplcm.cdpesqbb = "CRAP020".
                                                
-                                          /* ATUALIZAR LOTE */
-                                          craplot.nrseqdig  = craplot.nrseqdig + 1 
-                                          craplot.qtcompln  = craplot.qtcompln + 1
-                                          craplot.qtinfoln  = craplot.qtinfoln + 1
-                                          craplot.vlcompdb  = craplot.vlcompdb + 
-                                                              aux_vllanmto
-                                          craplot.vlinfodb  = craplot.vlinfodb + 
-                                                              aux_vllanmto.                                                                           
                                           VALIDATE craplcm.
                                     END.
                                 ELSE
@@ -3057,6 +3096,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                            INPUT NO).
          END.
 
+    IF AVAIL craplot THEN
     RELEASE craplot.
     RELEASE craptvl.
 

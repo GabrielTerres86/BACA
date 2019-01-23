@@ -19,6 +19,8 @@ create or replace package cecred.CXON0088 is
   --             20/06/2016 - Correcao para o uso da procedure fn_busca_dstextabem da TABE0001 em 
   --                          varias procedures desta package.(Carlos Rafael Tanholi). 
   --
+  --             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+  --                   Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Retona o lancamento para exibir na tela conforme o nro do documento */
@@ -1784,6 +1786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                          END IF;
                                       CLOSE cr_verifica_lcx;
 
+                                      if vr_i_nro_lote not between 11000 and 11999 then
                                       BEGIN -- Decrementando LOTE
                                         UPDATE craplot lot
                                            SET lot.qtcompln = lot.qtcompln - 1
@@ -1801,6 +1804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                                             pr_dscritic := 'Erro ao atualizar registro de LOTE : '||sqlerrm;
                                             RAISE vr_exc_erro;
                                       END;
+                                      end if;
 
                                       BEGIN
                                         DELETE craplcm lcm
@@ -1850,7 +1854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                       END IF;
                    END IF;
                 ELSE
-
+                   if rw_verifica_lcm1.nrdolote not between 11000 and 11999 then
                    BEGIN -- Decrementando LOTE
                       UPDATE craplot lot
                          SET lot.qtcompln = lot.qtcompln - 1
@@ -1869,6 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                          pr_dscritic := 'Erro ao atualizar registro de LOTE : '||sqlerrm;
                          RAISE vr_exc_erro;
                    END;
+                   end if;
 
                    BEGIN
                       DELETE craplcm lcm
@@ -2451,6 +2456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                    RAISE vr_exc_erro;
                 END IF;
 
+                if vr_i_nro_lote not between 11000 and 11999 then
                 BEGIN -- Decrementando LOTE
                   UPDATE craplot lot
                      SET lot.qtcompln = lot.qtcompln - 1
@@ -2468,6 +2474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                       pr_dscritic := 'Erro ao atualizar registro de LOTE : '||sqlerrm;
                       RAISE vr_exc_erro;
                 END;
+                end if;
 
                 BEGIN -- Deletando LCM
                   DELETE craplcm lcm
@@ -3334,7 +3341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                    RAISE vr_exc_erro;
 
                 ELSE -- Encontrou o Lote
-
+                   if vr_i_nro_lote not between 11000 and 11999 then
                    BEGIN -- Decrementando o Lote
                       UPDATE craplot lot
                          SET lot.qtcompln = lot.qtcompln - 1
@@ -3368,6 +3375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
 
                          RAISE vr_exc_erro;
                    END;
+                END IF;
                 END IF;
              CLOSE cr_consulta_lot;
 
@@ -3423,6 +3431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                rw_consulta_lot.vlcompcr = 0 AND
                rw_consulta_lot.vlinfocr = 0 THEN
 
+               if vr_i_nro_lote not between 11000 and 11999 then
                BEGIN
                   DELETE craplot lot
                    WHERE lot.cdcooper = vr_aux_cdcooper
@@ -3452,6 +3461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
 
                      RAISE vr_exc_erro;
                END;
+               end if;
             END IF;
          END IF;
       CLOSE cr_consulta_lot;

@@ -1798,7 +1798,7 @@ function validarNovoCartao() {
         }
 	
         var tpdpagto = $("#tpdpagto option:selected", "#frmNovoCartao").val();
-        var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val()).replace(/\./g, "");
+        var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val() || "0").replace(/\./g, "");
         vllimpro.replace(/\./g, ",");
 
         $("input[type=checkbox][name='nrseqavl[]']").each(function () {

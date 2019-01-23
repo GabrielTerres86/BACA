@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 13/12/2018
+    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
     
     Dados referentes ao programa:
 
@@ -118,6 +118,9 @@
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
         
         13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+                
+                08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
+                             INC0028548 (Douglas Pagel / AMcom).
                 
 ..............................................................................*/
 
@@ -672,6 +675,20 @@ PROCEDURE grava_dados:
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
+    EMPTY TEMP-TABLE tt-dados-coope.
+    EMPTY TEMP-TABLE tt-dados-assoc.
+    EMPTY TEMP-TABLE tt-tipo-rendi.
+    EMPTY TEMP-TABLE tt-itens-topico-rating.
+    EMPTY TEMP-TABLE tt-proposta-epr.
+    EMPTY TEMP-TABLE tt-crapbem.
+    EMPTY TEMP-TABLE tt-bens-alienacao.
+    EMPTY TEMP-TABLE tt-rendimento.
+    EMPTY TEMP-TABLE tt-faturam.
+    EMPTY TEMP-TABLE tt-dados-analise.
+    EMPTY TEMP-TABLE tt-interv-anuentes.
+    EMPTY TEMP-TABLE tt-hipoteca.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-aval-crapbem.
 
     IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
@@ -689,7 +706,10 @@ PROCEDURE grava_dados:
            aux_flgerlog = TRUE
            aux_flgtrans = FALSE
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Gravacao pre-aprovado".
+           aux_dstransa = "Gravacao pre-aprovado"
+           aux_cdcritic = 0
+           aux_dscritic = "".
+
 
     GRAVA: DO TRANSACTION ON ERROR  UNDO GRAVA, LEAVE GRAVA
                           ON ENDKEY UNDO GRAVA, LEAVE GRAVA:
@@ -799,7 +819,7 @@ PROCEDURE grava_dados:
                                INPUT 1,
                                INPUT aux_cdcritic,
                                INPUT-OUTPUT aux_dscritic).
-                RETURN "NOK".
+                UNDO GRAVA, LEAVE GRAVA.
             END.
 
         FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -817,7 +837,7 @@ PROCEDURE grava_dados:
                               INPUT 1,
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
+               UNDO GRAVA, LEAVE GRAVA.
            END.
        
        /* Dados de parametrizacao do credito pre-aprovado */
@@ -837,7 +857,8 @@ PROCEDURE grava_dados:
                              INPUT 1,
                              INPUT aux_cdcritic,
                              INPUT-OUTPUT aux_dscritic).
-              RETURN "NOK".
+              
+              UNDO GRAVA, LEAVE GRAVA.
           END.
 
        /* Rendimento */
@@ -1159,6 +1180,10 @@ PROCEDURE grava_dados:
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
 
+       GRAVA_EFETIVA: DO TRANSACTION ON ERROR  UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA
+                                     ON ENDKEY UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA:
+    
+
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1188,9 +1213,13 @@ PROCEDURE grava_dados:
                                                      OUTPUT TABLE tt-erro).
 
        IF RETURN-VALUE <> "OK" THEN
-          UNDO GRAVA, LEAVE GRAVA.
+              UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA.
+              
 
        ASSIGN aux_flgtrans = TRUE.
+
+       
+       END. /* END GRAVA_EFETIVA: DO TRANSACTION */
 
     END. /* END GRAVA: DO TRANSACTION */
 
@@ -2897,7 +2926,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  capitalizados  "
                    "mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m.  estipulada  na  quantidade  de  "
                    par_qtpreemp  FORMAT "z9" "  parcelas,  no  valor  de  R$ " 
                    par_vlpreemp  FORMAT "zzz,zz9.99" " "
@@ -2985,7 +3014,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  "
                    "capitalizados  mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m. estipulada na quantidade de "
                    par_qtpreemp FORMAT "z9"
                    " parcelas, no valor de R$  " 

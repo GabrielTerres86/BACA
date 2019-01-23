@@ -9632,6 +9632,10 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
                                Cancelamento de Limite (Andrew Albuquerque - GFT)  
                   08/10/2018 - Alteração para pegar da data da cooperativa e não SYSDATE
                   11/10/2018 - Alteração para mostrar a data de fim do contrato da CRAPLIM e não da CRAWLIM
+                  16/01/2019 - Adicionado tratamento no conteúdo da data inicio de vigência. Quando for contrato cancelado e não tiver 
+                               a data de cancelamento preenchida deve considerar a data de inicio de vigência ou data da proposta, pois
+                               quando se cancela um contrato pelo processo de renovação automática não preenche a data de cacelamento,
+                               somento troca a situção (Paulo Penteado GFT)
     ----------------------------------------------------------------------------------------------------------*/
   
     -- Variável de críticas
@@ -9645,9 +9649,10 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
     rw_crapdat  btch0001.rw_crapdat%TYPE;
     
     CURSOR cr_crawlim IS
-    SELECT CASE 
-             WHEN lim.insitlim = 3 THEN plim.dtcancel
-             ELSE NVL(lim.dtinivig,lim.dtpropos) END as dtinivig
+    SELECT CASE WHEN lim.insitlim = 3 THEN 
+                     NVL(plim.dtcancel, NVL(lim.dtinivig, lim.dtpropos))
+                ELSE NVL(lim.dtinivig, lim.dtpropos) 
+           END as dtinivig
           ,plim.dtfimvig
           ,lim.vllimite
           ,lim.insitlim

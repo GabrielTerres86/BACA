@@ -14,7 +14,7 @@
 		$nrctrcrd   = $_POST['nrctrcrd'];
 		$tpacao     = $_POST['tpacao'];
 		$inpessoa   = $_POST['inpessoa'];
-		
+		$dsiduser   = session_id();
 
 		$funcaoAposErro = 'bloqueiaFundo(divRotina);';	
 		if($tpacao == "montagrid"){
@@ -29,7 +29,13 @@
 				$bancoobXML .= " <Dados>";
 				$bancoobXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 				$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+
+                if($bancoob  == 2){
+				$bancoobXML .= "   <dsiduser>".$dsiduser."</dsiduser>";
+                }else{
 				$bancoobXML .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+                }
+
 				$bancoobXML .= " </Dados>";
 				$bancoobXML .= "</Root>";
 				if($bancoob  == 2){
@@ -184,7 +190,7 @@
 					$bancoobXML .= " <Dados>";
 					$bancoobXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 					$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-					$bancoobXML .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+					$bancoobXML .= "   <dsiduser>".$dsiduser."</dsiduser>";
 					$bancoobXML .= " </Dados>";
 					$bancoobXML .= "</Root>";
 					$bancoob = false;

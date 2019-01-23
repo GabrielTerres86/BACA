@@ -91,6 +91,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                              Marcelo Telles Coelho - Mouts
 
 				19/10/2018 - Ajuste na rotina para prever erro de alocamento de lote (Andrey Formigari - Mouts)
+				
+				16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ..............................................................................*/
 
@@ -4671,16 +4674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_horalimb VARCHAR2(50);
     vr_nmarquiv VARCHAR2(100);
     vr_nrseqdig   craplot.nrseqdig%TYPE;
-    vr_qtcompln   craplot.qtcompln%TYPE;
-    vr_qtinfoln   craplot.qtinfoln%TYPE;
-    vr_vlcompdb   craplot.vlcompdb%TYPE;
-    vr_vlinfodb   craplot.vlinfodb%TYPE;
     vr_nrdolote   craplot.nrdolote%TYPE;
-    
-    vr_qtcompln2  craplot.qtcompln%TYPE;
-    vr_qtinfoln2  craplot.qtinfoln%TYPE;
-    vr_vlcompdb2  craplot.vlcompdb%TYPE;
-    vr_vlinfodb2  craplot.vlinfodb%TYPE;
     
     flg_doctobb   BOOLEAN := FALSE;
     vr_contador   PLS_INTEGER := 0;
@@ -4815,17 +4809,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     END IF;
 
-    vr_nrseqdig := rw_craplot.nrseqdig;
-    vr_qtcompln := rw_craplot.qtcompln;
-    vr_qtinfoln := rw_craplot.qtinfoln;
-    vr_vlcompdb := rw_craplot.vlcompdb;
-    vr_vlinfodb := rw_craplot.vlinfodb;
-    vr_qtcompln2 := 0;
-    vr_qtinfoln2 := 0;
-    vr_vlcompdb2 := 0;
-    vr_vlinfodb2 := 0;
-
-
     -- fecha cursor de lote
     CLOSE cr_craplot;
 
@@ -4949,12 +4932,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                         /* parametros de saida */
                                         ,pr_cdcritic => vr_cdcritic            --> Codigo da critica
                                         ,pr_dscritic => vr_dscritic);
-
-           --Acumular os valores do lote para fazer update apos o loop 
-           vr_qtcompln2 := vr_qtcompln2 + 1;
-           vr_qtinfoln2 := vr_qtinfoln2 + 1;
-           vr_vlcompdb2 := vr_vlcompdb2 + rw_crapccs.vllanmto;
-           vr_vlinfodb2 := vr_vlinfodb2 + rw_crapccs.vllanmto;
 
            IF rw_crapccs.nrridlfp > 0 THEN
               IF vr_cdcritic IS NULL AND vr_dscritic IS NULL THEN
@@ -5165,28 +5142,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END IF;
 
         -- Atualiza a capa do lote
-        vr_nrseqdig := vr_nrseqdig + 1;
-        vr_qtcompln := vr_qtcompln + 1;
-        vr_qtinfoln := vr_qtinfoln + 1;
-        vr_vlcompdb := vr_vlcompdb + rw_crapccs.vllanmto;
-        vr_vlinfodb := vr_vlinfodb + rw_crapccs.vllanmto;
-
-        BEGIN
-           UPDATE craplot
-              -- se o numero for maior que o ja existente atualiza
-              SET nrseqdig = vr_nrseqdig,
-                  qtcompln = vr_qtcompln,
-                  qtinfoln = vr_qtinfoln,
-                  vlcompdb = vr_vlcompdb,
-                  vlinfodb = vr_vlinfodb
-            WHERE ROWID = rw_craplot.rowid;
-        EXCEPTION
-           WHEN OTHERS THEN
-             vr_cdcritic := 9999;
-             vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-             -- Executa a exceção
-             RAISE vr_exc_erro;
-        END;
+        vr_nrseqdig := fn_sequence('CRAPLOT'
+                                  ,'NRSEQDIG'
+                                  ,''||pr_cdcooper||';'
+                                   ||to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'
+                                   ||1||';'
+                                   ||100||';'
+                                   ||10200);
     END LOOP; /* Fim do loop rw_craplcs */
 
 
@@ -5334,25 +5296,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           vr_idxtbtem := vr_tab_crattem.next(vr_idxtbtem);
 
      END LOOP;
-     
-     IF rw_craplot_rowid.rowid IS NOT NULL THEN
-     
-        BEGIN
-           UPDATE craplot
-              SET qtcompln = qtcompln + vr_qtcompln2,
-                  qtinfoln = qtinfoln + vr_qtinfoln2,
-                  vlcompdb = vlcompdb + vr_vlcompdb2,
-                  vlinfodb = vlinfodb + vr_vlinfodb2
-            WHERE ROWID = rw_craplot_rowid.rowid;
-        EXCEPTION
-           WHEN OTHERS THEN
-             vr_cdcritic := 9999;
-             vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-             -- Executa a exceção
-             RAISE vr_exc_erro;
-        END;
-     
-     END IF;
      
      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper,
                                  pr_nmarqlog     => 'TRFSAL',
@@ -5544,10 +5487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
     vr_nmarquiv VARCHAR2(100);
     vr_nrseqdig   craplot.nrseqdig%TYPE;
-    vr_qtcompln   craplot.qtcompln%TYPE;
-    vr_qtinfoln   craplot.qtinfoln%TYPE;
-    vr_vlcompdb   craplot.vlcompdb%TYPE;
-    vr_vlinfodb   craplot.vlinfodb%TYPE;
     vr_cdhistor   craplcs.cdhistor%TYPE;
     vr_nrdolote   craplot.nrdolote%TYPE;
     flg_doctobb   BOOLEAN := FALSE;
@@ -5660,12 +5599,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        END;
 
     END IF;
-
-    vr_nrseqdig := rw_craplot.nrseqdig;
-    vr_qtcompln := rw_craplot.qtcompln;
-    vr_qtinfoln := rw_craplot.qtinfoln;
-    vr_vlcompdb := rw_craplot.vlcompdb;
-    vr_vlinfodb := rw_craplot.vlinfodb;
 
     -- fecha cursor de lote
     CLOSE cr_craplot;
@@ -5824,28 +5757,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        vr_tab_crattem(vr_contador).tppessoa := 1;
 
          -- Atualiza a capa do lote
-         vr_nrseqdig := vr_nrseqdig + 1;
-         vr_qtcompln := vr_qtcompln + 1;
-         vr_qtinfoln := vr_qtinfoln + 1;
-         vr_vlcompdb := vr_vlcompdb + rw_craplcs.vllanmto;
-         vr_vlinfodb := vr_vlinfodb + rw_craplcs.vllanmto;
-
-         BEGIN
-            UPDATE craplot
-               -- se o numero for maior que o ja existente atualiza
-               SET nrseqdig = vr_nrseqdig,
-                   qtcompln = vr_qtcompln,
-                   qtinfoln = vr_qtinfoln,
-                   vlcompdb = vr_vlcompdb,
-                   vlinfodb = vr_vlinfodb
-             WHERE ROWID = rw_craplot.rowid;
-         EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 9999;
-              vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-              -- Executa a exceção
-              RAISE vr_exc_erro;
-         END;
+       vr_nrseqdig := fn_sequence('CRAPLOT'
+                                 ,'NRSEQDIG'
+                                 ,''||pr_cdcooper||';'
+                                  ||to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'
+                                  ||1||';'
+                                  ||100||';'
+                                  ||10200);
 
          /* Atualizar o registro do lançamento do pagamento eliminado possíveis erros
             anteriores e retornando a situação do registro para a situação inicial */

@@ -105,6 +105,9 @@
                       norturno rodando (Douglas Pagel - AMcom).
 
                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+               
+               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -1319,6 +1322,7 @@ PROCEDURE atualiza-outros:
     DEFINE  VARIABLE c-nome-titular1    AS CHAR NO-UNDO.
     DEFINE  VARIABLE c-nome-titular2    AS CHAR NO-UNDO.
     DEFINE  VARIABLE i                  AS INTE NO-UNDO.
+    DEFINE  VARIABLE aux_nrseqdig       AS INTE NO-UNDO.
  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
      
@@ -1487,6 +1491,28 @@ PROCEDURE atualiza-outros:
 
     IF   craphis.inavisar = 1   THEN  
          DO:
+             /* Revitalizacao - Remocao de lotes */
+             IF p-cdhistor <> 561 THEN
+             DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+                RUN STORED-PROCEDURE pc_sequence_progress
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                  ,INPUT "NRSEQDIG"
+                                  ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                                  ,INPUT "N"
+                                  ,"").
+
+                CLOSE STORED-PROC pc_sequence_progress
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                            WHEN pc_sequence_progress.pr_sequence <> ?.
+             END.
+      
              CREATE crapavs.
              ASSIGN crapavs.cdcooper = crapcop.cdcooper
                     crapavs.cdagenci = crapass.cdagenci
@@ -1499,7 +1525,7 @@ PROCEDURE atualiza-outros:
                     crapavs.insitavs = 0
                     crapavs.nrdconta = crapass.nrdconta
                     crapavs.nrdocmto = p-nro-docto
-                    crapavs.nrseqdig = craplot.nrseqdig + 1
+                    crapavs.nrseqdig = (IF p-cdhistor = 561 THEN craplot.nrseqdig + 1 ELSE aux_nrseqdig)
                     crapavs.tpdaviso = 2
                     crapavs.vldebito = 0
                     crapavs.vlestdif = 0
@@ -1519,6 +1545,24 @@ PROCEDURE atualiza-outros:
            RUN fontes/digbbx.p (INPUT  aux_nrdconta,
                                 OUTPUT glb_dsdctitg,
                                 OUTPUT glb_stsnrcal).
+
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                              ,INPUT "NRSEQDIG"
+                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+                              ,INPUT "N"
+                              ,"").
+
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                        WHEN pc_sequence_progress.pr_sequence <> ?.
           
           /* BLOCO DA INSERÇAO DA CRAPLCM */
           IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
@@ -1533,7 +1577,7 @@ PROCEDURE atualiza-outros:
             ,INPUT aux_nrdconta                   /* par_nrdconta */
             ,INPUT p-nro-docto                    /* par_nrdocmto */
             ,INPUT p-cdhistor                     /* par_cdhistor */
-            ,INPUT craplot.nrseqdig + 1          /* par_nrseqdig */
+            ,INPUT aux_nrseqdig                   /* par_nrseqdig */
             ,INPUT p-valor                        /* par_vllanmto */
             ,INPUT aux_nrdconta                   /* par_nrdctabb */
             ,INPUT "CRAP056," + p-cod-liberador   /* par_cdpesqbb */
@@ -1593,18 +1637,10 @@ PROCEDURE atualiza-outros:
             IF  VALID-HANDLE(h-b1wgen0200) THEN
                 DELETE PROCEDURE h-b1wgen0200.
            
-           ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
-                  craplot.qtcompln  = craplot.qtcompln + 1
-                  craplot.qtinfoln  = craplot.qtinfoln + 1.
-
            IF   craphis.indebcre = "D" THEN 
-                ASSIGN craplot.vlcompdb  = craplot.vlcompdb + p-valor
-                       craplot.vlinfodb  = craplot.vlinfodb + p-valor
-                       p-pg              = YES.
+                ASSIGN p-pg              = YES.
            ELSE
-                ASSIGN craplot.vlcompcr  = craplot.vlcompcr + p-valor
-                       craplot.vlinfocr  = craplot.vlinfocr + p-valor
-                       p-pg              = NO.
+                ASSIGN p-pg              = NO.
 
            IF   craphis.inhistor >= 13   AND
                 craphis.inhistor <= 15   THEN 
@@ -1964,6 +2000,7 @@ PROCEDURE atualiza-outros:
 
     RELEASE craplcm.
     RELEASE craplot.
+    
     RELEASE craplcs.
     RETURN "OK".
 END PROCEDURE.
