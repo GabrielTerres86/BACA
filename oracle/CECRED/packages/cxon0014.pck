@@ -12454,13 +12454,11 @@ END pc_gera_titulos_iptu_prog;
           RAISE vr_exc_erro;
       END;
 
-
-
-
-
-      pr_histor := rw_craplot.cdhistor;
-
-
+      IF vr_nro_lote BETWEEN 16000 AND 16999 THEN
+        pr_histor := 713;
+      ELSE
+        pr_histor := 686;
+      END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN
 
