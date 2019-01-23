@@ -5720,10 +5720,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 ,rw_craplcm.vllanmto
             FROM craplcm
            WHERE craplcm.cdcooper = pr_cdcooper
-             AND craplcm.dtmvtolt = rw_craplot.dtmvtolt
-             AND craplcm.cdagenci = rw_Craplot.cdagenci
-             AND craplcm.cdbccxlt = rw_craplot.cdbccxlt
-             AND craplcm.nrdolote = rw_craplot.nrdolote
+             AND craplcm.dtmvtolt = rw_craplot_rvt.dtmvtolt
+             AND craplcm.cdagenci = rw_craplot_rvt.cdagenci
+             AND craplcm.cdbccxlt = rw_craplot_rvt.cdbccxlt
+             AND craplcm.nrdolote = rw_craplot_rvt.nrdolote
              AND craplcm.nrdctabb = pr_nrdconta
              AND craplcm.nrdocmto = vr_nrdocmto;
         EXCEPTION
@@ -5748,7 +5748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                            ,pr_nro_caixa    => pr_nrdcaixa   --Numero do caixa
                                            ,pr_cod_operador => pr_cdoperad   --Codigo Operador
                                            ,pr_valor        => pr_vllanmto   --Valor da transacao
-                                           ,pr_docto        => rw_craplot.nrseqdig   --Numero documento
+                                           ,pr_docto        => vr_nrseqdig   --Numero documento
                                            ,pr_operacao     => FALSE           --Indicador Operacao Debito
                                            ,pr_status       => '1'             --Status da Operacao - Online
                                            ,pr_estorno      => FALSE           --Indicador Estorno
@@ -5773,7 +5773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             
             --Atualizar tabela lancamentos
             BEGIN
-              UPDATE craplcm SET craplcm.nrsequni = rw_craplot.nrseqdig
+              UPDATE craplcm SET craplcm.nrsequni = vr_nrseqdig
                                 ,craplcm.nrautdoc = NVL(vr_nrautdoc,0)
               WHERE craplcm.ROWID = vr_rowid;
             EXCEPTION
