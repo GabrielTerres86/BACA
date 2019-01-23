@@ -497,15 +497,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
          AND e.vlsdprej > 0;    -- Com Saldo Devedor Prejuizo
     rw_preju_empr cr_preju_empr%ROWTYPE;
 
-    CURSOR cr_preju_dsctit (pr_nrdconta IN crapass.nrdconta%TYPE)IS
-      SELECT 1
-        FROM crapbdt b
-       WHERE b.cdcooper = pr_cdcooper
-         AND b.nrdconta = pr_nrdconta
-         AND b.inprejuz = 1       -- Em Prejuizo
-         AND b.dtliqprj IS NULL;  -- Prejuizo Nao Liquidado
-    rw_preju_dsctit cr_preju_dsctit%ROWTYPE;
-
     -- Variaveis
     vr_inprejuz        crapass.inprejuz%TYPE;
     vr_tipoverificacao INTEGER;
@@ -534,15 +525,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       IF vr_inprejuz = 1 THEN
         RETURN TRUE;
       END IF;
-      
-      -- Verificar Prejuizo Desconto Titulo
-      OPEN cr_preju_dsctit (pr_nrdconta => rw_ass_cpfcnpj.nrdconta);
-      FETCH cr_preju_dsctit INTO vr_inprejuz;
-      CLOSE cr_preju_dsctit;
-      IF vr_inprejuz = 1 THEN
-        RETURN TRUE;
-      END IF;
-    
     END LOOP;
 
     RETURN vr_prejuizo_ativo;
