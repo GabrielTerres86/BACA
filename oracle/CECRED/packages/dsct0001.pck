@@ -4494,13 +4494,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_nrborder => rw_craptdb.nrborder
                                                 ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
-                                                ,pr_cdhistor => vr_cdhistordsct_resreap
+                                                ,pr_cdhistor => vr_cdhistordsct_resreap --2679
                                                 ,pr_vllanmto => vr_vldjuros
                                                 ,pr_dscritic => vr_dscritic );
           
           IF  vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
           END IF;
+
+          vr_vllanmto := vr_vlliqnov; 
+
       ELSE
       IF rw_craptdb.dtvencto > pr_dtmvtoan AND
          rw_craptdb.dtvencto < pr_dtresgat THEN 
@@ -4639,6 +4642,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_vlliqori := rw_craptdb.vlliquid;
         vr_vlliqnov := rw_craptdb.vltitulo;  
       END IF;-- Fim IF vr_qtdprazo > 0 THEN     
+
+      vr_vllanmto := rw_craptdb.vltitulo - (vr_vlliqnov - vr_vlliqori);   
+
       END IF;
       
       --Selecionar lancamento juros desconto titulo
@@ -4764,7 +4770,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         END;      
       END IF;
       
-      vr_vllanmto := rw_craptdb.vltitulo - (vr_vlliqnov - vr_vlliqori);
       
       --> Atualizar lote
       BEGIN      
@@ -4803,7 +4808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_nrborder => rw_craptdb.nrborder
                                                 ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
-                                                ,pr_cdhistor => vr_cdhistordsct_resopcr
+                                                ,pr_cdhistor => vr_cdhistordsct_resopcr --2677
                                                 ,pr_vllanmto => vr_vlliqori
                                                 ,pr_dscritic => vr_dscritic );
           
@@ -4817,7 +4822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_nrborder => rw_craptdb.nrborder
                                                 ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
-                                                ,pr_cdhistor => vr_cdhistordsct_resbaix
+                                                ,pr_cdhistor => vr_cdhistordsct_resbaix --2678
                                                 ,pr_vllanmto => rw_craptdb.vltitulo
                                                 ,pr_dscritic => vr_dscritic );
           

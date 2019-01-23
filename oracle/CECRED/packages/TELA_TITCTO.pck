@@ -1416,7 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_recebidos_dia;
     
     -- Saldo anterior
-    vr_cdhisant := vr_cdhisrec||','||vr_cdhisven;
+    vr_cdhisant := dsct0001.vr_cdhistordsct_resbaix||','||vr_cdhisrec||','||vr_cdhisven;
     
     OPEN cr_saldo_anterior;
     FETCH cr_saldo_anterior INTO rw_saldo_anterior;
