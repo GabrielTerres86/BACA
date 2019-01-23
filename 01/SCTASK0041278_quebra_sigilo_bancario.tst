@@ -2680,7 +2680,7 @@ DECLARE
       
       SELECT *
         FROM (SELECT ret.*
-                    ,SUM(ret.vltitulo) OVER (PARTITION BY ret.cdoperad) totalret
+                    ,SUM(ret.vlrpagto) OVER (PARTITION BY ret.cdoperad) totalret
                 FROM crapret ret, crapcco cco
                WHERE cco.cdcooper = ret.cdcooper 
                  AND cco.nrconven = ret.nrcnvcob
