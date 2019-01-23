@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 11/06/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 23/01/2019
 
    Dados referentes ao programa:
 
@@ -339,7 +339,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                27/12/2018 - Inclusão de mensagem para a crítica 757 conforme 
                             instruções da requisição. Chamado SCTASK0029400 - Gabriel (Mouts).
 
-               
+			   07/12/2018 - Incluido parametros na abertura do cursor, Melhoria no processo de devoluções de cheques.
+                            Adriano (INC0022559).
 ............................................................................. */
 
      DECLARE
@@ -1566,7 +1567,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_cdbanchq => pr_cdbcoctl
                                  ,pr_cdagechq => pr_cdagechq
                                  ,pr_nrctachq => pr_nrctachq
-                                 ,pr_cdhistor => pr_cdhistor);
+                                 ,pr_cdhistor => pr_cdhistor
+                                 ,pr_vllanmto => pr_vllanmto
+                                 ,pr_cdbandep => pr_cdbandep
+                                 ,pr_cdagedep => pr_cdagedep
+                                 ,pr_nrctadep => pr_nrctadep);
           --Posicionar no proximo registro
           FETCH cr_crapdev_alinea INTO rw_crapdev_alinea;
 
