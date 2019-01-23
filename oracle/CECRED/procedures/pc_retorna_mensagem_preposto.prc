@@ -10,8 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
                                                                 pr_idseqttl IN crapsnh.idseqttl%TYPE,
                                                                 xml_operador OUT VARCHAR2) IS
     CURSOR cr_operad_aprov(pr_cdcooper crapass.cdcooper%TYPE,
-                           pr_nrdconta crapass.nrdconta%TYPE,
-                           pr_nrcpfpre crapass.nrcpfcgc%TYPE) IS
+                           pr_nrdconta crapass.nrdconta%TYPE) IS
         SELECT t.nrcpf_operador
         FROM TBCC_OPERAD_APROV t
         WHERE t.cdcooper = pr_cdcooper AND
