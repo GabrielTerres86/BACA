@@ -4108,7 +4108,7 @@ PROCEDURE gera_log:
                                  + " da conta/dv " + STRING(tt-desmarcar.nrctachq,"zzzz,zzz,9")
                                  + " do Banco " + STRING(tt-desmarcar.cdbanchq, "zz9")
                                  + ", valor " + STRING(tt-desmarcar.vllanmto, "zzz,zz9.99")
-                                 + " com alinea "+ STRING(par_cdalinea,"z9")
+                                 + " com alinea "+ STRING(tt-desmarcar.cdalinea,"z9")
                                  + " >> /usr/coop/" + TRIM(crapcop.dsdircop)
                                  + "/log/devolu.log" ).
             END.
