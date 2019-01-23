@@ -695,6 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
                24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
                             Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
+               23/01/2019 - Ajuste na pc_lanca_credito_bordero (Daniel)             
   ---------------------------------------------------------------------------------------------------------------*/
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%rowtype;
@@ -5355,7 +5356,7 @@ END pc_inserir_lancamento_bordero;
           WHEN DUP_VAL_ON_INDEX THEN
             CONTINUE;
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
+            vr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
             -- Levanta exceção
             RAISE vr_exc_erro;
         END;
@@ -5447,15 +5448,17 @@ END pc_inserir_lancamento_bordero;
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica
-          vr_dscritic := 'Erro ao atualizar o Lote!';
+          vr_dscritic := 'Erro ao atualizar o Lote: ' || SQLERRM;
 
           -- Gera exceção
           RAISE vr_exc_erro;
       END;
     
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||' '||vr_dscritic||' '||sqlerrm;
+        pr_dscritic := 'Erro DSCT003.pc_lanca_credito_bordero: ' || SQLERRM;
     END;
   END pc_lanca_credito_bordero;
     
