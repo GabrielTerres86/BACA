@@ -8,6 +8,9 @@
  * ALTERAÇÕES   :
  *               07/12/2018 - Melhoria no processo de devoluções de cheques.
  *                            Alcemir Mout's (INC0022559).
+ *               23/01/2019 - Alteracao na rotina de alteracao de alinea e
+ *                            melhoria na gravacao do log na verlog.
+ *                            Chamado - PRB0040476 - Gabriel Marcos (Mouts).
  *
  * --------------
  */
@@ -39,26 +42,28 @@
 	$vllanmto = (isset($_POST['vllanmto'])) ? $_POST['vllanmto'] : 0;
 	
 	// Monta o xml dinâmico de acordo com a operação
-	$xml = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0175.p</Bo>';
-	$xml .= '		<Proc>altera-alinea</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
-	$xml .= '		<cdbanchq>'.$cdbanchq.'</cdbanchq>';
-	$xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
-	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
-	$xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
-	$xml .= '		<cdbandep>'.$cdbandep.'</cdbandep>';
-	$xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
-	$xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
-	$xml .= '		<vllanmto>'.$vllanmto.'</vllanmto>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
+    $xml = '';
+    $xml .= '<Root>';
+    $xml .= '	<Cabecalho>';
+    $xml .= '		<Bo>b1wgen0175.p</Bo>';
+    $xml .= '		<Proc>altera-alinea</Proc>';
+    $xml .= '	</Cabecalho>';
+    $xml .= '	<Dados>';
+    $xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+    $xml .= '		<cdbanchq>'.$cdbanchq.'</cdbanchq>';
+    $xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
+    $xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
+    $xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
+    $xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
+    $xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+    $xml .= '		<cdbandep>'.$cdbandep.'</cdbandep>';
+    $xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
+    $xml .= '		<nrctadep>'.$nrctadep.'</nrctadep>';
+    $xml .= '		<vllanmto>'.$vllanmto.'</vllanmto>';
+    $xml .= '       <dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
+    $xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+    $xml .= '	</Dados>';
+    $xml .= '</Root>';
 
     // Executa script para envio do XML e cria objeto para classe de tratamento de XML
 	$xmlResult = getDataXML($xml);
