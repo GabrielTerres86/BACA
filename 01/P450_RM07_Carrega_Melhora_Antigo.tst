@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-110
+109
 declare 
   CURSOR cr_cop IS
     SELECT c.cdcooper
