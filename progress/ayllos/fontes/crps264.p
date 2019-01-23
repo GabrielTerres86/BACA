@@ -265,6 +265,10 @@
                            quando ocorre a devolucao de cheque, deixando a conta com
                            a situacao regularizada - Adriano (Supero) - PRJ435.
 
+              07/12/2018 - Melhoria no processo de devoluções de cheques.
+                           Alcemir Mout's (INC0022559).
+
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -2409,7 +2413,7 @@ PROCEDURE gera_arquivo_cecred:
    DEF VAR aux_cdbandep AS INT                                        NO-UNDO.
    DEF VAR aux_cdagedep AS INT                                        NO-UNDO.
    DEF VAR aux_cdtipdoc AS INT                                        NO-UNDO.
-
+   DEF var aux_horatran AS INT                                        NO-UNDO.
    DEF VAR aux_primeira AS LOGICAL                                    NO-UNDO.          
 
    DEF VAR h-b1wgen0011 AS HANDLE                                     NO-UNDO.
@@ -2762,6 +2766,32 @@ PROCEDURE gera_arquivo_cecred:
                 ASSIGN aux_nrsequen = aux_nrsequen + 1
                        aux_vldtotal = aux_vldtotal + crapdev.vllanmto.
                  
+				/*Quando vem um mesmo cheque na seguencia
+                  existe a possibilidade de haver chave duplicada
+                  para isso, é verificado se já existe na gncpdev
+                  caso exista deve ser incrementado a hora
+                  para então fazer o create na gncpdev*/
+   
+			    aux_horatran = TIME;
+				
+				FIND FIRST gncpdev WHERE gncpdev.cdcooper = crapdev.cdcooper AND 
+                                         gncpdev.dtmvtolt = DATE(
+                                                                INT(SUBSTR(crapdev.cdpesqui,86,2)),
+                                                                INT(SUBSTR(crapdev.cdpesqui,88,2)),
+                                                                INT(SUBSTR(crapdev.cdpesqui,82,4))) AND
+										 gncpdev.cdbanchq = INT(SUBSTR(crapdev.cdpesqui,4,3))       AND 
+										 gncpdev.cdagechq = INT(SUBSTR(crapdev.cdpesqui,7,4))       AND
+									     gncpdev.nrctachq = DEC(SUBSTR(crapdev.cdpesqui,12,12))     AND 
+										 gncpdev.nrcheque = INT(SUBSTR(crapdev.cdpesqui,25,6))      AND 
+										 gncpdev.cdtipreg = 1                                       AND 
+										 gncpdev.hrtransa = aux_horatran										 
+                                         NO-LOCK NO-ERROR.
+										
+		        IF AVAIL gncpdev THEN
+				   aux_horatran =  aux_horatran + 1;
+							
+							
+				
                 /* CRIACAO da GNCPCHQ */
                 CREATE gncpdev.
                 ASSIGN gncpdev.cdcooper = crapdev.cdcooper
@@ -2788,7 +2818,7 @@ PROCEDURE gera_arquivo_cecred:
                                           ELSE INT(SUBSTR(crapdev.cdpesqui,12,9))
                        gncpdev.nmarquiv = aux_nmarquiv
                        gncpdev.cdoperad = glb_cdoperad
-                       gncpdev.hrtransa = TIME
+                       gncpdev.hrtransa = aux_horatran
                        gncpdev.cdtipreg = 1
                        gncpdev.flgconci = NO
                        gncpdev.nrseqarq = aux_nrsequen
@@ -3197,6 +3227,31 @@ PROCEDURE gera_arquivo_cecred:
                      ASSIGN aux_cdcooper = p-cdcooper
                             aux_nrdconta = crapdev.nrdconta.
 
+
+				/*Quando vem um mesmo cheque na seguencia
+                  existe a possibilidade de haver chave duplicada
+                  para isso, é verificado se já existe na gncpdev
+                  caso exista deve ser incrementado a hora
+                  para então fazer o create na gncpdev*/
+
+
+                aux_horatran = TIME;
+				
+				FIND FIRST gncpdev WHERE gncpdev.cdcooper = crapdev.cdcooper AND 
+                                         gncpdev.dtmvtolt = DATE(
+                                                                INT(SUBSTR(crapdev.cdpesqui,86,2)),
+                                                                INT(SUBSTR(crapdev.cdpesqui,88,2)),
+                                                                INT(SUBSTR(crapdev.cdpesqui,82,4))) AND
+										 gncpdev.cdbanchq = INT(SUBSTR(crapdev.cdpesqui,4,3))       AND 
+										 gncpdev.cdagechq = INT(SUBSTR(crapdev.cdpesqui,7,4))       AND
+									     gncpdev.nrctachq = DEC(SUBSTR(crapdev.cdpesqui,12,12))     AND 
+										 gncpdev.nrcheque = INT(SUBSTR(crapdev.cdpesqui,25,6))      AND 
+										 gncpdev.cdtipreg = 1                                       AND 
+										 gncpdev.hrtransa = aux_horatran										 
+                                         NO-LOCK NO-ERROR.
+										
+		        IF AVAIL gncpdev THEN
+				   aux_horatran =  aux_horatran + 1;
                    
                 /* CRIACAO da GNCPCHQ */
                 CREATE gncpdev.
@@ -3224,7 +3279,7 @@ PROCEDURE gera_arquivo_cecred:
                                           ELSE INT(SUBSTR(gncpchq.dsidenti,12,12))
                        gncpdev.nmarquiv = aux_nmarquiv
                        gncpdev.cdoperad = glb_cdoperad
-                       gncpdev.hrtransa = TIME
+                       gncpdev.hrtransa = aux_horatran
                        gncpdev.cdtipreg = 1
                        gncpdev.flgconci = NO
                        gncpdev.nrseqarq = aux_nrsequen

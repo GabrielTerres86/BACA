@@ -8,6 +8,9 @@
  * ALTERAÇÕES   : 12/07/2016 #451040 Formatar número do cheque (Carlos)
  *
  *				  19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
+ * 
+ *                07/12/2018 - Melhoria no processo de devoluções de cheques.
+ *                             Alcemir Mout's (INC0022559).
  * --------------
  */
 ?>
@@ -57,6 +60,11 @@
 						<input type="hidden" id="nrcheque" name="nrcheque" value="<? echo getByTagName($devolucoes[$i]->tags,'nrcheque'); ?>" /> 
 						<input type="hidden" id="vllanmto" name="vllanmto" value="<? echo getByTagName($devolucoes[$i]->tags,'vllanmto'); ?>" /> 
 						<input type="hidden" id="cdalinea" name="cdalinea" value="<? echo getByTagName($devolucoes[$i]->tags,'cdalinea'); ?>" /> 
+						<input type="hidden" id="cdbanchq" name="cdbanchq" value="85" />
+					    <input type="hidden" id="cdbandep" name="cdbandep" value="<? echo getByTagName($devolucoes[$i]->tags,'cdbandep') ?>" />
+						<input type="hidden" id="cdagedep" name="cdagedep" value="<? echo getByTagName($devolucoes[$i]->tags,'cdagedep') ?>" />
+						<input type="hidden" id="nrctadep" name="nrctadep" value="<? echo getByTagName($devolucoes[$i]->tags,'nrctadep') ?>" />
+						
 					
 						<td><span><? echo getByTagName($devolucoes[$i]->tags,'cdbccxlt'); ?></span>
 								  <? echo getByTagName($devolucoes[$i]->tags,'cdbccxlt'); ?>

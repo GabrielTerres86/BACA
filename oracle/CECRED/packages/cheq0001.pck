@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   --                            (Wagner/Sustenção - Chamado #861675).
   --
   --                29/05/2018 - Inclusao de rotinas para baixa de arquivos CCF do FTP da ABBC. Chamado SCTASK0012791 (Heitor - Mouts)
+  --                
+  --                07/12/2018 - Melhoria no processo de devoluções de cheques.
+                                 Alcemir Mout's (INC0022559).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -59,6 +62,9 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                                       ,pr_nrdrecid IN crapfdc.progress_recid%TYPE --> Número do recid do progress
                                       ,pr_vlchqvlb IN NUMBER                      --> Valor VLB do cheque
                                       ,pr_insitdev IN crapdev.insitdev%TYPE DEFAULT 0 --> Situacao: 0 - a devolver, 1 - devolvido.
+                                      ,pr_cdbandep IN crapdev.cdbandep%TYPE DEFAULT NULL --> codigo banco do depositante do cheque                                  
+                                      ,pr_cdagedep IN crapdev.cdagedep%TYPE DEFAULT NULL --> codigo agencia do depositante do cheque
+                                      ,pr_nrctadep IN crapdev.nrctadep%TYPE DEFAULT NULL --> nr conta do depositante do cheque                                      
                                       ,pr_cdcritic IN OUT NUMBER                  --> Código da critica gerado pela rotina
                                       ,pr_des_erro IN OUT VARCHAR2);              --> Descrição do erro ocorrido na rotina
 
@@ -363,6 +369,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                       ,pr_nrdrecid IN crapfdc.progress_recid%TYPE
                                       ,pr_vlchqvlb IN NUMBER
                                       ,pr_insitdev IN crapdev.insitdev%TYPE DEFAULT 0
+                                      ,pr_cdbandep IN crapdev.cdbandep%TYPE DEFAULT NULL --> codigo banco do depositante do cheque                                  
+                                      ,pr_cdagedep IN crapdev.cdagedep%TYPE DEFAULT NULL --> codigo agencia do depositante do cheque
+                                      ,pr_nrctadep IN crapdev.nrctadep%TYPE DEFAULT NULL --> nr conta do depositante do cheque         
                                       ,pr_cdcritic IN OUT NUMBER
                                       ,pr_des_erro IN OUT VARCHAR2) IS
   BEGIN
@@ -623,7 +632,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_cdagechq IN crapdev.cdagechq%TYPE
                               ,pr_nrctachq IN crapdev.nrctachq%TYPE
                               ,pr_nrcheque IN crapdev.nrcheque%TYPE
-                              ,pr_cdhistor IN crapdev.cdhistor%TYPE) IS
+                              ,pr_cdhistor IN crapdev.cdhistor%TYPE
+                              ,pr_cdbandep IN crapdev.cdbandep%TYPE
+                              ,pr_cdagedep IN crapdev.cdagedep%TYPE
+                              ,pr_nrctadep IN crapdev.nrctadep%TYPE) IS
         SELECT rowid
         FROM crapdev crapdev
         WHERE crapdev.cdcooper = pr_cdcooper
@@ -632,6 +644,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         AND   crapdev.nrctachq = pr_nrctachq
         AND   crapdev.nrcheque = pr_nrcheque
         AND   crapdev.cdhistor = pr_cdhistor
+        AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
+        AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
+        AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0)
         UNION ALL
         SELECT rowid
         FROM crapdev crapdev
@@ -640,6 +655,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         AND   crapdev.cdagechq = pr_cdagechq
         AND   crapdev.nrctachq = pr_nrctachq
         AND   crapdev.nrcheque = pr_nrcheque
+        AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
+        AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
+        AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0)                
         AND   crapdev.cdhistor = 46;
       rw_crapdev_union  cr_crapdev_union%ROWTYPE;
 
@@ -847,7 +865,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_cdagechq => pr_cdagechq
                                ,pr_nrctachq => pr_nrctachq
                                ,pr_nrcheque => pr_nrdocmto
-                               ,pr_cdhistor => pr_cdhistor);
+                               ,pr_cdhistor => pr_cdhistor
+                               ,pr_cdbandep => pr_cdbandep
+                               ,pr_cdagedep => pr_cdagedep
+                               ,pr_nrctadep => pr_nrctadep);
          --Posicionar no proximo registro
          FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
@@ -887,7 +908,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,cdbanchq
                                  ,cdagechq
                                  ,nrctachq
-                                 ,indctitg)
+                                 ,indctitg
+                                 ,cdbandep
+                                 ,cdagedep
+                                 ,nrctadep)
                          VALUES  (pr_cdcooper
                                  ,pr_dtmvtolt
                                  ,pr_cdbccxlt
@@ -904,7 +928,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,vr_aux_cdbanchq
                                  ,pr_cdagechq
                                  ,pr_nrctachq
-                                 ,vr_indctitg);
+                                 ,vr_indctitg
+                                 ,pr_cdbandep
+                                 ,pr_cdagedep
+                                 ,pr_nrctadep);
            EXCEPTION
              WHEN OTHERS THEN
                vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_gera_devolucao_cheque: '||SQLERRM;
@@ -931,7 +958,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,cdbanchq
                                ,cdagechq
                                ,nrctachq
-                               ,indctitg)
+                               ,indctitg
+                               ,cdbandep
+                               ,cdagedep
+                               ,nrctadep)
                        VALUES  (pr_cdcooper
                                ,pr_dtmvtolt
                                ,pr_cdbccxlt
@@ -948,7 +978,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,vr_aux_cdbanchq
                                ,pr_cdagechq
                                ,pr_nrctachq
-                               ,vr_indctitg);
+                               ,vr_indctitg
+                               ,pr_cdbandep
+                               ,pr_cdagedep
+                               ,pr_nrctadep);
          EXCEPTION
            WHEN OTHERS THEN
              vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_pi_cria_dev: '||sqlerrm;
@@ -963,7 +996,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                          ,pr_cdagechq => pr_cdagechq
                          ,pr_nrctachq => pr_nrctachq
                          ,pr_nrcheque => pr_nrdocmto
-                               ,pr_cdhistor => pr_cdhistor);
+                               ,pr_cdhistor => pr_cdhistor
+                               ,pr_cdbandep => pr_cdbandep
+                               ,pr_cdagedep => pr_cdagedep
+                               ,pr_nrctadep => pr_nrctadep);                               
          --Posicionar no proximo registro
          FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
@@ -1011,7 +1047,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,cdbanchq
                                  ,cdagechq
                                  ,nrctachq
-                                 ,indctitg)
+                                 ,indctitg
+                                 ,cdbandep
+                                 ,cdagedep
+                                 ,nrctadep)
                          VALUES  (pr_cdcooper
                                  ,pr_dtmvtolt
                                  ,pr_cdbccxlt
@@ -1028,7 +1067,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,vr_aux_cdbanchq
                                  ,pr_cdagechq
                                  ,pr_nrctachq
-                                 ,vr_indctitg);
+                                 ,vr_indctitg
+                                 ,pr_cdbandep
+                                 ,pr_cdagedep
+                                 ,pr_nrctadep);
            EXCEPTION
              WHEN OTHERS THEN
                vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_gera_devolucao_cheque: '||SQLERRM;
@@ -1044,7 +1086,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_cdagechq => pr_cdagechq
                                ,pr_nrctachq => pr_nrctachq
                                ,pr_nrcheque => pr_nrdocmto
-                               ,pr_cdhistor => pr_cdhistor);
+                               ,pr_cdhistor => pr_cdhistor
+                               ,pr_cdbandep => pr_cdbandep
+                               ,pr_cdagedep => pr_cdagedep
+                               ,pr_nrctadep => pr_nrctadep);                               
          --Posicionar no proximo registro
          FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
@@ -1084,7 +1129,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,cdbanchq
                                  ,cdagechq
                                  ,nrctachq
-                                 ,indctitg)
+                                 ,indctitg
+                                 ,cdbandep
+                                 ,cdagedep
+                                 ,nrctadep)
                          VALUES  (pr_cdcooper
                                  ,pr_dtmvtolt
                                  ,pr_cdbccxlt
@@ -1101,7 +1149,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                  ,vr_aux_cdbanchq
                                  ,pr_cdagechq
                                  ,pr_nrctachq
-                                 ,vr_indctitg);
+                                 ,vr_indctitg
+                                 ,pr_cdbandep
+                                 ,pr_cdagedep
+                                 ,pr_nrctadep);
+                                                                  
            EXCEPTION
              WHEN OTHERS THEN
                vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_gera_devolucao_cheque: '||SQLERRM;
@@ -1127,7 +1179,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,cdbanchq
                                ,cdagechq
                                ,nrctachq
-                               ,indctitg)
+                               ,indctitg
+                               ,cdbandep
+                               ,cdagedep
+                               ,nrctadep)
                        VALUES  (pr_cdcooper
                                ,pr_dtmvtolt
                                ,pr_cdbccxlt
@@ -1144,7 +1199,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,vr_aux_cdbanchq
                                ,pr_cdagechq
                                ,pr_nrctachq
-                               ,vr_indctitg);
+                               ,vr_indctitg
+                               ,pr_cdbandep
+                               ,pr_cdagedep
+                               ,pr_nrctadep);                               
          EXCEPTION
            WHEN OTHERS THEN
              vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_gera_devolucao_cheque: '||sqlerrm;
@@ -1161,7 +1219,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.cdagechq = pr_cdagechq
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
-           AND   crapdev.cdhistor = pr_cdhistor;
+           AND   crapdev.cdhistor = pr_cdhistor
+           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1188,6 +1249,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
+             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
@@ -1208,7 +1272,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.cdagechq = pr_cdagechq
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
-           AND   crapdev.cdhistor = pr_cdhistor;
+           AND   crapdev.cdhistor = pr_cdhistor
+           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1234,6 +1301,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
+             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
              AND   crapdev.cdhistor = 46;
            EXCEPTION
              WHEN OTHERS THEN
@@ -1254,6 +1324,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.cdagechq = pr_cdagechq
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
+           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
            AND   crapdev.cdhistor = pr_cdhistor;
 
            --Se nao conseguiu deletar
@@ -1280,6 +1353,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
+             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
+             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
+             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
@@ -3624,7 +3700,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     vr_exc_saida EXCEPTION;    --> Controle de erros de processo
     vr_cdcritic  crapcri.cdcritic%TYPE;
     vr_dscritic  crapcri.dscritic%TYPE;
-
+    
 	vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
     vr_des_erro VARCHAR2(1000);
     
@@ -3699,7 +3775,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     IF vr_des_erro = 'NOK' THEN
       RAISE vr_exc_saida;
     END IF;
-                
+    
     IF vr_inimpede_talionario = 1 THEN -- Se nao houver impedimento para retirada de talionarios
       vr_cdcritic := 18; --018 - Situacao da conta errada.
     ELSIF rw_crapass.cdsitdtl IN (5,6,7,8) THEN --5=NORMAL C/PREJ., 6=NORMAL BLQ.PREJ, 7=DEMITIDO C/PREJ, 8=DEM. BLOQ.PREJ.
