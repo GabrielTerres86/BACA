@@ -3948,6 +3948,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                      pr_cdcriticidade => 2,
                      pr_cdmensagem    => nvl(pr_cdcritic,0),
                      pr_ind_tipo_log  => 2);
+
+        pr_cdcritic := 0;
     END;
   END pc_grava_campos_log_item;
 
@@ -4400,6 +4402,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                      pr_cdcriticidade => 2,
                      pr_cdmensagem    => nvl(pr_cdcritic,0),
                      pr_ind_tipo_log  => 2);
+
+        pr_cdcritic := 0;
     END;
 
     COMMIT;
@@ -4995,7 +4999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                    pr_dstiplog      => 'E',
                    pr_dscritic      => pr_dscritic||vr_dsparame,
                    pr_cdcriticidade => 2,
-                   pr_cdmensagem    => nvl(vr_cdcritic,0),
+                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                    pr_ind_tipo_log  => 2);
   END;
 
