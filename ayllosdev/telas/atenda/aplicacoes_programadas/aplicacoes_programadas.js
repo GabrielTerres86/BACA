@@ -200,7 +200,7 @@ function acessaOpcaoReativar() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados. O n&uacute;mero de contrato do novo plano &eacute;  "+(cdprodut*-1).toString()+".","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
@@ -214,7 +214,7 @@ function reativarAplicProgramada() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados. O n&uacute;mero de contrato do novo plano &eacute;  "+(cdprodut*-1).toString()+".","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	

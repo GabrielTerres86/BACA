@@ -136,7 +136,6 @@
 	$flgAlterar   = true;
 	$flgSuspender = false;	
 	$legend 	  = "Alterar";
-	include("aplicacoes_programadas_formulario_dados.php");
 
 	include("aplicacoes_programadas_formulario_dados.php");
 
