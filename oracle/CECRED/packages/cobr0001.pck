@@ -3725,6 +3725,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
       SELECT 1
         FROM crapceb
        WHERE crapceb.cdcooper = pr_cdcooper
+         AND crapceb.nrdconta = pr_nrdconta
+	 UNION ALL
+	    SELECT 1
+        FROM tbcobran_crapceb crapceb
+       WHERE crapceb.cdcooper = pr_cdcooper
          AND crapceb.nrdconta = pr_nrdconta;
        rw_crapceb cr_crapceb_2%ROWTYPE;
          
