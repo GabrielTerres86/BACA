@@ -32,8 +32,16 @@ BEGIN
   -- Create do job do mesmo
   sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCAPT_MIGRACAO_RPP'
                                ,job_type        => 'PLSQL_BLOCK'
-                               ,job_action      => 'BEGIN ' || CHR(10)
-                                                || '  CECRED.pc_controle_migra_rpp(0,''JBCAPT_MIGRACAO_RPP_0''); ' || CHR(10)
+                               ,job_action      => 'DECLARE ' || CHR(10)
+                                                ||  '   vr_cdcritic crapcri.cdcritic%TYPE; ' || CHR(10)
+                                                ||  '   vr_dscritic crapcri.dscritic%TYPE; ' || CHR(10)
+                                                || 'BEGIN ' || CHR(10)
+                                                || '  CECRED.pc_controle_migra_rpp(0,''JBCAPT_MIGRACAO_RPP_0'', vr_cdcritic, vr_dscritic); ' || CHR(10)
+                                                || '  -- Testar saida com erro ' || CHR(10)
+                                                || '  IF vr_dscritic IS NOT NULL THEN ' || CHR(10)
+                                                || '    -- Levantar exceçao ' || CHR(10)
+                                                || '    RAISE_application_error(-20500,''Erro: ''||vr_dscritic); ' || CHR(10)
+                                                || '  END IF;' || CHR(10)
                                                 || 'END; '
                                ,start_date      => TO_TIMESTAMP_TZ(to_char(SYSDATE + 1,'DD/MM/RRRR')||' 07:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')                               
                                ,repeat_interval => 'Freq=Daily;ByDay=MON, TUE, WED, THU, FRI;ByHour=06;ByMinute=0;BySecond=0' 
