@@ -957,8 +957,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(4277, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(4268, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(4266, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_rppagefis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"SALDO TOTAL DE TITULOS COM SALDO APLICACAO PROGRAMADA - COOPERADOS PESSOA FISICA"';           --> Descricao
@@ -1000,8 +1000,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                     --> Informacao inicial
                         TO_CHAR(vr_dtprodma,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
                         TO_CHAR(vr_dtprodma,'DDMMYY')||','||                                               --> Data DDMMAA
-                      gene0002.fn_mask(4277, pr_dsforma => '9999')||','||                                        --> Conta Destino
-                      gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                        --> Conta Origem
+                      gene0002.fn_mask(4266, pr_dsforma => '9999')||','||                                        --> Conta Destino
+                      gene0002.fn_mask(4268, pr_dsforma => '9999')||','||                                        --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_rppagefis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
                       '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS COM SALDO APLICACAO PROGRAMADA - COOPERADOS PESSOA FISICA"';          --> Descricao
@@ -1045,8 +1045,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(4278, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(4268, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(4267, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_rppagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"SALDO TOTAL DE TITULOS COM SALDO APLICACAO PROGRAMADA - COOPERADOS PESSOA JURIDICA"';         --> Descricao
@@ -1085,8 +1085,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(vr_dtprodma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(vr_dtprodma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(4278, pr_dsforma => '9999')||','||                                         --> Conta Destino
-                      gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(4267, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(4268, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_rppagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS COM SALDO APLICACAO PROGRAMADA - COOPERADOS PESSOA JURIDICA"';         --> Descricao
@@ -1128,8 +1128,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8066, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrprvfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"PROVISAO DO MES - APLICACAO PROGRAMADA COOPERADOS PESSOA FISICA"';                         --> Descricao
@@ -1171,8 +1171,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8067, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrprvjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"PROVISAO DO MES - APLICACAO PROGRAMADA COOPERADOS PESSOA JURIDICA"';                       --> Descricao
@@ -1214,8 +1214,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8066, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrajusprv_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"AJUSTE PROVISAO APLICACAO PROGRAMADA – PESSOA FISICA"';                         --> Descricao
@@ -1257,8 +1257,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8067, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrajusprv_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"AJUSTE PROVISAO APLICACAO PROGRAMADA – PESSOA JURIDICA"';                       --> Descricao
@@ -1302,8 +1302,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8066, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrajudprv_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"AJUSTE DE PROVISAO APLICACAO PROGRAMADA – PESSOA FISICA"';                         --> Descricao
@@ -1345,8 +1345,8 @@ BEGIN
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                         TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                         TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                      gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                      gene0002.fn_mask(8067, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrajudprv_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                       gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"AJUSTE DE PROVISAO APLICACAO PROGRAMADA – PESSOA JURIDICA"';                       --> Descricao
