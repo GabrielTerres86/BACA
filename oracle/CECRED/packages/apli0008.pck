@@ -325,6 +325,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
 															 ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
 															 ,pr_idconsul    IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
 															 ,pr_idgerlog    IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim) 																 
+															 ,pr_tpaplica    IN PLS_INTEGER DEFAULT 0           --> Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
 															 ,pr_cdcritic   OUT INTEGER                         --> Código da crítica
 															 ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
 															 ,pr_saldo_rdca OUT apli0001.typ_tab_saldo_rdca);   --> Tabela com os dados da aplicação
@@ -1236,35 +1237,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       
       /* Se solicitado, busca o rendimento */
       IF pr_inrendim = 1 THEN
-        -- Calcula o rendimento bruto total
-        pc_buscar_extrato_apl_prog (pr_cdcooper => pr_cdcooper
-                                   ,pr_cdoperad => pr_cdoperad
-                                   ,pr_nmdatela => pr_cdprogra
-                                   ,pr_idorigem => pr_idorigem
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_idseqttl => pr_idseqttl
-                                   ,pr_nrctrrpp => pr_nrctrrpp
-                                   ,pr_dtmvtolt_ini => rw_crapcpc.dtinirpp
-                                   ,pr_dtmvtolt_fim => pr_dtmvtolt
-                                   ,pr_idlstdhs => 1
-                                   ,pr_idgerlog => 0
-                                   ,pr_tab_extrato => vr_tab_extrato
-                                   ,pr_vlresgat => vr_vlresgat
-                                   ,pr_vlrendim => vr_vlrendim
-                                   ,pr_vldoirrf => vr_vlrdirrf
-                                   ,pr_cdcritic => vr_cdcritic
-                                   ,pr_dscritic => vr_dscritic);
+      -- Calcula o rendimento bruto total
+      pc_buscar_extrato_apl_prog (pr_cdcooper => pr_cdcooper
+                                 ,pr_cdoperad => pr_cdoperad
+                                 ,pr_nmdatela => pr_cdprogra
+                                 ,pr_idorigem => pr_idorigem
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_idseqttl => pr_idseqttl
+                                 ,pr_nrctrrpp => pr_nrctrrpp
+                                 ,pr_dtmvtolt_ini => rw_crapcpc.dtinirpp
+                                 ,pr_dtmvtolt_fim => pr_dtmvtolt
+                                 ,pr_idlstdhs => 1
+                                 ,pr_idgerlog => 0
+                                 ,pr_tab_extrato => vr_tab_extrato
+                                 ,pr_vlresgat => vr_vlresgat
+                                 ,pr_vlrendim => vr_vlrendim
+                                 ,pr_vldoirrf => vr_vlrdirrf
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
         IF pr_des_erro is null and vr_dscritic is null THEN
-            IF vr_tab_extrato.count >0 THEN
-              FOR vr_idx_extrato in vr_tab_extrato.first .. vr_tab_extrato.last LOOP
-                  IF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsprap,rw_crapcpc.cdhsrdap) THEN -- Provisao do mês e rendimento
-                     pr_vlrebtap := pr_vlrebtap + vr_tab_extrato(vr_idx_extrato).vllanmto;  
-                  ELSIF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsirap,rw_crapcpc.cdhsrvap) THEN -- IRRF e Ajuste Previsão
-                     pr_vlrebtap := pr_vlrebtap - vr_tab_extrato(vr_idx_extrato).vllanmto;  
-                  END IF;
-              END LOOP;
-            END IF;
-        END IF;
+          IF vr_tab_extrato.count >0 THEN
+            FOR vr_idx_extrato in vr_tab_extrato.first .. vr_tab_extrato.last LOOP
+                IF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsprap,rw_crapcpc.cdhsrdap) THEN -- Provisao do mês e rendimento
+                   pr_vlrebtap := pr_vlrebtap + vr_tab_extrato(vr_idx_extrato).vllanmto;  
+                ELSIF vr_tab_extrato(vr_idx_extrato).cdhistor in (rw_crapcpc.cdhsirap,rw_crapcpc.cdhsrvap) THEN -- IRRF e Ajuste Previsão
+                   pr_vlrebtap := pr_vlrebtap - vr_tab_extrato(vr_idx_extrato).vllanmto;  
+                END IF;
+            END LOOP;
+          END IF;
+      END IF;
       END IF;
     END;
   END pc_posicao_saldo_apl_prog;
@@ -1306,12 +1307,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
     BEGIN
       pc_posicao_saldo_apl_prog(pr_cdcooper => pr_cdcooper
                                ,pr_cdprogra => pr_cdprogra
-                               ,pr_cdoperad => pr_cdoperad
-                               ,pr_nrdconta => pr_nrdconta
-                               ,pr_idseqttl => pr_idseqttl
+                                               ,pr_cdoperad => pr_cdoperad
+                                               ,pr_nrdconta => pr_nrdconta
+                                               ,pr_idseqttl => pr_idseqttl
                                ,pr_idorigem => pr_idorigem
                                ,pr_nrctrrpp => pr_nrctrrpp
-                               ,pr_dtmvtolt => pr_dtmvtolt
+                                               ,pr_dtmvtolt => pr_dtmvtolt
                                ,pr_inrendim => 0             -- Nao precisa carregar rendimento
                                ,pr_vlbascal => vr_vlbascal
                                ,pr_vlsdtoap => vr_vlsdtoap
@@ -4717,7 +4718,7 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
       pr_des_erro := 'Erro ao fazer o cálculo da aplicação programada para a conta '||rw_craprpp.nrdconta||': '||sqlerrm;
 END pc_calc_app_programada;
 
-  PROCEDURE pc_lista_aplicacoes_progr(pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+  PROCEDURE pc_lista_aplicacoes_progr (pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
                                                              ,pr_cdoperad    IN crapope.cdoperad%TYPE           --> Código do Operador
                                                              ,pr_nmdatela    IN craptel.nmdatela%TYPE           --> Nome da Tela
                                                              ,pr_idorigem    IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
@@ -4731,6 +4732,7 @@ END pc_calc_app_programada;
                                                              ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
                                                              ,pr_idconsul    IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
                                                              ,pr_idgerlog    IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)                                                                  
+                                      ,pr_tpaplica    IN PLS_INTEGER DEFAULT 0           --> Tipo Aplicacao (0 - Todas / 1 - Não PCAPTA (RDC PÓS, PRE e RDCA) / 2 - Apenas PCAPTA)
                                                              ,pr_cdcritic   OUT INTEGER                         --> Código da crítica
                                                              ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
                                                              ,pr_saldo_rdca OUT apli0001.typ_tab_saldo_rdca) IS --> Tabela com os dados da aplicação
@@ -4778,6 +4780,8 @@ END pc_calc_app_programada;
 
       BEGIN
 
+          /* 0 - Todas ou 2 - PCAPTA */
+          IF pr_tpaplica IN (0,2) THEN
       -- Consulta de novas aplicacoes
       apli0008.pc_busca_aplicacoes_prog(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_cdoperad   => pr_cdoperad     --> Código do Operador
@@ -4797,7 +4801,10 @@ END pc_calc_app_programada;
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+          END IF;
 
+          /* 0 - Todas ou 1 - Não PCAPTA */
+          IF pr_tpaplica IN (0,1) THEN
           -- Consulta de aplicacoes antigas
           APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   --> Cooperativa
                                          ,pr_cdagenci   => pr_cdagenci   --> Codigo da agencia
@@ -4819,6 +4826,7 @@ END pc_calc_app_programada;
             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
             RAISE vr_exc_saida;
           END IF;                                        
+          END IF;                                     
 
       -- Montagem do XML com todas as aplicacoes que deverao ser exibidas na tela atenda
       IF vr_tab_aplica.COUNT > 0 THEN
