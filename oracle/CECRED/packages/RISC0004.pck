@@ -2427,7 +2427,7 @@ END pc_carrega_tabela_riscos;
   -- CURSORES
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-  CURSOR cr_crapepr(pr_rowidepr IN ROWID) IS
+  CURSOR cr_emprest(pr_rowidepr IN ROWID) IS
     SELECT e.cdcooper
           ,e.nrdconta
           ,e.nrctremp
@@ -2474,7 +2474,7 @@ END pc_carrega_tabela_riscos;
        AND b.flgbaixa(+) = 0  -- Não pode ter sido Baixado
        AND b.flcancel(+) = 0  -- Não pode ter sido Cancelado
      ORDER BY e.nrctremp;
-  rw_crapepr   cr_crapepr%ROWTYPE;
+  rw_crapepr   cr_emprest%ROWTYPE;
   
   CURSOR cr_central (pr_cdcooper IN crapris.cdcooper%TYPE
                     ,pr_nrdconta IN crapris.nrdconta%TYPE
@@ -2529,14 +2529,14 @@ END pc_carrega_tabela_riscos;
     END IF;
 
     -- Verificar Emprestimo
-    OPEN cr_crapepr(pr_rowidepr => pr_rowidepr);
-    FETCH cr_crapepr INTO rw_crapepr;
-    IF cr_crapepr%NOTFOUND THEN
-      CLOSE cr_crapepr;
+    OPEN cr_emprest(pr_rowidepr => pr_rowidepr);
+    FETCH cr_emprest INTO rw_crapepr;
+    IF cr_emprest%NOTFOUND THEN
+      CLOSE cr_emprest;
       vr_cdcritica_melhora := 0;  -- 0) EMPRESTIMO NAO ENCONTRADO
       RAISE vr_grava_log;
     END IF;
-    CLOSE cr_crapepr;
+    CLOSE cr_emprest;
 
   
     
