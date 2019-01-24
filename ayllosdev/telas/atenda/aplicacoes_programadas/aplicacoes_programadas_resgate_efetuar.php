@@ -20,6 +20,9 @@
 	//***             21/09/2018 - Alterações Aplicação Programada         ***//
 	//***                          (Proj. 411.2 - CIS Corporate)           ***// 
 	//***                                                                  ***//	
+	//***             24/01/2019 - Comentado if do campo "cdopelib"        ***//	
+	//***                          da sessão(Lombardi)                     ***//	
+	//***                                                                  ***//	
 	//************************************************************************//
 	
 	session_start();
@@ -137,7 +140,7 @@
 	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	// Senão, gera log com os dados da autorização e exclui o bloqueio no caso de resgate total (SM404)
-	}else{
+	} /*else{
 		if(isset($_SESSION['cdopelib'])) {
 			$vlresgat = str_replace(',','.',str_replace('.','',$vlresgat));
 			// Montar o xml de Requisicao
@@ -172,7 +175,7 @@
 			exibeErro($msgErro,$frm);			
 			exit();
 		}
-	} 
+	} */
 	
 	echo 'flgoprgt = true;';
 		
