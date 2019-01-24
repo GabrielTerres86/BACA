@@ -17,6 +17,8 @@ create or replace package cecred.APLI0003 is
   --
   --             15/07/2018 Inclusão da Aplicação Programada - Cláudio (CIS Corporate)
   --
+  --             25/09/2018 Inclusão da Aplicação Programada no retorno da pc_carrega_produto - Proj. 411.2 (CIS Corporate)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   /* Rotina referente a consulta de produtos cadastrados */ 
@@ -205,6 +207,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                              ,pr_idtippro IN crapcpc.idtippro%TYPE --> Tipo
                              ,pr_idtxfixa IN crapcpc.idtxfixa%TYPE --> Taxa Fixa
                              ,pr_idacumul IN crapcpc.idacumul%TYPE --> Taxa Cumulativa
+                             ,pr_indplano IN INTEGER               --> Apl. Programada (1 = Sim / 2 = Nao)
                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -275,6 +278,9 @@ create or replace package body cecred.APLI0003 is
                  15/07/2018 - Inclusão do parâmetro pr_idaplpgm em pc_lista_movimentacao_carteira
 			                        Claudio - CIS Corporate
                 
+                 25/09/2018 - Inclusão da Aplicação Programada no retorno 
+                              Proj. 411.2 (CIS Corporate)
+             
      ..............................................................................*/ 
     DECLARE
           
@@ -297,7 +303,11 @@ create or replace package body cecred.APLI0003 is
         cpc.cddindex,
         cpc.idtippro,
         cpc.idtxfixa,
-        cpc.idacumul
+        cpc.idacumul,
+        CASE cpc.indplano 
+             WHEN 1 THEN cpc.indplano
+             ELSE 2 
+               END indplano
       FROM
        crapcpc cpc
       WHERE (cpc.cdprodut = pr_cdprodut 
@@ -350,6 +360,7 @@ create or replace package body cecred.APLI0003 is
            
             -- campo com o nome do indexador
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmdindex', pr_tag_cont => rw_crapind.nmdindex, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'indplano', pr_tag_cont => rw_crapcpc.indplano, pr_des_erro => vr_dscritic);
             
             CLOSE cr_crapind;
 
@@ -3320,6 +3331,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                              ,pr_idtippro IN crapcpc.idtippro%TYPE --> Tipo
                              ,pr_idtxfixa IN crapcpc.idtxfixa%TYPE --> Taxa Fixa
                              ,pr_idacumul IN crapcpc.idacumul%TYPE --> Taxa Cumulativa                         
+                             ,pr_indplano IN INTEGER               --> Apl. Programada (1 = Sim / 2 = Nao)
                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -3334,7 +3346,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Junho/14.                    Ultima atualizacao: 16/06/2014
+     Data    : Junho/14.                    Ultima atualizacao: 26/09/2018
 
      Dados referentes ao programa:
 
@@ -3348,6 +3360,9 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                  produtos. Criacao do cursor de listagem de modalidades e tambem
                  de carteira para os produtos, implementacao do LOG de operacoes.
                  {Carlos Rafael Tanholi - 17/07/2014}
+                 
+                 26/09/2018 - Inclusao do parâmetro indplano para apl. programada
+                              Proj. 411.2 - CIS Corporate
      ..............................................................................*/ 
     DECLARE
           
@@ -3376,12 +3391,14 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       vr_nmdindex crapind.nmdindex %TYPE;
+      vr_indplano crapcpc.indplano%TYPE;
       
       vr_idsitpro VARCHAR2(100);
       vr_cdindex VARCHAR2(100);
       vr_idtippro VARCHAR2(100);
       vr_idtxfixa VARCHAR2(100);
       vr_idacumul VARCHAR2(100);       
+      vt_indplano VARCHAR2(100);       
       
       vr_vtsitpro VARCHAR2(100) := 'ATIVO,INATIVO';
       vr_vttippro VARCHAR2(100) := 'PRE-FIXADA,POS-FIXADA'; --seguindo a ordem PRE=1/POS=2
@@ -3399,6 +3416,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
        ,cpc.idtippro
        ,cpc.idtxfixa
        ,cpc.idacumul
+       ,cpc.indplano
       FROM
        crapcpc cpc
       WHERE cpc.nmprodut = pr_nmprodut
@@ -3413,6 +3431,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                            ,pr_idtxfixa IN crapcpc.idtxfixa%TYPE --> Taxa Fixa
                            ,pr_idacumul IN crapcpc.idacumul%TYPE --> Taxa Cumulativa
                            ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
+                           ,pr_indplano IN crapcpc.indplano%TYPE --> Apl. Programada (0=Nao, 1=Sim)
                            ) IS
       SELECT
         cpc.cdprodut
@@ -3422,6 +3441,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
        ,cpc.idtippro
        ,cpc.idtxfixa
        ,cpc.idacumul
+       ,cpc.indplano
       FROM
        crapcpc cpc
       WHERE
@@ -3430,6 +3450,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
        AND cpc.idtippro = pr_idtippro
        AND cpc.idtxfixa = pr_idtxfixa
        AND cpc.idacumul = pr_idacumul
+       AND cpc.indplano = pr_indplano
        AND cpc.cdprodut <> pr_cdprodut;
       
       rw_crapcpc_par cr_crapcpc_par%ROWTYPE; 
@@ -3470,7 +3491,8 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
         cpc.cddindex,
         cpc.idtippro,
         cpc.idtxfixa,
-        cpc.idacumul
+        cpc.idacumul,
+        cpc.indplano
       FROM
        crapcpc cpc
       WHERE
@@ -3496,6 +3518,12 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
        
 
     BEGIN
+      
+      IF pr_indplano = 1 THEN
+         vr_indplano := 1;
+      ELSE
+         vr_indplano := 0;
+      END IF;
       
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -3601,6 +3629,7 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                              ,pr_idtxfixa => pr_idtxfixa --> Taxa Fixa
                              ,pr_idacumul => pr_idacumul --> Taxa Cumulativa
                              ,pr_cdprodut => pr_cdprodut --> Codigo Produto
+                             ,pr_indplano => vr_indplano --> Apl. Programada
                               );
 
           FETCH cr_crapcpc_par
@@ -3694,7 +3723,8 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                      crapcpc.cddindex = pr_cddindex,
                      crapcpc.idtippro = pr_idtippro,
                      crapcpc.idtxfixa = pr_idtxfixa,
-                     crapcpc.idacumul = pr_idacumul
+                     crapcpc.idacumul = pr_idacumul,
+                     crapcpc.indplano = vr_indplano
                WHERE crapcpc.cdprodut = pr_cdprodut; 
                
             EXCEPTION
@@ -3713,7 +3743,8 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
                 UPDATE crapcpc 
                    SET crapcpc.nmprodut = pr_nmprodut,
                        crapcpc.idsitpro = pr_idsitpro,
-                       crapcpc.idacumul = pr_idacumul
+                       crapcpc.idacumul = pr_idacumul,
+                       crapcpc.indplano = vr_indplano
                  WHERE crapcpc.cdprodut = pr_cdprodut;   
                  
             EXCEPTION

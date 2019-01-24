@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 12/08/2014
  * OBJETIVO     : Ajax de consulta para tela PCAPTA - definicoes
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 08/10/2018 Inclusao da configuração das Apl. Programadas - Proj. 411.2 (CIS Corporate)
  *
  * --------------
  */
@@ -46,9 +46,9 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
         $xml .= " <Dados>";
         $xml .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
         $xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
-	$xml .= "   <idsitmod>" . $idsitmod . "</idsitmod>";
-	$xml .= "   <nrregist>" . $nrregist . "</nrregist>";        
-	$xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
+	    $xml .= "   <idsitmod>" . $idsitmod . "</idsitmod>";
+    	$xml .= "   <nrregist>" . $nrregist . "</nrregist>";        
+	    $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
         $xml .= " </Dados>";
         $xml .= "</Root>";
 
@@ -80,14 +80,13 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
     $idtxfixa = (isset($_POST["idtxfixa"])) ? $_POST["idtxfixa"] : 0;
     
     if ( $cdprodut > 0 && $cdcooper > 0 ) {
-        
         // Montar o xml de Requisicao
         $xml .= "<Root>";
         $xml .= " <Dados>";
         $xml .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
         $xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
-	$xml .= "   <nrregist>" . $nrregist . "</nrregist>";
-	$xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
+	    $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
+	    $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
         $xml .= " </Dados>";
         $xml .= "</Root>";
 
@@ -103,7 +102,6 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
         } else {
             $registros = $xmlObj->roottag->tags[0]->tags;
             $qtdregist = $xmlObj->roottag->tags[1]->cdata;
-            
             include('tab_definicao.php');
         }   
     }   
@@ -112,8 +110,10 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
 } else if  ( $flgopcao == 'C' ) { //consulta Taxa Fixa
     // Verifica se os parametros necessarios foram informados
     $cdprodut = (isset($_POST["cdprodut"])) ? $_POST["cdprodut"] : 0;
+    $cdcooper = (isset($_POST["cdcooper"])) ? $_POST["cdcooper"] : 0;
 
-    if ( $cdprodut > 0 ) {
+
+    if ( $cdprodut >0 && $cdcooper>0) {
 
         // Montar o xml de Requisicao
         $xml .= "<Root>";
@@ -134,13 +134,64 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
             exibirErro('error', $msgErro, 'Alerta - Ayllos', '', true);
         } else {
             $registros = $xmlObj->roottag->tags;
-            foreach ($registros as $registro) {
+            $vidtxfixa = $registros[0]->tags[5]->cdata;  //retorna taxa fixa 
+            $vnmdindex = $registros[0]->tags[7]->cdata; //nome do indexador
+            $vindplano = $registros[0]->tags[8]->cdata; //apl. programada. 1 = sim, 2 = nao
+        };
+        if ($vindplano == '1') {//Aplicacao Programada
+            $xmlAP .= "<Root>";
+            $xmlAP .= " <Dados>";
+            $xmlAP .= "   <cdcooper_b>" . $cdcooper . "</cdcooper_b>";
+            $xmlAP .= "   <cdprodut>"   . $cdprodut . "</cdprodut>";
+            $xmlAP .= " </Dados>";
+            $xmlAP .= "</Root>";
+
+            $xmlResultAP = mensageria($xmlAP, "APLI0008", "OBTEM_CONFIG_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $xmlObjAP = getObjectXML($xmlResultAP);
+            if (strtoupper($xmlObjAP->roottag->tags[0]->name == 'ERRO')) {           
+                $msgErro = $xmlObjAP->roottag->tags[0]->cdata;
+                if ($msgErro == null || $msgErro == '') {
+                    $msgErro = $xmlObjAP->roottag->tags[0]->tags[0]->tags[4]->cdata;
+                }
+                if ($msgErro != 'Configuração não encontrada') { // Continuar pois "ainda" não há configuracao
+                    exibirErro('error', $msgErro, 'Alerta - Aiyllos', '', true);
+                } else {
+                    $retorno[] = array(
+                        'idtxfixa'       => $vidtxfixa, //retorna taxa fixa 
+                        'nmdindex'       => $vnmdindex , //nome do indexador
+                        'indplano'       => $vindplano, //apl. programada. 1 = sim, 2 = nao
+                        'teimosinha'     => '0', //Teimosinha  (0 = indefinido, 1 = sim, 2 = nao)
+                        'debito_parcial' => '0', //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
+                        'vlminimo'       => '', //Valor mínimo para debito parcial
+                        'existe_config'  => '2' // Existe a configurcao ( 1 = sim, 2 = nao)
+                        );
+                     
+                } 
+            } else { // Nao encontrou erro
+                $registrosAP    = $xmlObjAP->roottag->tags[0]->tags;
+                $teimosinha     = $registrosAP[0]->tags[1]->cdata;  // Teimosinha  (0 = indefinido, 1 = sim, 2 = nao) 
+                $debito_parcial = $registrosAP[0]->tags[2]->cdata;  //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
+                $vlminimo       = $registrosAP[0]->tags[3]->cdata;  //Valor mínimo para debito parcial
                 $retorno[] = array(
-                    'idtxfixa'   => $registro->tags[5]->cdata, //retorna taxa fixa 
-                    'nmdindex'   => $registro->tags[7]->cdata //nome do indexador
-                );
+                    'idtxfixa'       => $vidtxfixa, 
+                    'nmdindex'       => $vnmdindex , 
+                    'indplano'       => $vindplano, 
+                    'teimosinha'     => $teimosinha,     //Teimosinha  (0 = indefinido, 1 = sim, 2 = nao)
+                    'debito_parcial' => $debito_parcial, //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
+                    'vlminimo'       => $vlminimo,       //Valor mínimo para debito parcial
+                    'existe_config'  => '1'              // Existe a configurcao ( 1 = sim, 2 = nao)
+
+                    );
             }
-        }   
+        } else {  // Apl . nao e do tipo pgoramada
+                $retorno[] = array(
+                    'idtxfixa'       => $vidtxfixa,  //retorna taxa fixa 
+                    'nmdindex'       => $vnmdindex , //nome do indexador
+                    'indplano'       => $vindplano   //apl. programada. 1 = sim, 2 = nao
+                    );
+
+        }
+
     }
 } else if  ( $flgopcao == 'CONCAR' ) { // consulta dias de carencia
 
@@ -324,12 +375,20 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
 } else if  ( $flgopcao == 'I' ) { //inserir
     
     // Verifica se os parametros necessarios foram informados
-    if (!isset($_POST["cdcooper"]) || !isset($_POST["cdmodali"])) { 
+    if (!isset($_POST["cdcooper"]) || !isset($_POST["cdmodali"]) || !isset($_POST["indplano"]) || !isset($_POST["cdprodut"]) ||
+        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ) { 
         $msgErro = 'Par&acirc;metros incorretos.';
         $erro = 'S';               
     } else {
         $cdcooper = (isset($_POST["cdcooper"])) ? $_POST["cdcooper"] : 0;
+        $cdprodut = (isset($_POST["cdprodut"])) ? $_POST["cdprodut"] : 0;
         $cdmodali = (isset($_POST["cdmodali"])) ? $_POST["cdmodali"] : 0;
+        $indplano = (isset($_POST["indplano"])) ? $_POST["indplano"] : 0;
+        $indteimo = (isset($_POST["indteimo"])) ? $_POST["indteimo"] : 0;  
+        $indparci = (isset($_POST["indparci"])) ? $_POST["indparci"] : 0;
+        $valormin = (isset($_POST["valormin"])) ? $_POST["valormin"] : 0;
+
+	    $valormin = str_replace(',','.',str_replace('.','',$valormin)); // substituir , por .
     }
 
     if ( $erro == 'N' ) {
@@ -362,6 +421,71 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
                     );
                 }
             }
+
+            if ($indplano == 1) {
+                // Grava configuracao se for programada
+                $xmlCfg .= "<Root>";
+                $xmlCfg .= " <Dados>";
+                $xmlCfg .= "   <cdcooper_a>" . $cdcooper . "</cdcooper_a>";
+                $xmlCfg .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
+                $xmlCfg .= "   <indplano>" . $indplano . "</indplano>";
+                $xmlCfg .= "   <flgteimo>" . $indteimo . "</flgteimo>";
+                $xmlCfg .= "   <fldbparc>" . $indparci . "</fldbparc>";
+                $xmlCfg .= "   <vlminimo>" . $valormin . "</vlminimo>";
+                $xmlCfg .= " </Dados>";
+                $xmlCfg .= "</Root>";
+                $xmlResultCfg = mensageria($xmlCfg, "APLI0008", "MANTEM_CONFIG_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObjCfg = getObjectXML($xmlResultCfg);
+                if (strtoupper($xmlObjCfg->roottag->tags[0]->name == 'ERRO')) {
+                    $msgErro = $xmlObjCfg->roottag->tags[0]->cdata;
+                    if ($msgErro == null || $msgErro == '') {
+                        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+                    }
+                    exibirErro('error', $msgErro, 'Alerta - Ayllos', '', true);
+                    exit();            
+                }
+            }
+
+        }
+    }    
+} else if  ( $flgopcao == 'A' ) { //Alterar a configuracao
+    
+    // Verifica se os parametros necessarios foram informados
+    if (!isset($_POST["cdcooper"]) || !isset($_POST["indplano"]) || !isset($_POST["cdprodut"]) ||
+        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ) { 
+        $msgErro = 'Par&acirc;metros incorretos.';
+        $erro = 'S';               
+    } else {
+        $cdcooper = (isset($_POST["cdcooper"])) ? $_POST["cdcooper"] : 0;
+        $cdprodut = (isset($_POST["cdprodut"])) ? $_POST["cdprodut"] : 0;
+        $indplano = (isset($_POST["indplano"])) ? $_POST["indplano"] : 0;
+        $indteimo = (isset($_POST["indteimo"])) ? $_POST["indteimo"] : 0;  
+        $indparci = (isset($_POST["indparci"])) ? $_POST["indparci"] : 0;
+        $valormin = (isset($_POST["valormin"])) ? $_POST["valormin"] : 0;
+
+	    $valormin = str_replace(',','.',str_replace('.','',$valormin)); // substituir , por .
+    }
+
+    if ( $erro == 'N' ) {
+        $xmlCfg .= "<Root>";
+        $xmlCfg .= " <Dados>";
+        $xmlCfg .= "   <cdcooper_a>" . $cdcooper . "</cdcooper_a>";
+        $xmlCfg .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
+        $xmlCfg .= "   <indplano>" . $indplano . "</indplano>";
+        $xmlCfg .= "   <flgteimo>" . $indteimo . "</flgteimo>";
+        $xmlCfg .= "   <fldbparc>" . $indparci . "</fldbparc>";
+        $xmlCfg .= "   <vlminimo>" . $valormin . "</vlminimo>";
+        $xmlCfg .= " </Dados>";
+        $xmlCfg .= "</Root>";
+        $xmlResultCfg = mensageria($xmlCfg, "APLI0008", "MANTEM_CONFIG_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObjCfg = getObjectXML($xmlResultCfg);
+        if (strtoupper($xmlObjCfg->roottag->tags[0]->name == 'ERRO')) {
+            $msgErro = $xmlObjCfg->roottag->tags[0]->cdata;
+            if ($msgErro == null || $msgErro == '') {
+                $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            }
+            exibirErro('error', $msgErro, 'Alerta - Ayllos', '', true);
+            exit();            
         }
     }    
 } else if ( $flgopcao == 'E' || $flgopcao == 'D' || $flgopcao == 'B' ) {

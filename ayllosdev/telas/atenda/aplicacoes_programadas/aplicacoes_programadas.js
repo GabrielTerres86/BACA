@@ -1,7 +1,7 @@
 //*************************************************************************//
 //*** Fonte: aplicacoes_programadas.js                                  ***//
 //*** Autor: David                                                      ***//
-//*** Data : Março/2010                   Ultima Alteracao: 27/07/2018  ***//
+//*** Data : Março/2010                   Ultima Alteracao: 05/09/2018  ***//
 //***                                                                   ***//
 //*** Objetivo  : Biblioteca de funções da rotina Poupança Programada   ***//
 //***             da tela ATENDA                                        ***//
@@ -17,7 +17,7 @@
 //***              (Gabriel Capoia - DB1)				                ***//
 //***																    ***//
 //***              27/12/2011 - Alterada na função 'acessaOpcaoIncluir' ***//
-//***              				para cálculo da data de inicio e        ***//
+//***              				para cáculos da data de inicio e        ***//
 //***              				de vencimento máximo. (Lucas)           ***//
 //***																    ***//
 //***			  27/06/2012 - Retirado window.open, novo esquema  para ***//
@@ -41,6 +41,9 @@
 //***                         (SM404).                                  ***//
 //***                                                                   ***//
 //***            27/07/2018 - Derivação para Aplicação Programada       ***//
+//***                         (Proj. 411.2 - CIS Corporate)             ***//
+//***                                                                   ***//
+//***            05/09/2018 - Inclusão do campo Finalidade              ***//
 //***                         (Proj. 411.2 - CIS Corporate)             ***//
 //***                                                                   ***//
 //*************************************************************************//
@@ -776,8 +779,10 @@ function validarAlteracaoAplicacao() {
 	showMsgAguardo("Aguarde, validando altera&ccedil&atilde;o ...");
 	
 	var vlprerpp = $("#vlprerpp","#frmDadosPoupanca").val().replace(/\./g,"");
-	
-	// Valida valor da prestação
+	var indebito = $("#diadebit","#frmDadosPoupanca").val();
+	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
+
+	// Valida valor da prestaï¿½ï¿½o
 	if (vlprerpp == "" || !validaNumero(vlprerpp,true,0,0)) {
 		hideMsgAguardo();
 		showError("error","Valor de presta&ccedil;&atilde;o inv&aacute;lido.","Alerta - Aimaro","$('#vlprerpp','#frmDadosPoupanca').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -792,6 +797,8 @@ function validarAlteracaoAplicacao() {
 			nrdconta: nrdconta,
 			nrctrrpp: nrctrrpp, 
 			vlprerpp: vlprerpp,
+			indebito: indebito,
+			dsfinali: dsfinali,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -809,11 +816,14 @@ function validarAlteracaoAplicacao() {
 	});				
 }
 
-// Função para alterar a poupança programada
-function alterarAplicacao(vlprerpp) {
+// função para alterar a poupança programada
+function alterarAplicacao(vlprerpp,dtprxdeb) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, alterando poupan&ccedil;a programada ...");	
-		
+
+	var indebito = $("#diadebit","#frmDadosPoupanca").val();
+	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
+
 	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",		
@@ -823,6 +833,9 @@ function alterarAplicacao(vlprerpp) {
 			nrctrrpp: nrctrrpp,		
 			vlprerpp: vlprerpp,
 			cdprodut: cdprodut,
+			indebito: indebito,
+			dsfinali: dsfinali,
+			dtprxdeb: dtprxdeb,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -877,8 +890,10 @@ function validarInclusaoPoupanca() {
 	var mesdtvct = $("#mesdtvct","#frmDadosPoupanca").val();
 	var anodtvct = $("#anodtvct","#frmDadosPoupanca").val();
 	var vlprerpp = $("#vlprerpp","#frmDadosPoupanca").val().replace(/\./g,"");
-	var tpemiext = $("#tpemiext","#frmDadosPoupanca").val();
+	var tpemiext = $("#tpemiext", "#frmDadosPoupanca").val();
+	var tpaplicacao = $("#tpaplicacao", "#frmDadosPoupanca").val();
 	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
+	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
 
 	//Limpa o campo de Erro anterior
 	$('input, select','#frmDadosPoupanca' ).removeClass('campoErro');
@@ -886,38 +901,9 @@ function validarInclusaoPoupanca() {
 	// Valida data de início	
 	if (dtinirpp == "" || !validaData(dtinirpp)) {
 		hideMsgAguardo();
-		showError("error","Data de in&iacute;cio inv&aacute;lida.","Alerta - Aimaro","focaCampoErro(\'dtinirpp\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","Data de in&iacute;cio inv&aacute;lida.","Alerta - Ayllos","focaCampoErro(\'dtinirpp\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
-	
-	// Valida mês para o vencimento
-	if (mesdtvct == "" || !validaNumero(mesdtvct,true,0,0)) {
-		hideMsgAguardo();
-		showError("error","Dia para vencimento inv&aacute;lido.","Alerta - Aimaro","focaCampoErro(\'mesdtvct\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
-	// Valida ano para o vencimento
-	if (anodtvct == "" || !validaNumero(anodtvct,true,0,0)) {
-		hideMsgAguardo();
-		showError("error","Dia para vencimento inv&aacute;lido.","Alerta - Aimaro","focaCampoErro(\'anodtvct\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
-	// Valida data de vencimento	
-	if (!validaData(diadtvct + "/" + mesdtvct + "/" + anodtvct)) {
-		hideMsgAguardo();
-		showError("error","Data de vencimento inv&aacute;lida.","Alerta - Aimaro","focaCampoErro(\'mesdtvct\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
-	// Valida quantidade de meses
-	if (vlprerpp == "" || !validaNumero(vlprerpp,true,0,0)) {
-		hideMsgAguardo();
-		showError("error","Valor de presta&ccedil;&atilde;o inv&aacute;lido.","Alerta - Aimaro","focaCampoErro(\'vlprerpp\',\'frmDadosPoupanca\');blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}	
-
 	
     // Validar tipo de impressado do extrato 
 	if (tpemiext == "" || !validaNumero(tpemiext,true,0,0)) {	
@@ -937,8 +923,9 @@ function validarInclusaoPoupanca() {
 			mesdtvct: mesdtvct,
 			anodtvct: anodtvct,
 			vlprerpp: vlprerpp,	
-			tpemiext: tpemiext, 				
+			tpemiext: tpemiext,
 		    cdprodut: cdprodut,
+			dsfinali: dsfinali,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -957,8 +944,11 @@ function validarInclusaoPoupanca() {
 	});				
 }
 
-// Função para incluir a aplicação programada
-function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cdprodut) {
+// função para incluir a Aplicação programada
+function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
+
+	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
+	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, incluindo poupan&ccedil;a programada ...");	
 	// Executa script de consulta através de ajax
@@ -974,6 +964,7 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cd
 			vlprerpp: vlprerpp,
 			tpemiext: tpemiext,
 			cdprodut: cdprodut,
+			dsfinali: dsfinali,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -991,19 +982,21 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cd
 	});		
 }
 
-// Função para impressão da autorização da poupança programada
-function imprimirAutorizacao(registro,tparquiv) {
-    registro = registro == "" ? nrdrowid : registro;
-    tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
+// função para impressão da autorização da poupança programada
+function imprimirAutorizacao(registro,tparquiv,cdprodin) {
+	registro = registro == "" ? nrdrowid : registro;
+	tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
+	cdprodin = cdprodin == "" ? cdprodut : cdprodin;
 
-    if (cdprodut < 1){
+	if (cdprodin < 1){
 		alert ('Este \u00e9 um plano antigo que n\u00e3o pode ter o termo de ades\u00e3o impresso.');
 		return false;
-		}
-
+	}
+	
 	if (registro == 0 || registro == "") {
 		return false;
-		}
+	}
+	
 	showMsgAguardo("Aguarde, imprimindo termo de ades&atilde;o ...");
 	$("#nrdconta","#frmAutorizacao").val(nrdconta);
 	$("#cdtiparq","#frmAutorizacao").val(tparquiv);
@@ -1012,14 +1005,14 @@ function imprimirAutorizacao(registro,tparquiv) {
 
 	var action = $("#frmAutorizacao").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
-
+	
 	if (callafterPoupanca != '') {
 		callafter = callafterPoupanca;
 		callafterPoupanca = '';
-}
-    carregaImpressaoAyllos("frmAutorizacao",action,callafter);
+	}
+	carregaImpressaoAyllos("frmAutorizacao",action,callafter);
 
-    }
+}
 
 function controlaLayout( nomeForm ){
 
@@ -1047,7 +1040,7 @@ function controlaLayout( nomeForm ){
 		var divRegistro = $('div.divRegistros','#divExtrato');		
 		var tabela      = $('table', divRegistro );
 						
-		divRegistro.css('height','160px');
+		divRegistro.css('height','190px');
 		
 		var ordemInicial = new Array();
 				
@@ -1070,7 +1063,7 @@ function controlaLayout( nomeForm ){
 		
 	
 	}else if( nomeForm == 'frmDadosPoupanca'){
-	
+
 		var Lvlprerpp = $('label[for="vlprerpp"]','#'+nomeForm);
 		var Lqtprepag = $('label[for="qtprepag"]','#'+nomeForm);
 		var Lvlprepag = $('label[for="vlprepag"]','#'+nomeForm);
@@ -1087,7 +1080,9 @@ function controlaLayout( nomeForm ){
 		var Ldsmsgsaq = $('label[for="dsmsgsaq"]','#'+nomeForm);
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Ldssitrpp = $('label[for="dssitrpp"]','#'+nomeForm);
-		
+		var Ldiadebit = $('label[for="diadebit"]','#'+nomeForm);
+		var Ldsfinali = $('label[for="dsfinali"]','#'+nomeForm);
+
 		var Cvlprerpp = $('#vlprerpp','#'+nomeForm);
 		var Cqtprepag = $('#qtprepag','#'+nomeForm);
 		var Cvlprepag = $('#vlprepag','#'+nomeForm);
@@ -1104,15 +1099,21 @@ function controlaLayout( nomeForm ){
 		var Cdsmsgsaq = $('#dsmsgsaq','#'+nomeForm);
 		var Cdspesqui = $('#dspesqui','#'+nomeForm);
 		var Cdssitrpp = $('#dssitrpp','#'+nomeForm);
+
+		var Cdiadebit = $('#diadebit','#'+nomeForm);
+		var Cdsfinali = $('#dsfinali','#'+nomeForm);
 		
 		$('#'+nomeForm).css('width','510px');
-		
+
 		Lvlprerpp.addClass('rotulo').css('width','130px');
-		Lqtprepag.css('width','135px');
+		Ldiadebit.css('width','135px');
+		Ldsfinali.addClass('rotulo').css('width','130px');
 		Lvlprepag.addClass('rotulo').css('width','130px');
-		Lvljuracu.css('width','135px');
-		Lvlrgtacu.addClass('rotulo').css('width','130px');
-		Lvlsdrdpp.css('width','135px');
+		Lqtprepag.css('width','135px');
+		Lvljuracu.addClass('rotulo').css('width','130px');
+		Lvlrgtacu.css('width','135px');
+		Lvlsdrdpp.addClass('rotulo').css('width','130px');
+
 		Ldtinirpp.addClass('rotulo').css('width','130px');
 		Ldtrnirpp.css('width','135px');
 		Ldtcancel.addClass('rotulo').css('width','130px');
@@ -1123,13 +1124,15 @@ function controlaLayout( nomeForm ){
 		Ldsmsgsaq.addClass('rotulo').css('width','130px');
 		Ldspesqui.addClass('rotulo').css('width','130px');
 		Ldssitrpp.css('width','75px');
-		
+
 		Cvlprerpp.css({'width':'100px','text-align':'right'});
-		Cqtprepag.css({'width':'100px'});
-		Cvlprepag.css({'width':'100px'});
-		Cvljuracu.css({'width':'100px'});
-		Cvlrgtacu.css({'width':'100px'});
-		Cvlsdrdpp.css({'width':'100px'});
+		Cdiadebit.css({'width':'25px','text-align':'right'});
+		Cdsfinali.css({'width':'160px'});
+		Cvlprepag.css({'width':'100px','text-align':'right'});
+		Cqtprepag.css({'width':'100px','text-align':'right'});
+		Cvljuracu.css({'width':'100px','text-align':'right'});
+		Cvlrgtacu.css({'width':'100px','text-align':'right'});
+		Cvlsdrdpp.css({'width':'100px','text-align':'right'});
 		Cdtinirpp.css({'width':'100px'});
 		Cdtrnirpp.css({'width':'100px'});
 		Cdtcancel.css({'width':'100px'});
@@ -1140,11 +1143,11 @@ function controlaLayout( nomeForm ){
 		Cdsmsgsaq.css({'width':'338px'});
 		Cdspesqui.css({'width':'160px'});
 		Cdssitrpp.css({'width':'100px'});
-	
+
 	}else if( nomeForm == 'frmIncluirPoupanca' ){
-		
+
 		nomeForm = 'frmDadosPoupanca';
-		
+
 		$('#'+nomeForm).addClass('formulario');
 		
 		var Ldtinirpp = $('label[for="dtinirpp"]','#'+nomeForm);
@@ -1153,20 +1156,23 @@ function controlaLayout( nomeForm ){
 		var Lanodtvct = $('label[for="anodtvct"]','#'+nomeForm);
 		var Lvlprerpp = $('label[for="vlprerpp"]','#'+nomeForm);
 		var Ltpemiext = $('label[for="tpemiext"]','#'+nomeForm);
-		
+		var Ldsfinali = $('label[for="dsfinali"]','#'+nomeForm);
+
 		var Cdtinirpp = $('#dtinirpp','#'+nomeForm);
 		var Cdiadtvct = $('#diadtvct','#'+nomeForm);
 		var Cmesdtvct = $('#mesdtvct','#'+nomeForm);
 		var Canodtvct = $('#anodtvct','#'+nomeForm);
 		var Cvlprerpp = $('#vlprerpp','#'+nomeForm);
 		var Ctpemiext = $('#tpemiext','#'+nomeForm);
-		
+		var Cdsfinali = $('#dsfinali','#'+nomeForm);
+
 		Ldtinirpp.addClass('rotulo').css('width','270px');
 		Ldiadtvct.addClass('rotulo').css('width','270px');
 		Lmesdtvct.css('width','11px');
 		Lanodtvct.css('width','11px');
 		Lvlprerpp.addClass('rotulo').css('width','270px');
 		Ltpemiext.addClass('rotulo').css('width','270px');
+		Ldsfinali.addClass('rotulo').css('width','270px');
 		
 		Cdtinirpp.css({'width':'115px'});
 		Cdiadtvct.css({'width':'25px'});
@@ -1174,7 +1180,8 @@ function controlaLayout( nomeForm ){
 		Canodtvct.css({'width':'37px'});
 		Cvlprerpp.css({'width':'115px','text-align':'right'});
 		Ctpemiext.css({'width':'115px'});
-	
+		Cdsfinali.css({'width':'185px'});
+
 	}else if( nomeForm == 'divResultadoResgates' ){
 		
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
@@ -1218,13 +1225,13 @@ function controlaLayout( nomeForm ){
 						
 		divRegistro.css('height','145px');
 		
-		$('#'+nomeForm).css('width','605px');
+		$('#'+nomeForm).css('width','695px');
 		
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '58px';
-		arrayLargura[1] = '58px';
+		arrayLargura[0] = '54px';
+		arrayLargura[1] = '148px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '30px';
 		arrayLargura[4] = '65px';

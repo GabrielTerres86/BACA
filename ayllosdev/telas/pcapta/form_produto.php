@@ -1,11 +1,11 @@
 <?php
 /* FONTE        : form_produto.php
- * CRIAÇÃO      : Jean Michel         
- * DATA CRIAÇÃO : 30/04/2014
+ * CRIAï¿½ï¿½O      : Jean Michel         
+ * DATA CRIAï¿½ï¿½O : 30/04/2014
  * OBJETIVO     : Formulario de produto da tela PCAPTA
  * --------------
- * ALTERAÇÕES   : Alterei a forma de montagem do combo de produtos
- *                para o mesmo carregar em tempo real as alterações
+ * ALTERAï¿½ï¿½ES   : Alterei a forma de montagem do combo de produtos
+ *                para o mesmo carregar em tempo real as alteraï¿½ï¿½es
  *                [Carlos Rafael Tanholi - 29/07/2014]
  */
 
@@ -105,6 +105,13 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                     <label for="idacumul">Cumulativa:</label>
                     <input type="radio" name="idacumul" id="idacumul" value="1" ><label>&nbsp;&nbsp;&nbsp;Sim</label>
                     <input type="radio" name="idacumul" id="idacumul" value="2" style="margin-left: 20px;" ><label>&nbsp;&nbsp;&nbsp;N&atilde;o</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="indplano">Apl. Programada:</label>
+                    <input type="radio" name="indplano" id="indplano" value="1" ><label>&nbsp;&nbsp;&nbsp;Sim</label>
+                    <input type="radio" name="indplano" id="indplano" value="2" style="margin-left: 20px;" ><label>&nbsp;&nbsp;&nbsp;N&atilde;o</label>
                 </td>
             </tr>
             <tr class="linhaBotoes">
@@ -209,6 +216,12 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
         });        
         $('#idacumul', '#frmCab').unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
+                $('#indplano', '#frmCab').focus();
+                return false;
+            }
+        });
+        $('#indplano', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
                 $('#btProseg', '#frmCab').focus();
                 return false;
             }
@@ -267,15 +280,22 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                                 });
 
                                 $("#dadosProdutos table input[type=radio]").each(function(i, obj) {
-                                    //checa taxa fixa
-                                    if ($(obj).attr('id') == 'idtxfixa') {
-                                        if ($(obj).val() == item.idtxfixa) {
-                                            $(obj).attr('checked', 'checked');
-                                        }
-                                    } else if ($(obj).attr('id') == 'idacumul') { //checa a cumulativa
-                                        if ($(obj).val() == item.idacumul) {
-                                            $(obj).attr('checked', 'checked');
-                                        }
+                                    switch ($(obj).attr('id')) {
+                                                case 'idtxfixa': // taxa fixa
+                                                    if ($(obj).val() == item.idtxfixa) {
+                                                        $(obj).attr('checked', 'checked');
+                                                    }
+                                                    break;
+                                                case 'idacumul': // acumula
+                                                    if ($(obj).val() == item.idacumul) {
+                                                        $(obj).attr('checked', 'checked');
+                                                    }
+                                                    break;
+                                                case 'indplano': //programada?
+                                                    if ($(obj).val() == item.indplano) {
+                                                        $(obj).attr('checked', 'checked');
+                                                    }
+                                                    break;
                                     }
                                 });
                             });
@@ -428,7 +448,8 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 cddindex: cCddindex.val(),
                 idtippro: cIdtippro.val(),
                 idtxfixa: cIdtxfixa.val(),
-                idacumul: cIdacumul.val()
+                idacumul: cIdacumul.val(),
+                indplano: cIndplano.val()
             },
             success: function(retorno) {
                 if (retorno.rows == 1) {
@@ -444,10 +465,12 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                             cIdtippro.attr("disabled", false);
                             cIdtxfixa.attr("disabled", false);
                             cIdacumul.attr("disabled", false);
+                            cIndplano.attr("disabled", false);
                         } else { //produto possui carteira ou modalidade cadastrada
                             //cNmprodut.attr("disabled", false); //nome
                             cIdsitpro.attr("disabled", false); //situacao
                             cIdacumul.attr("disabled", false); //cumulatividade
+                            cIndplano.attr("disabled", false); //APl. Programada
                         }
                     });
                     ocultaMsgAguardo();
@@ -468,6 +491,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
 
         var vr_idtxfixa = 0;
         var vr_idacumul = 0;
+        var vr_indplano = 0; 
 
         $('input[id="idtxfixa"]').each(function() {
             if ($(this).is(':checked')) {
@@ -479,7 +503,12 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 vr_idacumul = $(this).val();
             }
         });   
-        
+        $('input[id="indplano"]').each(function() {
+            if ($(this).is(':checked')) {
+                vr_indplano = $(this).val();
+            }
+        });   
+                
         showMsgAguardo("Aguarde, validando dados...");
         
         if (validaCamposTela()) {
@@ -496,18 +525,19 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                     cddindex: cCddindex.val(),
                     idtippro: cIdtippro.val(),
                     idtxfixa: vr_idtxfixa,
-                    idacumul: vr_idacumul
+                    idacumul: vr_idacumul,
+                    indplano: vr_indplano
                 },
                 success: function(retorno) {
                     if (retorno.rows == 1) {
                         $.each(retorno.records, function(i, item) {
                             if (item.nome == 'N' && item.parametro == 'N') {
-                                showConfirmacao('Confirma a inclusão do produto ' + cNmprodut.val() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
+                                showConfirmacao('Confirma a inclus&atilde;o do produto ' + cNmprodut.val() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
                             } else {
                                 if (item.nome == 'S') {
-                                    showError("error", "O nome do produto informado já está cadastrado.", "Alerta - Ayllos", "$('#nmprodut', '#frmCab').focus();ocultaMsgAguardo();");
+                                    showError("error", "O nome do produto informado j&aacute; est&aacute; cadastrado.", "Alerta - Ayllos", "$('#nmprodut', '#frmCab').focus();ocultaMsgAguardo();");
                                 } else if (item.parametro == 'S') {
-                                    showConfirmacao("Já existe produto cadastrado com os parâmetros informados. Confirma a inserção do produto " + cNmprodut.val() + "?", 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
+                                    showConfirmacao("J&aacute; existe produto cadastrado com os par&acirc;metros informados. Confirma a inser&ccedil;&atilde;o do produto " + cNmprodut.val() + "?", 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
                                 }
                             }
                         });
@@ -528,6 +558,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
         
         var vr_idtxfixa = 0;
         var vr_idacumul = 0;
+        var vr_indplano = 0;
 
         $('input[id="idtxfixa"]').each(function() {
             if ($(this).is(':checked')) {
@@ -539,7 +570,12 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 vr_idacumul = $(this).val();
             }
         });        
-        
+            $('input[id="indplano"]').each(function() {
+            if ($(this).is(':checked')) {
+                vr_indplano = $(this).val();
+            }
+        });   
+    
         showMsgAguardo("Aguarde, processando dados...");
         
         $.ajax({
@@ -555,7 +591,8 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 cddindex: cCddindex.val(),
                 idtippro: cIdtippro.val(),
                 idtxfixa: vr_idtxfixa,
-                idacumul: vr_idacumul
+                idacumul: vr_idacumul,
+                indplano: vr_indplano
             },
             success: function(retorno) {
                 if (retorno.rows == 1) {
@@ -563,7 +600,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                     $.each(retorno.records, function(i, item) {
                         // se o produto nao tiver carteira
                         if (item.carteira == 'N') {
-                            showConfirmacao('Confirma a exclusão do produto ' + cNmprodus.find("option:selected").text() + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluiDadosProduto();', 'hideMsgAguardo();', 'sim.gif', 'nao.gif');
+                            showConfirmacao('Confirma a exclus&atilde;o do produto ' + cNmprodus.find("option:selected").text() + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluiDadosProduto();', 'hideMsgAguardo();', 'sim.gif', 'nao.gif');
                         } else {
                             btnProseg1.hide();
                             btnCancel1.css('margin-left', '180px');
@@ -574,7 +611,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                             } else if (item.modalidade == "S") {
                                 msg = 'O produto possui modalidade cadastrada.';
                             }
-                            showError("error", 'Exclusão não permitida. ' + msg, "Alerta - Ayllos", "hideMsgAguardo();");
+                            showError("error", 'Exclus&atilde;o n&atilde;o permitida. ' + msg, "Alerta - Ayllos", "hideMsgAguardo();");
                         }
                     });
                 } else if (retorno.erro == 'S') {
@@ -594,6 +631,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
 
         var vr_idtxfixa = 0;
         var vr_idacumul = 0;
+        var vr_indplano = 0;
 
         $('input[id="idtxfixa"]').each(function() {
             if ($(this).is(':checked')) {
@@ -605,6 +643,11 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 vr_idacumul = $(this).val();
             }
         });
+        $('input[id="indplano"]').each(function() {
+            if ($(this).is(':checked')) {
+                vr_indplano = $(this).val();
+            }
+        });   
 
         showMsgAguardo("Aguarde, processando dados...");
 
@@ -622,18 +665,19 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                     cddindex: cCddindex.val(),
                     idtippro: cIdtippro.val(),
                     idtxfixa: vr_idtxfixa,
-                    idacumul: vr_idacumul
+                    idacumul: vr_idacumul,
+                    indplano: vr_indplano
                 },
                 success: function(retorno) {
                     if (retorno.rows == 1) {
                         $.each(retorno.records, function(i, item) {
                             if (item.nome == 'N' && item.parametro == 'N') {
-                                showConfirmacao('Confirma a alteração do produto ' + cNmprodut.val() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
+                                showConfirmacao('Confirma a altera&ccedil;&atilde;o do produto ' + cNmprodut.val() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
                             } else {
                                 if (item.nome == 'S') {
-                                    showError("error", "O nome do produto informado já está cadastrado.", "Alerta - Ayllos", "$('#nmprodut', '#frmCab').focus();ocultaMsgAguardo();");
+                                    showError("error", "O nome do produto informado jï¿½ estï¿½ cadastrado.", "Alerta - Ayllos", "$('#nmprodut', '#frmCab').focus();ocultaMsgAguardo();");
                                 } else if (item.parametro == 'S') {
-                                    showConfirmacao("Já existe produto cadastrado com os parâmetros informados. Confirma a alteração do produto " + cNmprodut.val() + "?", 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
+                                    showConfirmacao("J&aacute; existe produto cadastrado com os par&acirc;metros informados. Confirma a altera&ccedil;&atilde;o do produto " + cNmprodut.val() + "?", 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaDadosProduto();ocultaMsgAguardo();', 'ocultaMsgAguardo();', 'sim.gif', 'nao.gif');
                                 }
                             }
                         });
@@ -657,7 +701,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
             return false;
         }
         if (cIdsitpro.val() == 0) {
-            showError("error", "Selecione a situação.", "Alerta - Ayllos", "$('#idsitpro', '#frmCab').focus();");
+            showError("error", "Selecione a situa&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#idsitpro', '#frmCab').focus();");
             return false;
         }
         if (cCddindex.val() == 0) {
@@ -676,6 +720,10 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
             showError("error", "Selecione a cumulativa.", "Alerta - Ayllos", "$('#idacumul', '#frmCab').focus();");
             return false;
         }
+        if (cIndplano.val() <= 0 || cIndplano.val() == '' || cIndplano.val() == null) {
+            showError("error", "Informe se programada.", "Alerta - Ayllos", "$('#indplano', '#frmCab').focus();");
+            return false;
+        }
 
         return true;
     }
@@ -690,6 +738,7 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
 
         var vr_idtxfixa = 0;
         var vr_idacumul = 0;
+        var vr_indplano = 0;
 
         $('input[id="idtxfixa"]').each(function() {
             if ($(this).is(':checked')) {
@@ -701,6 +750,12 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 vr_idacumul = $(this).val();
             }
         });
+        $('input[id="indplano"]').each(function() {
+            if ($(this).is(':checked')) {
+                vr_indplano = $(this).val();
+            }
+        });   
+    
         showMsgAguardo("Aguarde, processando dados...");
 
         $.ajax({
@@ -716,7 +771,8 @@ if (strtoupper($xmlObjIndice->roottag->tags[0]->name == 'ERRO')) {
                 cddindex: cCddindex.val(),
                 idtippro: cIdtippro.val(),
                 idtxfixa: vr_idtxfixa,
-                idacumul: vr_idacumul
+                idacumul: vr_idacumul,
+                indplano: vr_indplano
             },
             success: function(retorno) {
                 if (retorno.erro == 'N') {

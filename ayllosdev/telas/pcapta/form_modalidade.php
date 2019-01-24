@@ -1,11 +1,11 @@
 <?php
 /* !
  * FONTE        : form_modalidade.php
- * CRIAÇÃO      : Jean Michel         
- * DATA CRIAÇÃO : 30/04/2014
+ * CRIAï¿½ï¿½O      : Jean Michel         
+ * DATA CRIAï¿½ï¿½O : 30/04/2014
  * OBJETIVO     : Formulario de modalidade da tela PCAPTA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAï¿½ï¿½ES   : 
  * --------------
  */
 
@@ -331,9 +331,6 @@ setVarSession('nmrotina', 'MODALIDADE');
         if ($(obj).val() > 0) {
 
             if ($("#hdnProdSel").val() != $(obj).val()) {
-
-                showMsgAguardo("Aguarde, carregando dados...");
-
                 $.ajax({
                     type: "POST",
                     url: UrlSite + "telas/pcapta/ajax_modalidade.php",
@@ -367,7 +364,7 @@ setVarSession('nmrotina', 'MODALIDADE');
         }
 
         if ($.trim($("#qtdiacar").val()) == '' || $("#qtdiacar").val() == null) {
-            showError("error", "Preencha a carência.", "Alerta - Ayllos", "$('#qtdiacar', '#frmCab').focus();");
+            showError("error", "Preencha a carï¿½ncia.", "Alerta - Ayllos", "$('#qtdiacar', '#frmCab').focus();");
             return false;
         }
 
@@ -413,16 +410,16 @@ setVarSession('nmrotina', 'MODALIDADE');
 
                     $.each(data.records, function(i, retorno) {
                         if (retorno.produto == 'N') {
-                            showError("error", 'Produto inválido', "Alerta - Ayllos", "$('#cdprodut', '#frmCab').focus();");
+                            showError("error", 'Produto invï¿½lido', "Alerta - Ayllos", "$('#cdprodut', '#frmCab').focus();");
                             //return false;
                         } else if (retorno.modalidade == 'S') {
-                            showError("error", 'Modalidade já cadastrada.', "Alerta - Ayllos", "");
+                            showError("error", 'Modalidade jï¿½ cadastrada.', "Alerta - Ayllos", "");
                             //return false;
                         } else if (retorno.carencia == 'S') {
-                            showError("error", 'A carência deve ser maior ou igual à 30 dias', "Alerta - Ayllos", "$('#qtdiacar', '#frmCab').focus();");
+                            showError("error", 'A carï¿½ncia deve ser maior ou igual ï¿½ 30 dias', "Alerta - Ayllos", "$('#qtdiacar', '#frmCab').focus();");
                             //return false;
                         } else if (retorno.prazo == 'S') {
-                            showError("error", 'O prazo deve ser maior ou igual à carência', "Alerta - Ayllos", "$('#qtdiaprz', '#frmCab').focus();");
+                            showError("error", 'O prazo deve ser maior ou igual ï¿½ carï¿½ncia', "Alerta - Ayllos", "$('#qtdiaprz', '#frmCab').focus();");
                             //return false;
                         } else if (retorno.taxa_fixa == 'S' && retorno.taxa_zerada == 'S') {
                             showError("error", 'Informe o percentual de taxa fixa', "Alerta - Ayllos", "$('#vltxfixa', '#frmCab').focus();");
@@ -434,7 +431,7 @@ setVarSession('nmrotina', 'MODALIDADE');
                             showError("error", 'Existe modalidade cadastrada com valor menor ou igual e rentabilidade maior', "Alerta - Ayllos", "");
                             //return false;
                         } else {
-                            showConfirmacao('Confirma inclusão da modalidade para o produto ' + $("#cdprodut option:selected").text() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaModalidade()', '', 'sim.gif', 'nao.gif');
+                            showConfirmacao('Confirma inclusï¿½o da modalidade para o produto ' + $("#cdprodut option:selected").text() + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaModalidade()', '', 'sim.gif', 'nao.gif');
                         }
                     });
                 }
@@ -461,9 +458,9 @@ setVarSession('nmrotina', 'MODALIDADE');
         });
         if (codModalidade != '') {
             $("#hdnCodModalidade").val(codModalidade);
-            showConfirmacao('Confirma a exclusão das modalidades?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluiModalidade()', '', 'sim.gif', 'nao.gif');
+            showConfirmacao('Confirma a exclus&atilde;o das modalidades?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluiModalidade()', '', 'sim.gif', 'nao.gif');
         } else {
-            showError("error", 'Nenhuma modalidade selecionada para exclusão.', "Alerta - Ayllos", "");
+            showError("error", 'Nenhuma modalidade selecionada para exclus&atilde;o.', "Alerta - Ayllos", "");
         }
 
     }
@@ -505,7 +502,7 @@ setVarSession('nmrotina', 'MODALIDADE');
                             resetaCampos();
                         } else {
                             //atualiza o total de registros no rodape da tabela
-                            $("#nrRegistrosTabela").text('Exibindo 1 até '+nrLinhasVisiveis+' de '+nrLinhasVisiveis);
+                            $("#nrRegistrosTabela").text('Exibindo 1 at&eacute; '+nrLinhasVisiveis+' de '+nrLinhasVisiveis);
                         }                        
                         
                         // limpa o campo hidden
