@@ -2853,18 +2853,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                          
     vr_nmendter := vr_dsdireto ||'/rl/'||pr_dsiduser;
     
-    vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
-    
-    --Executar o comando no unix
-    GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                         ,pr_des_comando => vr_dscomand
-                         ,pr_typ_saida   => vr_typsaida
-                         ,pr_des_saida   => vr_dscritic);
-    --Se ocorreu erro dar RAISE
-    IF vr_typsaida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
-      RAISE vr_exc_erro;
-    END IF; 
+    IF TRIM(pr_dsiduser) IS NOT NULL THEN
+      vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
+      
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomand
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      --Se ocorreu erro dar RAISE
+      IF vr_typsaida = 'ERR' THEN
+        vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF; 
+    END IF;
     
     --> Montar nome do arquivo
     pr_nmarqpdf := pr_dsiduser || gene0002.fn_busca_time || '.pdf';
