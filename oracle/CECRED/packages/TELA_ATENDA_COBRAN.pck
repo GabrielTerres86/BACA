@@ -1,5 +1,5 @@
-CREATE OR REPLACE PACKAGE CECRED.tela_atenda_cobran IS
-  --
+CREATE OR REPLACE PACKAGE cecred.tela_atenda_cobran IS
+
 	PROCEDURE pc_grava_auxiliar_crapceb(pr_cdcooper IN  crapceb.cdcooper%TYPE
 																		 ,pr_nrdconta IN  crapceb.nrdconta%TYPE
 																		 ,pr_nrconven IN  crapceb.nrconven%TYPE
@@ -369,7 +369,7 @@ CREATE OR REPLACE PACKAGE CECRED.tela_atenda_cobran IS
 
     PROCEDURE pc_cancela_descontos(pr_idcalculo_reciproci IN tbrecip_calculo.idcalculo_reciproci%TYPE --> Id da reciprocidade
                                   ,pr_nrdconta            IN crapceb.nrdconta%TYPE --> Numero da conta
-																	,pr_xmllog              IN VARCHAR2 --> XML com informações de LOG
+                                  ,pr_xmllog              IN VARCHAR2 --> XML com informações de LOG
                                   ,pr_cdcritic            OUT PLS_INTEGER --> Código da crítica
                                   ,pr_dscritic            OUT VARCHAR2 --> Descrição da crítica
                                   ,pr_retxml              IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
@@ -379,7 +379,7 @@ CREATE OR REPLACE PACKAGE CECRED.tela_atenda_cobran IS
     -- PRJ431
 END tela_atenda_cobran;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
+CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     ---------------------------------------------------------------------------
     --
     --  Programa : TELA_ATENDA_COBRAN
@@ -401,13 +401,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
     --                          do operador a partir da tabela CRAPDPO. O setor de 
     --                          COBRANCA foi removido da validação, pois o mesmo não 
     --                          existe na CRAPDPO (Renato Darosci - Supero)
-		--
+	--
 		--             16/12/2018 - Ajustar o sistema para trabalhar com a CRAPCEB 
 		--                          juntamente com uma tabela auxiliar, mantendo sempre o 
 		--                          registro aprovado mais atual na tabela CRAPCEB 
 		--                          (SM431 - Adriano Nagasava - Supero)
 		--
-		--             18/12/2018 - Correção na habilitação do convênio para inclusão na CIP
+	--             18/12/2018 - Correção na habilitação do convênio para inclusão na CIP
     --                          (Andre Clemer - Supero)
 		--
     ---------------------------------------------------------------------------
@@ -537,7 +537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
            AND crapcco.nrconven = crapceb.nrconven
            AND crapceb.idrecipr = pr_idcalculo_reciproci
            AND crapceb.cdcooper = pr_cdcooper
-           AND nrdconta         = pr_nrdconta;
+           AND nrdconta = pr_nrdconta;
     rw_convenios cr_convenios%ROWTYPE;
     --
 		PROCEDURE pc_grava_auxiliar_crapceb(pr_cdcooper IN  crapceb.cdcooper%TYPE
@@ -1425,7 +1425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                 IF vr_cdcritic <> 0 THEN
                     vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 END IF;
-								
+            
 								pr_des_erro := vr_dscritic;
             
                 pr_cdcritic := vr_cdcritic;
@@ -1455,7 +1455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             WHEN OTHERS THEN
                 pr_cdcritic := vr_cdcritic;
                 pr_dscritic := 'Erro geral na rotina da tela TELA_ATENDA_COBRAN: ' || SQLERRM;
-								
+            
 								pr_des_erro := pr_dscritic;
             
                 -- Carregar XML padrão para variavel de retorno
@@ -1947,7 +1947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         Alteracoes: 26/04/2016 - Ajustes projeto PRJ318 - Nova Plataforma cobrança
                                  (Odirlei-AMcom)
         
-            24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
+                    24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
                                  
                     14/09/2016 - Adicionado validacao de convenio ativo 
                                  (Douglas - Chamado 502770)
@@ -2104,10 +2104,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                              ,pr_nrconven IN crapceb.nrconven%TYPE) IS
                 SELECT nrcnvceb 
 								  FROM( SELECT /*+ INDEX_DESC(T0 CRAPCEB##CRAPCEB3) */
-															 nrcnvceb
-													FROM crapceb t0
-												 WHERE cdcooper = pr_cdcooper
-													 AND nrconven = pr_nrconven
+                 nrcnvceb
+                  FROM crapceb t0
+                 WHERE cdcooper = pr_cdcooper
+                   AND nrconven = pr_nrconven
 													 AND rownum = 1
 												 UNION ALL
 									      SELECT nrcnvceb
@@ -2210,7 +2210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
             -- Variaveis
             vr_blnfound      BOOLEAN;
-						vr_blnewreg_cip  BOOLEAN := FALSE;
+			vr_blnewreg_cip  BOOLEAN := FALSE;
             vr_fldda_sit_ben BOOLEAN;
             vr_flgimpri      INTEGER;
             vr_qtccoceb      NUMBER;
@@ -2465,48 +2465,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             -- Se NAO encontrou
         
             IF NOT vr_blnfound OR pr_blnewreg THEN
-							-- setado como TRUE para contemplar a nova reciprocidade
+                -- setado como TRUE para contemplar a nova reciprocidade
             
-							-- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
-							IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
-									vr_cdcritic := 949;
-									RAISE vr_exc_saida;
-							END IF;
+                -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+                IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
+                    vr_cdcritic := 949;
+                    RAISE vr_exc_saida;
+                END IF;
             
-							BEGIN
+                BEGIN
 								--
 								INSERT INTO tbcobran_crapceb
-											(cdcooper
-											,nrdconta
-											,nrconven
-											,nrcnvceb
-											,cdoperad
-											,cdopeori
-											,cdageori
-											,idrecipr
+                        (cdcooper
+                        ,nrdconta
+                        ,nrconven
+                        ,nrcnvceb
+                        ,cdoperad
+                        ,cdopeori
+                        ,cdageori
+                        ,idrecipr
 											,dtinsori
 											,insitceb
 											)
-								VALUES
-											(vr_cdcooper
-											,pr_nrdconta
-											,pr_nrconven
-											,vr_nrcnvceb
-											,vr_cdoperad
-											,vr_cdoperad
-											,vr_cdagenci
-											,pr_idrecipr
+                    VALUES
+                        (vr_cdcooper
+                        ,pr_nrdconta
+                        ,pr_nrconven
+                        ,vr_nrcnvceb
+                        ,vr_cdoperad
+                        ,vr_cdoperad
+                        ,vr_cdagenci
+                        ,pr_idrecipr
 											,SYSDATE
 											,vr_insitceb
 											);
-								-- Seta como registro novo
-								vr_blnewreg_cip := TRUE;
+                    -- Seta como registro novo
+                    vr_blnewreg_cip := TRUE;
 								--
-							EXCEPTION
-									WHEN OTHERS THEN
-											vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
-											RAISE vr_exc_saida;
-							END;
+                EXCEPTION
+                    WHEN OTHERS THEN
+                        vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
+                        RAISE vr_exc_saida;
+                END;
 							--
             END IF;
         
@@ -2902,40 +2902,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                     vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF2.';
                     RAISE vr_exc_saida;
                 END IF;
+            
             END IF;
         
             /**** Fim Tratamento CIP ****/
-						BEGIN
+        
+            BEGIN
 							--
-							UPDATE crapceb
-								 SET crapceb.dtcadast = rw_crapdat.dtmvtolt
-										,crapceb.inarqcbr = pr_inarqcbr
-										,crapceb.cddemail = decode(pr_inarqcbr, 0, 0, pr_cddemail)
-										,crapceb.flgcruni = pr_flgcruni
-										,crapceb.flgcebhm = pr_flgcebhm
-										,crapceb.flgregon = pr_flgregon
-										,crapceb.flgpgdiv = pr_flgpgdiv
-										,crapceb.flcooexp = pr_flcooexp
-										,crapceb.flceeexp = pr_flceeexp
-										,crapceb.flserasa = pr_flserasa
-										,crapceb.insitceb = vr_insitceb
-										,crapceb.cdhomolo = vr_cdoperad
-										,crapceb.qtdfloat = pr_qtdfloat
-										,crapceb.flprotes = pr_flprotes
-										,crapceb.insrvprt = pr_insrvprt
-										,crapceb.qtlimaxp = pr_qtlimaxp
-										,crapceb.qtlimmip = pr_qtlimmip
-										,crapceb.qtdecprz = pr_qtdecprz
-										,crapceb.inenvcob = pr_inenvcob
-							 WHERE crapceb.cdcooper = vr_cdcooper
-								 AND crapceb.nrdconta = pr_nrdconta
-								 AND crapceb.nrconven = pr_nrconven
-								 AND crapceb.idrecipr = pr_idrecipr;
+                UPDATE crapceb
+                   SET crapceb.dtcadast = rw_crapdat.dtmvtolt
+                      ,crapceb.inarqcbr = pr_inarqcbr
+                      ,crapceb.cddemail = decode(pr_inarqcbr, 0, 0, pr_cddemail)
+                      ,crapceb.flgcruni = pr_flgcruni
+                      ,crapceb.flgcebhm = pr_flgcebhm
+                      ,crapceb.flgregon = pr_flgregon
+                      ,crapceb.flgpgdiv = pr_flgpgdiv
+                      ,crapceb.flcooexp = pr_flcooexp
+                      ,crapceb.flceeexp = pr_flceeexp
+                      ,crapceb.flserasa = pr_flserasa
+                      ,crapceb.insitceb = vr_insitceb
+                      ,crapceb.cdhomolo = vr_cdoperad
+                      ,crapceb.qtdfloat = pr_qtdfloat
+                      ,crapceb.flprotes = pr_flprotes
+                      ,crapceb.insrvprt = pr_insrvprt
+                      ,crapceb.qtlimaxp = pr_qtlimaxp
+                      ,crapceb.qtlimmip = pr_qtlimmip
+                      ,crapceb.qtdecprz = pr_qtdecprz
+                      ,crapceb.inenvcob = pr_inenvcob
+                 WHERE crapceb.cdcooper = vr_cdcooper
+                   AND crapceb.nrdconta = pr_nrdconta
+                   AND crapceb.nrconven = pr_nrconven
+                   AND crapceb.idrecipr = pr_idrecipr;
               --
-						EXCEPTION
-							WHEN OTHERS THEN
-								vr_dscritic := 'Erro ao alterar o registro na CRAPCEB: ' || SQLERRM;
-								RAISE vr_exc_saida;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao alterar o registro na CRAPCEB: ' || SQLERRM;
+                    RAISE vr_exc_saida;
             END;
 						--
 						BEGIN
@@ -2971,7 +2973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 								RAISE vr_exc_saida;
 						END;
 						--
-            
+        
 						-- Verifica se está ativo e joga para a CRAPCEB
 						IF vr_insitceb IN(1, 5) THEN
 							--
@@ -3574,7 +3576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 							--
 						END IF;
 						
-						-- Criar cabecalho do XML
+            -- Criar cabecalho do XML
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
         
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -5598,6 +5600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             ROLLBACK;
         
     END pc_susta_boletos;
+
     ------------------CONVENIOS DE RECIPROCIDADE PARA DESCONTO ----------------------
     PROCEDURE pc_conv_recip_desc(pr_cdcooper IN crapcco.cdcooper%TYPE --> Codigo da Cooperativa
                                 ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Numero da Conta
@@ -5625,7 +5628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
           Alteracoes:
         ..............................................................................*/
-
+    
         --> Buscar convenios de reciprocidade para desconto
         CURSOR cr_conv_recip_desc(pr_cdcooper crapcco.cdcooper%TYPE
                                  ,pr_nrdconta crapceb.nrdconta%TYPE) IS
@@ -6604,15 +6607,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             SELECT COUNT(1)
 							FROM(
 							SELECT COUNT(1)
-								FROM crapceb
-							 WHERE cdcooper = pr_cdcooper
-								 AND nrdconta = pr_nrdconta
-								 AND insitceb IN (1, 3, 5)
-								 AND nrconven IN (SELECT nrconven
-																		FROM crapcco
-																	 WHERE cdcooper = pr_cdcooper
-																		 AND flgativo = 1
-																		 AND flrecipr = 1
+              FROM crapceb
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = pr_nrdconta
+               AND insitceb IN (1, 3, 5)
+               AND nrconven IN (SELECT nrconven
+                                  FROM crapcco
+                                 WHERE cdcooper = pr_cdcooper
+                                   AND flgativo = 1
+                                   AND flrecipr = 1
 																		 AND dsorgarq <> 'PROTESTO')
 							 UNION ALL
 							SELECT COUNT(1)
@@ -6774,23 +6777,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
     
         -- tem registros na ceb
         IF vr_qtccoceb > 0 THEN
-					BEGIN
-						-- se contrato esta pendente de aprovacao
-						IF vr_insitceb = 3 THEN
+            BEGIN
+                -- se contrato esta pendente de aprovacao
+                IF vr_insitceb = 3 THEN
 							--
 							BEGIN
 								--
-								UPDATE crapceb
-									 SET insitceb = 2
-								 WHERE cdcooper = pr_cdcooper
-									 AND nrdconta = pr_nrdconta
-									 AND insitceb = 3
-									 AND nrconven IN (SELECT nrconven
-																			FROM crapcco
-																		 WHERE cdcooper = pr_cdcooper
-																			 AND flgativo = 1
-																			 AND flrecipr = 1
-																			 AND dsorgarq <> 'PROTESTO');
+                    UPDATE crapceb
+                       SET insitceb = 2
+                     WHERE cdcooper = pr_cdcooper
+                       AND nrdconta = pr_nrdconta
+                       AND insitceb = 3
+                       AND nrconven IN (SELECT nrconven
+                                          FROM crapcco
+                                         WHERE cdcooper = pr_cdcooper
+                                           AND flgativo = 1
+                                           AND flrecipr = 1
+                                           AND dsorgarq <> 'PROTESTO');
 							--
 							END;
 							--
@@ -6810,21 +6813,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 								--	
 							END;
 							--
-						ELSE
+                ELSE
 							--
 							BEGIN
 								--
-								UPDATE crapceb
-									 SET insitceb = 2
-								 WHERE cdcooper = pr_cdcooper
-									 AND nrdconta = pr_nrdconta
-									 AND insitceb IN (1, 3, 5)
-									 AND nrconven IN (SELECT nrconven
-																			FROM crapcco
-																		 WHERE cdcooper = pr_cdcooper
-																			 AND flgativo = 1
-																			 AND flrecipr = 1
-																			 AND dsorgarq <> 'PROTESTO');
+                    UPDATE crapceb
+                       SET insitceb = 2
+                     WHERE cdcooper = pr_cdcooper
+                       AND nrdconta = pr_nrdconta
+                       AND insitceb IN (1, 3, 5)
+                       AND nrconven IN (SELECT nrconven
+                                          FROM crapcco
+                                         WHERE cdcooper = pr_cdcooper
+                                           AND flgativo = 1
+                                           AND flrecipr = 1
+                                           AND dsorgarq <> 'PROTESTO');
 								--
 							END;
 							--
@@ -6844,13 +6847,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 								--
 							END;
 							--
-						END IF;
+                END IF;
 						--
-					EXCEPTION
-						WHEN OTHERS THEN
-							pr_des_erro := 'Erro ao inativar convenios antigos: ' || SQLERRM;
-							RAISE vr_exc_saida;
-					END;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    pr_des_erro := 'Erro ao inativar convenios antigos: ' || SQLERRM;
+                    RAISE vr_exc_saida;
+            END;
         END IF;
     
         FOR ind_registro IN vr_convenios.first .. vr_convenios.last LOOP
@@ -6955,17 +6958,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         */
         IF vr_insitceb = 3 THEN -- Pendente
             CECRED.TELA_CADRES.pc_envia_email_alcada(pr_cdcooper
-                                                    ,vr_idcalculo_reciproci
-                                                    ,vr_cdcritic
-                                                    ,pr_des_erro);
-                                                    
-            IF TRIM(pr_des_erro) IS NOT NULL THEN
-                RAISE vr_exc_saida;
+                                                ,vr_idcalculo_reciproci
+                                                ,vr_cdcritic
+                                                ,pr_des_erro);
+        
+        IF TRIM(pr_des_erro) IS NOT NULL THEN
+            RAISE vr_exc_saida;
             END IF;
         END IF;
 
         
-
+    
         -- Criar cabeçalho do XML
         pr_idcalculo_reciproci := vr_idcalculo_reciproci;
     
@@ -8491,7 +8494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 											 AND crapceb.idrecipr = pr_idrecipr;
 		            
 								EXCEPTION
-										WHEN OTHERS THEN
+                WHEN OTHERS THEN
 												vr_dscritic := '2.Erro ao buscar informacoes: ' || SQLERRM;
 												RAISE vr_exc_saida;
 								END;
@@ -8580,192 +8583,192 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                                  ,pr_data_corte crapprm.dsvlrprm%TYPE
                                  ,pr_cdoperad   tbrecip_aprovador_calculo.cdoperador%TYPE) IS
             SELECT DISTINCT ceb.list_cnv
-													 ,ceb.idrecipr
-													 ,ceb.dtcadast
-													 ,ceb.insitceb
-													 ,tac.dtalteracao_status dtultima_aprovacao
-													 ,cal.dtinicio_vigencia_contrato
-													 ,cal.dtfim_vigencia_contrato
-													 ,add_months(cal.dtinicio_vigencia_contrato
-																		 ,(SELECT to_number(dscodigo)
-																				 FROM tbcobran_dominio_campo
-																				WHERE cddominio = cal.idfim_desc_adicional_coo
-																					AND nmdominio = 'TPMESES_RECIPRO')) AS dtfimdesc
-													 ,CASE
-															WHEN (SELECT COUNT(1)
-																			FROM tbrecip_param_workflow    tpw
-																					,tbrecip_aprovador_calculo tac
-																		 WHERE tpw.cdcooper = tac.cdcooper
-																			 AND tpw.cdalcada_aprovacao = tac.cdalcada_aprovacao
-																			 AND tpw.cdcooper = pr_cdcooper
-																			 AND tac.idcalculo_reciproci = ceb.idrecipr
-																			 AND tac.idstatus = 'R'
-																			 AND tpw.flregra_aprovacao = 1) > 0 THEN
-																'Rejeitado'
-															WHEN (SELECT COUNT(1)
-																			FROM tbrecip_param_workflow tpw
-																		 WHERE tpw.cdcooper = pr_cdcooper
-																			 AND tpw.flregra_aprovacao = 1) > 0 AND
-																	 (SELECT COUNT(1)
-																			FROM tbrecip_param_workflow tpw
-																		 WHERE tpw.cdcooper = pr_cdcooper
-																			 AND tpw.flregra_aprovacao = 1) =
-																	 (SELECT COUNT(1)
-																			FROM tbrecip_param_workflow    tpw
-																					,tbrecip_aprovador_calculo tac
-																					,crapceb                   crapceb2
-																		 WHERE tpw.cdcooper = tac.cdcooper
-																			 AND tpw.cdalcada_aprovacao = tac.cdalcada_aprovacao
-																			 AND tpw.cdcooper = pr_cdcooper
-																			 AND tac.idcalculo_reciproci = ceb.idrecipr
-																			 AND tac.idstatus = 'A'
-																			 AND tac.cdcooper = crapceb2.cdcooper
-																			 AND tac.idcalculo_reciproci = crapceb2.idrecipr
-																			 AND crapceb2.insitceb = 1 -- Ativo
-																			 AND tpw.flregra_aprovacao = 1) THEN
-																'Aprovado'
-															ELSE
-																CASE ceb.insitceb
-																	WHEN 1 THEN
-																		'Aprovado'
-																	WHEN 2 THEN
-																		'Inativo'
-																	WHEN 3 THEN
-																		'Em aprovação'
-																	WHEN 4 THEN
-																		'Rejeitado'
-																	WHEN 5 THEN
-																		'Aprovado'
-																	WHEN 6 THEN
-																		'Em aprovação'
-																	ELSE
-																		'Em aprovação'
-															END
-														END idstatus
-													 ,(SELECT COUNT(apr.idcalculo_reciproci)
-															 FROM tbrecip_aprovador_calculo apr
-															WHERE apr.idcalculo_reciproci = ceb.idrecipr) qtdaprov
-													 ,(SELECT COUNT(apr.idcalculo_reciproci)
-															 FROM tbrecip_aprovador_calculo apr
-															WHERE apr.idcalculo_reciproci = ceb.idrecipr
-																AND apr.cdoperador = pr_cdoperad
-																 OR pr_cdoperad = NULL) insitapr
-											 FROM (SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
-																	 ,crapceb.idrecipr
-																	 ,crapceb.dtcadast
+                           ,ceb.idrecipr
+                           ,ceb.dtcadast
+                           ,ceb.insitceb
+                           ,tac.dtalteracao_status dtultima_aprovacao
+                           ,cal.dtinicio_vigencia_contrato
+                           ,cal.dtfim_vigencia_contrato
+                           ,add_months(cal.dtinicio_vigencia_contrato
+                                      ,(SELECT to_number(dscodigo)
+                                         FROM tbcobran_dominio_campo
+                                        WHERE cddominio = cal.idfim_desc_adicional_coo
+                                          AND nmdominio = 'TPMESES_RECIPRO')) AS dtfimdesc
+                           ,CASE
+                                WHEN (SELECT COUNT(1)
+                                        FROM tbrecip_param_workflow    tpw
+                                            ,tbrecip_aprovador_calculo tac
+                                       WHERE tpw.cdcooper = tac.cdcooper
+                                         AND tpw.cdalcada_aprovacao = tac.cdalcada_aprovacao
+                                         AND tpw.cdcooper = pr_cdcooper
+                                         AND tac.idcalculo_reciproci = ceb.idrecipr
+                                         AND tac.idstatus = 'R'
+                                         AND tpw.flregra_aprovacao = 1) > 0 THEN
+                                 'Rejeitado'
+                                WHEN (SELECT COUNT(1)
+                                        FROM tbrecip_param_workflow tpw
+                                       WHERE tpw.cdcooper = pr_cdcooper
+                                         AND tpw.flregra_aprovacao = 1) > 0 AND
+                                     (SELECT COUNT(1)
+                                        FROM tbrecip_param_workflow tpw
+                                       WHERE tpw.cdcooper = pr_cdcooper
+                                         AND tpw.flregra_aprovacao = 1) =
+                                     (SELECT COUNT(1)
+                                        FROM tbrecip_param_workflow    tpw
+                                            ,tbrecip_aprovador_calculo tac
+                                            ,crapceb                   crapceb2
+                                       WHERE tpw.cdcooper = tac.cdcooper
+                                         AND tpw.cdalcada_aprovacao = tac.cdalcada_aprovacao
+                                         AND tpw.cdcooper = pr_cdcooper
+                                         AND tac.idcalculo_reciproci = ceb.idrecipr
+                                         AND tac.idstatus = 'A'
+                                         AND tac.cdcooper = crapceb2.cdcooper
+                                         AND tac.idcalculo_reciproci = crapceb2.idrecipr
+                                         AND crapceb2.insitceb = 1 -- Ativo
+                                         AND tpw.flregra_aprovacao = 1) THEN
+                                 'Aprovado'
+                                ELSE
+                                 CASE ceb.insitceb
+                                     WHEN 1 THEN
+                                      'Aprovado'
+                                     WHEN 2 THEN
+                                      'Inativo'
+                                     WHEN 3 THEN
+                                      'Em aprovação'
+                                     WHEN 4 THEN
+                                      'Rejeitado'
+                                     WHEN 5 THEN
+                                      'Aprovado'
+                                     WHEN 6 THEN
+                                      'Em aprovação'
+                                     ELSE
+                                      'Em aprovação'
+                                 END
+                            END idstatus
+                           ,(SELECT COUNT(apr.idcalculo_reciproci)
+                               FROM tbrecip_aprovador_calculo apr
+                              WHERE apr.idcalculo_reciproci = ceb.idrecipr) qtdaprov
+                           ,(SELECT COUNT(apr.idcalculo_reciproci)
+                               FROM tbrecip_aprovador_calculo apr
+                              WHERE apr.idcalculo_reciproci = ceb.idrecipr
+                                AND apr.cdoperador = pr_cdoperad
+                                 OR pr_cdoperad = NULL) insitapr
+              FROM (SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
+                          ,crapceb.idrecipr
+                          ,crapceb.dtcadast
 																	 ,trunc(crapceb.dtinsori) dtinsori
-																	 ,CASE
-																			WHEN (SELECT COUNT(1)
-																							FROM crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 1
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				1 -- Aprovado
-																			WHEN (SELECT COUNT(1)
-																							FROM crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 2
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				2 -- Inativo
-																			WHEN (SELECT COUNT(1)
-																						 FROM crapceb crapceb2
-																						WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							AND crapceb2.cdcooper = crapceb.cdcooper
-																							AND crapceb2.insitceb = 3
-																							AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				3 -- Em aprovação
-																			WHEN (SELECT COUNT(1)
-																							FROM crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 4
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				4 -- Rejeitado
-																			WHEN (SELECT COUNT(1)
-																							FROM crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 5
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				5 -- Aprovado
-																			WHEN (SELECT COUNT(1)
-																							FROM crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 6
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				6 -- Em aprovação
-																			ELSE
-																				6 -- Em aprovação
-																		END insitceb
-															 FROM crapceb
-															WHERE crapceb.nrdconta = pr_nrdconta
-																AND crapceb.cdcooper = pr_cdcooper
-																AND crapceb.idrecipr > 0
-															 /**/
-																AND crapceb.nrconven IN (SELECT nrconven
-																													 FROM crapcco
-																													WHERE cdcooper = pr_cdcooper
-																														AND flgativo = 1
-																														AND flrecipr = 1
-																														AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
-													 GROUP BY crapceb.idrecipr
-																	 ,crapceb.dtcadast
+                          ,CASE
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 1
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                1 -- Aprovado
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 2
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                2 -- Inativo
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 3
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                3 -- Em aprovação
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 4
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                4 -- Rejeitado
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 5
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                5 -- Aprovado
+                               WHEN (SELECT COUNT(1)
+                                       FROM crapceb crapceb2
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 6
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                6 -- Em aprovação
+                               ELSE
+                                6 -- Em aprovação
+                           END insitceb
+                      FROM crapceb
+                     WHERE crapceb.nrdconta = pr_nrdconta
+                       AND crapceb.cdcooper = pr_cdcooper
+                       AND crapceb.idrecipr > 0
+                          /**/
+                       AND crapceb.nrconven IN (SELECT nrconven
+                                                  FROM crapcco
+                                                 WHERE cdcooper = pr_cdcooper
+                                                   AND flgativo = 1
+                                                   AND flrecipr = 1
+                                                   AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
+                     GROUP BY crapceb.idrecipr
+                             ,crapceb.dtcadast
 																	 ,trunc(crapceb.dtinsori)
-																	 ,crapceb.nrdconta
-																	 ,crapceb.cdcooper
+                             ,crapceb.nrdconta
+                             ,crapceb.cdcooper
 													 UNION ALL
 														 SELECT listagg(crapceb.nrconven, ', ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
-																	 ,crapceb.idrecipr
-																	 ,crapceb.dtcadast
+                          ,crapceb.idrecipr
+                          ,crapceb.dtcadast
 																	 ,trunc(crapceb.dtinsori) dtinsori
-																	 ,CASE
-																			WHEN (SELECT COUNT(1)
+                          ,CASE
+                               WHEN (SELECT COUNT(1)
 																							FROM tbcobran_crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 1
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				1 -- Aprovado
-																			WHEN (SELECT COUNT(1)
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 1
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                1 -- Aprovado
+                               WHEN (SELECT COUNT(1)
 																							FROM tbcobran_crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 2
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				2 -- Inativo
-																			WHEN (SELECT COUNT(1)
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 2
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                2 -- Inativo
+                               WHEN (SELECT COUNT(1)
 																						 FROM tbcobran_crapceb crapceb2
-																						WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							AND crapceb2.cdcooper = crapceb.cdcooper
-																							AND crapceb2.insitceb = 3
-																							AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				3 -- Em aprovação
-																			WHEN (SELECT COUNT(1)
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 3
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                3 -- Em aprovação
+                               WHEN (SELECT COUNT(1)
 																							FROM tbcobran_crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 4
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				4 -- Rejeitado
-																			WHEN (SELECT COUNT(1)
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 4
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                4 -- Rejeitado
+                               WHEN (SELECT COUNT(1)
 																							FROM tbcobran_crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 5
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				5 -- Aprovado
-																			WHEN (SELECT COUNT(1)
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 5
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                5 -- Aprovado
+                               WHEN (SELECT COUNT(1)
 																							FROM tbcobran_crapceb crapceb2
-																						 WHERE crapceb2.nrdconta = crapceb.nrdconta
-																							 AND crapceb2.cdcooper = crapceb.cdcooper
-																							 AND crapceb2.insitceb = 6
-																							 AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
-																				6 -- Em aprovação
-																			ELSE
-																				6 -- Em aprovação
+                                      WHERE crapceb2.nrdconta = crapceb.nrdconta
+                                        AND crapceb2.cdcooper = crapceb.cdcooper
+                                        AND crapceb2.insitceb = 6
+                                        AND crapceb2.idrecipr = crapceb.idrecipr) >= 1 THEN
+                                6 -- Em aprovação
+                               ELSE
+                                6 -- Em aprovação
 																		END insitceb
 															 FROM tbcobran_crapceb crapceb
 															WHERE crapceb.nrdconta = pr_nrdconta
@@ -8833,8 +8836,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																				6 -- Em aprovação
 																			ELSE
 																				6 -- Em aprovação
-																		END
-																	 FROM crapceb
+                           END
+                      FROM crapceb
 																	WHERE crapceb.nrdconta = pr_nrdconta
 																		AND crapceb.cdcooper = pr_cdcooper
 																		AND crapceb.idrecipr = 0
@@ -8897,39 +8900,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																				6 -- Em aprovação
 																		END
 																	 FROM tbcobran_crapceb crapceb
-																	WHERE crapceb.nrdconta = pr_nrdconta
-																		AND crapceb.cdcooper = pr_cdcooper
-																		AND crapceb.idrecipr = 0
-																	 /**/
-																		AND crapceb.nrconven IN(SELECT nrconven
-																															FROM crapcco
-																														 WHERE cdcooper = pr_cdcooper
-																															 AND flgativo = 1
-																															 AND flrecipr = 1
-																															 AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
-														) ceb
-													 ,tbrecip_aprovador_calculo tac
-													 ,tbrecip_calculo cal
-											WHERE ceb.idrecipr = tac.idcalculo_reciproci(+)
-												AND ceb.idrecipr = cal.idcalculo_reciproci(+)
-												AND ceb.dtinsori >= to_date(pr_data_corte, 'DD/MM/RRRR')
-												AND (tac.dtalteracao_status IS NULL OR
-														 tac.dtalteracao_status = (SELECT MAX(tac2.dtalteracao_status)
-																												 FROM tbrecip_aprovador_calculo tac2
-																												WHERE tac2.idcalculo_reciproci = tac.idcalculo_reciproci
-																													AND tac2.idstatus = 'A'))
-									 ORDER BY CASE ceb.insitceb
-															WHEN 3 THEN
-																0
-															ELSE
-																ceb.insitceb
-															END
-													 ,CASE
-															WHEN dtinicio_vigencia_contrato IS NULL THEN
-																to_date('31/12/1969', 'DD/MM/RRRR')
-															ELSE
-																dtinicio_vigencia_contrato
-															END DESC;
+                     WHERE crapceb.nrdconta = pr_nrdconta
+                       AND crapceb.cdcooper = pr_cdcooper
+                       AND crapceb.idrecipr = 0
+                          /**/
+                       AND crapceb.nrconven IN (SELECT nrconven
+                                                  FROM crapcco
+                                                 WHERE cdcooper = pr_cdcooper
+                                                   AND flgativo = 1
+                                                   AND flrecipr = 1
+                                                   AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
+                    ) ceb
+                  ,tbrecip_aprovador_calculo tac
+                  ,tbrecip_calculo cal
+             WHERE ceb.idrecipr = tac.idcalculo_reciproci(+)
+               AND ceb.idrecipr = cal.idcalculo_reciproci(+)
+               AND ceb.dtinsori >= to_date(pr_data_corte, 'DD/MM/RRRR')
+               AND (tac.dtalteracao_status IS NULL OR
+                   tac.dtalteracao_status = (SELECT MAX(tac2.dtalteracao_status)
+                                                FROM tbrecip_aprovador_calculo tac2
+                                               WHERE tac2.idcalculo_reciproci = tac.idcalculo_reciproci
+                                                 AND tac2.idstatus = 'A'))
+             ORDER BY CASE ceb.insitceb
+                          WHEN 3 THEN
+                           0
+                          ELSE
+                           ceb.insitceb
+                      END
+                     ,CASE
+                          WHEN dtinicio_vigencia_contrato IS NULL THEN
+                           to_date('31/12/1969', 'DD/MM/RRRR')
+                          ELSE
+                           dtinicio_vigencia_contrato
+                      END DESC;
         rw_lista_contratos cr_lista_contratos%ROWTYPE;
     
         -- Variável de críticas
@@ -9265,20 +9268,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         CURSOR cr_lista_contratos(pr_cdcooper crapceb.cdcooper%TYPE
                                  ,pr_nrdconta crapceb.nrdconta%TYPE) IS
         
-          SELECT listagg(crapceb.nrconven, '; ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
-								,crapceb.idrecipr
-								,crapceb.dtcadast
-						FROM crapceb
-					 WHERE crapceb.nrdconta = pr_nrdconta
-						 AND crapceb.cdcooper = pr_cdcooper
-						 AND crapceb.idrecipr > 0
-					 GROUP BY crapceb.idrecipr
-									 ,crapceb.dtcadast
+            SELECT listagg(crapceb.nrconven, '; ') within GROUP(ORDER BY crapceb.nrconven) list_cnv
+                  ,crapceb.idrecipr
+                  ,crapceb.dtcadast
+              FROM crapceb
+             WHERE crapceb.nrdconta = pr_nrdconta
+               AND crapceb.cdcooper = pr_cdcooper
+               AND crapceb.idrecipr > 0
+             GROUP BY crapceb.idrecipr
+                     ,crapceb.dtcadast
 					 UNION ALL
-					SELECT to_char(crapceb.nrconven)
-								,crapceb.idrecipr
-								,crapceb.dtcadast
-						FROM crapceb
+            SELECT to_char(crapceb.nrconven)
+                  ,crapceb.idrecipr
+                  ,crapceb.dtcadast
+              FROM crapceb
 					 WHERE crapceb.nrdconta = pr_nrdconta
 						 AND crapceb.cdcooper = pr_cdcooper
 						 AND crapceb.idrecipr = 0
@@ -9297,9 +9300,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 								,crapceb.idrecipr
 								,crapceb.dtcadast
 						FROM tbcobran_crapceb crapceb
-					 WHERE crapceb.nrdconta = pr_nrdconta
-						 AND crapceb.cdcooper = pr_cdcooper
-						 AND crapceb.idrecipr = 0;
+             WHERE crapceb.nrdconta = pr_nrdconta
+               AND crapceb.cdcooper = pr_cdcooper
+               AND crapceb.idrecipr = 0;
         rw_lista_contratos cr_lista_contratos%ROWTYPE;
     BEGIN
         -- Criar XML de retorno para uso na Web
@@ -9316,50 +9319,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                                   ,pr_nmdcampo            OUT VARCHAR2 --> Nome do campo com erro
                                   ,pr_des_erro            OUT VARCHAR2 --> Erros do processo
                                    ) IS
-			/* .............................................................................
-				Programa: pc_cancela_descontos
-				Sistema : CECRED
-				Sigla   : COBRAN
-				Autor   : Augusto Conceição (SUPERO)
-				Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+        /* .............................................................................
+          Programa: pc_cancela_descontos
+          Sistema : CECRED
+          Sigla   : COBRAN
+          Autor   : Augusto Conceição (SUPERO)
+          Data    : Agosto/18.                    Ultima atualizacao: --/--/----
         
-				Dados referentes ao programa:
+          Dados referentes ao programa:
         
-				Frequencia: Sempre que for chamado
+          Frequencia: Sempre que for chamado
         
-				Objetivo  : Cancelar contratos de reciprocidade
+          Objetivo  : Cancelar contratos de reciprocidade
         
-				Observacao: -----
+          Observacao: -----
         
-				Alteracoes:
-			..............................................................................*/
+          Alteracoes:
+        ..............................................................................*/
     
-			-- Variável de críticas
-			vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-			vr_dscritic VARCHAR2(1000); --> Desc. Erro
+        -- Variável de críticas
+        vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+        vr_dscritic VARCHAR2(1000); --> Desc. Erro
     
-			-- Tratamento de erros
-			vr_exc_saida EXCEPTION;
+        -- Tratamento de erros
+        vr_exc_saida EXCEPTION;
     
-			-- Variaveis de log
-			vr_cdcooper INTEGER;
-			vr_cdoperad VARCHAR2(100);
-			vr_nmdatela VARCHAR2(100);
-			vr_nmeacao  VARCHAR2(100);
-			vr_cdagenci VARCHAR2(100);
-			vr_nrdcaixa VARCHAR2(100);
-			vr_idorigem VARCHAR2(100);
-			vr_qtdboltos INTEGER;
-    
-			-- calendário
-			rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-				
-			-- Variaveis
-			vr_dtfimrel VARCHAR2(8);
-			vr_nrdconta crapceb.nrdconta%TYPE;
-			vr_nrconven VARCHAR2(10);
-    
-      CURSOR cr_crapceb(pr_cdcooper            IN crapceb.cdcooper%TYPE
+        -- Variaveis de log
+        vr_cdcooper INTEGER;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+    vr_qtdboltos INTEGER;
+
+    -- Calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  			
+        -- Variaveis
+        vr_dtfimrel VARCHAR2(8);
+        vr_nrdconta crapceb.nrdconta%TYPE;
+        vr_nrconven VARCHAR2(10);
+
+    CURSOR cr_crapceb(pr_cdcooper            IN crapceb.cdcooper%TYPE
 			                 ,pr_nrdconta            IN crapceb.nrdconta%TYPE
                        ,pr_idcalculo_reciproci IN crapceb.idrecipr%TYPE
 											 ) IS
@@ -9374,14 +9377,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 				 WHERE cdcooper = pr_cdcooper
 				   AND nrdconta = pr_nrdconta
 					 AND idrecipr = pr_idcalculo_reciproci;
-				
-			CURSOR cr_convenios(pr_cdcooper            IN crapceb.cdcooper%TYPE
+  						 
+    CURSOR cr_convenios(pr_cdcooper            IN crapceb.cdcooper%TYPE
 			                   ,pr_nrdconta            IN crapceb.nrdconta%TYPE
 								         ,pr_idcalculo_reciproci IN crapceb.idrecipr%TYPE
 												 ) IS
-				SELECT ceb.nrconven
-					FROM crapceb ceb
-				 WHERE ceb.cdcooper = pr_cdcooper
+      SELECT ceb.nrconven
+        FROM crapceb ceb
+       WHERE ceb.cdcooper = pr_cdcooper
 				   AND ceb.nrdconta = pr_nrdconta
 					 AND ceb.idrecipr = pr_idcalculo_reciproci
 		 UNION ALL
@@ -9389,36 +9392,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 					FROM tbcobran_crapceb ceb
 				 WHERE ceb.cdcooper = pr_cdcooper
 				   AND ceb.nrdconta = pr_nrdconta
-					 AND ceb.idrecipr = pr_idcalculo_reciproci;
-			rw_convenios cr_convenios%ROWTYPE;
-			
-			--> Busca associado
-			CURSOR cr_crapass(pr_cdcooper IN crapcco.cdcooper%TYPE
-											 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-				SELECT ass.inpessoa
-							,to_char(ass.nrcpfcgc) nrcpfcgc
-							,to_char(ass.nrdconta) nrdconta
-							,decode(ass.inpessoa, 1, lpad(ass.nrcpfcgc, 11, '0'), lpad(ass.nrcpfcgc, 14, '0')) dscpfcgc
-							,decode(ass.inpessoa, 1, 'F', 'J') dspessoa
-							,to_char(cop.cdagectl) cdagectl
-					FROM crapass ass
-							,crapcop cop
-				 WHERE ass.cdcooper = cop.cdcooper
-					 AND ass.cdcooper = pr_cdcooper
-					 AND ass.nrdconta = pr_nrdconta;
-			rw_crapass cr_crapass%ROWTYPE;
-			
+         AND ceb.idrecipr = pr_idcalculo_reciproci;
+        rw_convenios cr_convenios%ROWTYPE;
+  			
+        --> Busca associado
+        CURSOR cr_crapass(pr_cdcooper IN crapcco.cdcooper%TYPE
+                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+            SELECT ass.inpessoa
+                  ,to_char(ass.nrcpfcgc) nrcpfcgc
+                  ,to_char(ass.nrdconta) nrdconta
+                  ,decode(ass.inpessoa, 1, lpad(ass.nrcpfcgc, 11, '0'), lpad(ass.nrcpfcgc, 14, '0')) dscpfcgc
+                  ,decode(ass.inpessoa, 1, 'F', 'J') dspessoa
+                  ,to_char(cop.cdagectl) cdagectl
+              FROM crapass ass
+                  ,crapcop cop
+             WHERE ass.cdcooper = cop.cdcooper
+               AND ass.cdcooper = pr_cdcooper
+               AND ass.nrdconta = pr_nrdconta;
+        rw_crapass cr_crapass%ROWTYPE;
+        
 			CURSOR c_qtdBoleto(pr_cdcooper            IN crapcco.cdcooper%TYPE
 			                  ,pr_nrdconta            IN crapass.nrdconta%TYPE
-                        ,pr_idcalculo_reciproci IN crapceb.idrecipr%TYPE
+                       ,pr_idcalculo_reciproci IN crapceb.idrecipr%TYPE
 												) IS
 				SELECT COUNT(1)
-					FROM crapcob
-				 WHERE crapcob.cdcooper = pr_cdcooper
-					 AND crapcob.nrdconta = pr_nrdconta
+              FROM crapcob
+             WHERE crapcob.cdcooper = pr_cdcooper
+               AND crapcob.nrdconta = pr_nrdconta
 					 AND crapcob.nrcnvcob IN(SELECT a.nrconven
 																		 FROM crapceb a
-																		where a.idrecipr = pr_idcalculo_reciproci
+                                         where a.idrecipr = pr_idcalculo_reciproci
 																			AND a.cdcooper = crapcob.cdcooper
 																			AND a.nrdconta = crapcob.nrdconta 
 																			AND a.insitceb = 1
@@ -9431,85 +9434,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																			AND a.insitceb = 1
 																	);
       --
-    BEGIN
-        -- Extrai os dados vindos do XML
-        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-    
-        IF TRIM(pr_idcalculo_reciproci) IS NULL OR pr_idcalculo_reciproci = 0 THEN
-            vr_dscritic := 'Contrato informado nao encontrado.';
-            RAISE vr_exc_saida;
-        END IF;
+  BEGIN
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                ,pr_cdcooper => vr_cdcooper
+                ,pr_nmdatela => vr_nmdatela
+                ,pr_nmeacao  => vr_nmeacao
+                ,pr_cdagenci => vr_cdagenci
+                ,pr_nrdcaixa => vr_nrdcaixa
+                ,pr_idorigem => vr_idorigem
+                ,pr_cdoperad => vr_cdoperad
+                ,pr_dscritic => vr_dscritic);
 
-        pc_gera_log_conv(pr_cdcooper            => vr_cdcooper
-                        ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
-                        ,pr_cdoperador          => vr_cdoperad
+    IF TRIM(pr_idcalculo_reciproci) IS NULL OR pr_idcalculo_reciproci = 0 THEN
+            vr_dscritic := 'Contrato informado nao encontrado.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    pc_gera_log_conv(pr_cdcooper            => vr_cdcooper
+            ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
+            ,pr_cdoperador          => vr_cdoperad
                         ,pr_dshistorico         => 'Fim da vigencia devido ao cancelamento.'
-                        ,pr_cdcritic            => vr_cdcritic
-                        ,pr_dscritic            => vr_dscritic);
-    
+            ,pr_cdcritic            => vr_cdcritic
+            ,pr_dscritic            => vr_dscritic);
+
         OPEN cr_crapceb(pr_cdcooper            => vr_cdcooper
 				               ,pr_nrdconta            => pr_nrdconta
 				               ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
 											 );
-        FETCH cr_crapceb INTO vr_nrdconta;
+    FETCH cr_crapceb INTO vr_nrdconta;
         -- Alimenta a booleana se achou ou nao
-        IF cr_crapceb%NOTFOUND THEN
-					CLOSE cr_crapceb;
+    IF cr_crapceb%NOTFOUND THEN
+          CLOSE cr_crapceb;
           vr_dscritic := 'Contrato informado nao encontrado.';
           RAISE vr_exc_saida;
-        END IF;
-        -- Fecha cursor
-        CLOSE cr_crapceb;
-				
-				--> Busca associado
+    END IF;
+    -- Fecha cursor
+    CLOSE cr_crapceb;
+  			
+        --> Busca associado
         OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
 											 );
   			
         FETCH cr_crapass INTO rw_crapass;
         IF cr_crapass%NOTFOUND THEN
-					CLOSE cr_crapass;
-					vr_cdcritic := 9;
-					RAISE vr_exc_saida;
+            CLOSE cr_crapass;
+            vr_cdcritic := 9;
+            RAISE vr_exc_saida;
         END IF;
         CLOSE cr_crapass;
-				
-				-- Valida a quantidade de boletos emitidos pelo contrato, 
+        
+        -- Valida a quantidade de boletos emitidos pelo contrato, 
         --caso haja, não poderá cancelar o contrato
-				OPEN c_qtdBoleto(pr_cdcooper            => vr_cdcooper
-												,pr_idcalculo_reciproci => pr_idcalculo_reciproci
+      OPEN c_qtdBoleto(pr_cdcooper => vr_cdcooper
+                       ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
 												,pr_nrdconta            => pr_nrdconta
 												);
-				FETCH c_qtdBoleto INTO vr_qtdboltos;  
-	      
-				IF c_qtdBoleto%NOTFOUND or vr_qtdboltos <> 0 THEN
-					CLOSE c_qtdBoleto;
-					vr_dscritic := 'Contrato possui boletos emitidos.';
-					RAISE vr_exc_saida;
-				END IF;
-				CLOSE c_qtdBoleto;
-    
-        -- Busca do calendário
-        OPEN btch0001.cr_crapdat(vr_cdcooper);
+      FETCH c_qtdBoleto INTO vr_qtdboltos;  
+      
+      IF c_qtdBoleto%NOTFOUND or vr_qtdboltos <> 0 THEN
+            CLOSE c_qtdBoleto;
+            vr_dscritic := 'Contrato possui boletos emitidos.';
+            RAISE vr_exc_saida;
+        END IF;
+        CLOSE c_qtdBoleto;
+
+    -- Busca do calendário
+    OPEN btch0001.cr_crapdat(vr_cdcooper);
         FETCH btch0001.cr_crapdat
             INTO rw_crapdat;
-        CLOSE btch0001.cr_crapdat;
-    
-        BEGIN
-            UPDATE crapceb
-               SET insitceb = 2
-             WHERE cdcooper = vr_cdcooper
+    CLOSE btch0001.cr_crapdat;
+
+    BEGIN
+      UPDATE crapceb
+         SET insitceb = 2
+       WHERE cdcooper = vr_cdcooper
 						   AND nrdconta = pr_nrdconta
-               AND idrecipr = pr_idcalculo_reciproci;
-        EXCEPTION
+         AND idrecipr = pr_idcalculo_reciproci;
+    EXCEPTION
 					WHEN no_data_found THEN
 						BEGIN
 							UPDATE tbcobran_crapceb
@@ -9518,62 +9521,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 							   AND nrdconta = pr_nrdconta
 								 AND idrecipr = pr_idcalculo_reciproci;
 						EXCEPTION
-							WHEN OTHERS THEN
+      WHEN OTHERS THEN
 								vr_dscritic := '2.Erro ao atualizar situacao na ceb. ' || SQLERRM;
 								RAISE vr_exc_saida;
 						END;
 							WHEN OTHERS THEN
 								vr_dscritic := '1.Erro ao atualizar situacao na ceb. ' || SQLERRM;
-								RAISE vr_exc_saida;
-        END;
-    
-        BEGIN
-            UPDATE tbrecip_calculo
-               SET dtfim_vigencia_contrato = rw_crapdat.dtmvtolt
-             WHERE idcalculo_reciproci = pr_idcalculo_reciproci;
-        EXCEPTION
-            WHEN OTHERS THEN
+        RAISE vr_exc_saida;
+    END;
+
+    BEGIN
+      UPDATE tbrecip_calculo
+         SET dtfim_vigencia_contrato = rw_crapdat.dtmvtolt
+       WHERE idcalculo_reciproci = pr_idcalculo_reciproci;
+    EXCEPTION
+      WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar data fim do calculo. ' || SQLERRM;
-                RAISE vr_exc_saida;
-        END;
-    
-        IF NOT TRIM(vr_dscritic) IS NULL THEN
-            RAISE vr_exc_saida;
-        END IF;
-				
+        RAISE vr_exc_saida;
+    END;
+
+    IF NOT TRIM(vr_dscritic) IS NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+  			
 				FOR rw_convenios IN cr_convenios(pr_cdcooper            => vr_cdcooper
 					                              ,pr_nrdconta            => pr_nrdconta
 					                              ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
 																				) LOOP
           BEGIN
 						--
-						vr_dtfimrel := to_char(rw_crapdat.dtmvtolt, 'RRRRMMDD');						
-						vr_nrconven := to_char(rw_convenios.nrconven);
+              vr_dtfimrel := to_char(rw_crapdat.dtmvtolt, 'RRRRMMDD');						
+              vr_nrconven := to_char(rw_convenios.nrconven);
 						--
-						UPDATE cecredleg.tbjdddabnf_convenio@jdnpcsql
-							 SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'E'
-									,TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
-						 WHERE TBJDDDABNF_Convenio."ISPB_IF"            = '05463212'
-							 AND TBJDDDABNF_Convenio."TpPessoaBenfcrio"   = rw_crapass.dspessoa
-							 AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
-							 AND TBJDDDABNF_Convenio."CodCli_Conv"        = vr_nrconven
-							 AND TBJDDDABNF_Convenio."AgDest"             = rw_crapass.cdagectl
-							 AND TBJDDDABNF_Convenio."CtDest"             = rw_crapass.nrdconta;
+              UPDATE cecredleg.tbjdddabnf_convenio@jdnpcsql
+                 SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'E'
+                     ,TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
+               WHERE TBJDDDABNF_Convenio."ISPB_IF" = '05463212'
+                 AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
+                 AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
+                 AND TBJDDDABNF_Convenio."CodCli_Conv" = vr_nrconven
+                 AND TBJDDDABNF_Convenio."AgDest" = rw_crapass.cdagectl
+                 AND TBJDDDABNF_Convenio."CtDest" = rw_crapass.nrdconta;
   			    --
           EXCEPTION
-						WHEN OTHERS THEN
-							vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: ' || SQLERRM;
-							RAISE vr_exc_saida;
+              WHEN OTHERS THEN
+                  vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: ' || SQLERRM;
+                  RAISE vr_exc_saida;
           END;
         END LOOP;
   	
         COMMIT;
         npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_1');
-    
-        -- Criar cabeçalho do XML
-        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados><retorno>1</retorno></Dados>');
-    
-    EXCEPTION
+
+    -- Criar cabeçalho do XML
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados><retorno>1</retorno></Dados>');
+
+  EXCEPTION
         WHEN vr_exc_saida THEN
             IF vr_cdcritic <> 0 THEN
                 pr_cdcritic := vr_cdcritic;

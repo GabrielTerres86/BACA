@@ -2737,15 +2737,15 @@ function validaEmiteExpede(limparCampos) {
     
     if (limparCampos) {
         if (sitflcee !== $("#flceeexp","#divOpcaoConsulta").prop('checked')) {
-        cVldesconto_cee.val('0,00');
-        cDataFimAdicionalCee.val('');
+            cVldesconto_cee.val('0,00');
+            cDataFimAdicionalCee.val('');
             cJustificativaDesc.val('');
         }
         if (sitflcoo !== $("#flcooexp","#divOpcaoConsulta").prop('checked')) {
             cVldesconto_coo.val('0,00');
-        cDataFimAdicionalCoo.val('');
-        cJustificativaDesc.val('');
-    }
+            cDataFimAdicionalCoo.val('');
+            cJustificativaDesc.val('');
+        }
     }
 
     if (cddopcao == 'C')
@@ -2974,7 +2974,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		cDataFimAdicionalCoo.habilitaCampo();
 	}
 
-	if (	(vVldesconto_cee != vVldesconto_ceeOld && vVldesconto_cee) ||
+    if (	(vVldesconto_cee != vVldesconto_ceeOld && vVldesconto_cee) ||
 			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
@@ -2985,19 +2985,19 @@ function validaHabilitacaoCamposBtn(cddopcao) {
         btnContinuar.prop('disabled', true);
         btnContinuar.attr('onclick', 'return false;');
 
-                    btnAprovacao.removeClass('botaoDesativado');
-                    btnAprovacao.prop('disabled', false);
-                    btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
+        btnAprovacao.removeClass('botaoDesativado');
+        btnAprovacao.prop('disabled', false);
+        btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
-	} else {
-		btnContinuar.removeClass('botaoDesativado');
-		btnContinuar.prop('disabled', false);
-		btnContinuar.attr('onclick', 'validaDados(false);return false;');
+    } else {
+        btnContinuar.removeClass('botaoDesativado');
+        btnContinuar.prop('disabled', false);
+        btnContinuar.attr('onclick', 'validaDados(false);return false;');
 
-		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnAprovacao.prop('disabled', true);
-		btnAprovacao.attr('onclick', 'return false;');
-	}
+        btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
+        btnAprovacao.prop('disabled', true);
+        btnAprovacao.attr('onclick', 'return false;');
+    }
 
 }
 
@@ -3107,24 +3107,24 @@ function abrirAprovacao(hideBtnDetalhes) {
         },
         success: function (response) {
 			if (response.substr(0,14) == 'hideMsgAguardo') {
-                eval(response);
-            } else {
-                var telaAprovacao = $('#telaAprovacao');
-                $("#divConteudoOpcao").hide();
-                telaAprovacao.html(response);
+				eval(response);
+			} else {
+				var telaAprovacao = $('#telaAprovacao');
+				$("#divConteudoOpcao").hide();
+				telaAprovacao.html(response);
 				telaAprovacao.find('#btVoltar').click(function (){
-                    acessaOpcaoContratos();
-                    telaAprovacao.html('');
-                });
-                if (hideBtnDetalhes) {
-                    telaAprovacao.find('#btDetalhes').hide();
-                } else {
+					acessaOpcaoContratos();
+					telaAprovacao.html('');
+				});
+				if (hideBtnDetalhes) {
+					telaAprovacao.find('#btDetalhes').hide();
+				} else {
 					telaAprovacao.find('#btDetalhes').click(function (){
-                        telaAprovacao.hide();
-                        acessaOpcaoDescontos('C');
-                    });
-                }
-            }
+						telaAprovacao.hide();
+						acessaOpcaoDescontos('C');
+					});
+				}
+			}
         }
     });
 }
@@ -3164,15 +3164,15 @@ function abrirRejeicao() {
         },
         success: function (response) {
 			if (response.substr(0,14) == 'hideMsgAguardo') {
-                eval(response);
-            } else {
-                var telaRejeicao = $('#telaRejeicao');
-                $("#divConteudoOpcao").hide();
-                telaRejeicao.html(response);
+				eval(response);
+			} else {
+				var telaRejeicao = $('#telaRejeicao');
+				$("#divConteudoOpcao").hide();
+				telaRejeicao.html(response);
 				telaRejeicao.find('#btVoltar').click(function (){
-                    acessaOpcaoContratos();
-                });
-            }
+					acessaOpcaoContratos();
+				});
+			}
         }
     });
 }

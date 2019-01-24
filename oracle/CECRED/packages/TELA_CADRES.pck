@@ -427,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     Alteracoes: 
     
     ..............................................................................*/
-		
+    
 		CURSOR cr_tbcobran_crapceb(pr_cdcooper tbcobran_crapceb.cdcooper%TYPE
 															,pr_idrecipr tbcobran_crapceb.idrecipr%TYPE
 														  ) IS
@@ -462,9 +462,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
         vr_dscritic := 'Erro ao atualizar a situacao na CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
         RAISE vr_exc_erro;
     END;
-		--
+    --
 		BEGIN
-      --
+			--
       UPDATE tbcobran_crapceb crapceb 
          SET crapceb.insitceb = 1 -- Ativo
        WHERE crapceb.idrecipr = pr_idrecipr
@@ -588,7 +588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 						 AND crapceb.insitceb = 1; -- Ativo
 					--
 				EXCEPTION
-					WHEN OTHERS THEN
+			WHEN OTHERS THEN
 						vr_dscritic := '2.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 						RAISE vr_exc_erro;
 				END;
@@ -679,7 +679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 						 AND crapceb.insitceb = 3; -- Pendente
 					--
 				EXCEPTION
-					WHEN OTHERS THEN
+			WHEN OTHERS THEN
 						vr_dscritic := '3.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 						RAISE vr_exc_erro;
 				END;
