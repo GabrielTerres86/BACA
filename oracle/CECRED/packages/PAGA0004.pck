@@ -1399,7 +1399,7 @@ create or replace package body cecred.PAGA0004 is
                                  ||to_char(rw_crapaut_sequen.dtmvtolt,'DD/MM/RRRR')||';'
                                  ||rw_crapaut_sequen.cdagenci||';'
                                  ||11||';'
-                                 ||11000 + 900);
+                                 ||11900);
     rw_craplot := NULL;
                               
 	  -- Controlar criação de lote, com pragma
@@ -1407,7 +1407,7 @@ create or replace package body cecred.PAGA0004 is
                     pr_dtmvtolt => rw_crapaut_sequen.dtmvtolt,
                     pr_cdagenci => rw_crapaut_sequen.cdagenci,
                     pr_cdbccxlt => 11,
-                    pr_nrdolote => 11000 + 900,
+                    pr_nrdolote => 11900,
                     pr_cdoperad => pr_cdoperad,
                     pr_nrdcaixa => rw_crapaut_sequen.nrdcaixa,
                     pr_tplotmov => 1,
@@ -2037,14 +2037,14 @@ create or replace package body cecred.PAGA0004 is
                                  ||to_char(rw_crapaut_sequen.dtmvtolt,'DD/MM/RRRR')||';'
                                  ||rw_crapaut_sequen.cdagenci||';'
                                  ||11||';'
-                                 ||11000 + 900);
+                                 ||11900);
     rw_craplot := NULL;
 	-- Controlar criação de lote, com pragma
     pc_insere_lote (pr_cdcooper => rw_crapaut_sequen.cdcooper,
                     pr_dtmvtolt => rw_crapaut_sequen.dtmvtolt,
                     pr_cdagenci => rw_crapaut_sequen.cdagenci,
                     pr_cdbccxlt => 11,
-                    pr_nrdolote => 11000 + 900,
+                    pr_nrdolote => 11900,
                     pr_cdoperad => pr_cdoperad,
                     pr_nrdcaixa => rw_crapaut_sequen.nrdcaixa,
                     pr_tplotmov => 1,
