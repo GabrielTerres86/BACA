@@ -497,6 +497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                    ,pr_flgsucesso => 1
                    ,pr_idprglog   => vr_idprglog);
 
+    commit;
+
   exception
     
     when vr_exc_saida then
@@ -509,7 +511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                      ,pr_cdcooper   => 0
                      ,pr_tpexecucao => 0    
                      ,pr_flgsucesso => 0 
-                     ,pr_idprglog   => vr_idprglog);
+                     ,pr_idprglog   => vr_idprglog);   
 
     when others then
       
@@ -2624,9 +2626,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , crd.nrdconta
          , crd.nrcrcard
       from crawcrd crd
+         , crapass ass
      where crd.cdcooper = pr_cdcooper
        and crd.dtlibera > pr_dtrefatu
        and nvl(crd.nrcrcard,0) > 0
+       and ass.cdcooper = crd.cdcooper
+       and ass.nrdconta = crd.nrdconta
+       and ass.nrcpfcgc = crd.nrcpftit
        -- Evita reenviar um cartao que ja foi
        -- enviado anteriormente com sucesso
        and not exists (select 1
