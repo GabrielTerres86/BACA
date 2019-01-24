@@ -825,7 +825,7 @@ END fn_busca_risco_melhora;
     -- Iniciar como "SEM GARANTIA"
     vr_tem_garantia := FALSE;
 
-
+	RETURN vr_tem_garantia;
 
 
     -- Verificar Garantia Aplicação - Modelo novo
