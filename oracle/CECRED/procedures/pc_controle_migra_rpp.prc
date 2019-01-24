@@ -1,5 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                                         ,pr_dsjobnam IN VARCHAR2) IS
+                                                         ,pr_dsjobnam IN VARCHAR2
+                                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                                         ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
  /* ..........................................................................
 
    JOB: pc_controle_migra_rpp
@@ -175,6 +177,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
     
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
+    pr_cdcritic := 0;
+    pr_dscritic := '';
+
     vr_cdcooper := pr_cdcooper;
     IF pr_cdcooper = 0 THEN
        vr_cdcooper := 3;
@@ -193,8 +198,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
        --- Neste ponto a proc cria um job dela mesma, informando a cooperativa
        FOR rw_crapprm IN cr_crapprm LOOP
            vr_jobname := vr_nomdojob||'_'||rw_crapprm.cdcooper||'$';
-           vr_dsplsql := 'begin cecred.pc_controle_migra_rpp(pr_cdcooper => '     ||rw_crapprm.cdcooper ||
-                                                          ', pr_dsjobnam => '''||vr_jobname||'''); end;';
+           vr_dsplsql := 'declare '||
+                         '   vr_cdcritic crapcri.cdcritic%TYPE; '||
+                         '   vr_dscritic crapcri.dscritic%TYPE; '||
+                         'begin cecred.pc_controle_migra_rpp(pr_cdcooper => '     ||rw_crapprm.cdcooper ||
+                                                          ', pr_dsjobnam => '''||vr_jobname||'' ||
+                                                          ', pr_cdcritic => vr_cdcritic'|| 
+                                                          ', pr_dscritic => vr_dscritic'||
+                                                          '); end;';
 
            -- Faz a chamada ao programa paralelo atraves de JOB
            gene0001.pc_submit_job (pr_cdcooper  => rw_crapprm.cdcooper                    --> Código da cooperativa
@@ -297,6 +308,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
       ELSE        
         pc_agrupa_comandos_saida_erro;        
       END IF;
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log
       cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper);
@@ -310,5 +323,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
       -- Efetuar rollback
       ROLLBACK;
       pc_agrupa_comandos_saida_erro;
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
  END pc_controle_migra_rpp;
 /

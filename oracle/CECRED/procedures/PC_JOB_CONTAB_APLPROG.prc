@@ -1,5 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_APLPROG (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                                         ,pr_dsjobnam IN VARCHAR2) IS
+                                                         ,pr_dsjobnam IN VARCHAR2
+                                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                                         ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
  /* ..........................................................................
 
    JOB: pc_job_contab_aplprog
@@ -138,6 +140,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_APLPROG (pr_cdcooper IN crapcop
 
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
+    pr_cdcritic := 0;
+    pr_dscritic := '';
+
     pc_controla_log_batch(pr_dstiplog => 'I'
                          ,pr_cdcooper => pr_cdcooper);
 
@@ -148,8 +153,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_APLPROG (pr_cdcooper IN crapcop
        --- Neste ponto a proc cria um job dela mesma, informando a cooperativa
        FOR rw_crapcop IN cr_crapcop LOOP
            vr_jobname := vr_nomdojob||'_'||rw_crapcop.cdcooper||'$';
-           vr_dsplsql := 'begin cecred.pc_job_contab_aplprog(pr_cdcooper => ' ||rw_crapcop.cdcooper ||
-                                                          ', pr_dsjobnam => '''||vr_jobname||'''); end;';
+           vr_dsplsql := 'declare '||
+                         '   vr_cdcritic crapcri.cdcritic%TYPE; '||
+                         '   vr_dscritic crapcri.dscritic%TYPE; '||
+                         'begin cecred.pc_job_contab_aplprog(pr_cdcooper => ' ||rw_crapcop.cdcooper ||
+                                                          ', pr_dsjobnam => '''||vr_jobname||''' ' ||
+                                                          ', pr_cdcritic => vr_cdcritic'|| 
+                                                          ', pr_dscritic => vr_dscritic'||
+                                                          '); end;';
 
            -- Faz a chamada ao programa paralelo atraves de JOB
            gene0001.pc_submit_job (pr_cdcooper  => rw_crapcop.cdcooper                    --> Código da cooperativa
@@ -247,6 +258,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_APLPROG (pr_cdcooper IN crapcop
       ELSE
         pc_agrupa_comandos_saida_erro;
       END IF;
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log
       cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -260,5 +273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_APLPROG (pr_cdcooper IN crapcop
       -- Efetuar rollback
       ROLLBACK;
       pc_agrupa_comandos_saida_erro;
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
  END PC_JOB_CONTAB_APLPROG;
 /
