@@ -2002,7 +2002,8 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_arqdesti IN VARCHAR2              --Nome Arquivo Destino
                                       ,pr_dsmensag IN VARCHAR2              --Descricao da Mensagem
                                       ,pr_nmarqlog IN VARCHAR2              --Nome Arquivo Log
-                                      ,pr_dscritic OUT VARCHAR2) IS         --Mensagem Erro
+                                      ,pr_dscritic OUT VARCHAR2             --Mensagem Erro
+                                      ,pr_criptogf IN BOOLEAN DEFAULT TRUE) IS   --Se deve criptografar o arquivo
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : pc_criptografa_move_arquiv      Antigo: procedures/b1wgen0091.p/criptografa_move_arquivo
@@ -2029,6 +2030,10 @@ create or replace package body cecred.INSS0001 as
                  26/03/2015 - Ajuste na organização e identação da escrita
                               (Adriano).          
                            
+                 09/01/2019 - Incluido parametro para permitir definir se deve criptografar o arquivo,
+		              para melhorar a performance do pagamento em lote de GPS
+                              (PTASK0010307 André MoutS).          
+						   
   ---------------------------------------------------------------------------------------------------------------*/
     --Varaiveis Locais
     vr_nmarqcri  VARCHAR2(1000);
@@ -2051,66 +2056,70 @@ create or replace package body cecred.INSS0001 as
       
       --Limpar variavel retorno                                         
       pr_dscritic:= NULL;
+ 
+     IF pr_criptogf THEN
+        --Buscar parametros 
+        vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
+        vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
+        
+        --se nao encontrou
+        IF vr_dscomora IS NULL OR 
+           vr_dsdirbin IS NULL THEN
+          
+          --Montar mensagem erro        
+          vr_dscritic:= 'Nao foi possivel selecionar parametros.';
+          
+          --Gera exceção
+          RAISE vr_exc_erro;
+          
+        END IF;
+        
+        -- Comando para criptografar o arquivo 
+        vr_comando:= vr_dscomora||' perl_remoto ' ||vr_dsdirbin||
+                     'mqcecred_criptografa.pl --criptografa='||
+                     chr(39)|| pr_nmarquiv ||chr(39);
+                     
+        --Executar o comando no unix
+        GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                              ,pr_des_comando => vr_comando
+                              ,pr_typ_saida   => vr_typ_saida
+                              ,pr_des_saida   => vr_nmarqcri);
+                              
+        --Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+          vr_comando||' - '||vr_nmarqcri;
+          
+          -- retornando ao programa chamador
+          RAISE vr_exc_erro;
+          
+        END IF;
 
-      --Buscar parametros 
-      vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
-      vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
-      
-      --se nao encontrou
-      IF vr_dscomora IS NULL OR 
-         vr_dsdirbin IS NULL THEN
-        
-        --Montar mensagem erro        
-        vr_dscritic:= 'Nao foi possivel selecionar parametros.';
-        
-        --Gera exceção
-        RAISE vr_exc_erro;
-        
+        --Retirar sujeira do final do nome do arquivo
+        vr_nmarqcri:= replace(replace(vr_nmarqcri,chr(10),''),chr(13),'');
       END IF;
-      
-      -- Comando para criptografar o arquivo 
-      vr_comando:= vr_dscomora||' perl_remoto ' ||vr_dsdirbin||
-                   'mqcecred_criptografa.pl --criptografa='||
-                   chr(39)|| pr_nmarquiv ||chr(39);
-                   
-      --Executar o comando no unix
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => vr_comando
-                            ,pr_typ_saida   => vr_typ_saida
-                            ,pr_des_saida   => vr_nmarqcri);
-                            
-      --Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        
-        vr_dscritic:= 'Nao foi possivel executar comando unix: '||
-        vr_comando||' - '||vr_nmarqcri;
-        
-        -- retornando ao programa chamador
-        RAISE vr_exc_erro;
-        
-      END IF;
-
-      --Retirar sujeira do final do nome do arquivo
-      vr_nmarqcri:= replace(replace(vr_nmarqcri,chr(10),''),chr(13),'');
       
       /* Obtem arquivo temporario criptografado / com .crypto no fim */
       IF TRIM(vr_nmarqcri) IS NULL THEN
         
-        --Mensagem Erro
-        vr_dscritic:= 'Erro ao criptografar o arquivo: '||pr_nmarquiv;
-        
-        vr_cdprogra := pr_cdprogra;
-        
-        --Escrever no Log
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => pr_nmarqlog
-                                  ,pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra || ' --> ' || 
-                                                    'ERRO: ' || vr_dscritic 
-                                  ,pr_cdprograma   => vr_cdprogra
-                                                    );
-                                                    
+        IF pr_criptogf THEN
+          
+          --Mensagem Erro
+          vr_dscritic:= 'Erro ao criptografar o arquivo: '||pr_nmarquiv;
+          
+          vr_cdprogra := pr_cdprogra;
+          
+          --Escrever no Log
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => pr_nmarqlog
+                                    ,pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                      ' - ' || vr_cdprogra || ' --> ' || 
+                                                      'ERRO: ' || vr_dscritic 
+                                    ,pr_cdprograma   => vr_cdprogra
+                                                      );
+        END IF;                                            
         /** MOVE SEM CRIPTOGRAFAR **/
         -- Comando para mover arquivo
         GENE0001.pc_mv_arquivo(pr_dsarqori => pr_nmarquiv 
@@ -4314,7 +4323,10 @@ create or replace package body cecred.INSS0001 as
   
     Alterações : 10/02/2015 Conversao Progress -> Oracle (Alisson-AMcom)
     
-                
+                 09/01/2019 - Ajustado para não criptografar o arquivo de backup,
+		              para melhorar a performance do pagamento em lote de GPS
+                              (PTASK0010307 André MoutS).   
+							  
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4343,7 +4355,8 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_arqdesti => vr_arqdesti     /* Nome arq Destino */
                                             ,pr_dsmensag => 'INSS - Gestao de beneficios'           
                                             ,pr_nmarqlog => pr_nmarqlog     /* Nome arq LOG */
-                                            ,pr_dscritic => pr_dscritic);  /* Mensagem Log (se erro) */
+                                            ,pr_dscritic => pr_dscritic     /* Mensagem Log (se erro) */
+                                            ,pr_criptogf => FALSE);  /* Não criptografa PTASK0010307 */
         --Se ocorreu erro
         IF pr_dscritic IS NOT NULL THEN
           --Retorno NOK
@@ -4364,7 +4377,8 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_arqdesti => vr_arqdesti     /* Nome arq Destino */
                                             ,pr_dsmensag => 'INSS - Gestao de beneficios'           
                                             ,pr_nmarqlog => pr_nmarqlog     /* Nome arq LOG */
-                                            ,pr_dscritic => pr_dscritic);  /* Mensagem Log (se erro) */
+                                            ,pr_dscritic => pr_dscritic     /* Mensagem Log (se erro) */
+                                            ,pr_criptogf => FALSE);         /* Não criptografa PTASK0010307 */
         --Se ocorreu erro
         IF pr_dscritic IS NOT NULL THEN
           --Retorno NOK
@@ -18004,11 +18018,11 @@ create or replace package body cecred.INSS0001 as
                               somente o registro mais antigo da tabela junto com o NB
                               (Lucas Ranghetti #626129)
 		------------------------------------------------------------------------------------------------------------------*/
-  	  -- Tratamento de erros
+  	-- Tratamento de erros
     vr_cdcritic INTEGER; -- Código da crítica
     vr_dscritic VARCHAR(4000); -- Descrição da crítica
     vr_exc_saida EXCEPTION; -- Exceção
-  
+
     -- Cursor para verificacao do beneficiário do inss
     CURSOR cr_verifica(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE,
                        pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
@@ -18018,68 +18032,68 @@ create or replace package body cecred.INSS0001 as
        WHERE dcb.cdcooper = pr_cdcooper
          AND dcb.nrdconta = pr_nrdconta
          AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
-       GROUP BY dcb.dtvencpv;
+      GROUP BY dcb.dtvencpv;
     rw_verifica cr_verifica%ROWTYPE;
-  
-    -- Cursor para buscar última data de vencimento do beneficiário do inss
+    
+		-- Cursor para buscar última data de vencimento do beneficiário do inss
     CURSOR cr_tbinss_dcb(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE,
                          pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
                          pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
       SELECT dtvencpv, nrrecben
         FROM (SELECT dcb.dtvencpv, dcb.nrrecben
-                FROM tbinss_dcb dcb
+									FROM tbinss_dcb dcb
                WHERE dcb.cdcooper = pr_cdcooper
-                 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
-                 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
+									 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+									 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
                ORDER BY dcb.dtvencpv)
-       WHERE ROWNUM = 1;
-    rw_tbinss_dcb cr_tbinss_dcb%ROWTYPE;
-  
-    -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
+       WHERE ROWNUM = 1;      
+			rw_tbinss_dcb cr_tbinss_dcb%ROWTYPE;
+
+      -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
     CURSOR cr_craplcm_inss(pr_cdcooper IN crapcop.cdcooper%TYPE,
                            pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                            pr_nrdconta IN tbinss_dcb.nrdconta%TYPE,
                            pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
-      SELECT 1
-        FROM craplcm lcm
-       WHERE lcm.cdcooper = pr_cdcooper
-         AND lcm.nrdconta = pr_nrdconta
-         AND lcm.cdhistor = 1399
-         AND lcm.dtmvtolt <= pr_dtmvtolt
-         AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
-            --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
+        SELECT 1
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.nrdconta = pr_nrdconta
+           AND lcm.cdhistor = 1399
+           AND lcm.dtmvtolt <= pr_dtmvtolt
+           AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
+           --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
          AND SUBSTR(lcm.cdpesqbb, 1, INSTR(lcm.cdpesqbb, ';') - 1) =
              pr_nrrecben;
-    rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
-  
-  BEGIN
-    -- Incluir nome do módulo logado - Chamado 664301
+      rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
+
+		BEGIN
+  	  -- Incluir nome do módulo logado - Chamado 664301
     GENE0001.pc_set_modulo(pr_module => 'INSS0001',
                            pr_action => 'INSS0001.fn_verifica_renovacao_vida');
-  
-    -- Busca última data de vencimento mais próxima do beneficiário
-    OPEN cr_verifica(pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta,
-                     pr_nrrecben => pr_nrrecben);
+      
+      -- Busca última data de vencimento mais próxima do beneficiário
+		  OPEN cr_verifica(pr_cdcooper => pr_cdcooper,
+			                 pr_nrdconta => pr_nrdconta,
+											 pr_nrrecben => pr_nrrecben);
     FETCH cr_verifica
       INTO rw_verifica;
-    IF cr_verifica%FOUND THEN
+      IF cr_verifica%FOUND THEN
       CLOSE cr_verifica;
-    
-      -- Busca última data de vencimento mais próxima do beneficiário
-      OPEN cr_tbinss_dcb(pr_cdcooper => pr_cdcooper,
-                         pr_nrdconta => pr_nrdconta,
-                         pr_nrrecben => pr_nrrecben);
+        
+        -- Busca última data de vencimento mais próxima do beneficiário
+        OPEN cr_tbinss_dcb(pr_cdcooper => pr_cdcooper,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrrecben => pr_nrrecben);
       FETCH cr_tbinss_dcb
         INTO rw_tbinss_dcb;
-      
+        
       IF cr_tbinss_dcb%FOUND THEN
         CLOSE cr_tbinss_dcb;
         -- Verifica se a prova de vida já venceu
       
         IF (rw_tbinss_dcb.dtvencpv <= (pr_dtmvtolt + 60)) OR
            rw_tbinss_dcb.dtvencpv IS NULL THEN
-        
+
           -- Verificar se a conta possui LCM 1399 nos ultimos 3 meses
           OPEN cr_craplcm_inss(pr_cdcooper => pr_cdcooper,
                                pr_dtmvtolt => pr_dtmvtolt,
@@ -18087,28 +18101,28 @@ create or replace package body cecred.INSS0001 as
                                pr_nrrecben => rw_tbinss_dcb.nrrecben);
           FETCH cr_craplcm_inss
             INTO rw_craplcm_inss;
-        
+
           IF cr_craplcm_inss%FOUND THEN
             CLOSE cr_craplcm_inss;
             RETURN 1; -- Tem LCM nos ultimos 3 meses / Notificar
-          ELSE
+        ELSE
             CLOSE cr_craplcm_inss;
             RETURN 0; -- Apesar de Vencido, nao tem LCM nos ultimos 3 meses / Não Notificar
-          END IF;
+        END IF;
         
-        ELSE
+      ELSE
           RETURN 0; -- Em dia
         END IF;
       ELSE
         CLOSE cr_tbinss_dcb;
         RETURN 0; -- Em dia
       END IF;
-    ELSE
+      ELSE
       CLOSE cr_verifica;
       RETURN 0; -- Em dia
-    END IF;
-  
-  END fn_verifica_renovacao_vida;
+      END IF;
+
+	END fn_verifica_renovacao_vida;
 
   --Procedure para chamar a fn_verifica_renovacao_vida no Progress e evitar estouro de cursor
   PROCEDURE pc_verifica_renovacao_vida(pr_cdcooper IN tbinss_dcb.cdcooper%TYPE -- Cooperativa
