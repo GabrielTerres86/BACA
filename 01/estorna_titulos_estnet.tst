@@ -23,26 +23,14 @@ DECLARE
          , c.cdctrbxo
          , c.nrdident
       FROM craptit c
-     WHERE (c.cdcooper = 1 -- codigo da cooperativa
-       AND c.nrdconta = 8019479 -- numero da conta
+     WHERE (c.cdcooper = 11 -- codigo da cooperativa
+       AND c.nrdconta = 1252 -- numero da conta
        AND c.dtmvtolt = '24/01/2019' -- data do pagamento
-       AND c.vltitulo = 104.76) -- valor do titulo
+       AND c.vltitulo = 1414.25) -- valor do titulo
        or (c.cdcooper = 1 -- codigo da cooperativa
-       AND c.nrdconta = 1355368 -- numero da conta
+       AND c.nrdconta = 87459 -- numero da conta
        AND c.dtmvtolt = '24/01/2019' -- data do pagamento
-       AND c.dscodbar = '23797791900000020351211090003008873300054000')
-       or (c.cdcooper = 13 -- codigo da cooperativa
-       AND c.nrdconta = 134031 -- numero da conta
-       AND c.dtmvtolt = '24/01/2019' -- data do pagamento
-       AND c.dscodbar = '34194777900000398501094327157208317074758000')
-       or (c.cdcooper = 10 -- codigo da cooperativa
-       AND c.nrdconta = 73750 -- numero da conta
-       AND c.dtmvtolt = '24/01/2019' -- data do pagamento
-       AND c.dscodbar in( '34195777900001753951090001295960643507841000','34198777900001976371099601566778679071558000'))
-       or (c.cdcooper = 1 -- codigo da cooperativa
-       AND c.nrdconta = 8019479 -- numero da conta
-       AND c.dtmvtolt = '24/01/2019' -- data do pagamento
-       AND c.dscodbar = '00198777700000104760000002875271000076972217'); 
+       AND c.vltitulo = 3200);
        
     -- estorno de convenios
     CURSOR c2 IS
@@ -61,10 +49,9 @@ DECLARE
 --         , c.nrdident
       FROM craplft c
      WHERE c.cdcooper = 1 
-       and c.nrdconta = 1820052  
+       and c.nrdconta = 8102007
        and c.dtmvtolt = '24/01/2019' 
-       and c.vllanmto = 350.21
-       and c.nrseqdig = 10000512;
+       and c.vllanmto = 202.38;
 
   vr_dstransa1 VARCHAR2(4000);
   vr_dscritic1 VARCHAR2(4000);
