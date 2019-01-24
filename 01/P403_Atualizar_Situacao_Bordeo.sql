@@ -3,7 +3,7 @@ UPDATE crapbdt bdt
        bdt.insitapr = 5,
        bdt.dtrejeit = to_date(SYSDATE, 'DD/MM/YYYY'),
        bdt.hrrejeit = to_char(SYSDATE, 'SSSSS')
- WHERE bdt.cdcooper = 16
+ WHERE bdt.cdcooper = 1
    AND bdt.dtlibbdt IS NULL
    AND bdt.dtmvtolt <= to_date('15/01/2019', 'DD/MM/YYYY')
    AND bdt.insitbdt NOT IN (5);
