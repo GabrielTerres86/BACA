@@ -97,18 +97,18 @@ BEGIN
   END LOOP;
   -- estorno de convenios
   FOR r2 IN c2 LOOP
-    cecred.paga0004_temp.pc_estorna_conveniotmp(pr_cdcooper => r1.cdcooper,
-                                                pr_nrdconta => r1.nrdconta,
-                                                pr_idseqttl => r1.idseqttl,
-                                                pr_cdbarras => r1.cdbarras,
-                                                pr_dscedent => r1.dscedent,
-                                                pr_cdseqfat => r1.cdseqfat,
-                                                pr_vlfatura => r1.vllanmto,
+    cecred.paga0004_temp.pc_estorna_conveniotmp(pr_cdcooper => r2.cdcooper,
+                                                pr_nrdconta => r2.nrdconta,
+                                                pr_idseqttl => r2.idseqttl,
+                                                pr_cdbarras => r2.cdbarras,
+                                                pr_dscedent => r2.dscedent,
+                                                pr_cdseqfat => r2.cdseqfat,
+                                                pr_vlfatura => r2.vllanmto,
                                                 pr_cdoperad => 1,
-                                                pr_idorigem => r1.idorigem,
-                                                pr_dstransa => vr_dstransa,
-                                                pr_dscritic => vr_dscritic,
-                                                pr_dsprotoc => vr_dsprotoc);
+                                                pr_idorigem => r2.idorigem,
+                                                pr_dstransa => vr_dstransa2,
+                                                pr_dscritic => vr_dscritic2,
+                                                pr_dsprotoc => vr_dsprotoc2);
 
     dbms_output.put_line('Convenio: ' || vr_dstransa2);
     dbms_output.put_line('Convenio: ' || vr_dscritic2);
