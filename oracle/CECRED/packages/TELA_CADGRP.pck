@@ -71,8 +71,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                               ,pr_dscritic  out varchar2
                               ,pr_retxml in out nocopy XMLType
                               ,pr_nmdcampo  out varchar2    
-                              ,pr_des_erro  out varchar2);
-                              
+                              ,pr_des_erro  out varchar2);        
+
   procedure pc_exportar_opcao_c (pr_cdagenci   in tbevento_pessoa_grupos.cdagenci%type
                                 ,pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type    
                                 ,pr_xmllog     in varchar2
@@ -1459,9 +1459,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
        and pes.cdfuncao = decode(length(trim(ass.tpvincul)),2,ass.tpvincul,' ')
      order
         by ordenado desc
-         --, gru.cdagenci
          , ass.nmprimtl;
            
+    -- Verifica se agencia foi encontrada
+    vr_flagenci boolean := false;
+
   begin
 
     --Inicializar Variaveis
@@ -1507,6 +1509,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       --Incrementar Quantidade Registros do Parametro
       vr_qtregist:= nvl(vr_qtregist,0) + 1;
               
+      -- Agencia existe na tabela de grupos
+      vr_flagenci := true;
+              
       -- Controles da paginacao
       if (vr_qtregist < pr_nriniseq) or
          (vr_qtregist > (pr_nriniseq + pr_nrregist)) then
@@ -1530,6 +1535,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       end if;
         
     end loop; 
+      
+    -- Se nao encontrou agencia critica mensagem
+    if not vr_flagenci then
+      vr_dscritic := 'Agência não encontrada.';
+      raise vr_exc_saida;
+    end if;
       
     -- Insere atributo na tag Dados com a quantidade de registros
     gene0007.pc_gera_atributo(pr_xml   => pr_retxml 

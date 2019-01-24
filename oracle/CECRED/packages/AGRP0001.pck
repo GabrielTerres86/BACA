@@ -511,7 +511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                      ,pr_cdcooper   => 0
                      ,pr_tpexecucao => 0    
                      ,pr_flgsucesso => 0 
-                     ,pr_idprglog   => vr_idprglog);
+                     ,pr_idprglog   => vr_idprglog);   
 
     when others then
       
@@ -1528,8 +1528,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     vr_nrdgrupo number;
     vr_nrdrowid rowid;
+    vr_idprglog number;
+    vr_cdprogra varchar2(400) := 'pc_agencia_conta';
 
   begin
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
@@ -1760,6 +1769,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                         
     end if;
 
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
+
+    -- Grava critica da execucao
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                          ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                          ,pr_tpexecucao    => 0   -- Outros
+                          ,pr_tpocorrencia  => 4   -- Mensagem
+                          ,pr_cdcriticidade => 0   -- Baixa
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
+                                                nvl(pr_cdcooper,0)||' Conta: '||
+                                                nvl(pr_nrdconta,0)|| 
+                                               ' Module: AGRP0001 '||pr_dscritic
+                          ,pr_idprglog      => vr_idprglog);
+
     commit;
     
   exception
@@ -1769,11 +1799,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'AGRP0001.pc_agencia_conta: ' || vr_dscritic;
     
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
     when others then
       
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado: AGRP0001.pc_agencia_conta: '||sqlerrm;
       
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
   end pc_agencia_conta;
   
   procedure pc_demitir_conta (pr_cdcooper   in crapass.cdcooper%type
@@ -1883,8 +1955,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     vr_nrdgrupo number;
     vr_nrdrowid rowid;
+    vr_idprglog number;
+    vr_cdprogra varchar2(400) := 'pc_demitir_conta';
     
   begin
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
@@ -2160,6 +2241,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     end if;
     
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
+
+    -- Grava critica da execucao
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                          ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                          ,pr_tpexecucao    => 0   -- Outros
+                          ,pr_tpocorrencia  => 4   -- Mensagem
+                          ,pr_cdcriticidade => 0   -- Baixa
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
+                                                nvl(pr_cdcooper,0)||' Conta: '||
+                                                nvl(pr_nrdconta,0)|| 
+                                               ' Module: AGRP0001 '||pr_dscritic
+                          ,pr_idprglog      => vr_idprglog); 
+
     commit;
 
   exception
@@ -2169,11 +2271,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'AGRP0001.pc_demitir_conta: ' || vr_dscritic;
     
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0 
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
     when others then
       
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado: AGRP0001.pc_demitir_conta: '||sqlerrm;
       
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
   end pc_demitir_conta;
 
   procedure pc_admitir_conta (pr_cdcooper   in crapass.cdcooper%type
@@ -2253,8 +2397,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     vr_nrdgrupo number;
     vr_nrdrowid rowid;
+    vr_idprglog number;
+    vr_cdprogra varchar2(400) := 'pc_admitir_conta';
     
   begin
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
     
     -- Analisa parametros de entrada
     if    pr_cdcooper is null then
@@ -2444,6 +2597,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     end if;
 
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
+
+    -- Grava critica da execucao
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                          ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                          ,pr_tpexecucao    => 0   -- Outros
+                          ,pr_tpocorrencia  => 4   -- Mensagem
+                          ,pr_cdcriticidade => 0   -- Baixa
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
+                                                nvl(pr_cdcooper,0)||' Conta: '||
+                                                nvl(pr_nrdconta,0)|| 
+                                               ' Module: AGRP0001 '||pr_dscritic
+                          ,pr_idprglog      => vr_idprglog);
+
     commit;
 
   exception
@@ -2453,11 +2626,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'AGRP0001.pc_admitir_conta: ' || vr_dscritic;
     
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
     when others then
       
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado: AGRP0001.pc_admitir_conta: '||sqlerrm;
       
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
   end pc_admitir_conta;
 
   procedure pc_obtem_nova_pessoa (pr_cdcooper   in crapass.cdcooper%type
@@ -2517,8 +2732,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     rw_loop_ctas_ativas cr_loop_ctas_ativas%rowtype;
     
     vr_contador integer := 0;
+    vr_idprglog number;
+    vr_cdprogra varchar2(400) := 'pc_obtem_nova_pessoa';
 
   begin
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
     
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2572,6 +2796,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     end loop;   
 
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
+
+    -- Grava critica da execucao
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                          ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                          ,pr_tpexecucao    => 0   -- Outros
+                          ,pr_tpocorrencia  => 4   -- Mensagem
+                          ,pr_cdcriticidade => 0   -- Baixa
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
+                                                nvl(pr_cdcooper,0)||' Idpessoa: '||
+                                                nvl(pr_idpessoa,0)|| 
+                                               ' Module: AGRP0001 '||pr_dscritic
+                          ,pr_idprglog      => vr_idprglog);
+
     commit;                                              
 
   exception
@@ -2581,11 +2825,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'AGRP0001.pc_obtem_nova_pessoa: ' || vr_dscritic;
     
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Idpessoa: '       ||nvl(pr_idpessoa,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
     when others then
       
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado: AGRP0001.pc_obtem_nova_pessoa: '||sqlerrm;
       
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra 
+                     ,pr_cdcooper   => 0
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
+                                                 ' Idpessoa: '       ||nvl(pr_idpessoa,0)|| 
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
   end pc_obtem_nova_pessoa;
 
   procedure pc_cartoes_conta_auto_job is
