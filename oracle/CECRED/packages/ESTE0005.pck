@@ -1965,8 +1965,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       FETCH cr_crapepr_preju
         INTO rw_crapepr_preju;
 
-          IF cr_crapepr_preju%FOUND THEN
-             vr_flemprej := TRUE;
+      IF cr_crapepr_preju%FOUND THEN
+         vr_flemprej := TRUE;
       END IF;
           
       CLOSE cr_crapepr_preju;
@@ -4283,7 +4283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- Montar objeto Categoria Cartão Cecred
     vr_lst_generic3 := json_list();
-
+    
      
 
     -- Buscar todos os dados do SPC
@@ -6065,7 +6065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_dsjustif := rw_crawcrd.dsjustif;
       vr_dsprotoc := rw_crawcrd.dsprotoc;
       vr_nrctrcrd := pr_nrctrcrd;
-	  IF vr_dsprotoc = '0' THEN
+	    IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
       vr_tplimcrd := 0; -- concessao
@@ -6288,7 +6288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF vr_nmarquiv IS NULL THEN
 
       -- Gerar ID aleatório
-      vr_dsiduser := dbms_random.string('A', 27);      
+      vr_nmarquiv := dbms_random.string('A', 27);      
       
       IF rw_crapass.inpessoa = 1 THEN
         -- Chamar a rotina de impressao do termo de adesao
@@ -6408,7 +6408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                              || '_result/' || vr_dsprotoc || '/pdf');
 
       -- Executar comando para Download
---ATENCAO - EM PRODUCAO alterar para 'S' apenas
+      --ATENCAO - EM PRODUCAO alterar para 'S' apenas
       --ATENCAO - caso ocorrer erro em HOMOL alterar para 'SR' para testar
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando);

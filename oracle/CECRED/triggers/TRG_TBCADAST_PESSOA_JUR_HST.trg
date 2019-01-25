@@ -43,7 +43,7 @@ DECLARE
     IF pr_cdcnae IS NULL THEN
       RETURN NULL;
     END IF;
-  
+
     RETURN pr_cdcnae ||'-'||
            CADA0014.fn_desc_cnae (pr_cdcnae    => pr_cdcnae,
                                   pr_dscritic  => vr_dscritic);
@@ -54,11 +54,11 @@ DECLARE
   FUNCTION fn_desc_natureza_juridica (pr_cdnatjur  IN tbcadast_pessoa_juridica.cdnatureza_juridica%TYPE)
               RETURN VARCHAR2 IS
   BEGIN
-  
+
     IF pr_cdnatjur IS NULL THEN
       RETURN NULL;
     END IF;
-    
+
     RETURN pr_cdnatjur ||'-'||
            CADA0014.fn_desc_natureza_juridica (pr_cdnatjur  => pr_cdnatjur,
                                                pr_dscritic  => vr_dscritic);
@@ -72,7 +72,7 @@ DECLARE
     IF pr_cdseteco IS NULL THEN
       RETURN NULL;
     END IF;
-  
+
     RETURN pr_cdseteco ||'-'||
            CADA0014.fn_desc_setor_economico (pr_cdseteco  => pr_cdseteco,
                                              pr_dscritic  => vr_dscritic);
@@ -86,12 +86,12 @@ DECLARE
     IF pr_tpregime_tributacao IS NULL THEN
       RETURN NULL;
     END IF;
-  
+
     RETURN pr_tpregime_tributacao ||'-'||
            CADA0014.fn_desc_tpregime_tributacao (pr_tpregime_tributacao  => pr_tpregime_tributacao,
                                                  pr_dscritic  => vr_dscritic);
   END;
-  
+
   --> Retornar descrição do ramo atividade
   FUNCTION fn_desc_ramo_atividade (pr_cdrmativ  IN tbcadast_pessoa_juridica.cdramo_atividade%TYPE)
            RETURN VARCHAR2 IS
@@ -99,7 +99,7 @@ DECLARE
     IF pr_cdrmativ IS NULL THEN
       RETURN NULL;
     END IF;
-  
+
     RETURN pr_cdrmativ ||'-'||
            CADA0014.fn_desc_ramo_atividade (pr_cdrmativ  => pr_cdrmativ,
                                             pr_dscritic  => vr_dscritic);
@@ -115,7 +115,7 @@ DECLARE
     IF pr_idorgexp IS NULL THEN
       RETURN NULL;
     END IF;
-    
+
     --> Buscar orgão expedidor
     cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => pr_idorgexp,
                                       pr_cdorgao_expedidor => vr_cdorgexp,
@@ -133,6 +133,8 @@ DECLARE
                              pr_dsvalor_novo_original IN tbcadast_pessoa_historico.dsvalor_novo_original%TYPE
                             ) IS
   BEGIN
+    -- Deve-se enviar o historico para o SOA
+    vr_flginsere_historico:=TRUE;
 
     CADA0014.pc_grava_hist_pessoa
                         ( pr_nmdatela    => vr_nmdatela   --> Nome da tela
@@ -188,31 +190,31 @@ BEGIN
 
   /**************************************
    ****** TBCADAST_CAMPO_HISTORICO ******
-            58	IDPESSOA
-            59	CDCNAE
-            60	NMFANTASIA
-            61	NRINSCRICAO_ESTADUAL
-            62	CDNATUREZA_JURIDICA
-            63	DTCONSTITUICAO
-            64	DTINICIO_ATIVIDADE
-            65	QTFILIAL
-            66	QTFUNCIONARIO
-            67	VLCAPITAL
-            68	DTREGISTRO
-            69	NRREGISTRO
-            70	DSORGAO_REGISTRO
-            71	DTINSCRICAO_MUNICIPAL
-            72	NRNIRE
-            73	INREFIS
-            74	DSSITE
-            75	NRINSCRICAO_MUNICIPAL
-            76	CDSETOR_ECONOMICO
-            77	VLFATURAMENTO_ANUAL
-            78	CDRAMO_ATIVIDADE
-            79	NRLICENCA_AMBIENTAL
-            80	DTVALIDADE_LICENCA_AMB
-            81	PEUNICO_CLIENTE
-            82	CDEMPRESA
+            58  IDPESSOA
+            59  CDCNAE
+            60  NMFANTASIA
+            61  NRINSCRICAO_ESTADUAL
+            62  CDNATUREZA_JURIDICA
+            63  DTCONSTITUICAO
+            64  DTINICIO_ATIVIDADE
+            65  QTFILIAL
+            66  QTFUNCIONARIO
+            67  VLCAPITAL
+            68  DTREGISTRO
+            69  NRREGISTRO
+            70  DSORGAO_REGISTRO
+            71  DTINSCRICAO_MUNICIPAL
+            72  NRNIRE
+            73  INREFIS
+            74  DSSITE
+            75  NRINSCRICAO_MUNICIPAL
+            76  CDSETOR_ECONOMICO
+            77  VLFATURAMENTO_ANUAL
+            78  CDRAMO_ATIVIDADE
+            79  NRLICENCA_AMBIENTAL
+            80  DTVALIDADE_LICENCA_AMB
+            81  PEUNICO_CLIENTE
+            82  CDEMPRESA
   **************************************/
 
 
@@ -264,7 +266,7 @@ BEGIN
                        pr_dsvalor_novo_original => :new.CDNATUREZA_JURIDICA
                       );
     END IF;
-    
+
     --> DTCONSTITUICAO
     IF nvl(:new.DTCONSTITUICAO,vr_data) <> nvl(:OLD.DTCONSTITUICAO,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTCONSTITUICAO',
@@ -288,34 +290,34 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'QTFILIAL',
                        pr_dsvalant => :old.QTFILIAL,
                        pr_dsvalnov => :new.QTFILIAL,
-                       pr_dsvalor_novo_original => :new.QTFILIAL                       
+                       pr_dsvalor_novo_original => :new.QTFILIAL
                       );
     END IF;
-    
+
     --> QTFUNCIONARIO
     IF nvl(:new.QTFUNCIONARIO,0) <> nvl(:OLD.QTFUNCIONARIO,0) THEN
       Insere_Historico(pr_nmdcampo => 'QTFUNCIONARIO',
                        pr_dsvalant => :old.QTFUNCIONARIO,
                        pr_dsvalnov => :new.QTFUNCIONARIO,
-                       pr_dsvalor_novo_original => :new.QTFUNCIONARIO                       
+                       pr_dsvalor_novo_original => :new.QTFUNCIONARIO
                       );
     END IF;
-    
+
     --> VLCAPITAL
     IF nvl(:new.VLCAPITAL,0) <> nvl(:OLD.VLCAPITAL,0) THEN
       Insere_Historico(pr_nmdcampo => 'VLCAPITAL',
                        pr_dsvalant => CADA0014.fn_formata_valor(:old.VLCAPITAL),
                        pr_dsvalnov => CADA0014.fn_formata_valor(:new.VLCAPITAL),
-                       pr_dsvalor_novo_original => :new.VLCAPITAL                       
+                       pr_dsvalor_novo_original => :new.VLCAPITAL
                       );
     END IF;
-    
+
     --> DTREGISTRO
     IF nvl(:new.DTREGISTRO,vr_data) <> nvl(:OLD.DTREGISTRO,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTREGISTRO',
                        pr_dsvalant => to_char(:old.DTREGISTRO,'DD/MM/RRRR'),
                        pr_dsvalnov => to_char(:new.DTREGISTRO,'DD/MM/RRRR'),
-                       pr_dsvalor_novo_original => to_char(:new.DTREGISTRO,'DD/MM/RRRR')                     
+                       pr_dsvalor_novo_original => to_char(:new.DTREGISTRO,'DD/MM/RRRR')
                       );
     END IF;
 
@@ -324,25 +326,25 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'NRREGISTRO',
                        pr_dsvalant => :old.NRREGISTRO,
                        pr_dsvalnov => :new.NRREGISTRO,
-                       pr_dsvalor_novo_original => :new.NRREGISTRO                     
+                       pr_dsvalor_novo_original => :new.NRREGISTRO
                       );
     END IF;
-    
+
     --> DSORGAO_REGISTRO
     IF nvl(:new.DSORGAO_REGISTRO,' ') <> nvl(:OLD.DSORGAO_REGISTRO,' ') THEN
       Insere_Historico(pr_nmdcampo => 'DSORGAO_REGISTRO',
                        pr_dsvalant => (:old.DSORGAO_REGISTRO),
                        pr_dsvalnov => (:new.DSORGAO_REGISTRO),
-                       pr_dsvalor_novo_original => :new.DSORGAO_REGISTRO                     
+                       pr_dsvalor_novo_original => :new.DSORGAO_REGISTRO
                       );
-    END IF;    
+    END IF;
 
     --> DTINSCRICAO_MUNICIPAL
     IF nvl(:new.DTINSCRICAO_MUNICIPAL,vr_data) <> nvl(:OLD.DTINSCRICAO_MUNICIPAL,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTINSCRICAO_MUNICIPAL',
                        pr_dsvalant => to_char(:old.DTINSCRICAO_MUNICIPAL,'DD/MM/RRRR'),
                        pr_dsvalnov => to_char(:new.DTINSCRICAO_MUNICIPAL,'DD/MM/RRRR'),
-                       pr_dsvalor_novo_original => to_char(:new.DTINSCRICAO_MUNICIPAL,'DD/MM/RRRR')                     
+                       pr_dsvalor_novo_original => to_char(:new.DTINSCRICAO_MUNICIPAL,'DD/MM/RRRR')
                       );
     END IF;
 
@@ -351,7 +353,7 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'NRNIRE',
                        pr_dsvalant => :old.NRNIRE,
                        pr_dsvalnov => :new.NRNIRE,
-                       pr_dsvalor_novo_original => :new.NRNIRE                     
+                       pr_dsvalor_novo_original => :new.NRNIRE
                       );
     END IF;
 
@@ -360,7 +362,7 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'INREFIS',
                        pr_dsvalant => (:old.INREFIS),
                        pr_dsvalnov => (:new.INREFIS),
-                       pr_dsvalor_novo_original => :new.INREFIS                     
+                       pr_dsvalor_novo_original => :new.INREFIS
                       );
     END IF;
 
@@ -369,16 +371,16 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'DSSITE',
                        pr_dsvalant => :old.DSSITE,
                        pr_dsvalnov => :new.DSSITE,
-                       pr_dsvalor_novo_original => :new.DSSITE                     
+                       pr_dsvalor_novo_original => :new.DSSITE
                       );
-    END IF;    
+    END IF;
 
     --> NRINSCRICAO_MUNICIPAL
     IF nvl(:new.NRINSCRICAO_MUNICIPAL,0) <> nvl(:OLD.NRINSCRICAO_MUNICIPAL,0) THEN
       Insere_Historico(pr_nmdcampo => 'NRINSCRICAO_MUNICIPAL',
                        pr_dsvalant => :old.NRINSCRICAO_MUNICIPAL,
                        pr_dsvalnov => :new.NRINSCRICAO_MUNICIPAL,
-                       pr_dsvalor_novo_original => :new.NRINSCRICAO_MUNICIPAL                     
+                       pr_dsvalor_novo_original => :new.NRINSCRICAO_MUNICIPAL
                       );
     END IF;
 
@@ -387,7 +389,7 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'CDSETOR_ECONOMICO',
                        pr_dsvalant => fn_desc_setor_economico(:old.CDSETOR_ECONOMICO),
                        pr_dsvalnov => fn_desc_setor_economico(:new.CDSETOR_ECONOMICO),
-                       pr_dsvalor_novo_original => :new.CDSETOR_ECONOMICO                     
+                       pr_dsvalor_novo_original => :new.CDSETOR_ECONOMICO
                       );
     END IF;
 
@@ -396,64 +398,64 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'VLFATURAMENTO_ANUAL',
                        pr_dsvalant => CADA0014.fn_formata_valor(:old.VLFATURAMENTO_ANUAL),
                        pr_dsvalnov => CADA0014.fn_formata_valor(:new.VLFATURAMENTO_ANUAL),
-                       pr_dsvalor_novo_original => :new.VLFATURAMENTO_ANUAL                    
+                       pr_dsvalor_novo_original => :new.VLFATURAMENTO_ANUAL
                       );
     END IF;
-    
+
     --> CDRAMO_ATIVIDADE
     IF nvl(:new.CDRAMO_ATIVIDADE,0) <> nvl(:OLD.CDRAMO_ATIVIDADE,0) THEN
       Insere_Historico(pr_nmdcampo => 'CDRAMO_ATIVIDADE',
                        pr_dsvalant => fn_desc_ramo_atividade(:old.CDRAMO_ATIVIDADE),
                        pr_dsvalnov => fn_desc_ramo_atividade(:new.CDRAMO_ATIVIDADE),
-                       pr_dsvalor_novo_original => :new.CDRAMO_ATIVIDADE                    
+                       pr_dsvalor_novo_original => :new.CDRAMO_ATIVIDADE
                       );
     END IF;
-    
+
     --> NRLICENCA_AMBIENTAL
     IF nvl(:new.NRLICENCA_AMBIENTAL,0) <> nvl(:OLD.NRLICENCA_AMBIENTAL,0) THEN
       Insere_Historico(pr_nmdcampo => 'NRLICENCA_AMBIENTAL',
                        pr_dsvalant => :old.NRLICENCA_AMBIENTAL,
                        pr_dsvalnov => :new.NRLICENCA_AMBIENTAL,
-                       pr_dsvalor_novo_original => :new.NRLICENCA_AMBIENTAL                    
+                       pr_dsvalor_novo_original => :new.NRLICENCA_AMBIENTAL
                       );
     END IF;
-    
+
     --> DTVALIDADE_LICENCA_AMB
     IF nvl(:new.DTVALIDADE_LICENCA_AMB,vr_data) <> nvl(:OLD.DTVALIDADE_LICENCA_AMB,vr_data) THEN
       Insere_Historico(pr_nmdcampo => 'DTVALIDADE_LICENCA_AMB',
                        pr_dsvalant => to_char(:old.DTVALIDADE_LICENCA_AMB,'DD/MM/RRRR'),
                        pr_dsvalnov => to_char(:new.DTVALIDADE_LICENCA_AMB,'DD/MM/RRRR'),
-                       pr_dsvalor_novo_original => to_char(:new.DTVALIDADE_LICENCA_AMB,'DD/MM/RRRR')                    
+                       pr_dsvalor_novo_original => to_char(:new.DTVALIDADE_LICENCA_AMB,'DD/MM/RRRR')
                       );
     END IF;
-    
+
     --> TPREGIME_TRIBUTACAO
     IF nvl(:new.TPREGIME_TRIBUTACAO,0) <> nvl(:OLD.TPREGIME_TRIBUTACAO,0) THEN
       Insere_Historico(pr_nmdcampo => 'TPREGIME_TRIBUTACAO',
                        pr_dsvalant => fn_desc_tpregime_tributacao(:old.TPREGIME_TRIBUTACAO),
                        pr_dsvalnov => fn_desc_tpregime_tributacao(:new.TPREGIME_TRIBUTACAO),
-                       pr_dsvalor_novo_original => :new.TPREGIME_TRIBUTACAO                    
+                       pr_dsvalor_novo_original => :new.TPREGIME_TRIBUTACAO
                       );
     END IF;
-    
+
     --> PEUNICO_CLIENTE
     IF nvl(:new.PEUNICO_CLIENTE,0) <> nvl(:OLD.PEUNICO_CLIENTE,0) THEN
       Insere_Historico(pr_nmdcampo => 'PEUNICO_CLIENTE',
                        pr_dsvalant => CADA0014.fn_formata_valor(:old.PEUNICO_CLIENTE),
                        pr_dsvalnov => CADA0014.fn_formata_valor(:new.PEUNICO_CLIENTE),
-                       pr_dsvalor_novo_original => :new.PEUNICO_CLIENTE                    
+                       pr_dsvalor_novo_original => :new.PEUNICO_CLIENTE
                       );
     END IF;
 
 
-    END IF;
+  END IF;
   -- Se gerou historico, entao deve-se transmitir para o SOA
-  IF vr_flginsere_historico THEN 
-        
-     CADA0014.PC_INSERE_COMUNIC_SOA(vr_nmdatela, -- nmtabela_oracle 
-                                    vr_idpessoa, -- idpessoa 
-                                    vr_nrsequen, -- nrsequencia 
-                                    vr_dhaltera, --dhalteracao 
+  IF vr_flginsere_historico THEN
+
+     CADA0014.PC_INSERE_COMUNIC_SOA(vr_nmdatela, -- nmtabela_oracle
+                                    vr_idpessoa, -- idpessoa
+                                    vr_nrsequen, -- nrsequencia
+                                    vr_dhaltera, --dhalteracao
                                     vr_tpoperac, --tpoperacao --Tipo de alteracao do registro (1-Inclusao/ 2-Alteracao/ 3-Exclusao)
                                     vr_dscritic    -- descrição do erro
                                    );

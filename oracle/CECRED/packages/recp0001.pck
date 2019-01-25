@@ -208,6 +208,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             07/12/2018 - Ajuste na "pc_pagar_contrato_acordo" para não acrescentar o valor do IOF provisionado no total 
   --                          a pagar quanto a conta corrente está em prejuízo.
   --                          (Reginaldo/AMcom - P450)
+	--             
+	--             08/01/2018 - Ajuste na procedure "pc_pagar_contrato_acordo", na chamada LANC0001.pc_gerar_lancto_conta
+	--                          para evitar violação de chave única por duplicidade do número do documento.
+	--                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
+	--                          (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -526,6 +531,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             06/06/2018 - Alterado para usar rotina que centraliza lançamentos
   --                          (LANC0001.pc_gerar_lancamento_conta). PRJ450 (Teobaldo J.- AMcom)
   --  
+	--             08/01/2019 - Ajuste para evitar violação de chave única por duplicidade de número do documento
+	--                          na chamada da LANC0001.pc_gerar_lancto_conta (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
     
     ---------------> CURSORES <-------------    
@@ -750,6 +757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         
       END LOOP;    
       
+      IF nvl(vr_vlioflan, 0) > 0 THEN   
+      
       -- Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
       -- substitui o insert na craplot e craplcm
       LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
@@ -760,7 +769,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrdctabb => pr_nrdconta
                                         ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')
-                                        ,pr_nrdocmto => vr_nrdocmto
+                                        ,pr_nrdocmto => PREJ0003.fn_gera_nrdocmto_craplcm(pr_cdcooper => pr_cdcooper
+                                                                                         ,pr_nrdconta => pr_nrdconta
+                                                                                         ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                                                         ,pr_cdhistor => 2323)
                                         ,pr_cdhistor => 2323
                                         ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1                                        
                                         ,pr_vllanmto => round(vr_vlioflan,2)
@@ -783,6 +795,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       FETCH cr_craplcm INTO rw_craplcm;
       CLOSE cr_craplcm;
       
+      pr_vltotpag := nvl(pr_vltotpag,0) + rw_craplcm.vllanmto; -- Assume apenas o valor parcial pago do IOF do acordo
+	      
       --Atualizar capa do Lote
       BEGIN
        UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + round(rw_craplcm.vllanmto,2)
@@ -797,6 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
          --Sair do programa
          RAISE vr_exc_erro;
       END;
+      END IF;
        
       --> Atualizar IOFs debitados
       FOR idx IN vr_tab_rowid_iof.first..vr_tab_rowid_iof.last LOOP
@@ -819,7 +834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       END LOOP;
       
       --> Atualizar apenas se nao for abono
-      IF pr_flgabono = 0 THEN
+      IF pr_flgabono = 0 AND nvl(vr_vlioflan, 0) > 0 THEN
         --> Atualizar valor total ja pago
         BEGIN
           UPDATE tbrecup_acordo_contrato acd
@@ -832,8 +847,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
             RAISE vr_exc_erro;
         END;
       END IF;
-            
-      pr_vltotpag := nvl(pr_vltotpag,0) + rw_craplcm.vllanmto; -- Assume apenas o valor parcial pago do IOF do acordo
     END IF;
   EXCEPTION
     WHEN  vr_exc_erro THEN
@@ -2518,10 +2531,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                              , pr_cdbccxlt => 100
                                              , pr_nrdolote => 650010
                                              , pr_nrdconta => rw_acordo_contrato.nrdconta
-                                             , pr_nrdocmto => 999992733
+                                             , pr_nrdocmto => PREJ0003.fn_gera_nrdocmto_craplcm(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                                                              , pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                                                              , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                                              , pr_cdhistor => 2733)
                                              , pr_cdhistor => 2720
                                              , pr_nrseqdig => vr_nrseqdig
-                                                   , pr_vllanmto => pr_vltotpag 
+                                             , pr_vllanmto => pr_vltotpag 
                                              , pr_nrdctabb => rw_acordo_contrato.nrdconta
                                              , pr_cdpesqbb => 'PAGAMENTO DE PREJUÍZO DE C/C VIA ACORDO'
                                              , pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt

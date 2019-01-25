@@ -8423,7 +8423,7 @@ create or replace package body cecred.INSS0001 as
       vr_nmarquiv:= vr_nmdireto||'/rl/'||pr_dsiduser;
       
       --Se encontrou o arquivo elimina
-      IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv) THEN
+      IF (gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv)) AND (TRIM(pr_dsiduser) IS NOT NULL) THEN
         vr_comando:= 'rm '||vr_nmarquiv||'* 2>/dev/null';
 
         --Executar o comando no unix
@@ -9848,7 +9848,7 @@ create or replace package body cecred.INSS0001 as
                         ' de '||to_char(pr_dtmvtolt,'YYYY')||'.';
        
       --Se arquivo existir no diretorio
-      IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv) THEN
+      IF (gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv)) AND (TRIM(pr_dsiduser) IS NOT NULL) THEN
         
         --Remover arquivo
         vr_comando:= 'rm '||vr_nmarquiv||'* 2>/dev/null';
@@ -10203,7 +10203,7 @@ create or replace package body cecred.INSS0001 as
       
 
       --Se arquivo existir no diretorio
-      IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv) THEN
+      IF (gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv)) AND (TRIM(pr_dsiduser) IS NOT NULL) THEN
         
         --Remover arquivo
         vr_comando:= 'rm '||vr_nmarquiv||'* 2>/dev/null';
@@ -10530,7 +10530,7 @@ create or replace package body cecred.INSS0001 as
       vr_pxrnvida:= add_months(pr_dtmvtolt,12);
       
       --Se arquivo existir no diretorio
-      IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv) THEN
+      IF (gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv)) AND (TRIM(pr_dsiduser) IS NOT NULL) THEN
         
         --Remover arquivo
         vr_comando:= 'rm '||vr_nmarquiv||'* 2>/dev/null';
@@ -10832,7 +10832,7 @@ create or replace package body cecred.INSS0001 as
       vr_nmarquiv:= vr_nmdireto||'/'||pr_dsiduser;
       
       --Se arquivo existir no diretorio
-      IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv) THEN
+      IF (gene0001.fn_exis_arquivo(pr_caminho => vr_nmarquiv)) AND (TRIM(pr_dsiduser) IS NOT NULL) THEN
         
         --Remover arquivo
         vr_comando:= 'rm '||vr_nmarquiv||'* 2>/dev/null';
