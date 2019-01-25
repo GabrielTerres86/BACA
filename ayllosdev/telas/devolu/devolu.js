@@ -18,13 +18,10 @@
  *
  *                03/10/2018 - Scripts para tratamento de opcao de excluir.
  *                             Bruno Luiz K. - Chamado SCTASK0029653 (Mouts).
- * 
+ *              
  *				  23/11/2018 - Tratando erro quando acessado a tela atraves pelo CRM.
  * 
  *               
- *  
- *                07/12/2018 - Melhoria no processo de devoluções de cheques.
- *                             Alcemir Mout's (INC0022559).
  *  
  */
 
@@ -81,7 +78,7 @@ var arrayRegDados = new Array();
 
 // Inicio
 $(document).ready(function() {
-	estadoInicial();
+    estadoInicial();
 	highlightObjFocus( $('#'+frmCab) );
     return false;
 });
@@ -94,28 +91,28 @@ function estadoInicial() {
     hideMsgAguardo();
     unblockBackground();
     removeOpacidade('divTela');
-	formataCabecalho();
-	
-	arrayRegLinha = new Array();
-	arrayRegDados = new Array();
+    formataCabecalho();
 
-	camposDc = '';
+    arrayRegLinha = new Array();
+    arrayRegDados = new Array();
+
+    camposDc = '';
 	dadosDc  = '';
-	
-	// Limpa HTML
-	$('#divResultado').html('');
-	$('#divConteudo').html('');
-	$('#divRotina').html('');
-	$('#divConteudoSenha').html('');
-	$('#divConteudoAlinea').html('');
-	$('#divRegistros').html('');
+
+    // Limpa HTML
+    $('#divResultado').html('');
+    $('#divConteudo').html('');
+    $('#divRotina').html('');
+    $('#divConteudoSenha').html('');
+    $('#divConteudoAlinea').html('');
+    $('#divRegistros').html('');
 
 	$('#'+frmCab).css({'display':'block'});
     $('#divBotoes', '#divTela').css({'display':'block'});
 	$('#divResultado').css({'display':'none'});
-	$('#divPesquisaRodape').remove();
+    $('#divPesquisaRodape').remove();
 
-	// Inicializa Variaveis do Cabeçalho
+    // Inicializa Variaveis do Cabeçalho
 	cCdagenci.val( '' );
 	cNrdconta.val( '' );
 	cNmprimtl.val( nmprimtl );
@@ -124,17 +121,17 @@ function estadoInicial() {
 	$('#cdagenci','#'+frmCab).select();
 	trocaBotao('Prosseguir','btnContinuar();');
 	$('#btVoltar','#divBotoes').hide();
-	
-	btFechaImagem();
+
+    btFechaImagem();
 
     // Desabilita Campos
 	$('#nmprimtl','#'+frmCab).desabilitaCampo();
-	
+
     // Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCab").val() == 1) {
         $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
     }
-	
+
     controlaFoco();
 	highlightObjFocus( $('#'+frmCab) );
 }
@@ -143,7 +140,7 @@ function estadoInicial() {
 // Formata Cabeçalho Principal
 function formataCabecalho() {
 
-	// Labels
+    // Labels
 	rCdagenci       = $('label[for="cdagenci"]','#'+frmCab);
 	rNrdconta		= $('label[for="nrdconta"]','#'+frmCab);
 	rNmprimtl       = $('label[for="nmprimtl"]','#'+frmCab);
@@ -154,24 +151,24 @@ function formataCabecalho() {
 	cNmprimtl       = $('#nmprimtl','#'+frmCab);
 	cTodosCabecalho	= $('input[type="text"],select','#'+frmCab);
 
-	//Rótulos
+    //Rótulos
 	rCdagenci.addClass('rotulo-linha').css({'width':'40px'});
 	rNrdconta.addClass('rotulo-linha').css({'width':'60px'});
     rNmprimtl.addClass('rotulo-linha').css({'width':'0px'});
-	
+
     // Campos
 	cCdagenci.css({'width':'40px'}).setMask('INTEGER','zzz','','');
 	cNrdconta.css({'width':'83px'});
     cNmprimtl.css({'width':'350px'});
 
-	layoutPadrao();
-	return false;
+    layoutPadrao();
+    return false;
 }
 
 // Formata a exibicao dos campos na tela
 function formataBanco() {
 
-	highlightObjFocus($('#frmBanco'));
+    highlightObjFocus($('#frmBanco'));
 
 	rCddopcao 	= $('label[for="cddopcao"]','#frmBanco');
 	cCddopcao	= $('#cddopcao', '#frmBanco');
@@ -181,16 +178,16 @@ function formataBanco() {
 
 	$('#divConteudo').css({'width':'300px', 'height':'110px'});
 
-	// centraliza a divRotina
+    // centraliza a divRotina
 	$('#divRotina').css({'width':'425px'});
 	$('#divConteudo').css({'width':'300px'});
-	$('#divRotina').centralizaRotinaH();
+    $('#divRotina').centralizaRotinaH();
 
-	hideMsgAguardo();
+    hideMsgAguardo();
 	bloqueiaFundo( $('#divRotina') );
-	cCddopcao.focus();
+    cCddopcao.focus();
 
-	return false;
+    return false;
 }
 
 // Formata a exibicao dos campos na tela
@@ -205,49 +202,22 @@ function formataSenhaSistema() {
 
 	$('#divConteudoSenha').css({'width':'220px', 'height':'110px'});
 
-	// centraliza a divRotina
+    // centraliza a divRotina
 	$('#divRotina').css({'width':'300px'});
 	$('#divConteudo').css({'width':'220px'});
-	$('#divRotina').centralizaRotinaH();
+    $('#divRotina').centralizaRotinaH();
 
-	hideMsgAguardo();
+    hideMsgAguardo();
 	bloqueiaFundo( $('#divRotina') );
-	cCodsenha.focus();
+    cCodsenha.focus();
 
-	return false;
-
-}
-
-function formataDepositante(){
-
-	highlightObjFocus($('#frmDepositante'));
-
-	rCdbandep = $('label[for="cdbandep"]','#frmDepositante');
-	cCdbandep = $('#cdbandep', '#frmDepositante');
-
-	rCdbandep.css({'width':'335px'});
-	cCdbandep.addClass('campoTelaSemBorda').css({'width':'55px'});
-
-	rCdagedep = $('label[for="cdagedep"]','#frmDepositante');
-	cCdagedep = $('#cdagedep', '#frmDepositante');
-
-	rCdagedep.css({'width':'60px'});
-	cCdagedep.addClass('campoTelaSemBorda').css({'width':'55px'});
-
-	rNrctadep = $('label[for="nrctadep"]','#frmDepositante');
-	cNrctadep = $('#nrctadep', '#frmDepositante');
-
-	rNrctadep.css({'width':'47px'});
-	cNrctadep.addClass('campoTelaSemBorda').css({'width':'100px'});	
-	
-	return false;
-
+    return false;
 }
 
 // Formata a exibicao dos campos na tela
 function formataSenhaCoord() {
 
-	highlightObjFocus($('#frmSenhaCoord'));
+    highlightObjFocus($('#frmSenhaCoord'));
 
 	rOperador 	= $('label[for="operauto"]', '#frmSenhaCoord');
 	rSenha		= $('label[for="codsenha"]', '#frmSenhaCoord');
@@ -263,16 +233,16 @@ function formataSenhaCoord() {
 
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});
 
-	// centraliza a divRotina
+    // centraliza a divRotina
 	$('#divRotina').css({'width':'425px'});
 	$('#divConteudoSenha').css({'width':'400px'});
-	$('#divRotina').centralizaRotinaH();
+    $('#divRotina').centralizaRotinaH();
 
-	hideMsgAguardo();
+    hideMsgAguardo();
 	bloqueiaFundo( $('#divRotina') );
-	cOperador.focus();
+    cOperador.focus();
 
-	return false;
+    return false;
 }
 
 // Formata a exibicao dos campos na tela
@@ -288,16 +258,16 @@ function formataAlinea() {
 
 	$('#divConteudoAlinea').css({'width':'220px', 'height':'110px'});
 
-	// centraliza a divRotina
+    // centraliza a divRotina
 	$('#divRotina').css({'width':'300px'});
 	$('#divConteudoAlinea').css({'width':'220px'});
-	$('#divRotina').centralizaRotinaH();
+    $('#divRotina').centralizaRotinaH();
 
-	hideMsgAguardo();
+    hideMsgAguardo();
 	bloqueiaFundo( $('#divRotina') );
-	cCdalinea.focus();
+    cCdalinea.focus();
 
-	return false;
+    return false;
 }
 
 
@@ -311,36 +281,36 @@ function controlaFoco() {
                 $('#nrdconta','#frmCab').val('');
             }
 			$('#nrdconta','#frmCab').select();
-			return false;
-	    }
-	});	
-		
+            return false;
+        }
+    });
+
 	$('#nrdconta','#'+frmCab).unbind('keypress').bind('keypress', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) { 
 			$('#cdagenci','#'+frmCab).desabilitaCampo();
             $('#nrdconta','#'+frmCab).desabilitaCampo();
-			btnContinuar('CI');
+            btnContinuar('CI');
             return false;
         }else {// Seta máscara ao campo
             return $('#nrdconta','#'+frmCab).setMask('INTEGER','zzzz.zzz-z','.-','');
         }
-	});
+    });
 
 	$('#btSalvar','#divBotoes').unbind('keypress').bind('keypress', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			$('#cdagenci','#'+frmCab).desabilitaCampo();
 			$('#nrdconta','#'+frmCab).desabilitaCampo();
-		    btnContinuar('CI');
-			return false;
+            btnContinuar('CI');
+            return false;
         }
-	});
+    });
 
 	$('#btSalvar','#divBotoes').unbind('click').bind('click', function(){
 		$('#cdagenci','#'+frmCab).desabilitaCampo();
 		$('#nrdconta','#'+frmCab).desabilitaCampo();
-	    return false;
-	});
-	
+        return false;
+    });
+
 }
 
 
@@ -348,32 +318,32 @@ function controlaFoco() {
 function trocaBotao( botao , funcao ) {
 	$('#divBotoes','#divTela').html('');
 	$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;" >Voltar</a>&nbsp;');
-	
+
 	if(botao == 'Lancamento' ){
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btMarcar" onClick="Marcar(); return false;" >Marcar</a>&nbsp;');
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btDesmarcar" onClick="Desmarcar(); return false;" >Desmarcar</a>');
 	}else {
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btSalvar" onclick=' + funcao + ' return false;" >' + botao + '</a>');
-	}
+    }
     $('#divBotoes','#divTela').append('<a href="#" class="botao" id="btExcluir" onClick="btExcluir(); return false;" >Excluir</a>');
 	$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btFechaImagem" onClick="btFechaImagem(); return false;" >Fechar Imagem</a>');
-	
+
 	$('#btFechaImagem','#divBotoes').hide(); 
     $('#btExcluir','#divBotoes').hide();
-	$('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
-	return false;
+    $('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
+    return false;
 }
 
 // Botoes
-function btnVoltar() {    
-	estadoInicial();
-	return false;
+function btnVoltar() {
+    estadoInicial();
+    return false;
 }
 
 // Botao Principal
 function btnContinuar(opcao) {
    BuscaDevolu(1,30,opcao);
-   return false;
+    return false;
 }
 
 // Botao Executa as Devolucoes
@@ -383,20 +353,20 @@ function ExecutaDevolucao() {
 }
 
 function Marcar(){
-	
+
 	if (iqtSelecao > 0 || alinea > 0 || alinea == 35   || cddsitua == 1) {return false;}
-	
-	marcar_cheque_devolu();
-	
+
+    marcar_cheque_devolu();
+
     return false;
 }
 
 function Desmarcar(){
-	
+
 	if (iqtSelecao == 0 || iqtSelecao.typeof == 'undefined') {return false;}
-	
-	marcar_cheque_devolu();	
-	return false;
+
+    marcar_cheque_devolu();
+    return false;
 }
 
 // Botao Auxiliar - Devolver Cheque
@@ -405,7 +375,7 @@ function proc_gera_dev() {
 		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea("AL");','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
 	}else{
 		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea();','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
-	}
+    }
     return false;
 }
 
@@ -414,9 +384,9 @@ function BuscaDevolu(nriniseq, nrregist,opcao) {
 
     var nrdconta = $('#nrdconta','#'+frmCab).val().replace(".", "").replace("-", "");
 	var cdagenci = $('#cdagenci','#'+frmCab).val();
-	
-	altalinea = false;
-	
+
+    altalinea = false;
+
     showMsgAguardo("Aguarde, buscando devolu&ccedil;&otilde;es...");
 
     $.ajax({
@@ -433,30 +403,29 @@ function BuscaDevolu(nriniseq, nrregist,opcao) {
                     redirect : 'script_ajax'
                 },
         error   : function(objAjax,responseError,objExcept) {
-                    hideMsgAguardo();
+            hideMsgAguardo();
                     showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
-                },
+        },
         success : function(response) {
             try {
                 if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
                     try {
                         $('input,select','#'+frmCab).removeClass('campoErro');
-						$('#divResultado').html('');
-						$('#divResultado').html(response);
+                        $('#divResultado').html('');
+                        $('#divResultado').html(response);
 						cNmprimtl.val($('#nmprimtl','#'+frmDevolu).val());
-						if (nrdconta == 0) {
+                        if (nrdconta == 0) {
                             formataTabelaDevolu();
                         } else {
-							formataTabelaLancto();
+                            formataTabelaLancto();
                         }
-                        formataDepositante();
 					} catch(error) {
                         hideMsgAguardo();
                         showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
                     }
                 } else {
                     try {
-                        eval(response);						
+                        eval(response);
 						$('#nrdconta','#'+frmCab).habilitaCampo();
 						$('#cdagenci','#'+frmCab).habilitaCampo();
                         return false;
@@ -479,10 +448,9 @@ function BuscaDevolu(nriniseq, nrregist,opcao) {
 // Formata Browse da Tela
 function formataTabelaDevolu() {
 
-	// Tabela
+    // Tabela
 	$('#tabDevoluDados').css({'display':'block'});
     $('#divResultado').css({'display':'block'});
-    $('#divDepositante').css({'display':'block'});
 
     var divRegistro = $('div.divRegistros', '#tabDevoluDados');
 	var tabela      = $('table', divRegistro );
@@ -492,11 +460,11 @@ function formataTabelaDevolu() {
 	divRegistro.css({'height':'280px','width':'970px'});
 
 	$('#divRegistrosRodape','#divConsulta').formataRodapePesquisa();
-	
-	var ordemInicial = new Array();
-	ordemInicial = [[0]];	
 
-	var arrayLargura = new Array();
+    var ordemInicial = new Array();
+    ordemInicial = [[0]];
+
+    var arrayLargura = new Array();
     arrayLargura[0]  = '33px'; // 
 	arrayLargura[1]  = '33px'; // bco
 	arrayLargura[2]  = '65px'; // age
@@ -507,8 +475,8 @@ function formataTabelaDevolu() {
 	arrayLargura[7]  = '';     // situcao
 	arrayLargura[8]  = '60px'; // operador
 	arrayLargura[9]  = '60px'; // aplicacao
-	arrayLargura[10] = '60px'; // contato
-	arrayLargura[11] = '60px'; // imagem
+    arrayLargura[10] = '60px'; // contato
+    arrayLargura[11] = '60px'; // imagem
 
     var arrayAlinha = new Array();
 	arrayAlinha[0]  = 'center';
@@ -521,33 +489,33 @@ function formataTabelaDevolu() {
 	arrayAlinha[7]  = 'center';
 	arrayAlinha[8]  = 'center';
 	arrayAlinha[9]  = 'left';
-	arrayAlinha[10] = 'center';
-	arrayAlinha[11] = 'center';
-	arrayAlinha[12] = 'center';
+    arrayAlinha[10] = 'center';
+    arrayAlinha[11] = 'center';
+    arrayAlinha[12] = 'center';
 
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
-	hideMsgAguardo();
-    	
+    hideMsgAguardo();
+
     $('#btSalvar','#divBotoes').hide();
     $('#btVoltar','#divBotoes').show();
     $('#btExcluir','#divBotoes').show();
 	$('#btVoltar','#divBotoes').focus();
-	
-	/********************
+
+    /********************
 	  EVENTO COMPLEMENTO
 	*********************/
 
     // seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
-		selecionaTabela($(this)); 
-	});
+        selecionaTabela($(this));
+    });
 
     // seleciona o registro que é focado
 	$('table > tbody > tr', divRegistro).focus( function() { 
-		selecionaTabela($(this));
-	});
-	
-	$('table > tbody > tr:eq(0)', divRegistro).click();
+        selecionaTabela($(this));
+    });
+
+    $('table > tbody > tr:eq(0)', divRegistro).click();
 
     var tables = $('.tituloRegistros');
     $(tables[0]).find('tr').each(function(){
@@ -563,7 +531,7 @@ function formataTabelaDevolu() {
         });
     });
 
-	return false;
+    return false;
 }
 
 function btExcluir(){
@@ -588,22 +556,18 @@ function excluir_cheque_devolu(){
                      nrdconta : nrdconta_tab,
                      nrctachq : nrctachq,
                      nrdocmto : nrcheque,
-                     cdbandep : cdbandep,
-                     cdagedep : cdagedep,
-                     nrctadep : nrctadep,
-					 vllanmto : vllanmto,
-                     redirect: 'script_ajax'
-                }, 
+                    redirect: 'script_ajax'
+                },
         error: function(objAjax,responseError,objExcept) {
-                     hideMsgAguardo();
+            hideMsgAguardo();
                      showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
         },
         success: function(response) {
-                     eval(response);
+            eval(response);
         }
     });
 
-return false; //return false to allow default event  tag <a>
+    return false; //return false to allow default event  tag <a>
 
 }
 
@@ -614,7 +578,7 @@ function btFechaImagem(){
 
 function formataTabelaLancto() {
 
-	// Tabela
+    // Tabela
     $('#tabDevoluConta').css({'display':'block'});
     $('#divResultado').css({'display':'block'});
 
@@ -625,10 +589,10 @@ function formataTabelaLancto() {
     $('#tabDevoluConta').css({'margin-top':'5px'});
 	divRegistro.css({'height':'280px','width':'900px'});
 
-	var ordemInicial = new Array();
-	ordemInicial = [[0]];
+    var ordemInicial = new Array();
+    ordemInicial = [[0]];
 
-	var arrayLargura = new Array();
+    var arrayLargura = new Array();
     arrayLargura[0]  = '15px';  //check
 	arrayLargura[1]  = '80px'; //bco
 	arrayLargura[2]  = '33px'; //age
@@ -639,8 +603,8 @@ function formataTabelaLancto() {
 	arrayLargura[7]  = ''; // situcao
 	arrayLargura[8]  = '60px';     // operador
 	arrayLargura[9]  = '60px'; // aplicacao
-	arrayLargura[10] = '60px'; // contrato
-	arrayLargura[11] = '63px'; // imagem 
+    arrayLargura[10] = '60px'; // contrato
+    arrayLargura[11] = '63px'; // imagem 
 
     var arrayAlinha = new Array();
 	arrayAlinha[0]  = 'center';
@@ -653,119 +617,111 @@ function formataTabelaLancto() {
 	arrayAlinha[7]  = 'center';
 	arrayAlinha[8]  = 'center';
 	arrayAlinha[9]  = 'center';
-	arrayAlinha[10] = 'center';
-	arrayAlinha[11] = 'center';
-	arrayAlinha[12] = 'center';
-	arrayAlinha[13] = 'center';
-	
-	
+    arrayAlinha[10] = 'center';
+    arrayAlinha[11] = 'center';
+    arrayAlinha[12] = 'center';
+    arrayAlinha[13] = 'center';
+
+
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
-	
+
 	$('#complemento','#linha').addClass('txtNormalBold').css({'width':'90%','text-align':'center'})
-	
-	hideMsgAguardo();
+
+    hideMsgAguardo();
     trocaBotao('Lancamento',''); //label e funcao
 	$('#btMarcar','#divBotoes').hide();
 	$('#btDesmarcar','#divBotoes').hide();
-	altalinea = false;	
-	
-	/********************
+    altalinea = false;
+
+    /********************
 	  EVENTO COMPLEMENTO
 	*********************/
-	
+
     // seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
-		selecionaTabela($(this));
-		
+        selecionaTabela($(this));
+
 		$('#btMarcar','#divBotoes').show();
 		$('#btDesmarcar','#divBotoes').show();
-		
-		if (alinea != 0 || iqtSelecao > 0) { 
+
+        if (alinea != 0 || iqtSelecao > 0) {
 			$('#btMarcar').trocaClass('botao',    'botaoDesativado');
 		}else{
 			$('#btMarcar').trocaClass('botaoDesativado',    'botao');
-		}
-	});
+        }
+    });
 
     // seleciona o registro que é focado
 	$('table > tbody > tr', divRegistro).focus( function() { 
-		selecionaTabela($(this));
-	});
+        selecionaTabela($(this));
+    });
 
-	// Se der dois clicks na tabela, altera alinea
+    // Se der dois clicks na tabela, altera alinea
 	$('table > tbody > tr', divRegistro).dblclick( function() {
-		
-		// Se tiver alinea e não for devolvido e não for alineas de contra-ordem(20,21,28,70) e altera alinea para devoluções 35 somente quando haver craplcm
+
+        // Se tiver alinea e não for devolvido e não for alineas de contra-ordem(20,21,28,70) e altera alinea para devoluções 35 somente quando haver craplcm
 		if (alinea != 0  && cddsitua != 1 &&
-		    alinea != 20 && alinea != 21 && 
+		    alinea != 20 && alinea != 21 &&
 			alinea != 28 && alinea != 70){
-			
+
 			if (alinea == 35 && dstabela == 'crapdev'){
-				altalinea = false;
+                altalinea = false;
 			}else{
-				altalinea = true;
-				mostraAlinea('AL');
-			}
-		}
-	});
-	
-	
-	$('table > tbody > tr:eq(0)', divRegistro).click();
-	return false;
+                altalinea = true;
+                mostraAlinea('AL');
+            }
+        }
+    });
+
+
+    $('table > tbody > tr:eq(0)', divRegistro).click();
+    return false;
 }
 
 function selecionaTabela(tr) {
 
-	cdcooper = $('#cdcooper', tr).val();
+    cdcooper = $('#cdcooper', tr).val();
     dsbccxlt = $('#dsbccxlt', tr).val();
     banco = $('#banco', tr).val();
     nrcheque = $('#nrcheque', tr).val();
     nrdctitg = $('#nrdctitg', tr).val();
-	cdbccxlt = $('#cdbccxlt', tr).val();
-	cdbanchq = $('#cdbanchq', tr).val();
+    cdbccxlt = $('#cdbccxlt', tr).val();
+    cdbanchq = $('#cdbanchq', tr).val();
     cdagechq = $('#cdagechq', tr).val();
-	cddsitua = $('#cddsitua', tr).val();
+    cddsitua = $('#cddsitua', tr).val();
     nrdrecid = $('#nrdrecid', tr).val();
     vllanmto = $('#vllanmto', tr).val();
     nrctachq = $('#nrctachq', tr).val();
 	alinea   = $('#cdalinea', tr).val();
     nmoperad = $('#nmoperad', tr).val();
-    cdbandep = $('#cdbandep', tr).val();
-    cdagedep = $('#cdagedep', tr).val();
-    nrctadep = $('#nrctadep', tr).val();
-
-    $("#cdbandep","#frmDepositante").val(cdbandep);
-	$("#cdagedep","#frmDepositante").val(cdagedep);
-	$("#nrctadep","#frmDepositante").val(nrctadep);
-	
-	nrdconta_tab = $('#nrdconta', tr).val();
+    nrdconta_tab = $('#nrdconta', tr).val();
     flag     = $('#flag', tr).val();
-	dstabela = $('#dstabela', tr).val();
-	altalinea = false;
+    dstabela = $('#dstabela', tr).val();
+    altalinea = false;
     return false;
 }
 
 // Processo de Devolucao - Por Conta
 function marcar_cheque_devolu() {
 
-	//Adquire as informações das checkbox selecionadas
+    //Adquire as informações das checkbox selecionadas
 	$('#indice','#tabDevoluConta').each(function() { 
-		if ($(this).prop('checked')) { 
-			arrayRegDados[arrayRegDados.length] = arrayRegLinha[$(this).val()];
-		}
-	});
-		
+        if ($(this).prop('checked')) {
+            arrayRegDados[arrayRegDados.length] = arrayRegLinha[$(this).val()];
+        }
+    });
+
 	if (iqtSelecao > 0){
-		
+
 		camposDc  = retornaCampos( arrayRegDados, '|' );
 		dadosDc   = retornaValores( arrayRegDados, ';', '|',camposDc );
-	}
-	
-	showMsgAguardo('Aguarde, verificando horario de execucao...');
-	
-	$.ajax({
+    }
+
+    showMsgAguardo('Aguarde, verificando horario de execucao...');
+
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/marcar_cheque_devolu.php',
 		data    :
                 {
@@ -782,122 +738,122 @@ function marcar_cheque_devolu() {
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
-			try {
-				hideMsgAguardo();
-				eval(response);
-				// validar horario para devolução de acordo com o parametrizado na TAB055
+            try {
+                hideMsgAguardo();
+                eval(response);
+                // validar horario para devolução de acordo com o parametrizado na TAB055
                 if(execucao == 'yes'){                   
                     showError('inform',dscritic,'Alerta - Aimaro','estadoInicial();');                
                 }else{				   
                     verifica_folha_cheque();
                 }
 			} catch(error) {
-				hideMsgAguardo();
+                hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
-		}
-	});
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
 // Senha - Autorizacao do Coordenador
 function mostraSenhaCoord() {
 
-	showMsgAguardo('Aguarde, abrindo...');
+    showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
+    // Executa script de confirmação através de ajax
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/senha_coord.php',
 		data    :
                 {
                     redirect: 'html_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
-		},
+        },
 		success: function(response) {
-			$('#divRotina').html(response);
-			buscaSenhaCoord();
-			return false;
-		}
-	});
+            $('#divRotina').html(response);
+            buscaSenhaCoord();
+            return false;
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Chamada de Formulário de Senha - Autorizacao do Coordenador
 function buscaSenhaCoord() {
 
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, abrindo ...');
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, abrindo ...');
 
-	$.ajax({
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/form_senha_coord.php',
 		data    :
                 {
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-				try {
+                try {
                     $('input,select','#'+frmCab).removeClass('campoErro');
-					$('#divConteudoSenha').html(response);
-					exibeRotina($('#divRotina'));
-					formataSenhaCoord();
+                    $('#divConteudoSenha').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataSenhaCoord();
 
 					$('#codsenha','#frmSenhaCoord').unbind('keypress').bind('keypress', function(e) {
 						if ( e.keyCode == 13 || e.keyCode == 9 ) {
-							validarSenha();
-							return false;
-						}
-					});
+                            validarSenha();
+                            return false;
+                        }
+                    });
 
-					return false;
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			} else {
-				try {
+                }
+            } else {
+                try {
 					eval( response );
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			}
-		}
-	});
+                }
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
 function validarSenha() {
 
-	hideMsgAguardo();
+    hideMsgAguardo();
 
-	// Situacao
+    // Situacao
 	var operauto 	= $('#operauto','#frmSenhaCoord').val();
 	var codsenha 	= $('#codsenha','#frmSenhaCoord').val();
 
     showMsgAguardo( 'Aguarde, validando dados...' );
 
-	$.ajax({
+    $.ajax({
         type    : 'POST',
 		async   : true ,
 		url     : UrlSite + 'telas/devolu/valida_senha.php',
@@ -912,26 +868,26 @@ function validarSenha() {
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
         },
 		success: function(response) {
-        try {
+            try {
             if ( response.indexOf('showError("error"') == -1) {
-                try {
+                    try {
                     $('input,select','#frmSenhaCoord').removeClass('campoErro');
-                    hideMsgAguardo();
-                    verifica_folha_cheque();
+                        hideMsgAguardo();
+                        verifica_folha_cheque();
                 } catch(error) {
-                    hideMsgAguardo();
+                        hideMsgAguardo();
                     showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-                }
-            } else {
-                try {
-                    hideMsgAguardo();
+                    }
+                } else {
+                    try {
+                        hideMsgAguardo();
                     eval( response );
                 } catch(error) {
-                    hideMsgAguardo();
+                        hideMsgAguardo();
                     showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+                    }
                 }
-            }
-            return false;
+                return false;
             } catch(error) {
                 hideMsgAguardo();
                 showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
@@ -939,7 +895,7 @@ function validarSenha() {
         }
     });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
@@ -947,7 +903,7 @@ function verifica_folha_cheque() {
 
     showMsgAguardo('Aguarde, verificando folha de cheque...');
 
-	$.ajax({
+    $.ajax({
         type    : 'POST',
         dataType: 'html',
         url     : UrlSite + 'telas/devolu/verifica_folha_cheque.php',
@@ -963,9 +919,6 @@ function verifica_folha_cheque() {
                     cddsitua : cddsitua,
                     nrdrecid : nrdrecid,
                     vllanmto : vllanmto,
-                    cdbandep : cdbandep,
-                    cdagedep : cdagedep,
-                    nrctadep : nrctadep,
                     flag     : flag,
                     redirect: 'script_ajax'
                 },
@@ -979,12 +932,12 @@ function verifica_folha_cheque() {
                     try {
                         $('input,select','#frmAlinea').removeClass('campoErro');
                         hideMsgAguardo();
-						
-						if (flag == 'yes' || iqtSelecao > 0) {
-							proc_gera_dev();
+
+                        if (flag == 'yes' || iqtSelecao > 0) {
+                            proc_gera_dev();
 						}else {
-							mostraAlinea('LA');
-						}
+                            mostraAlinea('LA');
+                        }
                     } catch(error) {
                         hideMsgAguardo();
                         showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
@@ -1004,9 +957,9 @@ function verifica_folha_cheque() {
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
@@ -1015,99 +968,99 @@ function mostraAlinea(opcao) {
 
     showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
+    // Executa script de confirmação através de ajax
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/alinea.php',
 		data    :
                 {
                     redirect: 'html_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
-		},
+        },
 		success: function(response) {
-			$('#divRotina').html(response);
-			buscaAlinea(opcao);
-			return false;
-		}
-	});
+            $('#divRotina').html(response);
+            buscaAlinea(opcao);
+            return false;
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Chamada de Formulário de Alinea
 function buscaAlinea(opcao) {
 
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, abrindo...');
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, abrindo...');
 
-	$.ajax({
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/form_alinea.php',
 		data    :
                 {
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-				try {
+                try {
                     $('input,select','#'+frmCab).removeClass('campoErro');
-					$('#divConteudoAlinea').html(response);
-					exibeRotina($('#divRotina'));
-					formataAlinea();
+                    $('#divConteudoAlinea').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataAlinea();
                     $('#cdalinea','#frmAlinea').focus();
-					
+
 					$('#cdalinea','#frmAlinea').unbind('keypress').bind('keypress', function(e) {
 						if ( e.keyCode == 13 || e.keyCode == 9 ) {
-							proc_gera_dev();
-							return false;
-						}
-					});
-					return false;
+                            proc_gera_dev();
+                            return false;
+                        }
+                    });
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			} else {
-				try {
+                }
+            } else {
+                try {
 					eval( response );
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			}
-		}
-	});
+                }
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
 function verifica_alinea(opcao) {
 
-	var cdalinea;	
-	
+    var cdalinea;
+
 	if(flag == 'yes' && opcao != 'AL') {
-		cdalinea = alinea;
+        cdalinea = alinea;
 	}else{
 		cdalinea = $('#cdalinea','#frmAlinea').val();
-		showMsgAguardo('Aguarde, validando alinea...');
-	}
+        showMsgAguardo('Aguarde, validando alinea...');
+    }
 
 	if(iqtSelecao > 0 && altalinea == false) {
-		geracao_devolu();
+        geracao_devolu();
 	}else {
-		$.ajax({
+        $.ajax({
 			type    : 'POST',
-			dataType: 'html',
+            dataType: 'html',
 			url     : UrlSite + 'telas/devolu/verifica_alinea.php',
 			data    :
 					{
@@ -1117,55 +1070,55 @@ function verifica_alinea(opcao) {
 						nrctachq : nrctachq,
 						nrdocmto : nrcheque,
 						cdalinea : cdalinea,
-						redirect: 'script_ajax'
+					    redirect: 'script_ajax'
 					},
 			error: function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
+                hideMsgAguardo();
 				showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-			},
+            },
 			success: function(response) {
-				try {
+                try {
 					if ( response.indexOf('showError("error"') == -1) {
-						try {
+                        try {
 							$('input,select','#frmAlinea').removeClass('campoErro');
-							hideMsgAguardo();
+                            hideMsgAguardo();
 							if(opcao == 'AL' || altalinea == true){
-								alteraAlinea();
+                                alteraAlinea();
 							}else{
-								geracao_devolu();
-							} 
+                                geracao_devolu();
+                            }
 						} catch(error) {
-							hideMsgAguardo();
+                            hideMsgAguardo();
 							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-						}
-					} else {
-						try {
-							hideMsgAguardo();
+                        }
+                    } else {
+                        try {
+                            hideMsgAguardo();
 							eval( response );
 						} catch(error) {
-							hideMsgAguardo();
+                            hideMsgAguardo();
 							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-						}
-					}
-					return false;
+                        }
+                    }
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
-			}
-		});
-	}
-	return false;
+                }
+            }
+        });
+    }
+    return false;
 }
 
 function alteraAlinea(){
-	
-	var cdalinea;
-	
+
+    var cdalinea;
+
 	cdalinea = $('#cdalinea','#frmAlinea').val();
-	showMsgAguardo('Aguarde, alterando alinea...');
-	
-	$.ajax({
+    showMsgAguardo('Aguarde, alterando alinea...');
+
+    $.ajax({
         type    : 'POST',
         dataType: 'html',
         url     : UrlSite + 'telas/devolu/altera_alinea.php',
@@ -1176,10 +1129,6 @@ function alteraAlinea(){
                     nrctachq : nrctachq,
                     nrdocmto : nrcheque,
                     cdalinea : cdalinea,
-					vllanmto : vllanmto,
-					cdbandep : cdbandep,
-                    cdagedep : cdagedep,
-                    nrctadep : nrctadep,
                     redirect: 'script_ajax'
                 },
         error: function(objAjax,responseError,objExcept) {
@@ -1187,18 +1136,18 @@ function alteraAlinea(){
             showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
         },
         success: function(response) {
-			try {
-				hideMsgAguardo();
-				fechaRotina($("#divRotina"));
+            try {
+                hideMsgAguardo();
+                fechaRotina($("#divRotina"));
 				eval( response );
             } catch(error) {
-				hideMsgAguardo();
+                hideMsgAguardo();
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-			}
-		}
-	});
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
@@ -1206,10 +1155,10 @@ function geracao_devolu() {
 
 	var cdalinea = $('#cdalinea','#frmAlinea').val();
 	var nrdconta = $('#nrdconta','#frmCab').val().replace(".", "").replace(".", "").replace("-", "");
-	
-	var mensagemRetorno = 'Processo de Marca&ccedil;&atilde;o Conclu&iacute;do!';
-	
-	$.ajax({
+
+    var mensagemRetorno = 'Processo de Marca&ccedil;&atilde;o Conclu&iacute;do!';
+
+    $.ajax({
         type    : 'POST',
         dataType: 'html',
         url     : UrlSite + 'telas/devolu/geracao_devolu.php',
@@ -1226,9 +1175,6 @@ function geracao_devolu() {
                     nrctachq : nrctachq,
                     nrdocmto : nrcheque,
 					flag     : flag,
-					cdbandep : cdbandep,
-					cdagedep : cdagedep,
-					nrctadep : nrctadep,
 					camposDc : camposDc,
 					dadosDc  : dadosDc,
                     redirect : 'script_ajax'
@@ -1240,11 +1186,11 @@ function geracao_devolu() {
         success: function(response) {
             try {
                 if ( response.indexOf('showError("error"') == -1) {
-                    try {						
-						if (iqtSelecao > 0) {
-							mensagemRetorno = 'Processo de Desmarca&ccedil;&atilde;o Conclu&iacute;do!';
-						}
-						var funcao = "BuscaDevolu(1,30,'CA');camposDc = '';dadosDc = '';";
+                    try {
+                        if (iqtSelecao > 0) {
+                            mensagemRetorno = 'Processo de Desmarca&ccedil;&atilde;o Conclu&iacute;do!';
+                        }
+                        var funcao = "BuscaDevolu(1,30,'CA');camposDc = '';dadosDc = '';";
                         showError('inform',mensagemRetorno,'Alerta - Aimaro','hideMsgAguardo();fechaRotina($("#divRotina"));gera_log();iqtSelecao = 0; arrayRegLinha = new Array();arrayRegDados = new Array();'+funcao);
                     } catch(error) {
                         hideMsgAguardo();
@@ -1265,25 +1211,25 @@ function geracao_devolu() {
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Devolucao - Por Conta
 function gera_log() {
 
-	var cdalinea;
+    var cdalinea;
 
 	if(flag == 'yes') {
-		cdalinea = alinea;
+        cdalinea = alinea;
 	}else{
 		cdalinea = $('#cdalinea','#frmAlinea').val();
-	}
-	
-	showMsgAguardo('Aguarde, gerando log...');
+    }
 
-	$.ajax({
+    showMsgAguardo('Aguarde, gerando log...');
+
+    $.ajax({
         type    : 'POST',
         dataType: 'html',
         url     : UrlSite + 'telas/devolu/gera_log.php',
@@ -1308,7 +1254,7 @@ function gera_log() {
             try {
                 if ( response.indexOf('showError("error"') == -1) {
                     try {
-						hideMsgAguardo();
+                        hideMsgAguardo();
                     } catch(error) {
                         hideMsgAguardo();
                         showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
@@ -1328,9 +1274,9 @@ function gera_log() {
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 
@@ -1340,81 +1286,81 @@ function mostraBanco() {
 
     showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa Script de Confirmação Através de Ajax
-	$.ajax({
+    // Executa Script de Confirmação Através de Ajax
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/banco.php',
 		data    :
                 {
                     redirect: 'html_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
+            hideMsgAguardo();
                 showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
-		},
+        },
 		success: function(response) {
-			$('#divRotina').html(response);
-			buscaBanco();
-			return false;
-		}
-	});
+            $('#divRotina').html(response);
+            buscaBanco();
+            return false;
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
 // Chamada de Formulário de Opcoes de Banco - Executar Devolucao
 function buscaBanco() {
 
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, abrindo ...');
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, abrindo ...');
 
-	$.ajax({
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/form_banco.php',
 		data    :
                 {
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-				try {
+                try {
                     $('input,select','#'+frmCab).removeClass('campoErro');
-					$('#divConteudo').html(response);
-					exibeRotina($('#divRotina'));
-					formataBanco();
+                    $('#divConteudo').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataBanco();
 
 					$('#cddopcao','#frmBanco').unbind('keypress').bind('keypress', function(e) {
 						if ( e.keyCode == 13 || e.keyCode == 9 ) {
-							verifica_solicitacao_processo();
-							return false;
-						}
-					});
+                            verifica_solicitacao_processo();
+                            return false;
+                        }
+                    });
 
-					return false;
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			} else {
-				try {
+                }
+            } else {
+                try {
 					eval( response );
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			}
-		}
-	});
+                }
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
@@ -1455,93 +1401,93 @@ function verifica_solicitacao_processo() {
                 }
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
 // Senha - Autorizacao do Sistema
 function mostraSenhaSistema() {
 
-	showMsgAguardo('Aguarde, abrindo...');
+    showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
+    // Executa script de confirmação através de ajax
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/senha.php',
 		data    :
                 {
                     redirect: 'html_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
-		},
+        },
 		success: function(response) {
-			$('#divRotina').html(response);
-			buscaSenhaSistema();
-			return false;
-		}
-	});
+            $('#divRotina').html(response);
+            buscaSenhaSistema();
+            return false;
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
 // Chamada de Formulário de Senha - Autorizacao do Sistema
 function buscaSenhaSistema() {
 
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, abrindo ...');
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, abrindo ...');
 
-	$.ajax({
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/form_senha_sistema.php',
 		data    :
                 {
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-				try {
+                try {
                     $('input,select','#'+frmCab).removeClass('campoErro');
-					$('#divConteudoSenha').html(response);
-					exibeRotina($('#divRotina'));
-					formataSenhaSistema();
+                    $('#divConteudoSenha').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataSenhaSistema();
 
 					$('#cddsenha','#frmSenha').unbind('keypress').bind('keypress', function(e) {
 						if ( e.keyCode == 13 || e.keyCode == 9 ) {
-							grava_processo_solicitacao();
-							return false;
-						}
-					});
+                            grava_processo_solicitacao();
+                            return false;
+                        }
+                    });
 
-					return false;
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			} else {
-				try {
+                }
+            } else {
+                try {
 					eval( response );
 
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			}
-		}
-	});
+                }
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
@@ -1550,8 +1496,8 @@ function grava_processo_solicitacao() {
     var cddevolu = selecBan;
     var cddsenha = $('#cddsenha','#frmSenha').val();
 
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, executando solicitacoes de processo...');
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, executando solicitacoes de processo...');
 
     $.ajax({
         type    : 'POST',
@@ -1572,7 +1518,7 @@ function grava_processo_solicitacao() {
                 try {
                     $('input,select','#'+frmCab).removeClass('campoErro');
                     hideMsgAguardo();
-					executa_processo_devolu();
+                    executa_processo_devolu();
                 } catch(error) {
                     hideMsgAguardo();
                     showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
@@ -1586,9 +1532,9 @@ function grava_processo_solicitacao() {
                 }
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 // Processo de Execucao de Devolucoes
@@ -1597,7 +1543,7 @@ function executa_processo_devolu() {
     var cddevolu = selecBan;
 
     hideMsgAguardo();
-	showMsgAguardo('Aguarde, executando devolucoes...');
+    showMsgAguardo('Aguarde, executando devolucoes...');
 
     $.ajax({
         type    : 'POST',
@@ -1630,9 +1576,9 @@ function executa_processo_devolu() {
                 }
             }
         }
-	});
+    });
 
-	return false;
+    return false;
 }
 
 // Controle de Selecao do Mouse
@@ -1644,279 +1590,279 @@ function LiberaCampos() {
 // Contatos
 function mostraContatos() {
 
-	showMsgAguardo('Aguarde, abrindo...');
+    showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
+    // Executa script de confirmação através de ajax
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/contatos.php',
 		data    :
                 {
                     redirect: 'html_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
-		},
+        },
 		success: function(response) {
-			$('#divRotina').html(response);
-			buscaContatos(0);
-			return false;
-		}
-	});
+            $('#divRotina').html(response);
+            buscaContatos(0);
+            return false;
+        }
+    });
 
-	return false;
+    return false;
 }
 
 function acessaOpacaAba(nropcoes,id){
-	
-	// Mostra mensagem de aguardo
-	showMsgAguardo('Aguarde, carregando...');
-	
-	// Atribui cor de destaque para aba da opção
-	for (var i = 0; i < nropcoes; i++) {
-		if ($('#linkAba' + id).length == false) {
-			continue;
-		}
-		
-		if (id == i) { // Atribui estilos para foco da opção			
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Atribui cor de destaque para aba da opção
+    for (var i = 0; i < nropcoes; i++) {
+        if ($('#linkAba' + id).length == false) {
+            continue;
+        }
+
+        if (id == i) { // Atribui estilos para foco da opção			
 			$('#linkAba'   + id).attr('class','txtBrancoBold');
 			$('#imgAbaEsq' + id).attr('src',UrlImagens + 'background/mnu_sle.gif');				
 			$('#imgAbaDir' + id).attr('src',UrlImagens + 'background/mnu_sld.gif');
 			$('#imgAbaCen' + id).css('background-color','#969FA9');
-			continue;			
-		}
-		
+            continue;
+        }
+
 		$('#linkAba'   + i).attr('class','txtNormalBold');
 		$('#imgAbaEsq' + i).attr('src',UrlImagens + 'background/mnu_nle.gif');			
 		$('#imgAbaDir' + i).attr('src',UrlImagens + 'background/mnu_nld.gif');
 		$('#imgAbaCen' + i).css('background-color','#C6C8CA');
-	}
-	
-	buscaContatos(id);
-	
+    }
+
+    buscaContatos(id);
+
 }
 
 // Chamada de Formulario de Contatos
 function buscaContatos(id) {
-	
-	hideMsgAguardo();
-	showMsgAguardo('Aguarde, abrindo ...');
-	
+
+    hideMsgAguardo();
+    showMsgAguardo('Aguarde, abrindo ...');
+
 	var nrdconta = $('#nrdconta','#frmCab').val().replace(".", "").replace(".", "").replace("-", "");
-	
+
 	if($('#nrdconta','#frmCab').val() != 0) {
-		nrdconta_tab = nrdconta;
-	}
-	
-	$.ajax({
+        nrdconta_tab = nrdconta;
+    }
+
+    $.ajax({
 		type    : 'POST',
-		dataType: 'html',
+        dataType: 'html',
 		url     : UrlSite + 'telas/devolu/busca_contatos.php',
 		data    :
                 {
-					nrdconta: nrdconta_tab,
+                    nrdconta: nrdconta_tab,
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
-		},
+        },
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-				try {                     
-					$('#divConteudoContatos').html(response);
-					exibeRotina($('#divRotina'));
-					formataContato(id);
-					return false;
+                try {
+                    $('#divConteudoContatos').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataContato(id);
+                    return false;
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			} else {
-				try {
+                }
+            } else {
+                try {
 					eval( response );
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
-				}
-			}
-		}
-	});
+                }
+            }
+        }
+    });
 
-	return false;
+    return false;
 }
 
 function formataContato(id){
-	
-	$('#divRotina').show();
-	
+
+    $('#divRotina').show();
+
 	if (id == 0){
-		 
+
 		$('#tabEmails').css({'display':'none'});
 		$('#tabTelefones').css({'display':'block'});
 		$('#divConteudoContatos').css({'display':'block'});
 
-		var divRegistro = $('div.divRegistros', '#tabTelefones');
+        var divRegistro = $('div.divRegistros', '#tabTelefones');
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
 
 		$('#tabTelefones').css({'margin-top':'5px'});
 		divRegistro.css({'height':'250px','width':'300px','padding-bottom':'2px'});		
-		
-		var ordemInicial = new Array();
 
-		var arrayLargura = new Array();
-		arrayLargura[0] = '35px'; 
-		arrayLargura[1] = '30px'; 
-		arrayLargura[2] = '90px'; 
+        var ordemInicial = new Array();
 
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'left';
+        var arrayLargura = new Array();
+        arrayLargura[0] = '35px';
+        arrayLargura[1] = '30px';
+        arrayLargura[2] = '90px';
+
+        var arrayAlinha = new Array();
+        arrayAlinha[0] = 'center';
+        arrayAlinha[1] = 'center';
+        arrayAlinha[2] = 'left';
 	}else{
 		$('#tabTelefones').css({'display':'none'});
 		$('#tabEmails').css({'display':'block'});
 		$('#divConteudoContatos').css({'display':'block'});
 
-		var divRegistro = $('div.divRegistros', '#tabEmails');
+        var divRegistro = $('div.divRegistros', '#tabEmails');
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
 
 		$('#tabEmails').css({'margin-top':'5px'});
 		divRegistro.css({'height':'250px','width':'500px','padding-bottom':'2px'});
-		
-		var ordemInicial = new Array();
 
-		var arrayLargura = new Array();
-		arrayLargura[0] = '35px'; 
-		arrayLargura[1] = '300px'; 	
+        var ordemInicial = new Array();
 
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'left';
-		
-	}
-	
+        var arrayLargura = new Array();
+        arrayLargura[0] = '35px';
+        arrayLargura[1] = '300px';
+
+        var arrayAlinha = new Array();
+        arrayAlinha[0] = 'center';
+        arrayAlinha[1] = 'left';
+
+    }
+
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-	hideMsgAguardo();
-	$('#divRotina').centralizaRotinaH();
+    hideMsgAguardo();
+    $('#divRotina').centralizaRotinaH();
 	bloqueiaFundo( $('#divRotina') );
 
-	return false;
-	
+    return false;
+
 }
 
 function btVoltContatos(){
-	$('#divRotina').hide();
-	hideMsgAguardo();
+    $('#divRotina').hide();
+    hideMsgAguardo();
     unblockBackground();
 }
 
 
 function consultaCheque(cdagechq,nrctachq,nrcheque) {
-	
-	showMsgAguardo("Aguarde, consultando cheque ...");
 
-	$('#divImagem').html("");
+    showMsgAguardo("Aguarde, consultando cheque ...");
+
+    $('#divImagem').html("");
 	$('#divImagem').css({'display':'none'});
-		
-	var cdcmpchq;
+
+    var cdcmpchq;
 	var cheque,tamcheque;
-	
-	tamcheque = nrcheque.length;
+
+    tamcheque = nrcheque.length;
 	cheque = nrcheque.substring(0,tamcheque - 1);
-	
-	cdbanchq = 85;	
-	
-	imgchqF = false; //Frente
-	imgchqV = false; // Verso
-	
-	// Executa script de consulta através de ajax
-	$.ajax({		
-		type: 'POST',
-		dataType: 'html',
-		url: UrlSite + 'telas/devolu/consulta_cheque.php',
-		data: {
-			cdcmpchq: cdcmpchq,
-			cdbanchq: cdbanchq,
-			cdagechq: cdagechq,
-			nrctachq: nrctachq,
-			nrcheque: cheque,
-			gerarpdf: false,
-			tpremess: "S",
-			redirect: 'script_ajax'
-		}, 
+
+    cdbanchq = 85;
+
+    imgchqF = false; //Frente
+    imgchqV = false; // Verso
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/devolu/consulta_cheque.php',
+        data: {
+            cdcmpchq: cdcmpchq,
+            cdbanchq: cdbanchq,
+            cdagechq: cdagechq,
+            nrctachq: nrctachq,
+            nrcheque: cheque,
+            gerarpdf: false,
+            tpremess: "S",
+            redirect: 'script_ajax'
+        },
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
+        },
 		success: function(response) {
-			try {				
-				eval(response);
+            try {
+                eval(response);
 			} catch(error) {
-				hideMsgAguardo();
+                hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
-		}
-	});
+            }
+        }
+    });
 }
 
 function limpaChequeTemp(imgrefe,frente, verso) {
-	// Executa script de consulta através de ajax
-	// Apaga arquivos do temp apenas quando as duas imagens , frente e verso do cheque forem carregadas e nao for gerar pdf
+    // Executa script de consulta através de ajax
+    // Apaga arquivos do temp apenas quando as duas imagens , frente e verso do cheque forem carregadas e nao for gerar pdf
 	if(imgrefe == 'imgchqF'){
-		imgchqF = true;
+        imgchqF = true;
 	}else if(imgrefe == 'imgchqV'){
-		imgchqV = true;
-	}
-	// as duas imagens do cheque, frente e verso devem estar carregadas e que nao seja para imprimir pdf nem baixar arquivo
+        imgchqV = true;
+    }
+    // as duas imagens do cheque, frente e verso devem estar carregadas e que nao seja para imprimir pdf nem baixar arquivo
 	if(imgchqF && imgchqV && !flgerpdf && !flbaiarq){
-		$.ajax({		
-			type: "POST",
-			dataType: "html",
-			url: UrlSite + "telas/imgchq/limpa_cheque_temp.php", 
-			data: {
-				dsfrente: frente,
-				dsdverso: verso,
-				redirect: "script_ajax"
-			}, 
+        $.ajax({
+            type: "POST",
+            dataType: "html",
+            url: UrlSite + "telas/imgchq/limpa_cheque_temp.php",
+            data: {
+                dsfrente: frente,
+                dsdverso: verso,
+                redirect: "script_ajax"
+            },
 			error: function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
+                hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			},
+            },
 			success: function(response) {
-				try {
-					eval(response);
+                try {
+                    eval(response);
 				} catch(error) {
-					hideMsgAguardo();
+                    hideMsgAguardo();
 					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
-			}				
-		});
-	}
+                }
+            }
+        });
+    }
 }
 
 
 function validaSelecao(linhaSelec,inprejuz){
 
     iqtSelecao = 0;
-	
+
     if (inprejuz == 1) {
 		showError("inform","Conta em Prejuizo","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-	}
+    }
 
     $('input:checkbox:checked', '#tabDevoluConta').each(function() {
         iqtSelecao++;
-    });    
+    });
 
-    if (iqtSelecao > 0) { 
+    if (iqtSelecao > 0) {
 		$('#btMarcar').trocaClass('botao',    'botaoDesativado');
-		$('#btDesmarcar').trocaClass('botaoDesativado', 'botao');
+        $('#btDesmarcar').trocaClass('botaoDesativado', 'botao');
     } else {
-		$('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
+        $('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
 		$('#btMarcar').trocaClass('botaoDesativado',    'botao');
     }
 
@@ -1929,7 +1875,7 @@ function validaSelecao(linhaSelec,inprejuz){
     }
 
     return false;
-	
+
 }
 
 function formataMoeda(valor){
