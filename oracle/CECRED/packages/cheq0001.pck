@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   --                29/05/2018 - Inclusao de rotinas para baixa de arquivos CCF do FTP da ABBC. Chamado SCTASK0012791 (Heitor - Mouts)
   --                
   --                07/12/2018 - Melhoria no processo de devoluções de cheques.
-  --                             Alcemir Mout's (INC0022559).
+                                 Alcemir Mout's (INC0022559).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
