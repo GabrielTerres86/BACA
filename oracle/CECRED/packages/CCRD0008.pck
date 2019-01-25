@@ -1110,6 +1110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_nmendter        VARCHAR2(4000);     
     vr_dscomand        VARCHAR2(4000);
     vr_typsaida        VARCHAR2(100);    
+    vr_nmarquiv        VARCHAR2(100);
     
     vr_tab_dados_ctr   typ_tab_dados_ctr;
     vr_tab_crapavt     cada0001.typ_tab_crapavt_58;
@@ -1148,7 +1149,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
                                         
-    vr_nmendter := vr_dsdireto ||'/rl/' || pr_nmarquiv;
+    /* Caso o nome esteja vazio vamos setar algum valor para impedir 
+       apagar todos os relatorios da pasta rl.
+       Apesar disso, logamos para saber do ocorrido */
+    vr_nmarquiv := pr_nmarquiv;
+    IF trim(vr_nmarquiv) is null THEN
+      vr_nmarquiv := dbms_random.string('A', 27);
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdopecxa, 
+                           pr_dscritic => 'Impressao do termo de adesao do cartao com nome vazio', 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans =>  1, -- True
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => vr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);  
+    END IF;
+    
+    vr_nmendter := vr_dsdireto ||'/rl/' || vr_nmarquiv;
     
     vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
     
@@ -1164,7 +1185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END IF; 
     
     --> Montar nome do arquivo
-    pr_nmarqpdf := pr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
+    pr_nmarqpdf := vr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
       
     --> Buscar dados para impressao do Termo de Adesão PF
     pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> Código da Cooperativa 
@@ -1447,6 +1468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_nmendter        VARCHAR2(4000);     
     vr_dscomand        VARCHAR2(4000);
     vr_typsaida        VARCHAR2(100);    
+    vr_nmarquiv        VARCHAR2(100);
     
     vr_tab_dados_ctr   typ_tab_dados_ctr;
     vr_tab_crapavt     cada0001.typ_tab_crapavt_58;
@@ -1485,7 +1507,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
                                          
-    vr_nmendter := vr_dsdireto ||'/rl/' || pr_nmarquiv;
+    /* Caso o nome esteja vazio vamos setar algum valor para impedir 
+       apagar todos os relatorios da pasta rl.
+       Apesar disso, logamos para saber do ocorrido */
+    vr_nmarquiv := pr_nmarquiv;
+    IF trim(vr_nmarquiv) is null THEN
+      vr_nmarquiv := dbms_random.string('A', 27);
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdopecxa, 
+                           pr_dscritic => 'Impressao do termo de adesao do cartao com nome vazio', 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans =>  1, -- True
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => vr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);  
+    END IF;
+                                         
+    vr_nmendter := vr_dsdireto ||'/rl/' || vr_nmarquiv;
     
     vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
     
@@ -1501,7 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END IF; 
     
     --> Montar nome do arquivo
-    pr_nmarqpdf := pr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
+    pr_nmarqpdf := vr_nmarquiv|| gene0002.fn_busca_time || '.pdf';
       
     --> Buscar dados para impressao do Termo de Adesão PF
     pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> Código da Cooperativa 

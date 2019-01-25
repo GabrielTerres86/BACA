@@ -6288,7 +6288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF vr_nmarquiv IS NULL THEN
 
       -- Gerar ID aleatório
-      vr_dsiduser := dbms_random.string('A', 27);      
+      vr_nmarquiv := dbms_random.string('A', 27);      
       
       IF rw_crapass.inpessoa = 1 THEN
         -- Chamar a rotina de impressao do termo de adesao
