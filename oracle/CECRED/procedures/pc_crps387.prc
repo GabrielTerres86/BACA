@@ -466,6 +466,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                04/09/2018 - Adicionar valor na validação dos registros cancelados 
                             vr_vllanmto_cancel (Lucas Ranghetti INC0023042)
+
+               25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
+                            impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+
 ............................................................................ */
 
     DECLARE
@@ -491,6 +495,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_cdcricid            tbgen_prglog_ocorrencia.cdcriticidade%TYPE;
 
       vr_dscodbar craplau.dscodbar%TYPE;
+
+      vr_dadosprm gene0002.typ_split;
+      vr_arqconve varchar2(100);
+      vr_convenio gnconve.cdconven%type := 0;
+
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -512,10 +521,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
           FROM crapcop;
 
       -- Busca sobre a tabela de convenios da cooperativa
-      CURSOR cr_gncvcop IS
+      CURSOR cr_gncvcop (pr_cdcooper in gnconve.cdcooper%TYPE
+                        ,pr_cdconven in gnconve.cdconven%TYPE) IS
         SELECT cdconven
           FROM gncvcop
          WHERE gncvcop.cdcooper = pr_cdcooper
+           AND gncvcop.cdconven = decode(pr_cdconven,0,gncvcop.cdconven,pr_cdconven)
          ORDER BY cdconven;
 
       -- Cursor sobre o cadastro de convenios
@@ -819,6 +830,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
         AND t.nrcpfcgc = pr_nrcpfcgc;
       rw_crapttl cr_crapttl%ROWTYPE;
 
+      -- Utilizado apenas em homologacao de convenios
+      CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
+      SELECT prm.dsvlrprm
+        FROM crapprm prm
+       WHERE prm.cdcooper = pr_cdcooper
+         AND prm.nmsistem = 'CRED'
+         AND prm.cdacesso = 'PRM_HCONVE_CRPS387_IN';
+      rw_hconven cr_hconven%ROWTYPE;
+
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       -- Criacao de temp/table para os dados do relatorio
       TYPE typ_reg_relato IS
@@ -965,6 +985,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_comando       varchar2(200);
       vr_typ_saida2     varchar2(4);
       
+      -- Variaveis projeto de homologacao de convenios
+      vr_contarlau integer := 1;
+
       -- Variaveis totalizadoras
       vr_doc_gravado PLS_INTEGER := 0;                                --> Quantidade de documentos gravados
       vr_vlr_gravado NUMBER(17,2) := 0;                               --> Valor total gravado
@@ -2040,8 +2063,34 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_nmsubdir => 'integra'); --> Utilizaremos o integra
 
+      -- Analisa se esta sendo homologado 
+      -- algum convenio (busca parametros)
+      open cr_hconven (pr_cdcooper);
+      fetch cr_hconven into rw_hconven;
+         
+      -- Popula variaveis caso encontre
+      if cr_hconven%found then
+        begin
+          vr_dadosprm := gene0002.fn_quebra_string(rw_hconven.dsvlrprm,';');
+          -- Vincula dados concatenados com variaveis
+          for i in vr_dadosprm.first..vr_dadosprm.last loop
+            case
+              when i = 1 then
+                vr_arqconve := vr_dadosprm(i);
+              when i = 2 then
+                vr_convenio := vr_dadosprm(i);
+            end case;
+          end loop;
+        exception
+          when others then
+            vr_dscritic := 'Erro ao manipular strings - homol. de convênios.';
+            raise vr_exc_saida;
+        end;
+      end if;
+
       -- Loop sobre a tabela de convenios da cooperativa
-      FOR rw_gncvcop IN cr_gncvcop LOOP
+      FOR rw_gncvcop IN cr_gncvcop (pr_cdcooper
+                                   ,vr_convenio) LOOP
 
         -- Loop sobre o cadastro de convenios
         FOR rw_gnconve IN cr_gnconve(rw_gncvcop.cdconven) LOOP
@@ -2091,6 +2140,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;
           CLOSE cr_gncontr;
 
+          -- Nao verificar caso seja nulo utilizado apenas
+          -- em homologacao de convenios
+          IF vr_arqconve <> vr_nrseqarq THEN
+            vr_dscritic := 'Número da sequência do arquivo incorreta: '||vr_nrseqarq||'.';
+            raise vr_exc_saida;   
+		  end if;
+
           -- Efetua a busca dos arquivos de debito e a consistencia da linha inicial
           pc_busca_arquivos_debito(pr_cdcooper,
                                    rw_crapdat.dtmvtolt,
@@ -2100,6 +2156,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                    vr_nrseqarq,
                                    rw_gnconve.nmempres,
                                    vr_contador);
+
+          -- Homologacao de convenios          
+          if cr_hconven%found and vr_contador = 0 then
+            vr_dscritic := 'Nenhum arquivo foi integrado.';
+            raise vr_exc_saida;
+          end if; 
 
           -- Retorna nome do modulo logado - 02/10/2017 - Ch 708424 
           GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
@@ -5422,6 +5484,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                ||'. '||SQLERRM;
                                 RAISE vr_exc_saida;
                             END;
+                            -- Homologacao de convenios          
+                            if cr_hconven%found then
+                              BEGIN
+                                INSERT 
+                                  INTO CRAPPRM (NMSISTEM
+                                               ,CDCOOPER
+                                               ,CDACESSO
+                                               ,DSTEXPRM
+                                               ,DSVLRPRM)
+                                VALUES         ('CRED'
+                                               ,pr_cdcooper
+                                               ,'PRM_HCONVE_CRPS387_OUT'
+                                               ,'Parametro de saida do Crps387, auxilia na homologacao dos convenios.'
+                                               ,vr_contarlau);
+                              EXCEPTION
+                                WHEN DUP_VAL_ON_INDEX THEN
+                                  BEGIN
+                                    UPDATE CRAPPRM PRM
+                                       SET PRM.DSVLRPRM = PRM.DSVLRPRM + 1
+                                     WHERE PRM.CDCOOPER = pr_cdcooper
+                                       AND PRM.NMSISTEM = 'CRED'
+                                       AND PRM.CDACESSO = 'PRM_HCONVE_CRPS387_OUT';
+                                  EXCEPTION
+                                    WHEN OTHERS THEN
+                                      vr_dscritic := 'Erro ao atualizar dados da tabela crapprm: '||SQLERRM;
+                                      RAISE vr_exc_saida;
+                                  END;
+                                WHEN OTHERS THEN
+                                  vr_dscritic := 'Erro ao inserir dados da tabela crapprm: '||SQLERRM;
+                                  RAISE vr_exc_saida;
+                              END;
+							end if; 
                             BEGIN
                               INSERT INTO tbconv_det_agendamento(idlancto
                                                                 ,cdlayout

@@ -164,6 +164,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  
                     25/10/2017 - Enviar o cdagectl para todos os convenios no arquivo ao invés de 
                                  mandar a cooperativa mais o PA (Lucas Ranghetti #767689)
+
+                    25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
+                                 impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+
     ............................................................................ */
 
     DECLARE
@@ -196,7 +200,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
       rw_crapcop cr_crapcop%ROWTYPE;
 
       -- seleciona os convenios da cooperativa
-      CURSOR cr_gnconve( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      CURSOR cr_gnconve( pr_cdcooper IN crapcop.cdcooper%TYPE
+                       , pr_cdconven IN gnconve.cdconven%TYPE ) IS
         SELECT gnconve.cdcooper
               ,gnconve.nmempres
               ,gnconve.cdhiscxa
@@ -221,6 +226,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         WHERE  gnconve.cdconven = gncvcop.cdconven
         AND    gnconve.cdcooper = crapcop.cdcooper
         AND    gncvcop.cdcooper = pr_cdcooper
+        AND    gnconve.cdconven = decode(pr_cdconven,0,gnconve.cdconven,pr_cdconven)
         AND    gnconve.flgativo = 1
         AND    gnconve.cdhiscxa > 0 -- Somente convenios arrec.caixa
         ORDER BY gnconve.cdconven;
@@ -271,6 +277,31 @@ CREATE OR REPLACE PROCEDURE CECRED.
         AND    gncontr.dtmvtolt = pr_dtmvtolt;
       rw_gncontr cr_gncontr%ROWTYPE;
 
+      -- Utilizado apenas em homologacao de convenios
+      CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
+      SELECT prm.dsvlrprm
+        FROM crapprm prm
+       WHERE prm.cdcooper = pr_cdcooper
+         AND prm.nmsistem = 'CRED'
+         AND prm.cdacesso = 'PRM_HCONVE_CRPS385_IN';
+      rw_hconven cr_hconven%ROWTYPE;
+      
+      -- Busca codigo do convenio a ser analisado
+      CURSOR cr_cdconve( pr_cdcooper IN crapcop.cdcooper%TYPE
+                       , pr_cdbarras IN craplft.cdbarras%TYPE
+                       , pr_dtmvtolt IN DATE) IS
+      SELECT gnconve.cdconven
+           , gnconve.nmarqcxa
+           , gnconve.cdhiscxa
+        FROM craplft
+           , gnconve
+       WHERE craplft.cdcooper        = pr_cdcooper
+         AND upper(craplft.cdbarras) = pr_cdbarras
+         AND craplft.dtmvtolt        = pr_dtmvtolt
+         AND gnconve.flgativo        = 1
+         AND gnconve.cdhiscxa        = craplft.cdhistor;
+      rw_cdconve cr_cdconve%ROWTYPE;
+
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -315,6 +346,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_dsattach     VARCHAR2(100);
       vr_nmarqrel     VARCHAR2(100);
       vr_path_arquivo VARCHAR2(500);
+      vr_cdconven     gnconve.cdconven%type := 0;
 
       --controle de clob
       vr_des_xml         CLOB;
@@ -1332,8 +1364,34 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --antecipa a data de movimento em cinco dias
       vr_dtanteri := rw_crapdat.dtmvtolt - 5;
 
+      -- Verifica se execucao esta 
+      -- homologando convenios e busca parametros
+      OPEN cr_hconven (pr_cdcooper);
+      FETCH cr_hconven INTO rw_hconven;
+      
+      -- Caso encontre parametro busca convenio
+      IF cr_hconven%FOUND THEN
+        -- Busca convenio
+        OPEN cr_cdconve(pr_cdcooper
+                       ,rw_hconven.dsvlrprm
+                       ,rw_crapdat.dtmvtolt);
+        FETCH cr_cdconve into rw_cdconve;
+        -- Se encontrar convenio define valor
+        IF cr_cdconve%FOUND THEN
+          vr_cdconven := rw_hconven.dsvlrprm;
+        ELSE
+          CLOSE cr_cdconve;
+          vr_dscritic := 'Fatura de convênio nao encontrada.';
+          RAISE vr_exc_saida;
+        END IF;        
+        CLOSE cr_cdconve;        
+      END IF;
+      
+      CLOSE cr_hconven;
+
       --percorre os convenios da cooperativa
-      OPEN cr_gnconve ( pr_cdcooper => pr_cdcooper);
+      OPEN cr_gnconve ( pr_cdcooper => pr_cdcooper
+                      , pr_cdconven => vr_cdconven );
       LOOP
         FETCH cr_gnconve INTO rw_gnconve;
         EXIT WHEN cr_gnconve%NOTFOUND;
