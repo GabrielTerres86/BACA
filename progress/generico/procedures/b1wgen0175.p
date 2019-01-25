@@ -8145,26 +8145,26 @@ PROCEDURE altera-alinea:
     
     DEF VAR aux_nmoperad AS CHAR                                       NO-UNDO.
     DEF BUFFER craqdev     FOR crapdev.
-	
+                                                  
     /* Ao entrar no loop esta critica eh limpa */
     ASSIGN aux_dscritic = "Cheque não encontrado."
            flg_devolbcb = FALSE.
 
     /* Buscar todas as devolucoes do lancamento */
     FOR EACH crapdev WHERE crapdev.cdcooper = par_cdcooper
-                       AND crapdev.cdbanchq = par_cdbanchq
-                       AND crapdev.cdagechq = par_cdagechq
-                       AND crapdev.nrctachq = par_nrctachq
-                       AND crapdev.nrcheque = par_nrdocmto
+                             AND crapdev.cdbanchq = par_cdbanchq
+                             AND crapdev.cdagechq = par_cdagechq
+                             AND crapdev.nrctachq = par_nrctachq
+                             AND crapdev.nrcheque = par_nrdocmto
                        AND crapdev.vllanmto = par_vllanmto
-                       AND crapdev.cdbandep = (IF par_cdbandep = ?
-                                             THEN crapdev.cdbandep
-                                             ELSE par_cdbandep) 
-                       AND crapdev.cdagedep = (IF par_cdagedep = ?
-                                             THEN crapdev.cdagedep
-                                             ELSE par_cdagedep)
-                       AND crapdev.nrctadep = (IF par_nrctadep = ?
-                                             THEN crapdev.nrctadep
+							 AND crapdev.cdbandep = (IF par_cdbandep = ?
+						                         THEN crapdev.cdbandep
+												 ELSE par_cdbandep) 
+						     AND crapdev.cdagedep = (IF par_cdagedep = ?
+												 THEN crapdev.cdagedep
+												 ELSE par_cdagedep)
+						     AND crapdev.nrctadep = (IF par_nrctadep = ?
+						                         THEN crapdev.nrctadep
                                              ELSE par_nrctadep) NO-LOCK:
                              
         ASSIGN aux_dscritic = "".
@@ -8217,9 +8217,9 @@ PROCEDURE altera-alinea:
                                 + " para alinea " + string(par_cdalinea,"z9") 
                                 + " >> /usr/coop/" + TRIM(crapcop.dsdircop) 
                                 + "/log/devolu.log" ). 
-
+                             
             END.
-
+        
         IF (par_cdalinea > 40 AND 
             par_cdalinea < 50) OR 
            (par_cdalinea = 20) OR 
@@ -8236,7 +8236,7 @@ PROCEDURE altera-alinea:
                     ASSIGN craqdev.cdalinea = par_cdalinea.
                 ELSE 
                     DELETE craqdev.
-            END.
+    END.
         ELSE
             ASSIGN craqdev.cdalinea = par_cdalinea.
 			
