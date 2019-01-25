@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 09/11/2018
+       Data    : Julho/2018                       Ultima atualizacao: 15/01/2019
 
        Dados referentes ao programa:
 
@@ -65,6 +65,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                      
 					 09/11/2018 - P450 - Correção na geração dos vencimentos para a modalidade 101 nas tags <Agreg>
 							      (Reginaldo/AMcom)
+                     
+                     15/01/2019 - P450 - Ajuste BNDES / Taxa Mensal (Guilherme/AMcom)
                      
     .............................................................................................................................*/
 
@@ -213,6 +215,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                NVL(wpr.nrliquid,0)     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
+              ,epr.txmensal
           from crapepr epr
               ,crawepr wpr
               ,craplcr lcr
@@ -5331,6 +5334,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
             vr_tab_crapepr(vr_ind_epr).nrctaav1 := rw_crapepr.nrctaav1;
             vr_tab_crapepr(vr_ind_epr).nrctaav2 := rw_crapepr.nrctaav2;
             vr_tab_crapepr(vr_ind_epr).qtpreemp := rw_crapepr.qtpreemp;
+            vr_tab_crapepr(vr_ind_epr).txmensal := rw_crapepr.txmensal;
             vr_tab_crapepr(vr_ind_epr).dtdpagto := rw_crapepr.dtdpagto; -- epr.dtdpagto
             vr_tab_crapepr(vr_ind_epr).dtdpripg := rw_crapepr.dtdpripg; -- wpr.dtdpagto
             vr_tab_crapepr(vr_ind_epr).qtctrliq := rw_crapepr.qtctrliq; -- Testes de existência de liquidação

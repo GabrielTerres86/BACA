@@ -152,6 +152,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
 	--                          quando há estorno do pagamento de prejuízo da conta corrente.
 	--                          (Reginaldo - AMcom - P450)
   --
+  --             21/12/2018 - Inclusão de regra para impedir o abono de IOF na "pc_paga_prejuz_cc".
+  --                          P450 - Reginaldo/AMcom
+  --				 
   ---------------------------------------------------------------------------------------------------------------
 
 FUNCTION fn_soma_dias_uteis_data(pr_cdcooper NUMBER, pr_dtmvtolt DATE, pr_qtddias INTEGER)
@@ -995,7 +998,7 @@ END pc_busca_saldos_devedores;
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Marcel Kohls
-     Data    : Junho/2018.                    Ultima atualizacao:
+     Data    : Junho/2018.                    Ultima atualizacao: 21/12/2018
 
      Dados referentes ao programa:
 
@@ -1003,7 +1006,8 @@ END pc_busca_saldos_devedores;
 
      Objetivo  : efetua pagamento de conta em prejuizo
 
-     Alteracoes:
+     Alteracoes: 21/12/2018 - Inclusão de regra para impedir o abono de IOF
+		             P450 - Reginaldo/AMcom
      ..............................................................................*/
   PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -1084,6 +1088,13 @@ END pc_busca_saldos_devedores;
       RAISE vr_exc_erro;
     END IF;
 
+	IF rw_prejuizo.vliofmes > 0 AND rw_prejuizo.vliofmes > pr_vlrpagto AND pr_vlrabono > 0 THEN
+	  vr_cdcritic := 0;
+      vr_dscritic := 'IOF não pode ser abonado, necessário realizar pagamento no mínimo de ' ||
+                      to_char(rw_prejuizo.vliofmes, '9G999G990D00', 'nls_numeric_characters='',.''');
+      RAISE vr_exc_erro;
+    END IF;
+
 		-- Atualiza o saldo liberado para operações na conta corrente
 		UPDATE tbcc_prejuizo
 		   SET vlsldlib = vlsldlib + pr_vlrpagto
@@ -1153,7 +1164,7 @@ END pc_busca_saldos_devedores;
   Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
   Sigla   : EMPR
   Autor   : Diego Simas
-  Data    : Agosto/2018.                    Ultima atualizacao: 23/08/2018
+  Data    : Agosto/2018.                    Ultima atualizacao: 19/12/2018
 
   Dados referentes ao programa:
 
@@ -1165,13 +1176,18 @@ END pc_busca_saldos_devedores;
                            é maior que o saldo devedor do empréstimo
                            PJ 450 - Diego Simas - AMcom
 
+              19/12/2018 - Incluido tratativa para nao permitir abonar o valor do IOF.
+                           PRJ450 - Regulatorio(Odirlei-AMcom)
+
   ..............................................................................*/
 
     -- Cursores
     CURSOR cr_crapepr(pr_cdcooper IN crapris.cdcooper%TYPE,
                       pr_nrdconta IN crapris.nrdconta%TYPE,
                       pr_nrctremp IN crapris.nrctremp%TYPE) IS
-    SELECT c.inprejuz
+    SELECT c.inprejuz,
+           c.vltiofpr,
+           c.vlpiofpr
       FROM crapepr c
      WHERE c.cdcooper = pr_cdcooper
        AND c.nrdconta = pr_nrdconta
@@ -1191,6 +1207,7 @@ END pc_busca_saldos_devedores;
     vr_vlaliqui crapepr.vlsdeved%TYPE;
     vr_index INTEGER;
   vr_sldpreju crapepr.vlsdeved%TYPE;
+    vr_vltiofpr crapepr.vliofepr%TYPE;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1278,6 +1295,8 @@ END pc_busca_saldos_devedores;
           RAISE vr_exc_erro;
         END IF;
 
+        vr_vltiofpr := 0;
+        
         -- ler os registros de emprestimos e incluir no xml
         vr_index := vr_tab_dados_epr.first;
 
@@ -1309,11 +1328,33 @@ END pc_busca_saldos_devedores;
                                 to_char(vr_sldpreju, '9G999G990D00', 'nls_numeric_characters='',.''');
                  RAISE vr_exc_erro;
               END IF;
+              
+              vr_vltiofpr := rw_crapepr.vltiofpr - nvl(rw_crapepr.vlpiofpr,0);
+              
            END IF;
+           
         ELSE
            CLOSE cr_crapepr;
            vr_cdcritic := 0;
            vr_dscritic := 'O Contrato informado não existe!';
+           RAISE vr_exc_erro;
+        END IF;
+
+        --> IOF
+        IF nvl(pr_vlrabono,0) > 0 AND 
+           nvl(vr_tab_dados_epr(vr_index).vliofcpl,0) > nvl(pr_vlrpagto,0) THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'IOF não pode ser abonado, necessário realizar pagamento no mínimo de ' ||
+                         to_char(nvl(vr_tab_dados_epr(vr_index).vliofcpl,0), '9G999G990D00', 'nls_numeric_characters='',.''');
+          RAISE vr_exc_erro;        
+        END IF;
+        
+        --> IOF PREJUIZO
+        IF nvl(pr_vlrabono,0) > 0 AND 
+           nvl(vr_vltiofpr,0) > nvl(pr_vlrpagto,0) THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'IOF não pode ser abonado, necessário realizar pagamento no mínimo de ' ||
+                         to_char(nvl(vr_vltiofpr,0), '9G999G990D00', 'nls_numeric_characters='',.''');
            RAISE vr_exc_erro;
         END IF;
 
