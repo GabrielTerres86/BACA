@@ -227,7 +227,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
             vr_lsminist :=  rw_gnapfep.nmfacili;
           END IF;
         END LOOP;                      
-              
+
+                      
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados',pr_posicao => 0          , pr_tag_nova => 'inf',      pr_tag_cont => NULL,                  pr_des_erro => vr_dscritic);
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'dtanoage', pr_tag_cont => rw_relatorio.dtanoage, pr_des_erro => vr_dscritic);
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_relatorio.cdcooper, pr_des_erro => vr_dscritic);
@@ -241,7 +242,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'hrsugini', pr_tag_cont => rw_relatorio.hrsugini, pr_des_erro => vr_dscritic);
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'dsdatop1', pr_tag_cont => rw_relatorio.dsdatop1, pr_des_erro => vr_dscritic);
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'dsdatop2', pr_tag_cont => rw_relatorio.dsdatop2, pr_des_erro => vr_dscritic);
-        GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'dsobserv', pr_tag_cont => rw_relatorio.dsobserv, pr_des_erro => vr_dscritic);
+        GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'dsobserv', pr_tag_cont => GENE0007.fn_convert_web_db(rw_relatorio.dsobserv), pr_des_erro => vr_dscritic);
         GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf',  pr_posicao => vr_contador, pr_tag_nova => 'lsminist', pr_tag_cont => vr_lsminist          , pr_des_erro => vr_dscritic);
         
         vr_contador := vr_contador + 1;

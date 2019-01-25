@@ -285,6 +285,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos presenciais
       FOR rw_evenpre IN cr_evenpre(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenpre.eixo  := gene0007.fn_caract_controle(rw_evenpre.eixo);
+          rw_evenpre.tema  := gene0007.fn_caract_controle(rw_evenpre.tema);
+          rw_evenpre.evento:= gene0007.fn_caract_controle(rw_evenpre.evento);
+                                      
           pc_escreve_xml ('<evento pa="' || rw_evenpre.pa || '"' ||
                                  ' eixo="' || rw_evenpre.eixo || '"' ||
                                  ' tema="' || rw_evenpre.tema || '"' ||
@@ -312,6 +316,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos EAD
       FOR rw_evenead IN cr_evenead(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenead.eixo  := gene0007.fn_caract_controle(rw_evenead.eixo);
+          rw_evenead.tema  := gene0007.fn_caract_controle(rw_evenead.tema);
+          rw_evenead.evento:= gene0007.fn_caract_controle(rw_evenead.evento);
+       
           pc_escreve_xml ('<evento pa="' || rw_evenead.pa || '"' ||
                                  ' eixo="' || rw_evenead.eixo || '"' ||
                                  ' tema="' || rw_evenead.tema || '"' ||
@@ -562,6 +570,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos presenciais
       FOR rw_evenpre IN cr_evenpre(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenpre.eixo  := gene0007.fn_caract_controle(rw_evenpre.eixo);
+          rw_evenpre.tema  := gene0007.fn_caract_controle(rw_evenpre.tema);
+          rw_evenpre.evento:= gene0007.fn_caract_controle(rw_evenpre.evento);
+
           pc_escreve_xml ('<evento eixo="' || rw_evenpre.eixo || '"' ||
                                  ' tema="' || rw_evenpre.tema || '"' ||
                                  ' evento="' || replace(rw_evenpre.evento,'"','''' ) || '"' ||
@@ -583,6 +595,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           
       -- percorre os eventos EAD
       FOR rw_evenead IN cr_evenead(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenead.eixo  := gene0007.fn_caract_controle(rw_evenead.eixo);
+          rw_evenead.tema  := gene0007.fn_caract_controle(rw_evenead.tema);
+          rw_evenead.evento:= gene0007.fn_caract_controle(rw_evenead.evento);
+        
           pc_escreve_xml ('<evento eixo="' || rw_evenead.eixo || '"' ||
                                  ' tema="' || rw_evenead.tema || '"' ||
                                  ' evento="' || replace(rw_evenead.evento,'"','''' ) || '"' ||
