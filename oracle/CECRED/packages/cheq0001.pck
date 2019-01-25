@@ -633,7 +633,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrctachq IN crapdev.nrctachq%TYPE
                               ,pr_nrcheque IN crapdev.nrcheque%TYPE
                               ,pr_cdhistor IN crapdev.cdhistor%TYPE
-                              ,pr_vllanmto IN crapdev.vllanmto%TYPE
                               ,pr_cdbandep IN crapdev.cdbandep%TYPE
                               ,pr_cdagedep IN crapdev.cdagedep%TYPE
                               ,pr_nrctadep IN crapdev.nrctadep%TYPE) IS
@@ -648,7 +647,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
         AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
         AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0)
-        AND   crapdev.vllanmto = pr_vllanmto
         UNION ALL
         SELECT rowid
         FROM crapdev crapdev
@@ -660,7 +658,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
         AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
         AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0)                
-        AND   crapdev.vllanmto = pr_vllanmto                
         AND   crapdev.cdhistor = 46;
       rw_crapdev_union  cr_crapdev_union%ROWTYPE;
 
@@ -869,7 +866,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_nrctachq => pr_nrctachq
                                ,pr_nrcheque => pr_nrdocmto
                                ,pr_cdhistor => pr_cdhistor
-                               ,pr_vllanmto => pr_vllanmto
                                ,pr_cdbandep => pr_cdbandep
                                ,pr_cdagedep => pr_cdagedep
                                ,pr_nrctadep => pr_nrctadep);
@@ -1001,7 +997,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_nrctachq => pr_nrctachq
                                ,pr_nrcheque => pr_nrdocmto
                                ,pr_cdhistor => pr_cdhistor
-                               ,pr_vllanmto => pr_vllanmto
                                ,pr_cdbandep => pr_cdbandep
                                ,pr_cdagedep => pr_cdagedep
                                ,pr_nrctadep => pr_nrctadep);                               
@@ -1092,7 +1087,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_nrctachq => pr_nrctachq
                                ,pr_nrcheque => pr_nrdocmto
                                ,pr_cdhistor => pr_cdhistor
-                               ,pr_vllanmto => pr_vllanmto
                                ,pr_cdbandep => pr_cdbandep
                                ,pr_cdagedep => pr_cdagedep
                                ,pr_nrctadep => pr_nrctadep);                               
