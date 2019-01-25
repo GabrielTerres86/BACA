@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 13/07/2018
+   Data    : Marco/2001                      Ultima atualizacao: 03/01/2019
 
    Dados referentes ao programa:
 
@@ -189,6 +189,9 @@
                             
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+
+               03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
+
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -958,7 +961,13 @@ PROCEDURE valida-codigo-cheque:
                             INPUT YES).
              RETURN "NOK".
          END.
-    IF p-cdbanchq = 479 THEN
+
+    FIND FIRST crapprm WHERE crapprm.cdcooper = 0 
+						 AND crapprm.cdacesso = 'BANCOS_BLQ_CHQ'
+						 AND crapprm.nmsistem = 'CRED' 
+						 NO-LOCK NO-ERROR.
+										 
+	IF CAN-DO(crapprm.dsvlrprm, STRING(p-cdbanchq)) THEN
         DO:
             ASSIGN i-cod-erro  = 956
                     c-desc-erro = " ".

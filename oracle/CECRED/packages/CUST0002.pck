@@ -131,7 +131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lombardi
-    Data    : 24/10/2016                        Ultima atualizacao: --/--/----
+    Data    : 24/10/2016                        Ultima atualizacao: 03/01/2019
 
     Dados referentes ao programa:
 
@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
     Objetivo  : Rotina para realizar as validação do CMC-7 do cheque
                (Validação mais simples para o IB).
                
-    Alteracoes: 
+    Alteracoes: 03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
     ............................................................................. */
     DECLARE
       vr_exc_saida EXCEPTION;
@@ -153,6 +153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       vr_dtminimo DATE;
       vr_qtddmini NUMBER;
       vr_prazo_custod NUMBER;
+	  vr_cdbancos crapprm.dsvlrprm%TYPE;
 
       -- Identifica o ultimo dia Util do ANO
       vr_dtultdia DATE;
@@ -261,9 +262,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         RAISE vr_exc_saida;
       END IF;
       
+	  /* Bancos que não podemos mais aceitar o recebimento de cheques. */
+      vr_cdbancos := gene0001.fn_param_sistema('CRED',0,'BANCOS_BLQ_CHQ');
+      
       -- Validação de bancos que está na LANCSTI.p
-      /* Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409 e 479 */
-      IF pr_cdbanchq IN (012,231,353,356,409,479) THEN
+      /* Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409, 479 e 399 */
+      IF INSTR(','||vr_cdbancos||',',','||pr_cdbanchq||',') > 0 THEN
         -- (21,01) Banco Invalido 
         pr_cdtipmvt := nvl(pr_cdtipmvt,21);
         pr_cdocorre := nvl(pr_cdocorre,'01');
