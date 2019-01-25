@@ -6,10 +6,6 @@
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579)
- *
- *                07/12/2018 - Melhoria no processo de devoluções de cheques.
- *                             Alcemir Mout's (INC0022559).
- *
  * --------------
  */
 ?>
@@ -42,9 +38,6 @@
     $nrdrecid = (isset($_POST['nrdrecid'])) ? $_POST['nrdrecid'] : 0  ;
     $vllanmto = (isset($_POST['vllanmto'])) ? $_POST['vllanmto'] : 0  ;
     $flag = (isset($_POST['flag'])) ? $_POST['flag'] : 0  ;
-	$cdbandep = (isset($_POST['cdbandep'])) ? $_POST['cdbandep'] : 0  ;
-    $cdagedep = (isset($_POST['cdagedep'])) ? $_POST['cdagedep'] : 0  ;
-    $nrctadep = (isset($_POST['nrctadep'])) ? $_POST['nrctadep'] : 0  ;
 
 	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
 
@@ -67,9 +60,6 @@
 	$xml .= '		<cddsitua>'.$cddsitua.'</cddsitua>';
 	$xml .= '		<nrdrecid>'.$nrdrecid.'</nrdrecid>';
 	$xml .= '		<vllanmto>'.$vllanmto.'</vllanmto>';
-	$xml .= '		<cdbandep>'.$cdbandep.'</cdbandep>';
-	$xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
-	$xml .= '		<nrctadep>'.$nrctadep.'</nrctadep>';	
 	$xml .= '		<flag>'.$flag.'</flag>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';

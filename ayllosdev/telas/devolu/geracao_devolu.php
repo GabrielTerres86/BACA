@@ -10,10 +10,6 @@
  *			      09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579)
  *
  *				  02/12/2016 - Voltar para o estado inicial caso ocorra erro (Lucas Ranghetti/Elton)
- *                
- *                07/12/2018 - Melhoria no processo de devoluções de cheques.
- *                             Alcemir Mout's (INC0022559).
- *
  */
 ?>
 
@@ -47,9 +43,6 @@
     $flag = (isset($_POST['flag'])) ? $_POST['flag'] : 0  ;
 	$camposDc = (isset($_POST['camposDc']))  ? $_POST['camposDc']  : '' ;
 	$dadosDc  = (isset($_POST['dadosDc']))   ? $_POST['dadosDc']   : '' ;
-	$cdagedep = (isset($_POST['cdagedep'])) ? $_POST['cdagedep'] : 0  ;
-    $cdbandep = (isset($_POST['cdbandep'])) ? $_POST['cdbandep'] : 0  ;
-	$nrctadep = (isset($_POST['nrctadep'])) ? $_POST['nrctadep'] : 0  ;
 
 	$retornoAposErro = 'estadoInicial();';
 
@@ -75,9 +68,6 @@
 	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
 	$xml .= '		<flag>'.$flag.'</flag>';
-	$xml .= '		<cdbandep>'.$cdbandep.'</cdbandep>';
-	$xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
-	$xml .= '		<nrctadep>'.$nrctadep.'</nrctadep>';
 	$xml .= 		retornaXmlFilhos( $camposDc, $dadosDc, 'Desmarcar', 'Itens');
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';

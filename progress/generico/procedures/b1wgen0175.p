@@ -128,8 +128,7 @@
    03/10/2018 - Procedure para receber nova opcao de exclusao na devolu.
                 Chamado SCTASK0029653 - Gabriel (Mouts).
    
-   07/12/2018 - Melhoria no processo de devoluções de cheques.
-                Alcemir Mout's (INC0022559).
+   
 
    23/01/2019 - Alteracao na rotina de alteracao de alinea e
                 melhoria na gravacao do log na verlog.
@@ -756,9 +755,6 @@ PROCEDURE busca-devolucoes-cheque:
                            tt-lancto.cdbanchq = crapfdc.cdbanchq   
                            tt-lancto.cdagechq = crapfdc.cdagechq
                            tt-lancto.nrctachq = crapfdc.nrctachq 
-                           tt-lancto.cdbandep = crapfdc.cdbandep
-						   tt-lancto.cdagedep = crapfdc.cdagedep
-						   tt-lancto.nrctadep = crapfdc.nrctadep
                            tt-lancto.banco    = aux_cdbanchq                           
                            tt-lancto.nrdrecid = RECID(craplcm)                        
                            tt-lancto.dstabela = "craplcm"
@@ -817,16 +813,6 @@ PROCEDURE busca-devolucoes-cheque:
                                          AND crapdev.cdagechq = crapfdc.cdagechq
                                          AND crapdev.nrctachq = crapfdc.nrctachq
                                          AND crapdev.nrcheque = aux_nrcalcul  
-					                     AND crapdev.vllanmto = crapfdc.vlcheque									 
-								         AND crapdev.cdbandep = (IF crapfdc.cdbandep = ? 
-																 THEN crapdev.cdbandep
-																 ELSE crapfdc.cdbandep)
-									     AND crapdev.cdagedep = (IF crapfdc.cdagedep = ? 
-										                         THEN crapdev.cdagedep
-																 ELSE crapfdc.cdagedep)
-										 AND crapdev.nrctadep = (IF crapfdc.nrctadep = ?
-										                         THEN crapdev.nrctadep
-																 ELSE crapfdc.nrctadep) 
                                          AND crapdev.cdhistor <> 46
                                          NO-LOCK NO-ERROR.
                     
@@ -875,16 +861,6 @@ PROCEDURE busca-devolucoes-cheque:
                                         AND tt-lancto.nrctachq = crapdev.nrctachq
                                         AND tt-lancto.nrdocmto = crapdev.nrcheque
                                         AND tt-lancto.cdalinea = crapdev.cdalinea	
-										AND tt-lancto.vllanmto = crapdev.vllanmto 
-										AND tt-lancto.cdbandep = (IF crapdev.cdbandep = ? 
-										                          THEN tt-lancto.cdbandep
-																  ELSE crapdev.cdbandep)
-									    AND tt-lancto.cdagedep = (IF crapdev.cdagedep = ? 
-										                          THEN tt-lancto.cdagedep
-																  ELSE crapdev.cdagedep)
-										AND tt-lancto.nrctadep = (IF crapdev.nrctadep = ? 
-										                          THEN tt-lancto.nrctadep
-																  ELSE crapdev.nrctadep)									
                             NO-LOCK NO-ERROR NO-WAIT.                
                 
                  IF  AVAILABLE tt-lancto THEN
@@ -900,9 +876,6 @@ PROCEDURE busca-devolucoes-cheque:
                        tt-lancto.nrctachq = crapdev.nrctachq   
                        tt-lancto.banco    = crapdev.cdbanchq    
                        tt-lancto.cddsitua = crapdev.insitdev
-					   tt-lancto.cdbandep = crapdev.cdbandep   
-                       tt-lancto.cdagedep = crapdev.cdagedep
-                       tt-lancto.nrctadep = crapdev.nrctadep 
                        tt-lancto.flag     = TRUE
                        tt-lancto.cdalinea = crapdev.cdalinea
                        aux_regexist      = TRUE    
@@ -1026,9 +999,6 @@ PROCEDURE busca-devolucoes-cheque:
                                tt-devolu.nmoperad = crapope.nmoperad
                                tt-devolu.vlaplica = aux_vlaplica
                                tt-devolu.vlsldprp = aux_vlsldprp 
-							   tt-devolu.cdbandep = crapdev.cdbandep
-							   tt-devolu.cdagedep = crapdev.cdagedep
-							   tt-devolu.nrctadep = crapdev.nrctadep							   
                                aux_regexist = TRUE.
                                
                         IF  aux_vlsldtot > crapdev.vllanmto THEN
@@ -1111,9 +1081,6 @@ PROCEDURE busca-devolucoes-cheque:
                                tt-devolu.nmoperad = crapope.nmoperad
                                tt-devolu.vlaplica = aux_vlaplica
                                tt-devolu.vlsldprp = aux_vlsldprp  
-							   tt-devolu.cdbandep = crapdev.cdbandep
-							   tt-devolu.cdagedep = crapdev.cdagedep
-							   tt-devolu.nrctadep = crapdev.nrctadep							   
                                aux_regexist = TRUE.
                                
                         IF  aux_vlsldtot > crapdev.vllanmto THEN
@@ -1228,9 +1195,6 @@ PROCEDURE busca-devolucoes-cheque:
                                tt-devolu.nmoperad = crapope.nmoperad
                                tt-devolu.vlaplica = aux_vlaplica
                                tt-devolu.vlsldprp = aux_vlsldprp  
-							   tt-devolu.cdbandep = crapdev.cdbandep
-							   tt-devolu.cdagedep = crapdev.cdagedep
-							   tt-devolu.nrctadep = crapdev.nrctadep							   
                                aux_regexist = TRUE.
                                
                         IF  aux_vlsldtot > crapdev.vllanmto THEN
@@ -1309,9 +1273,6 @@ PROCEDURE busca-devolucoes-cheque:
                                    tt-devolu.nmoperad = crapope.nmoperad
                                    tt-devolu.vlaplica = aux_vlaplica
                                    tt-devolu.vlsldprp = aux_vlsldprp 								   
-								   tt-devolu.cdbandep = crapdev.cdbandep
-							       tt-devolu.cdagedep = crapdev.cdagedep
-							       tt-devolu.nrctadep = crapdev.nrctadep							   
                                    aux_regexist = TRUE.
                                    
                             IF  aux_vlsldtot > crapdev.vllanmto THEN
@@ -1393,9 +1354,6 @@ PROCEDURE busca-devolucoes-cheque:
                                    tt-devolu.nmoperad = crapope.nmoperad
                                    tt-devolu.vlaplica = aux_vlaplica
                                    tt-devolu.vlsldprp = aux_vlsldprp
-								   tt-devolu.cdbandep = crapdev.cdbandep
-							       tt-devolu.cdagedep = crapdev.cdagedep
-							       tt-devolu.nrctadep = crapdev.nrctadep
                                    tt-devolu.dtliquid = crapfdc.dtliqchq WHEN AVAILABLE crapfdc
                                    tt-devolu.nrctachq = crapfdc.nrctachq WHEN AVAILABLE crapfdc
                                    aux_regexist = TRUE.
@@ -1465,9 +1423,6 @@ PROCEDURE busca-devolucoes-cheque:
                                    tt-devolu.nmoperad = crapope.nmoperad
                                    tt-devolu.vlaplica = aux_vlaplica
                                    tt-devolu.vlsldprp = aux_vlsldprp 
-							       tt-devolu.cdbandep = crapdev.cdbandep
-							       tt-devolu.cdagedep = crapdev.cdagedep
-							       tt-devolu.nrctadep = crapdev.nrctadep								   
                                    aux_regexist = TRUE.
                                    
                             IF  aux_vlsldtot > crapdev.vllanmto THEN
@@ -1560,9 +1515,6 @@ PROCEDURE verifica-folha-cheque:
     DEF INPUT PARAM par_cdagechq AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cddsitua AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrdrecid AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_cdbandep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_cdagedep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_nrctadep AS DECI                               NO-UNDO.	
     DEF INPUT PARAM par_flag     AS LOGICAL                            NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2848,9 +2800,6 @@ PROCEDURE geracao-devolu:
     DEF INPUT PARAM par_nrdocmto AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nmdatela LIKE craptel.nmdatela                 NO-UNDO.
     DEF INPUT PARAM par_flag     AS LOGICAL                            NO-UNDO.
-	DEF INPUT PARAM par_cdbandep AS INTE                               NO-UNDO.    
-    DEF INPUT PARAM par_cdagedep AS INTE                               NO-UNDO.	
-	DEF INPUT PARAM par_nrctadep AS DECI                               NO-UNDO.
     DEF INPUT PARAM TABLE FOR tt-desmarcar.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -2940,9 +2889,6 @@ PROCEDURE geracao-devolu:
                                      INPUT  par_nrdconta,
                                      INPUT  par_nrdocmto,
                                      INPUT  "devolu", /* nmdatela */
-									 INPUT  par_cdbandep,
-									 INPUT  par_cdagedep,
-									 INPUT  par_nrctadep,
                                      OUTPUT TABLE tt-erro).
                    
                     IF  RETURN-VALUE <> "OK"   THEN
@@ -2995,9 +2941,6 @@ PROCEDURE geracao-devolu:
                                      INPUT  par_nrdconta,
                                      INPUT  par_nrdocmto,
                                      INPUT  "devolu", /* nmdatela */
-									 INPUT  par_cdbandep,
-									 INPUT  par_cdagedep,
-									 INPUT  par_nrctadep,									 
                                      OUTPUT TABLE tt-erro).
 
                     IF  RETURN-VALUE <> "OK" THEN
@@ -3060,9 +3003,6 @@ PROCEDURE geracao-devolu:
                                      INPUT  tt-desmarcar.nrdconta,
                                      INPUT  tt-desmarcar.nrcheque,
                                      INPUT  "devolu", /* nmdatela */
-									 INPUT  tt-desmarcar.cdbandep,
-									 INPUT  tt-desmarcar.cdagedep,
-									 INPUT  tt-desmarcar.nrctadep,									 
                                      OUTPUT TABLE tt-erro).
                    
                     IF  RETURN-VALUE <> "OK"   THEN
@@ -3090,9 +3030,6 @@ PROCEDURE geracao-devolu:
                                      INPUT  tt-desmarcar.nrdconta,
                                      INPUT  tt-desmarcar.nrcheque,
                                      INPUT  "devolu", /* nmdatela */
-									 INPUT  tt-desmarcar.cdbandep,
-									 INPUT  tt-desmarcar.cdagedep,
-									 INPUT  tt-desmarcar.nrctadep,									 
                                      OUTPUT TABLE tt-erro).
 
                     IF  RETURN-VALUE <> "OK" THEN
@@ -3125,11 +3062,7 @@ PROCEDURE gera-devolu:
     DEF INPUT PARAM par_nrdconta AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrdocmto AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nmdatela LIKE craptel.nmdatela                 NO-UNDO.
-	DEF INPUT PARAM par_cdbandep LIKE crapdev.cdbandep                 NO-UNDO.
-    DEF INPUT PARAM par_cdagedep LIKE crapdev.cdagedep                 NO-UNDO.
-	DEF INPUT PARAM par_nrctadep LIKE crapdev.nrctadep                 NO-UNDO.
     
-
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -3377,32 +3310,12 @@ PROCEDURE gera-devolu:
                                    crapdev.cdagechq = par_cdagechq   AND
                                    crapdev.nrctachq = par_nrctachq   AND
                                    crapdev.nrcheque = par_nrdocmto   AND
-								   crapdev.vllanmto = par_vllanmto   AND 
-								   crapdev.cdbandep = (IF par_cdbandep = ? 
-								                       THEN crapdev.cdbandep										
-								                       ELSE par_cdbandep) AND 
-								   crapdev.cdagedep = (IF par_cdagedep = ? 
-								                       THEN crapdev.cdagedep										
-								                       ELSE par_cdagedep) AND  
-								   crapdev.nrctadep = (IF par_nrctadep = ? 
-								                       THEN crapdev.nrctadep										
-								                       ELSE par_nrctadep) AND 													   
                                    crapdev.cdhistor = 46)            OR
             CAN-FIND(crapdev WHERE crapdev.cdcooper = par_cdcooper   AND
                                    crapdev.cdbanchq = aux_cdbanchq   AND
                                    crapdev.cdagechq = par_cdagechq   AND
                                    crapdev.nrctachq = par_nrctachq   AND
                                    crapdev.nrcheque = par_nrdocmto   AND
-								   crapdev.vllanmto = par_vllanmto   AND 
-								   crapdev.cdbandep = (IF par_cdbandep = ? 
-								                       THEN crapdev.cdbandep										
-								                       ELSE par_cdbandep) AND 
-								   crapdev.cdagedep = (IF par_cdagedep = ? 
-								                       THEN crapdev.cdagedep										
-								                       ELSE par_cdagedep) AND  
-								   crapdev.nrctadep = (IF par_nrctadep = ? 
-								                       THEN crapdev.nrctadep										
-								                       ELSE par_nrctadep) AND 								   
                                    crapdev.cdhistor = par_cdhistor)  THEN DO:
             ASSIGN aux_cdcritic = 415
                    aux_dscritic = "".
@@ -3451,10 +3364,7 @@ PROCEDURE gera-devolu:
                                       ELSE 1
                    crapdev.cdagechq = par_cdagechq
                    crapdev.nrctachq = par_nrctachq
-                   crapdev.cdcooper = par_cdcooper
-				   crapdev.cdbandep = par_cdbandep
-				   crapdev.cdagedep = par_cdagedep
-				   crapdev.nrctadep = par_nrctadep.
+                   crapdev.cdcooper = par_cdcooper.
             
             IF   par_nrdctitg = ""   THEN   /* Nao eh conta-integracao */
                  crapdev.indctitg = FALSE.
@@ -3486,12 +3396,8 @@ PROCEDURE gera-devolu:
                                   ELSE 1
                crapdev.cdagechq = par_cdagechq
                crapdev.nrctachq = par_nrctachq
-               crapdev.cdcooper = par_cdcooper
-			   crapdev.cdbandep = par_cdbandep
-			   crapdev.cdagedep = par_cdagedep
-			   crapdev.nrctadep = par_nrctadep.
+               crapdev.cdcooper = par_cdcooper.
 			  
-
         /* Nao eh conta-integracao */
         IF  par_nrdctitg = ""   THEN
             crapdev.indctitg = FALSE.
@@ -3509,16 +3415,6 @@ PROCEDURE gera-devolu:
                                AND crapdev.cdagechq = par_cdagechq   
                                AND crapdev.nrctachq = par_nrctachq   
                                AND crapdev.nrcheque = par_nrdocmto  
-							   AND crapdev.vllanmto = par_vllanmto
-					           AND crapdev.cdbandep = (IF par_cdbandep = ? 
-								                       THEN crapdev.cdbandep										
-							                           ELSE par_cdbandep)  
-						       AND crapdev.cdagedep = (IF par_cdagedep = ? 
-								                       THEN crapdev.cdagedep										
-								                       ELSE par_cdagedep)   
-							   AND crapdev.nrctadep = (IF par_nrctadep = ? 
-								                       THEN crapdev.nrctadep										
-								                       ELSE par_nrctadep)  
                                AND crapdev.cdhistor = 46) THEN DO:
             ASSIGN aux_cdcritic = 415
                    aux_dscritic = "".
@@ -3568,10 +3464,7 @@ PROCEDURE gera-devolu:
                                       ELSE 1
                    crapdev.cdagechq = par_cdagechq
                    crapdev.nrctachq = par_nrctachq
-                   crapdev.cdcooper = par_cdcooper
-				   crapdev.cdbandep = par_cdbandep
-				   crapdev.cdagedep = par_cdagedep
-				   crapdev.nrctadep = par_nrctadep.
+                   crapdev.cdcooper = par_cdcooper.
 
             /* Nao eh conta-integracao */
             IF  par_nrdctitg = ""   THEN
@@ -3590,33 +3483,12 @@ PROCEDURE gera-devolu:
                                    crapdev.cdagechq = par_cdagechq   AND
                                    crapdev.nrctachq = par_nrctachq   AND
                                    crapdev.nrcheque = par_nrdocmto   AND
-								   crapdev.vllanmto = par_vllanmto   AND 
-								   crapdev.cdbandep = (IF par_cdbandep = ? 
-								                       THEN crapdev.cdbandep										
-								                       ELSE par_cdbandep) AND 
-								   crapdev.cdagedep = (IF par_cdagedep = ? 
-								                       THEN crapdev.cdagedep										
-								                       ELSE par_cdagedep) AND  
-								   crapdev.nrctadep = (IF par_nrctadep = ? 
-								                       THEN crapdev.nrctadep										
-								                       ELSE par_nrctadep) AND 								   
-								   
                                    crapdev.cdhistor = 46)            OR
             CAN-FIND(crapdev WHERE crapdev.cdcooper = par_cdcooper   AND
                                    crapdev.cdbanchq = aux_cdbanchq   AND
                                    crapdev.cdagechq = par_cdagechq   AND
                                    crapdev.nrctachq = par_nrctachq   AND
                                    crapdev.nrcheque = par_nrdocmto   AND
-								   crapdev.vllanmto = par_vllanmto   AND
-								   crapdev.cdbandep = (IF par_cdbandep = ? 
-								                       THEN crapdev.cdbandep										
-								                       ELSE par_cdbandep) AND 
-								   crapdev.cdagedep = (IF par_cdagedep = ? 
-								                       THEN crapdev.cdagedep										
-								                       ELSE par_cdagedep) AND  
-								   crapdev.nrctadep = (IF par_nrctadep = ? 
-								                       THEN crapdev.nrctadep										
-								                       ELSE par_nrctadep) AND 								   
                                    crapdev.cdhistor = par_cdhistor /*78*/ ) 
                                    THEN DO:
             ASSIGN aux_cdcritic = 415
@@ -3666,10 +3538,7 @@ PROCEDURE gera-devolu:
                                       ELSE 1
                    crapdev.cdagechq = par_cdagechq 
                    crapdev.nrctachq = par_nrctachq
-                   crapdev.cdcooper = par_cdcooper
-				   crapdev.cdbandep = par_cdbandep
-				   crapdev.cdagedep = par_cdagedep
-				   crapdev.nrctadep = par_nrctadep.
+                   crapdev.cdcooper = par_cdcooper.
 
             /* Nao eh conta-integracao */
             IF   par_nrdctitg = ""   THEN
@@ -3703,10 +3572,7 @@ PROCEDURE gera-devolu:
                                   ELSE 1
                crapdev.cdagechq = par_cdagechq
                crapdev.nrctachq = par_nrctachq
-               crapdev.cdcooper = par_cdcooper
-			   crapdev.cdbandep = par_cdbandep
-			   crapdev.cdagedep = par_cdagedep
-			   crapdev.nrctadep = par_nrctadep.
+               crapdev.cdcooper = par_cdcooper.
 
         /* Nao eh conta-integracao */
         IF   par_nrdctitg = ""   THEN
@@ -3726,16 +3592,6 @@ PROCEDURE gera-devolu:
                            AND crabdev.cdagechq = par_cdagechq   
                            AND crabdev.nrctachq = par_nrctachq   
                            AND crabdev.nrcheque = par_nrdocmto   
-						   AND crabdev.vllanmto = par_vllanmto
-						   AND crabdev.cdbandep = (IF par_cdbandep = ? 
-											       THEN crapdev.cdbandep										
-											       ELSE par_cdbandep)  
-						   AND crabdev.cdagedep = (IF par_cdagedep = ? 
-											       THEN crapdev.cdagedep										
-											       ELSE par_cdagedep)   
-						   AND crabdev.nrctadep = (IF par_nrctadep = ? 
-											       THEN crapdev.nrctadep										
-											       ELSE par_nrctadep)  						   
                            AND crabdev.cdhistor = par_cdhistor /* 47  191 */
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3775,16 +3631,6 @@ PROCEDURE gera-devolu:
                                AND crapdev.cdagechq = par_cdagechq 
                                AND crapdev.nrctachq = par_nrctachq 
                                AND crapdev.nrcheque = par_nrdocmto 
-							   AND crapdev.vllanmto = par_vllanmto
-						       AND crapdev.cdbandep = (IF par_cdbandep = ? 
-											           THEN crapdev.cdbandep										
-											           ELSE par_cdbandep)  
-						       AND crapdev.cdagedep = (IF par_cdagedep = ? 
-											           THEN crapdev.cdagedep										
-											           ELSE par_cdagedep)   
-						       AND crapdev.nrctadep = (IF par_nrctadep = ? 
-											           THEN crapdev.nrctadep										
-											           ELSE par_nrctadep)  								   
                                AND crapdev.cdhistor = 46
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3827,16 +3673,6 @@ PROCEDURE gera-devolu:
                            AND crabdev.cdagechq = par_cdagechq
                            AND crabdev.nrctachq = par_nrctachq
                            AND crabdev.nrcheque = par_nrdocmto
-						   AND crabdev.vllanmto = par_vllanmto	
-						   AND crabdev.cdbandep = (IF par_cdbandep = ? 
-											       THEN crapdev.cdbandep										
-											       ELSE par_cdbandep)  
-						   AND crabdev.cdagedep = (IF par_cdagedep = ? 
-											       THEN crapdev.cdagedep										
-											       ELSE par_cdagedep)   
-						   AND crabdev.nrctadep = (IF par_nrctadep = ? 
-											       THEN crapdev.nrctadep										
-											       ELSE par_nrctadep)  							   
                            AND crabdev.cdhistor = par_cdhistor /* 47  191 */
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3876,16 +3712,6 @@ PROCEDURE gera-devolu:
                                AND crapdev.cdagechq = par_cdagechq   
                                AND crapdev.nrctachq = par_nrctachq   
                                AND crapdev.nrcheque = par_nrdocmto   
-							   AND crapdev.vllanmto = par_vllanmto
-						       AND crabdev.cdbandep = (IF par_cdbandep = ? 
-											           THEN crapdev.cdbandep										
-											           ELSE par_cdbandep)  
-						       AND crabdev.cdagedep = (IF par_cdagedep = ? 
-											           THEN crapdev.cdagedep										
-											           ELSE par_cdagedep)   
-						       AND crabdev.nrctadep = (IF par_nrctadep = ? 
-											           THEN crapdev.nrctadep										
-											           ELSE par_nrctadep)  								   
                                AND crapdev.cdhistor = 46
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3926,17 +3752,6 @@ PROCEDURE gera-devolu:
                            AND crabdev.cdagechq = par_cdagechq
                            AND crabdev.nrctachq = par_nrctachq
                            AND crabdev.nrcheque = par_nrdocmto
-		  	               AND crabdev.vllanmto = par_vllanmto
-						   AND crabdev.cdbandep = (IF par_cdbandep = ? 
-											       THEN crapdev.cdbandep										
-											       ELSE par_cdbandep)  
-						   AND crabdev.cdagedep = (IF par_cdagedep = ? 
-											       THEN crapdev.cdagedep										
-											       ELSE par_cdagedep)   
-						   AND crabdev.nrctadep = (IF par_nrctadep = ? 
-											       THEN crapdev.nrctadep										
-											       ELSE par_nrctadep)  	
-												   
                            AND crabdev.cdhistor = par_cdhistor /* 47  191 */
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3976,16 +3791,6 @@ PROCEDURE gera-devolu:
                                AND crapdev.cdagechq = par_cdagechq
                                AND crapdev.nrctachq = par_nrctachq
                                AND crapdev.nrcheque = par_nrdocmto
-							   AND crapdev.vllanmto = par_vllanmto
-						       AND crapdev.cdbandep = (IF par_cdbandep = ? 
-											           THEN crapdev.cdbandep										
-											           ELSE par_cdbandep)  
-						       AND crapdev.cdagedep = (IF par_cdagedep = ? 
-											           THEN crapdev.cdagedep										
-											           ELSE par_cdagedep)   
-						       AND crapdev.nrctadep = (IF par_nrctadep = ? 
-											           THEN crapdev.nrctadep										
-											           ELSE par_nrctadep)  								   
                                AND crapdev.cdhistor = 46
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -8135,9 +7940,6 @@ PROCEDURE altera-alinea:
     DEF INPUT PARAM par_nrdocmto AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdalinea AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdoperad AS CHAR                               NO-UNDO.
-    DEF INPUT PARAM par_cdbandep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_cdagedep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_nrctadep AS DECI                               NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI                               NO-UNDO.	
     DEF INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                 NO-UNDO.
     DEF INPUT PARAM par_nmdatela LIKE craptel.nmdatela                 NO-UNDO.
@@ -8156,16 +7958,7 @@ PROCEDURE altera-alinea:
                              AND crapdev.cdagechq = par_cdagechq
                              AND crapdev.nrctachq = par_nrctachq
                              AND crapdev.nrcheque = par_nrdocmto
-                       AND crapdev.vllanmto = par_vllanmto
-							 AND crapdev.cdbandep = (IF par_cdbandep = ?
-						                         THEN crapdev.cdbandep
-												 ELSE par_cdbandep) 
-						     AND crapdev.cdagedep = (IF par_cdagedep = ?
-												 THEN crapdev.cdagedep
-												 ELSE par_cdagedep)
-						     AND crapdev.nrctadep = (IF par_nrctadep = ?
-						                         THEN crapdev.nrctadep
-                                             ELSE par_nrctadep) NO-LOCK:
+                             AND crapdev.vllanmto = par_vllanmto NO-LOCK:
                              
         ASSIGN aux_dscritic = "".
 												   
@@ -8266,10 +8059,7 @@ PROCEDURE excluir-cheque-devolu:
     DEF INPUT PARAM par_nrctachq LIKE crapass.nrdconta                 NO-UNDO.
     DEF INPUT PARAM par_nrdocmto AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdoperad AS CHAR                               NO-UNDO.
-	DEF INPUT PARAM par_cdbandep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_cdagedep AS INTE                               NO-UNDO.
-    DEF INPUT PARAM par_nrctadep AS DECI                               NO-UNDO.
-	DEF INPUT PARAM par_vlcheque AS DECI                               NO-UNDO.	    
+    
     DEF OUTPUT PARAM TABLE FOR tt-erro.    
 	
     DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
@@ -8375,17 +8165,6 @@ PROCEDURE excluir-cheque-devolu:
                          AND crapdev.cdagechq = par_cdagechq
                          AND (crapdev.nrctachq = par_nrctachq OR
                               crapdev.nrdctabb = par_nrdconta)
-                         AND crapdev.vllanmto = par_vlcheque
-						 AND crapdev.cdbandep = (IF par_cdbandep = ?
-						                         THEN crapdev.cdbandep
-												 ELSE par_cdbandep) 
-						 AND crapdev.cdagedep = (IF par_cdagedep = ?
-												 THEN crapdev.cdagedep
-												 ELSE par_cdagedep)
-						 AND crapdev.nrctadep = (IF par_nrctadep = ?
-						                         THEN crapdev.nrctadep
-												 ELSE par_nrctadep)
-                      
                          AND crapdev.nrcheque = par_nrdocmto
                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -8437,10 +8216,7 @@ PROCEDURE excluir-cheque-devolu:
                             + STRING(crapdev.nrctachq) + ", " 
                             + STRING(crapdev.indctitg) + ", " 
                             + STRING(crapdev.nrdctitg) + ", " 
-                                 + STRING(crapdev.indevarq) + ", "
-						    + STRING(crapdev.cdbandep) + ", " 							
-							+ STRING(crapdev.cdagedep) + ", " 
-							+ STRING(crapdev.nrctadep) 
+                            + STRING(crapdev.indevarq) 
                             + "')' "                  
                             + " >> /usr/coop/" + TRIM(crapcop.dsdircop)
                             + "/log/devolu.log" ).
