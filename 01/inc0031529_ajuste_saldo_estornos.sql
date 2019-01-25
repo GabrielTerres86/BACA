@@ -7,7 +7,7 @@ DECLARE
       FROM craplcm c
      WHERE c.cdcooper = 1
        AND c.nrdconta = 1355368
-       AND c.dtmvtolt = '24/01/2019'
+       AND c.dtmvtolt = to_date('24/01/2019','DD/MM/RRRR')
        AND c.vllanmto = 0
     UNION
     SELECT c.cdcooper
@@ -17,7 +17,7 @@ DECLARE
       FROM craplcm c
      WHERE c.cdcooper = 10
        AND c.nrdconta = 73750
-       AND c.dtmvtolt = '24/01/2019'
+       AND c.dtmvtolt = to_date('24/01/2019','DD/MM/RRRR')
        AND c.vllanmto = 0;
 BEGIN
   FOR r1 IN c1 LOOP
