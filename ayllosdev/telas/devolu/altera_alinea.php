@@ -33,22 +33,22 @@
 	$cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0;
 	
 	// Monta o xml dinâmico de acordo com a operação
-	$xml = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0175.p</Bo>';
-	$xml .= '		<Proc>altera-alinea</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+    $xml = '';
+    $xml .= '<Root>';
+    $xml .= '	<Cabecalho>';
+    $xml .= '		<Bo>b1wgen0175.p</Bo>';
+    $xml .= '		<Proc>altera-alinea</Proc>';
+    $xml .= '	</Cabecalho>';
+    $xml .= '	<Dados>';
+    $xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
-	$xml .= '		<cdbanchq>'.$cdbanchq.'</cdbanchq>';
-	$xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
-	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
-	$xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
+    $xml .= '		<cdbanchq>'.$cdbanchq.'</cdbanchq>';
+    $xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
+    $xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
+    $xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
+    $xml .= '	</Dados>';
+    $xml .= '</Root>';
 
     // Executa script para envio do XML e cria objeto para classe de tratamento de XML
 	$xmlResult = getDataXML($xml);
