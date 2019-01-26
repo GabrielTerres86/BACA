@@ -100,6 +100,7 @@
         <div id="declaracao_pj_cooperativa">Declara&ccedil;&atilde;o de pessoa jur&iacute;dica cooperativa</div>
     <? } ?>
 	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
+	<div id="ficha_proposta">Ficha-Proposta</div>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>

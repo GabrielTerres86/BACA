@@ -2552,8 +2552,12 @@ function verificaRelatorio() {
 
                 // Se esta incluindo, efetuar consultas
 						var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
-
-                showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Aimaro", "imprime();", metodo, "sim.gif", "nao.gif");
+				$inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+				if($inpessoa == 2){
+                	showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Aimaro", "imprime();", metodo, "sim.gif", "nao.gif");
+				}else{
+					eval(metodo);
+				}
             } else {
                 try {
                     eval(response);
