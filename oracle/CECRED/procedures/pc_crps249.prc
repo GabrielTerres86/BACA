@@ -651,8 +651,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                23/11/2018 - Adicionado na procedure pc_proc_cbl_mensal a utilização do cursor cr_lancbortot para considerar o valor da 
                             apropriação do juros de mora do desconto de titulos da tabela de lançamento do borderô ao invês dos valores 
                             gravados na craptdb, pois na craptdb grava a mora calculada pro dia seguinte (Paulo Penteado GFT)
+
+               30/11/2018 - Ajustado rotina para gerar lanc 384 atraves da tbcc_prejuizo_detalhe 
+                            PRJ450 - Regulatorio(Odirlei-AMcom)
                             
-         18/01/2019 - PRB0040545 (INC0030676) Correção de cursores para usarem os índices corretamente (Carlos)
+               18/01/2019 - PRB0040545 (INC0030676) Correção de cursores para usarem os índices corretamente (Carlos)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2506,6 +2509,23 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
   rw_compensa     cr_compensa%rowtype;
              
+--> Buscar os valores do historicos gerados nos detalhes da conta transitoria
+    CURSOR cr_tbprejuizo_det (pr_cdcooper in craphis.cdcooper%type,
+                              pr_dtmvtolt in craplcm.dtmvtolt%type,
+                              pr_cdhistor in craphis.cdhistor%type) IS 
+
+      SELECT ass.cdagenci,
+             COUNT(1) qtlanmto,
+             SUM(pd.vllanmto) vllanmto
+        FROM tbcc_prejuizo_detalhe pd,
+             crapass ass
+       WHERE pd.cdcooper = ass.cdcooper
+         AND pd.nrdconta = ass.nrdconta
+         AND pd.cdcooper = pr_cdcooper
+         AND pd.cdhistor = pr_cdhistor
+         AND pd.dtmvtolt = pr_dtmvtolt
+       GROUP BY ass.cdagenci;
+
     CURSOR cr_craplcm_tdb(pr_cdcooper IN crapcop.cdcooper%TYPE
                          ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
                          ,pr_cdhistor IN craphis.cdhistor%TYPE
@@ -2703,7 +2723,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
   -- Instância da tabela. O índice é o código da agência + tipo da fatura.
   vr_tab_faturas         typ_tab_faturas;
 
+  -- Armazenar valores agupados por agencia
+  TYPE typ_rec_age_gen
+       IS RECORD (cdagenci  NUMBER,
+                  qtlanmto  NUMBER,
+                  vllamnto  NUMBER);
+  TYPE typ_tab_age_gen IS TABLE OF typ_rec_age_gen
+       INDEX BY PLS_INTEGER;
   
+  vr_val_age_gen typ_tab_age_gen;
   
   -- Armazenar fatura bancoob
   TYPE typ_rec_valores_age 
@@ -14604,6 +14632,57 @@ BEGIN
                    '"(crps249) Transferencia Prejuizo - Conta Corrente"';
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
    end if;
+
+  --> PAGAMENTO DE PREJUIZO
+  vr_cdhistor := 384;
+  vr_vllanmto := 0;
+  vr_val_age_gen.delete;
+  --
+  FOR rw_tbprejuizo_det IN cr_tbprejuizo_det (pr_cdcooper => pr_cdcooper,
+                                              pr_dtmvtolt => vr_dtmvtolt,
+                                              pr_cdhistor => vr_cdhistor) LOOP -- Financiamento
+                                 
+    vr_vllanmto := vr_vllanmto + rw_tbprejuizo_det.vllanmto;
+    --
+    vr_idx_age_2 := rw_tbprejuizo_det.cdagenci;
+    vr_val_age_gen(vr_idx_age_2).cdagenci := lpad(rw_tbprejuizo_det.cdagenci,3,0);
+    vr_val_age_gen(vr_idx_age_2).vllamnto := nvl(vr_val_age_gen(vr_idx_age_2).vllamnto,0) + rw_tbprejuizo_det.vllanmto;
+    vr_val_age_gen(vr_idx_age_2).qtlanmto := nvl(vr_val_age_gen(vr_idx_age_2).qtlanmto,0) + rw_tbprejuizo_det.qtlanmto;
+    
+   END LOOP;
+  vr_vllanmto := abs(vr_vllanmto);
+  
+  
+  IF nvl(vr_vllanmto,0) > 0 THEN  
+  
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '4112,'||
+                   '7195,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) COMPLEMENTO HIST (0384) PAGAMENTO PREJUIZO – CONTA CORRENTE EM PREJUIZO"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+     
+     vr_linhadet := '999,' || TRIM(to_char(vr_vllanmto, '999999990.00'));
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+     
+   END IF;
+   
+   vr_idx_age_2 := vr_val_age_gen.first;
+   WHILE vr_idx_age_2 IS NOT NULL LOOP
+       
+     vr_linhadet := to_char(vr_val_age_gen(vr_idx_age_2).cdagenci,'fm000')||',' || 
+                    TRIM(to_char(vr_val_age_gen(vr_idx_age_2).vllamnto, '999999990.00'));
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   
+     vr_idx_age_2 := vr_val_age_gen.next(vr_idx_age_2);
+   END LOOP;
+   
+   --> Fim PAGAMENTO DE PREJUIZO
+   
 
  /*vr_cdhistor := 2386;
   vr_vllanmto := 0;
