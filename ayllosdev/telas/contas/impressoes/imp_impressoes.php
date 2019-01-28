@@ -12,6 +12,7 @@
  *
  *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS
  *							   PRJ 414 (Mateus Z - Mouts)
+ *				  16/01/2019 - Adicionado chamada para o relatorio Ficha-Proposta (Cássia de Oliveira - GFT)
  */	 
 ?>
 
@@ -42,6 +43,7 @@
 	$idseqttl = (isset($_POST['_idseqttl'])) ? $_POST['_idseqttl'] : '';
 	$GLOBALS['nrcpfcgc'] = (isset($_POST['_nrcpfcgc'])) ? $_POST['_nrcpfcgc'] : '';			
 	
+	// Inicio - Ficha-proposta - Cásssia de Oliveira (GFT)
 	// Função para exibir erros na tela através de javascript
     function exibeErro($msgErro) { 
 	  echo '<script>alert("'.$msgErro.'");</script>';	
@@ -134,5 +136,6 @@
 		$dompdf->render();
 		$dompdf->stream('impressoes_'.$impchave.'.pdf', $opcoes );
 	}
+	// Fim - Ficha-proposta - Cásssia de Oliveira (GFT)
 		
 ?>
