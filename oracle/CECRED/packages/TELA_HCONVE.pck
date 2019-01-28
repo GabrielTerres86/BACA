@@ -1943,7 +1943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     vr_des_saida    VARCHAR2(2000);
     
     vr_contador  number := 0;
-
+    vr_flgarqui boolean := false;
     vr_dados_futuros typ_tab_futuros;
 
   begin
@@ -1967,17 +1967,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => 'arq');
 
-    -- Realizar a cópia do arquivo
-    GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
-                               ,pr_typ_saida   => vr_typ_said
-                               ,pr_des_saida   => vr_des_erro);
+    while not vr_flgarqui loop
+
+      -- Realizar a cópia do arquivo
+      GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
+                                 ,pr_typ_saida   => vr_typ_said
+                                 ,pr_des_saida   => vr_des_erro);
 
       -- Testar erro
-    IF vr_typ_said = 'ERR' THEN
-      -- O comando shell executou com erro, gerar log e sair do processo
-      vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
-      RAISE vr_exc_saida;
-    END IF;
+      IF vr_typ_said = 'ERR' THEN
+        -- O comando shell executou com erro, gerar log e sair do processo
+        vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Verifica se o arquivo existe
+      IF GENE0001.fn_exis_arquivo(pr_caminho => vr_dsupload||'/'||pr_dsarquiv) THEN
+        vr_flgarqui := true;
+      -- Tenta criar copia dez vezes
+      ELSIF vr_contador = 10 THEN
+        vr_flgarqui := true;
+      END IF;
+      
+      vr_contador := vr_contador + 1;
+    
+    end loop;
+    
+    vr_contador := 0;
 
     -- Verifica se o arquivo existe
     IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsupload||'/'||pr_dsarquiv) THEN

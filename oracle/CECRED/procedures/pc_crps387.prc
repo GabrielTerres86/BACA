@@ -2088,6 +2088,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
         end;
       end if;
 
+	  close cr_hconven;
+
       -- Loop sobre a tabela de convenios da cooperativa
       FOR rw_gncvcop IN cr_gncvcop (pr_cdcooper
                                    ,vr_convenio) LOOP
@@ -2158,7 +2160,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                    vr_contador);
 
           -- Homologacao de convenios          
-          if cr_hconven%found and vr_contador = 0 then
+          if vr_convenio > 0 and vr_contador = 0 then
             vr_dscritic := 'Nenhum arquivo foi integrado.';
             raise vr_exc_saida;
           end if; 
@@ -5485,7 +5487,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                 RAISE vr_exc_saida;
                             END;
                             -- Homologacao de convenios          
-                            if cr_hconven%found then
+                            if vr_convenio > 0 then
                               BEGIN
                                 INSERT 
                                   INTO CRAPPRM (NMSISTEM

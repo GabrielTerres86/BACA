@@ -279,28 +279,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Utilizado apenas em homologacao de convenios
       CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
-      SELECT prm.dsvlrprm
+      SELECT prm.dsvlrprm cdconven
         FROM crapprm prm
        WHERE prm.cdcooper = pr_cdcooper
          AND prm.nmsistem = 'CRED'
          AND prm.cdacesso = 'PRM_HCONVE_CRPS385_IN';
       rw_hconven cr_hconven%ROWTYPE;
-      
-      -- Busca codigo do convenio a ser analisado
-      CURSOR cr_cdconve( pr_cdcooper IN crapcop.cdcooper%TYPE
-                       , pr_cdbarras IN craplft.cdbarras%TYPE
-                       , pr_dtmvtolt IN DATE) IS
-      SELECT gnconve.cdconven
-           , gnconve.nmarqcxa
-           , gnconve.cdhiscxa
-        FROM craplft
-           , gnconve
-       WHERE craplft.cdcooper        = pr_cdcooper
-         AND upper(craplft.cdbarras) = pr_cdbarras
-         AND craplft.dtmvtolt        = pr_dtmvtolt
-         AND gnconve.flgativo        = 1
-         AND gnconve.cdhiscxa        = craplft.cdhistor;
-      rw_cdconve cr_cdconve%ROWTYPE;
 
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -1205,6 +1189,46 @@ CREATE OR REPLACE PROCEDURE CECRED.
             dbms_lob.close(vr_des_xml2);
             dbms_lob.freetemporary(vr_des_xml2);
 
+            -- Satisfazer condicao significa que execucao
+            -- esta homologando algum convenio. 
+            IF vr_cdconven <> 0 THEN
+                
+              BEGIN
+                INSERT 
+                  INTO CRAPPRM (NMSISTEM
+                               ,CDCOOPER
+                               ,CDACESSO
+                               ,DSTEXPRM
+                               ,DSVLRPRM)
+                VALUES         ('CRED'
+                               ,pr_cdcooper
+                               ,'PRM_HCONVE_CRPS385_OUT'
+                               ,'Nome do arquivo concatenado com o diretorio.'
+                               ,gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                      pr_cdcooper => pr_cdcooper,
+                                                      pr_nmsubdir => '/salvar')||'/'||vr_nmarqped);
+              EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  BEGIN
+                    UPDATE CRAPPRM PRM
+                       SET PRM.DSVLRPRM = gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                                pr_cdcooper => pr_cdcooper,
+                                                                pr_nmsubdir => '/salvar')||'/'||vr_nmarqped
+                     WHERE PRM.CDCOOPER = pr_cdcooper
+                       AND PRM.NMSISTEM = 'CRED'
+                       AND PRM.CDACESSO = 'PRM_HCONVE_CRPS385_OUT';
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar dados da tabela crapprm: '||SQLERRM;
+                      RAISE vr_exc_saida;
+                  END;
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir dados da tabela crapprm: '||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+            
+            END IF;
+
             --se nao for convenio unico, transmite o arquivo
             IF rw_gnconve.flgcvuni = 0 THEN
               pc_transmite_arquivo;
@@ -1371,20 +1395,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       
       -- Caso encontre parametro busca convenio
       IF cr_hconven%FOUND THEN
-        -- Busca convenio
-        OPEN cr_cdconve(pr_cdcooper
-                       ,rw_hconven.dsvlrprm
-                       ,rw_crapdat.dtmvtolt);
-        FETCH cr_cdconve into rw_cdconve;
-        -- Se encontrar convenio define valor
-        IF cr_cdconve%FOUND THEN
-          vr_cdconven := rw_hconven.dsvlrprm;
-        ELSE
-          CLOSE cr_cdconve;
-          vr_dscritic := 'Fatura de convênio nao encontrada.';
-          RAISE vr_exc_saida;
-        END IF;        
-        CLOSE cr_cdconve;        
+        vr_cdconven := rw_hconven.cdconven;
       END IF;
       
       CLOSE cr_hconven;
