@@ -5635,7 +5635,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             SELECT conv.cdcooper
                   ,conv.nrconven
                   ,conv.cdhistor
-                  ,fn_crapceb1(conv.cdcooper
+                  ,fn_idrecipr(conv.cdcooper
 															,pr_nrdconta
 															,conv.nrconven
 															) idrecipr
