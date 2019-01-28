@@ -158,8 +158,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
          AND craplrg.dtresgat <= pr_dtmvtopr
          AND craplrg.inresgat  = 0
          AND craplrg.tpaplica  = 4
+		 AND craplrg.hrtransa >= 0
          AND craplrg.tpresgat IN (1,2,3)
-       ORDER BY craplrg.tpresgat, craplrg.progress_recid;
+       ORDER BY craplrg.tpresgat;
        
     -- Buscar cadastro da poupanca programada.
     CURSOR cr_craprpp (pr_cdcooper craplrg.cdcooper%TYPE,
@@ -1065,22 +1066,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
            pc_gera_resgate_poup_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_vlresgat => vr_vlresgat);
-           IF ((rw_craprpp.cdprodut < -1) AND (vr_vlresgat > 0) AND (rw_craplrg.hrtransa < 0) ) THEN
-          --Executa migração de poupança (antigo poupanca.i)
-          cecred.pc_migra_poupanca_prog (pr_cdcooper  => pr_cdcooper,          --> Cooperativa
-                                     pr_cdprogra  => vr_cdprogra,          --> Programa chamador
-                                          pr_inproces  => rw_crapdat.inproces,--> Indicador do processo
-                                     pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
-                                     pr_dtmvtopr  => rw_crapdat.dtmvtopr,          --> Data do processo
-                                     pr_vlsdrdpp  => vr_vlresgat,                     --> Valor de saldo da RPP
-                                     pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
-                                     pr_cdcritic  => vr_cdcritic,          --> Código da critica de erro
-                                     pr_dscritic  => vr_dscritic);         --> Descrição do erro encontrado
-               IF vr_dscritic is not null THEN
-                       raise vr_exc_saida;
-               END IF;
-
-           END IF;
         ELSE
            pc_gera_resgate_app_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,

@@ -105,6 +105,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
        and craprpp.cdsitrpp <> 5
      order by nrdconta,
               nrctrrpp;
+
+    CURSOR cr_crapprm IS
+        Select DSVLRPRM indmigracao
+          From crapprm
+         Where NMSISTEM = 'CRED'
+           AND CDACESSO = 'MIGRA_POUPANCA_PROG'
+           AND CDCOOPER = pr_cdcooper;
+      vr_crapprm cr_crapprm%ROWTYPE;
+
   --Cursor para buscar rowid acumulado e atualizar tabela craptrd
   cursor cr_tbgen_relwrk_trd(pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type) is
     select distinct a.dschave rowid_trd
@@ -203,6 +212,12 @@ begin
     vr_inproces := rw_crapdat.inproces;
   end if;
   close btch0001.cr_crapdat;
+
+  -- Buscar o indicatiov de migracao
+  OPEN cr_crapprm;
+  FETCH cr_crapprm
+  INTO vr_crapprm;
+  CLOSE cr_crapprm;
 
   -- Buscar o percentual de IR da aplicação
   vr_prcaplic := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
@@ -395,19 +410,21 @@ begin
         raise vr_exc_erro;
       end if;
     
-    --Executa migração de poupança (antigo poupanca.i)
-    cecred.pc_migra_poupanca_prog (pr_cdcooper  => pr_cdcooper,          --> Cooperativa
-                               pr_cdprogra  => vr_cdprogra,          --> Programa chamador
-                               pr_inproces  => vr_inproces,          --> Indicador do processo
-                               pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
-                               pr_dtmvtopr  => vr_dtmvtopr,          --> Data do processo
-                               pr_vlsdrdpp  => vr_vlsdrdpp,                     --> Valor de saldo da RPP
-                               pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
-                               pr_cdcritic  => pr_cdcritic,          --> Código da critica de erro
-                               pr_dscritic  => pr_dscritic);         --> Descrição do erro encontrado
-    if pr_dscritic is not null or pr_cdcritic is not null then
-      raise vr_exc_erro;
-    end if;
+      IF ((vr_crapprm.indmigracao IS NOT NULL) AND (vr_crapprm.indmigracao = '1')) THEN
+		--Executa migração de poupança (antigo poupanca.i)
+		cecred.pc_migra_poupanca_prog (pr_cdcooper  => pr_cdcooper,          --> Cooperativa
+								   pr_cdprogra  => vr_cdprogra,          --> Programa chamador
+								   pr_inproces  => vr_inproces,          --> Indicador do processo
+								   pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
+								   pr_dtmvtopr  => vr_dtmvtopr,          --> Data do processo
+								   pr_vlsdrdpp  => vr_vlsdrdpp,                     --> Valor de saldo da RPP
+								   pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
+								   pr_cdcritic  => pr_cdcritic,          --> Código da critica de erro
+								   pr_dscritic  => pr_dscritic);         --> Descrição do erro encontrado
+		if pr_dscritic is not null or pr_cdcritic is not null then
+		  raise vr_exc_erro;
+		end if;
+      END IF;
     end loop;
 
     -- Grava LOG de ocorrência final do cursor cr_craprpp
