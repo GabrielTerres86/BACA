@@ -222,7 +222,7 @@ function formataFormularioConsulta() {
     $('#flgtaiof', '#frmConsulta').css({ 'width': '80px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#vltrfesp', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("DECIMAL", "zzz.zz9,99", "", "");
     $('#flgcrcta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
-    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3'); 
+    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '4'); 
     $('#flgimpde', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsorgrec', '#frmConsulta').css({ 'width': '335px', 'text-align': 'left' }).desabilitaCampo();
     $('#flglispr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
