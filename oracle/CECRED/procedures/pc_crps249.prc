@@ -3603,18 +3603,18 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_cdestrut := '55';
 
     vr_tab_craphis.delete;
-    vr_tab_craphis(1).cdhistor  := DSCT0003.vr_cdhistordsct_liberacred;     --2665 LIBERACAO DO CREDITO DESCONTO DE TITULO
-    vr_tab_craphis(2).cdhistor  := DSCT0003.vr_cdhistordsct_rendaapropr;    --2666 RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
-    vr_tab_craphis(3).cdhistor  := DSCT0003.vr_cdhistordsct_pgtoopc;        --2671 PAGTO DESCONTO DE TITULO
-    vr_tab_craphis(4).cdhistor  := DSCT0003.vr_cdhistordsct_pgtocompe;      --2672 PAGTO DESCONTO TITULO VIA COMPE
-    vr_tab_craphis(5).cdhistor  := DSCT0003.vr_cdhistordsct_pgtocooper;     --2673 PAGTO DESCONTO DE TITULO VIA COOPERATIVA
-    vr_tab_craphis(6).cdhistor  := DSCT0003.vr_cdhistordsct_pgtoavalopc;    --2675 PAGTO DESCONTO DE TITULO AVAL
-    vr_tab_craphis(7).cdhistor  := DSCT0003.vr_cdhistordsct_resgatetitdsc;  --2678 RESGATE DE TÍTULO DESCONTADO
-    vr_tab_craphis(8).cdhistor  := DSCT0001.vr_cdhistordsct_resreap;        --2679 RENDA SOBRE RESGATE DE TÍTULO DESCONTADO
-    vr_tab_craphis(9).cdhistor  := DSCT0003.vr_cdhistordsct_pgtomultaopc;   --2682 PAGTO DE MULTA SOBRE DESCONTO DE TITULO (operacao credito)
-    vr_tab_craphis(10).cdhistor := DSCT0003.vr_cdhistordsct_pgtomultaavopc; --2684 PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
-    vr_tab_craphis(11).cdhistor := DSCT0003.vr_cdhistordsct_pgtojurosopc;   --2686 PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (operacao credito)
-    vr_tab_craphis(12).cdhistor := DSCT0003.vr_cdhistordsct_pgtojurosavopc; --2688 PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
+    vr_tab_craphis(1).cdhistor  := 2665; --LIBERACAO DO CREDITO DESCONTO DE TITULO
+    vr_tab_craphis(2).cdhistor  := 2666; --RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+    vr_tab_craphis(3).cdhistor  := 2671; --PAGTO DESCONTO DE TITULO 
+    vr_tab_craphis(4).cdhistor  := 2672; --PAGTO DESCONTO TITULO VIA COMPE
+    vr_tab_craphis(5).cdhistor  := 2673; --PAGTO DESCONTO DE TITULO VIA COOPERATIVA
+    vr_tab_craphis(6).cdhistor  := 2675; --PAGTO DESCONTO DE TITULO AVAL
+    vr_tab_craphis(7).cdhistor  := 2678; --RESGATE DE TÍTULO DESCONTADO
+    vr_tab_craphis(8).cdhistor  := 2679; --RENDA SOBRE RESGATE DE TÍTULO DESCONTADO
+    vr_tab_craphis(9).cdhistor  := 2682; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO (operacao credito)
+    vr_tab_craphis(10).cdhistor := 2684; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
+    vr_tab_craphis(11).cdhistor := 2686; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (operacao credito)
+    vr_tab_craphis(12).cdhistor := 2688; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
 
     vr_indice   := vr_tab_craphis.first;
     WHILE vr_indice IS NOT NULL LOOP
