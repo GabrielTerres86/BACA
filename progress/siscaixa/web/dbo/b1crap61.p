@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 12/06/2018
+   Data    : Marco/2010                      Ultima atualizacao: 25/01/2019
 
    Dados referentes ao programa:
 
@@ -36,7 +36,7 @@
                17/11/2014 - Efetuar RETURN "NOK" quando a procedure 
                            'realiza-deposito' retornar <> "OK" (Diego).
                            
-               03/12/2014 - Validaçãod e LOCKED na crapmdw e verificação de
+               03/12/2014 - Validação e LOCKED na crapmdw e verificação de
                             sequencial zerado
                             (Lucas Lunelli SD. 227937)     
                             
@@ -62,7 +62,9 @@
                12/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente - Rangel Decker AMcom     
                
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
+                            Heitor (Mouts)
+
+               25/01/2019 - P450 - Correçao parametro geraçao lançamento (bo 200), dtmvtocd (Renato Cordeiro - AMcom)
 
 ............................................................................ */
 
@@ -1053,7 +1055,7 @@ PROCEDURE deposita_envelope_dinheiro:
                       END.
                 
                     RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                                      ( INPUT crapdat.dtmvtolt        /* par_dtmvtolt */
+                                      ( INPUT crapdat.dtmvtocd        /* par_dtmvtolt */
                                        ,INPUT p-cod-agencia           /* par_cdagenci */
                                        ,INPUT 11                      /* par_cdbccxlt */
                                        ,INPUT i-nro-lote              /* par_nrdolote */
