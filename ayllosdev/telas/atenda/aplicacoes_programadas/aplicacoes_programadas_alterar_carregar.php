@@ -69,7 +69,7 @@
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibeErro(utf8_encode($msgErro));
 	}
-	
+	/*
 	// Monta o xml de requisição
 	$xmlAlterar  = "";
 	$xmlAlterar .= "<Root>";
