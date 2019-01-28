@@ -62,7 +62,7 @@
 		$xml .= "</Root>";	
 
 		// Executa script para envio do XML
-		$xmlResult = mensageria($xml, "CONTAS", "IMPRESSAO_FICHA_PROPOSTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "CONTAS", "IMPRESSAO_FICHA_PROPOSTA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		// Cria objeto para classe de tratamento de XML
 		$xmlObj = simplexml_load_string($xmlResult);
 		// Se ocorrer um erro, mostra crítica
