@@ -791,8 +791,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_nrdrowid => vr_nrdrowid);
                   END IF;
               END IF;  
-            END IF;  
-            END IF;  
+            END IF;
 
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
           IF ((vr_vlaplica > 0) AND (vr_dscritic IS NULL)) THEN
