@@ -79,6 +79,7 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
                                         INPUT par_flgpagto,
                                         INPUT par_qtpremax,
                                         INPUT par_dtdpagto,
+                                        INPUT 0,
                                        OUTPUT TABLE tt-erro).
         ELSE
         IF par_flcadast = 1 AND par_flcancel THEN
@@ -115,6 +116,7 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
                                         INPUT par_flgpagto,
                                         INPUT par_qtpremax,
                                         INPUT par_dtdpagto,
+                                        INPUT 0,
                                        OUTPUT TABLE tt-erro).
         ELSE
             DO:
