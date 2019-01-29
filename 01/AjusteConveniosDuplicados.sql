@@ -39,5 +39,6 @@ BEGIN
     WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE('Ocorreu um erro ao executar o baca: ' ||
                            SQLERRM);
+    rollback;
   END;
 END;
