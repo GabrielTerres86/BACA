@@ -160,7 +160,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
 
             CREATE xml_operacao.
             ASSIGN xml_operacao.dslinxml =  "<PARCELA>"
-                   + "<nrctremp>" + TRIM(STRING(tt-pagamentos-parcelas.nrctremp,"zzz,zzz,zzz,zz9")) + "</nrctremp>" 
+                   + "<nrctremp>" + TRIM(STRING(tt-pagamentos-parcelas.nrctremp,"zz,zzz,zz9")) + "</nrctremp>" 
                    + "<nrparepr>" + STRING(tt-pagamentos-parcelas.nrparepr,"zz9") + "</nrparepr>"
                    + "<dtvencto>" + TRIM(STRING(tt-pagamentos-parcelas.dtvencto,"99/99/9999")) + "</dtvencto>" 
                    + "<vldespar>" + aux_vldespar + "</vldespar>"

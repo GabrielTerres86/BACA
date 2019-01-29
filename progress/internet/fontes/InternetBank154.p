@@ -102,7 +102,7 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
            DO:
             CREATE xml_operacao.
             ASSIGN xml_operacao.dslinxml =  "<EMPRESTIMO>"
-                   + "<nrctremp>" + TRIM(STRING(tt-dados-epr.nrctremp,"zzz,zzz,zzz,zz9")) + "</nrctremp>" 
+                   + "<nrctremp>" + TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) + "</nrctremp>" 
                    + "<qtpreemp>" + STRING(tt-dados-epr.qtpreemp,"zz9") + "</qtpreemp>"
                    + "<vlemprst>" + TRIM(STRING(tt-dados-epr.vlemprst,"zzz,zzz,zzz,zz9.99")) + "</vlemprst>"
                    + "<vlpreemp>" + STRING(tt-dados-epr.vlpreemp,"zzz,zzz,zzz,zz9.99") + "</vlpreemp>"
