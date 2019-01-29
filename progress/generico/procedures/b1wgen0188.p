@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 13/12/2018
+    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
     
     Dados referentes ao programa:
 
@@ -118,6 +118,9 @@
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
         
         13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+                
+                08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
+                             INC0028548 (Douglas Pagel / AMcom).
                 
 ..............................................................................*/
 
@@ -1176,45 +1179,45 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-          
+
        GRAVA_EFETIVA: DO TRANSACTION ON ERROR  UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA
                                      ON ENDKEY UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA:
     
 
-           RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
-                                                         INPUT par_cdagenci,
-                                                         INPUT par_nrdcaixa,
-                                                         INPUT par_cdoperad,
-                                                         INPUT "CMAPRV", /*par_nmdatela*/
-                                                         INPUT par_idorigem,
-                                                         INPUT par_nrdconta,
-                                                         INPUT par_idseqttl,
-                                                         INPUT par_dtmvtolt,
-                                                         INPUT aux_flgerlog,
-                                                         INPUT nov_nrctremp,
-                                                         INPUT 0,  /*par_insitapr*/
-                                                         INPUT "", /*par_dsobscmt*/
-                                                         INPUT par_dtdpagto,
-                                                         INPUT 0, /*par_cdbccxlt*/
-                                                         INPUT 0, /*par_nrdolote*/
-                                                         INPUT par_dtmvtopr,
-                                                         INPUT 0, /*par_inproces*/
-                                                         /* calculo de tarifa sera
-                                                         realizado na propria rotina
-                                                         INPUT aux_vltarifa,
-                                                         INPUT aux_vltaxiof,
-                                                         INPUT aux_vltariof,*/
-                                                         INPUT par_nrcpfope,
-                                                         OUTPUT aux_dsmesage,
-                                                         OUTPUT TABLE tt-ratings,
-                                                         OUTPUT TABLE tt-erro).
+       RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT par_cdoperad,
+                                                     INPUT "CMAPRV", /*par_nmdatela*/
+                                                     INPUT par_idorigem,
+                                                     INPUT par_nrdconta,
+                                                     INPUT par_idseqttl,
+                                                     INPUT par_dtmvtolt,
+                                                     INPUT aux_flgerlog,
+                                                     INPUT nov_nrctremp,
+                                                     INPUT 0,  /*par_insitapr*/
+                                                     INPUT "", /*par_dsobscmt*/
+                                                     INPUT par_dtdpagto,
+                                                     INPUT 0, /*par_cdbccxlt*/
+                                                     INPUT 0, /*par_nrdolote*/
+                                                     INPUT par_dtmvtopr,
+                                                     INPUT 0, /*par_inproces*/
+                                                     /* calculo de tarifa sera
+                                                     realizado na propria rotina
+                                                     INPUT aux_vltarifa,
+                                                     INPUT aux_vltaxiof,
+                                                     INPUT aux_vltariof,*/
+                                                     INPUT par_nrcpfope,
+                                                     OUTPUT aux_dsmesage,
+                                                     OUTPUT TABLE tt-ratings,
+                                                     OUTPUT TABLE tt-erro).
 
-           IF RETURN-VALUE <> "OK" THEN
+       IF RETURN-VALUE <> "OK" THEN
               UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA.
               
-              
-            ASSIGN aux_flgtrans = TRUE.
-           
+
+       ASSIGN aux_flgtrans = TRUE.
+
        
        END. /* END GRAVA_EFETIVA: DO TRANSACTION */
 
@@ -2923,7 +2926,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  capitalizados  "
                    "mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m.  estipulada  na  quantidade  de  "
                    par_qtpreemp  FORMAT "z9" "  parcelas,  no  valor  de  R$ " 
                    par_vlpreemp  FORMAT "zzz,zz9.99" " "
@@ -3011,7 +3014,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "), acrescido de juros  remuneratorios  "
                    "capitalizados  mensalmente,  a  taxa  de "
                    SKIP
-                   craplcr.txmensal FORMAT "zz9.99"
+                   IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m. estipulada na quantidade de "
                    par_qtpreemp FORMAT "z9"
                    " parcelas, no valor de R$  " 
