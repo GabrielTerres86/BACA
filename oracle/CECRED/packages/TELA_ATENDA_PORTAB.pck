@@ -2124,7 +2124,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
               ,crapcop.dsendweb as dsendweb
               ,crapcop.nrtelura as nrtelura
               ,crapcop.nrtelouv as nrtelouv
-              ,crapcop.nmcidade||', '||to_char(to_date(SYSDATE),'dd" de "FMMonth" de "YYYY','nls_date_language=portuguese') as dataextenso
+              ,crapcop.nmcidade||', '||to_char(SYSDATE,'dd" de "FMMonth" de "YYYY','nls_date_language=portuguese') as dataextenso
           FROM crapcop 
          WHERE crapcop.cdcooper = pr_cdcooper;		   
       rw_crapcop cr_crapcop%ROWTYPE;
