@@ -206,7 +206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             de titulos (Guilherme).
 
                10/02/2009 - Alterado a apropriacao para lancar na conta contabil
-                            1644 o valor total sem tirar o abatimento.
+                            1643 o valor total sem tirar o abatimento.
                             craptdb.vltitulo - craptdb.vlliquid.
                             Comentario 1 na Tarefa: 22255
                           - Lancar liquidacao de titulos descontados pagos pelo
@@ -239,7 +239,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                08/07/2009 - Se forem titulos resgatados nao soma os juros
                             restituidos na apropriacao final do mes,
                             pois eles ja foram lancados a debito
-                            na 1644 no dia que o titulo eh resgatado(Guilherme).
+                            na 1643 no dia que o titulo eh resgatado(Guilherme).
 
                11/08/2009 - Incluir tarifa de Internet no craplft(Faturas) (Ze)
 
@@ -656,6 +656,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             PRJ450 - Regulatorio(Odirlei-AMcom)
                             
                18/01/2019 - PRB0040545 (INC0030676) Correção de cursores para usarem os índices corretamente (Carlos)
+			   
+			   29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao em numeracao de contas,
+				            gerar lancamento IOF FINAME, lancamento provisao mensal historico 38.
+							Heitor (Mouts)
+							  
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -698,6 +703,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craphis.nrctadeb
       from craphis
      where craphis.cdcooper = pr_cdcooper
+       AND (craphis.nrctadeb <> craphis.nrctacrd OR craphis.nrctadeb = 0)
        and craphis.cdhstctb > 0
        and craphis.cdhistor NOT IN (1154, -- Hist.Sicredi
                                     1019, -- Hist. Debito Automatico Sicredi
@@ -2637,6 +2643,15 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
              ,age.cdccuage
      ORDER BY ass.cdagenci;
              
+  CURSOR cr_prov_mes_38(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_dtiniper IN DATE
+                       ,pr_dtfimper IN DATE) IS
+    SELECT SUM(c.vllanmto) vllanmto
+      FROM craplcm c
+     WHERE c.cdcooper = pr_cdcooper
+       AND c.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper
+       AND c.cdhistor = 38;
+             
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
        
@@ -4193,7 +4208,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     '1642,'||
+                     '1641,'||
                      '7131,'||
                      trim(to_char(vr_tab_agencia(999).vr_vlaprjur, '99999999999990.00'))||','||
                      '5210,'||
@@ -4319,7 +4334,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         close cr_craptdb6;
       end;
       -- Se for um titulo resgatado nao soma os juros restituidos pois eles
-      -- ja foram lancados a debito na 1644 no dia que o titulo eh resgatado
+      -- ja foram lancados a debito na 1643 no dia que o titulo eh resgatado
       begin
         -- Borderô de desconto de títulos
         open cr_craptdb6 (pr_cdcooper,
@@ -4459,7 +4474,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     '1644,'||
+                     '1643,'||
                      '7132,'||
                      trim(to_char(vr_tab_agencia(999).vr_aprjursr, '99999999999990.00'))||','||
                      '5210,'||
@@ -4486,7 +4501,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     '1646,'||
+                     '1645,'||
                      '7132,'||
                      trim(to_char(vr_tab_agencia(999).vr_aprjurcr, '99999999999990.00'))||','||
                      '5210,'||
@@ -5378,7 +5393,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1642,';
+    vr_lsctaorc := ',1641,';
     vr_dshstorc := '"(crps249) RECEITA DE DESCONTO DE CHEQUE."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -5386,7 +5401,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := true;  -- Lancamento de reversao
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1642,';
+    vr_lsctaorc := ',1641,';
     vr_dshstorc := '"(crps249) REVERSAO DA RECEITA DE DESCONTO DE CHEQUE."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -5614,7 +5629,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1644,';
+    vr_lsctaorc := ',1643,';
     vr_dshstorc := '"(crps249) RENDA DE DESCONTO DE TITULO S/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -5622,7 +5637,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := true;  -- Lancamento de reversao
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1644,';
+    vr_lsctaorc := ',1643,';
     vr_dshstorc := '"(crps249) REVERSAO DA RENDA DE DESCONTO DE TITULO S/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -5658,7 +5673,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1646,';
+    vr_lsctaorc := ',1645,';
     vr_dshstorc := '"(crps249) RENDA DE DESCONTO DE TITULO C/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento; 
@@ -5666,7 +5681,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := true;  -- Lancamento de reversao
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1646,';
+    vr_lsctaorc := ',1645,';
     vr_dshstorc := '"(crps249) REVERSAO DA RENDA DE DESCONTO DE TITULO C/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -5702,7 +5717,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1638,';
+    vr_lsctaorc := ',1630,';
     vr_dshstorc := '"(crps249) RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento; 
@@ -5710,7 +5725,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_flgrvorc := true;  -- Lancamento de reversao
     vr_flgctpas := false; -- Conta do ATIVO
     vr_flgctred := true;  -- Redutora
-    vr_lsctaorc := ',1638,';
+    vr_lsctaorc := ',1630,';
     vr_dshstorc := '"(crps249) REVERSAO RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
@@ -6750,7 +6765,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
      IF to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') THEN
        IF vr_arq_op_cred(2)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5536,1641,vr_arq_op_cred(2)(999)(1),'"DESCONTO DE CHEQUE - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1641,1641,vr_arq_op_cred(2)(999)(1),'"DESCONTO DE CHEQUE - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
                                         
@@ -6767,7 +6782,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(2)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,5536,vr_arq_op_cred(2)(999)(1),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,1641,vr_arq_op_cred(2)(999)(1),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
                   
@@ -6784,7 +6799,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(2)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5537,1641,vr_arq_op_cred(2)(999)(2),'"DESCONTO DE CHEQUE - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1641,1641,vr_arq_op_cred(2)(999)(2),'"DESCONTO DE CHEQUE - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6801,7 +6816,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(2)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,5537,vr_arq_op_cred(2)(999)(2),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,1641,vr_arq_op_cred(2)(999)(2),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -6818,7 +6833,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(3)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5504,1621,vr_arq_op_cred(3)(999)(1),'"EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1621,1621,vr_arq_op_cred(3)(999)(1),'"EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6835,7 +6850,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                         
        IF vr_arq_op_cred(3)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5504,vr_arq_op_cred(3)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,1621,vr_arq_op_cred(3)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -6852,7 +6867,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(3)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5505,1621,vr_arq_op_cred(3)(999)(2),'"EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1621,1621,vr_arq_op_cred(3)(999)(2),'"EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -6869,7 +6884,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(3)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5505,vr_arq_op_cred(3)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,1621,vr_arq_op_cred(3)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita                                   
           
@@ -6886,7 +6901,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(4)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5548,1662,vr_arq_op_cred(4)(999)(1),'"FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1662,1662,vr_arq_op_cred(4)(999)(1),'"FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6903,7 +6918,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(4)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5548,vr_arq_op_cred(4)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,1662,vr_arq_op_cred(4)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6920,7 +6935,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(4)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5549,1662,vr_arq_op_cred(4)(999)(2),'"FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1662,1662,vr_arq_op_cred(4)(999)(2),'"FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6937,7 +6952,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(4)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5549,vr_arq_op_cred(4)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,1662,vr_arq_op_cred(4)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6954,7 +6969,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(5)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5516,1664,vr_arq_op_cred(5)(999)(1),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1664,1664,vr_arq_op_cred(5)(999)(1),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6971,7 +6986,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(5)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5516,vr_arq_op_cred(5)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,1664,vr_arq_op_cred(5)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -6988,7 +7003,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(5)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5517,1664,vr_arq_op_cred(5)(999)(2),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1664,1664,vr_arq_op_cred(5)(999)(2),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7005,7 +7020,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(5)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5517,vr_arq_op_cred(5)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,1664,vr_arq_op_cred(5)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7022,7 +7037,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(6)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 6 - FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5562,1667,vr_arq_op_cred(6)(999)(1),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1667,1667,vr_arq_op_cred(6)(999)(1),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7039,7 +7054,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(6)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,5562,vr_arq_op_cred(6)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,1667,vr_arq_op_cred(6)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7056,7 +7071,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(6)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5563,1667,vr_arq_op_cred(6)(999)(2),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1667,1667,vr_arq_op_cred(6)(999)(2),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7073,7 +7088,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(6)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,5563,vr_arq_op_cred(6)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,1667,vr_arq_op_cred(6)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7090,7 +7105,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
 		   IF vr_arq_op_cred(16)(999)(1) > 0 THEN
          -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA
-         vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5321,1603,vr_arq_op_cred(16)(999)(1),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+         vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1603,1603,vr_arq_op_cred(16)(999)(1),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7107,7 +7122,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(16)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA 
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,5321,vr_arq_op_cred(16)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,1603,vr_arq_op_cred(16)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7124,7 +7139,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(16)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5322,1603,vr_arq_op_cred(16)(999)(2),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1603,1603,vr_arq_op_cred(16)(999)(2),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7141,7 +7156,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(16)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,5322,vr_arq_op_cred(16)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,1603,vr_arq_op_cred(16)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7158,7 +7173,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 	   
 		   IF vr_arq_op_cred(17)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA 
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5325,1607,vr_arq_op_cred(17)(999)(1),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1607,1607,vr_arq_op_cred(17)(999)(1),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7175,7 +7190,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(17)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA 
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,5325,vr_arq_op_cred(17)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,1607,vr_arq_op_cred(17)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7192,7 +7207,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(17)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5326,1607,vr_arq_op_cred(17)(999)(2),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1607,1607,vr_arq_op_cred(17)(999)(2),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7209,7 +7224,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(17)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,5326,vr_arq_op_cred(17)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,1607,vr_arq_op_cred(17)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7226,7 +7241,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(7)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5538,vr_arq_op_cred(7)(999)(1),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1641,1641,vr_arq_op_cred(7)(999)(1),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7243,7 +7258,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(7)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5538,1642,vr_arq_op_cred(7)(999)(1),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,1641,vr_arq_op_cred(7)(999)(1),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7260,7 +7275,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(7)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5539,vr_arq_op_cred(7)(999)(2),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1641,1641,vr_arq_op_cred(7)(999)(2),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7276,7 +7291,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(7)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5539,1642,vr_arq_op_cred(7)(999)(2),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,1641,vr_arq_op_cred(7)(999)(2),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7293,7 +7308,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(8)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5540,1643,vr_arq_op_cred(8)(999)(1),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1643,1643,vr_arq_op_cred(8)(999)(1),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7310,7 +7325,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(8)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,5540,vr_arq_op_cred(8)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,1643,vr_arq_op_cred(8)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7326,7 +7341,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(8)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5541,1643,vr_arq_op_cred(8)(999)(2),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1643,1643,vr_arq_op_cred(8)(999)(2),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7343,7 +7358,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(8)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,5541,vr_arq_op_cred(8)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,1643,vr_arq_op_cred(8)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                      
           
@@ -7360,7 +7375,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(9)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5544,1645,vr_arq_op_cred(9)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1645,1645,vr_arq_op_cred(9)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7377,7 +7392,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(9)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,5544,vr_arq_op_cred(9)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,1645,vr_arq_op_cred(9)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7394,7 +7409,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(9)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5545,1645,vr_arq_op_cred(9)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1645,1645,vr_arq_op_cred(9)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7411,7 +7426,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(9)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,5545,vr_arq_op_cred(9)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,1645,vr_arq_op_cred(9)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7428,7 +7443,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(10)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1644,5542,vr_arq_op_cred(10)(999)(1),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1643,1643,vr_arq_op_cred(10)(999)(1),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7445,7 +7460,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(10)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5542,1644,vr_arq_op_cred(10)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,1643,vr_arq_op_cred(10)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7462,7 +7477,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(10)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1644,5543,vr_arq_op_cred(10)(999)(2),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1643,1643,vr_arq_op_cred(10)(999)(2),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7479,7 +7494,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(10)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5543,1644,vr_arq_op_cred(10)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,1643,vr_arq_op_cred(10)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7496,7 +7511,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
      
        IF vr_arq_op_cred(11)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5546,vr_arq_op_cred(11)(999)(1),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1645,1645,vr_arq_op_cred(11)(999)(1),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7513,7 +7528,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(11)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5546,1646,vr_arq_op_cred(11)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,1645,vr_arq_op_cred(11)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7530,7 +7545,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(11)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5547,vr_arq_op_cred(11)(999)(2),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1645,1645,vr_arq_op_cred(11)(999)(2),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7547,7 +7562,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(11)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5547,1646,vr_arq_op_cred(11)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,1645,vr_arq_op_cred(11)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                         
           
@@ -7668,7 +7683,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(20)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 20 - DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5582,1630,vr_arq_op_cred(20)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1630,1630,vr_arq_op_cred(20)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7685,7 +7700,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(20)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 20 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,5582,vr_arq_op_cred(20)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,1630,vr_arq_op_cred(20)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7702,7 +7717,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(20)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 20 - DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5583,1630,vr_arq_op_cred(20)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1630,1630,vr_arq_op_cred(20)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7719,7 +7734,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        
        IF vr_arq_op_cred(20)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 20 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,5583,vr_arq_op_cred(20)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,1630,vr_arq_op_cred(20)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7736,7 +7751,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
      
        IF vr_arq_op_cred(19)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 19 - RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1638,5590,vr_arq_op_cred(19)(999)(1),'"RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1630,1630,vr_arq_op_cred(19)(999)(1),'"RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7753,7 +7768,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(19)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 19 - RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5590,1638,vr_arq_op_cred(19)(999)(1),'"'||vr_dsprefix||'RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,1630,vr_arq_op_cred(19)(999)(1),'"'||vr_dsprefix||'RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7770,7 +7785,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(19)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 19 - RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1638,5591,vr_arq_op_cred(19)(999)(2),'"RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1630,1630,vr_arq_op_cred(19)(999)(2),'"RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
           
@@ -7787,7 +7802,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 
        IF vr_arq_op_cred(19)(999)(2) > 0 THEN
           -- Monta cabacalho - Arq 19 - RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5591,1638,vr_arq_op_cred(19)(999)(2),'"'||vr_dsprefix||'RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1630,1630,vr_arq_op_cred(19)(999)(2),'"'||vr_dsprefix||'RENDA A APROPRIAR SOBRE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                         
           
@@ -10958,7 +10973,7 @@ BEGIN
                    trim(vr_dtmvtolt_yymmdd)||','||
                    trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                    '4954,'||
-                   '1642,'||
+                   '1641,'||
                    trim(to_char(vr_vlcdbjur, '99999999999990.00'))||','||
                    '5210,'||
                    '"(crps249) RECEITA DE CHEQUE RECEBIDO PARA DESCONTO."';
@@ -11195,7 +11210,7 @@ BEGIN
     vr_linhadet := trim(vr_cdestrut)||
                    trim(vr_dtmvtolt_yymmdd)||','||
                    trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '1642,'||
+                   '1641,'||
                    '4954,'||
                    trim(to_char(vr_vlcdbcop, '99999999999990.00'))||','||
                    '2425,'||
@@ -11272,7 +11287,7 @@ BEGIN
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      '4954,'||
-                     '1644,'||
+                     '1643,'||
                      trim(to_char(vr_tdbjursr, '99999999999990.00'))||','||
                      '5210,'||
                      '"(crps249) RENDA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO."';
@@ -11300,7 +11315,7 @@ BEGIN
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      '4954,'||
-                     '1646,'||
+                     '1645,'||
                      trim(to_char(vr_tdbjurcr, '99999999999990.00'))||','||
                      '5210,'||
                      '"(crps249) RENDA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO."';
@@ -12055,7 +12070,7 @@ BEGIN
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     '1644,'||
+                     '1643,'||
                      '4954,'||
                      trim(to_char(vr_tdbjursr, '99999999999990.00'))||','||
                      '5210,'||
@@ -12070,7 +12085,7 @@ BEGIN
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     '1646,'||
+                     '1645,'||
                      '4954,'||
                      trim(to_char(vr_tdbjurcr, '99999999999990.00'))||','||
                      '5210,'||
@@ -14050,6 +14065,34 @@ BEGIN
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
   
+  -- AJUSTE IOF FINAME CENTRAL
+  IF pr_cdcooper = 3 THEN
+    vr_cdhistor := 2323;
+    vr_vllanmto := 0;
+    --
+    FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
+                                   vr_dtmvtolt,
+                                   vr_cdhistor) LOOP
+                                   
+      vr_vllanmto := rw_craplcm.vllanmto;
+      --
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                     TRIM(vr_dtmvtolt_yymmdd)||','||
+                     TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                     '4532,'||
+                     '7281,'||
+                     TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                     '5210,'||
+                     '"AJUSTE REF. (2323) IOF S/ CONTA CORRENTE (PRINCIPAL E ADICIONAL) LANCADO INDEVIDAMENTE PELO SISTEMA AIMARO"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      --Gerencial
+      vr_linhadet := '999,'||
+                    TRIM(to_char(vr_vllanmto, '999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    END LOOP;
+  END IF;
+  
   pc_proc_lcm_tdb(vr_dtrefere, 'D');
   
   -- Melhoria 324 - Contas de Compensação - Transferencia para prejuizo - Jean (Mout´S) 10/08/2017
@@ -15032,6 +15075,26 @@ BEGIN
 		--
 		CLOSE cr_finieptb;
 		--
+    
+    /* Incluido ajuste provisao mensal historico 38 */
+    IF to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') THEN
+      FOR rw_prov_mes_38 IN cr_prov_mes_38(pr_cdcooper
+                                          ,to_date('01'||to_char(vr_dtmvtolt,'MMRRRR'),'DDMMRRRR')
+                                          ,vr_dtultdia) LOOP
+        vr_cdestrut := 50;
+        vr_linhadet := trim(vr_cdestrut) ||
+                       trim(vr_dtmvtolt_yymmdd) || ',' ||
+                       trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+                       '1802,' ||
+                       '7281,' ||
+                         TRIM(to_char(nvl(rw_prov_mes_38.vllanmto, 0), 'fm99999999999990.00')) || ',' ||
+                       '5210,' ||
+                       '"(crps249) PROVISAO JUROS CHEQUE ESPECIAL"';
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      END LOOP;
+    END IF;
+    /* Fim provisao mensal historico 38 */
+    
 	ELSE -- pr_cdcooper <> 3 (todas as cooperativas diferente da central)
 		--
 		OPEN cr_lanipetb(pr_cdcooper
@@ -15148,7 +15211,10 @@ BEGIN
   END IF;
   
   -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
+  --Nao gerar OPCRED para central
+  IF pr_cdcooper <> 3 THEN
   pc_gera_arq_op_cred (vr_dscritic);
+  END IF;
   -- Incluir nome do módulo logado
   gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     
