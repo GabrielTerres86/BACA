@@ -35,10 +35,6 @@
                             
                09/11/2017 - Separar codigo e descricao da linha de credito e 
                             finalidade (David).
-                            
-               29/01/2019 - INC0031641 - Ajustes na exibiçao de contratos de empréstimo
-                            com mais de 8 digitos (Jefferson - MoutS)
-
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -128,7 +124,7 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                                                   TRIM(tt-dados-epr.nmprimtl) +
                                                   "</nmprimtl>"
                        xml_operacao14a.nrctremp = "<nrctremp>" +
-                              TRIM(STRING(tt-dados-epr.nrctremp,"zzz,zzz,zzz,zz9")) +
+                              TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) +
                                                   "</nrctremp>"
                        xml_operacao14a.vlemprst = "<vlemprst>" +
                          TRIM(STRING(tt-dados-epr.vlemprst,"zzz,zzz,zz9.99")) +

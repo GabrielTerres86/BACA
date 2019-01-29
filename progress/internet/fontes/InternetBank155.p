@@ -16,9 +16,6 @@
    Alteracoes: 16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
 
 			   12/10/2017 - Projeto 410 Inclusão do IOF Complementar atraso (Jean - MOut´S)
-                            
-               29/01/2019 - INC0031641 - Ajustes na exibiçao de contratos de empréstimo
-                            com mais de 8 digitos (Jefferson - MoutS)
 
 ..............................................................................*/
 
