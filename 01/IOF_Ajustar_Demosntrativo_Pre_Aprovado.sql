@@ -2,7 +2,6 @@ UPDATE crapepr e
     SET e.vltariof = e.vliofepr
   WHERE e.vltariof = 0
     AND e.vliofepr > 0
-    AND e.vlsdeved > 0
     AND e.tpemprst = 1
     AND e.cdfinemp = 68
     AND e.cdorigem IN (3, 4)
