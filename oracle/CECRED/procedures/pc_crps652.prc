@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 19/10/2018
+   Data    : AGOSTO/2013                      Ultima atualizacao: 23/01/2019
 
    Dados referentes ao programa:
 
@@ -250,6 +250,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                23/07/2018 - Projeto Revitalizaçao Sistemas - Execucao paralela por Coop e Agencia (Andreatta - MOUTs)
 
                19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+                                
+               23/01/2019 - Somar ao valor do saldo prejuizo (vlsdprej) o valor a ser pago de mora, multa
+                            e IOF para ser enviado no arquivo de carga_mf ao Cyber - INC0030650. (Fabricio)
                                 
      ............................................................................. */
 
@@ -533,7 +536,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              ,crapcyb.vlprepag
              ,crapcyb.dtdpagto
              ,crapcyb.dtdbaixa
-             ,crapcyb.vlsdprej
+             
+             ,CASE
+                WHEN crapcyb.cdorigem in (2,3) then -- emprestimos
+                  NVL((crapcyb.vlsdprej + (epr.vlttmupr - epr.vlpgmupr)
+                                        + (epr.vlttjmpr - epr.vlpgjmpr)
+                                        + (epr.vltiofpr - epr.vlpiofpr)
+                       ),0)
+                ELSE
+                  crapcyb.vlsdprej
+              END AS vlsdprej
+             
              ,crapcyb.flgresid
              ,crapcyb.flgconsg
              ,crapcyb.flgfolha
@@ -587,6 +600,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
         INNER JOIN crapass ON crapass.cdcooper = crapcyb.cdcooper AND crapass.nrdconta = crapcyb.nrdconta
          LEFT JOIN t_soma_crappep tpep ON tpep.cdcooper = crapcyb.cdcooper AND tpep.nrdconta = crapcyb.nrdconta AND tpep.nrctremp = crapcyb.nrctremp
          LEFT JOIN t_soma_desc_tit tdt ON tdt.cdcooper = crapcyb.cdcooper  AND tdt.nrdconta = crapcyb.nrdconta  AND tdt.nrctremp = crapcyb.nrctremp
+         LEFT JOIN crapepr epr         ON epr.cdcooper = crapcyb.cdcooper  AND epr.nrdconta = crapcyb.nrdconta  AND epr.nrctremp = crapcyb.nrctremp
         WHERE crapcyb.cdcooper = pr_cdcooper
           AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        AND   crapcyb.dtdbaixa IS NULL
