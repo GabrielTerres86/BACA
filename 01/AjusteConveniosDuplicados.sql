@@ -26,7 +26,8 @@ BEGIN
                WHERE B.NRDCONTA = A.NRDCONTA
                  AND B.NRCONVEN = A.NRCONVEN
                  AND B.CDCOOPER = 16
-                 /*AND B.INSITCEB = 1*/);
+                 /*AND B.INSITCEB = 1*/
+				 );
     
       DBMS_OUTPUT.PUT_LINE('Conta: ' || C1.NRDCONTA || ' - Conve: ' ||
                            C1.NRCONVEN);
