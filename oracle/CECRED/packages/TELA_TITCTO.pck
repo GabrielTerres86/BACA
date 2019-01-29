@@ -2331,20 +2331,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_nmsubdir => '/rl');
 
 
-    -- Remover arquivo existente
-    vr_dscomand := 'rm '||vr_dsdireto||'/'||vr_nmarquiv||'* 2>/dev/null';
+    IF TRIM(vr_nmarquiv) IS NOT NULL THEN
+      -- Remover arquivo existente
+      vr_dscomand := 'rm '||vr_dsdireto||'/'||vr_nmarquiv||'* 2>/dev/null';
 
-    -- Executar o comando no unix
-    GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                         ,pr_des_comando => vr_dscomand
-                         ,pr_typ_saida   => vr_typsaida
-                         ,pr_des_saida   => vr_dscritic);
-    -- Se ocorreu erro
-    IF vr_typsaida = 'ERR' THEN
-      vr_dscritic := 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
-      RAISE vr_exc_erro;
+      -- Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomand
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro
+      IF vr_typsaida = 'ERR' THEN
+        vr_dscritic := 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
     END IF;
-
 
     vr_nmjasper := 'crrl802_titcto.jasper';
     vr_dsxmlnode := '/raiz';
