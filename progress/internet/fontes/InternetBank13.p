@@ -125,7 +125,7 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
             ASSIGN xml_operacao.dslinxml = "<EMPRESTIMO><dtmvtolt>" +
                                    STRING(tt-dados-epr.dtmvtolt,"99/99/9999") +
                                            "</dtmvtolt><nrctremp>" +
-                              TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) +
+                              TRIM(STRING(tt-dados-epr.nrctremp,"zzz,zzz,zzz,zz9")) +
                                            "</nrctremp><vlemprst>" +
                      TRIM(STRING(tt-dados-epr.vlemprst,"zzz,zzz,zzz,zz9.99")) +
                                            "</vlemprst><qtpreemp>" +
