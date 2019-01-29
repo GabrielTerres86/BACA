@@ -10,7 +10,7 @@ INSERT INTO crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr)
                      (SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'CNTR0001'));
 
 INSERT INTO crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr)
-              VALUES('GERA_PROTOCOLO_CTD_PJ','CNTR0001','pc_gera_protocolo_ctd_pj','pr_nrdconta,pr_cdtippro,pr_dhcontrato,pr_nrcontrato,pr_vlcontrato,pr_cdtransacao_pendente,pr_contas_digitadas',
+              VALUES('GERA_PROTOCOLO_CTD_PJ','CNTR0001','PC_GERA_PROTOCOLO_CTD_PJ','pr_nrdconta,pr_cdtippro,pr_dhcontrato,pr_nrcontrato,pr_vlcontrato,pr_cdtransacao_pendente,pr_contas_digitadas,pc_cdcooper_tel
                      (SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'CNTR0001'));
 COMMIT;
 
