@@ -35,6 +35,10 @@
                             
                09/11/2017 - Separar codigo e descricao da linha de credito e 
                             finalidade (David).
+                            
+               29/01/2019 - INC0031641 - Ajustes na exibiçao de contratos de empréstimo
+                            com mais de 8 digitos (Jefferson - MoutS)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
