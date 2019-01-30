@@ -3400,7 +3400,6 @@ PROCEDURE permissoes-menu-mobile:
         ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,40,1001".
 
         FOR EACH tt-itens-menu-mobile NO-LOCK:
-          MESSAGE("tt-itens-menu-mobile.cditemmn " + STRING(tt-itens-menu-mobile.cditemmn)).
           IF NOT CAN-DO(aux_dscctsal, STRING(tt-itens-menu-mobile.cditemmn)) THEN
           DO:
             ASSIGN tt-itens-menu-mobile.flcreate = FALSE.
