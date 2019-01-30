@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 12/11/2018
+   Data    : Julho/2004.                       Ultima atualizacao: 20/12/2018
 
    Dados referentes ao programa:
 
@@ -740,7 +740,10 @@
                               valor a valor (Douglas)
 
                  12/11/2018 - Remover a vaidação de senha no fluxo de inclusão de cheque em custódia
-                              (Card de Melhoria 780 - Douglas)                      
+                              (Card de Melhoria 780 - Douglas) 
+
+                 20/12/2018 - Adicionar validação de senha na Inclusão de Custódia de cheque e Aprovação de Pagamento 
+				             (Douglas - INC0025643 e INC0025728)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -7521,6 +7524,15 @@ PROCEDURE proc_operacao141:
     IF  aux_tpoperac = 3 OR aux_tpoperac = 6  THEN
         ASSIGN aux_dtmvtocd = DATE(GET-VALUE("dtmvtolt")).       
 
+    /* Aprovacao de pagamento */
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_tpoperac = 4 THEN
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
+
     RUN sistema/internet/fontes/InternetBank141.p (INPUT aux_cdcooper,
                                                    INPUT aux_dtmvtocd,
                                                    INPUT aux_lisrowid,
@@ -8674,6 +8686,16 @@ PROCEDURE proc_operacao178:
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
                               
+    /* Validacao de senha na operacao de cadastro de custodia de cheques */ 
+    /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_operacao = 6 THEN
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.       
+
                               
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
