@@ -34,6 +34,11 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0002 AS
                                ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
                                ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
+                               
+
+  /* Sprint D - Rotina para gerar o arquivo contabil */                               
+  PROCEDURE pc_gera_arquivo_contabil (pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                              ,pr_dscritic OUT VARCHAR2);
 
 
 
@@ -70,6 +75,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --                08/06/2017 - Adicionar mensagens 'PAG0142R2','STR0034R2','PAG0134R2' referentes ao
 --                             novo catalogo do SPB (Lucas Ranghetti #668207)
+--
+--                08/01/2019 - Sprint D - Req19 - Rotina para gerar arquivo contabil (Jose Dill - Mouts)
+--
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -2125,6 +2133,289 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
         ROLLBACK;
     END;
   END pc_paginar_criticas;
+
+
+
+  PROCEDURE pc_gera_arquivo_contabil (pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                              ,pr_dscritic OUT VARCHAR2)  IS
+  /* ..........................................................................
+
+   Objetivo  : Gerar arquivo contabil para o Matera das informações da Ailos
+
+   Alteracoes: 
+   ........................................................................... */
+
+  -- CURSORES
+  -- Seleciona as informações das mensagens das operações enviadas
+  CURSOR cr_arq_cont (pr_dtmvtolt in date) is
+  Select tac.nmmensagem
+        ,tac.nrcontrole_if_str_pag
+        ,tac.dtlancamento_contabil
+        ,tac.vlrlancamento
+        ,tac.dsflexivel
+        ,his.nrctadeb nrconta_deb
+        ,his.nrctacrd nrconta_cred
+        ,his.dsexthst ||' '||tac.dsflexivel dsrefere
+        ,tac.nrcentrocusto
+        ,tac.rowid
+  from tbspb_arquivo_contabil tac
+      ,craphis his
+  where trunc(tac.dtlancamento_contabil) = trunc(pr_dtmvtolt)
+  and   tac.idsituacao  = 0
+  and   tac.cdhistor    = his.cdhistor
+  and   his.cdcooper    = 3;     
+  
+
+  -- VARIÁVEIS
+  -- Código do programa
+  vr_cdprogra      VARCHAR2(10);
+  -- Data do movimento
+  vr_dtmvtolt      crapdat.dtmvtolt%TYPE;
+
+    
+  -- Tratamento de erros
+  vr_exc_saida     EXCEPTION;
+  vr_dscritic VARCHAR2(4000);
+  --
+  vr_exc_erro EXCEPTION;  
+  vr_file_erro     EXCEPTION;  
+  --
+
+-- constantes para geracao de arquivos contabeis
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'DIR_ARQ_CONTAB_X';
+  vc_cdtodascooperativas INTEGER := 0;
+
+  vr_con_dtmvtolt      VARCHAR2(20);
+  vr_ind_arquivo       utl_file.file_type;  
+  vr_contador          NUMBER := 0;  
+  vr_utlfileh          VARCHAR2(200); 
+  vr_nmarquiv          VARCHAR2(100);
+  vr_linhadet          VARCHAR2(500);
+  vr_dscomando         VARCHAR2(500);  
+  vr_retfile           VARCHAR2(400);
+  vr_typ_saida         VARCHAR2(4000);  
+  vr_dircon            VARCHAR2(200);
+  vr_arqcon            VARCHAR2(200);   
+  
+  -- Escrever linha no arquivo
+  PROCEDURE pc_gravar_linha(pr_linha IN VARCHAR2) IS
+  BEGIN
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,pr_linha);
+  END pc_gravar_linha;  
+  
+  Function fn_valida_fase_55 (pr_nrcontrole in varchar2
+                             ,pr_nmmensagem in varchar2) return boolean is
+    vr_count number:= 0;
+  Begin
+    /* Validar somente para as mensagens enviadas que possuem o retorno 55/57. As demais não necessitam ser validadas.*/
+    If pr_nmmensagem in ('STR0003','STR0004','STR0007','STR0020','SEL1069',
+                         'LDL0022','RDC0002','RDC0007','SLB0002','LTR0004') Then 
+       --
+       Select count(*) 
+       into vr_count
+       From Tbspb_Msg_Enviada a
+           ,Tbspb_Msg_Enviada_Fase b
+       Where a.nrseq_mensagem = b.nrseq_mensagem
+       and   a.nrcontrole_if = pr_nrcontrole
+       and   b.cdfase in (55,57);
+       
+       If vr_count <> 0 Then
+          Return True;
+       Else
+          Return False;
+       End If;          
+    Else
+       /* Mensagem Recebida*/
+       Return True;
+    End If;   
+  End fn_valida_fase_55;
+
+  
+  PROCEDURE pc_abre_arquivo(pr_cdcooper  IN NUMBER,
+                            pr_dtmvtolt  IN DATE,
+                            pr_nmarquiv  IN VARCHAR2,
+                            pr_retfile  OUT VARCHAR2) IS
+
+  BEGIN
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_arquivo_contabil.pc_abre_arquivo');
+         
+    -- Define o diretório do arquivo
+    vr_utlfileh := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'contab') ;
+
+    -- Define Nome do Arquivo
+    vr_nmarquiv := to_char(pr_dtmvtolt, 'yy') ||
+                   to_char(pr_dtmvtolt, 'mm') ||
+                   to_char(pr_dtmvtolt, 'dd') ||
+                   '_'||pr_nmarquiv||'.TMP';
+         
+    pr_retfile  := to_char(pr_dtmvtolt, 'yy') ||
+                   to_char(pr_dtmvtolt, 'mm') ||
+                   to_char(pr_dtmvtolt, 'dd') ||
+                   '_'||pr_nmarquiv||'.txt';
+
+
+    -- Abre arquivo em modo de escrita (W)
+    GENE0001.pc_abre_arquivo(pr_nmdireto => vr_utlfileh         --> Diretório do arquivo
+                            ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
+                            ,pr_tipabert => 'W'                 --> Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
+                            ,pr_des_erro => vr_dscritic);       --> Erro
+ 
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao executar pc_gera_arquivo_contabil.pc_abre_arquivo. Erro:'||sqlerrm;         
+
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => vr_dscritic );
+  END pc_abre_arquivo;
+    
+BEGIN
+
+  -- A data de movimento deve ser sempre a do dia anterior, caso não seja um dia
+  -- util, a função Gene0005 busca o primeiro o dia util anterior ao atual
+  vr_dtmvtolt := GENE0005.fn_valida_dia_util(3,trunc(SYSDATE) - 1,'A');
+  --
+  --vr_dtmvtolt := trunc(sysdate); /*Retirar ao final, usado para testes*/
+  --
+  -- Definir as datas das linhas do arquivo
+  vr_con_dtmvtolt := '55' ||
+                     to_char(vr_dtmvtolt, 'yy') ||
+                     to_char(vr_dtmvtolt, 'mm') ||
+                     to_char(vr_dtmvtolt, 'dd');
+
+  vr_contador := 0;
+    
+  --Leitura dos lançamentos gravados no dia anterior (D-1)
+  FOR rw_cr_arq_cont IN cr_arq_cont(vr_dtmvtolt) LOOP
+      
+      vr_contador := vr_contador + 1;
+        
+      IF vr_contador = 1 THEN
+             
+        pc_abre_arquivo(3,vr_dtmvtolt,'LCTOSSPB',vr_retfile);
+
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_file_erro;
+        END IF;
+
+      END IF;  
+   
+      IF fn_valida_fase_55 (rw_cr_arq_cont.nrcontrole_if_str_pag
+                          , rw_cr_arq_cont.nmmensagem) THEN 
+        --                  
+        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                       TRIM(to_char(rw_cr_arq_cont.dtlancamento_contabil, 'ddmmyy')) || ','|| 
+                       rw_cr_arq_cont.nrconta_deb||','||
+                       rw_cr_arq_cont.nrconta_cred||','||                         
+                       TRIM(to_char(rw_cr_arq_cont.vlrlancamento, '99999999999990.00')) ||
+                       ',5210,' ||
+                       '"'||rw_cr_arq_cont.dsrefere||'"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+        --
+        If rw_cr_arq_cont.nrcentrocusto is not null Then
+           vr_linhadet := rw_cr_arq_cont.nrcentrocusto||','||TRIM(to_char(rw_cr_arq_cont.vlrlancamento, '99999999999990.00'));
+           -- Gravar Linha do Centro de custo/Valor
+           pc_gravar_linha(vr_linhadet);
+        End If;  
+        -- Atualiza status do lançamento para gerado
+        Begin
+          Update Tbspb_Arquivo_Contabil tac
+          set tac.idsituacao = 1
+          Where tac.rowid = rw_cr_arq_cont.rowid;
+        End;  
+      ELSE
+        -- Atualiza status do lançamento para rejeitado
+        Begin
+          Update Tbspb_Arquivo_Contabil tac
+          set tac.idsituacao = 2
+          Where tac.rowid = rw_cr_arq_cont.rowid;
+        End;  
+      END IF;        
+      --
+  END LOOP;
+  --
+   
+  IF vr_contador > 0 THEN
+    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+
+    -- Executa comando UNIX para converter arq para Dos
+    vr_dscomando := 'ux2dos ' || vr_utlfileh || '/' || vr_nmarquiv || ' > '
+                              || vr_utlfileh || '/' || vr_retfile || ' 2>/dev/null';
+
+    -- Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+
+    IF vr_typ_saida = 'ERR' THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => vc_cdtodascooperativas
+                                           ,pr_cdacesso => vc_cdacesso);
+                                             
+     vr_arqcon := to_char(vr_dtmvtolt, 'yy') ||
+                  to_char(vr_dtmvtolt, 'mm') ||
+                  to_char(vr_dtmvtolt, 'dd') ||
+                  '_'||LPAD(TO_CHAR(3),2,0)||
+                  '_LCTOSSPB.txt';
+
+      -- Executa comando UNIX para converter arq para Dos
+     vr_dscomando := 'ux2dos '||vr_utlfileh||'/'||vr_retfile||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
+
+    -- Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+
+    IF vr_typ_saida = 'ERR' THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Remover arquivo tmp
+    vr_dscomando := 'rm ' || vr_utlfileh || '/' || vr_nmarquiv;
+
+    -- Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+
+    IF vr_typ_saida = 'ERR' THEN
+        RAISE vr_exc_erro;
+    END IF;
+    
+    --
+    COMMIT;
+    --
+  END IF;
+    
+EXCEPTION
+  WHEN vr_exc_erro THEN
+    Rollback;
+    pr_dscritic := vr_dscritic;
+  WHEN vr_file_erro THEN
+    Rollback;
+    pr_dscritic := vr_dscritic;
+  WHEN OTHERS THEN
+    Rollback;
+    -- Monta mensagem de erro
+    pr_dscritic := 'Erro em pc_gera_arquivo_contabil: ' || SQLERRM;
+    CECRED.pc_internal_exception( pr_cdcooper => 3 
+                                 ,pr_compleme => pr_dscritic );
+
+END pc_gera_arquivo_contabil;
+
+
 
 END SSPB0002;
 /

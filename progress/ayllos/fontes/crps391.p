@@ -6,7 +6,7 @@
    Autora  : Mirtes
    Data    : Abril/2004                      Ultima atualizacao: 26/05/2018
 
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
 
    Frequencia:
    Objetivo  : Lanc. Arrecadacao Convenios Caixa(Executado somente na Central)
@@ -141,8 +141,8 @@
                            P308 (Ricardo Linhares).                            
                             
                            
-			  10/01/2017 - Ajuste para enviar TED somente se o valor for maior que zero 
-						  (Adriano  - SD 597906).		       
+                          10/01/2017 - Ajuste para enviar TED somente se o valor for maior que zero 
+                                                  (Adriano  - SD 597906).                       
 
               16/06/2017 - Adicionado e-mail convenios@cecred.coop.br, conforme
                            solicitado no chamado 687836 (Kelvin).
@@ -150,10 +150,12 @@
               06/03/2018 - Retirado filtro "cdtipcta = 1" e colocado filtro da conta buscando
                            do campo "nrctactl" da tabela "crapcop". PRJ366 (Lombardi).
 
-			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-        
-        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
+              26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+              
+              16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                           Heitor (Mouts)
+
+	          08/01/2018  - Sprint "D" - Re19 - Arquivo Contabil. 
 
 .............................................................................*/
                         
@@ -237,16 +239,19 @@ DEF VAR rel_cpfcgrcb2 AS CHAR      FORMAT "x(18)"             NO-UNDO.
 DEF VAR aux_dsccdrcb AS INTE    FORMAT "zzzzzzz9"             NO-UNDO.
 DEF VAR aux_dsccdrcb2 LIKE gnconve.dsccdrcb                   NO-UNDO.    
 DEF VAR aux_dsccdrcb3 LIKE gnconve.dsccdrcb                   NO-UNDO. 
+DEF VAR aux_mensagem AS CHAR       FORMAT "x(20)"             NO-UNDO. /* P475 */
+DEF VAR aux_dtarquivo_contabil AS DATE                        NO-UNDO. /* P475 */
+DEF VAR aux_par_nrseqarq AS CHAR       FORMAT "x(20)"         NO-UNDO. /* P475 */
 
 DEF TEMP-TABLE tt-arq-conve NO-UNDO
          FIELD cdcooper LIKE gncontr.cdcooper
          FIELD dtmvtolt LIKE gncontr.dtmvtolt
-		 FIELD nrctdbfl LIKE gnconve.nrctdbfl
-		 FIELD vltarifa LIKE gncontr.vltarifa
-		 FIELD nmempres LIKE gnconve.nmempres
-		 FIELD dsdircop LIKE crapcop.dsdircop
-		 FIELD cdconven LIKE gncontr.cdconven.
-		 
+                 FIELD nrctdbfl LIKE gnconve.nrctdbfl
+                 FIELD vltarifa LIKE gncontr.vltarifa
+                 FIELD nmempres LIKE gnconve.nmempres
+                 FIELD dsdircop LIKE crapcop.dsdircop
+                 FIELD cdconven LIKE gncontr.cdconven.
+                 
 DEF TEMP-TABLE tt-arq-radar NO-UNDO
          FIELD cdcooper LIKE gncontr.cdcooper
          FIELD dtmvtolt LIKE gncontr.dtmvtolt
@@ -317,11 +322,11 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         aux_arqrel_3 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
                                  + STRING(MONTH(glb_dtmvtolt),"99")
                                  + STRING(DAY(glb_dtmvtolt),"99") + "_REPCNVFIL.txt"
-								 
-		aux_arqrel_4 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
+                                                                 
+                aux_arqrel_4 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
                                  + STRING(MONTH(glb_dtmvtolt),"99")
                                  + STRING(DAY(glb_dtmvtolt),"99") + "_TARIFA_CONVENIOS.txt".
-								 
+                                                                 
                                  
  {includes/cabrel132_1.i }
  {includes/cabrel132_2.i }
@@ -484,13 +489,13 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
           
          IF tt-arq-conve.vltarifa > 0 THEN
          DO:
-           ASSIGN aux_linhaarq = STRING(YEAR(tt-arq-conve.dtmvtolt),'9999')		                         
+           ASSIGN aux_linhaarq = STRING(YEAR(tt-arq-conve.dtmvtolt),'9999')                                         
                                 + STRING(MONTH(tt-arq-conve.dtmvtolt),'99') 
                                 + STRING(DAY(tt-arq-conve.dtmvtolt),'99')  
                                 + ',' + STRING(DAY(tt-arq-conve.dtmvtolt),'99') 
                                       + STRING(MONTH(tt-arq-conve.dtmvtolt),'99') 
                                       + STRING(YEAR(tt-arq-conve.dtmvtolt),'9999')
-						        + ',1889'
+                                                        + ',1889'
                                 + ',' + STRING(tt-arq-conve.nrctdbfl, '9999')                                
                                 + ',' + TRIM(REPLACE(STRING(tt-arq-conve.vltarifa,'zzzzzzzz9.99'),',','.'))
                                 + ',5210'
@@ -669,7 +674,7 @@ PROCEDURE processa_convenios_deb_cred.
 
                 IF  gncontr.cdcooper <> gnconve.cdcooper   AND 
                     aux_vlapagar > 0                       THEN
-                    RUN prepara_lancamento.
+                    RUN prepara_lancamento. 
                          
                 ASSIGN aux_vlapagar = aux_vlrsalvo.
                
@@ -679,30 +684,30 @@ PROCEDURE processa_convenios_deb_cred.
                 ASSIGN aux_vlapagar = aux_vlapagar +  gncontr.vlapagar
                        aux_cdhisrep = 749.
             END.
-		
+                
 		// caso o valor de repasse for bruto então deve ser gerado 
-		// no arquivo contabil PRJ421.
+                // no arquivo contabil PRJ421.
         IF  gnconve.flgrepas AND gnconve.nrctdbfl > 0  THEN
         DO:
-		    FIND tt-arq-conve NO-LOCK WHERE
+                    FIND tt-arq-conve NO-LOCK WHERE
                  tt-arq-conve.cdconven = gncontr.cdconven NO-ERROR.
-			//verifica se o convenio ja existe na tabela, se existir somar valor da tarifa
-            // pois deve haver apenas um lancamento no arquivo do convenio com o valor total			
-	        IF AVAIL tt-arq-conve THEN 
-		       ASSIGN tt-arq-conve.vltarifa =  tt-arq-conve.vltarifa + gncontr.vltarifa.
-			ELSE
-			DO: 
-				CREATE tt-arq-conve.
-				ASSIGN tt-arq-conve.cdcooper = gncontr.cdcooper
-					   tt-arq-conve.dtmvtolt = gncontr.dtmvtolt
-					   tt-arq-conve.vltarifa = gncontr.vltarifa
-					   tt-arq-conve.nmempres = gnconve.nmempres
-					   tt-arq-conve.nrctdbfl = gnconve.nrctdbfl
-					   tt-arq-conve.dsdircop = crapcop.dsdircop
-					   tt-arq-conve.cdconven = gncontr.cdconven.
-		    END.		   
-		END.
-		
+                        //verifica se o convenio ja existe na tabela, se existir somar valor da tarifa
+            // pois deve haver apenas um lancamento no arquivo do convenio com o valor total                        
+                IF AVAIL tt-arq-conve THEN 
+                       ASSIGN tt-arq-conve.vltarifa =  tt-arq-conve.vltarifa + gncontr.vltarifa.
+                        ELSE
+                        DO: 
+                                CREATE tt-arq-conve.
+                                ASSIGN tt-arq-conve.cdcooper = gncontr.cdcooper
+                                           tt-arq-conve.dtmvtolt = gncontr.dtmvtolt
+                                           tt-arq-conve.vltarifa = gncontr.vltarifa
+                                           tt-arq-conve.nmempres = gnconve.nmempres
+                                           tt-arq-conve.nrctdbfl = gnconve.nrctdbfl
+                                           tt-arq-conve.dsdircop = crapcop.dsdircop
+                                           tt-arq-conve.cdconven = gncontr.cdconven.
+                    END.                   
+                END.
+                
         IF aux_flgradar  AND gnconve.nrctdbfl > 0  THEN  /*escreve a linha no arquivo*/
         DO: 
             CREATE tt-arq-radar. 
@@ -760,7 +765,7 @@ PROCEDURE processa_convenios_deb_cred.
                        DOWN STREAM str_1 WITH FRAME f_movtos.
 
                        IF   aux_vlapagar > 0   THEN
-                            RUN prepara_lancamento.
+                            RUN prepara_lancamento. 
                    END.
                ELSE
                    DO:
@@ -1001,7 +1006,7 @@ PROCEDURE processa_convenios_deb_cred.
 
                        IF aux_tpdcontr_1 = 1 AND 
                           aux_tpdcontr_2 = 4 AND 
-						  aux_vlrrepas > 0   THEN /*Somente enviar a TED se valor for maior que zero (SD  567906)*/
+                                                  aux_vlrrepas > 0   THEN /*Somente enviar a TED se valor for maior que zero (SD  567906)*/
                        DO:
                            IF UPPER(SUBSTRING(aux_dsccdrcb2, 9, 1)) = "X" THEN
                                ASSIGN aux_dsccdrcb2 = 
@@ -1422,7 +1427,7 @@ PROCEDURE enviar-ted:
                                    craplot.nrdcaixa = par_nrcxaope
                                    craplot.cdopecxa = par_cdoperad.
                         END.
-        
+    
         /* Busca a proxima sequencia do campo crapmat.nrseqted */
         RUN STORED-PROCEDURE pc_sequence_progress
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
@@ -1518,6 +1523,66 @@ PROCEDURE enviar-ted:
             ASSIGN craptvl.flgpescr = NO.
                    
         VALIDATE craplot.
+
+        /* Projeto 475 - Sprint D Arquivo contabil */
+    
+        IF par_cdconven <> 0 THEN
+        DO:
+          IF CAN-DO("59,60",STRING(par_cdconven)) THEN
+             ASSIGN aux_mensagem = "STR0020"
+                    aux_par_nrseqarq = STRING(par_nrseqarq,"999999") 
+             + STRING(par_cdconven,"99").
+          ELSE
+             ASSIGN aux_mensagem = "STR0007" 
+                    aux_par_nrseqarq = STRING(par_nrseqarq).
+             
+          IF par_dtagendt = ? THEN
+             ASSIGN aux_dtarquivo_contabil = glb_dtmvtolt.
+          ELSE
+             ASSIGN aux_dtarquivo_contabil = par_dtagendt.
+             
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+          RUN STORED-PROCEDURE pc_grava_arquivo_contabil
+            aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT aux_mensagem  /* Nome da mensagem */ 
+                                ,INPUT aux_mensagem  /* Nome da Mensagem de devolucao*/
+                                ,INPUT aux_dtarquivo_contabil /* Data de agendamento ou data do movimento */
+                                ,INPUT par_vldocmto  /* Valor do lancamento */
+                                ,INPUT ""  /*pr_FinlddIF */
+                                ,INPUT ""  /*pr_FinlddCli */
+                                ,INPUT par_nmfavore  /* Nome do cliente de credito */
+                                ,INPUT ""  /*pr_CodProdt*/
+                                ,INPUT ""  /*pr_SubTpAtv*/
+                                ,INPUT STRING(par_nrctafav) /* Número da conta de crédito*/
+                                ,INPUT ""  /*pr_CtDebtd*/
+                                ,INPUT STRING(par_nrcpffav)  /* Número do cnpj/cpef de credito */
+                                ,INPUT ""  /*pr_CtCed*/
+                                ,INPUT ""  /*pr_NumCtrlSTROr*/
+                                ,INPUT aux_nrctrlif  /* Número de controle */
+                                ,INPUT ""  /*pr_NumCtrlRem*/
+                                ,INPUT aux_par_nrseqarq  /*pr_his*/
+                                ,OUTPUT ""). /*pr_dscritic     => vr_dscritic*/
+                                                                  
+          
+          CLOSE STORED-PROC pc_grava_arquivo_contabil
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+          ASSIGN aux_dscritic = ""
+                 aux_dscritic = pc_grava_arquivo_contabil.pr_dscritic
+                                 WHEN pc_grava_arquivo_contabil.pr_dscritic <> ?.
+   
+          IF aux_dscritic <> ""  THEN
+             DO:
+                 glb_dscritic = aux_dscritic.
+                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                   glb_cdprogra + "' --> '" + glb_dscritic +                                   
+                                   " >> log/proc_message.log").
+                 RETURN.
+             END.
+        END.
+        /* Fim P475 Sprint Display */.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
         RUN STORED-PROCEDURE pc_proc_envia_tec_ted_prog 

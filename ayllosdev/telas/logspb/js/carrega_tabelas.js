@@ -158,13 +158,22 @@ function formatarTabela(colunasParam, tabela){
 	}
 
 	arrAlinha = Array();
-	$('div.divRegistros', '.divTabelaLogSpb').css({ 'height': '150px', 'width' : '100%'});
+	//$('div.divRegistros', '.divTabelaLogSpb').css({ 'height': '150px', 'width' : '100%'});
 	$("#divRegistrosRodape").formataRodapePesquisa();
 	$(tabela).formataTabela(ordemInicial, arrLargura, arrAlinha, "doubleClickTabela();");
 
 	/* forçar barras de rolagem */
-	$('.divRegistros').attr('style',"overflow-y: scroll;overflow-x: scroll;height: 300px;width: 980px;");
-	$('.divRegistrosRodape').attr('style','width: 980px;');
+	//$('.divRegistros').attr('style',"overflow-y: scroll;overflow-x: scroll;height: 300px;width: 750px;");
+	//$('.divRegistrosRodape').attr('style','width: 750px;');
+	$('.divRegistros').css({
+		'overflow-y': 'scroll',
+		'overflow-x': 'scroll',
+		'height': '300px',
+		'width': '750px'
+	});
+	$('.divRegistrosRodape').css({
+		'width': '750px'
+	});
 	$('thead', tabela).show();
 	$('.tituloRegistros').hide();
 	
