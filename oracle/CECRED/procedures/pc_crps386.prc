@@ -310,7 +310,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
 
   -- Busca codigo do convenio a ser analisado
   CURSOR cr_cdconve(pr_cdconven IN gnconve.cdconven%TYPE) IS
-  SELECT gnc.cdhisdeb
+  SELECT 1
     FROM gnconve gnc
    WHERE gnc.cdconven = pr_cdconven;
   rw_cdconve cr_cdconve%ROWTYPE;
@@ -368,10 +368,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   vr_nrrefere        VARCHAR2(25);
   vr_qtdigito        INTEGER;
 
-  vr_dadosprm gene0002.typ_split;
-  vr_nrdconta crapass.nrdconta%type;
   vr_cdconven gnconve.cdconven%type := 0;
-  vr_referenc crapatr.cdrefere%type;
   vr_dsvlrprm crapprm.dsvlrprm%type;
 
   -- Subrotina para escrever texto na variável CLOB do XML
@@ -633,24 +630,6 @@ begin
                                   rw_crapdat.dtmvtolt,
                                   rw_gnconve.cdhisdeb) loop
             
-      -- Satisfazer condicao significa que execucao
-      -- esta homologando algum convenio. Nesta caso
-      -- apenas iremos analisar autorizacao passada
-      -- via parametro, outros casos serao ignorados
-      if vr_dadosprm is not null then          
-        if vr_nrdconta > 0 and vr_referenc > 0 then
-          if rw_crapatr.nrdconta <> vr_nrdconta or 
-             rw_crapatr.cdrefere <> vr_referenc or
-             rw_crapatr.cdhistor <> rw_cdconve.cdhisdeb then
-            continue;
-          end if;
-        else
-          if rw_crapatr.cdhistor <> rw_cdconve.cdhisdeb then
-            continue;
-          end if;
-        end if;
-      end if;
-
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
 
