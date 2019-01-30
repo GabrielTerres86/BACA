@@ -8662,7 +8662,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_vllimcrd   crawcrd.vllimcrd%TYPE;                             --> Valor de limite de credito
       vr_tpdpagto   NUMBER          := 0;                              --> Tp de Pagto do cartão
       vr_flgdebcc   NUMBER          := 0;                              --> flg para debitar em conta
-			vr_flgprovi   crapcrd.flgprovi%TYPE;                             --> flg para cartão provisorio
+			vr_flgprovi   BOOLEAN;                                           --> flg para cartão provisorio
+			vr_flgproviint crapcrd.flgprovi%TYPE;                            --> flg para cartão provisorio (usado para o insert)
       vr_flgprcrd   NUMBER          := 0;                              --> Primeiro cartão dessa Modalidade
       vr_nmextttl   crapttl.nmextttl%TYPE;                             --> Nome Titular
       vr_vlsalari   crapttl.vlsalari%TYPE;                             --> Salario
@@ -10823,7 +10824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END;
                 
                 vr_cdlimcrd := 0;
-								vr_flgprovi := 0; -- Inicialmente definimos como não provisorio
+								vr_flgprovi := FALSE; -- Inicialmente definimos como não provisorio
                 -- Agencia do banco
                 BEGIN 
                   vr_cdagebcb := to_number(substr(vr_des_text,333,4));
@@ -11040,7 +11041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 								vr_nmtitcrd := substr(vr_des_text, 57, 23);
 								-- Validamos se o nome do titular é 'CARTAO PROVISORIO'
 								IF nvl(TRIM(upper(vr_nmtitcrd)), ' ') = 'CARTAO PROVISORIO' THEN
-									vr_flgprovi := 1; -- Caso for, definimos o flag como provisorio
+									vr_flgprovi := TRUE; -- Caso for, definimos o flag como provisorio
 								END IF;
                 
                 IF vr_tipooper IN (1,4) THEN
@@ -11144,7 +11145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
                    Fabricio - chamado 559710 */
                 IF vr_tipooper = 10 THEN
-                  IF vr_sitcarta = 10 THEN --reposicao
+                  IF vr_sitcarta = 10 OR vr_flgprovi THEN --reposicao
                     -- Atualiza os dados da situacao do cartao
                     atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
                                              pr_nrdconta => vr_nrdconta,
@@ -11945,6 +11946,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     CONTINUE;
                   ELSE      
                     BEGIN
+											vr_flgproviint := 0;
+											IF vr_flgprovi THEN
+											   vr_flgproviint := 1;
+											END IF;
                       INSERT INTO crapcrd
                          (cdcooper,
                           nrdconta,
@@ -11978,7 +11983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           rw_crawcrd.tpcartao,
                           rw_crawcrd.dtcancel,
                           rw_crawcrd.flgdebit,
-													vr_flgprovi)
+													vr_flgproviint)
                           RETURNING ROWID INTO rw_crapcrd.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -12059,6 +12064,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     IF cr_crapcrd%NOTFOUND THEN
                       -- Cria registro de Cartão de Crédito
                       BEGIN
+												vr_flgproviint := 0;
+												IF vr_flgprovi THEN
+													 vr_flgproviint := 1;
+												END IF;
                         INSERT INTO crapcrd
                            (cdcooper,
                             nrdconta,
@@ -12092,7 +12101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
                             rw_crawcrd.flgdebit,
-														vr_flgprovi)
+														vr_flgproviint)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -12301,6 +12310,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     ELSE
                       -- cria novo registro de cartão de crédito
                       BEGIN
+												vr_flgproviint := 0;
+												IF vr_flgprovi THEN
+													 vr_flgproviint := 1;
+												END IF;
                         INSERT INTO crapcrd
                            (cdcooper,
                             nrdconta,
@@ -12317,7 +12330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             tpcartao,
                             dtcancel,
                             flgdebit,
-														flgprovi)
+                            flgprovi)
                         VALUES
                            (rw_crawcrd.cdcooper,
                             rw_crawcrd.nrdconta,
@@ -12334,7 +12347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
                             rw_crawcrd.flgdebit,
-														vr_flgprovi)
+                            vr_flgproviint)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -12762,7 +12775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-			
+      
       -- cursor para retornar faturas pendentes de debito
       CURSOR cr_tbcrd_fatura(pr_cdcooper   IN crapcop.cdcooper%TYPE,
                              pr_insituacao IN tbcrd_fatura.insituacao%TYPE,
@@ -12799,7 +12812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dstransa   VARCHAR2(100);
       vr_tab_sald   EXTR0001.typ_tab_saldos;     --> Temp-Table com o saldo do dia
       vr_ind_sald   PLS_INTEGER;                 --> Indice sobre a temp-table vr_tab_sald
-      vr_vlsddisp   NUMBER(17,2);                --> Valor de saldo disponivel			
+      vr_vlsddisp   NUMBER(17,2);                --> Valor de saldo disponivel      
       vr_vlpagmto   NUMBER(17,2);                --> Valor de pagamento
       vr_dtmvante   DATE;                        --> Data anterior, usada para pegar fatura uam qtd x de dias
       vr_vlminpag   NUMBER(17,2);                --> Parametro de valor minimo de pagamento para fatura
@@ -12827,7 +12840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_erro   EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);  
-	    vr_des_erro   VARCHAR2(4000);
+      vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro; 
       
       ct_hispgfat CONSTANT INTEGER := 1545;
@@ -13134,8 +13147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         --Fecha cursor
         CLOSE cr_crawcrd;
                                              
-				-- Obter valores de saldos diários
-				extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_tbcrd_fatura.cdcooper,
+        -- Obter valores de saldos diários
+        extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_tbcrd_fatura.cdcooper,
                                     pr_rw_crapdat => rw_crapdat,
                                     pr_cdagenci   => rw_crapass.cdagenci, 
                                     pr_nrdcaixa   => 0,
@@ -13148,31 +13161,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     pr_tab_sald   => vr_tab_sald,
                                     pr_tab_erro   => vr_tab_erro);
 
-				-- se encontrar erro	                                   
-				IF vr_des_erro = 'NOK' THEN
-					-- presente na tabela de erros
-					IF vr_tab_erro.count > 0 THEN
-						-- adquire descrição 
-						vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-						-- grava log
-						btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-																			 pr_ind_tipo_log => 2, -- Erro tratato
-																			 pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -'    || 
-																																					 pr_cdprogra  || ' --> ' || vr_dscritic);
-					END IF;					
-					-- Volta para o inicio do loop
-					CONTINUE;
-				END IF;																		
-									
-				-- alimenta indice da temp-table				
-				vr_ind_sald := vr_tab_sald.last;
+        -- se encontrar erro                                     
+        IF vr_des_erro = 'NOK' THEN
+          -- presente na tabela de erros
+          IF vr_tab_erro.count > 0 THEN
+            -- adquire descrição 
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            -- grava log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, -- Erro tratato
+                                       pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -'    || 
+                                                                           pr_cdprogra  || ' --> ' || vr_dscritic);
+          END IF;          
+          -- Volta para o inicio do loop
+          CONTINUE;
+        END IF;                                    
+                  
+        -- alimenta indice da temp-table        
+        vr_ind_sald := vr_tab_sald.last;
         
         -- inicializa o valor de pagamento
         vr_vlpagmto := 0;
 
-				-- adquire saldo disponível total da conta (saldo + cheque especial + limite de crédito)
-				vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl +											 
-											 vr_tab_sald(vr_ind_sald).vllimcre;	
+        -- adquire saldo disponível total da conta (saldo + cheque especial + limite de crédito)
+        vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl +                       
+                       vr_tab_sald(vr_ind_sald).vllimcre;  
         
 
         IF upper(pr_cdprogra) = 'DEBCCR' THEN
@@ -13828,7 +13841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_erro   EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);  
-	    vr_des_erro   VARCHAR2(4000);
+      vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro; 
       
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
@@ -13896,7 +13909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                          ,pr_inpessoa => rw_tbcrd_fatura.inpessoa);
           FETCH cr_crawcrd INTO rw_crawcrd;
           
-          IF cr_crawcrd%NOTFOUND THEN	                
+          IF cr_crawcrd%NOTFOUND THEN                  
              pc_escreve_xml(chr(10)||'<nrtelefo>NAO CADASTRADO</nrtelefo>'
                            ||chr(10)||'<cdadmcrd>0</cdadmcrd>'
                            ||chr(10)||'<nmadmcrd>NAO CADASTRADO</nmadmcrd>'
