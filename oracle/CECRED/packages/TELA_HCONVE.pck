@@ -153,7 +153,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_HCONVE IS
 
 END TELA_HCONVE;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
 
   ---------------------------------------------------------------------------
@@ -1998,9 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     -- Verifica se o arquivo existe
     IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsupload||'/'||pr_dsarquiv) THEN
       -- Retorno de erro
-      --vr_dscritic := 'Erro no upload do arquivo: '||REPLACE(vr_dsupload,'/','-')||'-'||pr_dsarquiv;
-      --vr_dscritic := 'Arquivo não encontrado no diretório: '||REPLACE(vr_dsupload,'/','-')||'-'||pr_dsarquiv;
-      vr_dscritic := 'Erro no upload, tente novamente.';
+      vr_dscritic := 'Arquivo não encontrado no diretório: '||REPLACE(vr_dsupload,'/','-')||'-'||pr_dsarquiv;
       RAISE vr_exc_saida;
     END IF;
     
@@ -2027,8 +2024,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
-    
-    commit;
 
     -- Retorna xml caso encontre problema em alguma linha do arquivo
     if pr_retxml is not null THEN      
@@ -2049,8 +2044,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
-    
-    commit;
 
     -- Programa que faz lancamentos na craplau
     pc_crps387 (pr_cdcooper => pr_cdcooper
@@ -2064,9 +2057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
-    
-    commit;
-    
+
     -- Busca parametros de retorno da execucao do 387
     open cr_crapprm (pr_cdcooper);
     fetch cr_crapprm into rw_crapprm;
@@ -2104,8 +2095,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
         raise vr_exc_saida;
     end;
     
-    commit;
-
     begin
       update gnconve nve
          set nve.nrseqint = nve.nrseqint + 1
@@ -2115,8 +2104,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
         vr_dscritic := 'Ao atualizar dados da tabela gnconve: '||sqlerrm;
         raise vr_exc_saida;
     end;
-
-    commit;
 
     -- Lancamentos de debito
     pc_crps509 (pr_cdcooper => pr_cdcooper
@@ -2133,9 +2120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
-    
-    commit;
-        
+ 
     -- Arquivos de retorno
     pc_crps388(pr_cdcooper => pr_cdcooper
               ,pr_flgresta => vr_flgresta
@@ -2173,6 +2158,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     
     close cr_crapprm;
    
+    begin
+      delete
+        from crapprm prm
+       where prm.cdacesso in ('PRM_HCONVE_CRPS387_IN','PRM_HCONVE_CRPS388_IN');
+    exception
+      when others then
+        vr_dscritic := 'Erro ao deletar dados da crapprm: '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+
     commit;
 
   exception
@@ -4592,3 +4587,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
   END pc_busca_convenio;   
 
 END TELA_HCONVE;
+/
