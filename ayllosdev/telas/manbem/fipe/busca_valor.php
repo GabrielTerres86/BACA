@@ -1,7 +1,7 @@
 <? 
 /*!
  * FONTE            : busca_valor.php
- * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
+ * CRIAÇÃO        	: Maykon D. Granemann / ENVOLTI
  * DATA CRIAÇÃO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
@@ -26,8 +26,11 @@
     $cdMarcaVeiculo		        = (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
     $cdModeloVeiculo	        = (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ; 
     $cdMarcaModeloAnoVeiculo    = (isset($_POST['cdanofip'])) ? $_POST['cdanofip'] : 0  ; 
+	$cdCooperGlb				= (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 1 ;
     
-    $urlServicoOperacao = $UrlFipe."ObterListaTabelasFipe";
+	$cdMarcaModeloAnoVeiculo	= ($cdMarcaModeloAnoVeiculo <> 3200) ? $cdMarcaModeloAnoVeiculo : 32000 ; //diferente de ZERO KM, passamos vazio
+
+    $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaTabelasFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
@@ -37,15 +40,14 @@
                 "codigo": '.$cdModeloVeiculo.'
             },
             "marcaModeloAnoVeiculo": {
-                "codigo": '.$cdMarcaModeloAnoVeiculo.'
+                "sigla": "'.$cdMarcaModeloAnoVeiculo.'"
             }
         },
-        "paginacao": {
-            "posicaoPrimeiroRegistro": 1,
-            "registrosPorPagina": 100
+		"cooperativa": {
+			"codigo": "'.$cdCooperGlb.'"
         }
     }';
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 

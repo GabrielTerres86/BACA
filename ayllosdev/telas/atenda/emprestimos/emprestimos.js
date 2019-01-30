@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 10/10/2018
+ * FONTE        : emprestimos.js                            Última alteração: 29/01/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -143,6 +143,7 @@
 * 113: [10/10/2018] Ajustes nas declaracoes de variaveis (Andrey Formigari)
 * 114: [15/09/2018] Alteração da tela de Bens da Atenda Prestação/Empréstimo (Christian / Envolti)
 * 115: [20/09/2018] Inclusão de histórico de Gravames (Christian / Envolti)
+* 116: [29/01/2019] Alteracao da consulta FIPE  (Christian / Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3410,8 +3411,9 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_modelos.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
@@ -3429,9 +3431,10 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_anos.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementAno+"C").val() != "") {
@@ -3447,15 +3450,18 @@ function controlaLayout(operacao) {
 				trataCamposFipe($(this));
 				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_valor.php";
+					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $("#"+idElementModelo).val();
 					var cdAnoFipe;
 					if(modeloBem == '') {
-						cdAnoFipe = $(this).val();
+						//cdAnoFipe = $(this).val();
+						arrPart = $("option:selected", this).text().split(" ");
+						cdAnoFipe = arrPart[0];
 					} else {
 						cdAnoFipe = modeloBem;
 					}
-					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
+					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, tipveicu: cdTipoVeiculo, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 			});
@@ -10572,7 +10578,7 @@ function verificarTipoVeiculo() {
 	var optionsModBem = $('#nrmodbem option');
 		$.each(optionsModBem, function(){
 			if($(this).text().toUpperCase().search('ZERO KM') != -1){
-				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
+				if (modeloBem == '' || modeloBem == null) { modeloBem = 3200; }
 				$(this).remove();
 			}
 		});
