@@ -25,6 +25,9 @@
  *                23/11/2018 - Implantacao Projeto 421, parte 2
  *                             Heitor (Mouts)
  *
+ *                18/12/2018 - Remoção da solicitação de senha do coordenador para alteração do campo "indebprj"
+ *                             PJ 450 - Reginaldo/AMcom
+ *
  * --------------
  */
 
@@ -984,56 +987,6 @@ function controlaCamposCadastroHistorico() {
 		}
     });	
 	
-	//Chama tela para pedir senha de coordenador quando o histórico for flegado sim
-	//para estourar a conta (Diego Simas - AMcom)	
-	$("#inestocc", "#frmHistorico").unbind('change').bind('change', function () {			
-		var inestocc = $(this).val();
-		var opcao = $("#cddopcao", "#frmCab").val();		
-		//só pedir senha caso haja alteração no inesstocc (Indicador para Estourar Conta)
-		if(opcao == "A"){	
-			if(inestocc == 0){
-				$('#inestocc', '#frmHistorico').val(1);
-			}else{
-				$('#inestocc', '#frmHistorico').val(0);
-			}			
-				bloqueiaFundo(divRotina);
-				pedeSenhaCoordenador(2, 'voltaTelaSenha('+inestocc+');', '');
-				return false;			
-		}else{
-			if (aux_inestocc != inestocc) {
-				$('#inestocc', '#frmHistorico').val(0);
-				bloqueiaFundo(divRotina);
-				pedeSenhaCoordenador(2, 'voltaTelaSenha(1);', '');
-				return false;
-			}			
-		}		
-	});	
-
-	//Chama tela para pedir senha de coordenador quando o histórico for flegado sim
-	//para debitar após transferência da conta para prejuízo (Diego Simas - AMcom)
-	$("#indebprj", "#frmHistorico").unbind('change').bind('change', function () {
-		var indebprj = $(this).val();
-		var opcao = $("#cddopcao", "#frmCab").val();
-		//só pedir senha caso haja alteração no inesstocc (Indicador para Estourar Conta)
-		if (opcao == "A") {
-			if (indebprj == 0) {
-				$('#indebprj', '#frmHistorico').val(1);
-			} else {
-				$('#indebprj', '#frmHistorico').val(0);
-			}
-			bloqueiaFundo(divRotina);
-			pedeSenhaCoordenador(2, 'voltaTelaSenha(' + indebprj + ');', '');
-			return false;
-		} else {
-			if (aux_indebprj != indebprj) {
-				$('#indebprj', '#frmHistorico').val(0);
-				bloqueiaFundo(divRotina);
-				pedeSenhaCoordenador(2, 'voltaTelaSenha(1);', '');
-				return false;
-			}
-		}
-	});	
-
 	$("#indutblq", "#frmHistorico").unbind('change').bind('change', function () {
 
     	indutblq = $("#indutblq", "#frmHistorico").val();

@@ -2018,6 +2018,21 @@ END pc_carrega_tabela_riscos;
               END;
             END LOOP; -- FIM FOR rw_crapvri
           END LOOP; -- FIM FOR rw_crapris
+          
+          -- Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
+          BEGIN
+            UPDATE crapass
+               SET dsnivris = fn_traduz_risco(vr_maxrisco)
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = rw_contas_grupo.nrdconta;
+          EXCEPTION
+          WHEN OTHERS THEN
+		    --gera critica
+            vr_dscritic := 'Erro ao atualizar o nível de risco da conta conforme o maior risco do grupo (crapass). '||
+                           'Erro: '||SQLERRM;
+            RAISE vr_exc_erro;
+          END; -- Fim atualização do nível de risco do grupo
+          
         END LOOP; -- FIM FOR rw_contas_grupo
 
         -- Leitura de todos do grupo para atualizar o risco do grupo

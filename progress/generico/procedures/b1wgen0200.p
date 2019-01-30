@@ -9,7 +9,8 @@
    Objetivo  : BO - Rotinas generica para geraçao de lancamento em conta corrento do cooperado
 
    Alteracoes: 
-
+               16/11/2018 - prj450 - história 10669:Crédito de Estorno de Saque em conta em Prejuízo
+                            (Fabio Adriano - AMcom).
                             
                07/12/2018 - Ajustado pr_nrdocmto para varchar2 visto que o mesmo pode ter até 25 posicoes
                             que na comunicaçao com o Progress é truncado. PRJ450 - Regulatorio (Odirlei-AMcom)             
@@ -36,7 +37,7 @@ PROCEDURE gerar_lancamento_conta_comple:
     DEF  INPUT PARAM par_cdbccxlt LIKE craplcm.cdbccxlt    NO-UNDO.
     DEF  INPUT PARAM par_nrdolote LIKE craplcm.nrdolote    NO-UNDO.
     DEF  INPUT PARAM par_nrdconta LIKE craplcm.nrdconta    NO-UNDO.
-    DEF  INPUT PARAM par_nrdocmto LIKE craplcm.nrdocmto    NO-UNDO.
+    DEF  INPUT PARAM par_nrdocmto AS CHAR                  NO-UNDO.
     DEF  INPUT PARAM par_cdhistor LIKE craplcm.cdhistor    NO-UNDO.
     DEF  INPUT PARAM par_nrseqdig LIKE craplcm.nrseqdig    NO-UNDO.
     DEF  INPUT PARAM par_vllanmto LIKE craplcm.vllanmto    NO-UNDO.
@@ -240,7 +241,7 @@ PROCEDURE estorna_lancamento_conta:
     DEF  INPUT PARAM par_cdbccxlt LIKE craplcm.cdbccxlt    NO-UNDO.
     DEF  INPUT PARAM par_nrdolote LIKE craplcm.nrdolote    NO-UNDO.
     DEF  INPUT PARAM par_nrdctabb LIKE craplcm.nrdctabb    NO-UNDO.
-    DEF  INPUT PARAM par_nrdocmto LIKE craplcm.nrdocmto    NO-UNDO.
+    DEF  INPUT PARAM par_nrdocmto AS CHAR                  NO-UNDO.
     DEF  INPUT PARAM par_cdhistor LIKE craplcm.cdhistor    NO-UNDO.
     DEF  INPUT PARAM par_nrctachq LIKE craplcm.nrctachq    NO-UNDO.
     DEF  INPUT PARAM par_nrdconta LIKE craplcm.nrdconta    NO-UNDO.
@@ -378,6 +379,64 @@ PROCEDURE gerar_lancamento_conta:
     
     RETURN "OK". 
 END.    
+
+
+/******************************************************************************/
+/**     Procedure para Crédito de Estorno de Saque em conta em Prejuízo                 **/
+/******************************************************************************/
+PROCEDURE pc_estorna_saque_conta_prej:
+    DEF  INPUT PARAM par_cdcooper LIKE craplcm.cdcooper    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt LIKE craplcm.dtmvtolt    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci LIKE craplcm.cdagenci    NO-UNDO.
+    DEF  INPUT PARAM par_cdbccxlt LIKE craplcm.cdbccxlt    NO-UNDO.
+    DEF  INPUT PARAM par_nrdctabb LIKE craplcm.nrdctabb    NO-UNDO.
+    DEF  INPUT PARAM par_nrdocmto LIKE craplcm.nrdocmto    NO-UNDO.
+    DEF  INPUT PARAM par_cdhistor LIKE craplcm.cdhistor    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta LIKE craplcm.nrdconta    NO-UNDO.
+    DEF  INPUT PARAM par_nrseqdig LIKE craplcm.nrseqdig    NO-UNDO. 
+    DEF  INPUT PARAM par_vllanmto LIKE craplcm.vllanmto    NO-UNDO. 
+    /*** Saida ***/
+    DEF OUTPUT PARAM par_cdcritic AS INTE                  NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                  NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_estorna_saque_conta_prej
+    aux_handproc = PROC-HANDLE
+       ( INPUT  par_cdcooper  /* pr_cdcooper */
+        ,INPUT  par_dtmvtolt  /* pr_dtmvtolt */
+        ,INPUT  par_cdagenci  /* pr_cdagenci */
+        ,INPUT  par_cdbccxlt  /* pr_cdbccxlt */
+        ,INPUT  par_nrdctabb  /* pr_nrdctabb */
+        ,INPUT  par_nrdocmto  /* pr_nrdocmto */
+        ,INPUT  par_cdhistor  /* pr_cdhistor */
+        ,INPUT  par_nrdconta  /* pr_nrdconta */
+        ,INPUT  par_nrseqdig  /* par_nrseqdig */
+        ,INPUT  par_vllanmto  /* par_vllanmto */
+        ,OUTPUT 0             /* pr_cdcritic */
+        ,OUTPUT ""            /* pr_dscritic */
+        ).
+
+    CLOSE STORED-PROCEDURE pc_estorna_saque_conta_prej WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN par_cdcritic = 0
+           par_cdcritic = pc_estorna_saque_conta_prej.pr_cdcritic
+                          WHEN pc_estorna_saque_conta_prej.pr_cdcritic <> ?
+           par_dscritic = ""
+           par_dscritic = pc_estorna_saque_conta_prej.pr_dscritic
+                          WHEN pc_estorna_saque_conta_prej.pr_dscritic <> ?.    
+
+    IF par_cdcritic > 0 OR 
+      par_dscritic <> "" THEN                       
+    DO:
+      RETURN "NOK".
+    END.
+   
+    RETURN "OK".    
+    
+END.    
+
 
 /*................................. FUNCTIONS ...............................*/
 
