@@ -7,7 +7,7 @@
 
 	 Objetivo  : Rotina de entrega de talonarios
 
-	 Alterações: 
+	 Alterações: 29/11/2018 - Adicionado campo qtreqtal. Acelera - Entrega de Talonario (Lombardi)
 				
 	***************************************************************************/
 	
@@ -39,6 +39,7 @@
 	$cpfterce = isset($_POST['cpfterce']) && $_POST['cpfterce'] != '' ? $_POST['cpfterce'] : 0;
 	$nmtercei = isset($_POST['nmtercei']) && $_POST['nmtercei'] != '' ? $_POST['nmtercei'] : '';
 	$nrtaloes = isset($_POST['nrtaloes']) && $_POST['nrtaloes'] != '' ? $_POST['nrtaloes'] : '';
+	$qtreqtal = isset($_POST['qtreqtal']) && $_POST['qtreqtal'] != '' ? $_POST['qtreqtal'] : 0;
 	$verifica = isset($_POST['verifica']) && $_POST['verifica'] != '' ? $_POST['verifica'] : 1;
 	
 	// Monta o xml de requisição
@@ -53,6 +54,7 @@
 	$xml .= "		<cpfterce>".$cpfterce."</cpfterce>";
 	$xml .= "		<nmtercei>".$nmtercei."</nmtercei>";
 	$xml .= "		<nrtaloes>".$nrtaloes."</nrtaloes>";
+	$xml .= "		<qtreqtal>".$qtreqtal."</qtreqtal>";
 	$xml .= "		<verifica>".$verifica."</verifica>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
@@ -73,6 +75,6 @@
 			$executa = "solicitaSenhaMagnetico(\"entregaTalonario(0)\",".$nrdconta.",\"s\")";
 		echo $executa;
 	} else {
-		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','voltarConteudo(\'divConteudoOpcao\',\'divEntregaTalionario\');bloqueiaFundo(divRotina)',false);
+		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','voltarConteudo(\'divConteudoOpcao\',\'divTalionario\');bloqueiaFundo(divRotina)',false);
 	}
 ?>

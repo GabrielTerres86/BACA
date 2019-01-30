@@ -13,6 +13,7 @@
 	25/05/2018 - Alterada pra ser uma tela com os botões "Cheques nao compensados"
 	             e "Solicitar Talonario". PRJ366 (Lombardi)
 	16/08/2018 - Adicionado o botão "Entrega Talonario". Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+	24/01/2019 - Criado campo qtreqtal. Acelera - Entrega de Talonarios no Ayllos (Lombardi)
 	************************************************************************/
 	
 	session_start();
@@ -79,12 +80,12 @@ if (!in_array("@",$opcoesTela)) { // Executa primeira op&ccedil;&atilde;o da rot
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-									<div id="divEntregaTalionario"></div>
+									<div id="divTalionario"></div>
 									<div id="divConteudoOpcao" style="height: 100px;">
 										<div id="divBotoes" style="height:100px;">
 											<a href="#" class="botao" name="chequeNaoCompensados" id="chequeNaoCompensados" onClick="confirmaChequesNaoCompensados();">Cheques n&atilde;o compensados</a>
 											<div style="height: 10px;" />
-											<a href="#" class="botao" name="solicitarTalonario" id="solicitarTalonario" onClick="confirmaSolicitarTalonario();">Solicitar Talon&aacute;rio</a>
+											<a href="#" class="botao" name="solicitarTalonario" id="solicitarTalonario" onClick="acessaSolicitaTalonario();">Solicitar Talon&aacute;rio</a>
 											<div style="height: 10px;" />
 											<a href="#" class="botao" name="entregaTalonario" id="entregaTalonario" onClick="acessaEntregaTalonario();">Entrega Talon&aacute;rio</a>
 										</div>

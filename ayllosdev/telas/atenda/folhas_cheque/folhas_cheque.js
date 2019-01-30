@@ -15,6 +15,8 @@
 						  entregaTalonario, dscShowHideDiv, voltarConteudo, 
 						  cartaoAssinatura e controlaFocoEnterComLink. 
 						  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+			 24/01/2019 - Criado campo qtreqtal. 
+						  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
 
 ************************************************************************/
 var Ltpentrega1;
@@ -25,6 +27,7 @@ var Ltprequis1;
 var Ltprequis2;
 var Lnrinichq;
 var Lnrfinchq;
+var Lqtreqtal;
 
 var Ctpentrega1;
 var Ctpentrega2;
@@ -34,6 +37,7 @@ var Ctprequis1;
 var Ctprequis2;
 var Cnrinichq;
 var Cnrfinchq;
+var Cqtreqtal;
 var ultimoTalao;
 
 // Funcao para carregar lista de cheques n&atilde;o compensados em PDF
@@ -51,13 +55,19 @@ function carrega_lista() {
 }
 
 function solicitarTalonario () {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, solicitando talonarios ...");
+	
+	var qtreqtal = $('#qtreqtal','#frmSolicitaTalonarios').val();
+	
 	// Carrega conteúdo da opção através do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/atenda/folhas_cheque/solicitar_talonario.php',
+        url: UrlSite + 'telas/atenda/folhas_cheque/solicita_talonarios/solicitar_talonario.php',
         data: {
             nrdconta: nrdconta,
+			qtreqtal: qtreqtal,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -105,7 +115,15 @@ function confirmaChequesNaoCompensados () {
 }
 
 function confirmaSolicitarTalonario () {
-	showConfirmacao('Confirma a solicita&ccedil;&atilde;o do talon&aacute;rio?','Confirma&ccedil;&atilde;o - Aimaro','solicitarTalonario();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+	
+	var qtreqtal = $('#qtreqtal','#frmSolicitaTalonarios').val();
+	
+	if (qtreqtal == 0 || qtreqtal == '') {
+		showError("error", "Informe a quantidade de tal&otilde;es a solicitar.", "Alerta - Aimaro", "blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));Cqtreqtal.focus();");
+		return false;
+	}
+	
+	showConfirmacao('Confirma a solicita&ccedil;&atilde;o do talon&aacute;rio?','Confirma&ccedil;&atilde;o - Aimaro','solicitarTalonario();','blockBackground(parseInt($("#divRotina").css("z-index")));Cqtreqtal.focus();','sim.gif','nao.gif');
 }
 
 function acessaEntregaTalonario () {
@@ -128,7 +146,42 @@ function acessaEntregaTalonario () {
 		success: function(response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
-					$("#divEntregaTalionario").html(response);
+					$("#divTalionario").html(response);
+                    return false;
+                } catch (error) {
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+                }
+            }
+		}				
+	});
+}
+
+function acessaSolicitaTalonario () {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados de solicita&ccedil;&atilde;o de talonarios ...");
+	
+	// Carrega biblioteca javascript da rotina
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/folhas_cheque/solicita_talonarios/form_solicita_talonarios.php",
+		dataType: "html",
+		data: {
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')));");
+		},
+		success: function(response) {
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+					$("#divTalionario").html(response);
                     return false;
                 } catch (error) {
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
@@ -162,6 +215,7 @@ function formataLayout(nomeForm, ultimo_talao){
 		Ltprequis2 = $('label[for="tprequis_2"]','#'+nomeForm);
 		Lnrinichq = $('label[for="nrinichq"]','#'+nomeForm);
 		Lnrfinchq = $('label[for="nrfinchq"]','#'+nomeForm);
+		Lqtreqtal = $('label[for="qtreqtal"]','#'+nomeForm);
 		
 		Ctpentrega1 = $('#tpentrega_1','#'+nomeForm);
 		Ctpentrega2 = $('#tpentrega_2','#'+nomeForm);
@@ -171,6 +225,7 @@ function formataLayout(nomeForm, ultimo_talao){
 		Ctprequis2 = $('#tprequis_2','#'+nomeForm);
 		Cnrinichq = $('#nrinichq','#'+nomeForm);
 		Cnrfinchq = $('#nrfinchq','#'+nomeForm);
+		Cqtreqtal = $('#qtreqtal','#'+nomeForm);
 		
 		btnVoltar	 = $('#btnVoltar','#divBotoes');
 		btnContinuar = $('#btnContinuar','#divBotoes');
@@ -183,6 +238,7 @@ function formataLayout(nomeForm, ultimo_talao){
 		Ltprequis1.css({'width':'110px','text-align':'left'});
 		Lnrinichq.addClass('rotulo').css('width','90px');
 		Lnrfinchq.css('width','50px');
+		Lqtreqtal.addClass('rotulo').css('width','90px');
 		
 		Ccpfterce.addClass('cpf').css('width','140px');
 		Cnmtercei.css('width','290px');
@@ -190,6 +246,8 @@ function formataLayout(nomeForm, ultimo_talao){
 		Cnrinichq.setMask('INTEGER', 'zzzzzzz.9', '.', '');
 		Cnrfinchq.css({'width':'70px','text-align':'right'});
 		Cnrfinchq.setMask('INTEGER', 'zzzzzzz.9', '.', '');
+		Cqtreqtal.css({'width':'35px','text-align':'right'});
+		Cqtreqtal.setMask('INTEGER', 'zz9', '.', '');
 		
 		Ctpentrega1.attr('style', 'margin: 5px 3px 0px 3px !important; border: none !important; height: 16px !important;').habilitaCampo();
 		Ctpentrega2.attr('style', 'margin: 5px 3px 0px 3px !important; border: none !important; height: 16px !important;').habilitaCampo();
@@ -199,6 +257,7 @@ function formataLayout(nomeForm, ultimo_talao){
 		Ctprequis2.attr('style', 'margin: 5px 3px 0px 3px !important; border: none !important; height: 16px !important;').habilitaCampo();
 		Cnrinichq.habilitaCampo();
 		Cnrfinchq.habilitaCampo();
+		Cqtreqtal.habilitaCampo();
 		
 		Ctpentrega1.focus();
 		formataOpcoes();
@@ -237,6 +296,36 @@ function formataLayout(nomeForm, ultimo_talao){
 				return false;
 			}
 		});
+	} else if( nomeForm == 'frmSolicitaTalonarios' ) {
+		
+		Lqtreqtal = $('label[for="qtreqtal"]','#'+nomeForm);
+		Cqtreqtal = $('#qtreqtal','#'+nomeForm);
+		
+		btnVoltar	 = $('#btnVoltar','#divBotoes');
+		btnContinuar = $('#btnContinuar','#divBotoes');
+		
+		$('#'+nomeForm).css('width','400px');
+		
+		Lqtreqtal.addClass('rotulo').css('width','180px');
+		Cqtreqtal.css({'width':'35px','text-align':'right'});
+		Cqtreqtal.setMask('INTEGER', 'zz9', '.', '');
+		Cqtreqtal.habilitaCampo();
+		
+		Cqtreqtal.focus();
+		
+		layoutPadrao();
+		controlaFocoEnterComLink(nomeForm);
+		
+		//Evento keypress do campo Ccpfterce
+		Cqtreqtal.unbind('keydown').bind('keydown', function (e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if (e.keyCode == 9 || e.keyCode == 13) {
+				$(this).removeClass('campoErro');
+				confirmaSolicitarTalonario();
+				return false;
+			}
+		});
+		
 	}
 	return false;
 }
@@ -358,6 +447,7 @@ function entregaTalonario(verifica) {
 	var terceiro = $('input[name="tpentrega"]:checked','#frmEntregaTalonarios').val();
 	var cpfterce = $('#cpfterce','#frmEntregaTalonarios').val().replace('-','').replace(/\./g, "");
 	var nmtercei = $('#nmtercei','#frmEntregaTalonarios').val();
+	var qtreqtal = $('#qtreqtal','#frmEntregaTalonarios').val();
 	var nrtaloes = '';
 	
 	$("input:checkbox[name=talao]:checked").each(function(i, el){
@@ -381,6 +471,7 @@ function entregaTalonario(verifica) {
 			cpfterce: cpfterce,
 			nmtercei: nmtercei,
 			nrtaloes: nrtaloes,
+			qtreqtal: qtreqtal,
 			verifica: verifica,
 			redirect: "html_ajax"
 		},		
@@ -414,8 +505,8 @@ function dscShowHideDiv(show,hide) {
 
 function voltarConteudo(show,hide) {
 	
-	if (hide == 'divEntregaTalionario')
-		$("#divEntregaTalionario").html('');
+	if (hide == 'divTalionario')
+		$("#divTalionario").html('');
 	
 	dscShowHideDiv(show,hide);
 }

@@ -220,6 +220,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   PROCEDURE pc_busca_ccf_transabbc;
 
   PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
+                                     ,pr_qtreqtal      IN NUMBER                --> Quantidade de taloes requisitados
                                      ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
@@ -243,6 +244,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                                     ,pr_cpfterce   IN NUMBER                --> CPF terceiro
                                     ,pr_nmtercei   IN VARCHAR2              --> Nome terceiro
                                     ,pr_nrtaloes   IN VARCHAR2              --> Taloes selecionados
+                                    ,pr_qtreqtal   IN NUMBER                --> Quantidade de taloes requisitados
                                     ,pr_verifica   IN NUMBER                --> (Verificacao / 0 Cadastro)
                                     ,pr_xmllog     IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
@@ -959,10 +961,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
          --Selecionar devolucoes de cheques
          OPEN cr_crapdev_union (pr_cdcooper => pr_cdcooper
-                         ,pr_cdbanchq => vr_aux_cdbanchq
-                         ,pr_cdagechq => pr_cdagechq
-                         ,pr_nrctachq => pr_nrctachq
-                         ,pr_nrcheque => pr_nrdocmto
+                               ,pr_cdbanchq => vr_aux_cdbanchq
+                               ,pr_cdagechq => pr_cdagechq
+                               ,pr_nrctachq => pr_nrctachq
+                               ,pr_nrcheque => pr_nrdocmto
                                ,pr_cdhistor => pr_cdhistor);
          --Posicionar no proximo registro
          FETCH cr_crapdev_union INTO rw_crapdev_union;
@@ -3533,6 +3535,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
 
   PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
+                                     ,pr_qtreqtal      IN NUMBER                --> Quantidade de taloes requisitados
                                      ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
@@ -3556,6 +3559,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --                            (Adriano - INC0017466).
 	--               17/12/2018 - Ajuste para validar se uma conta pode ou não solicitar talão.
 	--							  (Andrey Formigari - Mouts) #SCTASK0039579
+	--               24/01/2019 - Adicionado campo para definir a quantidade de talões solicitados.
+	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
     -- .............................................................................
     -- Cursores 
         
@@ -3585,9 +3590,24 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
          AND req.insitreq IN (1,4,5); /* nao processadas */
     rw_crapreq cr_crapreq%ROWTYPE;
     
+    CURSOR cr_crapreq_2(pr_cdcooper IN crapreq.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapreq.dtmvtolt%TYPE
+                       ,pr_nrdctabb IN crapreq.nrdctabb%TYPE
+                       ,pr_cdagelot IN crapreq.cdagelot%TYPE) IS
+      SELECT req.insitreq
+        FROM crapreq req
+       WHERE req.cdcooper = pr_cdcooper
+         AND req.dtmvtolt = pr_dtmvtolt
+         AND req.tprequis = 1
+         AND req.nrdctabb = pr_nrdctabb
+         AND req.nrinichq = 0
+         AND req.cdagelot = pr_cdagelot;
+    rw_crapreq_2 cr_crapreq_2%ROWTYPE;
+    
     -- Busca capa do lote da requisição
     CURSOR cr_craptrq(pr_cdcooper IN craptrq.cdcooper%TYPE
-                     ,pr_cdagelot IN craptrq.cdagelot%TYPE) IS
+                     ,pr_cdagelot IN craptrq.cdagelot%TYPE
+                     ,pr_nrdolote IN craptrq.nrdolote%TYPE) IS
       SELECT trq.nrseqdig
             ,trq.qtinforq
             ,trq.qtcomprq
@@ -3597,8 +3617,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
        WHERE trq.cdcooper = pr_cdcooper
          AND trq.cdagelot = pr_cdagelot
          AND trq.tprequis = 1            
-         AND trq.nrdolote = 10000;
+         AND trq.nrdolote = pr_nrdolote;
     rw_craptrq cr_craptrq%ROWTYPE;
+    
+    CURSOR cr_crappco(pr_cdcooper IN crapfdc.cdcooper%TYPE) IS
+      SELECT dsconteu
+        FROM crappco pco
+       WHERE pco.cdcooper = pr_cdcooper 
+         AND pco.cdpartar = 34;
+    rw_crappco cr_crappco%ROWTYPE;
     
     -- Registro sobre a tabela de datas
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -3610,6 +3637,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     vr_qtcomprq craptrq.qtcomprq%TYPE;
     vr_qtinfotl craptrq.qtinfotl%TYPE;
     vr_qtcomptl craptrq.qtcomptl%TYPE;
+    vr_nrdolote NUMBER;
     
     -- Variaveis de log
     vr_cdcooper INTEGER;
@@ -3660,7 +3688,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       RAISE vr_exc_saida;
     END IF;
     
-    
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -3675,7 +3702,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       RAISE vr_exc_saida;
     END if;
     CLOSE cr_crapass;
-    
+    /*
     -- Verifica se existe uma solicitação pendente
     OPEN cr_crapreq(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
@@ -3688,6 +3715,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       vr_dscritic := 'Já existe uma solicitação de talonário pendente para a conta.';
       RAISE vr_exc_saida;
     END IF;
+    */
 
 	/* INICIO: SCTASK0039579 */
     
@@ -3716,9 +3744,45 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     
     /* FIM: SCTASK0039579 */
     
+    OPEN cr_crappco(vr_cdcooper);
+    FETCH cr_crappco INTO rw_crappco;
+    IF cr_crappco%FOUND THEN
+      IF pr_qtreqtal > to_number(rw_crappco.dsconteu) THEN
+        CLOSE cr_crappco;
+        vr_dscritic := 'Quantidade de taloes solicitados superior ao permitido de ' || rw_crappco.dsconteu || ' taloes';
+        RAISE vr_exc_saida;
+      END IF;
+    ELSE 
+      CLOSE cr_crappco;
+      vr_dscritic := 'Nao foi possivel obter limite de taloes.';
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crappco;
+    
+    -- Verifica se existe solicitação repetida no mesmo dia
+    OPEN cr_crapreq_2(pr_cdcooper => vr_cdcooper
+                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                     ,pr_nrdctabb => pr_nrdconta
+                     ,pr_cdagelot => vr_cdagenci);
+    FETCH cr_crapreq_2 INTO rw_crapreq_2;
+    vr_foundreg := cr_crapreq_2%FOUND;
+    CLOSE cr_crapreq_2;
+    IF vr_foundreg THEN    
+      IF rw_crapreq_2.insitreq = 6 THEN
+        vr_cdcritic := 350;
+        RAISE vr_exc_saida;
+      ELSE
+        vr_dscritic := 'Já existe uma solicitação de talonário pendente para a conta.';
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
+    
+    vr_nrdolote := 19000 + to_number(vr_cdagenci);
+    
     -- Verifica se existe capa do lote da requisição
     OPEN cr_craptrq(pr_cdcooper => vr_cdcooper
-                   ,pr_cdagelot => rw_crapass.cdagenci);
+                   ,pr_cdagelot => vr_cdagenci
+                   ,pr_nrdolote => vr_nrdolote);
     FETCH cr_craptrq INTO rw_craptrq;
     vr_foundreg := cr_craptrq%FOUND;
     CLOSE cr_craptrq;
@@ -3736,9 +3800,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,tprequis
                             ,cdagelot
                             ,cdcooper)
-                     VALUES (10000
+                     VALUES (vr_nrdolote
                             ,1
-                            ,rw_crapass.cdagenci
+                            ,vr_cdagenci
                             ,vr_cdcooper)
                    RETURNING nrseqdig 
                             ,qtinforq
@@ -3777,8 +3841,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                           ,pr_nrdconta
                           ,pr_nrdconta
                           ,rw_crapass.cdagenci
-                          ,rw_crapass.cdagenci
-                          ,10000
+                          ,vr_cdagenci
+                          ,vr_nrdolote
                           ,rw_crapass.cdtipcta
                           ,rw_crapdat.dtmvtolt
                           ,vr_nrseqdig + 1
@@ -3786,7 +3850,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                           ,1 /* Normal */
                           ,0
                           ,1
-                          ,1);
+                          ,pr_qtreqtal);
     EXCEPTION 
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao criar requisição de talonário. ' || SQLERRM;
@@ -3802,9 +3866,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
             ,trq.qtinfotl = vr_qtinfotl + 1
             ,trq.qtcomptl = vr_qtcomptl + 1
        WHERE trq.cdcooper = vr_cdcooper
-         AND trq.cdagelot = rw_crapass.cdagenci
+         AND trq.cdagelot = vr_cdagenci
          AND trq.tprequis = 1          
-         AND trq.nrdolote = 10000;
+         AND trq.nrdolote = vr_nrdolote;
     EXCEPTION 
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar capa do lote da requisição. ' || SQLERRM;
@@ -4041,7 +4105,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                     ,pr_cpfterce   IN NUMBER                --> CPF terceiro
                                     ,pr_nmtercei   IN VARCHAR2              --> Nome terceiro
                                     ,pr_nrtaloes   IN VARCHAR2              --> Taloes selecionados
-                                    ,pr_verifica   IN NUMBER                --> (Verificacao / 0 Cadastro)
+                                    ,pr_qtreqtal   IN NUMBER                --> Quantidade de taloes requisitados
+                                    ,pr_verifica   IN NUMBER                --> (1 Verificacao / 0 Cadastro)
                                     ,pr_xmllog     IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
                                     ,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
@@ -4061,7 +4126,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para entrega de talonario.
     --
-    --   Alteracoes: 
+    --   Alteracoes: 24/01/2019 - Adicionado campo para definir a quantidade de talões solicitados.
+	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
     -- .............................................................................
     -- Cursores 
         
@@ -4097,6 +4163,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       SELECT fdc.nrseqems      nrtalao
             ,MIN(fdc.nrcheque) nrinicial
             ,MAX(fdc.nrcheque) nrfinal
+            ,row_number() over(ORDER BY fdc.nrseqems) rnum
         FROM crapfdc fdc
             ,crapcop cop
        WHERE cop.cdcooper = pr_cdcooper
@@ -4257,6 +4324,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     vr_qttalent      NUMBER;
     vr_tpchqerr      BOOLEAN;
     vr_stsnrcal_bool BOOLEAN;
+    vr_qtreqtal      NUMBER;
     
   BEGIN
     
@@ -4338,6 +4406,23 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         RAISE vr_exc_saida;
       END IF;
       
+    END IF;
+    
+    IF pr_qtreqtal > 0 THEN
+      OPEN cr_crappco(vr_cdcooper);
+      FETCH cr_crappco INTO rw_crappco;
+      IF cr_crappco%FOUND THEN
+        IF pr_qtreqtal > to_number(rw_crappco.dsconteu) THEN  
+          CLOSE cr_crappco;
+          vr_dscritic := 'Quantidade de taloes solicitados superior ao permitido de ' || rw_crappco.dsconteu || ' taloes';
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE 
+        CLOSE cr_crappco;
+        vr_dscritic := 'Nao foi possivel obter limite de taloes.';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crappco;
     END IF;
     
     -- Verificar se a cota/capital do cooperado é válida
@@ -4475,6 +4560,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         vr_nrinichq := 0;
         vr_nrfinchq   := 0;
         
+        IF rw_taloes.rnum  = 1 THEN
+          vr_qtreqtal := pr_qtreqtal;
+        ELSE
+          vr_qtreqtal := 0;
+        END IF;
+        
         FOR rw_crapfdc IN cr_crapfdc(pr_cdcooper => vr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrseqems => rw_taloes.nrtalao
@@ -4489,7 +4580,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,pr_dtmvtocd => rw_crapdat.dtmvtocd
                             ,pr_tprequis => pr_tprequis
                             ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrinichq => rw_taloes.nrinicial
+                            ,pr_nrinichq => (CASE WHEN pr_qtreqtal > 0 THEN 0 ELSE rw_taloes.nrinicial END)
                             ,pr_cdagenci => vr_cdagenci);
             FETCH cr_crapreq INTO rw_crapreq;
                 
@@ -4577,7 +4668,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,vr_nrinichq
                               ,1
                               ,vr_nrfinchq
-                              ,0 -- ,IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
+                              ,nvl(vr_qtreqtal,0) -- ,IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
                               ,vr_nrseqdig
                               ,rw_crapdat.dtmvtocd
                               ,1 --,p-tprequis -- 1=Normal 2=TB
@@ -4594,10 +4685,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         BEGIN
           UPDATE craptrq trq
              SET trq.qtcomprq = trq.qtcomprq + 1
+                ,trq.qtcomptl = trq.qtcomptl + nvl(vr_qtreqtal,0)
                 ,trq.qtcompen = trq.qtcompen + 1
                 ,trq.nrseqdig = vr_nrseqdig
                 
                 ,trq.qtinforq = trq.qtinforq + 1
+                ,trq.qtinfotl = trq.qtinfotl + nvl(vr_qtreqtal,0)
                 ,trq.qtinfoen = trq.qtinfoen + 1
            WHERE trq.rowid = vr_craptrq_rowid;
         EXCEPTION
@@ -4813,7 +4906,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,pr_nrinichq
                             ,1
                             ,pr_nrfinchq
-                            ,0 -- ,IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
+                            ,nvl(pr_qtreqtal,0) -- ,IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
                             ,vr_nrseqdig
                             ,rw_crapdat.dtmvtocd
                             ,1 --,p-tprequis -- 1=Normal 2=TB
@@ -4831,9 +4924,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         UPDATE craptrq trq
            SET trq.nrseqdig = vr_nrseqdig
               ,trq.qtcomprq = trq.qtcomprq + 1
+              ,trq.qtcomptl = trq.qtcomptl + nvl(pr_qtreqtal,0)
               ,trq.qtcompen = trq.qtcompen + 1
                 
               ,trq.qtinforq = trq.qtinforq + 1
+              ,trq.qtinfotl = trq.qtinfotl + nvl(pr_qtreqtal,0)
               ,trq.qtinfoen = trq.qtinfoen + 1
          WHERE trq.rowid = vr_craptrq_rowid;
       EXCEPTION
@@ -4850,7 +4945,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                      ,pr_nrdocmto => vr_nrdolote
                                      ,pr_cdhistor => 0
                                      ,pr_nrcartao => '0' --STRING(p-nrcartao)
-                                     ,pr_vllanmto => 0
+                                     ,pr_vllanmto => nvl(pr_qtreqtal,0)
                                      ,pr_cdoperad => vr_cdoperad
                                      ,pr_cdbccrcb => 0
                                      ,pr_cdfinrcb => 0

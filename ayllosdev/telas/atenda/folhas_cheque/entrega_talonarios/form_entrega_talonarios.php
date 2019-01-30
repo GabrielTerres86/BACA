@@ -7,7 +7,7 @@
 
 	 Objetivo  : Formulario de entrega de talonarios
 
-	 Alterações: 
+	 Alterações: 29/11/2018 - Adicionado campo qtreqtal. Acelera - Entrega de Talonario (Lombardi)
 				
 	***************************************************************************/
 	
@@ -94,8 +94,6 @@
 			<label for="tprequis_2" class="radio"><? echo utf8ToHtml('Contínuo') ?></label>
 		</div>
 		
-		<br style="clear:both" />
-		
 		<div id="divTaloes" style="text-align: left; margin-left: 90px;">
 			<div style="height:15px;" />
 			<?
@@ -103,18 +101,18 @@
 			foreach($xmlTaloes as $talao) {
 				$ultimo_talao = getByTagName($talao->tags,'nrtalao');
 				?> 
+				<br style="clear:both" />
 				<input type="checkbox" id="<?php echo $ultimo_talao; ?>" name="talao" class="rotulo" style="margin: 3px 3px 0px 3px !important; height: 13px !important;">
 				<div style="text-align: left; margin-left: 20px; margin-top: 1px;">
 					<? echo utf8ToHtml(' Folha ') . mascara(getByTagName($talao->tags,'nrinicial'),'###.###.#') . ' a ' . mascara(getByTagName($talao->tags,'nrfinal'),'###.###.#'); ?>
 				</div>
-				<br style="clear:both" />
 				<?
 			}
 			?>
 		</div>
 		
 		<div id="divContinuo">
-			<div style="height:15px;" />
+			<div style="height:30px;" />
 			<label for="nrinichq"><? echo utf8ToHtml('Folha Inicial:') ?></label>
 			<input type="text" name="nrinichq" id="nrinichq" maxlength="9" />
 			
@@ -122,16 +120,25 @@
 			<input type="text" name="nrfinchq" id="nrfinchq" maxlength="9" />
 		</div>
 		
+		<br style="clear:both" />
+		
+		<div>
+			<label for="qtreqtal"><? echo utf8ToHtml('Solicitar') ?></label>
+			<input name="qtreqtal" id="qtreqtal" type="text" />
+			<label Class="rotulo-linha" style="width:37px;" ><? echo utf8ToHtml('tal&otilde;es') ?></label>
+		</div>
+		
 	</fieldset>
 </form>
-<div id="divBotoes" >
-	<a href="#" class="botao" id="btnVoltar" name="btnVoltar" onClick="voltarConteudo('divConteudoOpcao','divEntregaTalionario');return false;">Voltar</a>
+
+<div id="divBotoes" style="height:25px;">
+	<a href="#" class="botao" id="btnVoltar" name="btnVoltar" onClick="voltarConteudo('divConteudoOpcao','divTalionario');return false;">Voltar</a>
 	<a href="#" class="botao" id="btnContinuar" name="btnContinuar" onClick="confimaEntregaTalonario();">Entregar</a>
 </div>
 
 <script type="text/javascript">
 
-dscShowHideDiv("divEntregaTalionario","divConteudoOpcao");
+dscShowHideDiv("divTalionario","divConteudoOpcao");
 
 formataLayout('frmEntregaTalonarios', '<?php echo $ultimo_talao; ?>');
 
