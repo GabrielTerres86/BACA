@@ -1,6 +1,6 @@
 PL/SQL Developer Test script 3.0
 342
-declare 
+declare  
 
   --Busca todas as cooperativas
   CURSOR cr_crapcop IS
