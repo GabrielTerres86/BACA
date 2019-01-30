@@ -164,6 +164,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  
                     25/10/2017 - Enviar o cdagectl para todos os convenios no arquivo ao invés de 
                                  mandar a cooperativa mais o PA (Lucas Ranghetti #767689)
+
+                    25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
+                                 impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+
     ............................................................................ */
 
     DECLARE
@@ -196,7 +200,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
       rw_crapcop cr_crapcop%ROWTYPE;
 
       -- seleciona os convenios da cooperativa
-      CURSOR cr_gnconve( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      CURSOR cr_gnconve( pr_cdcooper IN crapcop.cdcooper%TYPE
+                       , pr_cdconven IN gnconve.cdconven%TYPE ) IS
         SELECT gnconve.cdcooper
               ,gnconve.nmempres
               ,gnconve.cdhiscxa
@@ -221,6 +226,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         WHERE  gnconve.cdconven = gncvcop.cdconven
         AND    gnconve.cdcooper = crapcop.cdcooper
         AND    gncvcop.cdcooper = pr_cdcooper
+        AND    gnconve.cdconven = decode(pr_cdconven,0,gnconve.cdconven,pr_cdconven)
         AND    gnconve.flgativo = 1
         AND    gnconve.cdhiscxa > 0 -- Somente convenios arrec.caixa
         ORDER BY gnconve.cdconven;
@@ -271,6 +277,15 @@ CREATE OR REPLACE PROCEDURE CECRED.
         AND    gncontr.dtmvtolt = pr_dtmvtolt;
       rw_gncontr cr_gncontr%ROWTYPE;
 
+      -- Utilizado apenas em homologacao de convenios
+      CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
+      SELECT prm.dsvlrprm cdconven
+        FROM crapprm prm
+       WHERE prm.cdcooper = pr_cdcooper
+         AND prm.nmsistem = 'CRED'
+         AND prm.cdacesso = 'PRM_HCONVE_CRPS385_IN';
+      rw_hconven cr_hconven%ROWTYPE;
+
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -315,6 +330,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_dsattach     VARCHAR2(100);
       vr_nmarqrel     VARCHAR2(100);
       vr_path_arquivo VARCHAR2(500);
+      vr_cdconven     gnconve.cdconven%type := 0;
 
       --controle de clob
       vr_des_xml         CLOB;
@@ -1173,6 +1189,46 @@ CREATE OR REPLACE PROCEDURE CECRED.
             dbms_lob.close(vr_des_xml2);
             dbms_lob.freetemporary(vr_des_xml2);
 
+            -- Satisfazer condicao significa que execucao
+            -- esta homologando algum convenio. 
+            IF vr_cdconven <> 0 THEN
+                
+              BEGIN
+                INSERT 
+                  INTO CRAPPRM (NMSISTEM
+                               ,CDCOOPER
+                               ,CDACESSO
+                               ,DSTEXPRM
+                               ,DSVLRPRM)
+                VALUES         ('CRED'
+                               ,pr_cdcooper
+                               ,'PRM_HCONVE_CRPS385_OUT'
+                               ,'Nome do arquivo concatenado com o diretorio.'
+                               ,gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                      pr_cdcooper => pr_cdcooper,
+                                                      pr_nmsubdir => '/salvar')||'/'||vr_nmarqped);
+              EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  BEGIN
+                    UPDATE CRAPPRM PRM
+                       SET PRM.DSVLRPRM = gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                                pr_cdcooper => pr_cdcooper,
+                                                                pr_nmsubdir => '/salvar')||'/'||vr_nmarqped
+                     WHERE PRM.CDCOOPER = pr_cdcooper
+                       AND PRM.NMSISTEM = 'CRED'
+                       AND PRM.CDACESSO = 'PRM_HCONVE_CRPS385_OUT';
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar dados da tabela crapprm: '||SQLERRM;
+                      RAISE vr_exc_saida;
+                  END;
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir dados da tabela crapprm: '||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+            
+            END IF;
+
             --se nao for convenio unico, transmite o arquivo
             IF rw_gnconve.flgcvuni = 0 THEN
               pc_transmite_arquivo;
@@ -1332,8 +1388,21 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --antecipa a data de movimento em cinco dias
       vr_dtanteri := rw_crapdat.dtmvtolt - 5;
 
+      -- Verifica se execucao esta 
+      -- homologando convenios e busca parametros
+      OPEN cr_hconven (pr_cdcooper);
+      FETCH cr_hconven INTO rw_hconven;
+      
+      -- Caso encontre parametro busca convenio
+      IF cr_hconven%FOUND THEN
+        vr_cdconven := rw_hconven.cdconven;
+      END IF;
+      
+      CLOSE cr_hconven;
+
       --percorre os convenios da cooperativa
-      OPEN cr_gnconve ( pr_cdcooper => pr_cdcooper);
+      OPEN cr_gnconve ( pr_cdcooper => pr_cdcooper
+                      , pr_cdconven => vr_cdconven );
       LOOP
         FETCH cr_gnconve INTO rw_gnconve;
         EXIT WHEN cr_gnconve%NOTFOUND;

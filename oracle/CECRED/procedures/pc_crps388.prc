@@ -272,6 +272,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            enviada a data de pagamento do agendamento (craplau.dtmvtopg) 
                            conforme já é enviado para o convênio 085
                            (Adriano - INC0027597).
+
+              25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
+                           impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -346,6 +350,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltotarq     NUMBER;
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
+  vr_cdconven     gnconve.cdconven%type;
+
   ---------------------------------- CURSORES  ----------------------------------
   
   -- Verificar se é conta migrada
@@ -363,7 +369,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_tco typ_tab_craptco;
   
   -- Busca os convênios ativos de Debito Automático da Cooperativa
-  CURSOR cr_gnconve IS   
+  CURSOR cr_gnconve (pr_cdconven in gnconve.cdconven%type) IS   
     SELECT gncvcop.cdconven
           ,gnconve.tprepass
           ,gnconve.nmempres
@@ -386,6 +392,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           ,gnconve
           ,crapcop 
      WHERE gncvcop.cdcooper = pr_cdcooper
+       AND gnconve.cdconven = decode(pr_cdconven,0,gnconve.cdconven,pr_cdconven)
        AND gnconve.cdconven = gncvcop.cdconven
        AND gnconve.flgativo = 1 /* True */
        AND gnconve.cdhisdeb > 0
@@ -480,6 +487,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
      WHERE cdconven = pr_cdconven 
        AND flgretor = 0; --FALSE
   
+  -- Utilizado apenas em homologacao de convenios
+  CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
+  SELECT prm.dsvlrprm
+    FROM crapprm prm
+   WHERE prm.cdcooper = pr_cdcooper
+     AND prm.nmsistem = 'CRED'
+     AND prm.cdacesso = 'PRM_HCONVE_CRPS388_IN';
+  rw_hconven cr_hconven%ROWTYPE;
+
   ------------------------- PROCEDIMENTOS INTERNOS -----------------------------
   
   -- Procedimento para obtenção da sequencia atual dos arquivos 
@@ -658,6 +674,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                 ,pr_nmarqdat   IN VARCHAR2
                                 ,pr_dtmvtopr   IN DATE 
                                 ,pr_nrseqdig      IN NUMBER
+                                ,pr_cdconven      IN NUMBER
                                 ,pr_tot_vlfatura  IN NUMBER
                                 ,pr_tot_vltarifa  IN NUMBER
                                 ,pr_tot_vlapagar  IN NUMBER
@@ -668,6 +685,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   BEGIN 
     -- Caso não seja convênio unificado 
     IF pr_rw_gnconve.flgcvuni = 0 THEN 
+
+	  -- Caso seja maior que zero
+	  -- esta em processo de homol de convenios
+      IF pr_cdconven > 0 THEN
+        -- Registra parametros para uso interno da rotina
+        begin         
+          insert 
+            into crapprm (nmsistem
+                         ,cdcooper
+                         ,cdacesso
+                         ,dstexprm
+                         ,dsvlrprm)
+          values         ('CRED'
+                         ,pr_cdcooper
+                         ,'PRM_HCONVE_CRPS388_OUT'
+                         ,'Parametro de entrada do Crps388, auxilia na homologacao dos convenios.'
+                         ,vr_camicop||'/'||vr_nmarqped);
+        exception
+          when dup_val_on_index then
+            update crapprm prm
+               set prm.dsvlrprm = vr_camicop||'/'||vr_nmarqped
+             where prm.cdcooper = pr_cdcooper
+               and prm.cdacesso = 'PRM_HCONVE_CRPS388_OUT';
+          when others then          
+            -- gerando a critica
+            pr_dscritic := 'Erro ao inserir dados na tabela crapprm: '||sqlerrm;        
+        end;
+      END IF;
+
       -- Para Internet e E-Sales 
       IF pr_rw_gnconve.tpdenvio IN(1,2) THEN
         -- Vamos converter para DOS 
@@ -835,9 +881,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
     -- Montagem de auxiliares para os arquivos 
     vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'rrrrmmdd');
     vr_flgfirst := true;
+
+    -- Analisa se esta sendo homologado 
+    -- algum convenio (busca parametros)
+    open cr_hconven (pr_cdcooper);
+    fetch cr_hconven into rw_hconven;
     
+    -- Se encontrou limita loop de convenios
+    if cr_hconven%found then
+      vr_cdconven := rw_hconven.dsvlrprm;
+    end if;
+    
+    close cr_hconven;
+
     -- Busca de todos os convênios de debito automático vinculados a Cooperativa
-    FOR rw_gnconve IN cr_gnconve LOOP 
+    FOR rw_gnconve IN cr_gnconve (vr_cdconven) LOOP 
       -- Montagem da data de repassa
       IF rw_gnconve.tprepass = 1 THEN 
         -- D+1
@@ -1936,6 +1994,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                             ,vr_nmarqdat
                             ,vr_dtmvtopr
                             ,vr_nrseqdig
+                            ,vr_cdconven
                             ,vr_tot_vlfatura
                             ,vr_tot_vltarifa
                             ,vr_tot_vlapagar
