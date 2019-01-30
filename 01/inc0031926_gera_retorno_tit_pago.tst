@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-30
+31
 -- Created on 30/01/2019 by F0030367 
 declare 
   -- Local variables here
@@ -29,6 +29,7 @@ begin
     dbms_output.put_line(to_char(sysdate, 'dd/mm/rrrr hh24:mi:ss') || 
                          ' >> Final da geração arquivos de pagamento.');
 
+  commit;
 end;
 0
 0
