@@ -844,8 +844,6 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 																																			
             echo 'strHTML += \'<tr' . $style . '>\';';
 			$vr_txtmsg = ( isset($mensagens[$i]->tags[1]->cdata) ) ? addslashes($mensagens[$i]->tags[1]->cdata) : '';
-
-			$vr_txtmsg = str_replace("Houve Prejuizo de Emprestimo","",$vr_txtmsg);
             echo 'strHTML += \'<td class="txtNormal"><textarea style="width: 455px; height: 40px; resize: none" readonly>' . removeCaracteresInvalidos(retiraAcentos($vr_txtmsg)) . '</textarea></td>\';';
 				echo 'strHTML += \'</tr>\';';															
 			}
