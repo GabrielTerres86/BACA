@@ -4427,7 +4427,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--                           para proximo registro.              
 	--                           Chamado INC0016984 (Gabriel - Mouts).
 	--
-    --              25/20/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
+    --              25/12/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
+    --
+    --              24/01/2019 - PJ298.2.2 - Ajustado mensagem de prejuizo de emprestimo (Rafael Faria - Supero)              
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4645,13 +4648,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND lim.insitlim = pr_insitlim;
     rw_craprli cr_craprli%ROWTYPE; 
     
-    --> Buscar emprestimos do cooperado
+    --> Buscar emprestimos do cooperado prejuizo
     CURSOR cr_crapepr IS
-      SELECT crapepr.vlsdprej
+      SELECT sum(crapepr.vlsdprej) vlsdprej
         FROM crapepr
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.nrdconta = pr_nrdconta
          AND crapepr.inprejuz = 1;
+    rw_crapepr cr_crapepr%ROWTYPE;
     
     --> Buscar emprestimos do cooperado
     CURSOR cr_crapepr_2(pr_cdcooper crapepr.cdcooper%TYPE,
@@ -4916,17 +4920,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND t.nrdconta = pr_nrdconta;
     rw_prejuizo cr_prejuizo%ROWTYPE;
 
-    --> Consultar se já houve prejuizo referente a empréstimos
-    CURSOR cr_crapepr_emp(pr_cdcooper crapepr.cdcooper%TYPE,
-                          pr_nrdconta crapepr.nrdconta%TYPE,
-                          pr_inliquid crapepr.inliquid%TYPE)IS
-      SELECT c.nrdconta
-        FROM crapepr c
-       WHERE c.cdcooper = pr_cdcooper
-         AND c.nrdconta = pr_nrdconta
-         AND c.inprejuz = 1
-         AND c.inliquid = pr_inliquid;
-    rw_crapepr_emp cr_crapepr_emp%ROWTYPE;
 
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
@@ -5303,34 +5296,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     END IF;
     
-    OPEN cr_crapepr_emp(pr_cdcooper => pr_cdcooper,
-                        pr_nrdconta => pr_nrdconta,
-                        pr_inliquid => 0);
-    FETCH cr_crapepr_emp INTO rw_crapepr_emp;
-    IF cr_crapepr_emp%FOUND THEN
-      CLOSE cr_crapepr_emp;
+    OPEN cr_crapepr;
+    FETCH cr_crapepr INTO rw_crapepr;
+    IF cr_crapepr%FOUND THEN
+      CLOSE cr_crapepr;
       -- Conta Corrente com Emprestimo em Prejuizo
       -- Incluir na temptable
+      IF rw_crapepr.vlsdprej >0 THEN
       pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     ELSE
-      CLOSE cr_crapepr_emp;
-      END IF;
-    
-    OPEN cr_crapepr_emp(pr_cdcooper => pr_cdcooper,
-                        pr_nrdconta => pr_nrdconta,
-                        pr_inliquid => 1);
-    FETCH cr_crapepr_emp INTO rw_crapepr_emp;
-    IF cr_crapepr_emp%FOUND THEN
-      CLOSE cr_crapepr_emp;
-      -- Houve prejuizo de emprestimo
-      -- Incluir na temptable
       pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Emprestimo',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;      
     ELSE
-      CLOSE cr_crapepr_emp;
+      CLOSE cr_crapepr;
     END IF;
-    
     -- FIM MENSAGENS PREJUÍZO --
 
     IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/
