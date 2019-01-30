@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0014 is
   -- Alteracoes:   
   --  
   --             27/06/2018 Nova procedure PC_INSERE_COMUNIC_SOA - Alexandre Borgmann - Mout´s Tecnologia
+  --			 30/01/2019 Liberacao Ajustada para producao da chamada para  pc_cria_pessoa_conta - Christian Grosch
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
