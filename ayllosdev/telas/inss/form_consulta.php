@@ -186,7 +186,7 @@
 			<a href="#" class="botao" id="btTrocaConta" onClick="acessaRotina('<?echo $rotinas[$i];?>','T');return false;" >Troca Conta</a>	
 			<a href="#" class="botao" id="btCompravaVida" onClick="acessaRotina('<?echo $rotinas[$i];?>','C');return false;" >Comprova Vida</a>	
 			<a href="#" class="botao" id="btAlteracaoCadastral" onClick="acessaRotina('<?echo $rotinas[$i];?>','A');return false;" >Altera Cadastro</a>	
-			<a href="#" class="botao" id="btReenviarCadastro" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','reenviarCadastro(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesConsulta\').focus();','sim.gif','nao.gif');return false;" >Reenvio de Cadastro</a> 
+			<a href="#" class="botao" id="btReenviarCadastro" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','reenviarCadastro(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesConsulta\').focus();','sim.gif','nao.gif');return false;" >Recadastramento</a> 
 		<?}	
 		}
 	
