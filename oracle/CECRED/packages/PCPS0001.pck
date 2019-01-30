@@ -55,6 +55,8 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
 																						 ,pr_nrctatrf        IN VARCHAR2                --> conta que recebe a transferencia.
 																						 ,pr_des_erro        OUT VARCHAR2               --> Houve critica?
 																						 ,pr_dscritic        OUT VARCHAR2);             --> Descrição da crítica
+																						 
+    PROCEDURE pc_deslig_conta_salario;																						 
   
 
 END PCPS0001;
@@ -76,6 +78,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       Alteracoes:
 
   ---------------------------------------------------------------------------------------------------------------*/
+	
+  -- Variáveis Globais e constantes
+  vr_dsarqlg         CONSTANT VARCHAR2(30) := 'pcps_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- Nome do arquivo de log mensal	
+  vr_dsmasklog       CONSTANT VARCHAR2(30) := 'dd/mm/yyyy hh24:mi:ss';
   
    PROCEDURE pc_busca_dominio(pr_nmdominio IN tbcc_dominio_campo.nmdominio%TYPE --> Nr. da Conta
                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -754,7 +760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		SELECT p.dsconteu
 			FROM crappco p
 		 WHERE p.cdcooper = 3
-			 AND p.cdpartar = 64;
+			 AND p.cdpartar = 65;
 	rw_crappco cr_crappco%ROWTYPE;
 		
 	-- Buscar se já não temos algum pacote ativo para o cooperado
@@ -1113,6 +1119,708 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       -- Erro
       pr_dscritic := 'Erro na PCPS0001.PC_VALIDA_TRANSF_CONTA_SALARIO: ' || SQLERRM;
   END;
+	
+	PROCEDURE pc_inclui_impedimento_deslig(pr_cdcooper IN crapass.cdcooper%TYPE
+		                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
+		                                    ,pr_cdimpedi IN tbcc_imped_deslig_cta_sal.cdimpedimento%TYPE) IS
+    /* .............................................................................
+            Programa: pc_inclui_impedimento_deslig
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Janeiro/2019                 Ultima atualizacao: 14/01/2019
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Valida se há algum impedimento para desligamento da conta salário
+
+            Observacao: -----
+        
+            Alteracoes:
+    ............................................................................. */
+  
+	-- Variaveis de critica
+	vr_dscritic VARCHAR2(1000);
+	vr_exc_erro EXCEPTION;
+	
+	BEGIN
+		INSERT INTO tbcc_imped_deslig_cta_sal (cdcooper
+		                                      ,nrdconta
+																					,cdimpedimento
+																					,dtimpedimento)
+																	 VALUES (pr_cdcooper
+																	        ,pr_nrdconta
+																					,nvl(pr_cdimpedi,0)
+																					,SYSDATE);
+	EXCEPTION
+		WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir impedimento de desligamento de conta salário. ' || SQLERRM;
+        RAISE vr_exc_erro;
+  END;																			
+	
+	PROCEDURE pc_gera_log_deslig_cta_sal(pr_nmdacao IN VARCHAR2
+		                                  ,pr_dsmsglog IN VARCHAR2) IS
+    /* .............................................................................
+            Programa: pc_grava_imped_deslig_ctasal
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Janeiro/2019                 Ultima atualizacao: 14/01/2019
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Valida se há algum impedimento para desligamento da conta salário
+
+            Observacao: -----
+        
+            Alteracoes:
+    ............................................................................. */																	 
+	
+	vr_dsmsglog VARCHAR2(1000);
+
+	BEGIN
+		vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+									 || 'PCPS0001.' || pr_nmdacao
+									 || ' --> ' || pr_dsmsglog;
+          
+		-- Incluir log de execução.
+		BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+															,pr_ind_tipo_log => 1
+															,pr_des_log      => vr_dsmsglog
+															,pr_nmarqlog     => vr_dsarqlg);
+	EXCEPTION
+		WHEN OTHERS THEN
+			NULL;
+	END;
+	
+	PROCEDURE pc_valida_deslig_cta_sal(pr_cdcooper IN crapass.cdcooper%TYPE
+		                                ,pr_nrdconta IN crapass.nrdconta%TYPE
+																		,pr_dtmvtolt IN BTCH0001.CR_CRAPDAT%ROWTYPE
+																	  ,pr_flgimped OUT BOOLEAN) IS
+    /* .............................................................................
+            Programa: pc_valida_deslig_cta_sal
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Janeiro/2019                 Ultima atualizacao: 14/01/2019
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Valida se há algum impedimento para desligamento da conta salário
+
+            Observacao: -----
+        
+            Alteracoes:
+    ............................................................................. */																	 
+	
+	-- Cursor para Limite de Crédito
+	CURSOR cr_craplim(pr_cdcooper craplim.cdcooper%TYPE
+		               ,pr_nrdconta craplim.nrdconta%TYPE) IS
+			SELECT 1
+			  FROM craplim lim
+			 WHERE lim.cdcooper = pr_cdcooper
+			   AND lim.nrdconta = pr_nrdconta
+				 AND lim.tpctrlim = 1
+				 AND lim.insitlim = 2;
+	rw_craplim cr_craplim%ROWTYPE;
+	
+	-- Cursor para Convenio 
+	CURSOR cr_crapatr(pr_cdcooper crapatr.cdcooper%TYPE
+		               ,pr_nrdconta crapatr.nrdconta%TYPE) IS
+			SELECT 1
+			  FROM crapatr atr
+			 WHERE atr.cdcooper = pr_cdcooper
+			   AND atr.nrdconta = pr_nrdconta
+				 AND atr.dtfimatr IS NULL;
+	rw_crapatr cr_crapatr%ROWTYPE;
+	
+	-- Cursor para PAMCARD
+	CURSOR cr_crappam(pr_cdcooper crappam.cdcooper%TYPE
+		               ,pr_nrdconta crappam.nrdconta%TYPE) IS
+			SELECT 1
+			  FROM crappam pam
+			 WHERE pam.cdcooper = pr_cdcooper
+			   AND pam.nrdconta = pr_nrdconta
+				 AND pam.flgpamca = 1;
+	rw_crappam cr_crappam%ROWTYPE;
+	
+	-- Cursor para conta ITG
+	CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+		               ,pr_nrdconta crapass.nrdconta%TYPE) IS
+			SELECT 1
+			  FROM crapass ass
+			 WHERE ass.cdcooper = pr_cdcooper
+			   AND ass.nrdconta = pr_nrdconta
+				 AND ass.flgctitg = 2;
+	rw_crapass cr_crapass%ROWTYPE;
+
+  -- Cursor para CDC
+	CURSOR cr_crapcdr(pr_cdcooper crapcdr.cdcooper%TYPE
+		               ,pr_nrdconta crapcdr.nrdconta%TYPE) IS
+			SELECT 1
+			  FROM crapcdr cdr
+			 WHERE cdr.cdcooper = pr_cdcooper
+			   AND cdr.nrdconta = pr_nrdconta
+				 AND cdr.flgconve = 1;
+	rw_crapcdr cr_crapcdr%ROWTYPE;
+	
+	-- Cursor dos produtos a consistir
+	CURSOR cr_produto IS
+	    SELECT pro.cdproduto
+			      ,DECODE(pro.cdproduto,  5, 13
+						                     , 15, 14
+																 , 16, 15
+																 , 31, 16
+																 , 36, 17
+																 , 37, 18) cdimpedimento
+			  FROM tbcc_produto pro
+			 WHERE pro.cdproduto IN (5,15,16,31,36,37);
+	rw_produto cr_produto%ROWTYPE;
+	
+	-- Cursor das folhas de cheque
+	CURSOR cr_crapfdc(pr_cdcooper crapfdc.cdcooper%TYPE
+		               ,pr_nrdconta crapfdc.nrdconta%TYPE) IS
+			SELECT fdc.cdcooper
+						,fdc.nrdconta
+						,fdc.cdbanchq
+						,fdc.cdagechq
+						,fdc.nrctachq
+						,fdc.nrcheque
+				FROM crapfdc fdc
+			 WHERE fdc.cdcooper = pr_cdcooper
+				 AND fdc.nrdconta = pr_nrdconta
+				 AND fdc.incheque = 0 
+				 AND fdc.dtliqchq IS NULL
+				 AND fdc.dtemschq IS NOT NULL
+				 AND fdc.dtretchq IS NOT NULL;
+	rw_cheque cr_crapfdc%ROWTYPE;
+	
+	-- Cursor das devoluções/saldo negativo
+	CURSOR cr_crapneg(pr_cdcooper crapneg.cdcooper%TYPE
+									 ,pr_nrdconta crapneg.nrdconta%TYPE
+									 ,pr_cdbanchq crapneg.cdbanchq%TYPE
+									 ,pr_cdagechq crapneg.cdagechq%TYPE
+									 ,pr_nrctachq crapneg.nrctachq%TYPE
+									 ,pr_nrcheque crapneg.nrdocmto%TYPE) IS
+		  SELECT 1
+			  FROM crapneg neg
+			 WHERE neg.cdcooper = pr_cdcooper
+				 AND neg.nrdconta = pr_nrdconta
+				 AND neg.cdbanchq = pr_cdbanchq
+				 AND neg.cdagechq = pr_cdagechq
+				 AND neg.nrctachq = pr_nrctachq
+				 AND SUBSTR(neg.nrdocmto,1,6) = pr_nrcheque
+				 AND neg.cdhisest = 1;
+	 rw_crapneg cr_crapneg%ROWTYPE;
+	
+	-- Cursor para Bordero
+	CURSOR cr_crapcdb(pr_cdcooper crapfdc.cdcooper%TYPE
+		               ,pr_nrdconta crapfdc.nrdconta%TYPE) IS
+	    SELECT 1
+			  FROM crapcdb cdb
+			 WHERE cdb.cdcooper = pr_cdcooper
+				 AND cdb.nrdconta = pr_nrdconta
+				 AND cdb.insitchq = 2
+				 AND cdb.dtlibera > pr_dtmvtolt.dtmvtolt;
+	rw_crapcdb cr_crapcdb%ROWTYPE;
+	
+	-- Cursor para Bloqueto Cobrança
+	CURSOR cr_crapceb(pr_cdcooper crapfdc.cdcooper%TYPE
+		               ,pr_nrdconta crapfdc.nrdconta%TYPE) IS
+	   SELECT 1
+			 FROM crapceb ceb
+		  WHERE ceb.cdcooper = pr_cdcooper
+			  AND ceb.nrdconta = pr_nrdconta
+			  AND ceb.insitceb = 1;
+  rw_crapceb cr_crapceb%ROWTYPE; 
+	
+	-- Cursor do cartao de credito
+	CURSOR cr_cartao(pr_cdcooper crawcrd.cdcooper%TYPE
+		              ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+		SELECT 1
+			FROM crawcrd 
+		 WHERE crawcrd.cdcooper = pr_cdcooper
+			 AND crawcrd.nrdconta = pr_nrdconta
+			 AND (crawcrd.insitcrd = 4 OR crawcrd.insitcrd = 3 OR crawcrd.insitcrd = 7);
+	rw_cartao cr_cartao%ROWTYPE;	
+	
+	-- Variaveis locais
+	vr_percenir                NUMBER;
+	vr_tab_craptab             APLI0001.typ_tab_ctablq;
+	vr_tab_craplpp             APLI0001.typ_tab_craplpp;
+	vr_tab_craplrg             APLI0001.typ_tab_craplpp;
+	vr_tab_resgate             APLI0001.typ_tab_resgate;
+	vr_tab_dados_rpp           APLI0001.typ_tab_dados_rpp;
+	vr_tab_erro                GENE0001.typ_tab_erro;
+	vr_tab_saldo_rdca          APLI0001.typ_tab_saldo_rdca;
+	vr_tab_totais_futuros      EXTR0002.typ_tab_totais_futuros;
+  vr_tab_lancamento_futuro   EXTR0002.typ_tab_lancamento_futuro;
+	vr_des_reto                VARCHAR2(10);
+	vr_vlsldrpp                NUMBER := 0;
+  vr_retorno                 VARCHAR2(500);
+	vr_vlsldapl                crapapl.vlaplica%TYPE;
+	vr_vllautom                NUMBER   := 0;
+	
+	BEGIN
+	  pr_flgimped := FALSE;	
+		
+		-- Limite de crédito
+		OPEN cr_craplim(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_craplim INTO rw_craplim;
+		
+		IF cr_craplim%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 1);
+		END IF;
+		CLOSE cr_craplim;
+		
+		-- Convenio
+		OPEN cr_crapatr(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapatr INTO rw_crapatr;
+		
+		IF cr_crapatr%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 2);
+		END IF;
+		CLOSE cr_crapatr;
+		
+		-- PAMCARD
+		OPEN cr_crappam(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crappam INTO rw_crappam;
+		
+		IF cr_crappam%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 3);
+		END IF;
+		CLOSE cr_crappam;
+		
+		-- Conta ITG
+		OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapass INTO rw_crapass;
+		
+		IF cr_crapass%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 4);
+		END IF;
+		CLOSE cr_crapass;
+		
+		-- CDC
+		OPEN cr_crapcdr(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapcdr INTO rw_crapcdr;
+		
+		IF cr_crapcdr%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 5);
+		END IF;
+		CLOSE cr_crapcdr;
+		
+		-- Folhas de cheque
+		OPEN cr_crapfdc(pr_cdcooper => pr_cdcooper
+		              ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapfdc INTO rw_cheque;
+		
+		IF cr_crapfdc%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 6);
+		END IF;
+		CLOSE cr_crapfdc;
+		
+		-- Bordero
+		OPEN cr_crapcdb(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapcdb INTO rw_crapcdb;
+		
+		IF cr_crapcdb%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 7);
+		END IF;
+		CLOSE cr_crapcdb;
+		
+    -- Cartao Credito
+		OPEN cr_cartao(pr_cdcooper => pr_cdcooper
+		              ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_cartao INTO rw_cartao;
+		
+		IF cr_cartao%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => 8);
+		END IF;
+		CLOSE cr_cartao;
+		
+		-- Bloqueto Cobrança
+		OPEN cr_crapceb(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapceb INTO rw_crapceb;
+		
+		IF cr_crapceb%FOUND THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																	,pr_nrdconta => pr_nrdconta
+																	,pr_cdimpedi => 9);
+		END IF;
+		CLOSE cr_crapceb;
+		
+    -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
+    vr_percenir := GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                                          ,pr_nmsistem => 'CRED'
+                                                                          ,pr_tptabela => 'CONFIG'
+                                                                          ,pr_cdempres => 0
+                                                                          ,pr_cdacesso => 'PERCIRAPLI'
+                                                                          ,pr_tpregist => 0));		
+
+		-- Resgate Poupança Programada
+		APLI0001.pc_consulta_poupanca(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => 1
+																 ,pr_nrdcaixa => 1
+																 ,pr_cdoperad => '1'
+																 ,pr_idorigem => 1
+																 ,pr_nrdconta => pr_nrdconta
+																 ,pr_idseqttl => 1
+																 ,pr_nrctrrpp => 0
+																 ,pr_dtmvtolt => pr_dtmvtolt.dtmvtolt
+																 ,pr_dtmvtopr => pr_dtmvtolt.dtmvtopr
+																 ,pr_inproces => pr_dtmvtolt.inproces
+																 ,pr_cdprogra => 'PCPS0001'
+																 ,pr_flgerlog => FALSE
+																 ,pr_percenir => vr_percenir
+																 ,pr_tab_craptab => vr_tab_craptab
+																 ,pr_tab_craplpp => vr_tab_craplpp
+																 ,pr_tab_craplrg => vr_tab_craplrg
+																 ,pr_tab_resgate => vr_tab_resgate
+																 ,pr_vlsldrpp => vr_vlsldrpp
+																 ,pr_retorno => vr_retorno
+																 ,pr_tab_dados_rpp => vr_tab_dados_rpp
+																 ,pr_tab_erro => vr_tab_erro);
+		IF vr_vlsldrpp > 0 THEN
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+														,pr_nrdconta => pr_nrdconta
+														,pr_cdimpedi => 10);
+		END IF;
+
+		-- Aplicação
+		APLI0002.pc_obtem_dados_aplicacoes(pr_cdcooper => pr_cdcooper
+																		  ,pr_cdagenci => 1
+																		  ,pr_nrdcaixa => 1
+																		  ,pr_cdoperad => '1'
+																		  ,pr_nmdatela => 'PCPS0001'
+																		  ,pr_idorigem => 1
+																		  ,pr_nrdconta => pr_nrdconta
+																		  ,pr_idseqttl => 1
+																		  ,pr_nraplica => 0
+																		  ,pr_cdprogra => 'PCPS0001'
+																		  ,pr_flgerlog => 0
+																		  ,pr_dtiniper => NULL
+																		  ,pr_dtfimper => NULL
+																		  ,pr_vlsldapl => vr_vlsldapl
+																		  ,pr_des_reto => vr_des_reto
+																		  ,pr_tab_saldo_rdca => vr_tab_saldo_rdca
+																		  ,pr_tab_erro => vr_tab_erro);
+																			
+    IF vr_vlsldapl > 0 THEN
+			pr_flgimped := TRUE;
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																	,pr_nrdconta => pr_nrdconta
+																	,pr_cdimpedi => 11);
+		END IF;																			
+
+		-- Limpamos a tabela
+		vr_tab_totais_futuros.delete;
+
+    -- Lançamento Futuro
+		EXTR0002.pc_consulta_lancamento(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => 1
+                                   ,pr_nrdcaixa => 1
+																	 ,pr_cdoperad => '1'
+																	 ,pr_nrdconta => pr_nrdconta
+																	 ,pr_idorigem => 1
+																	 ,pr_idseqttl => 1
+																	 ,pr_nmdatela => 'PCPS0001'
+																	 ,pr_flgerlog => FALSE
+																	 ,pr_dtiniper => NULL
+																	 ,pr_dtfimper => NULL
+																	 ,pr_indebcre => ''
+																	 ,pr_des_reto => vr_des_reto
+																	 ,pr_tab_erro => vr_tab_erro
+																	 ,pr_tab_totais_futuros => vr_tab_totais_futuros
+																	 ,pr_tab_lancamento_futuro => vr_tab_lancamento_futuro);
+																	 
+    --> Extrair valor
+    IF vr_tab_totais_futuros.exists(vr_tab_totais_futuros.first) THEN      
+			pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																	,pr_nrdconta => pr_nrdconta
+																	,pr_cdimpedi => 12);
+    END IF;																	 
+
+		FOR rw_produto IN cr_produto LOOP
+			IF cada0003.fn_produto_habilitado(pr_cdcooper => pr_cdcooper
+																			 ,pr_nrdconta => pr_nrdconta
+																			 ,pr_cdproduto => rw_produto.cdproduto) = 'S' THEN
+			  pr_flgimped := TRUE;
+				pc_inclui_impedimento_deslig(pr_cdcooper => pr_cdcooper
+																		,pr_nrdconta => pr_nrdconta
+																		,pr_cdimpedi => rw_produto.cdimpedimento);
+		  END IF;
+		END LOOP;
+	END;
+	
+	PROCEDURE pc_deslig_conta_salario IS
+																					 
+    /* .............................................................................
+            Programa: pc_deslig_conta_salario
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Janeiro/2019                 Ultima atualizacao: 11/01/2019
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Desliga uma conta salario, contanto q nao tenha impedimento
+
+            Observacao: -----
+        
+            Alteracoes:
+    ............................................................................. */
+		
+  -- Cursor para as cooperativas
+  CURSOR cr_crapcop IS
+    SELECT cop.cdcooper
+		      ,cop.nmrescop
+      FROM crapcop cop
+     WHERE cop.flgativo = 1;
+		 
+	-- Cursor para retornar os associados ativos que possuam conta salario e que
+	-- não possuem movimentações a mais de 2 anos
+	CURSOR cr_associados(pr_cdcooper tbcc_associados.cdcooper%TYPE) IS
+    SELECT ass.nrdconta
+		  FROM tbcc_associados tba
+			    ,crapass ass
+					,tbcc_tipo_conta ttc
+		 WHERE tba.cdcooper = pr_cdcooper
+		   AND tba.dtultimo_movto <= ADD_MONTHS(SYSDATE,-24)
+			 AND tba.cdcooper = ass.cdcooper
+			 AND tba.nrdconta = ass.nrdconta
+			 AND ass.cdtipcta = ttc.cdtipo_conta
+			 AND ass.inpessoa = ttc.inpessoa
+			 AND ttc.cdmodalidade_tipo = 2
+			 AND ass.dtdemiss IS NULL;
+			 
+  CURSOR cr_crapsnh(pr_cdcooper IN crapsnh.cdcooper%TYPE
+                   ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                   ,pr_idseqttl IN crapsnh.idseqttl%TYPE) IS
+    SELECT s.cdsitsnh
+      FROM crapsnh s
+     WHERE s.cdcooper = pr_cdcooper
+       AND s.nrdconta = pr_nrdconta
+       AND s.idseqttl = pr_idseqttl
+       AND s.tpdsenha = 1
+       AND (s.cdsitsnh = 1 
+        OR  s.cdsitsnh = 2);
+    rw_crapsnh cr_crapsnh%ROWTYPE;			 
+			 
+    -- Cursor genérico de calendário
+    rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;			 
+			 
+    -- Variáveis
+    vr_vlcotlib NUMBER;
+		vr_flgimped BOOLEAN;
+		vr_tab_msg_confirma cada0003.typ_tab_msg_confirma;
+		vr_tab_erro gene0001.typ_tab_erro;
+        
+    -- Tratamento de erros
+		vr_dscritic VARCHAR2(4000);
+		vr_cdcritic NUMBER := 0;
+		pr_nmdcampo VARCHAR2(400);
+		vr_des_reto VARCHAR2(4000);
+		vr_exec_erro EXCEPTION;
+
+	BEGIN
+		
+		pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+														  ,pr_dsmsglog => 'INICIANDO PROCESSO DE DESLIGAMENTO DE CONTAS SALÁRIO SEM MOVIMENTO.' );
+
+	
+		-- Percorrer as cooperativas do cursor
+		FOR rw_crapcop IN cr_crapcop LOOP
+
+			-- Leitura do calendário da cooperativa
+			OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
+			FETCH btch0001.cr_crapdat INTO rw_crapdat;
+			-- Se não encontrar
+			IF btch0001.cr_crapdat%NOTFOUND THEN
+				-- Fechar o cursor pois efetuaremos raise
+				CLOSE btch0001.cr_crapdat;
+			ELSE
+				-- Apenas fechar o cursor
+				CLOSE btch0001.cr_crapdat;
+			END IF;
+			
+			-- Limpamos todos os impedimentos da cooperativa para recriar os que ainda existem
+			BEGIN
+				DELETE
+					FROM tbcc_imped_deslig_cta_sal
+				 WHERE cdcooper = rw_crapcop.cdcooper;
+      EXCEPTION
+  		WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao remover impedimentos existentes. ' || SQLERRM;
+				RAISE vr_exec_erro;
+			END;
+
+			FOR rw_associados IN cr_associados(rw_crapcop.cdcooper) LOOP
+				--
+				SAVEPOINT sessao_associado;	
+				--
+				vr_dscritic := NULL;
+				--
+			  pc_valida_deslig_cta_sal(pr_cdcooper => rw_crapcop.cdcooper
+                                ,pr_nrdconta => rw_associados.nrdconta															 
+															  ,pr_dtmvtolt => rw_crapdat
+															  ,pr_flgimped => vr_flgimped);
+				
+			  -- Caso houve ao menos um impedimento vamos para a proxima conta
+				IF vr_flgimped THEN
+					continue;
+				END IF;
+				
+				-- Chamar a rotina para buscar as cotas liberadas
+        CADA0012.pc_retorna_cotas_liberada(pr_cdcooper => rw_crapcop.cdcooper
+                                          ,pr_nrdconta => rw_associados.nrdconta
+                                          ,pr_vldcotas => vr_vlcotlib
+                                          ,pr_dscritic => vr_dscritic);
+				IF TRIM(vr_dscritic) IS NOT NULL THEN
+					pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+													          ,pr_dsmsglog => 'Não foi possível retornar as cotas do cooperado (' || rw_crapcop.cdcooper || '/' || rw_associados.nrdconta || '). ' || vr_dscritic);
+          ROLLBACK TO sessao_associado;
+					continue;
+				END IF;															 
+
+        -- Chamar a rotina de devolucao das cotas
+				CADA0003.pc_gera_devolucao_capital(pr_cdcooper  => rw_crapcop.cdcooper
+																					,pr_nrdconta  => rw_associados.nrdconta
+																					,pr_vldcotas  => vr_vlcotlib                
+																					,pr_formadev  => 1
+																					,pr_qtdparce  => 1
+																					,pr_datadevo  => rw_crapdat.dtmvtolt
+																					,pr_mtdemiss  => 5
+																					,pr_dtdemiss  => rw_crapdat.dtmvtolt
+																					,pr_idorigem  => 1
+																					,pr_cdoperad  => 0
+																					,pr_nrdcaixa  => 0
+																					,pr_nmdatela  => ''
+																					,pr_cdagenci  => 0
+																					,pr_oporigem   => 1
+																					,pr_cdcritic  => vr_cdcritic
+																					,pr_dscritic  => vr_dscritic
+																					,pr_nmdcampo  => pr_nmdcampo
+																					,pr_des_erro  => vr_des_reto);
+																						 
+																						 
+				IF TRIM(vr_dscritic) IS NOT NULL THEN
+           pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+													           ,pr_dsmsglog => 'Não foi possível devolver capital do cooperado (' || rw_crapcop.cdcooper || '/' || rw_associados.nrdconta || '). ' || vr_dscritic);
+           ROLLBACK TO sessao_associado;
+					 continue;																		
+				END IF;																						 
+
+        -- Buscamos a senha do associado
+				OPEN cr_crapsnh(pr_cdcooper => rw_crapcop.cdcooper
+											 ,pr_nrdconta => rw_associados.nrdconta 
+											 ,pr_idseqttl => 1);
+		                     
+				FETCH cr_crapsnh INTO rw_crapsnh;
+		    
+				IF cr_crapsnh%NOTFOUND THEN
+					--Fechar o cursor
+					CLOSE cr_crapsnh;     
+				ELSE
+					--Fechar o cursor
+					CLOSE cr_crapsnh;
+		      
+					-- Caso houver, realizamos o cancelamento
+					CADA0003.pc_cancelar_senha_internet(pr_cdcooper => rw_crapcop.cdcooper
+																						 ,pr_cdagenci => 0
+																						 ,pr_nrdcaixa => 0
+																						 ,pr_cdoperad => 0
+																						 ,pr_nmdatela => ''
+																						 ,pr_idorigem => 1
+																						 ,pr_nrdconta => rw_associados.nrdconta
+																						 ,pr_idseqttl => 1
+																						 ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
+																						 ,pr_inconfir => 3
+																						 ,pr_flgerlog => 1
+																						 ,pr_tab_msg_confirma => vr_tab_msg_confirma
+																						 ,pr_tab_erro => vr_tab_erro
+																						 ,pr_des_erro => vr_des_reto);
+																						 
+          --Se Ocorreu erro
+          IF vr_des_reto <> 'OK' THEN						
+					  --Se possuir erro na tabela
+						IF vr_tab_erro.COUNT > 0 THEN
+							vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;				        
+						END IF;
+						--Mensagem Erro
+						vr_dscritic := 'Não foi possível cancelar senha do cooperado (' || rw_crapcop.cdcooper || '/' || rw_associados.nrdconta || '). ' || vr_dscritic;
+
+						
+						pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+													            ,pr_dsmsglog => vr_dscritic);
+            ROLLBACK TO sessao_associado;
+						continue;
+					END IF;
+					--
+				END IF;
+				
+				pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+													        ,pr_dsmsglog => 'REALIZADO DESLIGAMENTO DA CONTA ' || gene0002.fn_mask_conta(rw_associados.nrdconta) || ' DA COOPERATIVA ' || rw_crapcop.nmrescop || '.' );
+			
+			END LOOP;
+		 
+		END LOOP;
+		--
+		pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+													    ,pr_dsmsglog => 'PROCESSO DE DESLIGAMENTO DE CONTAS SALÁRIO SEM MOVIMENTO FINALIZADO.' );
+		--
+		COMMIT;
+		
+  EXCEPTION
+		WHEN vr_exec_erro THEN
+				pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+				                          ,pr_dsmsglog => vr_dscritic);
+        RAISE_APPLICATION_ERROR(-20001, vr_dscritic);
+		WHEN OTHERS THEN
+			  vr_dscritic := 'Erro na rotina: ' || SQLERRM;
+				pc_gera_log_deslig_cta_sal(pr_nmdacao => 'pc_deslig_conta_salario'
+				                          ,pr_dsmsglog => vr_dscritic);
+        RAISE_APPLICATION_ERROR(-20000, vr_dscritic);
+	END pc_deslig_conta_salario;
 
 END PCPS0001;
 /
