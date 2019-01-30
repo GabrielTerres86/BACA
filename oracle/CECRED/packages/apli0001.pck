@@ -192,6 +192,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
          ,cdtiparq INTEGER
          ,dtsldrpp crapdat.dtmvtolt%TYPE
          ,cdprodut crapcpc.cdprodut%TYPE
+         ,dsfinali craprpp.dsfinali%TYPE
          ,nrdrowid ROWID);
 
   --Definicao do tipo de tabela para poupanca-programada
@@ -4475,8 +4476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                  07/04/2014 - Alterações referente ao novo indexador de poupanca
                               (Jean Michel).
-								 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
-															cr_crapmfx (Jean Michel).
+				 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
+							  cr_crapmfx (Jean Michel).
 
                  24/06/2014 - Retirada leitura da craptab e incluido data de
                               liberacao do projeto do novo indexador de
@@ -4524,7 +4525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
       
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
@@ -4696,23 +4697,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
       IF rw_crapdat.inproces > 1 THEN
-      -- Se o vetor de dias uteis ainda não possuir informacoes
-      IF vr_tab_qtdiaute.COUNT = 0 THEN
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT *
-                             FROM (SELECT craptrd.dtiniper
-                                         ,craptrd.qtdiaute
-                                         ,count(*) over (partition by craptrd.dtiniper
-                                                         order by craptrd.progress_recid) registro
-                                     FROM craptrd
-                                     WHERE craptrd.cdcooper = pr_cdcooper)
-                            WHERE registro = 1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
-      END IF;
+        -- Se o vetor de dias uteis ainda não possuir informacoes
+        IF vr_tab_qtdiaute.COUNT = 0 THEN
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT *
+                               FROM (SELECT craptrd.dtiniper
+                                           ,craptrd.qtdiaute
+                                           ,count(*) over (partition by craptrd.dtiniper
+                                                           order by craptrd.progress_recid) registro
+                                       FROM craptrd
+                                       WHERE craptrd.cdcooper = pr_cdcooper)
+                              WHERE registro = 1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+            END IF;
+          END LOOP;
+        END IF;
 
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
@@ -4733,20 +4734,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                 ,craptrd.qtdiaute
-                                 ,count(*) over (partition by craptrd.dtiniper
-                                                     order by craptrd.progress_recid) registro
-                             FROM craptrd
-                            WHERE craptrd.cdcooper = pr_cdcooper
-                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                   ,craptrd.qtdiaute
+                                   ,count(*) over (partition by craptrd.dtiniper
+                                                       order by craptrd.progress_recid) registro
+                               FROM craptrd
+                              WHERE craptrd.cdcooper = pr_cdcooper
+                                AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
               EXIT;
-          END IF;
-        END LOOP;
+            END IF;
+          END LOOP;
         END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
@@ -5420,7 +5421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             Projeto Ligeirinho - Jonatas Jaqmam (AMcom)
                             
                09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
-                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                            
+                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)  
                             
                23/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             Incluido crps147 na lista de programas que nao gravam CRAPTRD             
@@ -5462,7 +5463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-
+    
     --Variáveis lote
     rw_craplot          lote0001.cr_craplot_sem_lock%rowtype;
 
@@ -5473,7 +5474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              craprpp.vlsdrdpp,
              craprpp.dtiniper,
              craprpp.dtfimper,
-             craprpp.vlabcpmf,
+             nvl(craprpp.vlabcpmf,0) vlabcpmf,
              craprpp.qtmesext,
              craprpp.nrdconta,
              craprpp.nrctrrpp,
@@ -5670,8 +5671,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_des_erro := gene0001.fn_busca_critica(427)||
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
-      end if;
-
+      end if;      
+      
       -- Para os programas CRPS147 e 148, foi realizado o upate no próprio crps, visto que teríamos problemas no paralelismo           
       if vr_cdprogra IN('CRPS148','CRPS147') then
         begin
@@ -5687,25 +5688,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
           if vr_des_erro is not null then
             raise vr_exc_erro; 
-    end if;
-
+          end if;
+        
         exception
           when others then
             vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
             raise vr_exc_erro;              
         end;
       else
-      -- Atualiza o indicador de cálculo
-      begin
-        update craptrd
+        -- Atualiza o indicador de cálculo
+        begin
+          update craptrd
              set incalcul = 1
-         where rowid = rw_craptrd.rowid;
-      exception
-        when others then
-          vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
-          raise vr_exc_erro;
-      end;
-    end if;
+           where rowid = rw_craptrd.rowid;
+        exception
+          when others then
+            vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
+            raise vr_exc_erro;
+        end;
+      end if;
     end if;
 
     --
@@ -5734,7 +5735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Próxima data
         vr_dtcalcul := vr_dtcalcul + 1;
       end loop;  /* Fim do WHILE */
-    end if;
+    end if;      
 
     /*  Arredondamento dos valores calculados  */
     vr_vlsdrdpp := fn_round(vr_vlsdrdpp,2);
@@ -5935,7 +5936,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       end if;
       --
       if vr_vlrentot > 0 then
-        -- Atualizar o tipo do lote
+          -- Atualizar o tipo do lote
         /* Projeto Revitalizacao - Remocao de lote */
         lote0001.pc_insere_lote_rvt(pr_cdcooper => pr_cdcooper
                                   , pr_dtmvtolt => vr_dtdolote
@@ -5951,12 +5952,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
         if vr_dscritic is not null then
           vr_des_erro := 'Erro ao inserir informações da capa de lote: '||vr_dscritic;
-              raise vr_exc_erro;
-        end if;
-       
+                raise vr_exc_erro;
+          end if;
+        
         --Se for CRPS147 E 148 utilizar chave do lote 8384 para adicionar os lançamentos.
         --Tratado de forma diferente devido paralelismo
-        
+
         /* Projeto Revitalizacao - Remocao de lote */
         vr_nrseqdig := fn_sequence('CRAPLOT'
 						                      ,'NRSEQDIG'
@@ -6000,10 +6001,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           when others then
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
-        end;
+        end;  
         
         /* Projeto Revitalizacao - Remocao de lote */
-      
+          
         --
         IF vr_cdprogra = 'CRPS148' and
            vr_vlrirrpp > 0 then
@@ -6054,7 +6055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --
+      --     
       
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
@@ -6276,7 +6277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --
+      --        
       
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
@@ -6386,7 +6387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --
+      --       
       if vr_cdprogra in ('CRPS147', 'CRPS148') then
         /* Ajuste */
         vr_vlajuste := vr_vlprovis - vr_vllan152;
@@ -6411,7 +6412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 		  					                     ||vr_cdagenci||';'
 			  				                     ||vr_cdbccxlt||';'
 				  			                     ||vr_nrdolote);
-            
+          
           -- Insere histórico de ajuste nos lançamentos da poupança programada
           begin
             insert into craplpp (dtmvtolt,
@@ -6449,7 +6450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-    end if;
+    end if;    
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
@@ -9557,6 +9558,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
               26/07/2018 - Inclusão da Aplicação Programada - Proj 411.2 (CIS Corporate)
 
+              20/09/2018 - Inclusao do campo dsfinali na pc_calc_poupanca - Proj. 411.2 (CIS Corporate)
+              
   ............................................................................. */
     DECLARE
 
@@ -9584,10 +9587,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,craprpp.flgctain
               ,craprpp.dtiniper
               ,craprpp.dtfimper
-              ,craprpp.vlabcpmf
+              ,nvl(craprpp.vlabcpmf,0) vlabcpmf 
               ,craprpp.cdsitrpp
               ,craprpp.vlsdrdpp
               ,craprpp.cdprodut
+              ,craprpp.dsfinali 
               ,craprpp.ROWID
               ,To_Char((CASE craprpp.cdsitrpp
                  WHEN 1 THEN 'Ativa'
@@ -9602,6 +9606,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         AND   craprpp.nrdconta = pr_nrdconta
         AND   (pr_nrctrrpp = 0  OR (pr_nrctrrpp > 0 AND craprpp.nrctrrpp = pr_nrctrrpp));
       rw_craprpp cr_craprpp%ROWTYPE;
+
+      -- Seleciona informações sobre o produto para Apl. Programada
+      CURSOR cr_crapcpc (pr_cdprodut IN crapcpc.cdprodut%TYPE) IS
+      SELECT cpc.nmprodut 
+      FROM   crapcpc cpc
+      WHERE  cpc.cdprodut = pr_cdprodut;
+      rw_crapcpc cr_crapcpc%ROWTYPE;       
 
       --Selecionar informacoes dos saldos da poupanca no aniversario
       CURSOR cr_crapspp (pr_cdcooper IN crapspp.cdcooper%TYPE
@@ -9628,6 +9639,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       vr_vlsdappr NUMBER(25,8); -- Saldo total -  aplicacao programada
       vr_vlrgappr NUMBER(25,8);-- Saldo total para resgate - aplicacao programada
+
+      vr_dsfinali VARCHAR2(20); -- Finalidade
 
       --Variaveis de retorno de erro
       vr_des_erro VARCHAR2(4000);
@@ -9697,6 +9710,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           -- chamadas desnecessárias abaixo
           
           If rw_craprpp.cdprodut < 1 Then 
+             vr_dsfinali := 'Poupança Programada';
           --Executar rotina para calcular saldo poupanca programada
           pc_calc_saldo_rpp (pr_cdcooper => pr_cdcooper
                             ,pr_cdprogra => pr_cdprogra
@@ -9713,6 +9727,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             ,pr_des_erro => vr_des_erro);
 
           Else -- Aplicacao Programada
+              vr_dsfinali := trim(rw_craprpp.dsfinali); 
+              If vr_dsfinali is null Then -- Nome do produto sera a finalidade
+                 Open cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
+                 Fetch cr_crapcpc Into rw_crapcpc;
+                 If cr_crapcpc%NOTFOUND Then
+                    vr_dsfinali := 'Aplicação Programada';
+                 Else  
+                    vr_dsfinali := rw_crapcpc.nmprodut;
+                 End if;                 
+                 Close cr_crapcpc;
+              End if;
               vr_vlsdrdpp := 0;
               apli0008.pc_calc_saldo_apl_prog(pr_cdcooper => pr_cdcooper
                                              ,pr_cdprogra => pr_cdprogra
@@ -9847,8 +9872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           pr_tab_dados_rpp(vr_index_tab).dtsldrpp:= rw_crapspp.dtsldrpp;
           pr_tab_dados_rpp(vr_index_tab).cdprodut:= rw_craprpp.cdprodut;          
           pr_tab_dados_rpp(vr_index_tab).nrdrowid:= rw_craprpp.ROWID;
-
-
+          pr_tab_dados_rpp(vr_index_tab).dsfinali:= vr_dsfinali;
         EXCEPTION
           WHEN vr_exc_pula THEN
             --Atribuir TRUE para flag transacao
@@ -12546,7 +12570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_dtmvtopr := rw_crapdat.dtmvtopr;
       vr_dtmvtocd := rw_crapdat.dtmvtocd;    
     END IF;
-
+    
 
     -- Data de fim e inicio da utilizacao da taxa de poupanca.
     -- Utiliza-se essa data quando o rendimento da aplicacao for menor que

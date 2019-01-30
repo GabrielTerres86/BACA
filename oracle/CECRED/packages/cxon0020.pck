@@ -131,7 +131,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             Everton Souza - Mouts
                01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
                             Marcelo Telles Coelho - Mouts
-							
+
 			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
@@ -419,6 +419,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                             
+                23/01/2019 - Tratar a geração do numero de documento para evitar duplicidade 
+                             (Jose Dill Mouts INC0030535)             
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1551,6 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_nrseq_mensagem20 tbspb_msg_enviada_fase.nrseq_mensagem%type;
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
     vr_flvldhor            NUMBER;
+    vr_aux_exisdoc NUMBER;
 
 
     --Rowid lancamento tarifa
@@ -1763,6 +1767,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --                            ,'N');
     -- -- retornar numero do documento
     pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
+    --
+    -- INC0030535 - Validar se ja existe número de documento (Jose Dill - Mouts)
+    vr_aux_exisdoc := 0;
+    Select count(*) into vr_aux_exisdoc 
+    From Craptvl tvl
+    Where tvl.cdcooper = rw_crapcop.cdcooper
+    and   tvl.tpdoctrf = 3
+    and   tvl.nrdocmto = pr_nrdocmto;
+    --
+    IF  vr_aux_exisdoc > 0 THEN
+        For vr_cont IN 1..5 Loop
+          Select Max(tvl.nrdocmto) + 1 into pr_nrdocmto 
+          From Craptvl tvl
+          Where tvl.cdcooper = rw_crapcop.cdcooper
+          and   tvl.tpdoctrf = 3;
+          -- Validar se existe
+          vr_aux_exisdoc := 0;
+          Select count(*) into vr_aux_exisdoc 
+          From Craptvl tvl
+          Where tvl.cdcooper = rw_crapcop.cdcooper
+          and   tvl.tpdoctrf = 3
+          and   tvl.nrdocmto = pr_nrdocmto;
+          --
+          IF vr_aux_exisdoc = 0 THEN
+             Exit;
+          END IF;   
+          --
+        End Loop;
+    END IF;  
+
+    IF vr_aux_exisdoc > 0  THEN
+      IF pr_idagenda <> 2 THEN --TED Online
+        vr_cdcritic := 0;
+        vr_dscritic := 'Não foi possível efetuar a operação. Tente novamente.'; 
+        RAISE vr_exc_erro;
+      ELSE
+        vr_cdcritic := 0;
+        vr_dscritic := 'Não foi possível efetuar a operação.'||'CRAPTVL: Coop - '
+                                                             ||rw_crapcop.cdcooper||
+                                                             ' Tipo: 3'||
+                                                             ' Documento: '||pr_nrdocmto; 
+        RAISE vr_exc_erro;        
+      END IF;
+    END IF;    
+    -- Fim INC0030535
 
     /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
     vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')

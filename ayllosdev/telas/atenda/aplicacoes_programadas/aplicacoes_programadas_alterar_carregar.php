@@ -3,25 +3,27 @@
 	/***************************************************************************
 	 Fonte: aplicacoes_programadas_carregar.php                             
 	 Autor: David                                                     
-     Data : MarÁo/2010                   Ultima Alteracao: 27/07/2018
+     Data : Mar√ßo/2010                   Ultima Alteracao: 10/09/2018
 	 
-	 Objetivo  : Mostrar opÁ„o para alterar AplicaÁ„o Programada      
+	 Objetivo  : Mostrar op√ß√£o para alterar Aplica√ß√£o Programada      
 	                                                                  
-	 AlteraÁıes: 04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
-				              16 - PoupanÁa Programada. PRJ366 (Lombardi).
+	 Altera√ß√µes: 04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+				              16 - Poupan√ßa Programada. PRJ366 (Lombardi).
 							  
-				 27/07/2018 - DerivaÁ„o para AplicaÁ„o Programada 
+				 27/07/2018 - Deriva√ß√£o para Aplica√ß√£o Programada 
+				 
+				 10/09/2018 - Inclusao do Campo Finalidade - Proj. 411.2
 				 
 	***************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, vari·veis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°veis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -31,7 +33,7 @@
 		exibeErro($msgError);		
 	}
 	
-	// Se par‚metros necess·rios n„o foram informados
+	// Se par√¢metros necess√°rios n√£o foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrrpp"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
@@ -40,12 +42,12 @@
 	$nrctrrpp = $_POST["nrctrrpp"];
 	$cdprodut = $_POST["cdprodut"];
 	
-	// Verifica se n˙mero da conta È um inteiro v·lido
+	// Verifica se n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}	
 	
-	// Verifica se o contrato da "poupanÁa" È um inteiro v·lido
+	// Verifica se o contrato da "poupan√ßa" √© um inteiro v√°lido
 	if (!validaInteiro($nrctrrpp)) {
 		exibeErro("N&uacute;mero de contrato inv&aacute;lido.");
 	}	
@@ -55,20 +57,20 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>". 16 ."</cdprodut>"; //PoupanÁa Programada
+	$xml .= "   <cdprodut>". 16 ."</cdprodut>"; //Poupan√ßa Programada
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
 	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObject = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibeErro(utf8_encode($msgErro));
 	}
-	
-	// Monta o xml de requisiÁ„o
+	/*
+	// Monta o xml de requisi√ß√£o
 	$xmlAlterar  = "";
 	$xmlAlterar .= "<Root>";
 	$xmlAlterar .= "	<Cabecalho>";
@@ -98,20 +100,51 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjAlterar = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjAlterar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
+	*/
+
+	// Montar o xml de Requisicao
+	$xmlAlterar = "<Root>";
+	$xmlAlterar .= " <Dados>";
+	$xmlAlterar .= "	<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlAlterar .= "	<idseqttl>1</idseqttl>";
+	$xmlAlterar .= "	<nrctrrpp>".$nrctrrpp."</nrctrrpp>";
+	$xmlAlterar .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlAlterar .= "	<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+	$xmlAlterar .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	$xmlAlterar .= "   <flgerlog>1</flgerlog>";
+	$xmlAlterar .= " </Dados>";
+	$xmlAlterar .= "</Root>";
+
+	$xmlResult = mensageria($xmlAlterar, "APLI0008", "OBTEM_DADOS_ALTERACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjAlterar = getObjectXML($xmlResult);
 	
+	// Se ocorrer um erro, mostra crÔøΩtica
+	if (strtoupper($xmlObjAlterar->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
+
 	$poupanca = $xmlObjAlterar->roottag->tags[0]->tags[0]->tags;	
-	
-	// Flags para montagem do formul·rio
+	$diadebit = $poupanca[7]->cdata;
+	$dsfinali = $poupanca[28]->cdata ; // Finalidade
+
+	// Flags para montagem do formulÔøΩrio
 	$flgAlterar   = true;
 	$flgSuspender = false;	
 	$legend 	  = "Alterar";
+
 	include("aplicacoes_programadas_formulario_dados.php");
-	
-	// FunÁ„o para exibir erros na tela atravÈs de javascript
+
+?>	
+<script type="text/javascript">
+	$("#vlprerpp","#frmDadosPoupanca").focus();
+</script>
+<?php 
+	// Funcao para exibir erros na tela atraves de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';

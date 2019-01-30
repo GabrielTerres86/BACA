@@ -3,13 +3,14 @@
 	//**********************************************************************************//
 	//*** Fonte: aplicacoes_programadas_consultar.php                                ***//
 	//*** Autor: David                                                               ***//
-	//*** Data : Março/2010                   Última Alteração: 27/07/2018           ***//
+	//*** Data : Março/2010                   Última Alteração: 09/09/2018           ***//
 	//***                                                                            ***//
 	//*** Objetivo  : Mostrar opção de consulta para Aplicação Programada            ***//	
 	//***                                                                            ***//	 
 	//*** Alterações: 27/07/2018 - Derivação para Aplicação Programada               ***//
     //***                          (Proj. 411.2 - CIS Corporate)                     ***//
-	//***                                                                            ***//
+	//***             05/09/2018 - Inclusão do campo finalidade                      ***//
+	//**                           (Proj. 411.2 - CIS Corporate)                     ***//
 	//**********************************************************************************//
 	
 	session_start();
@@ -81,8 +82,12 @@
 	if (strtoupper($xmlObjConsultar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjConsultar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
-	$poupanca = $xmlObjConsultar->roottag->tags[0]->tags[0]->tags;	
+	$poupanca = $xmlObjConsultar->roottag->tags[0]->tags[0]->tags;
 	
+	//$diadebit = substr($poupanca[6]->cdata,0,2);
+	$diadebit = $poupanca[7]->cdata;
+
+
 	if ($cdprodut>0) {
 		// Apl. programada
 		// Monta o xml de requisição
@@ -108,7 +113,11 @@
 
 		$poupanca[12]->cdata=$apl_prog[10]->cdata; // Saldo
 		$poupanca[13]->cdata=$apl_prog[11]->cdata; // Juros Acumulado
-
+	 	$poupanca[15]->cdata=$apl_prog[12]->cdata; // dtinirpp
+		$dsfinali = $apl_prog[18]->cdata; // Finalidade
+		}
+	else {
+		$dsfinali ='Poupanca Programada'; // Finalidade
 		}
 	
 	// Flags para montagem do formulário

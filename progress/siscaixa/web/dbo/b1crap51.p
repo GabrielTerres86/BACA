@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 13/07/2018
+   Data    : Marco/2001                      Ultima atualizacao: 25/01/2019
 
    Dados referentes ao programa:
 
@@ -145,6 +145,7 @@
 
 			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
 			                comprovantes, melhoria 112 (Tiago/Elton) 
+
                20/06/2016 - Adicionado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
                             (Douglas - Chamado 417655)
@@ -163,8 +164,7 @@
                             (Tiago - Chamado 546031)
 
                17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+                            crapass, crapttl, crapjur (Adriano - P339).
 
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
 			                cheque nao estiver descontado. (Daniel)	
@@ -172,7 +172,6 @@
                21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 2433-DEPOSITO BLOQ. 
                             PRJ367 - Compe Sessao Unica (Lombardi)
                
-                      
                16/03/2018 - Substituida verificacao "cdtipcta entre 8 e 11" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
                             
@@ -188,7 +187,10 @@
                             10 autenticoes para cada deposito de cheque (Tiago/Fabricio)
                             
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
+                            Heitor (Mouts)
+               
+               25/01/2019 - P450 - Correçao parametro geraçao lançamento (bo 200), dtmvtocd (Renato Cordeiro - AMcom)
+
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -4416,7 +4418,7 @@ PROCEDURE atualiza-deposito-com-captura:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -4564,7 +4566,7 @@ PROCEDURE atualiza-deposito-com-captura:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -4727,7 +4729,7 @@ PROCEDURE atualiza-deposito-com-captura:
             PERSISTENT SET h-b1wgen0200.
             
         RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
           ,INPUT p-cod-agencia                  /* par_cdagenci */
           ,INPUT 11                             /* par_cdbccxlt */
           ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -5717,7 +5719,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -5867,7 +5869,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -6030,7 +6032,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
             PERSISTENT SET h-b1wgen0200.
             
         RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
           ,INPUT p-cod-agencia                  /* par_cdagenci */
           ,INPUT 11                             /* par_cdbccxlt */
           ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -7154,7 +7156,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -7302,7 +7304,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                           PERSISTENT SET h-b1wgen0200.
                           
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -7462,7 +7464,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
             PERSISTENT SET h-b1wgen0200.
             
         RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
           ,INPUT p-cod-agencia                  /* par_cdagenci */
           ,INPUT 11                             /* par_cdbccxlt */
           ,INPUT i-nro-lote                     /* par_nrdolote */

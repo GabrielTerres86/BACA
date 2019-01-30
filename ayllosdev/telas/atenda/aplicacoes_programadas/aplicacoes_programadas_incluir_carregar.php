@@ -26,6 +26,9 @@
 							   
 				  27/07/2018 - Derivação para Aplicação Programada              
                                (Proj. 411.2 - CIS Corporate)
+
+				  06/09/2018 - Inclusão do campo finalidade, ocultar campo vencimento              
+                               (Proj. 411.2 - CIS Corporate)
 							   
 	***************************************************************************/
 	
@@ -149,7 +152,6 @@
 		exit();
 	}
 ?>
-<?/**/?>
 <form action="" method="post" name="frmDadosPoupanca" id="frmDadosPoupanca">
 	<fieldset>
 		<legend>Poupan&ccedil;a Programada - Incluir</legend>
@@ -159,27 +161,28 @@
 		<input name="dtinirpp" type="text" class="campo" id="dtinirpp" value = "<?php echo $aux_dtinirpp; ?>"/>
 		<br />
 		
-		<label for="diadtvct">Dia/M&ecirc;s/Ano Vencimento:</label>
-		<input name="diadtvct" type="text" class="campo" id="diadtvct" value = "<?php echo $dia; ?>" />
-		
-		<label for="mesdtvct">/</label>
-		<input name="mesdtvct" type="text" class="campo" id="mesdtvct" value = "<?php echo $mes; ?>" />
-		
-		<label for="anodtvct">/</label>
-		<input name="anodtvct" type="text" class="campo" id="anodtvct" value = "<?php echo $ano; ?>" />
-		<br />
-		
 		<label for="vlprerpp">Valor da Presta&ccedil;&atilde;o:</label>
 		<input name="vlprerpp" type="text" class="campo" id="vlprerpp" value="0,00" />
 		<br />
+
+		<label for="dsfinali">Finalidade:</label>
+		<input name="dsfinali" type="text" class="campo" id="dsfinali" value="" maxlength="20"/>
+		<br />
+
 		<label for="tpemiext">Tipo de impress&atilde;o do extrato:</label>
 		<select name="tpemiext" id="tpemiext" class="campo">
 			<option value="1">Individual</option>
 			<option value="2">Todas</option>
 			<option value="3" selected>N&atilde;o emite</option>			
-		</select>					
+		</select>			
+		
 		<input name="cdprodut" type="hidden" class="campo" id="cdprodut" value="<?php echo $cdprodut; ?>">
-	</fieldset>
+		<input name="diadtvct" type="hidden" class="campo" id="diadtvct" value = "<?php echo $dia; ?>" />
+		<input name="mesdtvct" type="hidden" class="campo" id="mesdtvct" value = "<?php echo $mes; ?>" />
+		<input name="anodtvct" type="hidden" class="campo" id="anodtvct" value = "<?php echo $ano; ?>" />
+		<br />
+
+		</fieldset>
 </form>
 <div id="divBotoes">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltarDivPrincipal();return false;" />

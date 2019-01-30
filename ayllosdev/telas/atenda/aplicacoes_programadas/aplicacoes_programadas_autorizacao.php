@@ -81,9 +81,9 @@
 		?><script language="javascript">alert('<?php echo $msg; ?>');window.close();</script><?php
 		exit();		
 	}			
-
-	$nmarqpdf = $xmlObjAutoriza->roottag->tags[0]->tags[0]->tags[0]->cdata;
 	
+	$nmarqpdf = $xmlObjAutoriza->roottag->tags[0]->tags[0]->tags[0]->cdata;
+
 	// Chama função para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
 	

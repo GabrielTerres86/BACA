@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 20/03/2017
+   Data    : Marco/2009                        Ultima atualizacao: 10/01/2019
 
    Dados referentes ao programa:
 
@@ -63,6 +63,9 @@
 	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                          
 
                30/01/2018 - Adicionado novas tags devido ao projeto 285 - Novo IB (Rafael).                                         
+               
+               10/01/2019 - Adequar o relatorio de movimento de cobranca para que o 
+                            titulo descontado seja exibido apenas como TD (Douglas - RITM0038174)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -236,10 +239,31 @@ IF  par_idrelato = 1 OR
                    
                 IF  par_idrelato = 1 OR par_idrelato = 4 THEN    
                     DO:
+                        
+                        IF par_idrelato = 1  THEN
+                        DO:
                         ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,10).
                 
                         IF  R-INDEX(tt-consulta-blt.dssituac,"/TD") > 0 THEN
                             ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,R-INDEX(tt-consulta-blt.dssituac,"/TD") - 1).                                                     
+                    
+                            /* Essa concatenacao estava acontecendo na escrita do XML */ 
+                            ASSIGN tt-consulta-blt.dssituac = tt-consulta-blt.dssituac + tt-consulta-blt.flgdesco.
+                        END.
+                        
+                        /* relatorio de movimento de cobranca */ 
+                        IF par_idrelato = 4  THEN
+                        DO:
+                            /* Verificar se o titulo esta descontado */ 
+                            IF tt-consulta-blt.flgdesco = "*" THEN
+                            DO:
+                                /* Se estiver descontado, vamos validar se ja possui "TD" na situacao */ 
+                                IF  R-INDEX(tt-consulta-blt.dssituac,"/TD") < 0 OR 
+                                    R-INDEX(tt-consulta-blt.dssituac,"/TD") = 0 THEN
+                                    /* Adicionar TD caso nao exista */ 
+                                    ASSIGN tt-consulta-blt.dssituac = tt-consulta-blt.dssituac + "/TD".
+                            END. 
+                        END. 
                     
                         xml_operacao.dslinxml = "<boleto><nossonro>" +
                                                 tt-consulta-blt.nrnosnum +
@@ -280,7 +304,7 @@ IF  par_idrelato = 1 OR
                                                 "</cdagepag><cdsituac>" +
                                                 tt-consulta-blt.cdsituac +
                                                 "</cdsituac><dssituac>" + 
-                                                tt-consulta-blt.dssituac + tt-consulta-blt.flgdesco +
+                                                tt-consulta-blt.dssituac + 
                                                 "</dssituac><flgdesco>" +
                                                 tt-consulta-blt.flgdesco +
                                                 "</flgdesco><dtelimin>" +

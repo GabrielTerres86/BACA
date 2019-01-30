@@ -17,8 +17,11 @@
 				              contratação do produto. PRJ366 (Lombardi).
 
 				 27/07/2018 - Derivação para Aplicação Programada 
-							  (Proj. 411.2 - CIS Corporate)                   
-				 
+							  (Proj. 411.2 - CIS Corporate)         
+
+				 09/09/2018 - Inclusão Finalidade             
+                              (Proj. 411.2 - CIS Corporate)      
+ 
 	***************************************************************************/
 	
 	session_start();
@@ -53,7 +56,8 @@
 	$vlprerpp = $_POST["vlprerpp"];	
 	$tpemiext = $_POST["tpemiext"];
 	$cdprodut = $_POST["cdprodut"];
-
+	$dsfinali = $_POST["dsfinali"];
+	
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -100,46 +104,8 @@
 		exibeErro("Aplica&ccedil;&atilde;o programada inv&aacute;lida.");			
 	}	
 	
-	// Monta o xml de requisição
-	$xmlIncluir  = ""; 
-	$xmlIncluir .= "<Root>";
-	$xmlIncluir .= "	<Cabecalho>";
-	$xmlIncluir .= "		<Bo>b1wgen0006.p</Bo>";
-	$xmlIncluir .= "		<Proc>validar-dados-inclusao</Proc>";
-	$xmlIncluir .= "	</Cabecalho>";	
-	$xmlIncluir .= "	<Dados>";
-	$xmlIncluir .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlIncluir .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlIncluir .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlIncluir .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlIncluir .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlIncluir .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlIncluir .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlIncluir .= "		<idseqttl>1</idseqttl>";
-	$xmlIncluir .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
-	$xmlIncluir .= "		<dtinirpp>".$dtinirpp."</dtinirpp>"; 			
-	$xmlIncluir .= "		<mesdtvct>".$mesdtvct."</mesdtvct>";
-	$xmlIncluir .= "		<anodtvct>".$anodtvct."</anodtvct>";	
-	$xmlIncluir .= "		<vlprerpp>".$vlprerpp."</vlprerpp>"; 	
-	$xmlIncluir .= "		<tpemiext>".$tpemiext."</tpemiext>";
-	$xmlIncluir .= "	</Dados>";	
-	$xmlIncluir .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlIncluir);
+	// Validações unificadas - Datas e valores
 
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjIncluir = getObjectXML($xmlResult);
-	
-	
-	$nmcampos = ( isset($xmlObjIncluir->roottag->tags[0]->attributes["NMCAMPOS"]) ) ? $xmlObjIncluir->roottag->tags[0]->attributes["NMCAMPOS"] : '';
-		
-	
-	// Se ocorrer um erro, mostra crítica
-	if (isset($xmlObjIncluir->roottag->tags[0]->name) && strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata, $nmcampos);
-	} 
-	
 	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
 	
 	// Montar o xml de Requisicao
@@ -147,31 +113,30 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
-	$xml .= "   <cddchave>".    0    ."</cddchave>";
+	$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xml .= "   <dtinirpp>".$dtinirpp."</dtinirpp>";
+	$xml .= "   <vlprerpp>".$vlcontra."</vlprerpp>";
+	$xml .= "   <tpemiext>".$tpemiext."</tpemiext>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObject = getObjectXML($xmlResult);
+
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
 	}
 	
 	$solcoord = $xmlObject->roottag->tags[0]->cdata;
 	$mensagem = $xmlObject->roottag->tags[1]->cdata;
 	
-	$executar = "";
-	
 	// Esconde mensagem de aguardo
-	$executar .= "hideMsgAguardo();";	
+	$executar = "hideMsgAguardo();";	
 	
 	// Confirma operação
-	$executar .= "showConfirmacao(\"Deseja incluir a poupan&ccedil;a programada?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"incluirAplProg(\\\"".$dtinirpp."\\\",\\\"".$diadtvct."\\\",\\\"".$mesdtvct."\\\",\\\"".$anodtvct."\\\",\\\"".$vlprerpp."\\\" ,\\\"".$tpemiext."\\\" ,\\\"".$cdprodut."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+	$executar .= "showConfirmacao(\"Deseja incluir a poupan&ccedil;a programada?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"incluirAplProg(\\\"".$dtinirpp."\\\",\\\"".$diadtvct."\\\",\\\"".$mesdtvct."\\\",\\\"".$anodtvct."\\\",\\\"".$vlprerpp."\\\" ,\\\"".$tpemiext."\\\" ,\\\"".$cdprodut."\\\",\\\"".$dsfinali."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($mensagem != "") {
@@ -179,7 +144,7 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
-		exibirErro("error",$mensagem,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
 	} else {
 		echo $executar;
 	}
@@ -187,7 +152,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro, $campo) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","focaCampoErro(\"'.$campo.'\",\'frmDadosPoupanca\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); ");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","focaCampoErro(\"'.$campo.'\",\'frmDadosPoupanca\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); ");';
 		exit();
 		
 	}

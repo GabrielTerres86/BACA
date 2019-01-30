@@ -548,6 +548,9 @@
 
                 19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
                              conta cartão for zerada (Lucas Ranghetti INC0024543)
+                             
+               23/01/2018 - Altera�ao na rotina de alterar_administradora para contemplar o insitdec (deci�ao da esteira).
+                            INC0027746 Augusto - Supero
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -24080,6 +24083,7 @@ PROCEDURE altera_administradora:
 
           ASSIGN crabcrd.cdadmcrd = par_codnadmi
                  crabcrd.insitcrd = 1
+                 crabcrd.insitdec = 1              /* Inclusao Augusto - Supero - 23/01/2019 */
                  crabcrd.dtpropos = par_dtmvtolt   /* Inclusao Renato - Supero - 07/11/2014 */
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1

@@ -2878,12 +2878,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       END IF;
 
+      -- Pelo batch não deve validar titular bloqueado, conforme produto antigo.
+      IF upper(pr_nmdatela) <> 'CRPS145' THEN
       -- Verifica se conta esta bloqueada
       IF rw_crapass.cdsitdtl IN(2, 4, 6, 8) THEN
         vr_cdcritic := 95;
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
+	  END IF;
 
       -- Verifica se cooperado esta eliminado
       IF rw_crapass.dtelimin IS NOT NULL THEN
@@ -3635,7 +3638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Agosto/14.                    Ultima atualizacao: 02/06/2016
+     Data    : Agosto/14.                    Ultima atualizacao: 28/11/2018
 
      Dados referentes ao programa:
 
@@ -3653,6 +3656,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               Proj. 411.2 - CIS Corporate)
 
 
+                 28/11/2018 - Utilizar a o parâmetro pr_dtmvtolt no lugar da crapdat.dtmvtolt
+                              Proj. 411.2 - CIS Corporate
 
     ..............................................................................*/
 
@@ -4075,7 +4080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de lancamentos na poupanca
         FOR rw_craplpp IN cr_craplpp (pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt - 180) LOOP
+                                     ,pr_dtmvtolt => pr_dtmvtolt - 180) LOOP
 
           IF rw_craplpp.qtlancmto > 3 THEN
             -- Montar indice para acessar tabela
@@ -4213,8 +4218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Verifica se ha saldo suficiente
         OPEN cr_crapsli(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
-                       ,pr_dtrefere => last_day(rw_crapdat.dtmvtolt));
-
+                       ,pr_dtrefere => last_day(pr_dtmvtolt));         
+        FETCH cr_crapsli INTO rw_crapsli;
         -- Verifica se consulta retornou registros
         IF cr_crapsli%NOTFOUND THEN
           CLOSE cr_crapsli;
@@ -4361,7 +4366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END LOOP;
 
       OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                     ,pr_dtmvtolt => pr_dtmvtolt
                      ,pr_cdagenci => 1
                      ,pr_cdbccxlt => 100
                      ,pr_nrdolote => 8500);
@@ -4386,7 +4391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,vlcompcr)
           VALUES(
             pr_cdcooper
-           ,rw_crapdat.dtmvtolt
+           ,pr_dtmvtolt
            ,1
            ,100
            ,8500
@@ -4492,7 +4497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       IF pr_iddebcti = 1 THEN -- Recurso da Conta Investimento
 
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                       ,pr_dtmvtolt => pr_dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => 9900010106);
@@ -4517,7 +4522,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,vlcompdb)
             VALUES(
               pr_cdcooper
-             ,rw_crapdat.dtmvtolt
+             ,pr_dtmvtolt
              ,1
              ,100
              ,9900010106 --10106
@@ -4657,7 +4662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             UPDATE
               crapsli
             SET
-              vlsddisp = rw_crapsli.vlsddisp + pr_vlaplica
+              vlsddisp = rw_crapsli.vlsddisp - pr_vlaplica
             WHERE
               crapsli.rowid = rw_crapsli.rowid;
 
@@ -4673,7 +4678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Débito
         -- Consulta de lote de débito
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                       ,pr_dtmvtolt => pr_dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => 9900010104);
@@ -4700,7 +4705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,vlinfodb
                ,vlcompdb) VALUES(
                 pr_cdcooper
-               ,rw_crapdat.dtmvtolt
+               ,pr_dtmvtolt
                ,1
                ,100
                ,9900010104 --10104
@@ -4768,7 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,nraplica)
           VALUES(
             pr_cdcooper
-           ,rw_crapdat.dtmvtolt
+           ,pr_dtmvtolt
            ,rw_craplot.cdagenci
            ,rw_craplot.cdbccxlt
            ,rw_craplot.nrdolote
@@ -4790,7 +4795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- CRÉDITO
         -- Consulta de lote de credito
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                       ,pr_dtmvtolt => pr_dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => 9900010105);
@@ -4817,7 +4822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,vlinfocr
                ,vlcompcr) VALUES(
                 pr_cdcooper
-               ,rw_crapdat.dtmvtolt
+               ,pr_dtmvtolt
                ,1
                ,100
                ,9900010105 --10105
@@ -4892,7 +4897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
              ,nraplica)
           VALUES(
             pr_cdcooper
-           ,rw_crapdat.dtmvtolt
+           ,pr_dtmvtolt
            ,rw_craplot.cdagenci
            ,rw_craplot.cdbccxlt
            ,rw_craplot.nrdolote
@@ -4914,7 +4919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         BEGIN
            LANC0001.pc_gerar_lancamento_conta(
                           pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                         ,pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
                          ,pr_nrdolote => 8501
@@ -4922,7 +4927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_nrdctabb => pr_nrdconta
                          ,pr_nrdocmto => vr_nraplica
                          ,pr_nrseqdig => 0
-                         ,pr_dtrefere => rw_crapdat.dtmvtolt
+                         ,pr_dtrefere => pr_dtmvtolt
                          ,pr_vllanmto => pr_vlaplica
                          ,pr_cdhistor => rw_crapcpc.cdhscacc
                          ,pr_nraplica => vr_nraplica
@@ -4940,7 +4945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
+            IF trim(vr_dscritic) IS NULL THEN
+              vr_dscritic := 'Erro ao inserir registro de lancamento de debito.' || SQLERRM;
+            END IF;
             RAISE vr_exc_saida;
         END;
       END IF; -- Fim ELSE recurso nao proveniente de conta investimento
@@ -5030,7 +5037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       --Gerar protocolo
       GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
-                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 --> Data movimento
+                                ,pr_dtmvtolt => pr_dtmvtolt                         --> Data movimento
                                 ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) --> Hora da transação NOK
                                 ,pr_nrdconta => pr_nrdconta                         --> Número da conta
                                 ,pr_nrdocmto => vr_nraplica                         --> Número do documento

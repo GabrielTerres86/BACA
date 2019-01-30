@@ -6729,7 +6729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jean Michel
-     Data    : Setembro/2015                     Ultima atualizacao: 14/12/2018
+     Data    : Setembro/2015                     Ultima atualizacao: 17/01/2019
 
      Dados referentes ao programa:
 
@@ -6744,10 +6744,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 				 10/02/2016 - Alteracao de parametro Fato Geradorde, rw_crapdat.dtmvtolt para
 							  pr_dtmvtolt, SD 397975 (Jean Michel).
 
-                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel). 
-                 
+                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel).             
+
                  14/12/2018 - Andreatta - Mouts : Ajustar para utilizar fn_Sequence e 
                              não mais max na busca no nrsequen para tbcc_operacoes_diarias            
+
+				 17/01/2019 - SCTASK0043529 - Inclusao dos campos da chave primaria da
+                              TBCC_OPERACOES_DIARIAS no log, incluido tambem um indentificador
+                              nas excecoes para facilitar a localizacao do erro gerado.
 
   ............................................................................ */
 
@@ -6851,6 +6855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_dsconteu VARCHAR(100); --> Auxiliar para retornar da funcao de busca de parametro
     vr_des_erro VARCHAR2(100);
     vr_nrsequen tbcc_operacoes_diarias.nrsequen%TYPE := 0;
+    vr_dserropk VARCHAR(200);
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_rowid_craplat ROWID;
     vr_cdlantar number;
@@ -6912,6 +6917,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     IF rw_crapass.inpessoa = 3 THEN
       RAISE vr_exc_null;
     END IF;
+
+    -- Inicializa a variavel utilizada nos EXCEPTIONS
+    vr_dserropk := 'CDCOOPER = '     || pr_cdcooper ||
+                   '; NRDCONTA = '   || pr_nrdconta ||
+                   '; CDOPERACAO = ' || pr_tipotari ||
+                   '; DTOPERACAO = ' || TO_CHAR(pr_dtmvtolt,'DD/MM/YYYY');
 
     pr_fliseope := 0; --- Não isentar tarifa
     pr_qtacobra := 0;
@@ -7297,7 +7308,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    END IF;
               EXCEPTION
                 WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+                  vr_dscritic := '01 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                                 vr_dserropk     ||
+                                 '; NRSEQUEN = ' || vr_nrsequen ||
+                                 '. Erro: ' || SQLERRM;
                   RAISE vr_exc_saida;
               END;                 
               pr_fliseope := 1; -- Não tarifar    
@@ -7344,7 +7358,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+                    vr_dscritic := '02 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                                   vr_dserropk     ||
+                                   '; NRSEQUEN = ' || vr_nrsequen ||
+                                   '. Erro: ' || SQLERRM;
                     RAISE vr_exc_saida;
                 END; 
                   
@@ -7365,7 +7382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
           FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
           CLOSE cr_tbcc_operacoes_diarias;
-          
+            
           vr_nrsequen := fn_sequence('TBCC_OPERACOES_DIARIAS','NRSEQUEN',to_char(pr_cdcooper)||';'||to_char(pr_nrdconta)||';'||to_char(pr_tipotari)||';'||to_char(pr_dtmvtolt,'dd/mm/rrrr'));
           vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
@@ -7410,7 +7427,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    end if;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+                vr_dscritic := '03 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                               vr_dserropk     ||
+                               '; NRSEQUEN = ' || vr_nrsequen ||
+                               '. Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;                 
             --vr_des_erro :=SQLERRM;
@@ -7443,7 +7463,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                     ,nvl(pr_nrdocumento,0));
               EXCEPTION
                 WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+                  vr_dscritic := '04 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                                 vr_dserropk     ||
+                                 '; NRSEQUEN = ' || vr_nrsequen ||
+                                 '. Erro: ' || SQLERRM;
                   RAISE vr_exc_saida;
               END; 
                
@@ -7534,7 +7557,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
              end if;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+            vr_dscritic := '05 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                           vr_dserropk     ||
+                           '; NRSEQUEN = ' || vr_nrsequen ||
+                           '. Erro: ' || SQLERRM;
           RAISE vr_exc_saida;
         END;
 
@@ -7579,7 +7605,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             vr_vltarifa := 0;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+        vr_dscritic := '06 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                       vr_dserropk     ||
+                       '; NRSEQUEN = ' || vr_nrsequen ||
+                       '. Erro: ' || SQLERRM;
       RAISE vr_exc_saida;
     END;
     else             -- INSERE NOVO REGISTRO COM TRIBUTACAO
@@ -7609,7 +7638,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             );
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+          vr_dscritic := '07 - Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). ' ||
+                         vr_dserropk     ||
+                         '; NRSEQUEN = ' || vr_nrsequen ||
+                         '. Erro: ' || SQLERRM;
         RAISE vr_exc_saida;
       END;
     end if;

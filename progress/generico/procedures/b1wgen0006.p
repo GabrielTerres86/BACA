@@ -4004,6 +4004,7 @@ PROCEDURE incluir-poupanca-programada:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+	DEF OUTPUT PARAM par_nrrdcapp AS INTE                            NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -4210,6 +4211,7 @@ PROCEDURE incluir-poupanca-programada:
         FIND CURRENT crapspp NO-LOCK NO-ERROR.
 
         ASSIGN par_nrdrowid = ROWID(craprpp)
+			   par_nrrdcapp = aux_nrrdcapp
                aux_flgtrans = TRUE.
 
     END. /** Fim do DO TRANSACTION - TRANS_POUP **/
@@ -4313,6 +4315,7 @@ PROCEDURE incluir-aplicacao-programada:
     DEF  INPUT PARAM par_flgdbpar AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+	DEF OUTPUT PARAM par_nrrdcapp AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -4524,6 +4527,7 @@ PROCEDURE incluir-aplicacao-programada:
         FIND CURRENT crapspp NO-LOCK NO-ERROR.
 
         ASSIGN par_nrdrowid = ROWID(craprpp)
+		       par_nrrdcapp = aux_nrrdcapp
                aux_flgtrans = TRUE.
 
     END. /** Fim do DO TRANSACTION - TRANS_POUP **/

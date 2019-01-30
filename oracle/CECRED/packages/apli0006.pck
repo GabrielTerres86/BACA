@@ -1101,7 +1101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 20/12/2018 - Removido rollback do tratamento de excecao (Anderson)
     ..............................................................................*/
     DECLARE
 
@@ -1307,11 +1307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em APLI0006.pc_taxa_acumul_aplic_pos. Erro: ' || SQLERRM;
-        ROLLBACK;
     END;
 
   END pc_taxa_acumul_aplic_pos;
@@ -1345,7 +1343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 20/12/2018 - Removido rollback do tratamento de excecao (Anderson)
     ..............................................................................*/
     DECLARE
 
@@ -1553,11 +1551,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em APLI0006.pc_taxa_acumul_aplic_pre. Erro: ' || SQLERRM;
-        ROLLBACK;
     END;
 
   END pc_taxa_acumul_aplic_pre;

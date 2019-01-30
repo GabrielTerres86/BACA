@@ -105,6 +105,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --                          (Tiago/Thiago SD 589074).  
   --
   --             26/02/2018 - Tabela CRAPTIP substituida pela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
+  --
+  --             29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao na numeracao das contas utilizadas.
+  --                          Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -1596,95 +1599,95 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('RECURSO PROPRIO').nrdconta := 0;
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('RECURSO PROPRIO').nrdconta := 0;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 5558;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 5559;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 5572;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 5573;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO ABN').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO ABN').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 5558;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 5559;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 5572;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 5573;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO ABN').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO ABN').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 5558;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 5559;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 5572;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 5573;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BB').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BB').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 5552;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 5553;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 5566;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 5567;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 1681;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES').nrdconta := 1681;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5506;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5507;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5508;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5509;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1687;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1687;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1688;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1688;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 5554;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 5555;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 5568;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 5569;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 1678;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 1678;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 1682;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO BRDE').nrdconta := 1682;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO BRDE').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 5556;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 5557;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 5570;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 5571;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 1683;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 1683;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 1685;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO CAIXA').nrdconta := 1685;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO CAIXA').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 5558;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 5559;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 5572;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 5573;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO PNMPO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO PNMPO DIM').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 5558;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 5559;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 5572;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 5573;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO DIM').nrdconta := 1667;
 
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 5552;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5548;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 5553;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5549;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 5566;
-    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5562;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 5567;
-    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5563;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 1681;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 1681;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 1667;
 
     -- CONTAS JUROS +60
     -- vr_tab_risco('B') := 3;
@@ -2879,11 +2882,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     No final do mes:
     D - 7116
-    C - 1633
+    C - 1621
     Histórico:1434 - Ajuste de saldo de (risco) RECEITAS A APROPRIAR
 
     No início do mes seguinte:
-    D - 1633
+    D - 1621
     C - 7116
     *************************/
 
@@ -2894,7 +2897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpf <> 0   THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,5510,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,1611,' ||
                       TRIM(to_char(vr_juros38da.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
@@ -2924,7 +2927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5341,7014,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1622,7014,' ||
                        TRIM(to_char(vr_juros38da.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
@@ -2959,7 +2962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,5511,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,1611,' ||
                       TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
@@ -2990,7 +2993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7015,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1611,7015,' ||
                        TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
@@ -3154,7 +3157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_taxas37.valorpf <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,5510,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,1611,' ||
                       TRIM(to_char(vr_taxas37.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa fisica"';
@@ -3184,7 +3187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5510,7012,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1611,7012,' ||
                        TRIM(to_char(vr_taxas37.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa fisica"';
@@ -3218,7 +3221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_taxas37.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,5511,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,1611,' ||
                       TRIM(to_char(vr_taxas37.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa juridica"';
@@ -3249,7 +3252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7013,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1611,7013,' ||
                        TRIM(to_char(vr_taxas37.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa juridica"';
@@ -3284,7 +3287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros57.valorpf <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,5510,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,1611,' ||
                       TRIM(to_char(vr_juros57.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa fisica"';
@@ -3314,7 +3317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5510,7012,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1611,7012,' ||
                        TRIM(to_char(vr_juros57.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa fisica"';
@@ -3349,7 +3352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros57.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,5511,' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,1611,' ||
                       TRIM(to_char(vr_juros57.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
                       '"(risco) Rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa juridica"';
@@ -3379,7 +3382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7013,' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1611,7013,' ||
                        TRIM(to_char(vr_juros57.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa juridica"';
@@ -3414,7 +3417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros.valorpf <> 0 THEN
       -- Monta a linha de cabeçalho
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7010,5530,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7010,1621,' ||
                      TRIM(to_char(vr_vldjuros.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PESSOA FISICA"';
@@ -3445,7 +3448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5530,7010,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1621,7010,' ||
                      TRIM(to_char(vr_vldjuros.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PESSOA FISICA"';
@@ -3479,7 +3482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7011,5531,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7011,1621,' ||
                      TRIM(to_char(vr_vldjuros.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PESSOA JURIDICA"';
@@ -3509,7 +3512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5531,7011,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1621,7011,' ||
                      TRIM(to_char(vr_vldjuros.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PESSOA JURIDICA"';
@@ -3541,7 +3544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- FINAN CIAMENTOS EM ATRASO - PESSOA FISICA
     IF vr_finjuros.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7026,5560,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7026,1662,' ||
                      TRIM(to_char(vr_finjuros.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PESSOA FISICA"';
@@ -3570,7 +3573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END LOOP;
 
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5560,7026,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1662,7026,' ||
                      TRIM(to_char(vr_finjuros.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PESSOA FISICA"';
@@ -3602,7 +3605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- FINANCIAMENTOS EM ATRASO - PESSOA JURIDICA
     IF vr_finjuros.valorpj <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7027,5561,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7027,1662,' ||
                      TRIM(to_char(vr_finjuros.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PESSOA JURIDICA"';
@@ -3632,7 +3635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5561,7027,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1662,7027,' ||
                      TRIM(to_char(vr_finjuros.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PESSOA JURIDICA"';
@@ -3665,7 +3668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- EMPRESTIMOS EM ATRASO PREFIXADO - PESSOA FISICA
     IF vr_vldjuros2.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,5534,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,1664,' ||
                      TRIM(to_char(vr_vldjuros2.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PREFIXADO PESSOA FISICA"';
@@ -3695,7 +3698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5534,7016,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1664,7016,' ||
                      TRIM(to_char(vr_vldjuros2.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PREFIXADO PESSOA FISICA"';
@@ -3727,7 +3730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- EMPRESTIMOS EM ATRASO PREFIXADO - PESSOA JURIDICA
     IF vr_vldjuros2.valorpj <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,5535,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,1664,' ||
                      TRIM(to_char(vr_vldjuros2.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PREFIXADO PESSOA JURIDICA"';
@@ -3757,7 +3760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5535,7017,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1664,7017,' ||
                      TRIM(to_char(vr_vldjuros2.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO PREFIXADO PESSOA JURIDICA"';
@@ -3790,7 +3793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_finjuros2.valorpf <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7028,5576,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7028,1667,' ||
                      TRIM(to_char(vr_finjuros2.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PREFIXADO PESSOA FISICA"';
@@ -3819,7 +3822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5576,7028,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1667,7028,' ||
                      TRIM(to_char(vr_finjuros2.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PREFIXADO PESSOA FISICA"';
@@ -3852,7 +3855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_finjuros2.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7029,5577,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7029,1667,' ||
                      TRIM(to_char(vr_finjuros2.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PREFIXADO PESSOA JURIDICA"';
@@ -3881,7 +3884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5577,7029,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1667,7029,' ||
                      TRIM(to_char(vr_finjuros2.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO PREFIXADO PESSOA JURIDICA"';
@@ -3913,7 +3916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- [Projeto 403] - Juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA 
     IF vr_totrendap.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7152,5590,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7152,1630,' ||
                      TRIM(to_char(vr_totrendap.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA ."';
@@ -3943,7 +3946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5590,7152,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1630,7152,' ||
                      TRIM(to_char(vr_totrendap.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA."';
@@ -3974,7 +3977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- [Projeto 403] - Juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA
     IF vr_totrendap.valorpj <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7153,5591,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7153,1630,' ||
                      TRIM(to_char(vr_totrendap.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA ."';
@@ -4004,7 +4007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5591,7153,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1630,7153,' ||
                      TRIM(to_char(vr_totrendap.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
@@ -4035,7 +4038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- [Projeto 403] - Juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA 
     IF vr_totjurmra.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7154,5590,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7154,1630,' ||
                      TRIM(to_char(vr_totjurmra.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA."';
@@ -4065,7 +4068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5590,7154,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1630,7154,' ||
                      TRIM(to_char(vr_totjurmra.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA."';
@@ -4096,7 +4099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- [Projeto 403] - Juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA
     IF vr_totjurmra.valorpj <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7155,5591,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7155,1630,' ||
                      TRIM(to_char(vr_totjurmra.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
@@ -4126,7 +4129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5591,7155,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1630,7155,' ||
                      TRIM(to_char(vr_totjurmra.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
@@ -4158,7 +4161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpf <> 0 THEN
         
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5534,1756,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1664,1766,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSÃO CARTAO PESSOA FISICA."';
@@ -4187,7 +4190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5534,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1766,1664,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
@@ -4220,7 +4223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpj <> 0 THEN
 
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5535,1757,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1664,1766,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -4249,7 +4252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5535,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1766,1664,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -4281,7 +4284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- EMPRESTIMOS EM ATRASO POS FIXADO - PESSOA FISICA
     IF vr_vldjuros6.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7591,5335,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7591,1603,' ||
                      TRIM(to_char(vr_vldjuros6.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO POS FIXADO PESSOA FISICA"';
@@ -4311,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5335,7591,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1603,7591,' ||
                      TRIM(to_char(vr_vldjuros6.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO POS FIXADO PESSOA FISICA"';
@@ -4343,7 +4346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- EMPRESTIMOS EM ATRASO POS FIXADO - PESSOA JURIDICA
     IF vr_vldjuros6.valorpj <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7592,5336,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7592,1603,' ||
                      TRIM(to_char(vr_vldjuros6.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO POS FIXADO PESSOA JURIDICA"';
@@ -4373,7 +4376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5336,7592,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1603,7592,' ||
                      TRIM(to_char(vr_vldjuros6.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar EMPRESTIMOS EM ATRASO POS FIXADO PESSOA JURIDICA"';
@@ -4406,7 +4409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_finjuros6.valorpf <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7561,5339,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7561,1607,' ||
                      TRIM(to_char(vr_finjuros6.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO POS FIXADO PESSOA FISICA"';
@@ -4435,7 +4438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5339,7561,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1607,7561,' ||
                      TRIM(to_char(vr_finjuros6.valorpf, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO POS FIXADO PESSOA FISICA"';
@@ -4468,7 +4471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_finjuros6.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7562,5340,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7562,1607,' ||
                      TRIM(to_char(vr_finjuros6.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO POS FIXADO PESSOA JURIDICA"';
@@ -4497,7 +4500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5340,7562,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1607,7562,' ||
                      TRIM(to_char(vr_finjuros6.valorpj, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) juros a apropriar FINANCIAMENTOS EM ATRASO POS FIXADO PESSOA JURIDICA"';
@@ -4668,7 +4671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||
-                       ',5528,4112,' ||
+                       ',1622,4112,' ||
                        TRIM(to_char(vr_rel1722_0201_v.valorpf , '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) SALDO CHEQUE ESPECIAL UTILIZADO PESSOA FISICA"';
@@ -4706,7 +4709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
                        TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) ||
-                       ',4112,5528,' ||
+                       ',4112,1622,' ||
                        TRIM(to_char(vr_rel1722_0201_v.valorpf , '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) SALDO CHEQUE ESPECIAL UTILIZADO PESSOA FISICA"';
@@ -4750,7 +4753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||
-                       ',5529,4112,' ||
+                       ',1622,4112,' ||
                        TRIM(to_char(vr_rel1722_0201_v.valorpj , '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) SALDO CHEQUE ESPECIAL UTILIZADO PESSOA JURIDICA"';
@@ -4788,7 +4791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
                        TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) ||
-                       ',4112,5529,' ||
+                       ',4112,1622,' ||
                        TRIM(to_char(vr_rel1722_0201_v.valorpj , '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) SALDO CHEQUE ESPECIAL UTILIZADO PESSOA JURIDICA"';
@@ -4837,7 +4840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||
-                       ',8447,5588,' ||
+                       ',8447,1722,' ||
                        TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) PROVISAO SALDO CHEQUE ESPECIAL UTILIZADO PESSOA FISICA"';
@@ -4883,7 +4886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
                        TRIM(to_char(vr_dtmovime, 'ddmmyy')) ||
-                       ',5588,8447,' ||
+                       ',1722,8447,' ||
                        TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) PROVISAO SALDO CHEQUE ESPECIAL UTILIZADO PESSOA FISICA"';
@@ -4936,7 +4939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||
-                       ',8448,5589,' ||
+                       ',8448,1722,' ||
                        TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) PROVISAO SALDO CHEQUE ESPECIAL UTILIZADO PESSOA JURIDICA"';
@@ -4982,7 +4985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       ELSE
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
                        TRIM(to_char(vr_dtmovime, 'ddmmyy')) ||
-                       ',5589,8448,' ||
+                       ',1722,8448,' ||
                        TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) PROVISAO SALDO CHEQUE ESPECIAL UTILIZADO PESSOA JURIDICA"';
@@ -5025,7 +5028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_rel1613_0299_v.valorpf <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5502,5500,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1613,1611,' ||
                      TRIM(to_char(vr_rel1613_0299_v.valorpf, '99999999999990.00')) ||
                      ',1434,' || '"(risco) SAQUE SOBRE DEPOSITO BLOQUEADO PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5055,7 +5058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
-                     TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',4112,5502,' ||
+                     TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',4112,1613,' ||
                      TRIM(to_char(vr_rel1613_0299_v.valorpf, '99999999999990.00')) ||
                      ',1434,' || '"(risco) SAQUE SOBRE DEPOSITO BLOQUEADO PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5083,7 +5086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_rel1613_0299_v.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5503,5501,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1613,1611,' ||
                      TRIM(to_char(vr_rel1613_0299_v.valorpj, '99999999999990.00')) ||
                      ',1434,' || '"(risco) SAQUE SOBRE DEPOSITO BLOQUEADO PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5113,7 +5116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
-                     TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',4112,5503,' ||
+                     TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',4112,1613,' ||
                      TRIM(to_char(vr_rel1613_0299_v.valorpj, '99999999999990.00')) ||
                      ',1434,' || '"(risco) SAQUE SOBRE DEPOSITO BLOQUEADO PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5152,7 +5155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5500,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1611,' ||
                      vr_contacon || ',' ||
                      TRIM(to_char(vr_rel1722_0101_v.valorpf, '99999999999990.00')) ||
                      ',1434,' || '"(risco) ADIANTAMENTO A DEPOSITANTES PESSOA FISICA"';
@@ -5178,7 +5181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
                      TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',' ||
-                     vr_contacon || ',5500,' ||
+                     vr_contacon || ',1611,' ||
                      TRIM(to_char((vr_rel1722_0101_v.valorpf - vr_rel1613_0299_v.valorpf), '99999999999990.00')) ||
                      ',1434,' || '"(risco) ADIANTAMENTO A DEPOSITANTES PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5219,7 +5222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5501,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1611,' ||
                      vr_contacon || ',' ||
                      TRIM(to_char(vr_rel1722_0101_v.valorpj, '99999999999990.00')) ||
                      ',1434,' || '"(risco) ADIANTAMENTO A DEPOSITANTES PESSOA JURIDICA"';
@@ -5245,7 +5248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmvtopr) || ',' ||
                      TRIM(to_char(vr_dtmvtopr, 'ddmmyy')) || ',' ||
-                     vr_contacon || ',5501,' ||
+                     vr_contacon || ',1611,' ||
                      TRIM(to_char((vr_rel1722_0101_v.valorpj - vr_rel1613_0299_v.valorpj), '99999999999990.00')) ||
                      ',1434,' || '"(risco) ADIANTAMENTO A DEPOSITANTES PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5286,7 +5289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- PROJ 186 - Divisao PF/PJ
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5588,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1722,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO ADIANTAMENTO A DEPOSITANTES PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5314,7 +5317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5588,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1722,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO ADIANTAMENTO A DEPOSITANTES PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5348,7 +5351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- PROJ 186 - Divisao PF/PJ
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5589,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1722,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO ADIANTAMENTO A DEPOSITANTES PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5376,7 +5379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5589,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1722,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO ADIANTAMENTO A DEPOSITANTES PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -5410,7 +5413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5594,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1731,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO FIN.PESSOAIS"';
       pc_gravar_linha(vr_linhadet);
@@ -5436,7 +5439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                      TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5594,8447,' ||
+                      TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1731,8447,' ||
                       TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                       ',1434,' || '"(risco) PROVISAO FIN.PESSOAIS"';
       pc_gravar_linha(vr_linhadet);
@@ -5470,7 +5473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5595,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1731,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO FIN.EMPRESAS "';
       pc_gravar_linha(vr_linhadet);
@@ -5496,7 +5499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5595,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1731,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO FIN.EMPRESAS"';
       pc_gravar_linha(vr_linhadet);
@@ -5589,7 +5592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1721,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5584,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO EMPR.PESSOAIS"';
       pc_gravar_linha(vr_linhadet);
@@ -5614,7 +5617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1721,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5584,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO EMPR.PESSOAIS"';
       pc_gravar_linha(vr_linhadet);
@@ -5645,7 +5648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5596,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1733,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.PESSOAIS PREFIXADO"';
@@ -5671,7 +5674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5596,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1733,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.PESSOAIS PREFIXADO"';
@@ -5705,7 +5708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5597,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1733,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.EMPRESAS PREFIXADO "';
@@ -5732,7 +5735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5597,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1733,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.EMPRESAS PREFIXADO"';
@@ -5767,7 +5770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5587,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1725,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.EMPRESAS PREFIXADO"';
@@ -5793,7 +5796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5587,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1725,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.EMPRESAS PREFIXADO"';
@@ -5828,7 +5831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5586,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1725,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.PESSOAIS PREFIXADO"';
@@ -5854,7 +5857,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5586,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1725,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.PESSOAIS PREFIXADO"';
@@ -5890,7 +5893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5329,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1617,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
@@ -5916,7 +5919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5329,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1617,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
@@ -5950,7 +5953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5330,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1617,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO "';
@@ -5977,7 +5980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5330,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1617,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO"';
@@ -6012,7 +6015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5332,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1615,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
@@ -6038,7 +6041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5332,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1615,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
@@ -6073,7 +6076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5331,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1615,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
@@ -6099,7 +6102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5331,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1615,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
@@ -6134,7 +6137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5586,1760,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1725,1760,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
@@ -6160,7 +6163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,5586,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,1725,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
@@ -6193,7 +6196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5587,1761,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',1725,1760,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
@@ -6219,7 +6222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1761,5587,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,1725,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
@@ -6254,7 +6257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5599,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1734,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FINAME PESSOA JURIDICA"';
@@ -6280,7 +6283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5599,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1734,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) PROVISAO FINAME PESSOA JURIDICA"';
@@ -6314,7 +6317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5592,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1724,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO TIT.DESCONTADOS PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6339,7 +6342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5592,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1724,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO TIT.DESCONTADOS PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6371,7 +6374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5593,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1724,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO TIT.DESCONTADOS PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6396,7 +6399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5593,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1724,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO TIT.DESCONTADOS PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6430,7 +6433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5526,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,1763,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO DESCONTO TITULO PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6455,7 +6458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5526,8447,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1763,8447,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) REVERSÃO PROVISAO DESCONTO TITULO PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6488,7 +6491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5527,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,1763,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO DESCONTO TITULO PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6513,7 +6516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5527,8448,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1763,8448,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) REVERSÃO PROVISAO DESCONTO TITULO PESSOA JURIDICA"';
       pc_gravar_linha(vr_linhadet);
@@ -6923,7 +6926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_nrdcctab(14):= '3383.9302';
     vr_nrdcctab(15):= '3392.9302';
     vr_nrdcctab(16):= '3393.9302';
-    vr_nrdcctab(17):= '8442.1721';  -- Emprestimos Pessoas - Origem 3
+    vr_nrdcctab(17):= '8442.5584';  -- Emprestimos Pessoas - Origem 3
     vr_nrdcctab(18):= '8442.1723';  -- Emprestimos Empresas - Origem 3
     vr_nrdcctab(19):= '8442.1724';  -- Titulos Descontados - Origem 2 Mod.0302
     vr_nrdcctab(20):= '8442.1731';  -- Financiamentos Pessoas - Origem 3

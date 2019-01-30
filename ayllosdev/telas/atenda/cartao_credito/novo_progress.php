@@ -351,7 +351,7 @@
 			
 			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:'); ?></label>
 			<div id="limiteDiv">
-				<? if($adicional || $tipo == "dbt"){?>
+				<? if($tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
 					<?php
 					//for ($i = 0; $i < count($cdLimite); $i++){
@@ -462,7 +462,7 @@
 		if ($inpessoa == "1") { // Pessoa Física 
 	?>
 		// Seta máscara aos campos
-		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");
+		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
 		$("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
 		$("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
 		$("#vlsalari","#frmNovoCartao").setMask("DECIMAL","zzz.zzz.zz9,99","","");
@@ -483,7 +483,9 @@
 
 		// Seta máscara aos campos
 		$("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
-		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");		
+		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
+		$("#nmempres","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
+
 		$("#vllimdeb","#frmNovoCartao").setMask("DECIMAL","zzz.zz9,99","","");
 		$("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
 		

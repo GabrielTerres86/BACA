@@ -46,7 +46,8 @@
 	if (!validaInteiro($nrctrrpp)) {
 		exibeErro("N&uacute;mero de contrato inv&aacute;lido.");
 	}	
-		
+
+	/*	
 	// Monta o xml de requisição
 	$xmlSuspender  = "";
 	$xmlSuspender .= "<Root>";
@@ -81,9 +82,33 @@
 	if (strtoupper($xmlObjSuspender->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSuspender->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
+	*/
+	// Montar o xml de Requisicao
+	$xmlSuspender = "<Root>";
+	$xmlSuspender .= " <Dados>";
+	$xmlSuspender .= "	<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlSuspender .= "	<idseqttl>1</idseqttl>";
+	$xmlSuspender .= "	<nrctrrpp>".$nrctrrpp."</nrctrrpp>";
+	$xmlSuspender .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlSuspender .= "	<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
+	$xmlSuspender .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	$xmlSuspender .= "   <flgerlog>1</flgerlog>";
+	$xmlSuspender .= " </Dados>";
+	$xmlSuspender .= "</Root>";
+
+	$xmlResult = mensageria($xmlSuspender, "APLI0008", "OBTEM_DADOS_SUSPENSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjSuspender = getObjectXML($xmlResult);
 	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjSuspender->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjSuspender->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
+
 	$poupanca = $xmlObjSuspender->roottag->tags[0]->tags[0]->tags;	
-	
+	$diadebit = $poupanca[7]->cdata;
+	$dsfinali = $poupanca[28]->cdata ; // Finalidade
+
 	// Flags para montagem do formulário
 	$flgAlterar   = false;
 	$flgSuspender = true;	

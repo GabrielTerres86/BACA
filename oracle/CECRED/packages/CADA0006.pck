@@ -5,14 +5,19 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Lombardi
-    Data     : Janeiro/2018.                   Ultima atualizacao: 04/06/2018
+    Data     : Janeiro/2018.                   Ultima atualizacao: 01/10/2018
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Rotinas para buscar detalhes de cadastros
   
-   Alteracoes:   
+   Alteracoes: 08/09/2018 - Considerar apenas a contratação da Aplicação Programada, não somando com aplicações 
+                            anteriores (pc_valida_valor_de_adesao)
+                            Proj. 411.2 (CIS Corporate)   
+
+               01/10/2018 - Possibilitar a alteração do dia da contratação, valor e finalidade de aplicações programadas
+                            Proj. 411.2 (CIS Corporate)   
 
   ---------------------------------------------------------------------------------------------------------------*/
 	
@@ -208,6 +213,30 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                      ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                      ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
                                      
+  PROCEDURE pc_valida_adesao_apl_prog_web (pr_nrdconta   IN crapass.nrdconta%TYPE  --> Situacao
+                                          ,pr_dtmvtolt   IN VARCHAR2               --> Data de movimento
+                                          ,pr_dtinirpp   IN VARCHAR2               --> Data do início da Apl. Prog.
+                                          ,pr_vlprerpp   IN craprpp.vlprerpp%TYPE  --> Valor da parcela
+                                          ,pr_tpemiext   IN PLS_INTEGER            --> Tipo da Impressão
+                                          ,pr_xmllog     IN VARCHAR2               --> XML com informações de LOG
+                                          ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                          ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                          ,pr_retxml  IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                          ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
+
+  PROCEDURE pc_valida_altera_apl_prog_web (pr_nrdconta   IN crapass.nrdconta%TYPE       --> Situacao
+                                          ,pr_dtmvtolt   IN VARCHAR2                    --> Data de movimento
+                                          ,pr_nrctrrpp   IN craprpp.nrctrrpp%TYPE       --> Número do Contrato - CRAPRPP
+                                          ,pr_indebito   IN INTEGER                     --> Dia de débito
+                                          ,pr_vlprerpp   IN craprpp.vlprerpp%TYPE       --> Valor da parcela
+                                          ,pr_xmllog     IN VARCHAR2                    --> XML com informações de LOG
+                                          ,pr_cdcritic   OUT PLS_INTEGER                --> Código da crítica
+                                          ,pr_dscritic   OUT VARCHAR2                   --> Descrição da crítica
+                                          ,pr_retxml  IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo   OUT VARCHAR2                   --> Nome do campo com erro
+                                          ,pr_des_erro   OUT VARCHAR2);                 --> Erros do processo
+                                    
   PROCEDURE pc_valida_valor_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                   ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
@@ -286,6 +315,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                          ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> codigo da situacao
                                          ,pr_des_erro OUT VARCHAR2 --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+                                         
+                                       
 END CADA0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
@@ -295,14 +326,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Lombardi
-  --  Data     : Janeiro/2018.                   Ultima atualizacao: --/--/----
+  --  Data     : Janeiro/2018.                   Ultima atualizacao: 08/09/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas para manutenção de tipos de conta
   --
-  -- Alteracoes:   
+  -- Alteracoes: 08/09/2018 - Considerar apenas a contratação da Aplicação Programada, não somando com aplicações 
+  --                          anteriores (pc_valida_valor_de_adesao)
+  --                          Proj. 411.2 (CIS Corporate)   
+  --  
   ---------------------------------------------------------------------------------------------------------------
   
   /*****************************************************************************/
@@ -811,7 +845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         END IF;
         
       END IF;
-      
+        
       IF vr_inimpcre = 1 AND 
          pr_cdprodut IN (4  -- CARTÃO DE CRÉDITO
                         ,13 -- LIMITE DE CRÉDITO
@@ -3533,6 +3567,392 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     END;
   END pc_valida_adesao_prod_web;
   
+  PROCEDURE pc_valida_adesao_apl_prog_web (pr_nrdconta   IN crapass.nrdconta%TYPE       --> Situacao
+                                          ,pr_dtmvtolt   IN VARCHAR2                    --> Data de movimento
+                                          ,pr_dtinirpp   IN VARCHAR2                    --> Data do início da Apl. Prog.
+                                          ,pr_vlprerpp   IN craprpp.vlprerpp%TYPE       --> Valor da parcela
+                                          ,pr_tpemiext   IN PLS_INTEGER                 --> Tipo da Impressão
+                                          ,pr_xmllog     IN VARCHAR2                    --> XML com informações de LOG
+                                          ,pr_cdcritic   OUT PLS_INTEGER                --> Código da crítica
+                                          ,pr_dscritic   OUT VARCHAR2                   --> Descrição da crítica
+                                          ,pr_retxml  IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo   OUT VARCHAR2                   --> Nome do campo com erro
+                                          ,pr_des_erro   OUT VARCHAR2) IS               --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_valida_adesao_apl_prog_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : CIS Corporate
+        Data    : Setembro/18.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Mensageria para contratacao da aplicação programada 
+                    (validação dos parâmetros e valores)
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+     
+      --Variaveis auxiliares
+      vr_solcoord INTEGER;
+      vr_clob     CLOB;   
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_mensagem VARCHAR2(200);
+      
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_possuipr  VARCHAR2(1);
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis gerais
+      
+      vr_dtmvtolt DATE := to_date(pr_dtmvtolt,'DD/MM/YYYY');
+      vr_dtinirpp DATE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Verifica se são datas válidas, dentro de prazos válidos
+      BEGIN
+            vr_dtinirpp := to_date(pr_dtinirpp,'DD/MM/YYYY');
+            IF (vr_dtinirpp IS NULL) OR
+               (vr_dtinirpp > ADD_MONTHS(vr_dtmvtolt,2)) OR
+               (vr_dtinirpp < vr_dtmvtolt)  
+             THEN
+               RAISE vr_exc_saida;
+            END IF;
+      EXCEPTION
+            WHEN OTHERS THEN
+                 vr_cdcritic:=13;  
+                 pr_nmdcampo:='dtinirpp'; 
+      END;
+      IF vr_cdcritic IS NOT NULL THEN
+         RAISE vr_exc_saida;  
+      END IF;
+      -- Verifica Tipo de extrato é válido
+
+      IF pr_tpemiext < 1 OR pr_tpemiext > 3 THEN
+         vr_cdcritic:=264;  
+         pr_nmdcampo:='tpemiext';
+         RAISE vr_exc_saida;  
+      END IF;       
+      -- Verifica se o valor está dentro da faixa permitida
+      pc_valida_valor_de_adesao(pr_cdcooper => vr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdprodut => 16          -- Poup./Apl. Programada
+                               ,pr_vlcontra => pr_vlprerpp
+                               ,pr_idorigem => vr_idorigem
+                               ,pr_cddchave => 0
+                               ,pr_solcoord => vr_solcoord
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        IF vr_solcoord = 1 THEN
+          vr_mensagem := vr_dscritic;
+        ELSE
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      -- Monta documento XML - Ok
+      dbms_lob.createtemporary(vr_clob, TRUE);
+      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+        
+      -- Criar cabeçalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?>'||
+                                                   '<Root>'||
+                                                          '<solcoord>'||vr_solcoord||'</solcoord>'||
+                                                          '<mensagem>'||vr_mensagem||'</mensagem>'||
+                                                   '</Root>'
+                             ,pr_fecha_xml      => TRUE);
+      
+      -- Atualiza o XML de retorno
+      pr_retxml := xmltype(vr_clob);
+
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+        
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_adesao_apl_prog_web: ' || SQLERRM;        
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_valida_adesao_apl_prog_web;
+  
+  PROCEDURE pc_valida_altera_apl_prog_web (pr_nrdconta   IN crapass.nrdconta%TYPE       --> Situacao
+                                          ,pr_dtmvtolt   IN VARCHAR2                    --> Data de movimento
+                                          ,pr_nrctrrpp   IN craprpp.nrctrrpp%TYPE       --> Número do Contrato - CRAPRPP
+                                          ,pr_indebito   IN INTEGER                     --> Dia de débito
+                                          ,pr_vlprerpp   IN craprpp.vlprerpp%TYPE       --> Valor da parcela
+                                          ,pr_xmllog     IN VARCHAR2                    --> XML com informações de LOG
+                                          ,pr_cdcritic   OUT PLS_INTEGER                --> Código da crítica
+                                          ,pr_dscritic   OUT VARCHAR2                   --> Descrição da crítica
+                                          ,pr_retxml  IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo   OUT VARCHAR2                   --> Nome do campo com erro
+                                          ,pr_des_erro   OUT VARCHAR2) IS               --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_valida_altera_apl_prog_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : CIS Corporate
+        Data    : Setembro/18.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Mensageria para alteracao da aplicação programada 
+                    (validação dos parâmetros e valores)
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+     
+      --Variaveis auxiliares
+      vr_solcoord INTEGER;
+      vr_clob     CLOB;   
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_mensagem VARCHAR2(200);
+      
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_possuipr  VARCHAR2(1);
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis gerais
+      vr_dtmvtolt DATE := to_date(pr_dtmvtolt,'DD/MM/YYYY');
+      
+      vr_dtproxdeb_char VARCHAR2(10);
+      vr_dtproxdeb DATE;
+      vr_dtvalida BOOLEAN:=FALSE;
+      
+
+      -- Cursores
+      -- Busca pelos dados da conta
+      CURSOR cr_craprpp (pr_cdcooper IN craprpp.cdcooper%TYPE
+                        ,pr_nrdconta IN craprpp.nrdconta%TYPE
+                        ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE)
+      IS
+        SELECT  rpp.cdsitrpp
+               ,rpp.dtdebito
+               ,rpp.diadebit
+          FROM craprpp rpp
+         WHERE rpp.cdcooper = pr_cdcooper
+           AND rpp.nrdconta = pr_nrdconta
+           AND rpp.nrctrrpp = pr_nrctrrpp;
+      
+      rw_craprpp cr_craprpp%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Verifica se o contrato existe
+      OPEN cr_craprpp (pr_cdcooper => vr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrctrrpp => pr_nrctrrpp);
+      FETCH cr_craprpp INTO rw_craprpp;
+      -- Se não encontrar
+      IF cr_craprpp%NOTFOUND THEN
+        CLOSE cr_craprpp;
+        vr_cdcritic := 495;
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_craprpp;
+     
+      -- Verifica se o dia é valido
+      IF (pr_indebito < 1) OR (pr_indebito > 31) THEN
+         vr_cdcritic := 0;
+         vr_dscritic := 'Dia de debito invalido';
+         pr_nmdcampo:='indebito'; 
+         RAISE vr_exc_saida;
+      END IF;
+
+      -- Nao deveria estar nesta situação, mas iremos proteger 
+      IF rw_craprpp.dtdebito IS NULL THEN 
+         rw_craprpp.dtdebito := vr_dtmvtolt;
+      END IF;
+      
+      IF rw_craprpp.diadebit IS NULL THEN
+        rw_craprpp.diadebit := EXTRACT (DAY FROM rw_craprpp.dtdebito);
+      END IF;
+      
+      -- Verificar se alteraram a data débito 
+      IF pr_indebito <> rw_craprpp.diadebit THEN
+         -- Foi alterada
+         IF pr_indebito > rw_craprpp.diadebit THEN -- Debitar novamente neste mês
+             BEGIN
+                  vr_dtproxdeb := TO_DATE(TO_CHAR(pr_indebito,'00')||TO_CHAR(vr_dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY');
+             EXCEPTION -- Colocar para o dia primeiro do próximo mês
+                  WHEN OTHERS THEN
+                       vr_dtproxdeb := LAST_DAY(vr_dtmvtolt)+1;
+             END;    
+         ELSE -- Enviar para o próximo mês
+             BEGIN
+                  vr_dtproxdeb := TO_DATE(TO_CHAR(pr_indebito,'00')||TO_CHAR(LAST_DAY(vr_dtmvtolt)+1,'/MM/YYYY'),'DD/MM/YYYY');
+             EXCEPTION -- Colocar para o dia primeiro do próximo mês
+                  WHEN OTHERS THEN    
+                       vr_dtproxdeb := LAST_DAY(LAST_DAY(vr_dtmvtolt)+1)+1;
+             END;    
+         END IF;
+         vr_dtproxdeb_char := TO_CHAR(vr_dtproxdeb,'DD/MM/YYYY');
+      ELSE
+         vr_dtproxdeb_char := TO_CHAR(rw_craprpp.dtdebito,'DD/MM/YYYY');
+      END IF;
+            
+      -- Verifica se o valor está dentro da faixa permitida
+      pc_valida_valor_de_adesao(pr_cdcooper => vr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdprodut => 16          -- Poup./Apl. Programada
+                               ,pr_vlcontra => pr_vlprerpp
+                               ,pr_idorigem => vr_idorigem
+                               ,pr_cddchave => 0
+                               ,pr_solcoord => vr_solcoord
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        IF vr_solcoord = 1 THEN
+          vr_mensagem := vr_dscritic;
+        ELSE
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      -- Monta documento XML - Ok
+      dbms_lob.createtemporary(vr_clob, TRUE);
+      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+        
+      -- Criar cabeçalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?>'||
+                                                   '<Root>'||
+                                                          '<solcoord>'||vr_solcoord||'</solcoord>'||
+                                                          '<mensagem>'||vr_mensagem||'</mensagem>'||
+                                                          '<diadebito>'||vr_dtproxdeb_char||'</diadebito>'||
+                                                   '</Root>'
+                             ,pr_fecha_xml      => TRUE);
+      
+      -- Atualiza o XML de retorno
+      pr_retxml := xmltype(vr_clob);
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+        
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_adesao_apl_prog_web: ' || SQLERRM;        
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_valida_altera_apl_prog_web;
+  
   PROCEDURE pc_valida_valor_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                   ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
@@ -3601,7 +4021,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Lombardi
-        Data    : Março/18.                    Ultima atualizacao: --/--/----
+        Data    : Março/18.                    Ultima atualizacao: 08/09/2018
     
         Dados referentes ao programa:
     
@@ -3611,7 +4031,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 08/09/2018 - Para Apl. programadas, não considerar outras aplicações
+                               - Proj. 411.2 (CIS Corporate)
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -3693,7 +4114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       END IF;
       
       -- Verifica produtos que não necessitam que seja buscado o valor anterior
-      IF pr_cdprodut NOT IN (12,13,14,15) THEN 
+      IF pr_cdprodut NOT IN (12,13,14,15,16) THEN 
         -- Busca valor já contratado
         pc_busca_valor_contratado(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta

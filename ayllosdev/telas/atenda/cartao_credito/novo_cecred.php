@@ -718,7 +718,7 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 	if ($pessoaFisica) { // Pessoa Física 
     ?>
     // Seta máscara aos campos
-    $("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");
+    $("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
     $("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
     $("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
     $("#vlsalari","#frmNovoCartao").setMask("DECIMAL","zzz.zzz.zz9,99","","");
@@ -741,7 +741,8 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 
     // Seta máscara aos campos
     $("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
-    $("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");
+    $("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
+    $("#nmempres","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
     $("#vllimdeb","#frmNovoCartao").setMask("DECIMAL","zzz.zz9,99","","");
     $("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
     $("#valorLimite").setMask("DECIMAL","zzz.zzz.zz9,99","","");

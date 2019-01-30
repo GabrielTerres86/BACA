@@ -4,18 +4,19 @@
  * DATA CRIAÇÃO : 02/07/2014
  * OBJETIVO     : Biblioteca de funções da tela PCAPTA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 25/09/2018 - Inclusão do campo indplano (Apl. Programada) - Proj. 411.2  (CIS Corporate)
  * --------------
  */
 
 //Formulários
 var frmCab = 'frmCab';
 
-var rNmprodut, rNommitra, rIdsitpro, rCddindex, rIdtippro, rIdtxfixa, rIdacumul, rCdprodut, rQtdiacar, rQtdiaprz, rVlrfaixa, rVlperren, rVltxfixa, rCdcooper, rCdnomenc, rDsnomenc, rQtmincar, rVlminapl;
-var rNmprodus, rIdsitnom, rCdhscacc, rCdhsvrcc, rCdhsraap, rCdhsnrap, rCdhsprap, rCdhsrvap, rCdhsrdap, rCdhsirap, rCdhsrgap, rCdhsvtap, rDtmvtolt, rCddopcao;
+var rNmprodut, rNommitra, rIdsitpro, rCddindex, rIdtippro, rIdtxfixa, rIdacumul, rIndplano, rCdprodut, rQtdiacar, rQtdiaprz, rVlrfaixa, rVlperren, rVltxfixa, rCdcooper, rCdnomenc, rDsnomenc, rQtmincar, rVlminapl;
+var rNmprodus, rIdsitnom, rCdhscacc, rCdhsvrcc, rCdhsraap, rCdhsnrap, rCdhsprap, rCdhsrvap, rCdhsrdap, rCdhsirap, rCdhsrgap, rCdhsvtap, rDtmvtolt, rCddopcao, rIndteimo, rIndparci, rVlminimo;
 
-var cNmprodut, cNommitra, cIdsitpro, cCddindex, cIdtippro, cIdtxfixa, cIdacumul, cCdprodut, cQtdiacar, cQtdiaprz, cVlrfaixa, cVlperren, cVltxfixa, cCdcooper, cCdnomenc, cDsnomenc, cQtmincar, cQtmaxcar, cVlminapl, cVlmaxapl;
-var cNmprodus, cIdsitnom, cCdhscacc, cCdhsvrcc, cCdhsraap, cCdhsnrap, cCdhsprap, cCdhsrvap, cCdhsrdap, cCdhsirap, cCdhsrgap, cCdhsvtap, cDtmvtolt, cCddopcao;
+
+var cNmprodut, cNommitra, cIdsitpro, cCddindex, cIdtippro, cIdtxfixa, cIdacumul, cIndplano, cCdprodut, cQtdiacar, cQtdiaprz, cVlrfaixa, cVlperren, cVltxfixa, cCdcooper, cCdnomenc, cDsnomenc, cQtmincar, cQtmaxcar, cVlminapl, cVlmaxapl;
+var cNmprodus, cIdsitnom, cCdhscacc, cCdhsvrcc, cCdhsraap, cCdhsnrap, cCdhsprap, cCdhsrvap, cCdhsrdap, cCdhsirap, cCdhsrgap, cCdhsvtap, cDtmvtolt, cCddopcao, cIndteimo, cIndparci, cVlminimo;
 
 var btnAltera, btnConsul, btnExclui, btnInclui, btnVoltar, btnAtivar, btnBloque, btnDesblo, btnDefini, btnFiltra, btnProseg, btnCancel;
 
@@ -41,7 +42,7 @@ function estadoInicial() {
     $('#divTela').fadeTo(0, 0.1);
     $('#frmCab').css({'display': 'block'});
 
-    // Botões
+    // Botï¿½es
     btnAltera = $('#btAltera', '#' + frmCab);
     btnConsul = $('#btConsul', '#' + frmCab);
     btnExclui = $('#btExclui', '#' + frmCab);
@@ -57,7 +58,6 @@ function estadoInicial() {
 
     //Label
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);
-
     rNmprodut = $('label[for="nmprodut"]', '#' + frmCab);
     rNmprodus = $('label[for="nmprodus"]', '#' + frmCab);
     rNommitra = $('label[for="nommitra"]', '#' + frmCab);
@@ -66,6 +66,7 @@ function estadoInicial() {
     rIdtippro = $('label[for="idtippro"]', '#' + frmCab);
     rIdtxfixa = $('label[for="idtxfixa"]', '#' + frmCab);
     rIdacumul = $('label[for="idacumul"]', '#' + frmCab);
+    rIndplano = $('label[for="indplano"]', '#' + frmCab);
     rCdprodut = $('label[for="cdprodut"]', '#' + frmCab);
     rQtdiacar = $('label[for="qtdiacar"]', '#' + frmCab);
     rQtdiaprz = $('label[for="qtdiaprz"]', '#' + frmCab);
@@ -89,6 +90,9 @@ function estadoInicial() {
     rCdhsrgap = $('label[for="cdhsrgap"]', '#' + frmCab);
     rCdhsvtap = $('label[for="cdhsvtap"]', '#' + frmCab);
     rDtmvtolt = $('label[for="dtmvtolt"]', '#' + frmCab);
+    rIndteimo = $('label[for="indteimo"]', '#' + frmCab);
+    rIndparci = $('label[for="indparci"]', '#' + frmCab);
+    rVlminimo = $('label[for="vlminimo"]', '#' + frmCab);
 
     //Campos
     cCddopcao = $('#cddopcao', '#' + frmCab);
@@ -100,6 +104,7 @@ function estadoInicial() {
     cIdtippro = $('#idtippro', '#' + frmCab);
     cIdtxfixa = $('#idtxfixa', '#' + frmCab);
     cIdacumul = $('#idacumul', '#' + frmCab);
+    cIndplano = $('#indplano', '#' + frmCab);
     cCdprodut = $('#cdprodut', '#' + frmCab);
     cQtdiacar = $('#qtdiacar', '#' + frmCab);
     cQtdiaprz = $('#qtdiaprz', '#' + frmCab);
@@ -125,6 +130,9 @@ function estadoInicial() {
     cCdhsrgap = $('#cdhsrgap', '#' + frmCab);
     cCdhsvtap = $('#cdhsvtap', '#' + frmCab);
     cDtmvtolt = $('#dtmvtolt', '#' + frmCab);
+    cIndteimo = $('#indteimo', '#' + frmCab);
+    cIndparci = $('#indparci', '#' + frmCab);
+    cVlminimo = $('#vlminimo', '#' + frmCab);
 
     removeOpacidade('divTela');
     unblockBackground();
@@ -143,8 +151,12 @@ function estadoInicial() {
     cIdtippro.attr("disabled", true);
     cIdtxfixa.attr("disabled", true);
     cIdacumul.attr("disabled", true);
+    cIndplano.attr("disabled", true);
     cVltxfixa.attr("disabled", true);  
     cVlperren.attr("disabled", true);  
+    cIndteimo.attr("disabled", true);
+    cIndparci.attr("disabled", true);
+    cVlminimo.attr("disabled", true);
     
     // PCAPTA - Historicos
     cCdhscacc.attr("disabled", true);
@@ -157,7 +169,6 @@ function estadoInicial() {
     cCdhsirap.attr("disabled", true); 
     cCdhsrgap.attr("disabled", true); 
     cCdhsvtap.attr("disabled", true);    
-    
     cCdnomenc.attr("disabled", true);
     cQtmincar.attr("disabled", true);    
     cQtmaxcar.attr("disabled", true);    
@@ -188,6 +199,7 @@ function formataCabecalho() {
     rIdtippro.css('width', '130px');
     rIdtxfixa.css('width', '130px');
     rIdacumul.css('width', '130px');
+    rIndplano.css('width', '130px');
     rCdprodut.css('width', '130px');
     rQtdiacar.css('width', '130px');
     rQtdiaprz.css('width', '130px');
@@ -211,6 +223,10 @@ function formataCabecalho() {
     rCdhsrgap.css('width', '250px');
     rCdhsvtap.css('width', '250px');
     rDtmvtolt.css('width', '130px');
+    rIndteimo.css('width', '130px');
+    rIndparci.css('width', '130px');
+    rVlminimo.css('width', '130px');
+    
 
     /* Tamanho Campos */
     cNmprodut.css({'width': '150px'});
@@ -245,6 +261,9 @@ function formataCabecalho() {
     cCdhsvtap.css({'width': '90px'});
     cDtmvtolt.css({'width': '150px'});
     cDtmvtolt.css({'text-align': 'right'});
+    cVlminimo.css({'width': '150px'});
+    cVlminimo.css({'text-align': 'right'});
+
     cTodosCabecalho.habilitaCampo();
 
     $("#dtmvtolt", "#" + frmCab).attr("disabled", true);
@@ -340,7 +359,7 @@ function escolheOpcao(cddopcao, stropcao) {
         // Mostra mensagem de aguardo
         showMsgAguardo("Aguarde, carregando dados...");
 
-        // Executa script de bloqueio através de ajax
+        // Executa script de bloqueio atravï¿½s de ajax
         $.ajax({
             type: "POST",
             dataType: 'html',
@@ -351,7 +370,7 @@ function escolheOpcao(cddopcao, stropcao) {
             success: function(response) {
                 hideMsgAguardo();
                 //valida se a sessao do navegador nao expirou
-                if ( response.indexOf('Sessão não registrada.') != -1 || response.indexOf('login_sistemas.php') != -1) {
+                if ( response.indexOf('Sess&atilde;o n&atilde;o registrada.') != -1 || response.indexOf('login_sistemas.php') != -1) {
                     resposta = response;
                     redirecionaPagina();
                 } else {
@@ -383,7 +402,7 @@ function escolheOpcao(cddopcao, stropcao) {
                     
                     if ( cddopcao == 'D' ) { //definicao politica
                         if ( stropcao != 'C' && ($("#nvoperad").val() != 3 || $("#cdcooper").val() != 3) ) {
-                            showError("error", "036 - Operação não autorizada.", "Alerta - Ayllos", "hideMsgAguardo();");
+                            showError("error", "036 - Opera&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "hideMsgAguardo();");
                             permissao = 'N';                            
                         } else {
                             hideMsgAguardo();
@@ -392,7 +411,7 @@ function escolheOpcao(cddopcao, stropcao) {
                     } else if ( cddopcao == 'M' ) { //opcao modalidade
                         //if ( stropcao != 'C' && $("#nvoperad").val() != 3 && $("#cdcooper").val() != 3 ) { 
                         if ( stropcao != 'C' && ($("#nvoperad").val() != 3 || $("#cdcooper").val() != 3) ) {
-                            showError("error", "036 - Operação não autorizada.", "Alerta - Ayllos", "hideMsgAguardo();");
+                            showError("error", "036 - Opera&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "hideMsgAguardo();");
                             permissao = 'N';
                         } else {
                             hideMsgAguardo();
@@ -408,7 +427,7 @@ function escolheOpcao(cddopcao, stropcao) {
     }
 
     if ( permissao == 'S' ) {
-        
+                
         switch (cddopcao)
         {
             case 'C':
@@ -416,10 +435,9 @@ function escolheOpcao(cddopcao, stropcao) {
                 cCdcooper.attr('disabled', false);
                 $("#carteiraConsulta #btFiltrar").focus();
                 break;
-            case 'D':           
-
-                switch (stropcao) {
-
+            case 'D':
+                 switch (stropcao) {
+                    
                     case 'B':
 						carregaComboProdutos('A');
                         $("#hdnCodSubOpcao").val('B');
@@ -472,11 +490,21 @@ function escolheOpcao(cddopcao, stropcao) {
                         $('#definicaoConsulta, tr.linhaBotoes').show();
                         $("#cdcooper", "#" + frmCab).focus();
                         break;
+
+                    case 'A':
+						carregaComboProdutos('T');
+                        $("#hdnCodSubOpcao").val('A');
+                        cCdcooper.attr('disabled', false);
+                        cCdprodut.attr('disabled', false);
+                        $('#definicaoConsulta legend').text('Políticas da Cooperativa - Alterar');                    
+                        $('#definicaoConsulta, tr.linhaBotoes').show();
+                        $("#cdcooper", "#" + frmCab).focus();                        
+                        break;
+
                     default:
 
                         break;
                 }
-
                 break;
             case 'H':
 
@@ -682,6 +710,7 @@ function escolheOpcao(cddopcao, stropcao) {
                         cIdtippro.attr("disabled", true);
                         cIdtxfixa.attr("disabled", true);
                         cIdacumul.attr("disabled", true);
+                        cIndplano.attr("disabled", true);
                         $("#dadosProdutos legend").text('Dados do Produto - Alterar');
                         $("#nmprodus", "#" + frmCab).focus();                        
                         break;
@@ -707,6 +736,7 @@ function escolheOpcao(cddopcao, stropcao) {
                         cIdtippro.attr("disabled", true);
                         cIdtxfixa.attr("disabled", true);
                         cIdacumul.attr("disabled", true);
+                        cIndplano.attr("disabled", true);
                         $("#dadosProdutos legend").text('Dados do Produto - Consultar');
                         
                         $("#nmprodus", "#" + frmCab).focus();                        
@@ -732,6 +762,7 @@ function escolheOpcao(cddopcao, stropcao) {
                         cIdtippro.attr("disabled", true);
                         cIdtxfixa.attr("disabled", true);
                         cIdacumul.attr("disabled", true);
+                        cIndplano.attr("disabled", true);
                         $("#dadosProdutos legend").text('Dados do Produto - Excluir');
                         
                         $("#nmprodus", "#" + frmCab).focus();                        
@@ -756,9 +787,11 @@ function escolheOpcao(cddopcao, stropcao) {
                         cIdtippro.attr("disabled", false);
                         cIdtxfixa.attr("disabled", false);
                         cIdacumul.attr("disabled", false);
+                        cIndplano.attr("disabled", false);
 
                         $('input:radio[name=idtxfixa][value=1]').attr('checked', true);
                         $('input:radio[name=idacumul][value=1]').attr('checked', true);
+                        $('input:radio[name=indplano][value=1]').attr('checked', true);
 
                         cNmprodut.focus();
                         $("#dadosProdutos legend").text('Dados do Produto - Inserir');                    
@@ -834,6 +867,15 @@ function resetaCampos() {
         $(this).val('');
     });
 
+    $("#pcapta table td select").each(function() {
+        $(this).find("option[value=0]").attr("selected", "selected");
+        $(this).removeAttr('disabled');
+    });
+
+    $('#indplano', '#frmCab').prop( "checked", false );
+    $('#indteimo', '#frmCab').prop( "checked", false );
+    $('#indparci', '#frmCab').prop( "checked", false );
+    $('#vlminimo', '#frmCab').val('');
     $("div.divRetorno").hide();
     $("tr.linhaBotoes").show();
     return false;
