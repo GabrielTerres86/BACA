@@ -695,6 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
                24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
                             Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
+               23/01/2019 - Ajuste na pc_lanca_credito_bordero (Daniel)             
   ---------------------------------------------------------------------------------------------------------------*/
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%rowtype;
@@ -5355,7 +5356,7 @@ END pc_inserir_lancamento_bordero;
           WHEN DUP_VAL_ON_INDEX THEN
             CONTINUE;
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
+            vr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
             -- Levanta exceção
             RAISE vr_exc_erro;
         END;
@@ -5447,15 +5448,17 @@ END pc_inserir_lancamento_bordero;
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica
-          vr_dscritic := 'Erro ao atualizar o Lote!';
+          vr_dscritic := 'Erro ao atualizar o Lote: ' || SQLERRM;
 
           -- Gera exceção
           RAISE vr_exc_erro;
       END;
     
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||' '||vr_dscritic||' '||sqlerrm;
+        pr_dscritic := 'Erro DSCT003.pc_lanca_credito_bordero: ' || SQLERRM;
     END;
   END pc_lanca_credito_bordero;
     
@@ -9438,21 +9441,22 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
     
-    
-    CURSOR cr_crapnrc(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE
-                     ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE) IS
-    SELECT nrc.tpctrrat
-          ,nrc.nrctrrat
-          ,nrc.dtmvtolt
-          ,nrc.insitrat
-          ,nrc.progress_recid
-      FROM crapnrc nrc
-     WHERE nrc.cdcooper = pr_cdcooper
-       AND nrc.nrdconta = pr_nrdconta
-       AND nrc.nrctrrat = pr_nrctrrat
-       AND nrc.tpctrrat = 3;
-    rw_crapnrc cr_crapnrc%ROWTYPE;
+    CURSOR cr_crawlim(pr_cdcooper IN crawlim.cdcooper%TYPE
+                     ,pr_nrdconta IN crawlim.nrdconta%TYPE
+                     ,pr_nrctrlim IN crawlim.nrctrlim%TYPE) IS
+    SELECT lim.nrinfcad
+          ,lim.nrgarope
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.nrperger
+      FROM crawlim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = 3
+       AND lim.nrgarope > 0
+       AND lim.nrliquid > 0;
+    rw_crawlim cr_crawlim%ROWTYPE;
     
     BEGIN
       pr_nmdcampo := NULL;
@@ -9473,21 +9477,18 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                 ,pr_action => vr_nmeacao);
                                 
                                 
-                                OPEN cr_crapnrc(pr_cdcooper => vr_cdcooper
+      OPEN cr_crawlim(pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrctrrat => pr_nrctrlim);  
-                      FETCH cr_crapnrc INTO rw_crapnrc;     
+                     ,pr_nrctrlim => pr_nrctrlim);  
+      FETCH cr_crawlim INTO rw_crawlim;     
                       
-            
-          
-        
-         IF cr_crapnrc%NOTFOUND THEN
+      IF cr_crawlim%NOTFOUND THEN
           -- Fechar o cursor
-          CLOSE cr_crapnrc; 
+        CLOSE cr_crawlim; 
           vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
           RAISE vr_exc_erro;
         ELSE
-          CLOSE cr_crapnrc;   
+        CLOSE cr_crawlim;   
         END IF;
 
       -- inicializar o clob
