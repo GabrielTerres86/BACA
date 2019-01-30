@@ -1,6 +1,6 @@
 <?php
 /*****************************************************************
-	Fonte        : form_consulta.php					Última alteração: 26/06/2017
+	Fonte        : form_consulta.php					Última alteração: 07/01/2019
   Criação      : Adriano
   Data criação : Maio/2013
   Objetivo     : Mostra o form de consulta da tela INSS
@@ -17,6 +17,9 @@
 
 
 					26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
+
+					07/01/2019 - Inclusão das rotinas para uso do serviço de "Reenvio cadastral"
+			                    (Jonata - Mouts - SCTASK0030602).
 
   --------------
  ****************************************************************/ 
@@ -183,7 +186,7 @@
 			<a href="#" class="botao" id="btTrocaConta" onClick="acessaRotina('<?echo $rotinas[$i];?>','T');return false;" >Troca Conta</a>	
 			<a href="#" class="botao" id="btCompravaVida" onClick="acessaRotina('<?echo $rotinas[$i];?>','C');return false;" >Comprova Vida</a>	
 			<a href="#" class="botao" id="btAlteracaoCadastral" onClick="acessaRotina('<?echo $rotinas[$i];?>','A');return false;" >Altera Cadastro</a>	
-					
+			<a href="#" class="botao" id="btReenviarCadastro" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','reenviarCadastro(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesConsulta\').focus();','sim.gif','nao.gif');return false;" >Reenvio de Cadastro</a> 
 		<?}	
 		}
 	
