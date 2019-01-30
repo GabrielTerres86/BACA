@@ -37,14 +37,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --
   --    Programa: MENU0001
   --    Autor   : Douglas Quisinski
-  --    Data    : Maio/2018                      Ultima Atualizacao:   /  /    
+  --    Data    : Janeiro/2019                      Ultima Atualizacao:  30/01/2019   
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : Configurar os itens de MENU que sao configurados para exibicao 
   --
   --  Alteracoes: 09/05/2018 Criação (Douglas Quisinski)
-  --              05/11/2018 - Removido os menus da conta online para portabilidade de
+  --              30/01/2019 - Removido os menus da conta online para portabilidade de
   --              salários (Lucas Skroch - Supero - P485)
   --    
   --    
@@ -121,14 +121,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         50 - Tela inicial ATM > Saque
         51 - Tela inicial ATM > Transferências
         52 - Tela inicial ATM > Meu Cadastro
-        53 - Tela inicial ATM > Botão Pressione para visualizar seu saldo - PJ485 - FIM
+        53 - Tela inicial ATM > Botão Pressione para visualizar seu saldo 
+        54 - Tela inicial ATM > Pagamentos - PJ485 - FIM
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
     
     Alteracoes: 09/05/2018 - Criação (Douglas Quisinski)
     
-                05/11/2018 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
+                30/01/2019 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
     ............................................................................. */
     DECLARE
       -- Flag Recarga de Celular
@@ -223,6 +224,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       vr_flgatmcad INTEGER := 0;            
       -- FlagTela inicial ATM > Botão Pressione para visualizar seu saldo
       vr_flgatmsld INTEGER := 0; 
+      -- FlagTela inicial ATM > Pagamentos
+      vr_flgpagatm INTEGER := 0;
       -- PJ485 - Fim
       
       -- XML
@@ -233,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       CURSOR cr_modalidade_tipo(pr_cdcooper IN crapass.cdcooper%type
                                ,pr_nrdconta IN crapass.nrdconta%type) IS
       
-         SELECT c.cdmodalidade_tipo
+         SELECT nvl(c.cdmodalidade_tipo,0) cdmodalidade_tipo
            FROM crapass a,       
                 tbcc_tipo_conta c
           WHERE c.inpessoa     = a.inpessoa
@@ -319,7 +322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         CLOSE cr_modalidade_tipo;
         
         -- Caso encontrar e for de portabilidade de salario = 2, habilita os menus na conta online
-        IF cr_modalidade_tipo%FOUND AND rw_modalidade_tipo.cdmodalidade_tipo = 2 THEN                                                      
+        IF rw_modalidade_tipo.cdmodalidade_tipo = 2 THEN                                                      
            vr_flgconext := 1; -- item 14
            vr_flglcmfut := 1; -- item 15
            vr_flgexttar := 1; -- item 16
@@ -360,6 +363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
            vr_flgatmtrs := 1; -- item 51
            vr_flgatmcad := 1; -- item 52
            vr_flgatmsld := 1; -- item 53
+           vr_flgpagatm := 1; -- item 54
            
            -- Adicionar o Item de Menu de Conta Corrente > Consultas > Extrato na Conta Online
            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
@@ -641,6 +645,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgatmsld) ); 
                                                                               
+            -- Adicionar o Item de Menu de Tela inicial ATM > Menu Pagamentos no ATM
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 54 -- Lista de Dominio "54 - Tela inicial ATM > Menu Pagamentos"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgpagatm) ); 
+            
         ELSE
             -- Adicionar o Item de Menu da Recarga de celular
             GENE0002.pc_escreve_xml(pr_xml            => vr_clob
