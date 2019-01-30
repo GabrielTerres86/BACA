@@ -95,9 +95,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
 
     Observacao: -----
 
-    Alteracoes:    
-    --          29/01/2019 - Incluído filtro para somente pegar eventos do Progrid 
-    --          (Wagner - Sustentação - INC0031616)    
+    Alteracoes:
     ..............................................................................*/    
   
   
@@ -177,7 +175,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
             and cd.dtanoage = ce.dtanoage
             and cd.cdagenci = ce.cdagenci
             and ce.flgevsel = 1 -- Eventos Selecionados
-            AND ce.idevento = 1 -- Progrid
             and cd.cdevento = ce.cdevento
             and cd.tpcuseve = 1
             and cp.idevento = ce.idevento
@@ -236,7 +233,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
         and cp.idevento = cd.idevento
         and cp.cdcooper = 0
         and cp.dtanoage = 0
-        AND cd.idevento = 1 -- Progrid
         and cp.cdevento = cd.cdevento
         and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         and ct.nrseqtem(+) = cp.nrseqtem
@@ -407,9 +403,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
 
     Observacao: -----
 
-    Alteracoes:    
-    --          29/01/2019 - Incluído filtro para somente pegar eventos do Progrid 
-    --          (Wagner - Sustentação - INC0031616)
+    Alteracoes:
     ..............................................................................*/    
   
   
@@ -445,13 +439,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           select Eixo,Tema,Evento,sum(Qt_De_Eventos) Qt_Eventos,Participacao_Por_Evento,Investimento_Por_Evento,
                  sum(Qt_De_Eventos) * Participacao_Por_Evento Participacao_total_prevista,
                  sum(Qt_De_Eventos) * Investimento_Por_Evento Investimento_Total,
-                 CASE WHEN (sum(Qt_De_Eventos) * Investimento_Por_Evento) = 0 OR
-                           (sum(Qt_De_Eventos) * Participacao_Por_Evento) = 0 THEN
-                       0 -- evitar divisão por zero.
-                      ELSE          
-                       (sum(Qt_De_Eventos) * Investimento_Por_Evento) / 
-                       (sum(Qt_De_Eventos) * Participacao_Por_Evento) 
-                 END Valor_Por_Pessoa
+                 (sum(Qt_De_Eventos) * Investimento_Por_Evento) / (sum(Qt_De_Eventos) * Participacao_Por_Evento) Valor_Por_Pessoa
           from (
           select cd.cdagenci,ge.dseixtem Eixo,ct.dstemeix Tema,cp.nmevento Evento,
                  decode(ce.qtocoeve,0,1,ce.qtocoeve) Qt_De_Eventos,                 
@@ -474,7 +462,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and cd.dtanoage = ce.dtanoage
           and cd.cdagenci = ce.cdagenci
           and ce.flgevsel = 1 -- Eventos Selecionados
-          AND ce.idevento = 1 -- Progrid
           and cd.cdevento = ce.cdevento
           and cd.tpcuseve = 1
           and cp.idevento = ce.idevento
@@ -530,7 +517,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and cp.idevento = cd.idevento
           and cp.cdcooper = 0
           and cp.dtanoage = 0
-          AND cd.idevento = 1 -- Progrid
           and cp.cdevento = cd.cdevento
           and ct.nrseqtem(+) = cp.nrseqtem
           and ge.idevento(+) = ct.idevento
