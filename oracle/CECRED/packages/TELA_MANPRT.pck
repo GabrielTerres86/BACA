@@ -28,28 +28,24 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                                      ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
                                      ,pr_flgcon        IN INTEGER) IS
     SELECT ted.idlancto
-          ,cartorio.nmcartorio as nome_cartorio
+          ,( SELECT sys.stragg(cart.nmcartorio) 
+               FROM tbcobran_cartorio_protesto cart 
+              WHERE cart.nrcpf_cnpj = ted.nrcnpj_debitada 
+                AND rownum = 1 ) as nome_cartorio -- pode haver mais de um cartório com o mesmo CPF/CNPJ
           ,ted.nmtitular_debitada as nome_remetente
           ,ted.nrcnpj_debitada as cnpj_cpf
-          --,banco.nmresbcc as nome_banco
           ,banco.cdbccxlt  as nome_banco
-          --,agencia.nmageban as nome_agencia
           ,agencia.cdageban as nome_agencia
           ,ted.dsconta_debitada as conta
           ,ted.dtmvtolt as data_recebimento
           ,ted.vllanmto as valor
-          --,municipio.cdestado as nome_estado
-          --,municipio.dscidesp as nome_cidade
           ,caf.cdufresd as nome_estado
           ,caf.nmcidade as nome_cidade
           ,'PENDENTE' as status
     FROM tbfin_recursos_movimento ted
          inner join crapban banco on (ted.nrispbif = banco.nrispbif)
          inner join crapagb agencia on (agencia.cddbanco = banco.cdbccxlt and cdagenci_debitada = agencia.cdageban)
-         -- left join crapmun municipio on (municipio.cdcidade = agencia.cdcidade)
          left join crapcaf caf on (caf.cdcidade = agencia.cdcidade)
-         left join tbcobran_cartorio_protesto cartorio on (ted.nrcnpj_debitada = cartorio.nrcpf_cnpj 
-                                                    /*and ted.nmtitular_debitada = cartorio.nmcartorio*/)
     WHERE ted.dsdebcre = 'C' AND TED.INDEVTED_MOTIVO = 0 
      and ((ted.dtmvtolt between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
          or (pr_dtinicial is null and pr_dtfinal is null))
@@ -285,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --  Programa : TELA_MANPRT
   --  Sistema  : Ayllos Web
   --  Autor    : Helinton Steffens (Supero)
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 28/09/2018
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 23/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -306,6 +302,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 - Ajustado banco.flgdispb para 1 na query de conciliações.
     
      23/10/2018 - Alterado consulta de tarifas e custas para incluir o cdcartorio. (Fabio Stein - Supero)
+     
+     23/01/2019 - Tratamento para histórico 2917 - Liq de boleto em cartório via DOC 
+                - Desvinculado o cadastro de cartórios no processo de conciliação. (P352 - Cechet)
    ---------------------------------------------------------------------------*/
     
     
@@ -315,7 +314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                         ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE
                                         ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
                                         ,pr_flgcon        IN INTEGER) IS
-    select cartorio.nmcartorio
+    select mun.dscidade || ' - ' || mun.cdestado nmcartorio
           ,mov.vllanmto
           ,ret.nrcnvcob
           ,coop.nmrescop
@@ -325,22 +324,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
           ,conc.dtdproc
           ,banco.cdbccxlt
           ,mov.cdagenci_debitada
-          ,municipio.dscidade
-          ,municipio.cdestado
-          ,cartorio.nrcpf_cnpj
+          ,mun.dscidade
+          ,mun.cdestado
+--          ,cartorio.nrcpf_cnpj
           ,mov.dtmvtolt
     from tbcobran_conciliacao_ieptb conc
         ,tbcobran_retorno_ieptb ret
-        ,tbcobran_cartorio_protesto cartorio
-        ,crapmun municipio
+--        ,tbcobran_cartorio_protesto cartorio
+        ,crapmun mun
         ,tbfin_recursos_movimento mov
         ,crapcop coop
         ,crapban banco
     where ret.idretorno = conc.idretorno_ieptb
       and conc.idrecurso_movto = mov.idlancto
-      and cartorio.idcidade = municipio.idcidade
-      and cartorio.cdcartorio = ret.cdcartorio
-      and municipio.cdcomarc = ret.cdcomarc
+      and mun.cdufibge || LPAD(mun.cdcidbge,5,'0') = ret.cdcomarc
       and mov.cdcooper = coop.cdcooper
       and mov.nrispbif = banco.nrispbif
       AND banco.flgdispb = 1
@@ -348,7 +345,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
          or (pr_dtinicial is null and pr_dtfinal is null))
       and ((ret.vltitulo >= pr_vlinicial and ret.vltitulo <= pr_vlfinal) 
          or (pr_vlinicial = 0 and pr_vlfinal = 0))
-      and (cartorio.nrcpf_cnpj = pr_cartorio or pr_cartorio is null);
+--      and (cartorio.nrcpf_cnpj = pr_cartorio or pr_cartorio is null)
+      ;
     rw_tbcobran_conciliacao_ieptb cr_tbcobran_conciliacao_ieptb%ROWTYPE;
                                                                               
     
@@ -375,7 +373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     FROM tbcobran_retorno_ieptb retorno
          INNER JOIN crapcob ON (retorno.cdcooper = crapcob.cdcooper AND retorno.nrdconta = crapcob.nrdconta AND retorno.nrcnvcob = crapcob.nrcnvcob AND retorno.nrdocmto = crapcob.nrdocmto)
          INNER JOIN crapmun ON retorno.cdcomarc = crapmun.cdcomarc
-         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND retorno.cdcartorio = cartorio.cdcartorio         INNER JOIN crapcop ON retorno.cdcooper = crapcop.cdcooper
+         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND retorno.cdcartorio = cartorio.cdcartorio         
          INNER JOIN crapcop ON retorno.cdcooper = crapcop.cdcooper
          LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = retorno.idlancto_tarifa
          LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = retorno.idlancto_custas
@@ -405,7 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     FROM  tbcobran_confirmacao_ieptb confirmacao
           INNER JOIN crapcob ON (confirmacao.cdcooper = crapcob.cdcooper AND confirmacao.nrdconta = crapcob.nrdconta AND confirmacao.nrcnvcob = crapcob.nrcnvcob AND confirmacao.nrdocmto = crapcob.nrdocmto)
           INNER JOIN crapmun ON confirmacao.cdcomarc = crapmun.cdcomarc
-         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND confirmacao.cdcartorio = cartorio.cdcartorio          INNER JOIN crapcop ON confirmacao.cdcooper = crapcop.cdcooper
+          INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade AND confirmacao.cdcartorio = cartorio.cdcartorio          
           INNER JOIN crapcop ON confirmacao.cdcooper = crapcop.cdcooper
           LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = confirmacao.idlancto_tarifa
           LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = confirmacao.idlancto_custas
@@ -548,7 +546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                (pr_dtinimvt is null OR pr_dtfimmvt is null)
              )
               and (mov.cdhistor  in(2663,2734)
-              or (mov.cdhistor  = 2622 and mov.dtconciliacao is null ))
+              or (mov.cdhistor  IN (2622,2917) and mov.dtconciliacao is null ))
               and his.cdhistor = mov.cdhistor
               and his.cdcooper = mov.cdcooper
       group by 
@@ -1634,7 +1632,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                      ,pr_vlfinal       IN tbcobran_retorno_ieptb.vltitulo%TYPE
                      ,pr_cartorio      IN INTEGER) IS
     SELECT ret.idretorno,
-           cart.nmcartorio,
+           mun.dscidade || ' - ' || mun.cdestado nmcartorio,
            cop.nmrescop,
            ret.nrcnvcob,
            ret.nrdconta,
@@ -1644,8 +1642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 					 ret.vlsaldo_titulo,
            count(1) over() as rcount
       FROM tbcobran_retorno_ieptb ret
-           INNER JOIN crapmun mun ON mun.cdcomarc = ret.cdcomarc
-           INNER JOIN tbcobran_cartorio_protesto cart ON cart.idcidade = mun.idcidade AND ret.cdcartorio = cart.cdcartorio
+           LEFT JOIN crapmun mun ON mun.cdufibge || LPAD(mun.cdcidbge,5,'0') = ret.cdcomarc
            INNER JOIN crapcop cop ON cop.cdcooper = ret.cdcooper
      WHERE ret.dtconciliacao IS NULL
        AND ret.tpocorre = 1 -- titulo pago em cartorio
@@ -2236,7 +2233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
         FROM tbfin_recursos_movimento ted
   INNER JOIN tbcobran_cartorio_protesto cart ON cart.nrcpf_cnpj = ted.nrcnpj_debitada
                                             AND cart.nmcartorio = ted.nmtitular_debitada
-       WHERE ted.cdhistor IN (2622)
+       WHERE ted.cdhistor IN (2622,2917)
          AND ted.dtconciliacao IS NULL -- PARA DEBUG, comentar
          -- AND ted.idlancto = 999998      -- PARA DEBUG, retirar comentario
          AND ted.dsdebcre = 'C'
@@ -2436,27 +2433,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                  
     rw_titulos cr_titulos%ROWTYPE;
     
-    CURSOR cr_ted_cartorio(pr_nrcnpj_debitada IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
-                          ,pr_idcartorio IN tbcobran_cartorio_protesto.idcartorio%TYPE) IS
-    SELECT cartorio.idcidade,
-           cartorio.idcartorio,
-           cartorio.cdcartorio
-      FROM tbfin_recursos_movimento ted
-     INNER JOIN tbcobran_cartorio_protesto cartorio 
-             ON (cartorio.nrcpf_cnpj = ted.nrcnpj_debitada AND
-                 cartorio.idcartorio = pr_idcartorio);
-    rw_ted_cartorio cr_ted_cartorio%ROWTYPE;
-    
-    CURSOR cr_cartorio (pr_cdcomarca  IN crapmun.cdcomarc%TYPE
-                       ,pr_nrcpf_cnpj IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
-                       ,pr_cdcartorio IN tbcobran_cartorio_protesto.cdcartorio%TYPE) IS
-    SELECT idcartorio 
-      FROM tbcobran_cartorio_protesto car, crapmun mun
-     WHERE mun.cdcomarc = pr_cdcomarca
-       AND car.idcidade = mun.idcidade
-       AND car.nrcpf_cnpj = pr_nrcpf_cnpj;
-    rw_cartorio cr_cartorio%ROWTYPE;       
-    
     PRAGMA AUTONOMOUS_TRANSACTION;
     
   BEGIN      
@@ -2480,28 +2456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     END IF;
     CLOSE cr_titulos;
     
-    OPEN cr_cartorio (pr_cdcomarca => rw_titulos.cdcomarc
-                     ,pr_nrcpf_cnpj => rw_ted.nrcnpj_debitada
-                     ,pr_cdcartorio => rw_titulos.cdcartorio);
-    FETCH cr_cartorio INTO rw_cartorio;
-    IF cr_cartorio%NOTFOUND THEN
-      CLOSE cr_cartorio;
-      vr_dscritic := 'Não foi encontrado o cadastro do cartório para conciliação.';
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_cartorio;                         
-    
-    OPEN cr_ted_cartorio(pr_nrcnpj_debitada => rw_ted.nrcnpj_debitada
-                        ,pr_idcartorio => rw_cartorio.idcartorio);
-    FETCH cr_ted_cartorio INTO rw_ted_cartorio;
-    IF cr_ted_cartorio%NOTFOUND THEN
-      CLOSE cr_ted_cartorio;
-      vr_dscritic := 'Não foi possível efetuar a conciliação. O cadastro manual do cartório deverá ser realizado';
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_ted_cartorio;
-    
-    IF rw_ted.cdhistor NOT IN (2622) THEN
+    IF rw_ted.cdhistor NOT IN (2622,2917) THEN
       vr_dscritic := 'Histórico da TED não permite uso de conciliação. Favor verificar!';
       RAISE vr_exc_saida;
     END IF;
@@ -2569,8 +2524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 rw_titulos.idretorno, -- ID Titulo
                 0,
                 NULL,
-                1,
-                rw_ted_cartorio.idcartorio);
+                '1',
+                0);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao gerar conciliação: ' ||SQLERRM;

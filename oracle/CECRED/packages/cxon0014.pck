@@ -10197,6 +10197,7 @@ END pc_gera_titulos_iptu_prog;
   --                            em outra singular para tratar como  "Liquidação Interbancária"
   --                            (AJFink - Chamado 792324)
   --
+  --               22/01/2019 - Gerar crítica 1462 quando boleto estiver bloqueado para pagamento (P352-Cechet)
   ---------------------------------------------------------------------------------------------------------------
     --
     procedure pc_convenio_outra_singular(pr_cdcooper in  crapceb.cdcooper%type
@@ -10363,6 +10364,7 @@ END pc_gera_titulos_iptu_prog;
               ,crapcob.incobran
               ,crapcob.dtretcob
               ,crapcob.nrdctabb
+              ,crapcob.dtbloque
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.cdbandoc = pr_cdbandoc
@@ -11299,6 +11301,29 @@ END pc_gera_titulos_iptu_prog;
                   --Levantar Excecao
                   RAISE vr_exc_erro;
                 END IF;
+             ELSIF rw_crapcob.dtbloque IS NOT NULL AND pr_flgcritica THEN
+               -- Criar erro
+               -- Boleto bloqueado para pagamento
+               CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                                    ,pr_cdagenci => pr_cod_agencia
+                                    ,pr_nrdcaixa => vr_nrdcaixa
+                                    ,pr_cod_erro => 1462
+                                    ,pr_dsc_erro => NULL
+                                    ,pr_flg_erro => TRUE
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+                                    
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                ELSE
+                  vr_cdcritic:= 1462;
+                  vr_dscritic:= NULL;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;                                   
+                
              END IF; /* excluido/pago e baixado */
              --Retornar valores
              pr_insittit:= 2;
