@@ -7637,11 +7637,12 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
           vr_dscritic := 'Borderô deve estar Em estudo ou Aprovado';
           raise vr_exc_erro;
         END IF;
+        /*
         IF (rw_crapbdt.cdoperad<>vr_cdoperad) THEN
           vr_dscritic := 'Operador deve ser o mesmo que criou o borderô';
           raise vr_exc_erro;
         END IF;
-        
+        */
         /*Altera os dados necessários do lote*/
         UPDATE
             craplot

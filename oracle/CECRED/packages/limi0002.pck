@@ -2210,22 +2210,23 @@ END pc_renova_limdesctit;
               RAISE vr_exc_saida;
           END;
 
-          -- Gerar histórico de cancelamento automática ou vigencia do contrato.
-          cecred.tela_atenda_dscto_tit.pc_gravar_hist_alt_limite(pr_cdcooper => vr_cdcooper
-                                                                ,pr_nrdconta => rw_craplim.nrdconta
-                                                                ,pr_nrctrlim => rw_craplim.nrctrlim
-                                                                ,pr_tpctrlim => 3 -- Limite Desconto Titulo
-                                                                ,pr_dsmotivo => CASE WHEN rw_craplim.insitlim = 4 THEN
-                                                                                          'VIGÊNCIA AUTOMÁTICA'
-                                                                                     ELSE 'CANCELAMENTO AUTOMÁTICO'
-                                                                                END
-                                                                ,pr_cdcritic => vr_cdcritic 
-                                                                ,pr_dscritic => vr_dscritic );
+          IF vr_flgregis THEN
+            -- Gerar histórico de cancelamento automática ou vigencia do contrato.
+            cecred.tela_atenda_dscto_tit.pc_gravar_hist_alt_limite(pr_cdcooper => vr_cdcooper
+                                                                  ,pr_nrdconta => rw_craplim.nrdconta
+                                                                  ,pr_nrctrlim => rw_craplim.nrctrlim
+                                                                  ,pr_tpctrlim => 3 -- Limite Desconto Titulo
+                                                                  ,pr_dsmotivo => CASE WHEN rw_craplim.insitlim = 4 THEN
+                                                                                            'VIGÊNCIA AUTOMÁTICA'
+                                                                                       ELSE 'CANCELAMENTO AUTOMÁTICO'
+                                                                                  END
+                                                                  ,pr_cdcritic => vr_cdcritic 
+                                                                  ,pr_dscritic => vr_dscritic );
 
-          IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
-            RAISE vr_exc_saida;
-          END IF; 
-
+            IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF; 
+          END IF;
         END IF;
         
         -- Verifica se a conta deve ser gerada no relatorio

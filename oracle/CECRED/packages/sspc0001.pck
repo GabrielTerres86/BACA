@@ -7979,25 +7979,6 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
 
     END LOOP;
 
-    -- AWAE: TODO: Atualizar quando for criado o campo DTCONBIR na tabela de Pagador (crapsab) 
-    -- Atualiza a data da consulta na tabela de Pagador (crapsab)
-    /*BEGIN
-      UPDATE crapsab
-         SET dtconbir = (SELECT trunc(nvl(dtreapro, dtconbir))
-                           FROM crapcbd
-                          WHERE nrconbir = vr_nrconbir
-                            AND nrseqdet = 1)
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         and nrinssac = vr_nrinssac;
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-        vr_dscritic := 'Erro ao atualizar a tabela CRAPSAB: '||SQLERRM;
-        RAISE vr_exc_saida;
-    END;*/
-
     -- Atualiza as tabelas finais de controle
     pc_atualiza_tab_controle(pr_nrconbir => vr_nrconbir,
                              pr_cdcritic => vr_cdcritic,
@@ -8029,19 +8010,6 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                             pr_nrconbir => vr_nrconbir,
                             pr_dscritic => vr_dscritic,
                             pr_tpocorre => 1);
-
-      -- Volta o numero da consulta do biro no emprestimo
-      BEGIN
-        UPDATE craplim
-           SET nrconbir = nvl(vr_nrconbir, nrconbir)
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         AND nrctrlim = vr_nrdocmto
-         AND tpctrlim = 3; -- Tipo do Produto: Título
-      EXCEPTION
-        WHEN OTHERS THEN
-          NULL;
-      END;
 
       IF vr_nrconbir > 0 THEN
         -- Insere na inconsistencia
@@ -8095,19 +8063,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                             pr_nrconbir => vr_nrconbir,
                             pr_dscritic => vr_dscritic,
                             pr_tpocorre => 2);
-      -- AWAE: TODO: Atualizar quando for criado o campo NRCONBIR na tabela de Pagador (crapsab) 
-      /*
-      BEGIN
-      UPDATE crapsab
-         SET nrconbir = nvl(vr_nrconbir, nrconbir)
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         and nrinssac = vr_nrinssac;
-      EXCEPTION
-        WHEN OTHERS THEN
-          NULL;
-      END;
-      */
+      
   END pc_solicita_cons_bordero_biro;
 
 -- Chama a rotina de consulta ao biro da Ibratan para os emprestimos
