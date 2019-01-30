@@ -1150,7 +1150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 30/10/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 21/12/2018
     
       Dados referentes ao programa:
     
@@ -1167,6 +1167,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                no pagamento divergente, então deverá ser recebido montante
                                menor ao range cadastrado. (SD#821097 - AJFink)
 
+                  21/12/2018 - Incluido tratativa para utilizar valor calculado pela CIP, caso o valor for maior
+                               que o valor calculado. INC0029066 (Odirlei-AMcom) 
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -1196,6 +1198,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
 
     IF pr_vldpagto < vr_vlminpgt THEN
       RETURN 0; -- Valor a pagar menor que o mínimo
+    END IF;
+  
+    --> Verificar se valor maximo é menor que o valor calculado pela CIP, deve acatar o valor da CIP
+    --> pois ocorre casos onde o valor incide juros e multa
+    IF vr_vlmaxpgt < vr_vltitcal THEN
+      vr_vlmaxpgt := vr_vltitcal;    
     END IF;
   
     IF pr_vldpagto > vr_vlmaxpgt AND pr_idvlrmax = 1 THEN
