@@ -1179,11 +1179,7 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-
-       GRAVA_EFETIVA: DO TRANSACTION ON ERROR  UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA
-                                     ON ENDKEY UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA:
-    
-
+      
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1211,18 +1207,14 @@ PROCEDURE grava_dados:
                                                      OUTPUT aux_dsmesage,
                                                      OUTPUT TABLE tt-ratings,
                                                      OUTPUT TABLE tt-erro).
-
-       IF RETURN-VALUE <> "OK" THEN
-              UNDO GRAVA_EFETIVA, LEAVE GRAVA_EFETIVA.
-              
-
-       ASSIGN aux_flgtrans = TRUE.
-
        
-       END. /* END GRAVA_EFETIVA: DO TRANSACTION */
-
+       IF RETURN-VALUE <> "OK" THEN
+          UNDO GRAVA, LEAVE GRAVA.
+       
+       ASSIGN aux_flgtrans = TRUE.
+       
     END. /* END GRAVA: DO TRANSACTION */
-
+  
     IF NOT TEMP-TABLE tt-erro:HAS-RECORDS AND
        (aux_cdcritic > 0 OR aux_dscritic <> "") THEN
        DO:
