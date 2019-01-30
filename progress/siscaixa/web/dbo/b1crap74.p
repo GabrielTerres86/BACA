@@ -466,11 +466,6 @@ PROCEDURE estorna-cheque-avulso.
     END.
 
    /* Remocao lotes
-    ASSIGN craplot.qtcompln  = craplot.qtcompln - 1
-           craplot.qtinfoln  = craplot.qtinfoln - 1
-           craplot.vlcompdb  = craplot.vlcompdb - p-valor
-           craplot.vlinfodb  = craplot.vlinfodb - p-valor.
-
    IF  craplot.vlcompdb = 0 and
        craplot.vlinfodb = 0 and
        craplot.vlcompcr = 0 and
