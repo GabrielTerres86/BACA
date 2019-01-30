@@ -25,6 +25,11 @@ CREATE OR REPLACE PACKAGE CECRED.MENU0001 AS
                                    pr_dsxml    OUT NOCOPY XMLType,       --> XML com os itens de menu que são configuraveis em cada canal
                                    pr_dscritic OUT VARCHAR2);            --> Mensagem de erro
 
+  -- Rotina para buscar os itens do menu mobile.																	 
+  PROCEDURE pc_busca_itens_menumobile(pr_itens             OUT VARCHAR2 --> Itens do menumobile
+                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
+                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica																	 
+
 END MENU0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
@@ -707,6 +712,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                        SQLERRM;
     END;
   END pc_carrega_config_menu;
+	
+  PROCEDURE pc_busca_itens_menumobile(pr_itens             OUT VARCHAR2 --> Itens do menumobile
+                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
+                                     ,pr_dscritic          OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_busca_itens_menumobile
+        Sistema : CECRED MOBILE
+        Sigla   : MENU
+        Autor   : Augusto (Supero)
+        Data    : Janeiro/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar os itens do menu mobile.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta
+      CURSOR cr_itens IS
+        SELECT menumobileid
+				FROM (SELECT m.menumobileid
+										,ltrim(sys_connect_by_path(m.nome, ' -> '), ' -> ') nome
+										,sys_connect_by_path(lpad(m.sequencia, 3, '0'), '-') seq
+								FROM (SELECT menumobileid
+														,nome
+														,menupaiid
+														,sequencia
+												FROM menumobile
+											 WHERE versaomaximaapp IS NULL) m
+							 START WITH m.menupaiid IS NULL
+							CONNECT BY PRIOR m.menumobileid = m.menupaiid
+							 ORDER BY seq);
+      rw_itens cr_itens%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'MENU0001'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Busca os itens
+      FOR rw_itens IN cr_itens LOOP
+			    pr_itens := pr_itens || rw_itens.menumobileid || ',';
+			END LOOP;
+			
+			IF TRIM(pr_itens) IS NOT NULL THEN
+				pr_itens := SUBSTR(pr_itens, 0, LENGTH(pr_itens)-1);
+			END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_busca_itens_menumobile: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_busca_itens_menumobile;	
 
 END MENU0001;
 /
