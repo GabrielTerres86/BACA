@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 								Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
 								Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
 								);
-                  
+
   TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
        INDEX BY PLS_INTEGER;
 			 
@@ -746,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                ,pr_cdcritic => vr_cdcritic    --> Código da crítica
                                ,pr_dscritic => vr_dscritic);  --> Descrição da crítica                
-    
+
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR 
       nvl(vr_cdcritic,0) > 0 THEN
@@ -1361,7 +1361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF rw_crapcdb.cdbanchq = 85 THEN
         -- Buscar cadastro do cooperado emitente
         OPEN cr_crapass_2 (pr_cdagectl => rw_crapcdb.cdagechq
-                        ,pr_nrdconta => rw_crapcdb.nrctachq);
+                          ,pr_nrdconta => rw_crapcdb.nrctachq);
         FETCH cr_crapass_2 INTO rw_crapass_2;
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
@@ -1399,12 +1399,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               vr_rel_nmcheque := rw_crapjur.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
                                                            pr_inpessoa => 2);
-            ELSE
+      ELSE
               vr_rel_dscpfcgc := 'NAO CADASTRADO';
               vr_rel_nmcheque := 'NAO CADASTRADO';
             END IF;
           END IF;
-        END IF;
+      END IF;
       ELSE
         -- Buscar cadastro de emitentes de cheques
         OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
@@ -1911,7 +1911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND crapbdc.nrborder = pr_nrborder;
          
     rw_crapbdc cr_crapbdc%ROWTYPE;
-    
+
     -- Linha de Desconto
     CURSOR cr_crapldc (pr_cddlinha IN crapldc.cddlinha%TYPE) IS
       SELECT cddlinha
@@ -2460,10 +2460,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                     -- Se NAO existir na PLTABLE
                     IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
                       vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-                    END IF;
-                  END IF;
                 END IF;
-              END LOOP;
+            END IF;
+        END IF;
+      END LOOP;
             END IF;
           END IF;
           pc_escreve_xml(        '</restricoes>');
@@ -3158,7 +3158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         
         -- Buscar cadastro do cooperado emitente
         OPEN cr_crapass_2 (pr_cdagectl => rw_cstdsc.cdagechq
-                        ,pr_nrdconta => rw_cstdsc.nrctachq);
+                          ,pr_nrdconta => rw_cstdsc.nrctachq);
         FETCH cr_crapass_2 INTO rw_crapass_2;
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
@@ -5074,7 +5074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_analisar_bordero_cheques
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Novembro/2016                 Ultima atualizacao: 20/12/2017
+    Data    : Novembro/2016                 Ultima atualizacao: 03/01/2018
 
     Dados referentes ao programa:
 
@@ -5090,6 +5090,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
                 27/12/2017 - Ajuste para passar o parametro Numero da Agencia do Cheque para a procedure
                              pc_ver_fraude_chq_extern (Douglas - Chamado 820177)
+
+				03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -5116,8 +5118,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlperliq NUMBER;               -- Valor percentual de liquidez
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
-	
   vr_nrcpfcgc NUMBER;
+	vr_cdbancos crapprm.dsvlrprm%TYPE;
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -5679,8 +5681,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 															 ,pr_dsdetres => NULL);
 			END IF;
 			
-			-- Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409 e 479
-			IF substr(pr_tab_cheques(vr_index).dsdocmc7,01,03) IN ('012','231','353','356','409','479') THEN
+			/* Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409, 479 e 399 */
+			vr_cdbancos := gene0001.fn_param_sistema('CRED',0,'BANCOS_BLQ_CHQ');
+
+			-- Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409, 479 e 399
+			IF INSTR(','||vr_cdbancos||',',','||substr(pr_tab_cheques(vr_index).dsdocmc7,01,03)||',') > 0 THEN
 		     -- Gerar ocorrencia 17 - Banco nao permitido
 				 pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 																,pr_idx_cheques => vr_index
@@ -6730,8 +6735,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     ELSE
       -- Fechar cursor
 			CLOSE cr_craplot;
-		END IF;
-			
+		END IF;		
+
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
                               rw_craplot.cdagenci||';'||
@@ -7112,8 +7117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     ELSE
       -- Fechar cursor
 			CLOSE cr_craplot;
-		END IF;
-			
+		END IF;	  
+
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
                               rw_craplot.cdagenci||';'||
@@ -7435,30 +7440,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                 
   ..............................................................................*/																			 
 	-- Variável de críticas
-	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
-	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
-	-- Tratamento de erros
-	vr_exc_erro        EXCEPTION;    
+  vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+  vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+  -- Tratamento de erros
+  vr_exc_erro        EXCEPTION;    
 																			 
   vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
-	vr_dsdaviso VARCHAR2(1000); 
+  vr_dsdaviso VARCHAR2(1000); 
 																			 
-	-- Variáveis auxiliares
-	vr_index_cheque     PLS_INTEGER;
-	vr_tab_cheques      typ_tab_cheques;
-	vr_nrdocmto         NUMBER;
+  -- Variáveis auxiliares
+  vr_index_cheque     PLS_INTEGER;
+  vr_tab_cheques      typ_tab_cheques;
+  vr_nrdocmto         NUMBER;
   vr_vlborder         NUMBER;
-	vr_nrseqdig         NUMBER;
+  vr_nrseqdig         NUMBER;
   --vr_dtiniiof         DATE;
   --vr_dtfimiof         DATE;
   --vr_txccdiof         NUMBER;
   vr_flgimune         PLS_INTEGER;
-	vr_dsreturn         VARCHAR2(10);
+  vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
-	vr_cdpactra         NUMBER;
+  vr_cdpactra         NUMBER;
   vr_nrdrowid         ROWID;
-	vr_vllanmto         NUMBER;
-	vr_tab_lim_desconto typ_tab_lim_desconto;
+  vr_vllanmto         NUMBER;
+  vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_rowid_log        ROWID;
   vr_vltaxa_iof_principal NUMBER(25,8);
   
@@ -7491,7 +7496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,bdc.dhdassin
 					,bdc.cdopeasi
           ,bdc.cdagenci
-          ,bdc.nrdolote
+          ,bdc.nrdolote          
 		  ,bdc.dtmvtolt        
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
@@ -7809,9 +7814,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			                          ,pr_nrdconta => pr_nrdconta
 																,pr_nrborder => pr_nrborder) LOOP
       
-    -- Verificar se o cheque ainda está pendente de entrega
-    OPEN cr_crapdcc(pr_cdcooper => pr_cdcooper
-                   ,pr_nrdconta => pr_nrdconta
+      -- Verificar se o cheque ainda está pendente de entrega
+      OPEN cr_crapdcc(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
                      ,pr_nrborder => pr_nrborder
                      ,pr_nrremret => rw_crapcdb.nrremret
                      ,pr_cdcmpchq => rw_crapcdb.cdcmpchq
@@ -7820,17 +7825,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                      ,pr_nrctachq => rw_crapcdb.nrctachq
                      ,pr_nrcheque => rw_crapcdb.nrcheque);
                      
-    FETCH cr_crapdcc INTO rw_crapdcc;
-      
+      FETCH cr_crapdcc INTO rw_crapdcc;
+        
       -- Se não existir registro
       IF cr_crapdcc%NOTFOUND THEN
         CLOSE cr_crapdcc;
-      vr_cdcritic := 0;
+        vr_cdcritic := 0;
         vr_dscritic := 'Cheque sem registro de Custódia.';
-      RAISE vr_exc_erro;      
-    END IF;
-    -- Fechar cursor
-    CLOSE cr_crapdcc;
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fechar cursor
+      CLOSE cr_crapdcc;
       -- Se ainda está pendente de entrega
       IF rw_crapdcc.inconcil = 0 OR  rw_crapdcc.dtcustod IS NULL THEN
         vr_cdcritic := 0;
@@ -7846,7 +7851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dtprzmax := rw_crapdat.dtmvtolt + vr_tab_lim_desconto(rw_crapass.inpessoa).qtprzmax;
   		
       vr_przmxcmp := vr_tab_lim_desconto(rw_crapass.inpessoa).Przmxcmp;
-    
+      
  	  -- Verificar prazo mínimo excedido
 	  IF rw_crapcdb.dtlibera <= vr_dtprzmin THEN
 	    -- Gerar ocorrencia 5 - 
@@ -7854,7 +7859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         vr_dscritic := 'Existem cheques com data de liberacao fora do limite.';
         RAISE vr_exc_erro;
 	  END IF;
-      
+			
 			-- Alimentar PlTable com dados do cheque
 			vr_index_cheque := vr_tab_cheques.count;
 			vr_tab_cheques(vr_index_cheque).dtlibera := rw_crapcdb.dtlibera;
@@ -7990,7 +7995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_erro;
        END IF;               
-                       
+            
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -8069,11 +8074,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                   ,pr_flgimune      => vr_flgimune);
         EXCEPTION
 					WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
+						-- Gerar crítica
+						vr_cdcritic := 0;
 						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;
+						-- Levantar exceção
+						RAISE vr_exc_erro;
 				END;
 				
 				BEGIN
@@ -8242,10 +8247,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       
     ELSE
       
-			-- Fechar cursor
-			CLOSE cr_craplot;
+      -- Fechar cursor
+	  	CLOSE cr_craplot;
       
-		END IF;
+		END IF;   
 		
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
@@ -8321,7 +8326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		
 		-- Se for imune de tributação
 		IF vr_vltotiof > 0 THEN
-												 
+
        --Se for imune, somente efetua o lancamento na tabela de IOF
        IF vr_flgimune > 0 THEN
          BEGIN
@@ -8347,63 +8352,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 -- Gerar crítica
                 vr_cdcritic := 0;
                 vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-			-- Levantar exceção
-			RAISE vr_exc_erro;
+                -- Levantar exceção
+                RAISE vr_exc_erro;
           END;
        ELSE
           --Lanca na LCM e na tabela de IOF  
-			-- Buscar PA do operador
-			OPEN cr_crapope(pr_cdcooper => pr_cdcooper
-			               ,pr_cdoperad => pr_cdoperad);
-			FETCH cr_crapope INTO rw_crapope;
-			
-			-- Se não encontrar
-			IF cr_crapope%NOTFOUND THEN
-				vr_cdpactra := 0;
-			ELSE
-				vr_cdpactra := rw_crapope.cdpactra;
-			END IF;
-			-- Fechar cursor
-			CLOSE cr_crapope;
-			
-			-- Buscar lote do IOF
-			OPEN cr_craplot_iof(pr_cdcooper => pr_cdcooper
-												 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-												 ,pr_cdpactra => vr_cdpactra);
-			FETCH cr_craplot_iof INTO rw_craplot_iof;
-			
-			-- Se não encontrou IOF
-			IF cr_craplot_iof%NOTFOUND THEN
-				BEGIN
-          INSERT INTO craplot(dtmvtolt
-					                   ,cdagenci
-														 ,cdbccxlt
-														 ,nrdolote
-														 ,tplotmov
-														 ,cdcooper)
-											 VALUES(rw_crapdat.dtmvtolt
-											       ,1
-														 ,100
-														 ,(19000 + vr_cdpactra)
-														 ,1
-														 ,pr_cdcooper)
-				  RETURNING nrseqdig, ROWID INTO vr_nrseqdig, vr_nrdrowid;
-				EXCEPTION
-					WHEN OTHERS THEN      
-						-- Gerar crítica
-						vr_cdcritic := 0;
-						vr_dscritic := REPLACE(REPLACE('Erro ao inserir lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-						-- Levantar exceção
-						RAISE vr_exc_erro;
-				END;
-			ELSE
-				-- Se encontrou, atribui valores às variáveis
-				vr_nrseqdig := rw_craplot_iof.nrseqdig;
-				vr_nrdrowid := rw_craplot_iof.rowid;
-			END IF;
-			-- Fechar cursor
-			CLOSE cr_craplot_iof;
-			
+          -- Buscar PA do operador
+          OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+                         ,pr_cdoperad => pr_cdoperad);
+          FETCH cr_crapope INTO rw_crapope;
+    			
+          -- Se não encontrar
+          IF cr_crapope%NOTFOUND THEN
+            vr_cdpactra := 0;
+          ELSE
+            vr_cdpactra := rw_crapope.cdpactra;
+          END IF;
+          -- Fechar cursor
+          CLOSE cr_crapope;
+    			
+          -- Buscar lote do IOF
+          OPEN cr_craplot_iof(pr_cdcooper => pr_cdcooper
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             ,pr_cdpactra => vr_cdpactra);
+          FETCH cr_craplot_iof INTO rw_craplot_iof;
+    			
+          -- Se não encontrou IOF
+          IF cr_craplot_iof%NOTFOUND THEN
+            BEGIN
+              INSERT INTO craplot(dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,tplotmov
+                                 ,cdcooper)
+                           VALUES(rw_crapdat.dtmvtolt
+                                 ,1
+                                 ,100
+                                 ,(19000 + vr_cdpactra)
+                                 ,1
+                                 ,pr_cdcooper)
+          RETURNING nrseqdig, ROWID INTO vr_nrseqdig, vr_nrdrowid;
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao inserir lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+            END;
+          ELSE
+        -- Se encontrou, atribui valores às variáveis
+        vr_nrseqdig := rw_craplot_iof.nrseqdig;
+        vr_nrdrowid := rw_craplot_iof.rowid;
+      END IF;
+            -- Fechar cursor
+            CLOSE cr_craplot_iof;
+            
           /*
           vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                                      to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
@@ -8449,7 +8454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          vr_vllanmto:= ROUND(vr_vltotiof, 2);
          
          	
-			BEGIN
+          BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
                               ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
                               ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
@@ -8467,64 +8472,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                               ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
                                 ,pr_dscritic      => vr_dscritic
                                 ,pr_flgimune      => vr_flgimune);
-				EXCEPTION
-					WHEN OTHERS THEN      
-						-- Gerar crítica
-						vr_cdcritic := 0;
-						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-						-- Levantar exceção
-						RAISE vr_exc_erro;
-			END;			
-			-- Atualizar valores da craplot refente ao IOF			
-			BEGIN
-			  UPDATE craplot lot
-				   SET lot.vlinfodb = lot.vlinfodb + vr_vllanmto 
-					    ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
-							,lot.qtinfoln = lot.qtinfoln + 1
-							,lot.qtcompln = lot.qtinfoln + 1
-							,lot.nrseqdig = lot.nrseqdig + 1
-				 WHERE lot.rowid = vr_nrdrowid;
-				
-			EXCEPTION
-				WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := REPLACE(REPLACE('Erro ao atualizar lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;
-			END;
-			-- Buscar cota de IOF
-	    OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
-			               ,pr_nrdconta => pr_nrdconta);
-			FETCH cr_crapcot INTO rw_crapcot;
-			
-			-- Se não encontrou registro
-			IF cr_crapcot%NOTFOUND THEN
-				-- Fechar cursor
-				CLOSE cr_crapcot;
-				-- Gerar crítica
-				vr_cdcritic := 0;
-				vr_dscritic := 'Registro de cota de IOF não encontrado';
-				-- Levantar exceção
-				RAISE vr_exc_erro;
-			END IF;
-			
-			BEGIN
-				-- Atualizar valores das cotas
-			  UPDATE crapcot cot
-				   SET cot.vliofapl = cot.vliofapl + vr_vllanmto
-					    ,cot.vlbsiapl = cot.vlbsiapl + vr_vlborder
-				 WHERE cot.rowid = rw_crapcot.rowid;
-			EXCEPTION
-				WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := REPLACE(REPLACE('Erro ao atualizar valores das cotas de IOF: ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;				
-			END;
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+          END;			
+          -- Atualizar valores da craplot refente ao IOF			
+          BEGIN
+            UPDATE craplot lot
+               SET lot.vlinfodb = lot.vlinfodb + vr_vllanmto 
+                  ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
+                  ,lot.qtinfoln = lot.qtinfoln + 1
+                  ,lot.qtcompln = lot.qtinfoln + 1
+                  ,lot.nrseqdig = lot.nrseqdig + 1
+             WHERE lot.rowid = vr_nrdrowid;
+    				
+          EXCEPTION
+            WHEN OTHERS THEN      
+              -- Gerar crítica
+              vr_cdcritic := 0;
+              vr_dscritic := REPLACE(REPLACE('Erro ao atualizar lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+              -- Levantar exceção
+              RAISE vr_exc_erro;
+          END;
+          -- Buscar cota de IOF
+          OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta);
+          FETCH cr_crapcot INTO rw_crapcot;
+    			
+          -- Se não encontrou registro
+          IF cr_crapcot%NOTFOUND THEN
+            -- Fechar cursor
+            CLOSE cr_crapcot;
+            -- Gerar crítica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Registro de cota de IOF não encontrado';
+            -- Levantar exceção
+            RAISE vr_exc_erro;
+          END IF;
+    			
+          BEGIN
+            -- Atualizar valores das cotas
+            UPDATE crapcot cot
+               SET cot.vliofapl = cot.vliofapl + vr_vllanmto
+                  ,cot.vlbsiapl = cot.vlbsiapl + vr_vlborder
+             WHERE cot.rowid = rw_crapcot.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN      
+              -- Gerar crítica
+              vr_cdcritic := 0;
+              vr_dscritic := REPLACE(REPLACE('Erro ao atualizar valores das cotas de IOF: ' || SQLERRM, chr(13)),chr(10));																			
+              -- Levantar exceção
+              RAISE vr_exc_erro;				
+          END;
+        END IF;
 		END IF;
-    END IF;
     
 		COMMIT;
     

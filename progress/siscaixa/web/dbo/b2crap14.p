@@ -1131,12 +1131,13 @@ PROCEDURE retorna-valores-titulo-iptu.
 
              END.
               
-          IF  crapban.cdbccxlt = 012  OR    /*** Banco Standard ***/
-              crapban.cdbccxlt = 231  OR    /*** Banco Boavista ***/
-              crapban.cdbccxlt = 353  OR    /*** Banco Santander ***/
-              crapban.cdbccxlt = 356  OR    /*** Banco Real ***/
-              crapban.cdbccxlt = 409  OR    /*** Unibanco ***/
-              crapban.cdbccxlt = 479  THEN  /*** Itaubank ***/
+          FIND FIRST crapprm WHERE crapprm.cdcooper = 0 
+                 AND crapprm.cdacesso = 'BANCOS_BLQ_TIT'
+                 AND crapprm.nmsistem = 'CRED'
+                 NO-LOCK NO-ERROR.
+                           
+          IF CAN-DO(crapprm.dsvlrprm, STRING(crapban.cdbccxlt)) THEN
+         
               DO:
                   ASSIGN i-cod-erro  = 57 
                         c-desc-erro =  " ". 
