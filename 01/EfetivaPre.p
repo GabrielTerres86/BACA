@@ -2238,8 +2238,8 @@ PROCEDURE grava_efetivacao_proposta:
 
        DELETE PROCEDURE h-b1wgen0043.
 
-       IF RETURN-VALUE <> "OK"   THEN
-          UNDO EFETIVACAO , LEAVE EFETIVACAO.
+      /*  IF RETURN-VALUE <> "OK"   THEN
+          UNDO EFETIVACAO , LEAVE EFETIVACAO. */
 
        /* Acionar rotina de Gravacao do Calculo CET gerado */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
