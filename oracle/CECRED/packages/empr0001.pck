@@ -1113,7 +1113,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
   --                          Josiane Stiehler- AMcom
   --
-  --             04/01/2019 - chamado INC0027294 (Fabio-Amcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -5017,8 +5016,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
 
-                    04/01/2019 - chamado INC0027294 (Fabio-Amcom)
-
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -5283,15 +5280,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND inliquid = 0 -- Não liquidada
                AND dtvencto <= pr_rw_crapdat.dtmvtoan; -- Parcela Vencida
 
-      -- Buscar quantidade de parcelas liquidadas
-      CURSOR cr_crappep_qtdeparcliq(pr_nrctremp IN crapepr.nrctremp%TYPE) IS
-        SELECT count(*) qtdeparcliq
-          FROM crappep
-         WHERE cdcooper = pr_cdcooper
-               AND nrdconta = pr_nrdconta
-               AND nrctremp = pr_nrctremp
-               AND inliquid = 1;
-
       -- Busca dos lançamentos cfme lista de históricos passado
       CURSOR cr_craplem(pr_nrctremp  IN crapepr.nrctremp%TYPE
                        ,pr_lsthistor IN VARCHAR2 DEFAULT ' ') IS --> Lista comdigos de histórico a retornar
@@ -5428,7 +5416,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_err_efet PLS_INTEGER;
       vr_portabilidade VARCHAR2(500);
       vr_incdccon INTEGER;
-      vr_qtdeparcliq INTEGER;
 
       vr_nrctremp_migrado crawepr.nrctremp%type := 0;
       vr_exibe_migrado    BOOLEAN := FALSE;
@@ -5600,22 +5587,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_vlmrapar := 0;
           vr_vlmtapar := 0;
           vr_vliofcpl := 0;
-          vr_qtdeparcliq := 0;
           -- Para empréstimo ainda não liquidados
           IF rw_crapepr.inliquid = 0 OR
              rw_crapepr.tpemprst IN (1,2) THEN --tratamento b1wgen0002a.i
             -- Manter o valor da tabela
-            --vr_qtprecal := rw_crapepr.qtprecal;
-            
-            OPEN cr_crappep_qtdeparcliq(pr_nrctremp => rw_crapepr.nrctremp);
-            FETCH cr_crappep_qtdeparcliq
-              INTO vr_qtdeparcliq;
-            if vr_qtdeparcliq > 0 then
-               vr_qtprecal := vr_qtdeparcliq;
-            else vr_qtprecal := rw_crapepr.qtprecal;
-            end if;    
-            CLOSE cr_crappep_qtdeparcliq;
-            
+            vr_qtprecal := rw_crapepr.qtprecal;
           ELSE
             -- Usar o valor total de parcelas
             vr_qtprecal := rw_crapepr.qtpreemp;

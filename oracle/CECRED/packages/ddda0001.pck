@@ -476,8 +476,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --
   --             30/11/2018 - Implementado UPPER na consulta da CRAPSAB na procedure pc_cria_remessa_dda
   --                          (Tiago - INC0026317)   
-  --
-  --             20/12/2018 - Chamado INC0028955 Erro de cursor invalido (Fabio - Amcom).   
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -1116,8 +1114,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --
     -- Frequencia: -----
     -- Objetivo  : Procedure para gravar linha log
-    --
-    -- Alteracoes : 20/12/2018 - Chamado INC0028955 Erro de cursor invalido (Fabio - Amcom).
   
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -1163,9 +1159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                                 ,pr_inpessoa => rw_crapass.inpessoa);
       END IF;
       --Fechar Cursor
-      if cr_crapass%isopen then
-        CLOSE cr_crapass;
-      end if;   
+      CLOSE cr_crapass;
       --Abrir arquivo modo append
       gene0001.pc_abre_arquivo(pr_nmdireto => pr_nmdirlog --> Diretório do arquivo
                               ,pr_nmarquiv => pr_nmarqlog --> Nome do arquivo
