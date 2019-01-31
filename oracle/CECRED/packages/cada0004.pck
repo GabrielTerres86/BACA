@@ -4650,7 +4650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     --> Buscar emprestimos do cooperado prejuizo
     CURSOR cr_crapepr IS
-      SELECT sum(crapepr.vlsdprej) vlsdprej
+      SELECT crapepr.vlsdprej
         FROM crapepr
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.nrdconta = pr_nrdconta
@@ -4940,6 +4940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_flgcadas     INTEGER;
     vr_dsmensag     VARCHAR2(4000);
     vr_flgpreju     BOOLEAN;
+    vr_flgpreju_ativo BOOLEAN;
     vr_dsprejuz     VARCHAR2(1000);
     vr_sralerta     INTEGER;
     vr_tab_alertas  typ_tab_alertas;
@@ -5296,21 +5297,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     END IF;
     
-    OPEN cr_crapepr;
-    FETCH cr_crapepr INTO rw_crapepr;
-    IF cr_crapepr%FOUND THEN
-      CLOSE cr_crapepr;
-      -- Conta Corrente com Emprestimo em Prejuizo
-      -- Incluir na temptable
-      IF rw_crapepr.vlsdprej >0 THEN
+    vr_flgpreju := FALSE;
+    vr_flgpreju_ativo := FALSE;
+    --> Verificar se possui emprestimo em prejuizo
+    FOR rw_crapepr IN cr_crapepr LOOP
+      vr_flgpreju := TRUE;
+      IF rw_crapepr.vlsdprej > 0  THEN
+        vr_flgpreju_ativo := TRUE;
+        EXIT;
+      END IF;
+    END LOOP;
+
+    IF vr_flgpreju THEN
+      IF vr_flgpreju_ativo THEN
         pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       ELSE
         pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Emprestimo',
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-      END IF;      
-    ELSE
-      CLOSE cr_crapepr;
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;
     END IF;
     -- FIM MENSAGENS PREJUÍZO --
 
@@ -6318,7 +6323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--
     --              08/11/2018 - Alteração do campo indnivel da tela atenda para nrdgrupo - P484.
     --                           Gabriel Marcos (Mouts).
-	--
+	--              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------

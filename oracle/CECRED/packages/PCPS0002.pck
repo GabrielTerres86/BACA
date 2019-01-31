@@ -1458,6 +1458,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_nrctpart      VARCHAR2(20); 
     vr_dscritic      VARCHAR2(1000);
     vr_nrposxml      NUMBER;
+    vr_nrposapr      NUMBER;
+    vr_nrposrep      NUMBER;
+    
     
     -- Procedure para atualizar o registro de portabilidade retornado
     PROCEDURE pc_atualiza_retorno(pr_dsdrowid  IN VARCHAR2) IS
@@ -1558,6 +1561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       -- Se a solicitação foi reprovada
       IF rg_dados.idsituacao = 3 THEN
       
+        vr_nrposrep := NVL((vr_nrposrep+1),0);
+        
         /*************** INICIO - Grupo Reprova Portabilidade Conta Salário ***************/
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalr'
                      ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrRepvd'
@@ -1568,18 +1573,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrRepvd'
                      ,pr_tag_nova => 'MotvReprvcPortddCtSalr'
                      ,pr_tag_cont => LPAD(rg_dados.cdmotivo,3,'0')
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposrep );
     
         -- Data Cancelamento Portabilidade de Conta Salário
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrRepvd'
                      ,pr_tag_nova => 'DtReprvcPortddCtSalr'
                      ,pr_tag_cont => to_char(SYSDATE,vr_dateformat)
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposrep );
       
         /*************** FIM - Grupo Reprova Portabilidade Conta Salário ***************/
       
       ELSE 
         
+        vr_nrposapr := NVL((vr_nrposapr+1),0);
+      
         /*************** INICIO - Grupo Aprova Portabilidade Conta Salário ***************/
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalr'
                      ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrAprovd'
@@ -1591,19 +1598,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrAprovd'
                      ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_Cli'
                      ,pr_tag_cont => NULL
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
       
         -- CPF Cliente
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
                      ,pr_tag_nova => 'CPFCli'
                      ,pr_tag_cont => LPAD(rg_dados.nrcpfcgc,11,'0')
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
             
         -- Nome Cliente
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
                      ,pr_tag_nova => 'NomCli'
                      ,pr_tag_cont => SUBSTR(rg_dados.nmprimtl,1,80)
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
       
         -- Se tem informação de telefone
         IF TRIM(rg_dados.dstelefone) IS NOT NULL THEN
@@ -1611,7 +1618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
                        ,pr_tag_nova => 'TelCli'
                        ,pr_tag_cont => rg_dados.dstelefone
-                       ,pr_posicao  => vr_nrposxml);
+                       ,pr_posicao  => vr_nrposapr);
         END IF;
       
         -- Se tem informação de email
@@ -1620,7 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
                        ,pr_tag_nova => 'EmailCli'
                        ,pr_tag_cont => rg_dados.dsdemail
-                       ,pr_posicao  => vr_nrposxml);
+                       ,pr_posicao  => vr_nrposapr);
         END IF;
       
         /******************* FIM - Grupo Cliente *******************/
@@ -1629,31 +1636,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrAprovd'
                      ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
                      ,pr_tag_cont => NULL
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
       
         -- ISPB Participante Folha Pagamento
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
                      ,pr_tag_nova => 'ISPBPartFolhaPgto'
                      ,pr_tag_cont => LPAD(rg_dados.nrispb_banco_folha,8,'0')
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ Participante Folha Pagamento
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
                      ,pr_tag_nova => 'CNPJPartFolhaPgto'
                      ,pr_tag_cont => LPAD(rg_dados.nrcnpj_banco_folha,14,'0')
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ do Empregador
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
                      ,pr_tag_nova => 'CNPJEmprdr'
                      ,pr_tag_cont => LPAD(rg_dados.nrcnpj_empregador,14,'0')
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ Participante Folha Pagamento
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
                      ,pr_tag_nova => 'DenSocEmprdr'
                      ,pr_tag_cont => rg_dados.dsnome_empregador
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         /******************* FIM - Grupo Participante Folha Pagamento *******************/
             
@@ -1661,37 +1668,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_PortddCtSalrAprovd'
                      ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_cont => NULL
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
         
         -- ISPB Participante Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'ISPBPartDest'
                      ,pr_tag_cont => LPAD(rg_dados.nrispb_destinataria,8,'0')
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ Participante Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'CNPJPartDest'
                      ,pr_tag_cont => LPAD(rg_dados.nrcnpj_destinataria,14,'0') 
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
         
         -- Tipo de Conta Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'TpCtDest'
                      ,pr_tag_cont => rg_dados.cdtipo_cta_destinataria 
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
         
         -- Agência Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'AgCliDest'
                      ,pr_tag_cont => rg_dados.cdagencia_destinataria
-                     ,pr_posicao  => vr_nrposxml );
+                     ,pr_posicao  => vr_nrposapr );
         
         -- Conta Corrente Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'CtCliDest'
                      ,pr_tag_cont => rg_dados.nrdconta
-                     ,pr_posicao  => vr_nrposxml);
+                     ,pr_posicao  => vr_nrposapr);
         
         /******************* FIM - Grupo Destino *******************/
         /******************* FIM - Grupo Aprova Portabilidade Conta Salário  *******************/
@@ -2092,9 +2099,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- ATUALIZAR TODOS OS REGISTROS QUE FORAM ENVIADOS NO ARQUIVO 
     UPDATE tbcc_portabilidade_recebe   T
        SET t.dtretorno           = NULL
-         , t.nmarquivo_resposta  = NULL
-         , t.dsdominio_motivo    = vr_dsdominioerro
-         , t.cdmotivo            = vr_cderrret
+         , t.nmarquivo_resposta  = vr_nmarquiv
+         -- Não deve mexer no motivo, pois será reenviado
+         --, t.dsdominio_motivo    = vr_dsdominioerro
+         --, t.cdmotivo            = vr_cderrret
      WHERE t.nmarquivo_resposta  = vr_nmarqenv;
     
   EXCEPTION
@@ -3512,7 +3520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqRET
                                     ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqRET||'.xml'
                                     ,pr_dscritic => vr_dscritic);
-        
+                    
         -- Em caso de erro
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
