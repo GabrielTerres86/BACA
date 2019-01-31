@@ -195,7 +195,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
                   dsopecoo  VARCHAR2(100),
-                  innivris  VARCHAR2(1), 
+                  innivris  VARCHAR2(2), 
                   qtdiaatr  NUMBER,
                   flverbor crapbdt.flverbor%TYPE
                   );
@@ -635,13 +635,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                    ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
                                    ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
                                    ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
+                                   ,pr_flforcar     IN BOOLEAN DEFAULT FALSE --> Força os cálculos independente se houve job no d-1
                                    --------------> OUT <--------------
                                    ,pr_pc_cedpag    OUT NUMBER
                                    ,pr_qtd_cedpag   OUT NUMBER
                                    ,pr_pc_conc      OUT NUMBER
                                    ,pr_qtd_conc     OUT NUMBER
-                                   ,pr_pc_geral     OUT NUMBER
-                                   ,pr_qtd_geral    OUT NUMBER
                                    ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
                                    ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   );
@@ -8393,8 +8392,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --Variaveis da liquidez
     vr_vlconcentracao NUMBER(25,2);   
     vr_qtconcentracao NUMBER(25,2);
-    vr_vlgeral        NUMBER(25,2);
-    vr_qtgeral        NUMBER(25,2);
     
 --    vr_tempo INTEGER;
 
@@ -8404,34 +8401,26 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --
     -- [PAGADORES] - Obter dados dos Pagadores a serem analisados
     CURSOR cr_crapsab IS
-    SELECT
-      pag.cdcooper
-      ,pag.nrdconta
-      ,pag.nrinssac
-      ,pag.cdtpinsc
-      ,ass.inpessoa
-    FROM 
-      craplim lim 
-      INNER JOIN crapsab pag ON pag.nrdconta = lim.nrdconta AND pag.cdcooper = lim.cdcooper
-      INNER JOIN crapcob cob -- Boletos de Cobrança
-                       ON  cob.incobran = 0     -- Cobrança em aberto
-                       and    cob.nrinssac = pag.nrinssac
-                       and    cob.nrdconta = pag.nrdconta
-                       and    cob.cdcooper = pag.cdcooper
-      INNER JOIN crapass ass ON ass.nrdconta = pag.nrdconta AND ass.cdcooper=pag.cdcooper
-    WHERE 
-      lim.tpctrlim=3
-      AND lim.insitlim=2 
-      AND lim.cdcooper = pr_cdcooper
-      AND pag.nrdconta is NOT NULL 
+	   SELECT pag.cdcooper,
+	          pag.nrdconta,
+	          pag.nrinssac,
+	          pag.cdtpinsc,
+	          ass.inpessoa,
+	          ass.nrcpfcgc
+	     FROM crapsab pag, crapass ass
+	    WHERE pag.cdcooper = pr_cdcooper
+      AND pag.nrdconta = pr_nrdconta
       AND pag.nrinssac = nvl(pr_nrinssac, pag.nrinssac)
-      AND pag.nrdconta = nvl(pr_nrdconta, lim.nrdconta)
-    GROUP BY
-      pag.cdcooper
-      ,pag.nrdconta
-      ,pag.nrinssac
-      ,pag.cdtpinsc
-      ,ass.inpessoa;
+	      AND ass.cdcooper = pag.cdcooper
+	      AND ass.nrdconta = pag.nrdconta
+	      AND EXISTS (SELECT 1
+	             FROM crapcob cob -- Boletos de Cobrança
+	            WHERE cob.cdcooper = pag.cdcooper
+	              AND cob.nrdconta = pag.nrdconta
+	              AND cob.nrinssac = pag.nrinssac
+	              AND cob.incobran = 0 -- Cobrança em aberto
+	              AND cob.flgregis = 1
+	              AND cob.dtvencto > rw_crapdat.dtmvtolt);
     
     rw_crapsab cr_crapsab%rowtype;
    
@@ -8455,6 +8444,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     and    cob.cdcooper = ceb.cdcooper
     and    cob.nrdconta = ceb.nrdconta
     and    cob.nrcnvcob = ceb.nrconven
+    AND    cob.dtmvtolt >= add_months(rw_crapdat.dtmvtolt,-12)
     --
     and    cob.nrinssac = rw_crapsab.nrinssac
     --
@@ -8482,6 +8472,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     and    cob.cdcooper = ceb.cdcooper
     and    cob.nrdconta = ceb.nrdconta
     and    cob.nrcnvcob = ceb.nrconven
+    AND    cob.dtmvtolt >= add_months(rw_crapdat.dtmvtolt,-12)
     --
     and    cob.incobran = 3 -- Baixado
     --
@@ -8501,10 +8492,10 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     select count(1) qt_tit_nao_pagos
     from   crapcob cob
     where  cob.incobran = 0
---    and    cob.dtdpagto is null
     and    cob.cdcooper = rw_crapsab.cdcooper
     and    cob.nrdconta = rw_crapsab.nrdconta
     AND    cob.dtvencto < rw_crapdat.dtmvtolt 
+    AND    cob.dtmvtolt >= add_months(rw_crapdat.dtmvtolt,-6)
     and    cob.nrinssac = rw_crapsab.nrinssac;
     rw_qt_nao_pagos cr_qt_nao_pagos%rowtype;    
 
@@ -8531,40 +8522,16 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     rw_socio cr_socio%rowtype;
     
     -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador
-    cursor cr_coop_tit_conta_pag is
-    select count(1) tem_tit_conta_pag
-    from   crapcob cob_pag
-          ,craptdb tdb 
-    where  cob_pag.cdcooper = pr_cdcooper
-      and  cob_pag.nrdconta = rw_crapsab.nrdconta
-      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- titulos descontados
-      and  tdb.cdcooper = cob_pag.cdcooper 
-      and  tdb.cdbandoc = cob_pag.cdbandoc 
-      and  tdb.nrdctabb = cob_pag.nrdctabb 
-      and  tdb.nrdconta = cob_pag.nrdconta 
-      and  tdb.nrcnvcob = cob_pag.nrcnvcob 
-      and  tdb.nrdocmto = cob_pag.nrdocmto
-      --
-      and  exists -- cob_pag.nrinssac in
-             (select  1
-                from  crapcob cob_rem
-                     ,craptdb tdb
-                where cob_pag.cdcooper = pr_cdcooper
-                  and cob_pag.nrinssac = rw_crapsab.nrinssac
-                  and cob_rem.nrinssac = cob_pag.nrinssac
-                  and tdb.cdcooper     = cob_rem.cdcooper 
-                  and tdb.cdbandoc     = cob_rem.cdbandoc 
-                  and tdb.nrdctabb     = cob_rem.nrdctabb 
-                  and tdb.nrdconta     = cob_rem.nrdconta 
-                  and tdb.nrcnvcob     = cob_rem.nrcnvcob 
-                  and tdb.nrdocmto     = cob_rem.nrdocmto                     
-                  and cob_rem.nrdconta in 
-                         (select nrdconta
+    CURSOR cr_coop_tit_conta_pag is
+    SELECT COUNT(1) tem_tit_conta_pag
+    FROM   craptdb tdb 
+    WHERE tdb.cdcooper = pr_cdcooper
+      AND tdb.nrinssac = rw_crapsab.nrcpfcgc -- cedente
+      AND tdb.dtresgat is null and tdb.dtlibbdt is not null -- titulos descontados
+      AND tdb.nrdconta in (select nrdconta -- busca conta do pagador
                             from crapass rem
-                           where rem.nrcpfcgc     = cob_pag.nrinssac
-                             and rem.cdcooper     = pr_cdcooper
-                             and cob_pag.nrinssac = rw_crapsab.nrinssac)
-             );            
+                           where rem.nrcpfcgc     = rw_crapsab.nrinssac --pagador
+                             and rem.cdcooper     = pr_cdcooper);
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
     PROCEDURE pc_resetar_flag_analise is
@@ -8691,11 +8658,11 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
              raise vr_exc_erro;
          end if;
-   open  cr_crapsab;   
-   loop
-         fetch cr_crapsab into rw_crapsab;
-         exit  when cr_crapsab%NOTFOUND;
+   
+   FOR rw_crapsab IN cr_crapsab LOOP      
+         
          vr_flcrapsab := true;
+         
          IF (rw_crapsab.inpessoa=1) THEN
             vr_tab_dados_dsctit := vr_tab_dados_dsctit_fis;
          ELSE
@@ -8781,30 +8748,28 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              raise vr_exc_erro;
          end if;
             
-         pc_atualiza_calculos_pagador ( pr_cdcooper
-                                      ,rw_crapsab.nrdconta
-                                      ,rw_crapsab.nrinssac
-                                      ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                      ,rw_crapdat.dtmvtolt 
-                                      ,vr_tab_dados_dsctit(1).cardbtit_c
-                                      ,vr_tab_dados_dsctit(1).qttliqcp
-                                      ,vr_tab_dados_dsctit(1).vltliqcp
-                                      ,vr_tab_dados_dsctit(1).pcmxctip
-                                      ,vr_tab_dados_dsctit(1).qtmitdcl
-                                      ,vr_tab_dados_dsctit(1).vlmintcl
+         pc_atualiza_calculos_pagador (pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_crapsab.nrdconta
+                                      ,pr_nrinssac => rw_crapsab.nrinssac
+                                      ,pr_dtmvtolt_de => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                      ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt 
+                                      ,pr_qtcarpag => vr_tab_dados_dsctit(1).cardbtit_c
+                                      ,pr_qttliqcp => vr_tab_dados_dsctit(1).qttliqcp
+                                      ,pr_vltliqcp => vr_tab_dados_dsctit(1).vltliqcp
+                                      ,pr_pcmxctip => vr_tab_dados_dsctit(1).pcmxctip
+                                      ,pr_qtmitdcl => vr_tab_dados_dsctit(1).qtmitdcl
+                                      ,pr_vlmintcl => vr_tab_dados_dsctit(1).vlmintcl
+                                      ,pr_flforcar => TRUE
                                       --------------> OUT <--------------
-                                      ,vr_vlliquidez
-                                      ,vr_qtliquidez
-                                      ,vr_vlconcentracao
-                                      ,vr_qtconcentracao
-                                      ,vr_vlgeral
-                                      ,vr_qtgeral
-                                      ,pr_cdcritic
-                                      ,pr_dscritic
+                                      ,pr_pc_cedpag  => vr_vlliquidez
+                                      ,pr_qtd_cedpag => vr_qtliquidez
+                                      ,pr_pc_conc    => vr_vlconcentracao
+                                      ,pr_qtd_conc   => vr_qtconcentracao
+                                      ,pr_cdcritic   => pr_cdcritic
+                                      ,pr_dscritic   => pr_dscritic
                                       );
          COMMIT;
-   end   loop;
-   close cr_crapsab;
+   END LOOP;
 
    if  not(vr_flcrapsab) then
        vr_cdcritic := 0;
@@ -8841,13 +8806,12 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                    ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
                                    ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
                                    ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
+                                   ,pr_flforcar     IN BOOLEAN DEFAULT FALSE --> Força os cálculos independente se houve job no d-1
                                    --------------> OUT <--------------
                                    ,pr_pc_cedpag    OUT NUMBER
                                    ,pr_qtd_cedpag   OUT NUMBER
                                    ,pr_pc_conc      OUT NUMBER
                                    ,pr_qtd_conc     OUT NUMBER
-                                   ,pr_pc_geral     OUT NUMBER
-                                   ,pr_qtd_geral    OUT NUMBER
                                    ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
                                    ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   ) IS 
@@ -8934,6 +8898,40 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
     BEGIN
+      OPEN cr_analise_pagador;
+      FETCH cr_analise_pagador INTO rw_analise_pagador;
+      IF (cr_analise_pagador%NOTFOUND) THEN
+        CLOSE cr_analise_pagador;
+        vr_dscritic := 'Erro ao carregar críticas de pagador';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_analise_pagador;
+      -- Verificar se a data existe
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF    btch0001.cr_crapdat%notfound then
+            CLOSE btch0001.cr_crapdat;
+            vr_cdcritic := 1;
+            RAISE vr_exc_erro;
+      END   IF;
+      close btch0001.cr_crapdat;
+      
+      
+       --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
+      OPEN  cr_concentracao_excecao;
+      FETCH cr_concentracao_excecao into rw_concentracao_excecao;
+      --    Se houver exceção cadastrada na CADPCP, e ela for maior que o valor da TAB052, será considerada a exceção.
+      IF    cr_concentracao_excecao%found and rw_concentracao_excecao.pe_conc_excecao > vr_pcmxctip THEN
+            vr_concentracao_maxima := rw_concentracao_excecao.pe_conc_excecao;
+      ELSE
+            vr_concentracao_maxima := vr_pcmxctip;
+      END IF;
+      CLOSE cr_concentracao_excecao;      
+      IF  pr_pc_conc > vr_concentracao_maxima then
+          vr_cri_concentr_maxtit := pr_pc_conc;
+          vr_inpossui_criticas := 1;
+      END IF;
+        
       IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR pr_dtmvtolt_de IS NULL OR pr_qtmitdcl IS NULL OR pr_vlmintcl is NULL) THEN
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
@@ -8941,15 +8939,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
           vr_cdcritic := 1187;
           RAISE vr_exc_erro;
         END IF;
-        -- Verificar se a data existe
-        open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-        fetch btch0001.cr_crapdat into rw_crapdat;
-        if    btch0001.cr_crapdat%notfound then
-              close btch0001.cr_crapdat;
-              vr_cdcritic := 1;
-              raise vr_exc_erro;
-        end   if;
-        close btch0001.cr_crapdat;
         
         pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
                                    ,pr_cdagenci          => null -- Não utiliza dentro da procedure
@@ -8983,26 +8972,33 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
         vr_vlmintcl  := pr_vlmintcl;
       END IF;
                                    
-      --> Calculo das porcentagens de Liquidez
-       DSCT0003.pc_calcula_liquidez(pr_cdcooper
-                       ,pr_nrdconta     
-                       ,pr_nrinssac     
-                       ,vr_dtmvtolt_de
-                       ,vr_dtmvtolt_ate
-                       ,vr_qtcarpag
-                       ,vr_qtmitdcl
-                       ,vr_vlmintcl
+      DSCT0003.pc_calcula_concentracao(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrinssac => pr_nrinssac
+                     ,pr_dtmvtolt_de => vr_dtmvtolt_de
+                     ,pr_dtmvtolt_ate => vr_dtmvtolt_ate
+                     ,pr_qtcarpag => vr_qtcarpag
+                     ,pr_qtmitdcl => vr_qtmitdcl
+                     ,pr_vlmintcl => vr_vlmintcl
+                    -- OUT --
+                    ,pr_pc_conc      => pr_pc_conc
+                    ,pr_qtd_conc     => pr_qtd_conc
+                    );
+                    
+      IF (pr_flforcar) THEN
+        DSCT0003.pc_calcula_liquidez_pagador(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrinssac => pr_nrinssac
+                     ,pr_dtmvtolt_de => vr_dtmvtolt_de
+                     ,pr_dtmvtolt_ate => vr_dtmvtolt_ate
+                     ,pr_qtcarpag => vr_qtcarpag
+                     ,pr_qtmitdcl => vr_qtmitdcl
+                     ,pr_vlmintcl => vr_vlmintcl
                        -- OUT --     
-                       --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
-                       ,pr_pc_cedpag
-                       ,pr_qtd_cedpag
-                        --  CÁLCULO LIQUIDEZ DE CONCENTRACAO --
-                       ,pr_pc_conc
-                       ,pr_qtd_conc
-                       -- CALCULO LIQUIDEZ GERAL
-                       ,pr_pc_geral
-                       ,pr_qtd_geral
+                    ,pr_pc_cedpag    => pr_pc_cedpag
+                    ,pr_qtd_cedpag   => pr_qtd_cedpag
        );
+                    
        --  PEMIN_LIQUIDEZ_QT  : Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp)
        if  pr_qtd_cedpag < vr_qttliqcp then
            vr_cri_liquidez_qt := pr_qtd_cedpag;
@@ -9015,26 +9011,11 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
            vr_inpossui_criticas := 1;
        end if;             
 
-       --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
-       open  cr_concentracao_excecao;
-       fetch cr_concentracao_excecao into rw_concentracao_excecao;
-       --    Se houver exceção cadastrada na CADPCP, e ela for maior que o valor da TAB052, será considerada a exceção.
-       if    cr_concentracao_excecao%found and rw_concentracao_excecao.pe_conc_excecao > vr_pcmxctip then
-             vr_concentracao_maxima := rw_concentracao_excecao.pe_conc_excecao;
-       else
-             vr_concentracao_maxima := vr_pcmxctip;
-       end if;
-       close cr_concentracao_excecao;      
-       if  pr_pc_conc > vr_concentracao_maxima then
-           vr_cri_concentr_maxtit := pr_pc_conc;
-           vr_inpossui_criticas := 1;
-       end if;
-       
-       OPEN cr_analise_pagador;
-       FETCH cr_analise_pagador INTO rw_analise_pagador;
-       IF (cr_analise_pagador%NOTFOUND) THEN
-         vr_dscritic := 'Erro ao carregar críticas de pagador';
-         RAISE vr_exc_erro;
+     ELSE
+       vr_cri_liquidez_qt := rw_analise_pagador.pemin_liquidez_qt;
+       vr_cri_liquidez_vl := rw_analise_pagador.pemin_liquidez_vl;
+       pr_qtd_cedpag      := rw_analise_pagador.perc_liquidez_qt;
+       pr_pc_cedpag       := rw_analise_pagador.perc_liquidez_vl;
        END IF;
        
        vr_inpossui_criticas := CASE WHEN (nvl(rw_analise_pagador.qtremessa_cartorio,0) 
@@ -9062,8 +9043,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
         WHERE
           cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
-          AND nrinssac = pr_nrinssac
-        ;
+         AND nrinssac = pr_nrinssac;
+        
         
       EXCEPTION
        WHEN vr_exc_erro THEN

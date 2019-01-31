@@ -31,7 +31,6 @@
 	isPostMethod();		
 	  
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0;
 	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;
 	$cddlinha = (isset($_POST['cddlinha'])) ? $_POST['cddlinha'] : 0;
 
@@ -40,7 +39,6 @@
 	$xmlRenovaLimite .= "   <Dados>";
 	$xmlRenovaLimite .= "	   <nrdconta>".$nrdconta."</nrdconta>";
 	$xmlRenovaLimite .= "	   <idseqttl>1</idseqttl>";
-	$xmlRenovaLimite .= "	   <vllimite>".$vllimite."</vllimite>";
 	$xmlRenovaLimite .= "	   <nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlRenovaLimite .= "	   <cddlinha>".$cddlinha."</cddlinha>";
 	$xmlRenovaLimite .= "   </Dados>";

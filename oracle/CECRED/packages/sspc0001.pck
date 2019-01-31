@@ -172,11 +172,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
 -- Efetua a consulta ao biro da Ibratan para os títulos de um Borderô
 PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, --> Codigo da cooperativa de emprestimo
                                         pr_nrdconta IN  crapcob.nrdconta%TYPE, --> Numero da conta de emprestimo
-                                        pr_nrdocmto IN  crapcob.nrdocmto%TYPE,
-                                        pr_cdbandoc IN  crapcob.cdbandoc%TYPE,
-                                        pr_nrdctabb IN  crapcob.nrdctabb%TYPE,
-                                        pr_nrcnvcob IN  crapcob.nrcnvcob%TYPE,
-                                        pr_inprodut IN  PLS_INTEGER DEFAULT 7, --> Indicador de produto (7 - Borderô)
+                                        pr_nrinssac IN  crapcob.nrinssac%TYPE,
+                                        pr_vlttitbd IN  NUMBER,                --> Valor total
+                                        pr_nrctrlim IN  craplim.nrctrlim%TYPE,  --> Contrato de desconto de titulo
+                                        pr_inpessoa IN  crapsab.cdtpinsc%TYPE, --> tipo de pessoa
+                                        pr_nrcepsac IN  crapsab.nrcepsac%TYPE, --> Cep do pagador
                                         pr_cdoperad IN  crapcob.cdoperad%TYPE, --> Operador que solicitou a consulta
                                         pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                                         pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
@@ -572,7 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 18/10/2018
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 25/01/2019
   --
   --  Dados referentes ao programa:
   --
@@ -7438,11 +7438,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
 -- Efetua a consulta ao biro da Ibratan para os Pagadores de Títulos de um Borderô
 PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, --> Codigo da cooperativa de emprestimo
                                         pr_nrdconta IN  crapcob.nrdconta%TYPE, --> Numero da conta de emprestimo
-                                        pr_nrdocmto IN  crapcob.nrdocmto%TYPE,
-                                        pr_cdbandoc IN  crapcob.cdbandoc%TYPE,
-                                        pr_nrdctabb IN  crapcob.nrdctabb%TYPE,
-                                        pr_nrcnvcob IN  crapcob.nrcnvcob%TYPE,
-                                        pr_inprodut IN  PLS_INTEGER DEFAULT 7, --> Indicador de produto (7 - Borderô)
+                                        pr_nrinssac IN  crapcob.nrinssac%TYPE,
+                                        pr_vlttitbd IN  NUMBER,                --> Valor total
+                                        pr_nrctrlim IN  craplim.nrctrlim%TYPE,  --> Contrato de desconto de titulo
+                                        pr_inpessoa IN  crapsab.cdtpinsc%TYPE, --> tipo de pessoa
+                                        pr_nrcepsac IN  crapsab.nrcepsac%TYPE, --> Cep do pagador
                                         pr_cdoperad IN  crapcob.cdoperad%TYPE, --> Operador que solicitou a consulta
                                         pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                                         pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
@@ -7453,37 +7453,9 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
   --                                                      Ultima atualizacao:
   --
   --              28/03/2018 - Andrew Albuquerque GFT (AWAE) - Criação da Procedure.
+  --              23/01/2019 - Luis Fernando GFT - Alterações na procedure para executar por pagador e nao por titulo
   --
   ---------------------------------------------------------------------------------------------------------------
-
-    --Cursor sobre os dados dos títulos dos Borderô
-    CURSOR cr_crapcob IS
-      SELECT cob.nrdocmto,
-             cob.cdcooper,
-             cob.nrdconta,
-             cob.cdtpinsc, -- Codigo do tipo da inscricao do Sacado/Pagador(0-nenhum/1-CPF/2-CNPJ)
-             cob.nrinssac, -- Número de Inscrição do do Pagador/Sacado (CPF/CNPJ)
-             cob.nrctasac, -- Numero da conta/dv do Pagador/Sacado na Cooperatica
-             cob.cdtpinav, -- Codigo do tipo da inscricao do Avalista (0-nenhum/1-CPF/2-CNPJ)
-             cob.nrinsava, -- Número de inscrição do Avalista (CPF/CNPJ)
-             cob.dtvencto, -- Data de Vencimento do Título
-             cob.vltitulo, -- valor do Título
-             sab.nrcepsac  -- CEP Sacado 
-        FROM crapcob cob,
-             crapsab sab
-       WHERE cob.flgregis > 0 -- Indicador de Registro CIP (0-Sem registro CIP/ 1-Registro Online/ 2-Registro offline)
-         AND cob.incobran = 0 -- 0 cobrança em aberto.
-         -- filtros paramétricos 
-         AND cob.cdcooper = pr_cdcooper
-         AND cob.nrdconta = pr_nrdconta
-         AND cob.nrdocmto = pr_nrdocmto
-         and cob.cdbandoc = pr_cdbandoc
-         and cob.nrdctabb = pr_nrdctabb
-         and cob.nrcnvcob = pr_nrcnvcob
-         AND sab.nrdconta = cob.nrdconta
-         AND sab.cdcooper = cob.cdcooper
-         AND sab.nrinssac = cob.nrinssac;
-
     -- Busca as tags para a consulta do biro
     CURSOR cr_crapmbr(pr_cdbircon crapmbr.cdbircon%TYPE,
                       pr_cdmodbir crapmbr.cdmodbir%TYPE) IS
@@ -7560,20 +7532,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     vr_qthrsrpv_pj  PLS_INTEGER;           --> Quantidade de horas de reaproveitamento para pessoa juridica
     vr_qtdiarpv_pj  PLS_INTEGER;           --> Quantidade de dias de reaproveitamento para pessoa juridica
 
-    -- Variáveis para Retorno do Tìtulo
-    vr_nrdocmto crapcob.nrdocmto%TYPE;
-    vr_cdcooper crapcob.cdcooper%TYPE;
-    vr_nrdconta crapcob.nrdconta%TYPE;
-    vr_cdtpinsc crapcob.cdtpinsc%TYPE;
-    vr_nrinssac crapcob.nrinssac%TYPE;
-    vr_nrctasac crapcob.nrctasac%TYPE;
-    vr_cdtpinav crapcob.cdtpinav%TYPE;
-    vr_nrinsava crapcob.nrinsava%TYPE;   
-    vr_dtvencto crapcob.dtvencto%TYPE;
-    vr_vltitulo crapcob.vltitulo%TYPE;
-    vr_nrcepsac crapsab.nrcepsac%TYPE;
-    
     vr_dsprodut VARCHAR2(100);         --> Descricao do produto que sera utilizado
+    vr_inprodut INTEGER := 7;          --> Desconto de título
 
   BEGIN
     GENE0001.pc_informa_acesso(pr_module => 'ATENDA'
@@ -7588,28 +7548,6 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
 
-    -- Busca os dados do Título
-    OPEN cr_crapcob;
-    FETCH cr_crapcob INTO vr_nrdocmto,
-                         vr_cdcooper,
-                         vr_nrdconta,
-                         vr_cdtpinsc,
-                         vr_nrinssac,
-                         vr_nrctasac,
-                         vr_cdtpinav,
-                         vr_nrinsava,
-                         vr_dtvencto,
-                         vr_vltitulo,
-                         vr_nrcepsac;
-    IF cr_crapcob%NOTFOUND THEN
-      vr_dscritic := 'Contrato de Título inexistente. Favor verificar!';
-
-      CLOSE cr_crapcob;
-      RAISE vr_exc_saida;
-    END IF;
-    -- Fecha o cursor de Títulos
-    CLOSE cr_crapcob;
-
     -- Busca os dados do operador
     OPEN cr_crapope;
     FETCH cr_crapope INTO rw_crapope;
@@ -7623,12 +7561,12 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     CLOSE cr_crapope;
     
     -- Se o Pagador é Pessoa Física
-    IF vr_cdtpinsc = 1 /*vr_inpessoa = 1 OR vr_inpessoa_av1 = 1 OR vr_inpessoa_av2 = 1*/ THEN
+    IF pr_inpessoa = 1 /*vr_inpessoa = 1 OR vr_inpessoa_av1 = 1 OR vr_inpessoa_av2 = 1*/ THEN
       -- Verifica qual o biro de consulta
       SSPC0001.pc_busca_modalidade_prm(pr_cdcooper => pr_cdcooper,
-                                       pr_inprodut => pr_inprodut,
+                                       pr_inprodut => vr_inprodut,
                                        pr_inpessoa => 1, -- Pessoa fisica
-                                       pr_vlprodut => vr_vltitulo, --vr_vlemprst,
+                                       pr_vlprodut => pr_vlttitbd, --vr_vlemprst,
                                        pr_cdbircon => vr_cdbircon_pf,
                                        pr_cdmodbir => vr_cdmodbir_pf);
       -- Busca o nome da tag para pessoa fisica
@@ -7653,7 +7591,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       CLOSE cr_crapcbr;
 
       -- Busca a quantidade de horas de reaproveitamento para PF
-      OPEN cr_craprbi(pr_inprodut,
+      OPEN cr_craprbi(vr_inprodut,
                       1); -- Pessoa Fisica
       FETCH cr_craprbi INTO vr_qtdiarpv_pf, vr_qthrsrpv_pf;
       -- Se encontrou, deve-se cancelar a consulta
@@ -7667,12 +7605,12 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     END IF;
 
     -- Se possuir alguma pessoa juridica
-    IF vr_cdtpinsc = 2/* OR vr_inpessoa_av1 = 2 OR vr_inpessoa_av2 = 2*/ THEN
+    IF pr_inpessoa = 2/* OR vr_inpessoa_av1 = 2 OR vr_inpessoa_av2 = 2*/ THEN
       -- Verifica qual o biro de consulta
       pc_busca_modalidade_prm(pr_cdcooper => pr_cdcooper,
-                              pr_inprodut => pr_inprodut,
+                              pr_inprodut => vr_inprodut,
                               pr_inpessoa => 2, -- Pessoa juridica
-                              pr_vlprodut => vr_vltitulo, --vr_vlemprst,
+                              pr_vlprodut => pr_vlttitbd, --vr_vlemprst,
                               pr_cdbircon => vr_cdbircon_pj,
                               pr_cdmodbir => vr_cdmodbir_pj);
       -- Busca o nome da tag para pessoa juridica
@@ -7697,7 +7635,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       CLOSE cr_crapcbr;
 
       -- Busca a quantidade de horas de reaproveitamento para PJ
-      OPEN cr_craprbi(pr_inprodut,
+      OPEN cr_craprbi(vr_inprodut,
                       2); -- Pessoa Juridica
       FETCH cr_craprbi INTO vr_qtdiarpv_pj, vr_qthrsrpv_pj;
       -- Se encontrou, deve-se cancelar a consulta
@@ -7711,7 +7649,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     END IF;
 
     -- Se o Pagador for CPF, deve-se verificar se tem que consultar SCR
-    IF vr_cdtpinsc = 1 THEN
+    IF pr_inpessoa = 1 THEN
       -- define o biro e a modalidade de consulta do titular para PF
       vr_cdbircon_tit := vr_cdbircon_pf;
       vr_cdmodbir_tit := vr_cdmodbir_pf;
@@ -7744,8 +7682,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
          0,
          0,
          0,
-         pr_inprodut,
-         lpad(pr_nrdconta,10,'0')||'-'||lpad(vr_nrdocmto,10,'0')||pr_inprodut,
+         vr_inprodut,
+         lpad(pr_nrdconta,10,'0')||'-'||lpad(pr_nrctrlim,10,'0')||vr_inprodut,
          pr_cdoperad,
          rw_crapope.cdpactra);
     EXCEPTION
@@ -7792,7 +7730,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
 
       -- Se o titular da consulta for PJ, entao consultar somente ele, pois os avalistas podem ser
       -- os socios e neste caso nao deve-se solicitar a consulta dos avalistas
-      IF vr_cdtpinsc = 2 AND  -- Se for PJ
+      IF pr_inpessoa = 2 AND  -- Se for PJ
          vr_qtenvreq = 1 THEN -- E for a primeira requisicao
 
         -- Verifica se tem como reaproveitar o registro
@@ -7801,7 +7739,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                         pr_cdmodbir => vr_cdmodbir_tit,
                                         pr_cdcooper => pr_cdcooper,
                                         pr_nrdconta => pr_nrdconta,
-                                        pr_nrcpfcgc => vr_nrinssac,
+                                        pr_nrcpfcgc => pr_nrinssac,
                                         pr_intippes => 1, -- Titular
                                         pr_qtdiarpv => vr_qtdiarpv_pj,
                                         pr_cdcritic => vr_cdcritic,
@@ -7820,12 +7758,12 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
         pc_monta_cpf_cnpj_envio(pr_xml      => vr_xmlenv,
                                 pr_contador => vr_contador,
                                 pr_nmtagbir => vr_nmtagbir_pj,
-                                pr_nrcpfcgc => vr_nrinssac,
+                                pr_nrcpfcgc => pr_nrinssac,
                                 pr_inpessoa => 'J',
                                 pr_cdpactra => rw_crapope.cdpactra,
                                 pr_qthrsrpv => vr_qthrsrpv_pj,
                                 pr_dtconscr => NULL,
-                                pr_nrcep    => vr_nrcepsac,
+                                pr_nrcep    => pr_nrcepsac,
                                 pr_dscritic => vr_dscritic);
 
         -- Incrementa o contador de enviados
@@ -7837,8 +7775,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                           pr_cdmodbir => vr_cdmodbir_tit,
                           pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
-                          pr_nrcpfcgc => vr_nrinssac,
-                          pr_inpessoa => vr_cdtpinsc,
+                          pr_nrcpfcgc => pr_nrinssac,
+                          pr_inpessoa => pr_inpessoa,
                           pr_intippes => 1, -- Titular
                           pr_cdcritic => vr_cdcritic,
                           pr_dscritic => vr_dscritic);
@@ -7849,14 +7787,14 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       ELSE
 
         -- Enviar o titular somente se for diferente de PJ
-        IF vr_cdtpinsc <> 2 THEN
+        IF pr_inpessoa <> 2 THEN
           -- Verifica se nao tem como reaproveitar o registro
           IF NOT fn_verifica_reaproveitamento(pr_nrconbir => vr_nrconbir,
                                           pr_cdbircon => vr_cdbircon_tit,
                                           pr_cdmodbir => vr_cdmodbir_tit,
                                           pr_cdcooper => pr_cdcooper,
                                           pr_nrdconta => pr_nrdconta,
-                                          pr_nrcpfcgc => vr_nrinssac,
+                                          pr_nrcpfcgc => pr_nrinssac,
                                           pr_intippes => 1, -- Titular
                                           pr_qtdiarpv => vr_qtdiarpv_pf,
                                           pr_cdcritic => vr_cdcritic,
@@ -7870,12 +7808,12 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
             pc_monta_cpf_cnpj_envio(pr_xml      => vr_xmlenv,
                                     pr_contador => vr_contador,
                                     pr_nmtagbir => vr_nmtagbir_pf,
-                                    pr_nrcpfcgc => vr_nrinssac,
+                                    pr_nrcpfcgc => pr_nrinssac,
                                     pr_inpessoa => 'F',
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_pf,
                                     pr_dtconscr => NULL,
-                                    pr_nrcep    => vr_nrcepsac,
+                                    pr_nrcep    => pr_nrcepsac,
                                     pr_dscritic => vr_dscritic);
 
             -- Incrementa o contador de enviados
@@ -7887,8 +7825,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                               pr_cdmodbir => vr_cdmodbir_tit,
                               pr_cdcooper => pr_cdcooper,
                               pr_nrdconta => pr_nrdconta,
-                              pr_nrcpfcgc => vr_nrinssac,
-                              pr_inpessoa => vr_cdtpinsc,
+                              pr_nrcpfcgc => pr_nrinssac,
+                              pr_inpessoa => pr_inpessoa,
                               pr_intippes => 1, -- Titular
                               pr_cdcritic => vr_cdcritic,
                               pr_dscritic => vr_dscritic);
@@ -7905,7 +7843,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       -- Envia a requisicao
       pc_envia_requisicao(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
-                          pr_nrdocmto => vr_nrdocmto,
+                          pr_nrdocmto => pr_nrctrlim,
                           pr_dsprodut => vr_dsprodut,
                           pr_envioxml => vr_xmlenv,
                           pr_nrprotoc => vr_nrprotoc,
@@ -7955,8 +7893,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                               pr_nrconbir => vr_nrconbir,
                               pr_nrprotoc => vr_nrprotoc,
                               pr_nrdconta => pr_nrdconta,
-                              pr_nrdocmto => vr_nrdocmto,
-                              pr_inprodut => pr_inprodut,
+                              pr_nrdocmto => pr_nrctrlim,
+                              pr_inprodut => vr_inprodut,
                               pr_tpconaut => 'A',
                               pr_inconscr => vr_inconscr,
                               pr_retxml   => vr_xmlret,
@@ -7975,7 +7913,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
 
       -- Verifica se todas as consultas ja foram feitas para sair do loop
       EXIT WHEN vr_qtenvreq = 2 OR  -- Se ja efetuou as duas consultas
-                vr_cdtpinsc = 1;    -- Se o titular for PF
+                pr_inpessoa = 1;    -- Se o titular for PF
 
     END LOOP;
 
@@ -8005,7 +7943,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       -- Trata erro na requisicao, mostra paramentros na gravação da tbgen_prglog
       pc_trata_erro_retorno(pr_cdcooper => pr_cdcooper,
                             pr_nrdconta => pr_nrdconta,
-                            pr_nrdocmto => vr_nrdocmto,
+                            pr_nrdocmto => pr_nrctrlim,
                             pr_nrprotoc => vr_nrprotoc,
                             pr_nrconbir => vr_nrconbir,
                             pr_dscritic => vr_dscritic,
@@ -8018,7 +7956,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                        ,pr_tpincons => 2 -- Erro
                                        ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
                                                     || ' Conta: '      || pr_nrdconta
-                                                    || ' Documento: '  || vr_nrdocmto
+                                                    || ' Documento: '  || pr_nrctrlim
                                                     || ' Protocolo do biro: ' || vr_nrprotoc
                                                     || ' Consulta no biro: '  || vr_nrconbir
                                        ,pr_dsincons => vr_dscritic
@@ -8045,7 +7983,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                        ,pr_tpincons => 2 -- Erro
                                        ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
                                                     || ' Conta: '      || pr_nrdconta
-                                                    || ' Documento: '  || vr_nrdocmto
+                                                    || ' Documento: '  || pr_nrctrlim
                                                     || ' Protocolo do biro: ' || vr_nrprotoc
                                                     || ' Consulta no biro: '  || vr_nrconbir
                                        ,pr_dsincons => pr_dscritic
@@ -8058,7 +7996,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       -- Trata erro na requisicao
       pc_trata_erro_retorno(pr_cdcooper => pr_cdcooper,
                             pr_nrdconta => pr_nrdconta,
-                            pr_nrdocmto => vr_nrdocmto,
+                            pr_nrdocmto => pr_nrctrlim,
                             pr_nrprotoc => vr_nrprotoc,
                             pr_nrconbir => vr_nrconbir,
                             pr_dscritic => vr_dscritic,
