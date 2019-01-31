@@ -95,6 +95,8 @@
                              atualizado para efetivar ou negar a operaçao, utilizado
 							 na abertura do caixa online mesmo quando o processo 
 							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
+
+				19/12/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
              
 ........................................................................... */
 
@@ -1292,7 +1294,34 @@ PROCEDURE calcula_poupanca:
                rpp_dtrefere = craprpp.dtfimper
                rpp_dtmvtolt = crapdat.dtmvtocd + 1. /*Calculo ate dia do mvto*/ 
 
-        /*  Leitura dos lancamentos de resgate da aplicacao  */
+		IF craprpp.cdprodut >= 1 THEN
+			DO:
+				{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+				  /* Efetuar a chamada a rotina Oracle */
+				 RUN STORED-PROCEDURE pc_calc_saldo_apl_prog
+				 aux_handproc = PROC-HANDLE NO-ERROR (INPUT p-cdcooper /* Código da Cooperativa */
+													 ,INPUT "CRAP002" /* Código do Programa */
+													 ,INPUT "1" /* Código de Operador */
+													 ,INPUT crapass.nrdconta /* Número da Conta */
+													 ,INPUT 1 /* Titular da Conta */
+													 ,INPUT 2 /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+													 ,INPUT craprpp.nrctrrpp /* Número de RPP */
+													 ,INPUT rpp_dtmvtolt /* Data de Movimento */
+													 ,OUTPUT 0           /* Valor de Saldo RPP    */
+													 ,OUTPUT "").        /* Descrição da crítica */
+										 
+				/* Fechar o procedimento para buscarmos o resultado */ 
+				 CLOSE STORED-PROC pc_calc_saldo_apl_prog
+					   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+				 
+				 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+			
+				ASSIGN rpp_vlsdrdpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp.
+			END.
+
+			/*  Leitura dos lancamentos de resgate da aplicacao  */
 
         FOR EACH craplpp WHERE craplpp.cdcooper  = p-cdcooper         AND
                                craplpp.nrdconta  = craprpp.nrdconta   AND
