@@ -2226,7 +2226,7 @@ PROCEDURE grava_efetivacao_proposta:
                                          INPUT par_nrctremp,
                                          INPUT TRUE, /*Gravar Rating*/
                                          INPUT TRUE, /** Log **/
-                                        OUTPUT TABLE v,
+                                        OUTPUT TABLE tt-erro,
                                         OUTPUT TABLE tt-cabrel,
                                         OUTPUT TABLE tt-impressao-coop,
                                         OUTPUT TABLE tt-impressao-rating,
@@ -2239,7 +2239,7 @@ PROCEDURE grava_efetivacao_proposta:
        DELETE PROCEDURE h-b1wgen0043.
 
        IF RETURN-VALUE <> "OK"   THEN
-          EMPTY tt-erro.
+          EMPTY TEMP-TABLE tt-erro.
          
          /* UNDO EFETIVACAO , LEAVE EFETIVACAO. */
 
