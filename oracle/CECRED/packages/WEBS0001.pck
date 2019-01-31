@@ -898,6 +898,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_des_reto             VARCHAR2(100);
       /*Fim 438*/
       
+      vr_cdcritic crapcri.cdcritic%type;
+      vr_dscritic crapcri.dscritic%type;
+      
     BEGIN
       --Limpar tabela erro      
       vr_tab_erro.DELETE;      
@@ -1297,6 +1300,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_nmdcampo => 'dsnivris'
                                  ,pr_dsdadant => rw_crapass_log.dsnivris
                                  ,pr_dsdadatu => rw_crapass.dsnivris);
+      END IF;
+
+      -- se for CDC ira notificar a alteracao da proposta via push
+      IF rw_crapfin.tpfinali = 3 and pr_insitpro in (1,2) THEN
+
+        -- avisar o pagamento efetuado para a push
+        -- (1 aprovado, 5 aprovado), (2 reprovada, 25 pgto negado)
+        pc_registra_push_sit_prop_cdc (pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctremp => pr_nrctremp
+                                      ,pr_insitpro => decode(pr_insitapr,1,5,25)
+                                      ,pr_cdcritic => vr_cdcritic  --> Codigo da critica
+                                      ,pr_dscritic => vr_dscritic); --> Descricao da critica
       END IF;
       
       -- Caso nao ocorreu nenhum erro, vamos retorna como status de OK

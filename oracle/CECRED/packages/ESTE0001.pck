@@ -4028,6 +4028,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   30/01/2017 - Remocao do campo tipo de emprestimo. (Jaison/James - PRJ298)
 
        				   20/12/2017 - Incluídos históricos 2013 e 2014 no cursor cr_craplem Prj. 402 (Jean Michel).
+
+                  30/10/2018 - Adicionado novos campos projeto 439 (Rafael Faria - Supero)
     ..........................................................................*/ 
     
     -----------> CURSORES <-----------
@@ -4079,7 +4081,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              epr.vliofadc,
              empr0012.fn_retorna_comissao_emp(pr_cdcooper=> epr.cdcooper
                                              ,pr_nrdconta=> epr.nrdconta
-                                             ,pr_nrctremp=> epr.nrctremp) vlcomissao
+                                             ,pr_nrctremp=> epr.nrctremp) vlcomissao,
+             add_months(wepr.dtvencto,wepr.qtpreemp -1) dtultpag
         FROM crawepr wepr,
              craplcr lcr,
              crapope ope,
@@ -4309,6 +4312,10 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_efetivar.put('valor'                  , rw_crawepr.vlemprst);
     vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawepr.qtpreemp);
     vr_obj_efetivar.put('parcelaPrimeiroVencimento' , fn_Data_ibra( rw_crawepr.dtvencto));
+    -- se for CDC envia o ultimo vencimento
+    IF rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_efetivar.put('parcelaUltimoVencimento' , fn_Data_ibra( rw_crawepr.dtultpag));
+    END IF;
     vr_obj_efetivar.put('parcelaValor'           , fn_decimal_ibra(rw_crawepr.vlpreemp));
     
     -- Gerar imagem apensa se nao for CDC

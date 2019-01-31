@@ -363,7 +363,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   -- Descrição de erro                                                                        
 
   PROCEDURE pc_retorna_situacao_ibracred (pr_cdcooper  IN crapcop.cdcooper%TYPE      --> Coodigo Cooperativa
-                                         ,pr_idorigem  IN INTEGER                    --> Origem dos Dados
                                          ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da Conta do Associado
                                          ,pr_nrctremp  IN crapepr.nrctremp%TYPE      --> Numero do contrato
                                          ,pr_cdoperad  IN crapope.cdoperad%TYPE      --> Codigo do operador
@@ -389,6 +388,46 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                          -->> SAIDA
                                          ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2);               --> Descrição da crítica
+
+  PROCEDURE pc_reg_push_sit_prop_cdc_web (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
+                                         ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
+                                         ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                         ,pr_insitpro   IN NUMBER                              --> Situação da proposta
+                                         ,pr_xmllog     IN VARCHAR2                            --> XML com informações de LOG
+                                         ,pr_cdcritic   OUT PLS_INTEGER                        --> Código da crítica
+                                         ,pr_dscritic   OUT VARCHAR2                           --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY xmltype                  --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo   OUT VARCHAR2                           --> Nome do Campo
+                                         ,pr_des_erro   OUT VARCHAR2) ;                       --> Saida OK/NOK
+  
+  PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
+                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_insitpro   IN NUMBER                              --> Situação da proposta
+                                          -->> SAIDA
+                                          ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2);               --> Descrição da crítica
+
+  PROCEDURE pc_prepara_push_prop_cdc (pr_cdcooper   IN tbepr_cdc_emprestimo.cdcooper%TYPE      --> Coodigo Cooperativa
+                                     ,pr_nrdconta   IN tbepr_cdc_emprestimo.nrdconta%TYPE      --> Numero da Conta do Associado
+                                     ,pr_nrctremp   IN tbepr_cdc_emprestimo.nrctremp%TYPE      --> Numero do contrato
+                                     ,pr_insitpro   IN NUMBER                                  --> Situação da proposta
+                                     -->> SAIDA
+                                     ,pr_retorno     OUT xmltype                               --> XML de retorno
+                                     ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);               --> Descrição da crítica
+
+  PROCEDURE pc_valida_envio_proposta(pr_cdcooper IN NUMBER     --> Código da cooperativa do lojista
+																		,pr_nrdconta IN NUMBER     --> Número da conta do lojista
+                                    ,pr_insitblq OUT NUMBER     --> 0 bloqueado 1 liberado
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE);
+
+  PROCEDURE pc_valida_geracao_contrato (pr_cdcooper  IN crapcop.cdcooper%TYPE    -- Código da cooperativa
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE    -- Número da conta
+                                       ,pr_nrctremp  IN crawepr.nrctremp%TYPE    -- Número do contrato
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE    -- Código de erro 
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);   -- Descrição de erro                              
+                                    
 
 END EMPR0012;
 /
@@ -1185,7 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       -- Montar mensagem de critica
       vr_status      := 400;
       vr_cdcritic    := 138;
-      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch  CECRED esta em execucao.';
+      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch AIMARO esta em execucao.';
       RAISE vr_exc_saida;
     END IF;  
       
@@ -3180,7 +3219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                  ,dsemail
                  ,idcomissao
                  ,idcooperado_cdc)
-             VALUES(pr_nmvendedor     
+          VALUES (replace(pr_nmvendedor,'&', 'E')
                  ,pr_nrcpf          
                  ,pr_dsemail        
                  ,pr_idcomissao
@@ -3225,7 +3264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         BEGIN
           UPDATE tbepr_cdc_vendedor 
-             SET nmvendedor      = pr_nmvendedor     
+             SET nmvendedor      =  REPLACE(pr_nmvendedor, '&', 'E')
                 ,nrcpf           = pr_nrcpf          
                 ,dsemail         = pr_dsemail        
                 ,idcooperado_cdc = pr_idcooperado_cdc
@@ -4157,6 +4196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
    -- Exceções
    vr_exc_erro EXCEPTION;
+   vr_exc_saida EXCEPTION;
    -- Tratamento de erros
    vr_dscritic crapcri.dscritic%TYPE;
    vr_cdcritic crapcri.cdcritic%TYPE;
@@ -4165,6 +4205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
    vr_nrdconta         VARCHAR2(100);
    vr_nrctremp         VARCHAR2(100);
    vr_flgdocdg         VARCHAR2(100);
+   vr_rowid            ROWID;
 
    CURSOR cr_crawepr IS
      select epr.rowid
@@ -4176,6 +4217,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         and epr.nrdconta=to_number(vr_nrdconta)
         and epr.nrctremp=to_number(vr_nrctremp);
      rw_crawepr cr_crawepr%ROWTYPE;
+
+   --> Cursor de Emprestimos
+   CURSOR cr_crapepr IS
+     SELECT 1              
+       FROM crapepr
+      WHERE crapepr.cdcooper = to_number(vr_cdcooper)
+        AND crapepr.nrdconta = to_number(vr_nrdconta)
+        AND crapepr.nrctremp = to_number(vr_nrctremp);
+    rw_crapepr cr_crapepr%ROWTYPE;
 
   BEGIN
 
@@ -4201,6 +4251,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       RAISE vr_exc_erro;
     END IF;
 
+    GENE0001.pc_gera_log(pr_cdcooper => to_number(vr_cdcooper)
+                        ,pr_cdoperad => 'AUTOCDC'
+                        ,pr_dscritic => 'Contrato: ' || vr_nrctremp || ' Retorno: ' || vr_flgdocdg
+                        ,pr_dsorigem => 'INT_CDC'
+                        ,pr_dstransa => 'Integracao Smart Share - CDC'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 -- TRUE
+                        ,pr_hrtransa => GENE0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'AUTOCDC'
+                        ,pr_nrdconta => to_number(vr_nrdconta)
+                        ,pr_nrdrowid => vr_rowid); 
+
     -- verifica existência da conta
     OPEN cr_crawepr;
     FETCH cr_crawepr INTO rw_crawepr;
@@ -4212,7 +4275,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       -- Gerar crítica
       vr_dscritic := 'Proposta nao encontrada.';
       -- Levantar exceção
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Busca dos detalhes do empréstimo
+    OPEN cr_crapepr;
+    FETCH cr_crapepr INTO rw_crapepr;
+    -- Se encontrar informações
+    IF cr_crapepr%FOUND THEN
+      CLOSE cr_crapepr;
+      -- Gerar critica 
+      vr_cdcritic := 970; --> 970 - Proposta ja efetivada.
+      vr_dscritic := 'Proposta ja efetivada';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_crapepr;
     END IF;
 
     -- se o fluxo foi aprovado e finalizado com sucesso
@@ -4269,7 +4346,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       END LOOP;
 
       pc_retorna_situacao_ibracred (pr_cdcooper  => rw_crawepr.cdcooper      --> Coodigo Cooperativa
-                                   ,pr_idorigem  => 7 --> Batch              --> Origem dos Dados
                                    ,pr_nrdconta  => rw_crawepr.nrdconta      --> Numero da Conta do Associado
                                    ,pr_nrctremp  => rw_crawepr.nrctremp      --> Numero do contrato
                                    ,pr_cdoperad  => 1                --> Codigo do operador
@@ -4295,11 +4371,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     pr_dscritic := null;  
 
     EXCEPTION
+      WHEN vr_exc_saida THEN
+        GENE0001.pc_gera_log(pr_cdcooper => to_number(vr_cdcooper)
+                            ,pr_cdoperad => 'AUTOCDC'
+                            ,pr_dscritic => 'Contrato: ' || vr_nrctremp || ' Retorno: ' || vr_flgdocdg || ' ' || vr_dscritic
+                            ,pr_dsorigem => 'INT_CDC'
+                            ,pr_dstransa => 'Integracao Smart Share - CDC'
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1 -- TRUE
+                            ,pr_hrtransa => GENE0002.fn_busca_time
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'AUTOCDC'
+                            ,pr_nrdconta => to_number(vr_nrdconta)
+                            ,pr_nrdrowid => vr_rowid); 
+        
+        pr_dscritic := vr_dscritic;
+        commit;
       WHEN vr_exc_erro THEN          
-        -- Descaz a atualização
-        rollback;
         -- Carregar XML padrao para variavel de retorno
         pr_dscritic := vr_dscritic;
+        -- Descaz a atualização
+        rollback;
       WHEN OTHERS THEN
         -- Retorno não OK
         pr_dscritic := 'NOK - '|| SQLERRM;
@@ -5437,6 +5529,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_data_inicial crapdat.dtmvtolt%type;
     vr_prazo_efetiva NUMBER;
     vr_flaliena      INTEGER;
+    vr_insitapr       NUMBER(1) := 5; -- situacao de pagamento efetuado
+    vr_insitpgn       NUMBER(2) := 25; -- situacao pagamento negado
+
+    vr_nmsistem VARCHAR2(4)  := 'CRED';
+    vr_cdacesso VARCHAR2(20) := 'PRAZO_EFETIVA_CDC';
+    vr_cdoperad VARCHAR2(10) := 'AUTOCDC';
+    vr_dsorigem VARCHAR2(10) := 'EFT_CDC';
+
+    vr_flgtrans NUMBER(1)    := 1; -- TRUE
+    vr_idseqttl NUMBER(1)    := 1;
+    vr_flgerlog NUMBER(1)    := 0;
+    vr_nmdatela VARCHAR2(10) := 'AUTOCDC';
+
+    vr_dstipo_doc   VARCHAR2(10) := 'EFETIVAR';
+    vr_dsreprovacao VARCHAR2(1)  := 2;
+    vr_dsobservacao VARCHAR2(25) := 'Contrato não efetivado';
 
     vr_tab_ratings  rati0001.typ_tab_ratings;
     vr_mensagem     VARCHAR2(4000);
@@ -5463,9 +5571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       CLOSE BTCH0001.cr_crapdat;
     END IF;
     
-    vr_prazo_efetiva := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+    vr_prazo_efetiva := gene0001.fn_param_sistema(pr_nmsistem => vr_nmsistem
                                                  ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_cdacesso => 'PRAZO_EFETIVA_CDC');
+                                                 ,pr_cdacesso => vr_cdacesso);
 
     vr_data_inicial := rw_crapdat.dtmvtolt-vr_prazo_efetiva;
 
@@ -5495,15 +5603,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         --raise vr_exc_saida;
         -- Gera Log
         GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                            ,pr_cdoperad => 'AUTOCDC'
+                            ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => 'EFT_CDC'
+                            ,pr_dsorigem => vr_dsorigem
                             ,pr_dstransa => 'Gravames proposta CDC.'
                             ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 1 -- TRUE
+                            ,pr_flgtrans => vr_flgtrans -- TRUE
                             ,pr_hrtransa => GENE0002.fn_busca_time
-                            ,pr_idseqttl => 1
-                            ,pr_nmdatela => 'AUTOCDC'
+                            ,pr_idseqttl => vr_idseqttl
+                            ,pr_nmdatela => vr_nmdatela
                             ,pr_nrdconta => rw_rapassecdc.nrdconta
                             ,pr_nrdrowid => vr_rowid
                             ); 
@@ -5531,15 +5639,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
               --raise vr_exc_saida;
               -- Gera Log
               GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                                  ,pr_cdoperad => 'AUTOCDC'
+                                  ,pr_cdoperad => vr_cdoperad
                                   ,pr_dscritic => vr_dscritic
-                                  ,pr_dsorigem => 'EFT_CDC'
+                                  ,pr_dsorigem => vr_dsorigem
                                   ,pr_dstransa => 'Recalculo de emprestimo.'
                                   ,pr_dttransa => TRUNC(SYSDATE)
-                                  ,pr_flgtrans => 1 -- TRUE
+                                  ,pr_flgtrans => vr_flgtrans
                                   ,pr_hrtransa => GENE0002.fn_busca_time
-                                  ,pr_idseqttl => 1
-                                  ,pr_nmdatela => 'AUTOCDC'
+                                  ,pr_idseqttl => vr_idseqttl
+                                  ,pr_nmdatela => vr_nmdatela
                                   ,pr_nrdconta => rw_rapassecdc.nrdconta
                                   ,pr_nrdrowid => vr_rowid
                                   ); 
@@ -5555,9 +5663,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                                 ,pr_nmdatela => vr_cdprogra               --> Nome da Tela
                                                 ,pr_idorigem => rw_rapassecdc.cdorigem    --> Origem dos Dados
                                                 ,pr_nrdconta => rw_rapassecdc.nrdconta    --> Numero da Conta do Associado
-                                                ,pr_idseqttl => 1                         --> Sequencial do Titular
+                                                ,pr_idseqttl => vr_idseqttl               --> Sequencial do Titular
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data Movimento
-                                                ,pr_flgerlog => 0                         --> Imprimir log 0=FALSE 1=TRUE
+                                                ,pr_flgerlog => vr_flgerlog               --> Imprimir log 0=FALSE 1=TRUE
                                                 ,pr_nrctremp => rw_rapassecdc.nrctremp    --> Numero Contrato Emprestimo
                                                 ,pr_dtdpagto => rw_crapdat.dtmvtolt       --> Data pagamento
                                                 ,pr_dtmvtopr => rw_crapdat.dtmvtopr       --> Data
@@ -5574,24 +5682,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
           -- Gera Log
           GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                              ,pr_cdoperad => 'AUTOCDC'
+                              ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'EFT_CDC'
+                              ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => 'Efetivacao proposta CDC.'
                               ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 -- TRUE
+                              ,pr_flgtrans => vr_flgtrans
                               ,pr_hrtransa => GENE0002.fn_busca_time
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => 'AUTOCDC'
+                              ,pr_idseqttl => vr_idseqttl
+                              ,pr_nmdatela => vr_nmdatela
                               ,pr_nrdconta => rw_rapassecdc.nrdconta
                               ,pr_nrdrowid => vr_rowid); 
           
           pc_grava_pedencia_emprestimo (pr_cdcooper => rw_rapassecdc.cdcooper
                                        ,pr_nrdconta => rw_rapassecdc.nrdconta
                                        ,pr_nrctremp => rw_rapassecdc.nrctremp
-                                       ,pr_dstipo_doc => 'EFETIVAR'
-                                       ,pr_dsreprovacao => 2
-                                       ,pr_dsobservacao => 'Contrato não efetivado'
+                                       ,pr_dstipo_doc   => vr_dstipo_doc
+                                       ,pr_dsreprovacao => vr_dsreprovacao
+                                       ,pr_dsobservacao => vr_dsobservacao
                                        ,pr_cdcritic => vr_cdcritic 
                                        ,pr_dscritic => vr_dscritic);
 
@@ -5602,11 +5710,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                        ,pr_dscritic => vr_dscritic);
 
           pc_retorna_situacao_ibracred (pr_cdcooper  => rw_rapassecdc.cdcooper      --> Coodigo Cooperativa
-                                       ,pr_idorigem  => 7 --> Batch      --> Origem dos Dados
                                        ,pr_nrdconta  => rw_rapassecdc.nrdconta      --> Numero da Conta do Associado
                                        ,pr_nrctremp  => rw_rapassecdc.nrctremp      --> Numero do contrato
-                                       ,pr_cdoperad  => 1                --> Codigo do operador
-                                       ,pr_cdsitprp  => 25 -- Pagamento negado      --> Situação da proposta na IBRACRED
+                                       ,pr_cdoperad  => vr_cdoperad      --> Codigo do operador
+                                       ,pr_cdsitprp  => vr_insitpgn      --> Situação da proposta na IBRACRED
                                        ,pr_cdcritic  => vr_cdcritic      --> Código da crítica
                                        ,pr_dscritic  => vr_dscritic);   --> Descrição da crítica
 
@@ -5625,15 +5732,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           --raise vr_exc_saida;
           -- Gera Log
           GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                              ,pr_cdoperad => 'AUTOCDC'
+                              ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'EFT_CDC'
+                              ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => 'Efetuar repasse CDC.'
                               ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 -- TRUE
+                              ,pr_flgtrans => vr_flgtrans
                               ,pr_hrtransa => GENE0002.fn_busca_time
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => 'AUTOCDC'
+                              ,pr_idseqttl => vr_idseqttl
+                              ,pr_nmdatela => vr_nmdatela
                               ,pr_nrdconta => rw_rapassecdc.nrdconta
                               ,pr_nrdrowid => vr_rowid
                               ); 
@@ -5658,15 +5765,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           --raise vr_exc_saida;
           -- Gera Log
           GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
-                              ,pr_cdoperad => 'AUTOCDC'
+                              ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'EFT_CDC'
+                              ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => 'Efetuar repasse CDC.'
                               ,pr_dttransa => TRUNC(SYSDATE)
-                              ,pr_flgtrans => 1 -- TRUE
+                              ,pr_flgtrans => vr_flgtrans
                               ,pr_hrtransa => GENE0002.fn_busca_time
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => 'AUTOCDC'
+                              ,pr_idseqttl => vr_idseqttl
+                              ,pr_nmdatela => vr_nmdatela
                               ,pr_nrdconta => rw_rapassecdc.nrdconta
                               ,pr_nrdrowid => vr_rowid
                               ); 
@@ -6153,7 +6260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                        ,pr_nrctremp => pr_nrctremp
                                        ,pr_dstipo_doc => 'GRAVAMES'
                                        ,pr_dsreprovacao => 2   --dsreprovacao (0-aprovado, 2-nao aprovado)
-                                       ,pr_dsobservacao => substr(vr_dscrigrv,1,100)
+                                       ,pr_dsobservacao => vr_dscrigrv
                                        ,pr_cdcritic => vr_cdcritic 
                                        ,pr_dscritic => vr_dscritic);
 
@@ -6174,7 +6281,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           END IF;                            
 
           pc_retorna_situacao_ibracred (pr_cdcooper  => pr_cdcooper      --> Coodigo Cooperativa
-                                       ,pr_idorigem  => 7 --> Batch      --> Origem dos Dados
                                        ,pr_nrdconta  => pr_nrdconta      --> Numero da Conta do Associado
                                        ,pr_nrctremp  => pr_nrctremp      --> Numero do contrato
                                        ,pr_cdoperad  => 1                --> Codigo do operador
@@ -6661,7 +6767,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
             --Enviar Email
             GENE0003.pc_solicita_email(pr_cdcooper        => rw_crapcdr.cdcooper    --> Cooperativa conectada
                                       ,pr_cdprogra        => 'JBEPR_RENOVARTARIFACDC'    --> Programa conectado
-                                      ,pr_des_destino     => 'CECRED - CDC <cdc@cecred.coop.br>' --> Um ou mais detinatários separados por ';' ou ','
+                                      ,pr_des_destino     => 'cdc@ailos.coop.br' --> Um ou mais detinatários separados por ';' ou ','
                                       ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
                                       ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
                                       ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
@@ -6820,7 +6926,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   END pc_altera_situacao_proposta;
   
   PROCEDURE pc_retorna_situacao_ibracred (pr_cdcooper  IN crapcop.cdcooper%TYPE      --> Coodigo Cooperativa
-                                         ,pr_idorigem  IN INTEGER                    --> Origem dos Dados
                                          ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da Conta do Associado
                                          ,pr_nrctremp  IN crapepr.nrctremp%TYPE      --> Numero do contrato
                                          ,pr_cdoperad  IN crapope.cdoperad%TYPE      --> Codigo do operador
@@ -7158,6 +7263,660 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Erro ao retornar situacao: ' || SQLERRM;
   END pc_grava_pedencia_emprestimo;      
+
+  PROCEDURE pc_reg_push_sit_prop_cdc_web (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
+                                         ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
+                                         ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                         ,pr_insitpro   IN NUMBER                              --> Situação da proposta
+                                         ,pr_xmllog     IN VARCHAR2                            --> XML com informações de LOG
+                                         ,pr_cdcritic   OUT PLS_INTEGER                        --> Código da crítica
+                                         ,pr_dscritic   OUT VARCHAR2                           --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY xmltype                  --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo   OUT VARCHAR2                           --> Nome do Campo
+                                         ,pr_des_erro   OUT VARCHAR2) IS                       --> Saida OK/NOK
+  /* .............................................................................
+       Programa: pc_reg_push_sit_prop_cdc_web 
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael Faria (supero)
+       Data    : 24/08/2018                            Ultima atualizacao:
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Rotina responsavel por notificar alteracao de proposta
+
+       Alteracoes:
+    ............................................................................. */
+    
+  BEGIN
+
+    pc_registra_push_sit_prop_cdc (pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrctremp => pr_nrctremp
+                                  ,pr_insitpro => pr_insitpro
+                                  ,pr_cdcritic => pr_cdcritic
+                                  ,pr_dscritic => pr_dscritic);
+    
+    -- Carregar XML padrao para variavel de retorno
+  	pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																	 '<Root></Root>');
+
+  EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral no programa: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_reg_push_sit_prop_cdc_web;      
+
+  PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
+                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_insitpro   IN NUMBER                              --> Situação da proposta
+                                          -->> SAIDA
+                                          ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2) IS               --> Descrição da crítica
+
+  /* .............................................................................
+
+       Programa: pc_registra_push_sit_prop_cdc 
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael Faria (supero)
+       Data    : 24/08/2018                            Ultima atualizacao:
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Rotina responsavel por notificar alteracao de proposta
+
+       Alteracoes:
+    ............................................................................. */
+
+    ----->> VARIAVEIS <<-----
+    -- Variáveis de Erro          
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   crapcri.cdcritic%TYPE := 0;
+    vr_dscritic   crapcri.dscritic%TYPE;
+    
+    -- variaveis programa
+    vr_cdprodut   INTEGER;
+    vr_dsprodut   VARCHAR2(20);
+    vr_idevento   tbgen_evento_soa.idevento%type;
+    
+    vr_tpevento tbgen_evento_soa.tpevento%type := 'COMUNICACAO';
+    vr_tproduto_evento tbgen_evento_soa.tproduto_evento%type := 'CDC';
+    vr_tpoperacao tbgen_evento_soa.tpoperacao%type := 'NOTIFICAR';
+
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+    ---------------------------> SUBROTINAS <--------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END; 
+    
+  BEGIN
+
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+
+    pc_escreve_xml ('<?xml version="1.0" encoding="ISO-8859-1" ?><dados>');   
+    
+    -- tag propostaContratoCredito
+    pc_escreve_xml ('<propostaContratoCredito>');
+      -- tag emitente
+      pc_escreve_xml ('<emitente>');
+        pc_escreve_xml ('<contaCorrente>'); 
+        pc_escreve_xml ('<codigoContaSemDigito>'||substr(pr_nrdconta,1,length(pr_nrdconta)-1)||'</codigoContaSemDigito>');
+        pc_escreve_xml ('<digitoVerificadorConta>'||substr(pr_nrdconta,-1)||'</digitoVerificadorConta>');
+        pc_escreve_xml ('<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>');
+        pc_escreve_xml ('</contaCorrente>'); 
+      pc_escreve_xml ('</emitente>');
+       /*
+        3:"Aprovada"
+        4:"Não Aprovada"
+        5:"Pagamento Efetuado"
+        8:"Cancelada"
+        18:"Pendente"
+        24:"Pagamento em análise"
+        25:"Pagamento Negado"
+       */
+      pc_escreve_xml ('<statusProposta><codigo>'||pr_insitpro||'</codigo></statusProposta>');
+      pc_escreve_xml ('<identificadorProposta>'||pr_nrctremp||'</identificadorProposta>');
+
+    pc_escreve_xml ('</propostaContratoCredito>');
+
+    pc_escreve_xml ('</dados>',TRUE);
+
+    soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
+                                ,pr_nrdconta               => pr_nrdconta
+                                ,pr_nrctrprp               => pr_nrctremp
+                                ,pr_tpevento               => vr_tpevento
+                                ,pr_tproduto_evento        => vr_tproduto_evento
+                                ,pr_tpoperacao             => vr_tpoperacao
+                                ,pr_dsconteudo_requisicao  => vr_des_xml
+                                ,pr_idevento               => vr_idevento
+                                ,pr_dscritic               => vr_dscritic);
+
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro ao retornar situacao: ' || SQLERRM;
+  END pc_registra_push_sit_prop_cdc;      
+
+  PROCEDURE pc_prepara_push_prop_cdc (pr_cdcooper   IN tbepr_cdc_emprestimo.cdcooper%TYPE      --> Coodigo Cooperativa
+                                     ,pr_nrdconta   IN tbepr_cdc_emprestimo.nrdconta%TYPE      --> Numero da Conta do Associado
+                                     ,pr_nrctremp   IN tbepr_cdc_emprestimo.nrctremp%TYPE      --> Numero do contrato
+                                     ,pr_insitpro   IN NUMBER                                  --> Situação da proposta
+                                     -->> SAIDA
+                                     ,pr_retorno     OUT xmltype                               --> XML de retorno
+                                     ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2) IS               --> Descrição da crítica
+
+  /* .............................................................................
+
+       Programa: pc_prepara_push_prop_cdc 
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael Faria (supero)
+       Data    : 24/08/2018                            Ultima atualizacao:
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Rotina responsavel prepara notificacao proposta
+
+       Alteracoes:
+    ............................................................................. */
+    ----->> CURSORES <<-----
+    --> Buscar dados do emprestimo
+    CURSOR cr_emprestimo (pr_cdcooper crawepr.cdcooper%TYPE
+                         ,pr_nrdconta crawepr.nrdconta%TYPE
+                         ,pr_nrctremp crawepr.nrctremp%TYPE)IS
+      SELECT tce.idcooperado_cdc
+            ,a.nmprimtl
+            ,epr.cdfinemp
+            -- Indica que am linha de credito eh CDC ou C DC
+            ,DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc
+        FROM tbepr_cdc_emprestimo tce
+            ,crawepr epr
+            ,crapass a
+       WHERE epr.cdcooper = tce.cdcooper
+         AND epr.nrdconta = tce.nrdconta
+         AND epr.nrctremp = tce.nrctremp
+         AND epr.cdcooper = a.cdcooper
+         AND epr.nrdconta = a.nrdconta
+         AND tce.cdcooper = pr_cdcooper
+         AND tce.nrdconta = pr_nrdconta
+         AND tce.nrctremp = pr_nrctremp;
+    rw_emprestimo cr_emprestimo%ROWTYPE;
+
+    CURSOR cr_usuario (pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%type) IS
+      SELECT u.idusuario
+            ,u.dslogin
+            ,u.dstoken_ios
+            ,u.dstoken_android
+            ,u.dstoken_web
+            ,n.flgprop_aprovada
+            ,n.flgprop_negagada
+            ,n.flgprop_cancelada
+            ,n.flgpgto_efetuado
+            ,n.flgpgto_analise
+            ,n.flgpgto_negado
+            ,n.flgpgto_pendente
+        FROM tbepr_cdc_usuario_vinculo v
+            ,tbepr_cdc_usuario u
+            ,tbepr_cdc_usuario_notifica n
+       WHERE v.idusuario=u.idusuario
+         and u.idusuario=n.idusuario
+         and v.idcooperado_cdc=pr_idcooperado_cdc
+         and n.flgnotifica=0; --TODO 1 quando liberar
+    rw_usuario cr_usuario%rowtype;
+
+    ----->> VARIAVEIS <<-----
+    -- Variáveis de Erro          
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   crapcri.cdcritic%TYPE := 0;
+    vr_dscritic   crapcri.dscritic%TYPE;
+
+    -- variaveis programa
+    vr_contador   numeric :=0;
+    vr_idevento   tbgen_evento_soa.idevento%type;
+
+    -- chamada do servico
+    vr_tpevento        tbgen_evento_soa.tpevento%type        := 'COMUNICACAO';
+    vr_tproduto_evento tbgen_evento_soa.tproduto_evento%type := 'CDC';
+    vr_tpoperacao      tbgen_evento_soa.tpoperacao%type      := 'NOTIFICAR';
+    vr_dssitpro        varchar2(100);
+
+    -- links para acesso
+    vr_url_portal  varchar2(100) := 'https://portalcdchml2.ailos.coop.br';
+    vr_url_ios     varchar2(100) := '';
+    vr_url_android varchar2(100) := '';
+    
+    vr_prioridade number(1) :=2;
+    vr_canalComunicacao number(1) :=3;
+    vr_canalRelacionamento number(1) :=2;
+
+    -- variaveis de controle de push
+    vr_flgprop_aprovada  tbepr_cdc_usuario_notifica.flgprop_aprovada%type  :=0;
+    vr_flgprop_negagada  tbepr_cdc_usuario_notifica.flgprop_negagada%type  :=0;
+    vr_flgprop_cancelada tbepr_cdc_usuario_notifica.flgprop_cancelada%type :=0;
+    vr_flgpgto_efetuado  tbepr_cdc_usuario_notifica.flgpgto_efetuado%type  :=0;
+    vr_flgpgto_analise   tbepr_cdc_usuario_notifica.flgpgto_analise%type   :=0;
+    vr_flgpgto_negado    tbepr_cdc_usuario_notifica.flgpgto_negado%type    :=0;
+    vr_flgpgto_pendente  tbepr_cdc_usuario_notifica.flgpgto_pendente%type  :=0;
+
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+
+    ---------------------------> SUBROTINAS <--------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END; 
+    
+  BEGIN  
+
+    --> Buscar dados do emprestimo
+    OPEN cr_emprestimo (pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => pr_nrctremp);
+    FETCH cr_emprestimo INTO rw_emprestimo;
+    IF cr_emprestimo%NOTFOUND THEN
+      vr_cdcritic := 535; --> 535 - Proposta nao encontrada.
+      CLOSE cr_emprestimo;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_emprestimo;
+    END IF;
+
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+
+    -- iniciar xml
+    pc_escreve_xml ('<?xml version="1.0" encoding="ISO-8859-1" ?><dados>');
+
+      pc_escreve_xml ('<cdcooper>'||pr_cdcooper||'</cdcooper>');
+      pc_escreve_xml ('<nrdconta>'||pr_nrdconta||'</nrdconta>');
+      pc_escreve_xml ('<nrctremp>'||pr_nrctremp||'</nrctremp>');
+      pc_escreve_xml ('<insitpro>'||pr_insitpro||'</insitpro>');
+    
+    /*
+    3:"Aprovada"
+    4:"Não Aprovada"
+    5:"Pagamento Efetuado"
+    8:"Cancelada"
+    18:"Pendente"
+    24:"Pagamento em análise"
+    25:"Pagamento Negado"
+    */
+
+    IF pr_insitpro=3 THEN
+      vr_dssitpro := 'Aprovado';
+      vr_flgprop_aprovada:=1;
+    ELSIF pr_insitpro=4 THEN
+      vr_dssitpro := 'Nao Aprovado';
+      vr_flgprop_negagada:=1;
+    ELSIF pr_insitpro=5 THEN
+      vr_dssitpro := 'Pagamento efetuado';
+      vr_flgpgto_efetuado:=1;
+    ELSIF pr_insitpro=8 THEN
+      vr_dssitpro := 'Cancelada';
+      vr_flgprop_cancelada:=1;
+    ELSIF pr_insitpro=18 THEN
+      vr_dssitpro := 'Pendente';
+      vr_flgpgto_pendente:=1;
+    ELSIF pr_insitpro=24 THEN
+      vr_dssitpro := 'Pagamento em analise';
+      vr_flgpgto_analise:=1;
+    ELSIF pr_insitpro=25 THEN
+      vr_dssitpro := 'Pagamento negado';
+      vr_flgpgto_negado:=1;
+    END IF;
+    
+      pc_escreve_xml ('<dsmsgpush>'||'A proposta do(a) cooperado (a) '|| rw_emprestimo.nmprimtl ||' teve o status atualizado(a) para '|| vr_dssitpro ||'</dsmsgpush>');
+      pc_escreve_xml ('<dstitpush>Notificacao de proposta</dstitpush>');
+
+      pc_escreve_xml ('<prioridade>'||vr_prioridade||'</prioridade>');
+      pc_escreve_xml ('<canalComunicacao>'||vr_canalComunicacao||'</canalComunicacao>');
+      pc_escreve_xml ('<canalRelacionamento>'||vr_canalRelacionamento||'</canalRelacionamento>');
+
+      pc_escreve_xml ('<lista>');  
+    FOR rw_usuario in cr_usuario (rw_emprestimo.idcooperado_cdc) LOOP
+
+      -- verifica se o usuario deve receber o PUSH conforme configuracao
+      IF vr_flgprop_aprovada=1 AND rw_usuario.flgprop_aprovada=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgprop_negagada=1 AND rw_usuario.flgprop_negagada=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgprop_cancelada=1 AND rw_usuario.flgprop_cancelada=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgpgto_efetuado=1 AND rw_usuario.flgpgto_efetuado=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgpgto_analise=1 AND rw_usuario.flgpgto_analise=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgpgto_negado=1 AND rw_usuario.flgpgto_negado=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSIF vr_flgpgto_pendente=1 AND rw_usuario.flgpgto_pendente=1 THEN
+        vr_contador := vr_contador + 1;
+      ELSE
+        continue;
+      END IF;
+
+      -- verifica os dispositivos que iram receber a mensagem IOS
+      IF rw_usuario.dstoken_ios is not null THEN
+        pc_escreve_xml ('<dispostivo>');
+          pc_escreve_xml ('<token>'||rw_usuario.dstoken_ios||'</token>');
+          pc_escreve_xml ('<url>'||vr_url_ios||'</url>');
+        pc_escreve_xml ('</dispostivo>');
+      END IF;
+
+      -- verifica os dispositivos que iram receber a mensagem ANDROID
+      IF rw_usuario.dstoken_android is not null THEN
+        pc_escreve_xml ('<dispostivo>');
+          pc_escreve_xml ('<token>'||rw_usuario.dstoken_android||'</token>');
+          pc_escreve_xml ('<url>'||vr_url_android||'</url>');
+        pc_escreve_xml ('</dispostivo>');
+      END IF;
+
+      -- verifica os dispositivos que iram receber a mensagem PORTAL
+      IF rw_usuario.dstoken_web is not null THEN
+        pc_escreve_xml ('<dispostivo>');
+          pc_escreve_xml ('<token>'||rw_usuario.dstoken_web||'</token>');
+          pc_escreve_xml ('<url>'||vr_url_portal||'</url>');
+        pc_escreve_xml ('</dispostivo>');
+      END IF;
+
+    END LOOP;
+      pc_escreve_xml ('</lista>');
+    pc_escreve_xml ('</dados>',TRUE);
+
+    IF vr_contador = 0 THEN
+      -- Gerar crítica
+      vr_cdcritic := 0;  
+      vr_dscritic := 'Usuario sem configuracao de push';
+      -- Levantar exceção
+      RAISE vr_exc_erro;
+    ELSE
+      pr_retorno := xmltype(vr_des_xml);
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_retorno := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+
+      
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+     pr_cdcritic := 0;
+     pr_dscritic := 'Erro não tratado na pc_retorna_segmento: ' || SQLERRM;
+     -- Carregar XML padrao para variavel de retorno
+     pr_retorno := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_prepara_push_prop_cdc;      
+
+  PROCEDURE pc_valida_envio_proposta(pr_cdcooper IN NUMBER     --> Código da cooperativa do lojista
+																		,pr_nrdconta IN NUMBER     --> Número da conta do lojista
+                                    ,pr_insitblq OUT NUMBER     --> 0 bloqueado 1 liberado
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+	/* .............................................................................
+		Programa: pc_valida_envio_proposta
+		Sistema : Integração CDC x Autorizador
+		Sigla   : CRED
+		Autor   : Rafael Faria (supero)
+		Data    : Agosto/2018                       Ultima atualizacao: 
+	    
+		Dados referentes ao programa:
+	    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Rotina responsável por validar a trava de envio de proposta
+	    
+		Alteracoes: 
+	............................................................................. */
+	
+    -- Variáveis para tratamento de erros
+		vr_exc_erro EXCEPTION;
+    vr_erro_lojista EXCEPTION;
+		vr_dscritic crapcri.dscritic%TYPE;
+		
+		-- Variáveis auxiliares
+		vr_qtdaciona NUMBER := 0;
+
+		 -- data das coopeativas
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Buscar parâmetros do cdc
+		CURSOR cr_param_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+		  SELECT par.nrprop_env
+			      ,par.intempo_prop_env
+			  FROM tbepr_cdc_parametro par
+			 WHERE par.cdcooper = pr_cdcooper;		
+		rw_param_cdc cr_param_cdc%ROWTYPE;
+
+		CURSOR cr_ver_aciona(pr_cdcooper IN NUMBER
+		                    ,pr_nrdconta IN NUMBER
+												,pr_intempo_prop_env IN NUMBER) IS 
+		  SELECT count(aci.rowid)
+			  FROM tbsite_cooperado_cdc c
+            ,tbepr_cdc_emprestimo e
+            ,tbgen_webservice_aciona aci
+			 WHERE c.cdcooper=pr_cdcooper
+         AND c.nrdconta=pr_nrdconta
+         AND c.idmatriz is null
+         AND c.idcooperado_cdc=e.idcooperado_cdc
+         AND aci.cdcooper=e.cdcooper
+         AND aci.nrdconta=e.nrdconta
+         AND aci.nrctrprp=e.nrctremp
+         AND aci.dsoperacao='INTEGRACAO CDC - INCLUSAO PROPOSTA'
+         AND aci.dhacionamento >= (SYSDATE - ((pr_intempo_prop_env / 60)/24));
+
+  BEGIN
+
+	  -- Buscar parâmetros CDC da cooperativa
+	  OPEN cr_param_cdc(pr_cdcooper => pr_cdcooper);
+		FETCH cr_param_cdc INTO rw_param_cdc;
+
+    -- Se não encontrou parâmetros de integração CDC
+    IF cr_param_cdc%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_param_cdc;
+			-- Gerar crítica
+			vr_dscritic := 'Parametros de CDC nao cadastrados.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_param_cdc;	
+
+    -- Verificar quantidade de acionamentos feitos pelo mesmo lojista dentro de uma hora		
+    OPEN cr_ver_aciona(pr_cdcooper => pr_cdcooper
+		                  ,pr_nrdconta => pr_nrdconta
+								  		,pr_intempo_prop_env=> rw_param_cdc.intempo_prop_env );
+		FETCH cr_ver_aciona INTO vr_qtdaciona;
+    -- Fechar cursor
+		CLOSE cr_ver_aciona;
+
+    -- Verificar quantidade máxima parametrizada de envio de propostas por hora
+    IF vr_qtdaciona > rw_param_cdc.nrprop_env THEN
+			-- Gerar crítica
+			vr_dscritic    := 'Lojista excedeu a quantidade de envio de propostas!';
+			-- Levantar exceção
+			RAISE vr_erro_lojista;
+		END IF;
+
+    -- pode enviar propostas
+    pr_insitblq := 1;
+
+	EXCEPTION
+		WHEN vr_erro_lojista THEN		
+			gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper
+		                          ,pr_cdprogra => 'EMPR0012'
+															,pr_des_destino => 'cdc@ailos.coop.br'
+															,pr_des_assunto => 'Lojista excedeu o numero de envio de proposta'
+															,pr_des_corpo => 'O Lojista da cooperativa ' || pr_cdcooper || ' conta ' || pr_nrdconta ||'.'|| CHR(13) ||
+																							 'Excedeu a quantidade maxima de proposta enviadas ' || rw_param_cdc.nrprop_env || ' em menos de ' || rw_param_cdc.intempo_prop_env || 'de horas.'
+															,pr_des_anexo => ''
+															,pr_des_erro => vr_dscritic);
+      -- Atribuir críticas
+			pr_dscritic := vr_dscritic;
+      -- nao pode enviar proposta
+      pr_insitblq := 0;
+    WHEN vr_exc_erro THEN
+      pr_dscritic := 'Cooperativa sem parametros configurados';
+
+    WHEN OTHERS THEN
+      -- Erro
+      pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+      -- nao pode enviar proposta
+      pr_insitblq := 0;
+  END pc_valida_envio_proposta;
+  
+  PROCEDURE pc_valida_geracao_contrato (pr_cdcooper  IN crapcop.cdcooper%TYPE    -- Código da cooperativa
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE    -- Número da conta
+                                       ,pr_nrctremp  IN crawepr.nrctremp%TYPE    -- Número do contrato
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE    -- Código de erro 
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição de erro                              
+    /* .............................................................................
+
+      Programa: pc_valida_geracao_contrato
+      Sistema : Barramento de Serviço
+      Autor   : Rafael Faria - Supero
+      Data    : 17/12/2018                 Ultima atualizacao:
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotirna responsavel por validar a situacao da proposta na geracao do contrato CDC
+
+      Alteracoes: -----
+    ..............................................................................*/
+
+      -- Verificar se contrato de emprestimo já foi aprovado
+      CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crawepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+        SELECT epr.insitapr
+              ,epr.insitest
+              ,epr.cdoperad
+          FROM crawepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;     
+      rw_crawepr cr_crawepr%ROWTYPE;
+       
+      --> Cursor de Emprestimos
+      CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT 1              
+          FROM crapepr
+         WHERE crapepr.cdcooper = pr_cdcooper
+           AND crapepr.nrdconta = pr_nrdconta
+           AND crapepr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;
+
+      -- Variáveis de Erro          
+      vr_exc_erro EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+
+    BEGIN
+    
+      -- Verificar se contrato de emprestimo existe
+      OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_crawepr INTO rw_crawepr;
+      
+      -- Se não encotrou, incluir critica e sair
+      IF cr_crawepr%NOTFOUND THEN
+        vr_cdcritic := 535;
+        close cr_crawepr;
+        raise vr_exc_erro;
+      END IF;
+      CLOSE cr_crawepr;
+      
+      IF rw_crawepr.insitapr not in (1,       --> Aprovado
+                                     3) then  --> Aprovado com Restricao
+        vr_cdcritic := 0;
+        vr_dscritic := 'A proposta deve estar aprovada!';
+        raise vr_exc_erro;
+      END IF;   
+     
+      IF upper(rw_crawepr.cdoperad) != 'AUTOCDC' THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Proposta nao e da integracao CDC';
+        raise vr_exc_erro;
+      END IF;
+      
+      -- Busca dos detalhes do empréstimo
+      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_crapepr INTO rw_crapepr;
+      -- Se encontrar informações
+      IF cr_crapepr%FOUND THEN
+        CLOSE cr_crapepr;
+        
+        -- Gerar critica 
+        vr_cdcritic := 970; --> 970 - Proposta ja efetivada.
+        RAISE vr_exc_erro;
+        
+      ELSE
+        CLOSE cr_crapepr;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral ao atualizar sit. proposta: ' || SQLERRM;
+        ROLLBACK;
+
+  END pc_valida_geracao_contrato;
+  
 
 END EMPR0012;
 /
