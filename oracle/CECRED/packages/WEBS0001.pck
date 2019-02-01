@@ -880,6 +880,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrdrowid      ROWID;
       vr_exc_saida     EXCEPTION;
       vr_exc_erro_500  EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%type;
+      vr_dscritic crapcri.dscritic%type;
+      vr_insitpro NUMBER(2);
+
       /*M438*/
             --PL tables
       vr_tab_rating_sing      RATI0001.typ_tab_crapras;
@@ -897,9 +901,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_flgcriar             NUMBER;
       vr_des_reto             VARCHAR2(100);
       /*Fim 438*/
-      
-      vr_cdcritic crapcri.cdcritic%type;
-      vr_dscritic crapcri.dscritic%type;
       
     BEGIN
       --Limpar tabela erro      
@@ -1303,16 +1304,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END IF;
 
       -- se for CDC ira notificar a alteracao da proposta via push
-      IF rw_crapfin.tpfinali = 3 and pr_insitpro in (1,2) THEN
+      IF rw_crapfin.tpfinali = 3 and pr_insitapr in (1,2) THEN
 
         -- avisar o pagamento efetuado para a push
-        -- (1 aprovado, 5 aprovado), (2 reprovada, 25 pgto negado)
-        pc_registra_push_sit_prop_cdc (pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_nrctremp => pr_nrctremp
-                                      ,pr_insitpro => decode(pr_insitapr,1,5,25)
-                                      ,pr_cdcritic => vr_cdcritic  --> Codigo da critica
-                                      ,pr_dscritic => vr_dscritic); --> Descricao da critica
+        -- (1 aprovado, 3 aprovado), (2 reprovada, 4 nao aprovado)
+        IF pr_insitapr= 1 THEN
+          vr_insitpro := 3;
+        ELSE
+          vr_insitpro := 4;
+        END IF;
+
+        EMPR0012.pc_registra_push_sit_prop_cdc (pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => pr_nrdconta
+                                               ,pr_nrctremp => pr_nrctremp
+                                               ,pr_insitpro => vr_insitpro
+                                               ,pr_cdcritic => vr_cdcritic  --> Codigo da critica
+                                               ,pr_dscritic => vr_dscritic); --> Descricao da critica
       END IF;
       
       -- Caso nao ocorreu nenhum erro, vamos retorna como status de OK
