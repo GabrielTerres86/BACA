@@ -5,7 +5,7 @@
 	 Autor: Luis Fernando (GFT)
 	 Data : 24/01/2019                Última Alteração: 
 	                                                                  
-	 Objetivo  : Agrupa as rotinas de analise 
+	 Objetivo  : Agrupa as rotinas de analise dos pagadores e dos titulos
 
 	************************************************************************/
 	
