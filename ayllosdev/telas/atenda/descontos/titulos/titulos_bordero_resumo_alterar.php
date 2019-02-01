@@ -46,45 +46,6 @@
 	}
 	$selecionados = implode($selecionados,",");
 
-	// FAZ VALIDAÇÃO DOS TITULOS SE BATEM COM AS REGRAS DA TAB052 DE VALOR E PRAZO
-	$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <chave>".$selecionados."</chave>";
-	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VALIDAR_TITULOS_ALTERACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getClassXML($xmlResult);
-    $root = $xmlObj->roottag;
-    // Se ocorrer um erro, mostra crítica
-	if ($root->erro){
-		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","hideMsgAguardo()");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
-		echo "</script>";
-		exit;
-	}
-
-	/*Faz solicitação no Biro para os titulos*/
-	$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <chave>".$selecionados."</chave>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-
- 	// CONSULTA DA IBRATAN	
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getClassXML($xmlResult);
-    $root = $xmlObj->roottag;
-    // Se ocorrer um erro, mostra crítica
-	if ($root->erro){
-		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
-		echo "</script>";
-	}
-
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
     $xml .= " <Dados>";

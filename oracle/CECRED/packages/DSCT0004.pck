@@ -807,6 +807,9 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
 
+  vr_tab_dados_titulos TELA_ATENDA_DSCTO_TIT.typ_tab_dados_titulos;
+  vr_tab_dados_pagador TELA_ATENDA_DSCTO_TIT.typ_tab_dados_pagador;
+
   CURSOR cr_crapcbd(pr_nrinssac crapcob.nrinssac%TYPE) IS
   SELECT crapcbd.nrconbir
         ,crapcbd.nrseqdet
@@ -878,10 +881,7 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
       END IF;
-
-      pc_inicia_xml;
-      pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>');
-  
+      -- Agrupa os pagadores para fazer solicitação de calculo no biro
       vr_index := vr_tab_nrdocmto.first;
       WHILE vr_index IS NOT NULL
       LOOP
@@ -897,15 +897,70 @@ BEGIN
                                                   ,pr_cdbandoc => vr_tab_cdbandoc(vr_index) );
             FETCH tela_atenda_dscto_tit.cr_crapcob INTO tela_atenda_dscto_tit.rw_crapcob;
             IF    tela_atenda_dscto_tit.cr_crapcob%FOUND THEN
+             vr_tab_dados_titulos(vr_index).cdcooper := tela_atenda_dscto_tit.rw_crapcob.cdcooper;
+             vr_tab_dados_titulos(vr_index).nrdconta := tela_atenda_dscto_tit.rw_crapcob.nrdconta;
+             vr_tab_dados_titulos(vr_index).nrctremp := tela_atenda_dscto_tit.rw_crapcob.nrctremp;
+             vr_tab_dados_titulos(vr_index).nrcnvcob := tela_atenda_dscto_tit.rw_crapcob.nrcnvcob;
+             vr_tab_dados_titulos(vr_index).nrdocmto := tela_atenda_dscto_tit.rw_crapcob.nrdocmto;
+             vr_tab_dados_titulos(vr_index).nrinssac := tela_atenda_dscto_tit.rw_crapcob.nrinssac;
+             vr_tab_dados_titulos(vr_index).nmdsacad := tela_atenda_dscto_tit.rw_crapcob.nmdsacad;
+             vr_tab_dados_titulos(vr_index).dtvencto := tela_atenda_dscto_tit.rw_crapcob.dtvencto;
+             vr_tab_dados_titulos(vr_index).dtmvtolt := tela_atenda_dscto_tit.rw_crapcob.dtmvtolt;
+             vr_tab_dados_titulos(vr_index).vltitulo := tela_atenda_dscto_tit.rw_crapcob.vltitulo;
+             vr_tab_dados_titulos(vr_index).nrnosnum := tela_atenda_dscto_tit.rw_crapcob.nrnosnum;
+             vr_tab_dados_titulos(vr_index).flgregis := tela_atenda_dscto_tit.rw_crapcob.flgregis;
+             vr_tab_dados_titulos(vr_index).cdtpinsc := tela_atenda_dscto_tit.rw_crapcob.cdtpinsc;
+             vr_tab_dados_titulos(vr_index).vldpagto := tela_atenda_dscto_tit.rw_crapcob.vldpagto;
+             vr_tab_dados_titulos(vr_index).cdbandoc := tela_atenda_dscto_tit.rw_crapcob.cdbandoc;
+             vr_tab_dados_titulos(vr_index).nrdctabb := tela_atenda_dscto_tit.rw_crapcob.nrdctabb;
+             vr_tab_dados_titulos(vr_index).dtdpagto := tela_atenda_dscto_tit.rw_crapcob.dtdpagto;
+             vr_tab_dados_titulos(vr_index).nrborder := tela_atenda_dscto_tit.rw_crapcob.nrborder;
+             vr_tab_dados_titulos(vr_index).dtlibbdt := tela_atenda_dscto_tit.rw_crapcob.dtlibbdt;
+             vr_tab_dados_titulos(vr_index).dssittit := tela_atenda_dscto_tit.rw_crapcob.dssittit;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).nrinssac := tela_atenda_dscto_tit.rw_crapcob.nrinssac;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).nrdconta := tela_atenda_dscto_tit.rw_crapcob.nrdconta;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).cdcooper := tela_atenda_dscto_tit.rw_crapcob.cdcooper;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).nrcepsac := tela_atenda_dscto_tit.rw_crapcob.nrcepsac;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).inpessoa := tela_atenda_dscto_tit.rw_crapcob.cdtpinsc;
+             vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).vlttitbd := nvl(vr_tab_dados_pagador(tela_atenda_dscto_tit.rw_crapcob.nrinssac).vlttitbd,0) + tela_atenda_dscto_tit.rw_crapcob.vltitulo;
+          END IF;
+          CLOSE tela_atenda_dscto_tit.cr_crapcob;
+        END IF;
 
+        vr_qtpagina := vr_qtpagina +1;
+        vr_index := vr_tab_nrdocmto.next(vr_index);
+      END LOOP;
+
+      pc_inicia_xml;
+      pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>');
+
+      IF (vr_tab_dados_titulos.count>0) THEN
+         vr_index := vr_tab_dados_pagador.first;
+         WHILE vr_index IS NOT NULL LOOP
+           TELA_ATENDA_DSCTO_TIT.pc_solicita_biro_bordero(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nrdconta => pr_nrdconta
+                                                     ,pr_nrinssac => vr_tab_dados_pagador(vr_index).nrinssac
+                                                     ,pr_vlttitbd => vr_tab_dados_pagador(vr_index).vlttitbd
+                                                     ,pr_nrctrlim => rw_craplim.nrctrlim
+                                                     ,pr_inpessoa => vr_tab_dados_pagador(vr_index).inpessoa
+                                                     ,pr_nrcepsac => vr_tab_dados_pagador(vr_index).nrcepsac
+                                                     ,pr_cdoperad => 996
+                                                     ,pr_cdcritic => vr_cdcritic
+                                                     ,pr_dscritic => vr_dscritic);
+            vr_index := vr_tab_dados_pagador.next(vr_index);
+        END LOOP;
+        
+        vr_index := vr_tab_dados_titulos.first;
+        WHILE vr_index IS NOT NULL
+        LOOP
                   IF vr_tab_criticas.count = 0 THEN
                     -- Verificar se o Título possui critica
                     dsct0003.pc_calcula_restricao_titulo(pr_cdcooper     => pr_cdcooper
                                                         ,pr_nrdconta     => pr_nrdconta
-                                                        ,pr_nrdocmto     => tela_atenda_dscto_tit.rw_crapcob.nrdocmto
-                                                        ,pr_nrcnvcob     => tela_atenda_dscto_tit.rw_crapcob.nrcnvcob
-                                                        ,pr_nrdctabb     => tela_atenda_dscto_tit.rw_crapcob.nrdctabb
-                                                        ,pr_cdbandoc     => tela_atenda_dscto_tit.rw_crapcob.cdbandoc
+                                                  ,pr_nrdocmto     => vr_tab_dados_titulos(vr_index).nrdocmto
+                                                  ,pr_nrcnvcob     => vr_tab_dados_titulos(vr_index).nrcnvcob
+                                                  ,pr_nrdctabb     => vr_tab_dados_titulos(vr_index).nrdctabb
+                                                  ,pr_cdbandoc     => vr_tab_dados_titulos(vr_index).cdbandoc
                                                         ,pr_tab_criticas => vr_tab_criticas
                                                         ,pr_cdcritic     => vr_cdcritic
                                                         ,pr_dscritic     => vr_dscritic);
@@ -916,20 +971,9 @@ BEGIN
                   END IF;
 
                   IF vr_tab_criticas.count = 0 THEN
-                  -- Efetuar análise do pagador, verificando situação no Ayllos e Ibratan
-                  tela_atenda_dscto_tit.pc_solicita_biro_bordero(pr_cdcooper => pr_cdcooper
-                                                                ,pr_nrdconta => pr_nrdconta
-                                                                ,pr_nrdocmto => tela_atenda_dscto_tit.rw_crapcob.nrdocmto
-                                                                ,pr_cdbandoc => tela_atenda_dscto_tit.rw_crapcob.cdbandoc
-                                                                ,pr_nrdctabb => tela_atenda_dscto_tit.rw_crapcob.nrdctabb
-                                                                ,pr_nrcnvcob => tela_atenda_dscto_tit.rw_crapcob.nrcnvcob
-                                                                ,pr_nrinssac => tela_atenda_dscto_tit.rw_crapcob.nrinssac
-                                                                ,pr_cdoperad => 996
-                                                                ,pr_cdcritic => vr_cdcritic
-                                                                ,pr_dscritic => vr_dscritic);
 
                       --    Verifica resultado do Ibratan
-                      OPEN  cr_crapcbd(tela_atenda_dscto_tit.rw_crapcob.nrinssac);
+              OPEN  cr_crapcbd(vr_tab_dados_titulos(vr_index).nrinssac);
                       FETCH cr_crapcbd INTO rw_crapcbd;
                       IF    cr_crapcbd%NOTFOUND THEN
                       vr_inpreapr := '0';
@@ -954,11 +998,11 @@ BEGIN
                       -- Verifica criticas do Pagador, caso não tenha retornado nenhuma crítica/pendencia da consulta do Ibratan
                       dsct0003.pc_calcula_restricao_pagador(pr_cdcooper     => pr_cdcooper
                                                            ,pr_nrdconta     => pr_nrdconta
-                                                           ,pr_nrinssac     => tela_atenda_dscto_tit.rw_crapcob.nrinssac
-                                                           ,pr_cdbandoc     => tela_atenda_dscto_tit.rw_crapcob.cdbandoc
-                                                           ,pr_nrdctabb     => tela_atenda_dscto_tit.rw_crapcob.nrdctabb
-                                                           ,pr_nrcnvcob     => tela_atenda_dscto_tit.rw_crapcob.nrcnvcob
-                                                           ,pr_nrdocmto     => tela_atenda_dscto_tit.rw_crapcob.nrdocmto
+                                                     ,pr_nrinssac     => vr_tab_dados_titulos(vr_index).nrinssac
+                                                     ,pr_cdbandoc     => vr_tab_dados_titulos(vr_index).cdbandoc
+                                                     ,pr_nrdctabb     => vr_tab_dados_titulos(vr_index).nrdctabb
+                                                     ,pr_nrcnvcob     => vr_tab_dados_titulos(vr_index).nrcnvcob
+                                                     ,pr_nrdocmto     => vr_tab_dados_titulos(vr_index).nrdocmto
                                                            ,pr_tab_criticas => vr_tab_criticas
                                                            ,pr_cdcritic     => vr_cdcritic
                                                            ,pr_dscritic     => vr_dscritic);
@@ -975,23 +1019,18 @@ BEGIN
 
                   vr_det_xml := vr_det_xml||
                                 '<titulo>'||
-                                  '<nrcnvcob>'||tela_atenda_dscto_tit.rw_crapcob.nrcnvcob||'</nrcnvcob>'||
-                                  '<nrborder>'||tela_atenda_dscto_tit.rw_crapcob.nrdocmto||'</nrborder>'||-- numero do boleto
-                                  '<nrdocmto>'||tela_atenda_dscto_tit.rw_crapcob.nrdocmto||'</nrdocmto>'||-- numero do boleto
-                                  '<nmdsacad>'||tela_atenda_dscto_tit.rw_crapcob.nmdsacad||'</nmdsacad>'||
-                                  '<dtvencto>'||to_char(tela_atenda_dscto_tit.rw_crapcob.dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
-                                  '<vltitulo>'||trim(to_char(tela_atenda_dscto_tit.rw_crapcob.vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
+                            '<nrcnvcob>'||vr_tab_dados_titulos(vr_index).nrcnvcob||'</nrcnvcob>'||
+                            '<nrborder>'||vr_tab_dados_titulos(vr_index).nrdocmto||'</nrborder>'||-- numero do boleto
+                            '<nrdocmto>'||vr_tab_dados_titulos(vr_index).nrdocmto||'</nrdocmto>'||-- numero do boleto
+                            '<nmdsacad>'||vr_tab_dados_titulos(vr_index).nmdsacad||'</nmdsacad>'||
+                            '<dtvencto>'||to_char(vr_tab_dados_titulos(vr_index).dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
+                            '<vltitulo>'||trim(to_char(vr_tab_dados_titulos(vr_index).vltitulo,'99999999D99','NLS_NUMERIC_CHARACTERS='',.'''))||'</vltitulo>'||
                                   '<inpreapr>'||vr_inpreapr||'</inpreapr>'|| -- Indicado Titulo Pré-Aprovado: 0 Não, 1 Sim
-                                  '<dssittit>'||tela_atenda_dscto_tit.rw_crapcob.dssittit||'</dssittit>'||
+                            '<dssittit>'||vr_tab_dados_titulos(vr_index).dssittit||'</dssittit>'||
                                 '</titulo>';
+          vr_index := vr_tab_dados_titulos.next(vr_index);
+        END LOOP;
             END   IF;
-            CLOSE tela_atenda_dscto_tit.cr_crapcob;
-        END IF;
-            
-        vr_qtpagina := vr_qtpagina +1;
-
-        vr_index := vr_tab_nrdocmto.next(vr_index);
-      END LOOP;
           
       pc_escreve_xml('<Dados qtregist="'||nvl(vr_tab_nrdocmto.count,0)||'" >');
       pc_escreve_xml('<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
@@ -1592,13 +1631,12 @@ BEGIN
             DSCT0002.pc_atualiza_calculos_pagador(pr_cdcooper => tela_atenda_dscto_tit.rw_crapcob.cdcooper
                                                  ,pr_nrdconta => tela_atenda_dscto_tit.rw_crapcob.nrdconta
                                                  ,pr_nrinssac => tela_atenda_dscto_tit.rw_crapcob.nrinssac
+                                                 ,pr_flforcar => FALSE
                                                  --------------> OUT <--------------
                                                  ,pr_pc_cedpag  => vr_aux
                                                  ,pr_qtd_cedpag => vr_aux
                                                  ,pr_pc_conc    => vr_aux
                                                  ,pr_qtd_conc   => vr_aux
-                                                 ,pr_pc_geral   => vr_aux
-                                                 ,pr_qtd_geral  => vr_aux
                                                  ,pr_cdcritic   => vr_cdcritic
                                                  ,pr_dscritic   => vr_dscritic );
 

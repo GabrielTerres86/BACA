@@ -33,10 +33,16 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
+	$nrctrlim = $_POST["nrctrlim"];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
+		exit;
+	}
+	// Verifica se o número da conta é um inteiro válido
+	if (!validaInteiro($nrctrlim)) {
+		exibeErro("Contrato inv&aacute;lido.");
 		exit;
 	}
 	
@@ -46,21 +52,6 @@
 		exit;
 	}
 	$selecionados = implode($selecionados,",");
-
-	$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <chave>".$selecionados."</chave>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-    
- 	// CONSULTA DA IBRATAN	
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getClassXML($xmlResult);
-    $root = $xmlObj->roottag;
-	if ($root->erro){
-		exibeErro(htmlentities($root->erro->registro->dscritic));
-	}
 
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";

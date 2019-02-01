@@ -46,6 +46,8 @@
  * 029: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
  * 030: [09/08/2018] Vitor Shimada Assanuma (GFT): Validação do parâmetro da #TAB052 de quantidade máxima de títulos ao incluir um título ao borderô
  * 027: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
+ 
+ * 033: [05/09/2018] Luis Fernando (GFT): Ajustada rotina de selecao de bordero para incluir prejuizo 
  */
 
  // variaveis propostas
@@ -2405,14 +2407,12 @@ function renovaValorLimite(vllimite, nrctrlim, cddlinha) {
 
     showMsgAguardo('Aguarde, efetuando renovacao...');
 
-    var vllimite = converteNumero(vllimite);
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_renova_limite.php",
         data: {
             nrdconta: nrdconta,
-            vllimite: vllimite,
             cddlinha: cddlinha,
             nrctrlim: nrctrlim.replace(/[^0-9]/g,''),
             redirect: "script_ajax"
@@ -2440,6 +2440,7 @@ function converteNumero (numero){
 }
 
 function mostrarBorderoResumo() {
+    var nrctrlim = normalizaNumero($("#nrctrlim","#divIncluirBordero").val());
     /*Testa se o valor disponivel mais a tolerancia são maiores que o total de titulos selecionados*/
     var vlutiliz = $("#vlutiliz","#divIncluirBordero"); //valor descontado
     var vllimite = $("#vllimite","#divIncluirBordero"); //valor disponivel
@@ -2462,15 +2463,16 @@ function mostrarBorderoResumo() {
     var selecionados = $("input[name*='selecionados'",divSelecionados);
     if(selecionados.length>0){
         // Mostra mensagem de aguardo
-        showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
-
+        showMsgAguardo("Aguarde, realizando an&aacute;lise do biro ...");
         // Carrega conteúdo da opção através de ajax
         $.ajax({
             type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
+            url: UrlSite + "telas/atenda/descontos/titulos/rotinas_analise.php",
             dataType: "html",
             data: {
                 nrdconta: nrdconta,
+                nrctrlim: nrctrlim,
+                rotina: 'biro',
                 selecionados: selecionados.map(function(){return $(this).val();}).get(),
                 redirect: "html_ajax"
             },
@@ -2479,7 +2481,60 @@ function mostrarBorderoResumo() {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                $("#divOpcoesDaOpcao4").html(response);
+                var r = $.parseJSON(response);
+                if (r.status=='erro'){
+                    hideMsgAguardo();
+                    showError("error", r.mensagem, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                }
+                else{
+                    showMsgAguardo("Aguarde, realizando an&aacute;lise dos sacados ...");
+                    // Carrega conteúdo da opção através de ajax
+                    $.ajax({
+                        type: "POST",
+                        url: UrlSite + "telas/atenda/descontos/titulos/rotinas_analise.php",
+                        dataType: "html",
+                        data: {
+                            nrdconta: nrdconta,
+                            nrctrlim: nrctrlim,
+                            rotina: 'analise_pagadores',
+                            selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                            redirect: "html_ajax"
+                        },
+                        error: function (objAjax, responseError, objExcept) {
+                            hideMsgAguardo();
+                            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                        },
+                        success: function (response) {
+                            var r = $.parseJSON(response);
+                            if (r.status=='erro'){
+                                hideMsgAguardo();
+                                showError("error", r.mensagem, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                            }
+                            else{
+                                showMsgAguardo("Aguarde, carregando resumo dos t&iacute;tulos ...");
+                                // Carrega conteúdo da opção através de ajax
+                                $.ajax({
+                                    type: "POST",
+                                    url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
+                                    dataType: "html",
+                                    data: {
+                                        nrdconta: nrdconta,
+                                                                nrctrlim: nrctrlim,
+                                        selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                                        redirect: "html_ajax"
+                                    },
+                                    error: function (objAjax, responseError, objExcept) {
+                                        hideMsgAguardo();
+                                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                                    },
+                                    success: function (response) {
+                                        $("#divOpcoesDaOpcao4").html(response);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
             }
         });
     }
@@ -2491,6 +2546,7 @@ function mostrarBorderoResumo() {
 }
 
 function mostrarBorderoResumoAlterar() {
+    var nrctrlim = normalizaNumero($("#nrctrlim","#divIncluirBordero").val());
     /*Testa se o valor disponivel mais a tolerancia são maiores que o total de titulos selecionados*/
     var vlutiliz = $("#vlutiliz","#divIncluirBordero"); //valor descontado
     var vllimite = $("#vllimite","#divIncluirBordero"); //valor disponivel
@@ -2514,16 +2570,17 @@ function mostrarBorderoResumoAlterar() {
         var selecionados = $("input[name*='selecionados'",divSelecionados);
         if(selecionados.length>0){
             // Mostra mensagem de aguardo
-            showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+            showMsgAguardo("Aguarde, realizando an&aacute;lise do biro ...");
 
             // Carrega conteúdo da opção através de ajax
             $.ajax({
                 type: "POST",
-                url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo_alterar.php",
+                url: UrlSite + "telas/atenda/descontos/titulos/rotinas_analise.php",
                 dataType: "html",
                 data: {
                     nrdconta: nrdconta,
-                    nrborder: nrborder.val(),
+                    nrctrlim: nrctrlim,
+                    rotina: 'biro',
                     selecionados: selecionados.map(function(){return $(this).val();}).get(),
                     redirect: "html_ajax"
                 },
@@ -2532,7 +2589,60 @@ function mostrarBorderoResumoAlterar() {
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
                 },
                 success: function (response) {
-                    $("#divOpcoesDaOpcao4").html(response);
+                    var r = $.parseJSON(response);
+                    if (r.status=='erro'){
+                        hideMsgAguardo();
+                        showError("error", r.mensagem, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                    }
+                    else{
+                        showMsgAguardo("Aguarde, realizando an&aacute;lise dos sacados ...");
+                        // Carrega conteúdo da opção através de ajax
+                        $.ajax({
+                            type: "POST",
+                            url: UrlSite + "telas/atenda/descontos/titulos/rotinas_analise.php",
+                            dataType: "html",
+                            data: {
+                                nrdconta: nrdconta,
+                                nrctrlim: nrctrlim,
+                                rotina: 'analise_pagadores',
+                                selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                                redirect: "html_ajax"
+                            },
+                            error: function (objAjax, responseError, objExcept) {
+                                hideMsgAguardo();
+                                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                            },
+                            success: function (response) {
+                                var r = $.parseJSON(response);
+                                if (r.status=='erro'){
+                                    hideMsgAguardo();
+                                    showError("error", r.mensagem, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                                }
+                                else{
+                                    showMsgAguardo("Aguarde, carregando resumo dos t&iacute;tulos ...");
+                                    // Carrega conteúdo da opção através de ajax
+                                    $.ajax({
+                                        type: "POST",
+                                        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo_alterar.php",
+                                        dataType: "html",
+                                        data: {
+                                            nrdconta: nrdconta,
+                                            nrborder: nrborder.val(),
+                                            selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                                            redirect: "html_ajax"
+                                        },
+                                        error: function (objAjax, responseError, objExcept) {
+                                            hideMsgAguardo();
+                                            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                                        },
+                                        success: function (response) {
+                                            $("#divOpcoesDaOpcao4").html(response);
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
                 }
             });
         }

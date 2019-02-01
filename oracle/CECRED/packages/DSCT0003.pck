@@ -472,7 +472,18 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                        ,pr_dscritic OUT VARCHAR2                                          --> Descrição da crítica
                                         );
                                         
- PROCEDURE pc_calcula_liquidez(pr_cdcooper     IN craptdb.cdcooper%TYPE
+ PROCEDURE pc_calcula_liquidez_geral(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_geral     OUT NUMBER
+                            ,pr_qtd_geral    OUT NUMBER);
+                            
+ PROCEDURE pc_calcula_liquidez_pagador(pr_cdcooper     IN craptdb.cdcooper%TYPE
                             ,pr_nrdconta     IN craptdb.nrdconta%TYPE
                             ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL 
                             ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
@@ -482,11 +493,19 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                             ,pr_vlmintcl     IN NUMBER   DEFAULT 0
                             -- OUT --
                             ,pr_pc_cedpag    OUT NUMBER
-                            ,pr_qtd_cedpag   OUT NUMBER
+                            ,pr_qtd_cedpag   OUT NUMBER);
+                            
+ PROCEDURE pc_calcula_concentracao(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
                             ,pr_pc_conc      OUT NUMBER
-                            ,pr_qtd_conc     OUT NUMBER
-                            ,pr_pc_geral     OUT NUMBER
-                            ,pr_qtd_geral    OUT NUMBER);
+                            ,pr_qtd_conc     OUT NUMBER);
                             
  PROCEDURE pc_calcula_juros_simples_tit(pr_cdcooper  IN craptdb.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -661,6 +680,16 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                               ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                               );
+  PROCEDURE pc_retorna_liquidez_geral(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_geral     OUT NUMBER
+                            ,pr_qtd_geral    OUT NUMBER);
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -1132,6 +1161,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
      Data     : Maio/2018
      Frequencia: Sempre que for chamado
      Objetivo  : Cálculo da Liquidez Geral
+     Alteracao :
+               24/01/2019 - Trocada para nova funcao de liquidez geral - Luis Fernando (GFT)
    ---------------------------------------------------------------------------------------------------------------------*/
    /* Calculo da Liquidez:
     Soma do Valor de todos os titulos nao pagos dividido pela soma de todos os titulos daquele emitente (nrdconta)
@@ -1139,27 +1170,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
            carencia na data de vencimento.
     (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
    -- Variaveis de retorno 
-   pr_pc_cedpag    NUMBER(25,2);
-   pr_qtd_cedpag   NUMBER;
-   pr_pc_conc      NUMBER(25,2);
-   pr_qtd_conc     NUMBER;
    pr_pc_geral     NUMBER(25,2);
    pr_qtd_geral    NUMBER;
    
    BEGIN       
-     pc_calcula_liquidez(pr_cdcooper => pr_cdcooper
+     pc_calcula_liquidez_geral(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrinssac => NULL
                      ,pr_dtmvtolt_de => pr_dtmvtolt_de
                      ,pr_dtmvtolt_ate => pr_dtmvtolt_ate
                      ,pr_qtcarpag => pr_qtcarpag
                      ,pr_qtmitdcl => pr_qtmitdcl
                      ,pr_vlmintcl => pr_vlmintcl
                     -- OUT --
-                    ,pr_pc_cedpag    => pr_pc_cedpag
-                    ,pr_qtd_cedpag   => pr_qtd_cedpag
-                    ,pr_pc_conc      => pr_pc_conc
-                    ,pr_qtd_conc     => pr_qtd_conc
                     ,pr_pc_geral     => pr_pc_geral
                     ,pr_qtd_geral    => pr_qtd_geral
                     );
@@ -1183,31 +1205,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Data     : Maio/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna a porcentagem de concentracao de titulos daquele pagador em um range de data de liquidez
+     Alteracao :
+               24/01/2019 - Trocada para nova funcao de concentracao - Luis Fernando (GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Variaveis de retorno 
-   pr_pc_cedpag    NUMBER(25,2);
-   pr_qtd_cedpag   NUMBER;
    pr_pc_conc      NUMBER(25,2);
    pr_qtd_conc     NUMBER;
-   pr_pc_geral     NUMBER(25,2);
-   pr_qtd_geral    NUMBER;
    
    BEGIN       
-     pc_calcula_liquidez(pr_cdcooper            
-                     ,pr_nrdconta     
-                     ,pr_nrinssac     
-                     ,pr_dtmvtolt_de  
-                     ,pr_dtmvtolt_ate 
-                     ,pr_qtcarpag     
-                     ,pr_qtmitdcl
-                     ,pr_vlmintcl
+     pc_calcula_concentracao(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrinssac => pr_nrinssac
+                     ,pr_dtmvtolt_de => pr_dtmvtolt_de
+                     ,pr_dtmvtolt_ate => pr_dtmvtolt_ate
+                     ,pr_qtcarpag => pr_qtcarpag
+                     ,pr_qtmitdcl => pr_qtmitdcl
+                     ,pr_vlmintcl => pr_vlmintcl
                     -- OUT --
-                    ,pr_pc_cedpag    => pr_pc_cedpag
-                    ,pr_qtd_cedpag   => pr_qtd_cedpag
                     ,pr_pc_conc      => pr_pc_conc
                     ,pr_qtd_conc     => pr_qtd_conc
-                    ,pr_pc_geral     => pr_pc_geral
-                    ,pr_qtd_geral    => pr_qtd_geral
                     );
      RETURN pr_pc_conc;      
    END fn_concentracao_titulo_pagador;
@@ -1230,6 +1246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Data     : Maio/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna a porcentagem de liquidez do pagador contra o cedente no range de data
+     Alteracao :
+               24/01/2019 - Trocada para nova funcao de liquidez geral - Luis Fernando (GFT)
   ---------------------------------------------------------------------------------------------------------------------*/ 
    /* CÁLCULO DA CONCENTRACAO DO PAGADOR
     Soma do Valor de todos os titulos nao pagos dividido pela soma de todos os titulos daquele emitente (nrdconta)
@@ -1239,27 +1257,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     -- Variaveis de retorno 
    pr_pc_cedpag    NUMBER(25,2);
    pr_qtd_cedpag   NUMBER;
-   pr_pc_conc      NUMBER(25,2);
-   pr_qtd_conc     NUMBER;
-   pr_pc_geral     NUMBER(25,2);
-   pr_qtd_geral    NUMBER;
    
    BEGIN       
-     pc_calcula_liquidez(pr_cdcooper            
-                     ,pr_nrdconta     
-                     ,pr_nrinssac     
-                     ,pr_dtmvtolt_de  
-                     ,pr_dtmvtolt_ate 
-                     ,pr_qtcarpag     
-                     ,pr_qtmitdcl
-                     ,pr_vlmintcl
+     pc_calcula_liquidez_pagador(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrinssac => pr_nrinssac
+                     ,pr_dtmvtolt_de => pr_dtmvtolt_de
+                     ,pr_dtmvtolt_ate => pr_dtmvtolt_ate
+                     ,pr_qtcarpag => pr_qtcarpag
+                     ,pr_qtmitdcl => pr_qtmitdcl
+                     ,pr_vlmintcl => pr_vlmintcl
                     -- OUT --
                     ,pr_pc_cedpag    => pr_pc_cedpag
                     ,pr_qtd_cedpag   => pr_qtd_cedpag
-                    ,pr_pc_conc      => pr_pc_conc
-                    ,pr_qtd_conc     => pr_qtd_conc
-                    ,pr_pc_geral     => pr_pc_geral
-                    ,pr_qtd_geral    => pr_qtd_geral
                     );
      RETURN pr_pc_cedpag;
    END fn_liquidez_pagador_cedente;
@@ -3316,10 +3326,6 @@ END pc_inserir_lancamento_bordero;
     vr_vlmaxutl crapcop.vlmaxutl%TYPE;
     vr_vlminscr crapcop.vlcnsscr%TYPE;
     
-    vr_liqpagcd   NUMBER(25,2);
-    vr_qtd_cedpag NUMBER(25,2);
-    pr_pc_conc    NUMBER(25,2);
-    vr_qtd_conc   NUMBER(25,2);
     vr_liqgeral   NUMBER(25,2);
     vr_qtd_geral  NUMBER(25,2);
     BEGIN
@@ -3476,19 +3482,14 @@ END pc_inserir_lancamento_bordero;
       END IF;
       
       -- Faz os calculos de liquidez
-      pc_calcula_liquidez(pr_cdcooper            
-                           ,pr_nrdconta     
-                           ,NULL
-                           ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30  
-                           ,rw_crapdat.dtmvtolt 
-                           ,vr_tab_dados_dsctit(1).cardbtit_c
-                           ,vr_tab_dados_dsctit(1).qtmitdcl
-                           ,vr_tab_dados_dsctit(1).vlmintcl
+      pc_retorna_liquidez_geral(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_dtmvtolt_de =>  rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                           ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
+                           ,pr_qtcarpag => vr_tab_dados_dsctit(1).cardbtit_c
+                           ,pr_qtmitdcl => vr_tab_dados_dsctit(1).qtmitdcl
+                           ,pr_vlmintcl => vr_tab_dados_dsctit(1).vlmintcl
                            -- OUT --     
-                           ,pr_pc_cedpag    => vr_liqpagcd
-                           ,pr_qtd_cedpag   => vr_qtd_cedpag
-                           ,pr_pc_conc      => pr_pc_conc
-                           ,pr_qtd_conc     => vr_qtd_conc
                            ,pr_pc_geral     => vr_liqgeral
                            ,pr_qtd_geral    => vr_qtd_geral);
                            
@@ -4415,8 +4416,8 @@ END pc_inserir_lancamento_bordero;
           raise vr_exc_erro;
         END IF;
         
-        /*Faz calculo de liquidez e concentracao e atualiza as criticas*/
-        DSCT0002.pc_atualiza_calculos_pagador( pr_cdcooper => pr_cdcooper
+        --Faz calculo de liquidez e concentracao e atualiza as criticas
+        DSCT0002.pc_atualiza_calculos_pagador(pr_cdcooper => pr_cdcooper
                                                 ,pr_nrdconta     => pr_nrdconta
                                                 ,pr_nrinssac     => rw_craptdbcob.nrinssac
                                                 ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
@@ -4424,17 +4425,16 @@ END pc_inserir_lancamento_bordero;
                                                 ,pr_qtcarpag     => vr_tab_dados_dsctit(1).cardbtit_c
                                                 ,pr_qtmitdcl     => vr_tab_dados_dsctit(1).qtmitdcl
                                                 ,pr_vlmintcl     => vr_tab_dados_dsctit(1).vlmintcl
+                                                ,pr_flforcar     => FALSE
                                                --------------> OUT <--------------
                                                ,pr_pc_cedpag    => vr_ignora_numero
                                                ,pr_qtd_cedpag   => vr_ignora_numero
                                                ,pr_pc_conc      => vr_ignora_numero
                                                ,pr_qtd_conc     => vr_ignora_numero
-                                               ,pr_pc_geral     => vr_ignora_numero
-                                               ,pr_qtd_geral    => vr_ignora_numero
                                                ,pr_cdcritic     => vr_cdcritic
                                                ,pr_dscritic     => vr_dscritic
                               );
-        /*Verifica se houve restrições no job diário*/
+        --Verifica se houve restrições no job diário
         OPEN cr_analise_pagador (pr_nrinssac=>rw_craptdbcob.nrinssac);
         FETCH cr_analise_pagador INTO rw_analise_pagador;
         IF (rw_analise_pagador.inpossui_criticas=1) THEN
@@ -5458,7 +5458,7 @@ END pc_inserir_lancamento_bordero;
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro DSCT003.pc_lanca_credito_bordero: ' || SQLERRM;
+        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||' '||vr_dscritic||' '||sqlerrm;
     END;
   END pc_lanca_credito_bordero;
     
@@ -6156,26 +6156,25 @@ END pc_inserir_lancamento_bordero;
             END LOOP;
           END IF;
                     
-          dsct0002.pc_atualiza_calculos_pagador ( pr_cdcooper
-                                      ,rw_crapcob.nrdconta
-                                      ,rw_crapcob.nrinssac
-                                      ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                      ,rw_crapdat.dtmvtolt 
-                                      ,vr_tab_dados_dsctit(1).cardbtit_c
-                                      ,vr_tab_dados_dsctit(1).qttliqcp
-                                      ,vr_tab_dados_dsctit(1).vltliqcp
-                                      ,vr_tab_dados_dsctit(1).pcmxctip
-                                      ,vr_tab_dados_dsctit(1).qtmitdcl
-                                      ,vr_tab_dados_dsctit(1).vlmintcl
+          dsct0002.pc_atualiza_calculos_pagador (pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_crapcob.nrdconta
+                                      ,pr_nrinssac => rw_crapcob.nrinssac
+                                      ,pr_dtmvtolt_de => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                      ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
+                                      ,pr_qtcarpag => vr_tab_dados_dsctit(1).cardbtit_c
+                                      ,pr_qttliqcp => vr_tab_dados_dsctit(1).qttliqcp
+                                      ,pr_vltliqcp => vr_tab_dados_dsctit(1).vltliqcp
+                                      ,pr_pcmxctip => vr_tab_dados_dsctit(1).pcmxctip
+                                      ,pr_qtmitdcl => vr_tab_dados_dsctit(1).qtmitdcl
+                                      ,pr_vlmintcl => vr_tab_dados_dsctit(1).vlmintcl
+                                      ,pr_flforcar => FALSE
                                       --------------> OUT <--------------
-                                      ,vr_liqpagcd
-                                      ,vr_qtd_cedpag
-                                      ,vr_concpaga
-                                      ,vr_qtd_conc
-                                      ,vr_liqgeral
-                                      ,vr_qtd_geral
-                                      ,vr_cdcritic
-                                      ,vr_dscritic
+                                      ,pr_pc_cedpag  => vr_liqpagcd
+                                      ,pr_qtd_cedpag => vr_qtd_cedpag
+                                      ,pr_pc_conc    => vr_concpaga
+                                      ,pr_qtd_conc   => vr_qtd_conc
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic
                                       );
 
          -- Salva as informações da CRAPABT => CONCENTRACAO
@@ -6214,6 +6213,18 @@ END pc_inserir_lancamento_bordero;
               RAISE vr_exc_erro;
             END IF;
                          
+        -- Faz os calculos de liquidez
+        pc_retorna_liquidez_geral(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_dtmvtolt_de =>  rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                           ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
+                           ,pr_qtcarpag => vr_tab_dados_dsctit(1).cardbtit_c
+                           ,pr_qtmitdcl => vr_tab_dados_dsctit(1).qtmitdcl
+                           ,pr_vlmintcl => vr_tab_dados_dsctit(1).vlmintcl
+                           -- OUT --
+                           ,pr_pc_geral     => vr_liqgeral
+                           ,pr_qtd_geral    => vr_qtd_geral);
+                           
          -- Salva as informações da CRAPABT => LIQUIDEZ GERAL                     
          pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
                          ,pr_cdoperad => pr_cdoperad
@@ -7217,23 +7228,18 @@ EXCEPTION
          ROLLBACK;
  END pc_pagar_titulos_vencidos;
 
- PROCEDURE pc_calcula_liquidez(pr_cdcooper     IN craptdb.cdcooper%TYPE
+ PROCEDURE pc_calcula_liquidez_geral(pr_cdcooper     IN craptdb.cdcooper%TYPE
                             ,pr_nrdconta     IN craptdb.nrdconta%TYPE
-                            ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL 
                             ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                             ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                             ,pr_qtcarpag     IN NUMBER
                             ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
                             ,pr_vlmintcl     IN NUMBER   DEFAULT 0
                             -- OUT --
-                            ,pr_pc_cedpag    OUT NUMBER
-                            ,pr_qtd_cedpag   OUT NUMBER
-                            ,pr_pc_conc      OUT NUMBER
-                            ,pr_qtd_conc     OUT NUMBER
                             ,pr_pc_geral     OUT NUMBER
                             ,pr_qtd_geral    OUT NUMBER) IS
    /*---------------------------------------------------------------------------------------------------------------------
-    Programa : pc_calcula_liquidez
+    Programa : pc_calcula_liquidez_geral
     Sistema  : CRED
     Sigla    : CRED
     Autor    : Vitor Shimada Assanuma (GFT)
@@ -7243,29 +7249,66 @@ EXCEPTION
     Alterações:
               Alterado a regra do calculo de liquidez cedente pagador para quando não ache titulos seja 100% - Vitor Shimada Assanuma (GFT)
               Adicionado minimo de titulos e valor minimo do titulo para calculo da liquidez - Luis Fernando (GFT)
+              Alterado o nome para funcionar apenas a liquidez geral - Luis Fernando (GFT)
     ---------------------------------------------------------------------------------------------------------------------*/
-    -- CALCULO DA CONCENTRACAO DO PAGADOR
-    CURSOR cr_concentracao IS
+    -- CALCULO  DA LIQUIDEZ GERAL
+    CURSOR cr_liquidez_geral IS
       SELECT 
-        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN 1 ELSE 0 END)/COUNT(1))*100, 0) AS qtd_conc,
-        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100, 0) AS pc_conc
-       FROM   craptdb tdb -- Titulos do Bordero
-       WHERE 
-       (tdb.insittit = 4 OR (tdb.insittit=0 AND tdb.insitapr<>2))
-       AND    tdb.cdcooper = pr_cdcooper
-       AND    tdb.nrdconta = pr_nrdconta
+        COUNT(1) AS qtd_titulos,
+        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
+        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
+       FROM   crapcob cob -- Titulos do Bordero
+       WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+       AND    cob.cdcooper = pr_cdcooper
+       AND    cob.nrdconta = pr_nrdconta
+       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
        --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
        AND    NOT EXISTS( SELECT 1
                           FROM   craptit tit
-                          WHERE  tit.cdcooper = tdb.cdcooper
-                          AND    tit.dtmvtolt = tdb.dtdpagto
-                          AND    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                          AND    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                          WHERE  tit.cdcooper = cob.cdcooper
+                          AND    tit.dtmvtolt = cob.dtdpagto
+                          AND    cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                          AND    cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
                           AND    tit.cdbandst = 85
                           AND    tit.cdagenci IN (90,91) )
     ;
-    rw_concentracao cr_concentracao%ROWTYPE;
+    rw_liquidez_geral cr_liquidez_geral%ROWTYPE;
+
+  BEGIN
+    OPEN cr_liquidez_geral;
+    FETCH cr_liquidez_geral INTO rw_liquidez_geral;
+    CLOSE cr_liquidez_geral;
+
+    IF (rw_liquidez_geral.qtd_titulos < pr_qtmitdcl OR (nvl(rw_liquidez_geral.pc_geral,0) = 0 AND rw_liquidez_geral.qtd_titulos = 0)) THEN
+      pr_pc_geral  := 100;
+      pr_qtd_geral := 100;
+    ELSE
+      pr_pc_geral  := rw_liquidez_geral.pc_geral;
+      pr_qtd_geral :=  rw_liquidez_geral.qtd_geral;
+    END IF;
+ END pc_calcula_liquidez_geral;
     
+ PROCEDURE pc_calcula_liquidez_pagador(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_cedpag    OUT NUMBER
+                            ,pr_qtd_cedpag   OUT NUMBER) IS
+   /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_calcula_liquidez_pagador
+    Sistema  : CRED
+    Sigla    : CRED
+    Autor    : Luis Fernando (GFT)
+    Data     : 24/01/2019
+    Frequencia: Sempre que for chamado
+    Objetivo  : Procedure criada para tarzer a liquidez do pagador em relação ao cedente
+    Alterações:
+    ---------------------------------------------------------------------------------------------------------------------*/
     -- CALCULO DA LIQUIDEZ CEDENTE PAGADOR
     CURSOR cr_liquidez_pagador IS
       SELECT 
@@ -7273,9 +7316,7 @@ EXCEPTION
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
        FROM   crapcob cob -- Titulos do Bordero
-       WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
---       AND    cob.dtresgat IS NULL 
---       AND    cob.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
+       WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
        AND    cob.cdcooper = pr_cdcooper
        AND    cob.nrdconta = pr_nrdconta
        AND    cob.nrinssac = pr_nrinssac
@@ -7292,39 +7333,8 @@ EXCEPTION
     ;
     rw_liquidez_pagador cr_liquidez_pagador%ROWTYPE;
     
-    -- CALCULO  DA LIQUIDEZ GERAL
-    CURSOR cr_liquidez_geral IS
-      SELECT 
-        COUNT(1) AS qtd_titulos,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
-       FROM   crapcob cob -- Titulos do Bordero
-       WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
---       AND    cob.dtresgat IS NULL 
---       AND    cob.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
-       AND    cob.cdcooper = pr_cdcooper
-       AND    cob.nrdconta = pr_nrdconta
-       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
-       --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-       AND    NOT EXISTS( SELECT 1
-                          FROM   craptit tit
-                          WHERE  tit.cdcooper = cob.cdcooper
-                          AND    tit.dtmvtolt = cob.dtdpagto
-                          AND    cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                          AND    cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                          AND    tit.cdbandst = 85
-                          AND    tit.cdagenci IN (90,91) )
-    ;
-    rw_liquidez_geral cr_liquidez_geral%ROWTYPE;
-    
   BEGIN
     IF (pr_nrinssac IS NOT NULL) THEN
-      OPEN cr_concentracao;
-      FETCH cr_concentracao INTO rw_concentracao;
-      CLOSE cr_concentracao;
-      pr_pc_conc    := rw_concentracao.pc_conc;
-      pr_qtd_conc   := rw_concentracao.qtd_conc;
-    
       OPEN cr_liquidez_pagador;
       FETCH cr_liquidez_pagador INTO rw_liquidez_pagador;
       CLOSE cr_liquidez_pagador;
@@ -7336,22 +7346,65 @@ EXCEPTION
         pr_qtd_cedpag :=  rw_liquidez_pagador.qtd_cedpag; 
       END IF;
     ELSE 
-      pr_pc_conc    := 0;
-      pr_qtd_conc   := 0;
       pr_pc_cedpag  := 0;
       pr_qtd_cedpag := 0;
     END IF;
     
-    OPEN cr_liquidez_geral;
-    FETCH cr_liquidez_geral INTO rw_liquidez_geral;
-    CLOSE cr_liquidez_geral;
+ END pc_calcula_liquidez_pagador;
+ 
+ PROCEDURE pc_calcula_concentracao(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_conc      OUT NUMBER
+                            ,pr_qtd_conc     OUT NUMBER) IS
+   /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_calcula_concentracao
+    Sistema  : CRED
+    Sigla    : CRED
+    Autor    : Luis Fernando (GFT)
+    Data     : 24/01/2019
+    Frequencia: Sempre que for chamado
+    Objetivo  : Procedure criada para tarzer a concentracao do pagador em relação ao cedente
+    Alterações:
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- CALCULO DA CONCENTRACAO DO PAGADOR
+    CURSOR cr_concentracao IS
+      SELECT
+        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN 1 ELSE 0 END)/COUNT(1))*100, 0) AS qtd_conc,
+        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100, 0) AS pc_conc
+       FROM   craptdb tdb -- Titulos do Bordero
+       WHERE
+       (tdb.insittit = 4 OR (tdb.insittit=0 AND tdb.insitapr<>2))
+       AND    tdb.cdcooper = pr_cdcooper
+       AND    tdb.nrdconta = pr_nrdconta
+       --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
+       AND    NOT EXISTS( SELECT 1
+                          FROM   craptit tit
+                          WHERE  tit.cdcooper = tdb.cdcooper
+                          AND    tit.dtmvtolt = tdb.dtdpagto
+                          AND    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                          AND    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                          AND    tit.cdbandst = 85
+                          AND    tit.cdagenci IN (90,91) )
+    ;
+    rw_concentracao cr_concentracao%ROWTYPE;
     
-    IF (rw_liquidez_geral.qtd_titulos < pr_qtmitdcl OR (nvl(rw_liquidez_geral.pc_geral,0) = 0 AND rw_liquidez_geral.qtd_titulos = 0)) THEN
-      pr_pc_geral  := 100;
-      pr_qtd_geral := 100;
+  BEGIN
+    IF (pr_nrinssac IS NOT NULL) THEN
+      OPEN cr_concentracao;
+      FETCH cr_concentracao INTO rw_concentracao;
+      CLOSE cr_concentracao;
+      pr_pc_conc    := rw_concentracao.pc_conc;
+      pr_qtd_conc   := rw_concentracao.qtd_conc;
     ELSE
-      pr_pc_geral  := rw_liquidez_geral.pc_geral;
-      pr_qtd_geral :=  rw_liquidez_geral.qtd_geral;
+      pr_pc_conc    := 0;
+      pr_qtd_conc   := 0;
     END IF;
 
  END pc_calcula_liquidez;
@@ -9403,6 +9456,155 @@ EXCEPTION
       CLOSE cr_craptdb;
 
   END pc_buscar_borderos_liberados;
+
+  PROCEDURE pc_retorna_liquidez_geral(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_geral     OUT NUMBER
+                            ,pr_qtd_geral    OUT NUMBER) IS
+                    
+     /*---------------------------------------------------------------------------------------------------------------------
+        Programa : pc_retorna_liquidez_geral
+        Sistema  : 
+        Sigla    : CRED
+        Autor    : Luis Fernando (GFT)
+        Data     : 24/01/2019
+        Frequencia: Sempre que for chamado
+        Objetivo  : Verifica se a liquidez geral esta calculada, se nao calcula
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Tratamento de erro
+      vr_exc_erro EXCEPTION;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Código de Erro
+      vr_dscritic VARCHAR2(1000);        --> Descrição de Erro
+        
+      CURSOR cr_liquidez_geral IS
+        SELECT
+          vl_liquidez_geral,
+          qt_liquidez_geral,
+          dtmvtolt
+        FROM
+          tbdsct_liquidez_geral
+        WHERE
+          nrdconta = pr_nrdconta
+          AND cdcooper = pr_cdcooper
+          AND dtmvtolt = pr_dtmvtolt_ate;
+      rw_liquidez_geral cr_liquidez_geral%ROWTYPE;
+      
+      BEGIN
+        OPEN cr_liquidez_geral;
+        FETCH cr_liquidez_geral INTO rw_liquidez_geral;
+        IF (cr_liquidez_geral%NOTFOUND) THEN
+          -- calcula liquidez
+          pc_calcula_liquidez_geral(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_dtmvtolt_de => pr_dtmvtolt_de
+                     ,pr_dtmvtolt_ate => pr_dtmvtolt_ate
+                     ,pr_qtcarpag => pr_qtcarpag
+                     ,pr_qtmitdcl => pr_qtmitdcl
+                     ,pr_vlmintcl => pr_vlmintcl
+                    -- OUT --
+                    ,pr_pc_geral     => pr_pc_geral
+                    ,pr_qtd_geral    => pr_qtd_geral
+                    );
+
+          INSERT INTO tbdsct_liquidez_geral
+          (cdcooper
+          ,nrdconta
+          ,dtmvtolt
+          ,vl_liquidez_geral
+          ,qt_liquidez_geral)
+          VALUES
+          (pr_cdcooper
+          ,pr_nrdconta
+          ,pr_dtmvtolt_ate
+          ,pr_pc_geral
+          ,pr_qtd_geral
+          );
+  
+        ELSE
+          -- utiliza liquidez já calculada
+          pr_pc_geral  := rw_liquidez_geral.vl_liquidez_geral;
+          pr_qtd_geral := rw_liquidez_geral.qt_liquidez_geral;
+        END IF;
+        
+        CLOSE cr_liquidez_geral;
+
+  END pc_retorna_liquidez_geral;
+    
+  PROCEDURE pc_retorna_liquidez_pagador(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                            ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                            ,pr_nrinssac     IN crapcob.nrinssac%TYPE DEFAULT NULL
+                            ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                            ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                            ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                            -- OUT --
+                            ,pr_pc_cedpag    OUT NUMBER
+                            ,pr_qtd_cedpag   OUT NUMBER) IS
+                    
+     /*---------------------------------------------------------------------------------------------------------------------
+        Programa : pc_retorna_liquidez_geral
+        Sistema  : 
+        Sigla    : CRED
+        Autor    : Luis Fernando (GFT)
+        Data     : 24/01/2019
+        Frequencia: Sempre que for chamado
+        Objetivo  : Verifica se a liquidez do pagador esta calculada, se nao calcula
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Tratamento de erro
+      vr_exc_erro EXCEPTION;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Código de Erro
+      vr_dscritic VARCHAR2(1000);        --> Descrição de Erro
+        
+    CURSOR cr_analise_pagador IS
+      SELECT 
+        perc_liquidez_qt,
+        perc_liquidez_vl
+      FROM
+        tbdsct_analise_pagador
+      WHERE
+        cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta
+        AND nrinssac = pr_nrinssac
+    ;
+    rw_analise_pagador cr_analise_pagador%ROWTYPE;
+      
+    BEGIN
+      OPEN cr_analise_pagador;
+      FETCH cr_analise_pagador INTO rw_analise_pagador;
+      IF (cr_analise_pagador%NOTFOUND) THEN
+        -- calcula liquidez
+        pc_calcula_liquidez_pagador(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrinssac => pr_nrinssac
+                   ,pr_dtmvtolt_de => pr_dtmvtolt_de
+                   ,pr_dtmvtolt_ate => pr_dtmvtolt_ate
+                   ,pr_qtcarpag => pr_qtcarpag
+                   ,pr_qtmitdcl => pr_qtmitdcl
+                   ,pr_vlmintcl => pr_vlmintcl
+                  -- OUT --
+                  ,pr_pc_cedpag     => pr_pc_cedpag
+                  ,pr_qtd_cedpag    => pr_qtd_cedpag
+                  );
+      ELSE
+        -- utiliza liquidez já calculada
+        pr_pc_cedpag  := rw_analise_pagador.perc_liquidez_vl;
+        pr_qtd_cedpag := rw_analise_pagador.perc_liquidez_qt;
+      END IF;
+        
+      CLOSE cr_analise_pagador;
+    END pc_retorna_liquidez_pagador;
+
 PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                               pr_nrctrlim  IN craplim.nrctrlim%TYPE
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
