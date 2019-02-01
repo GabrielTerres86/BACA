@@ -3793,16 +3793,34 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 ------------- Verifica se exite reaproveitamento -------------
       -- Verifica se existe dados na consulta
       IF pr_retxml.existsnode('//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO') > 0 THEN  
-        BEGIN
-          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
-        EXCEPTION
-          WHEN OTHERS THEN
-            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
-            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
-            vr_dscritic := 'Erro processo reaproveitamento-'||vr_contador||': '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+
+	    IF pr_inprodut = 7 THEN
+          
+          BEGIN
+            pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/DESCRICAO','S',vr_dsobserv, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+              vr_dscritic := 'Erro processo reaproveitamento-'||vr_contador||': '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        ELSE
+
+			BEGIN
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
+			EXCEPTION
+			  WHEN OTHERS THEN
+				-- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+				CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+				vr_dscritic := 'Erro processo reaproveitamento-'||vr_contador||': '||SQLERRM;
+				RAISE vr_exc_saida;
+			END;
+        END IF;  
+
+
         -- Verifica se ocorreu algum erro
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
