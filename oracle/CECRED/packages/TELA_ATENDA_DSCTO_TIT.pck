@@ -438,7 +438,6 @@ PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  crawlim.nrctrlim%type --> Nu
 
 PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
-                                      ,pr_vllimite  IN craplim.vllimite%TYPE --> Valor do limite de desconto
                                       ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
                                       ,pr_cddlinha  IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
