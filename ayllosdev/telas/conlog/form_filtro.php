@@ -12,19 +12,15 @@
 
  * ********************************************************************* */
 
-	session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');	
-	require_once('../../includes/controla_secao.php');
-	require_once('../../class/xmlfile.php');
-	isPostMethod();
-	
-	require_once("../../includes/carrega_permissoes.php");	
-
+?>
+<script type="text/javascript">
+$(document).ready(function () {
+<?
 	require_once("busca_arlog.php");
 	require_once("busca_coop.php");
-	
 ?>
+});
+</script>
 <form id="frmFiltro" name="frmFiltro" class="formulario" style="display:none;">
 	
 	<fieldset id="fsetFiltro" name="fsetFiltro" style="padding:0px; margin-bottom:10px; padding: 10 10 10 10;">
@@ -34,10 +30,10 @@
 		<div id="divFiltro">
 
 			<label for="dtde" class="rotulo" style="width: 100px">Data de:</label>
-			<input type="text" id="dtde" name="dtde" value="01/10/2018"/>
+			<input type="text" id="dtde" name="dtde" value=""/>
 				
 			<label for="dtate" class="rotulo-linha" style="width: 117px"><? echo utf8ToHtml('Data até:') ?></label>
-			<input type="text" id="dtate" name="dtate"value="02/10/2018" />
+			<input type="text" id="dtate" name="dtate" value="" />
 			
 			<label for="cdcooper" class="rotulo-linha" style="width: 110px">Cooperativa:</label>
 			<select id="cdcooper" name="cdcooper">
