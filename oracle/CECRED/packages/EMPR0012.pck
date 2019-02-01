@@ -112,9 +112,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                ,pr_dscritic     OUT VARCHAR2);                         --> Retorno de Erro  
 
   --> Rotina para retorno dos dados do logista
-  PROCEDURE pc_retorna_lojista(pr_cdcooper        IN crapcop.cdcooper%TYPE                      --> Cooperativa
-                              ,pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%type  --> Identificador do cooperado conveniado no cdc
-                              ,pr_nmfantasia      IN tbsite_cooperado_cdc.nmfantasia%type       --> Nome fantasia
+  PROCEDURE pc_retorna_lojista(pr_cdcooper        IN crapcop.cdcooper%TYPE default 0                      --> Cooperativa
+                              ,pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%type default 0 --> Identificador do cooperado conveniado no cdc
+                              ,pr_nmfantasia      IN tbsite_cooperado_cdc.nmfantasia%type default ' '      --> Nome fantasia
+                              ,pr_dssubsegmento   IN TBEPR_CDC_SUBSEGMENTO.DSSUBSEGMENTO%type default ' '  -->Subsegmento do lojista
                               ,pr_pagina          IN pls_integer                                    -- número da página desejada 
                               ,pr_limite          IN pls_integer                                    -- limite de linhas desejadas
                               ,pr_retorno         OUT xmltype                                   --> XML de retorno
@@ -444,7 +445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   --
   -- Objetivo  : Centralizar rotinas para integração do CDC x Autorizador.
   --
-  -- Alteracoes: 
+  -- Alteracoes: 21/11/2018 - pc_retorna_lojista para usar subsegmento (Fabio - AMcom).
   --
   ---------------------------------------------------------------------------
 
@@ -1842,13 +1843,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   END pc_retorna_subsegmento;  
   
    --> Rotina para retorno dos dados do logista
-  PROCEDURE pc_retorna_lojista(pr_cdcooper        IN crapcop.cdcooper%TYPE                      --> Cooperativa
-                              ,pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%type  --> Identificador do cooperado conveniado no cdc
-                              ,pr_nmfantasia      IN tbsite_cooperado_cdc.nmfantasia%type       --> Nome fantasia
+  PROCEDURE pc_retorna_lojista(pr_cdcooper        IN crapcop.cdcooper%TYPE default 0                      --> Cooperativa
+                              ,pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%type default 0 --> Identificador do cooperado conveniado no cdc
+                              ,pr_nmfantasia      IN tbsite_cooperado_cdc.nmfantasia%type default ' '      --> Nome fantasia
+                              ,pr_dssubsegmento   IN TBEPR_CDC_SUBSEGMENTO.DSSUBSEGMENTO%type default ' '  -->Subsegmento do lojista
                               ,pr_pagina          IN pls_integer                                    -- número da página desejada 
                               ,pr_limite          IN pls_integer                                    -- limite de linhas desejadas
                               ,pr_retorno         OUT xmltype                                   --> XML de retorno
-                              ,pr_dscritic        OUT VARCHAR2)is                                --> Retorno de Erro                                ,pr_dscritic         OUT VARCHAR2) IS               --> Retorno de Erro  
+                              ,pr_dscritic        OUT VARCHAR2)is                               --> Retorno de Erro                             
 
     -- Exceções
     vr_exc_erro EXCEPTION;
@@ -1860,7 +1862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
     -- Cursor para buscar os segmentos e subsegmentos cdc
     CURSOR cr_logista IS
-      select s.idcooperado_cdc
+      select DISTINCT 
+             s.idcooperado_cdc
             ,s.cdcooper
             ,s.nrdconta
             ,s.idmatriz
@@ -1898,6 +1901,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
            ,crapass a
            ,crapcop cop
            ,crapmun m
+           ,tbepr_cdc_subsegmento      sub     
+           ,tbepr_cdc_subsegmento_coop suc
+           ,tbepr_cdc_lojista_subseg   sul
       where s.cdcooper = c.cdcooper
         and s.nrdconta = c.nrdconta
         and s.idmatriz is null
@@ -1906,10 +1912,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         and c.cdcooper = a.cdcooper
         and c.nrdconta = a.nrdconta
         and a.cdcooper = cop.cdcooper
+        and upper(sub.dssubsegmento) like '%' || trim(upper(pr_dssubsegmento)) || '%' 
+        and sub.cdsubsegmento = suc.cdsubsegmento
+        and suc.cdcooper = s.cdcooper 
+        and sul.idsubsegmento_coop = suc.idsubsegmento_coop
+        and sul.idcooperado_cdc = s.idcooperado_cdc 
         and s.idcooperado_cdc = decode(nvl(pr_idcooperado_cdc,0),0,s.idcooperado_cdc,pr_idcooperado_cdc)
-        and s.cdcooper = decode(pr_cdcooper,0,s.cdcooper,pr_cdcooper)
+        and s.cdcooper = decode(nvl(pr_cdcooper,0),0,s.cdcooper,pr_cdcooper)
         and upper(s.nmfantasia) like '%' || trim(upper(pr_nmfantasia)) || '%'
-        and m.idcidade (+) = s.idcidade;
+        and m.idcidade (+) = s.idcidade
+      order by s.nmfantasia;
 
     CURSOR cr_segmento (pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idsubsegmento_coop%TYPE) IS
@@ -1922,9 +1934,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
            ,tbepr_cdc_lojista_subseg   sul
       where seg.cdsegmento = sub.cdsegmento
         and sub.cdsubsegmento = suc.cdsubsegmento
-        and suc.cdcooper = pr_cdcooper
+        and suc.cdcooper = decode(nvl(pr_cdcooper,0),0,suc.cdcooper,pr_cdcooper) 
         and sul.idsubsegmento_coop = suc.idsubsegmento_coop
-        and sul.idcooperado_cdc = pr_idcooperado_cdc
+        and sul.idcooperado_cdc = decode(nvl(pr_idcooperado_cdc,0),0,sul.idcooperado_cdc,pr_idcooperado_cdc) 
       order by seg.cdsegmento;
 
     CURSOR cr_subsegmento (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1942,19 +1954,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
             ,tbepr_cdc_subsegmento      sub     
             ,tbepr_cdc_subsegmento_coop suc
             ,tbepr_cdc_lojista_subseg   sul
-       where seg.cdsegmento = pr_cdsegmento
+       where seg.cdsegmento = decode(nvl(pr_cdsegmento,0),0,seg.cdsegmento,pr_cdsegmento)  
          and seg.cdsegmento = sub.cdsegmento
          and sub.cdsubsegmento = suc.cdsubsegmento
-         and suc.cdcooper = pr_cdcooper
+         and suc.cdcooper = decode(nvl(pr_cdcooper,0),0,suc.cdcooper,pr_cdcooper) 
          and sul.idsubsegmento_coop = suc.idsubsegmento_coop
-         and sul.idcooperado_cdc = pr_idcooperado_cdc
+         and sul.idcooperado_cdc = decode(nvl(pr_idcooperado_cdc,0),0,sul.idcooperado_cdc,pr_idcooperado_cdc)  
        order by sub.cdsubsegmento;
       
   BEGIN
     -- Cria o cabecalho do xml de envio
     vr_xml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Lojistas/>');
 
-    -- Loop sobre a tabela de segmentos
+    -- Loop sobre a tabela de lojistas
     FOR rw_logista IN cr_logista LOOP
 
       -- Insere o nó principal
@@ -2210,8 +2222,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 							              ,pr_des_erro => pr_dscritic);
 
       -- Inicializa sequencia de segmentos
-      vr_nrcontseg := 0;
-      vr_nrcontsub := 0;
 
       -- Loop sobre a tabela de segmentos
       FOR rw_segmento IN cr_segmento (rw_logista.cdcooper
@@ -4277,7 +4287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       -- Levantar exceção
       RAISE vr_exc_saida;
     END IF;
-    
+
     -- Busca dos detalhes do empréstimo
     OPEN cr_crapepr;
     FETCH cr_crapepr INTO rw_crapepr;
