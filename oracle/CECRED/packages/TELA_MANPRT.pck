@@ -28,10 +28,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                                      ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
                                      ,pr_flgcon        IN INTEGER) IS
     SELECT ted.idlancto
-          ,( SELECT sys.stragg(cart.nmcartorio) 
+          ,NVL(( SELECT sys.stragg(cart.nmcartorio) 
                FROM tbcobran_cartorio_protesto cart 
               WHERE cart.nrcpf_cnpj = ted.nrcnpj_debitada 
-                AND rownum = 1 ) as nome_cartorio -- pode haver mais de um cartório com o mesmo CPF/CNPJ
+                AND rownum = 1 ),'CARTORIO NAO CADASTRADO' || ' - ' || ted.nrcnpj_debitada) as nome_cartorio -- pode haver mais de um cartório com o mesmo CPF/CNPJ
           ,ted.nmtitular_debitada as nome_remetente
           ,ted.nrcnpj_debitada as cnpj_cpf
           ,banco.cdbccxlt  as nome_banco
