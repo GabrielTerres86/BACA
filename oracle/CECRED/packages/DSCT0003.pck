@@ -7407,7 +7407,7 @@ EXCEPTION
       pr_qtd_conc   := 0;
     END IF;
 
- END pc_calcula_liquidez;
+ END pc_calcula_concentracao;
   
   PROCEDURE pc_calcula_atraso_tit(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Codigo Cooperativa
                                  ,pr_nrdconta    IN craptdb.nrdconta%TYPE      --Número da conta do cooperado
