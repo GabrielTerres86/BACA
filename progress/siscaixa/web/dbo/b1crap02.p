@@ -1307,7 +1307,7 @@ PROCEDURE calcula_poupanca:
 													 ,INPUT 1 /* Titular da Conta */
 													 ,INPUT 2 /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
 													 ,INPUT craprpp.nrctrrpp /* Número de RPP */
-													 ,INPUT rpp_dtmvtolt /* Data de Movimento */
+													 ,INPUT crapdat.dtmvtocd /* Data de Movimento */
 													 ,OUTPUT 0           /* Valor de Saldo RPP    */
 													 ,OUTPUT "").        /* Descrição da crítica */
 										 
