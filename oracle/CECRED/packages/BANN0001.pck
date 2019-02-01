@@ -9,6 +9,11 @@ PROCEDURE pc_consulta_banner(pr_cdcooper     IN tbgen_notificacao.cdcooper%TYPE 
 
 END BANN0001;
 /
+/*
+Alterações:
+
+31/01/2019 - INC0031835 Melhoria do exists do cursor cur_banner (Carlos)
+*/
 CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
 
   PROCEDURE pc_consulta_banner(pr_cdcooper     IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
@@ -43,35 +48,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
       AND    tban.insituacao_banner = 1 -- ativo
       AND    ((tban.inexibir_quando = 1 AND trunc(tban.dtexibir_de) <= trunc(SYSDATE) AND trunc(tban.dtexibir_ate) >= trunc(SYSDATE)) OR
               (tban.inexibir_quando = 0))
-      AND    EXISTS (SELECT 1 -- filtro generico
+      AND    EXISTS (
+                     SELECT 1 -- filtro generico
                      FROM    TBGEN_BANNER_FILTRO_GENERICO tbfg
-                            ,TBGEN_BANNER tban1
                      WHERE   tbfg.cdbanner = tban.cdbanner
                      AND     tbfg.cdcanal  = tban.cdcanal
-                     AND     tban1.cdbanner = tbfg.cdbanner
-                     AND     tban1.cdcanal  = tbfg.cdcanal
-                     AND     tban1.tpfiltro = 0
-                     AND     pr_cdcooper IN (select regexp_substr(tbfg.dsfiltro_cooperativas,'[^,]+', 1, level) from dual
-                                             connect by regexp_substr(tbfg.dsfiltro_cooperativas, '[^,]+', 1, level) is not null) -- cooperativa
-                     AND     pcur_tipo_pessoa IN (select regexp_substr(tbfg.dsfiltro_tipos_conta,'[^,]+', 1, level) from dual
-                                             connect by regexp_substr(tbfg.dsfiltro_tipos_conta, '[^,]+', 1, level) is not null) -- tipo de pessoa
-                     AND     ((tbfg.inoutros_filtros = 1 AND tbfg.dsfiltro_produto=35 AND pcur_produto=1) 
-                             OR 
-                              (tbfg.inoutros_filtros = 0)
-                             )
+                     AND tban.tpfiltro = 0
+                     AND pr_cdcooper IN (SELECT regexp_substr(tbfg.dsfiltro_cooperativas, '[^,]+', 1, LEVEL)
+                                         FROM dual
+                                         CONNECT BY regexp_substr(tbfg.dsfiltro_cooperativas,'[^,]+',1,LEVEL) IS NOT NULL) -- cooperativa
+                     AND pcur_tipo_pessoa IN (SELECT regexp_substr(tbfg.dsfiltro_tipos_conta, '[^,]+', 1, LEVEL)
+                                              FROM dual
+                                              CONNECT BY regexp_substr(tbfg.dsfiltro_tipos_conta,'[^,]+',1,LEVEL) IS NOT NULL) -- tipo de pessoa
+                     AND ((tbfg.inoutros_filtros = 1 AND tbfg.dsfiltro_produto = 35 AND pcur_produto = 1) OR (tbfg.inoutros_filtros = 0))
                      UNION
                      SELECT 1 -- arquivo csv
                      FROM    TBGEN_BANNER_FILTRO_ESPECIFICO tbfe
-                            ,TBGEN_BANNER tban2
                      WHERE   tbfe.cdbanner = tban.cdbanner
                      AND     tbfe.cdcanal  = tban.cdcanal
-                     AND     tban2.cdbanner = tbfe.cdbanner
-                     AND     tban2.cdcanal  = tbfe.cdcanal
-                     AND     tban2.tpfiltro = 1
+                     AND tban.tpfiltro = 1
                      AND     tbfe.cdcooper  = pr_cdcooper
                      AND     tbfe.nrdconta  = pr_nrdconta
-                     AND     (tbfe.idseqttl  = pr_idseqttl
-                              OR  tbfe.idseqttl IS NULL)
+                     AND (tbfe.idseqttl = pr_idseqttl OR tbfe.idseqttl IS NULL)
                      )
       AND    ordembanner.cdbanner = tban.cdbanner
       ORDER BY ordembanner.seqbanner;
@@ -94,7 +92,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
     vr_xml_tmp VARCHAR2(32767);
     --
     vr_exc_erro EXCEPTION;                        
-    vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
     --
     vr_intransicao                 tbgen_banner_param.intransicao%TYPE;
