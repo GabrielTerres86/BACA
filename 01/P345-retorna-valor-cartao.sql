@@ -5,7 +5,7 @@
 update crawcrd 
    set cdadmcrd = 17
       ,insitcrd = 4
-      ,nrcrcard = 6393500011309260
+      ,nrcrcard = 6393500011309268
       ,cdgraupr = 0
       ,vlsalari = 0.01
       ,dddebito = 32
