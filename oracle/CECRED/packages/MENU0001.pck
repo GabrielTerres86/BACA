@@ -37,14 +37,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --
   --    Programa: MENU0001
   --    Autor   : Douglas Quisinski
-  --    Data    : Janeiro/2019                      Ultima Atualizacao:  30/01/2019   
+  --    Data    : Janeiro/2019                      Ultima Atualizacao:  01/02/2019   
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : Configurar os itens de MENU que sao configurados para exibicao 
   --
   --  Alteracoes: 09/05/2018 Criação (Douglas Quisinski)
-  --              30/01/2019 - Removido os menus da conta online para portabilidade de
+  --              01/02/2019 - Removido os menus da conta online para portabilidade de
   --              salários (Lucas Skroch - Supero - P485)
   --    
   --    
@@ -67,7 +67,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : MENU
     Autor   : Douglas Quisinski
-    Data    : 09/05/2018                        Ultima atualizacao: 01/11/2018
+    Data    : 09/05/2018                        Ultima atualizacao: 01/02/2019
     
     Dados referentes ao programa:
       Se for necessário adicionar mais itens de menu configuráveis para exibir/esconder, deverão ser adicionadas novas tags "item_menu", e os campos:
@@ -111,10 +111,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         40 - Transferências > Outros > Comprovantes
         41 - Transferências > Outros > Agendamentos
         42 - Investimentos > Cotas Capital > Consultar
-        43 - Empréstimos
-        44 - Cartões
-        45 - Cobrança Bancária
-        46 - Botão Acessar versão clássica
         47 - Conveniências > Perfil > Informações Cadastrais
         48 - Conveniências > Perfil > Alteração de Senha
         49 - Conveniências > Perfil > Configuração de Favoritos
@@ -130,6 +126,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
     Alteracoes: 09/05/2018 - Criação (Douglas Quisinski)
     
                 30/01/2019 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
+				01/02/2019 - Adaptação da rotina para enviar a camada de serviços apenas os itens de menu 
+                             a serem exibidos (Lucas Skroch - Supero - P485)
     ............................................................................. */
     DECLARE
       -- Flag Recarga de Celular
@@ -202,14 +200,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       vr_flgtrsage INTEGER := 0;
       -- Flag Investimentos > Cotas Capital > Consultar
       vr_flgcotcon INTEGER := 0;
-      -- Flag Empréstimos
-      vr_flgempres INTEGER := 0;
-      -- Flag Cartões
-      vr_flgcartao INTEGER := 0;
-      -- Flag Cobrança Bancária
-      vr_flgcobban INTEGER := 0;      
-      -- Flag Botão Acessar versão clássica
-      vr_flgacevcl INTEGER := 0;
       -- Flag Conveniências > Perfil > Informações Cadastrais
       vr_flginfcad INTEGER := 0;
       -- Flag Conveniências > Perfil > Alteração de Senha
@@ -271,6 +261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       --------------------------------------------------------------------------------------
       -- Inicializar a recarga de celular como desabilitada do menu
       vr_flgsitrc := 0;
+
 
       --------------------------------------------------------------------------------------
       ----------------- VERIFICAR SE O PRE-APROVADO ESTÁ HABILITADA A CONTA ----------------
@@ -352,10 +343,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
            vr_flgtrscmp := 1; -- item 40
            vr_flgtrsage := 1; -- item 41
            vr_flgcotcon := 1; -- item 42
-           vr_flgempres := 1; -- item 43
-           vr_flgcartao := 1; -- item 44
-           vr_flgcobban := 1; -- item 45
-           vr_flgacevcl := 1; -- item 46
            vr_flginfcad := 1; -- item 47
            vr_flgaltsen := 1; -- item 48
            vr_flgcfgfav := 1; -- item 49
@@ -567,35 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                    ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 42 -- Lista de Dominio "Investimentos > Cotas Capital > Consultar"
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgcotcon) ); 
-                                                                              
-            -- Adicionar o Item de Menu de Empréstimos na Conta Online
-            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 43 -- Lista de Dominio "43 - Empréstimos"
-                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                              ,pr_habilitado => vr_flgempres) ); 
-
-            -- Adicionar o Item de Menu de Cartões na Conta Online
-            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 44 -- Lista de Dominio "44 - Cartões"
-                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                              ,pr_habilitado => vr_flgcartao) ); 
-                                                                              
-            -- Adicionar o Item de Menu de Cobrança Bancária na Conta Online
-            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 45 -- Lista de Dominio "45 - Cobrança Bancária"
-                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                              ,pr_habilitado => vr_flgcobban) ); 
-                                                                                                                                                      
-            -- Adicionar o Item de Menu de Botão Acessar versão clássica na Conta Online
-            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 46 -- Lista de Dominio "46 - Botão Acessar versão clássica
-                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                              ,pr_habilitado => vr_flgacevcl) ); 
-                                                                              
+                                                                
             -- Adicionar o Item de Menu de Conveniências > Perfil > Informações Cadastrais na Conta Online
             GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                    ,pr_texto_completo => vr_xml_temp
