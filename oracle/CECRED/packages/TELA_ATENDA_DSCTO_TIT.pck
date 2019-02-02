@@ -102,7 +102,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
         incobran       crapcob.incobran%TYPE,
         insittit       craptdb.insittit%TYPE,
         nrborder       craptdb.nrborder%TYPE,
-        dtlibbdt       craptdb.dtlibbdt%TYPE
+        dtlibbdt       craptdb.dtlibbdt%TYPE,
+        dssittit       VARCHAR2(100)
         );
   
   TYPE typ_tab_dados_titulos IS TABLE OF typ_reg_dados_titulos INDEX BY BINARY_INTEGER;
