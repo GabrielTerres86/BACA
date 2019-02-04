@@ -4184,7 +4184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           -- Ler linha
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv --> Handle do arquivo aberto
                                       ,pr_des_text => vr_dslinha);  --> Texto lido
-             
+            
           IF NOT (length(vr_dslinha) = 240 OR
                   length(vr_dslinha) = 241 OR
                   length(vr_dslinha) = 400 OR
@@ -4223,13 +4223,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           
           IF pr_tparquiv = 'CNAB240' THEN
             
-            pr_cddbanco := to_number(substr(vr_dslinha,1,3));
-		    pr_nrdconta := to_number(substr(vr_dslinha,59,13));
+            BEGIN 
+              pr_cddbanco := to_number(substr(vr_dslinha,1,3));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo do banco invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+
+            END;
+            
+
+            BEGIN 
+              pr_nrdconta := to_number(substr(vr_dslinha,59,13));              
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo da conta invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;
+            
+            
             
           ELSIF pr_tparquiv = 'CNAB400' THEN
-            
-            pr_cddbanco := to_number(substr(vr_dslinha,77,3));
-			pr_nrdconta := to_number(substr(vr_dslinha,32,9));
+
+            BEGIN 
+              pr_cddbanco := to_number(substr(vr_dslinha,77,3));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo do banco invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;
+
+            BEGIN 
+              pr_nrdconta := to_number(substr(vr_dslinha,32,9));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo da conta invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;		      
                                 
           END IF;           
         
@@ -4241,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                       ,pr_nrlinseq => '99999'
                                       ,pr_cdseqcri => vr_contaerr
-                                      ,pr_dscritic => 'Codigo do banco invalido'
+                                      ,pr_dscritic => 'Codigo do banco invalido.'
                                       ,pr_tab_rejeita => pr_rec_rejeita 
                                       ,pr_critica => vr_dscritic      
                                       ,pr_des_reto => vr_des_reto);
