@@ -3616,7 +3616,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         FROM craptrq trq 
        WHERE trq.cdcooper = pr_cdcooper
          AND trq.cdagelot = pr_cdagelot
-         AND trq.tprequis = 1            
+         AND trq.tprequis = 0         
          AND trq.nrdolote = pr_nrdolote;
     rw_craptrq cr_craptrq%ROWTYPE;
     
@@ -3801,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,cdagelot
                             ,cdcooper)
                      VALUES (vr_nrdolote
-                            ,1
+                            ,0
                             ,vr_cdagenci
                             ,vr_cdcooper)
                    RETURNING nrseqdig 
@@ -3863,11 +3863,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
          SET trq.nrseqdig = vr_nrseqdig + 1
             ,trq.qtinforq = vr_qtinforq + 1
             ,trq.qtcomprq = vr_qtcomprq + 1
-            ,trq.qtinfotl = vr_qtinfotl + 1
-            ,trq.qtcomptl = vr_qtcomptl + 1
+            ,trq.qtinfotl = vr_qtinfotl + nvl(pr_qtreqtal,0)
+            ,trq.qtcomptl = vr_qtcomptl + nvl(pr_qtreqtal,0)
        WHERE trq.cdcooper = vr_cdcooper
          AND trq.cdagelot = vr_cdagenci
-         AND trq.tprequis = 1          
+         AND trq.tprequis = 0          
          AND trq.nrdolote = vr_nrdolote;
     EXCEPTION 
       WHEN OTHERS THEN
