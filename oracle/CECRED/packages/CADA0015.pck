@@ -6068,13 +6068,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
               IF cr_conta_comunic_soa%NOTFOUND THEN
                 vr_idinclusao := TRUE;
-              -- Se possuir alguma informacao diferente
-              ELSIF rw_conta_comunic_soa.tpsituacao_matricula <> 1 OR
-                    rw_conta_comunic_soa.cdagenci <> rw_crapass.cdagenci OR
-                    nvl(rw_conta_comunic_soa.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) <> nvl(rw_crapass.dtdemiss,to_date('31/12/2999','DD/MM/YYYY')) THEN
-                vr_idinclusao := TRUE;
               END IF;
-                CLOSE cr_conta_comunic_soa;
+              CLOSE cr_conta_comunic_soa;
                   
               IF vr_idinclusao THEN
                 -- Buscar conta do cooperado
