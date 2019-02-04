@@ -58,6 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
 																						 
     PROCEDURE pc_deslig_conta_salario;																						 
   
+    /* Função para converter um arquivo em formato UTF8 em CLOB */
+    FUNCTION fn_arq_utf_para_clob(pr_caminho IN VARCHAR2
+                                 ,pr_arquivo IN VARCHAR2) RETURN CLOB;
 
 END PCPS0001;
 /
@@ -1821,6 +1824,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 				                          ,pr_dsmsglog => vr_dscritic);
         RAISE_APPLICATION_ERROR(-20000, vr_dscritic);
 	END pc_deslig_conta_salario;
+
+  /* Função para converter um arquivo em formato UTF8 em CLOB */
+  FUNCTION fn_arq_utf_para_clob(pr_caminho IN VARCHAR2
+                               ,pr_arquivo IN VARCHAR2) RETURN CLOB IS
+    /*..............................................................................
+
+       Programa: fn_arq_utf_para_clob
+       Autor   : Renato Darosci
+       Data    : Fevereiro/2019                      Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Objetivo  : Criar um CLOB a partir do arquivo UTF8. Já existe uma rotina que 
+                   faz a mesma coisa na GENE0002, porém ela trabalha com arquivos
+                   US7ASCII de forma fixa e precisaremos trabalhar com UTF8 com os 
+                   arquivos da CIP.
+
+       Alteracoes: 
+    ..............................................................................*/
+
+    -- CLOB para saida
+    vr_clob CLOB;
+  BEGIN
+	  -- Incluir nome do módulo logado 
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PCPS0001.fn_arq_utf_para_clob'); 
+    
+    -- Realiza a leitura do arquivo -->  NLS_CHARSET_NAME(871) = UTF8
+    vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 871); 
+
+    -- Alterado pc_set_modulo da procedure 
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
+
+    RETURN vr_clob;
+  END fn_arq_utf_para_clob;
+
+
 
 END PCPS0001;
 /
