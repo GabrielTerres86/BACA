@@ -30,7 +30,7 @@
 		
 		$xmlResult = "";
 		// Executa script para envio do XML	 
-		$xmlResult = mensageria($xml, "CONLOG", "BUSCA_ARLOG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "CONLOG", "BUSCA_ARQLOG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		//$xmlObj = getObjectXML($xmlResult);
 		$xmlObj = simplexml_load_string($xmlResult);
 		
