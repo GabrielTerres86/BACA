@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 24/10/2018
+   Data    : Outubro/91.                     Ultima atualizacao: 01/02/2019
 
    Dados referentes ao programa:
 
@@ -323,6 +323,10 @@
                19/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
                             estorno de lançamentos na conta corrente              
                             pc_estorna_lancto_prog (Fabio Adriano - AMcom).             
+
+			   01/02/2019 - Revitalizacao (Remocao de lotes)
+                            Jonata (Mouts)
+  
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1326,6 +1330,10 @@ DO WHILE TRUE:
                
            END.
       
+      IF NOT (craplot.nrdolote = 6400 or 
+	          craplot.nrdolote = 7050 or
+			  craplot.nrdolote = 8473) then
+      do:
       IF   craphis.indebcre = "D"   THEN
            craplot.vlcompdb = craplot.vlcompdb - tel_vllanmto.
       ELSE
@@ -1333,6 +1341,7 @@ DO WHILE TRUE:
                 craplot.vlcompcr = craplot.vlcompcr - tel_vllanmto.
 
       craplot.qtcompln = craplot.qtcompln - 1.
+	  end.
 
       ASSIGN tel_qtinfoln = craplot.qtinfoln   tel_qtcompln = craplot.qtcompln
              tel_vlinfodb = craplot.vlinfodb   tel_vlcompdb = craplot.vlcompdb
