@@ -39,7 +39,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 23/04/2018
+    Data    : Abril/2006                     Ultima Atualizacao: 05/02/2019
     
     Dados referentes ao programa:
 
@@ -547,6 +547,9 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            PRJ381 - Antifraude (Odirlei-AMcom)
 
               20/05/2018 - Adicionado tratamento com a tabela tbdsct_trans_pend (Paulo Penteado GFT)
+              
+              05/02/2019 - Alterada rotina cadastrar-agendamento para passar o parametro do codigo de controle 
+                           da consulta na cip corretamente (Tiago PRB0040595)
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -2337,7 +2340,7 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_dstransf,
                           INPUT par_dshistor,
                           INPUT par_iptransa,  /* pr_iptransa */
-						              INPUT pr_cdctrlcs, /* pr_cdctrlcs*/
+						              INPUT par_cdctrlcs, /* pr_cdctrlcs*/
                           INPUT par_iddispos,
                          OUTPUT 0, /* pr_idlancto */
                          OUTPUT "",  /* pr_dstransa */                         
