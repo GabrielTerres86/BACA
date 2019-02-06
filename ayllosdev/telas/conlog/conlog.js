@@ -24,8 +24,8 @@ function formataFiltro(){
 
 	$('#nmarqlog[type=text]').css({ 'display': 'none' });
 	
-	$('#dtde', '#divFiltro').css({ 'width': '130px' }).habilitaCampo().setMask('INTEGER','/z9/zzz9', '/', '');
-	$('#dtate', '#divFiltro').css({ 'width': '130px' }).habilitaCampo().setMask('INTEGER','/z9/zzz9', '/', '');
+	$('#dtde', '#divFiltro').addClass('data').css({ 'width': '130px' }).habilitaCampo().setMask('INTEGER','zz/zz/zzz9','/','');
+	$('#dtate', '#divFiltro').addClass('data').css({ 'width': '130px' }).habilitaCampo().setMask('INTEGER','zz/zz/zzz9','/','');
 	$('#cdcooper', '#divFiltro').css({ 'width': '175px' }).habilitaCampo();
 	$('#cdprogra', '#divFiltro').css({ 'width': '130px', 'text-transform': 'uppercase' }).habilitaCampo();
 	$('#tpocorre', '#divFiltro').css({ 'width': '130px' }).habilitaCampo();
@@ -62,6 +62,13 @@ function formataFiltro(){
 
 		}
 	});
+
+	var dia = String('0' + new Date().getDate()).slice(-2);
+	var mes = String('0' + (new Date().getMonth()+1)).slice(-2);
+	var ano = new Date().getFullYear();
+
+	$('#dtde', '#divFiltro').val(dia + '/' + mes + '/' + ano);
+	$('#dtate', '#divFiltro').val(dia + '/' + mes + '/' + ano);
 	
 	$('#btConsultar').unbind('click').bind('click', function(){
 		$('#divTabela').html('');
