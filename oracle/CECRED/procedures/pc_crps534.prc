@@ -330,6 +330,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_nrcpfemp     crapttl.nrcpfemp%TYPE;
 	vr_nrcpfstl     crapttl.nrcpfcgc%TYPE;
   vr_nrcpfttl     crapttl.nrcpfcgc%TYPE;
+	vr_des_erro     VARCHAR2(1000);
   
   -- variáveis para controle de arquivos
    vr_dircon VARCHAR2(200);
