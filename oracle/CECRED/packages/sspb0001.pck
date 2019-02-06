@@ -3868,6 +3868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           vr_flgutstr := TRUE;
         ELSE
           vr_flgutpag := TRUE;
+          vr_flgutstr := TRUE;
         END IF;
       ELSE
         vr_flgutstr := TRUE;  
