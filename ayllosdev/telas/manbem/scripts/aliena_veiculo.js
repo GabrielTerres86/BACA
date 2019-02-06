@@ -73,10 +73,11 @@ function TrataDados(){
 }
 function validaCamposAditiv(){
 	var invalidos=0;
+    
 	errorMessage = "";
 	
 	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' ) {
 		if(!validaCampo('dsmarbemC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('dsbemfinC', '#frmTipo')){invalidos=invalidos+1;}
 		if(!validaCampo('nrmodbemC', '#frmTipo')){invalidos=invalidos+1;}
@@ -220,6 +221,7 @@ function CancelaSubstituicao()
 	intervenienteValidado=false;
 }
 function SubstituiBem(){
+	
 	if(intervenienteValidado)
 	{
 		gravaInterveniente();
