@@ -118,3 +118,7 @@
 			</div>
 		</fieldset>
 	</form>
+
+<script type="text/javascript">
+	var glbCdCooper = '<? echo $glbvars["cdcooper"]; ?>';
+</script>
