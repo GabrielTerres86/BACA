@@ -29,7 +29,7 @@ begin
   begin
     -- Realiza ajuste na altovale
     insert into crapmfx (dtmvtolt, tpmoefix, vlmoefix, cdcooper)
-         values ('12/02/2019',12,0.8287,16);
+         values (to_date('12/02/2019','dd/mm/yyyy'),12,0.8287,16);
   exception
     when others then
       vr_dscritic := 'Erro ao ajustar altovale: '||sqlerrm;
