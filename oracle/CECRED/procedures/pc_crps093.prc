@@ -124,6 +124,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                  10/10/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente 
                                        (Fabio Adriano - AMcom).
                  
+                 13/12/2018 - Removida atualização da capa de lote (CRAPLOT) para Cotas
+                              Yuri - Mouts
       ............................................................................. */
 
     DECLARE
@@ -994,14 +996,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
               ELSE 
                  vr_cdhistor := 2062;
               END IF;
+              -- Busca o sequencial 
+              rw_craplot7200.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                                     pr_nmdcampo => 'NRSEQDIG',
+                                                     pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                                    to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                                                    ';1;100;7200');
               lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_craplot7200.dtmvtolt
                                                 , pr_cdagenci => rw_craplot7200.cdagenci
                                                 , pr_cdbccxlt => rw_craplot7200.cdbccxlt
                                                 , pr_nrdolote => rw_craplot7200.nrdolote
                                                 , pr_nrdconta => rw_crapass.nrdconta
-                                                , pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
+                                                , pr_nrdocmto => rw_craplot7200.nrseqdig
+                                             -- , pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
                                                 , pr_cdhistor => vr_cdhistor --decode(rw_crapass.inpessoa,1,2061,2062)
-                                                , pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
+                                                , pr_nrseqdig => rw_craplot7200.nrseqdig
+                                             -- , pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
                                                 , pr_vllanmto => rw_crapsld.vlsddisp --vr_vldescto
                                                 , pr_nrdctabb => rw_crapass.nrdconta
                                                 , pr_cdpesqbb => ' '
@@ -1053,7 +1063,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             END;
 
             -- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
-            BEGIN
+            -- Comentado por Yuri - Mouts
+/*            BEGIN
               UPDATE craplot
               SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
                  ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
@@ -1075,7 +1086,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
                 --Sair do programa
                 RAISE vr_exc_undo;
-            END;
+            END; */
 
             BEGIN
               UPDATE tbcotas_devolucao
@@ -1150,14 +1161,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             BEGIN
               
               -- PRJ450 - 10/10/2018.
+              -- Busca o sequencial 
+              rw_craplot7200.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                                     pr_nmdcampo => 'NRSEQDIG',
+                                                     pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                                    to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                                                    ';1;100;7200');
               lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_craplot7200.dtmvtolt
                                                 , pr_cdagenci => rw_craplot7200.cdagenci
                                                 , pr_cdbccxlt => rw_craplot7200.cdbccxlt
                                                 , pr_nrdolote => rw_craplot7200.nrdolote
                                                 , pr_nrdconta => rw_crapass.nrdconta
-                                                , pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
+                                                , pr_nrdocmto => rw_craplot7200.nrseqdig
+                                              --, pr_nrdocmto => nvl(rw_craplot7200.nrseqdig,0) + 1 
                                                 , pr_cdhistor => 111
-                                                , pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
+                                                , pr_nrseqdig => rw_craplot7200.nrseqdig
+                                              --, pr_nrseqdig => nvl(rw_craplot7200.nrseqdig,0) + 1
                                                 , pr_vllanmto => rw_crapsld.vlsdchsl
                                                 , pr_nrdctabb => rw_crapass.nrdconta
                                                 , pr_cdpesqbb => ' '
@@ -1209,7 +1228,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             END;
 
             -- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
-            BEGIN
+            -- Comentado por Yuri - Mouts
+/*          BEGIN
               UPDATE craplot
               SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
                  ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
@@ -1231,7 +1251,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
                 --Sair do programa
                 RAISE vr_exc_undo;
-            END;
+            END;*/
 
             -- Verifica se o mês é superior a 6
             vr_idsmstre := to_char(rw_crapdat.dtmvtolt,'MM');
@@ -1354,9 +1374,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             END;
           END IF;
 
-
           -- se o associado possuir cotas, efetua a baixa de capital
           IF nvl(rw_crapcot.vldcotas,0) > 0 THEN -- valor de cotas do associado
+            -- Busca o sequencial 
+            rw_craplot8006.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                                   pr_nmdcampo => 'NRSEQDIG',
+                                                   pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                                  to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                                                  ';1;100;8006');
+
             -- Insere lançamento na tabela de lançamentos de cotas de capital
             BEGIN
               INSERT INTO craplct( dtmvtolt
@@ -1377,8 +1403,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                      ,rw_crapass.nrdconta
                      ,nvl(rw_crapcot.vldcotas,0)
                      ,decode(rw_crapass.inpessoa,1,2079,2080)
-                     ,rw_craplot8006.nrseqdig + 1
-                     ,rw_craplot8006.nrseqdig + 1
+                     ,rw_craplot8006.nrseqdig
+                   --,rw_craplot8006.nrseqdig + 1
+                     ,rw_craplot8006.nrseqdig
+                   --,rw_craplot8006.nrseqdig + 1
                      ,nvl(rw_crapcot.qtcotmfx,0)
                      ,pr_cdcooper)
               RETURNING vllanmto
@@ -1391,7 +1419,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             END;
 
 			-- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
-            BEGIN
+/*          BEGIN
               UPDATE craplot
               SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
                  ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
@@ -1413,7 +1441,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
                 --Sair do programa
                 RAISE vr_exc_undo;
-            END;
+            END;*/
 
             BEGIN
               UPDATE tbcotas_devolucao
