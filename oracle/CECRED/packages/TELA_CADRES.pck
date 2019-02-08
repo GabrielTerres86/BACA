@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
                                  ,pr_dscritic            OUT VARCHAR2                                       -- Descrição da crítica
                                  );
 	--
-	PROCEDURE pc_busca_workflow(pr_cdcooper IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
+	PROCEDURE pc_busca_workflow(pr_cdcooprt IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
                              ,pr_xmllog   IN  VARCHAR2                             -- XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER                          -- Código da crítica
                              ,pr_dscritic OUT VARCHAR2                             -- Descrição da crítica
@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
                              ,pr_des_erro OUT VARCHAR2                             -- Erros do processo
 		                         );
   --
-	PROCEDURE pc_insere_aprovador(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_insere_aprovador(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
 		                           ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															 ,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE        -- Código do aprovador
 															 ,pr_dsemail_aprovador  IN  tbrecip_param_aprovador.dsemail_aprovador%TYPE  -- E-mail do aprovador
@@ -27,7 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															 ,pr_des_erro           OUT VARCHAR2                                        -- Erros do processo
 		                           );
   --
-	PROCEDURE pc_exclui_aprovador(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_exclui_aprovador(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
 		                           ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															 ,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE        -- Código do aprovador
 															 ,pr_xmllog             IN  VARCHAR2                                        -- XML com informações de LOG
@@ -38,7 +38,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															 ,pr_des_erro           OUT VARCHAR2                                        -- Erros do processo
 		                           );
 	--
-	PROCEDURE pc_busca_aprovadores(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE                 -- Identificador da cooperativa
+	PROCEDURE pc_busca_aprovadores(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE                 -- Identificador da cooperativa
 		                            ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE       -- Código da alçada de aprovação
 																,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE DEFAULT NULL -- Codigo do aprovador
 																,pr_xmllog             IN  VARCHAR2                                              -- XML com informações de LOG
@@ -49,7 +49,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 																,pr_des_erro           OUT VARCHAR2                                              -- Erros do processo
 																);
 	--
-	PROCEDURE pc_busca_operadores(pr_cdcooper IN  crapope.cdcooper%TYPE -- Identificador da cooperativa
+	PROCEDURE pc_busca_operadores(pr_cdcooprt IN  crapope.cdcooper%TYPE -- Identificador da cooperativa
 		                           ,pr_cdoperad IN  crapope.cdoperad%TYPE -- Código do operador
 															 ,pr_nmoperad IN  crapope.nmoperad%TYPE -- Nome do operador
 															 ,pr_nriniseq IN  NUMBER DEFAULT 1      -- Registro inicial para paginação
@@ -62,7 +62,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															 ,pr_des_erro OUT VARCHAR2              -- Erros do processo
 															 );
 	--
-	PROCEDURE pc_atualiza_alcada(pr_cdcooper           IN  tbrecip_param_workflow.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_atualiza_alcada(pr_cdcooprt           IN  tbrecip_param_workflow.cdcooper%TYPE           -- Identificador da cooperativa
 		                          ,pr_cdalcada_aprovacao IN  tbrecip_param_workflow.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															,pr_flregra_aprovacao  IN  tbrecip_param_workflow.flregra_aprovacao%TYPE  -- Identificador da flag de aprovação
 															,pr_xmllog             IN  VARCHAR2                                       -- XML com informações de LOG
@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															,pr_des_erro           OUT VARCHAR2                                       -- Erros do processo
 		                          );
 	--
-	PROCEDURE pc_busca_alcada_aprovacao(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+	PROCEDURE pc_busca_alcada_aprovacao(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
 		                                 ,pr_idcalculo_reciproci IN  tbrecip_aprovador_calculo.idcalculo_reciproci%TYPE -- Identificador do cálculo de reciprocidade
 																		 ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
 																		 ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
@@ -83,7 +83,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 																		 ,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
 																		 );
 	--
-	PROCEDURE pc_aprova_contrato(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+	PROCEDURE pc_aprova_contrato(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
 		                          ,pr_cdalcada_aprovacao  IN  tbrecip_param_workflow.cdalcada_aprovacao%TYPE     -- Código da alçada de aprovação
 															,pr_idcalculo_reciproci IN  tbrecip_aprovador_calculo.idcalculo_reciproci%TYPE -- Identificador da flag de aprovação
 															,pr_idstatus            IN  tbrecip_aprovador_calculo.idstatus%TYPE            -- Status enviado pelo aprovador
@@ -96,7 +96,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
 		                          );
   --
-  PROCEDURE pc_valida_alcada(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+  PROCEDURE pc_valida_alcada(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
                             ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
                             ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
                             ,pr_dscritic            OUT VARCHAR2                                           -- Descrição da crítica
@@ -104,6 +104,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
                             ,pr_nmdcampo            OUT VARCHAR2                                           -- Nome do campo com erro
                             ,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
                             );
+                            
+  --
+  PROCEDURE pc_busca_qtd_regional(pr_cdcooprt IN crapcop.cdcooper%type -->Codigo Cooperativa
+                                 ,pr_xmllog   IN VARCHAR2 DEFAULT NULL -->XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          -->Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             -->Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    -->Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             -->Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2);
 	--
 END TELA_CADRES;
 /
@@ -227,6 +236,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND crapceb.nrdconta = crapass.nrdconta
 				 AND crapceb.cdcooper = pr_cdcooper
 				 AND crapceb.idrecipr = pr_idrecipr
+				 AND ROWNUM = 1
+			 UNION ALL
+			SELECT crapceb.nrdconta
+						,crapass.nmprimtl
+				FROM tbcobran_crapceb crapceb
+						,crapass
+			 WHERE crapceb.cdcooper = crapass.cdcooper
+				 AND crapceb.nrdconta = crapass.nrdconta
+				 AND crapceb.cdcooper = pr_cdcooper
+				 AND crapceb.idrecipr = pr_idrecipr
 				 AND ROWNUM = 1;
 		
 		rw_conta cr_conta%ROWTYPE;
@@ -294,7 +313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
                    'Foi solicitada a sua aprovação para alterar a tarifa do convênio de cobrança, conforme negociação abaixo: <br><br>' ||
                    'Conta: ' || SUBSTR(rw_conta.nrdconta,1, LENGTH(rw_conta.nrdconta)-1) || '-' || SUBSTR(rw_conta.nrdconta,LENGTH(rw_conta.nrdconta), LENGTH(rw_conta.nrdconta)) || '<br>' ||
                    'Nome/Razão Social: ' || rw_conta.nmprimtl || '<br><br>' ||
-                   'Justificativa: <br>' || vr_dsjustificativa_desc_adic ||
+                   'Justificativa: <br>' || gene0007.fn_convert_db_web( vr_dsjustificativa_desc_adic ) ||
                    '<br><br>Para aprovar ou rejeitar a negociação, acesse a conta na tela ATENDA > COBRANÇA BANCÁRIA, através do link abaixo: <br><br>' ||
                    '<a href="https://ayllos.cecred.coop.br/home.php">https://ayllos.cecred.coop.br/home.php</a>';
     --
@@ -409,6 +428,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     
     ..............................................................................*/
     
+		CURSOR cr_tbcobran_crapceb(pr_cdcooper tbcobran_crapceb.cdcooper%TYPE
+															,pr_idrecipr tbcobran_crapceb.idrecipr%TYPE
+														  ) IS
+		  SELECT tbcobran_crapceb.nrdconta
+			      ,tbcobran_crapceb.nrconven
+						,tbcobran_crapceb.nrcnvceb
+			  FROM tbcobran_crapceb
+			 WHERE tbcobran_crapceb.idrecipr = pr_idrecipr
+			   AND tbcobran_crapceb.cdcooper = pr_cdcooper;
+		--
+		rw_tbcobran_crapceb cr_tbcobran_crapceb%ROWTYPE;
+    
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
@@ -434,6 +465,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     --
 		BEGIN
 			--
+      UPDATE tbcobran_crapceb crapceb 
+         SET crapceb.insitceb = 1 -- Ativo
+       WHERE crapceb.idrecipr = pr_idrecipr
+         AND crapceb.cdcooper = pr_cdcooper
+         AND crapceb.insitceb = 3; -- Pendente
+      --
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+		--
+		BEGIN
+			--
 			UPDATE tbrecip_calculo tc
 			   SET tc.dtinicio_vigencia_contrato = pr_dtinicio
 			 WHERE tc.idcalculo_reciproci        = pr_idrecipr;
@@ -443,6 +488,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
         vr_dscritic := 'Erro ao atualizar a data na tbrecip_calculo ' || pr_idrecipr || ': ' || SQLERRM;
         RAISE vr_exc_erro;
 		END;
+		--
+		OPEN cr_tbcobran_crapceb(pr_cdcooper
+														,pr_idrecipr
+														);
+	  --
+		LOOP
+			--
+			FETCH cr_tbcobran_crapceb INTO rw_tbcobran_crapceb;
+			EXIT WHEN cr_tbcobran_crapceb%NOTFOUND;
+			--
+			tela_atenda_cobran.pc_grava_principal_crapceb(pr_cdcooper => pr_cdcooper                  -- IN
+																									 ,pr_nrdconta => rw_tbcobran_crapceb.nrdconta -- IN
+																									 ,pr_nrconven => rw_tbcobran_crapceb.nrconven -- IN
+																									 ,pr_nrcnvceb => rw_tbcobran_crapceb.nrcnvceb -- IN
+																									 ,pr_insitceb => NULL                         -- IN
+																									 ,pr_dscritic => vr_dscritic                  -- OUT
+																									 );
+			--
+			IF vr_dscritic IS NOT NULL THEN
+				--
+				CLOSE cr_tbcobran_crapceb;
+				RAISE vr_exc_erro;
+				--
+			END IF;
+			--
+		END LOOP;
+		--
+		CLOSE cr_tbcobran_crapceb;
 		--
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -505,6 +578,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND crapceb.insitceb = 1; -- Ativo
 			--
 		EXCEPTION
+			WHEN no_data_found THEN
+				BEGIN
+					--
+					UPDATE tbcobran_crapceb crapceb
+						 SET crapceb.insitceb = 2 -- Inativo
+					 WHERE crapceb.idrecipr = pr_idrecipr
+						 AND crapceb.cdcooper = pr_cdcooper
+						 AND crapceb.insitceb = 1; -- Ativo
+					--
+				EXCEPTION
+			WHEN OTHERS THEN
+						vr_dscritic := '2.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+						RAISE vr_exc_erro;
+				END;
 			WHEN OTHERS THEN
 				vr_dscritic := '2.Erro ao atualizar a situacao na CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
@@ -582,6 +669,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND crapceb.insitceb = 3; -- Pendente
 			--
 		EXCEPTION
+			WHEN no_data_found THEN
+				BEGIN
+					--
+					UPDATE tbcobran_crapceb crapceb
+						 SET crapceb.insitceb = 6 -- Não aprova
+					 WHERE crapceb.idrecipr = pr_idrecipr
+						 AND crapceb.cdcooper = pr_cdcooper
+						 AND crapceb.insitceb = 3; -- Pendente
+					--
+				EXCEPTION
+			WHEN OTHERS THEN
+						vr_dscritic := '3.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+						RAISE vr_exc_erro;
+				END;
 			WHEN OTHERS THEN
 				vr_dscritic := '3.Erro ao atualizar a situacao na CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
@@ -607,7 +708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_reprova_contrato;
 	--
-	PROCEDURE pc_busca_workflow(pr_cdcooper IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
+	PROCEDURE pc_busca_workflow(pr_cdcooprt IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
 														 ,pr_xmllog   IN  VARCHAR2                             -- XML com informações de LOG
 														 ,pr_cdcritic OUT PLS_INTEGER                          -- Código da crítica
 														 ,pr_dscritic OUT VARCHAR2                             -- Descrição da crítica
@@ -713,7 +814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			SELECT COUNT(1)
 			  INTO vr_qtregistros
 			  FROM tbrecip_param_workflow tpw
-			 WHERE tpw.cdcooper = pr_cdcooper;
+			 WHERE tpw.cdcooper = pr_cdcooprt;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
@@ -739,7 +840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				--
 				FOR i IN vr_tab_dominios.first..vr_tab_dominios.last LOOP
 					--
-					pc_insere_param_workflow(pr_cdcooper           => pr_cdcooper                  -- IN
+					pc_insere_param_workflow(pr_cdcooper           => pr_cdcooprt                  -- IN
 																	,pr_cdalcada_aprovacao => vr_tab_dominios(i).cddominio -- IN
 																	,pr_dscritic           => vr_dscritic                  -- OUT
 																	);
@@ -762,7 +863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
 		--
-		OPEN cr_param_workflow(pr_cdcooper);
+		OPEN cr_param_workflow(pr_cdcooprt);
 		--
 		pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
 		--
@@ -788,7 +889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
 		ELSE
 			--
-			vr_dscritic := 'Nenhuma alcada encontrada para a cooperativa informada: ' || pr_cdcooper;
+			vr_dscritic := 'Nenhuma alcada encontrada para a cooperativa informada: ' || pr_cdcooprt;
       RAISE vr_exc_erro;
 			--
 		END IF;
@@ -829,7 +930,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_busca_workflow;
 	--
-	PROCEDURE pc_insere_aprovador(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_insere_aprovador(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
 		                           ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															 ,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE        -- Código do aprovador
 															 ,pr_dsemail_aprovador  IN  tbrecip_param_aprovador.dsemail_aprovador%TYPE  -- E-mail do aprovador
@@ -922,7 +1023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																					 ,dsemail_aprovador
 																					 ,flativo
 																					 )
-																		 VALUES(pr_cdcooper
+																		 VALUES(pr_cdcooprt
 																					 ,pr_cdalcada_aprovacao
 																					 ,pr_cdaprovador
 																					 ,pr_dsemail_aprovador
@@ -940,7 +1041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			BEGIN
 				--
 				UPDATE tbrecip_param_aprovador tpa
-				   SET tpa.cdcooper           = pr_cdcooper
+				   SET tpa.cdcooper           = pr_cdcooprt
 					    ,tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
 							,tpa.dsemail_aprovador  = pr_dsemail_aprovador
 							,tpa.flativo            = 1 -- Ativo
@@ -988,7 +1089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_insere_aprovador;
 	--
-	PROCEDURE pc_exclui_aprovador(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_exclui_aprovador(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE           -- Identificador da cooperativa
 		                           ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															 ,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE        -- Código do aprovador
 															 ,pr_xmllog             IN  VARCHAR2                                        -- XML com informações de LOG
@@ -1059,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
 			UPDATE tbrecip_param_aprovador tpa
 			   SET tpa.flativo = 0 -- Inativo
-			 WHERE tpa.cdcooper           = pr_cdcooper
+			 WHERE tpa.cdcooper           = pr_cdcooprt
 			   AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
 				 AND tpa.cdaprovador        = pr_cdaprovador;
 			--
@@ -1103,7 +1204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_exclui_aprovador;
   --
-  PROCEDURE pc_busca_aprovadores(pr_cdcooper           IN  tbrecip_param_aprovador.cdcooper%TYPE                 -- Identificador da cooperativa
+  PROCEDURE pc_busca_aprovadores(pr_cdcooprt           IN  tbrecip_param_aprovador.cdcooper%TYPE                 -- Identificador da cooperativa
 		                            ,pr_cdalcada_aprovacao IN  tbrecip_param_aprovador.cdalcada_aprovacao%TYPE       -- Código da alçada de aprovação
 																,pr_cdaprovador        IN  tbrecip_param_aprovador.cdaprovador%TYPE DEFAULT NULL -- Codigo do aprovador
 																,pr_xmllog             IN  VARCHAR2                                              -- XML com informações de LOG
@@ -1213,7 +1314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
 		--
-		OPEN cr_aprovadores(pr_cdcooper
+		OPEN cr_aprovadores(pr_cdcooprt
 											 ,pr_cdalcada_aprovacao
 											 ,pr_cdaprovador
 											 );
@@ -1281,7 +1382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_busca_aprovadores;
 	--
-	PROCEDURE pc_busca_operadores(pr_cdcooper IN  crapope.cdcooper%TYPE -- Identificador da cooperativa
+	PROCEDURE pc_busca_operadores(pr_cdcooprt IN  crapope.cdcooper%TYPE -- Identificador da cooperativa
 		                           ,pr_cdoperad IN  crapope.cdoperad%TYPE -- Código do operador
 															 ,pr_nmoperad IN  crapope.nmoperad%TYPE -- Nome do operador
 															 ,pr_nriniseq IN  NUMBER DEFAULT 1      -- Registro inicial para paginação
@@ -1414,7 +1515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
 		--
-		OPEN cr_crapope(pr_cdcooper
+		OPEN cr_crapope(pr_cdcooprt
 									 ,pr_cdoperad
 									 ,pr_nmoperad
 									 ,pr_nriniseq
@@ -1488,7 +1589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_busca_operadores;
 	--
-	PROCEDURE pc_atualiza_alcada(pr_cdcooper           IN  tbrecip_param_workflow.cdcooper%TYPE           -- Identificador da cooperativa
+	PROCEDURE pc_atualiza_alcada(pr_cdcooprt           IN  tbrecip_param_workflow.cdcooper%TYPE           -- Identificador da cooperativa
 		                          ,pr_cdalcada_aprovacao IN  tbrecip_param_workflow.cdalcada_aprovacao%TYPE -- Código da alçada de aprovação
 															,pr_flregra_aprovacao  IN  tbrecip_param_workflow.flregra_aprovacao%TYPE  -- Identificador da flag de aprovação
 															,pr_xmllog             IN  VARCHAR2                                       -- XML com informações de LOG
@@ -1560,7 +1661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			UPDATE tbrecip_param_workflow tpw
 			   SET tpw.flregra_aprovacao = pr_flregra_aprovacao
 			 WHERE tpw.cdalcada_aprovacao = pr_cdalcada_aprovacao
-			   AND tpw.cdcooper           = pr_cdcooper;
+			   AND tpw.cdcooper           = pr_cdcooprt;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
@@ -1602,7 +1703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_atualiza_alcada;
 	--
-	PROCEDURE pc_busca_alcada_aprovacao(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+	PROCEDURE pc_busca_alcada_aprovacao(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
 		                                 ,pr_idcalculo_reciproci IN  tbrecip_aprovador_calculo.idcalculo_reciproci%TYPE -- Identificador do cálculo de reciprocidade
 																		 ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
 																		 ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
@@ -1739,7 +1840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			SELECT COUNT(1)
 			  INTO vr_qtregistros
 			  FROM tbrecip_param_workflow tpw
-			 WHERE tpw.cdcooper = pr_cdcooper;
+			 WHERE tpw.cdcooper = pr_cdcooprt;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
@@ -1753,7 +1854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
 		--
-		OPEN cr_alcada_aprovacao(pr_cdcooper
+		OPEN cr_alcada_aprovacao(pr_cdcooprt
 		                        ,pr_idcalculo_reciproci
 														,vr_cdoperad
 														);
@@ -1782,7 +1883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
 		ELSE
 			--
-			vr_dscritic := 'Nenhuma alcada encontrada para a cooperativa informada: ' || pr_cdcooper;
+			vr_dscritic := 'Nenhuma alcada encontrada para a cooperativa informada: ' || pr_cdcooprt;
       RAISE vr_exc_erro;
 			--
 		END IF;
@@ -1823,7 +1924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_busca_alcada_aprovacao;
 	--
-	PROCEDURE pc_aprova_contrato(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+	PROCEDURE pc_aprova_contrato(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
 		                          ,pr_cdalcada_aprovacao  IN  tbrecip_param_workflow.cdalcada_aprovacao%TYPE     -- Código da alçada de aprovação
 															,pr_idcalculo_reciproci IN  tbrecip_aprovador_calculo.idcalculo_reciproci%TYPE -- Identificador da flag de aprovação
 															,pr_idstatus            IN  tbrecip_aprovador_calculo.idstatus%TYPE            -- Status enviado pelo aprovador
@@ -1881,6 +1982,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																															,crapceb.nrdconta
 																													FROM crapceb
 																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr
+																										 UNION ALL
+																												SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr)
+				 AND crapceb2.insitceb IN(1, 3) -- 1 = Ativo / 3 = Pendente
+			 UNION ALL
+			SELECT crapceb2.cdcooper
+						,crapceb2.nrdconta
+						,crapceb2.nrconven
+						,crapceb2.nrcnvceb
+						,crapceb2.idrecipr
+						,crapceb2.insitceb
+				FROM tbcobran_crapceb crapceb2
+			 WHERE (crapceb2.cdcooper, crapceb2.nrdconta) IN (SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
 																													 AND crapceb.idrecipr = pr_idrecipr)
 				 AND crapceb2.insitceb IN(1, 3); -- 1 = Ativo / 3 = Pendente
 		
@@ -1924,6 +2045,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
                             ,pr_dscritic => vr_dscritic
 														);
 
+    -- Verifica se a reciprocidade foi informada
+    IF TRIM(pr_idcalculo_reciproci) IS NULL OR pr_idcalculo_reciproci = 0 THEN
+        vr_dscritic := 'Contrato sem código de reciprocidade.';
+    END IF;
+
     -- Verifica se houve erro recuperando informacoes de log                              
     IF vr_dscritic IS NOT NULL THEN
 			--
@@ -1931,7 +2057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
     END IF;
 		-- Valida se o usuário possui permissão de aprovador na alçada informada
-		OPEN cr_valida_aprovador(pr_cdcooper
+		OPEN cr_valida_aprovador(pr_cdcooprt
 														,pr_cdalcada_aprovacao
 														,vr_cdoperad
 														);
@@ -1948,7 +2074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		CLOSE cr_valida_aprovador;
 		--
 		-- Verificacao do calendario
-		OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+		OPEN BTCH0001.cr_crapdat(pr_cdcooprt);
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
 		--
@@ -1963,7 +2089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																					 ,dsjustificativa
 																					 ,cdoperador
 																					 )
-																		 VALUES(pr_cdcooper
+																		 VALUES(pr_cdcooprt
 																		       ,rw_valida_aprovador.cdalcada_aprovacao --pr_cdalcada_aprovacao
 																		       ,pr_idcalculo_reciproci
 																					 ,vr_cdoperad
@@ -2011,7 +2137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 								WHERE tpw.cdalcada_aprovacao = tdc.cddominio
 									AND tdc.nmdominio          = 'IDALCADA_RECIPR'
 									AND tpw.flregra_aprovacao  = 1 -- Ativo
-									AND tpw.cdcooper           = pr_cdcooper
+									AND tpw.cdcooper           = pr_cdcooprt
 						 ORDER BY tpw.cdalcada_aprovacao) pendentes
 				 WHERE pendentes.dsstatus <> 'Aprovado';
 				--
@@ -2023,7 +2149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
 			IF vr_qtpendentes = 0 THEN
 				--
-				OPEN cr_contratos(pr_cdcooper
+				OPEN cr_contratos(pr_cdcooprt
 												 ,pr_idcalculo_reciproci
 												 );
 				--
@@ -2073,7 +2199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
       COMMIT;
       -- Envia os e-mails com a solicitação de aprovação para a próxima alçada se existir
-      pc_envia_email_alcada(pr_cdcooper            => pr_cdcooper
+      pc_envia_email_alcada(pr_cdcooper            => pr_cdcooprt
                            ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
                            ,pr_cdcritic            => vr_cdcritic
                            ,pr_dscritic            => vr_dscritic
@@ -2087,7 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
       --
 		ELSE -- Rejeitado
 			--
-			pc_reprova_contrato(pr_cdcooper => pr_cdcooper            -- IN
+			pc_reprova_contrato(pr_cdcooper => pr_cdcooprt            -- IN
 												 ,pr_idrecipr => pr_idcalculo_reciproci -- IN
 												 ,pr_cdcritic => vr_cdcritic            -- OUT
 												 ,pr_dscritic => vr_dscritic            -- OUT
@@ -2134,7 +2260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_aprova_contrato;
 	--
-  PROCEDURE pc_valida_alcada(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+  PROCEDURE pc_valida_alcada(pr_cdcooprt            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
                             ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
                             ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
                             ,pr_dscritic            OUT VARCHAR2                                           -- Descrição da crítica
@@ -2166,7 +2292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
        WHERE tpw.cdalcada_aprovacao = tdc.cddominio
          AND tdc.nmdominio          = 'IDALCADA_RECIPR'
          AND tpw.flregra_aprovacao  = 1 -- Ativo
-         AND tpw.cdcooper           = pr_cdcooper
+         AND tpw.cdcooper           = pr_cdcooprt
 		ORDER BY tpw.cdalcada_aprovacao;
 		
     rw_alcada cr_alcada%ROWTYPE;
@@ -2219,6 +2345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     --
     CLOSE cr_alcada;
 		--
+    -- Comentado para não gerar erro na tela (removido a pedido dos usuarios)
     IF vr_qtalcada = 0 THEN
 			--
 			vr_dscritic := 'Nenhuma alcada encontrada. Verifique o cadastro e realize novamente a operacao.';
@@ -2263,5 +2390,144 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																		 '<Root><Erro>' || pr_dscritic ||
 																		 '</Erro></Root>');
   END pc_valida_alcada;
+  
+  /* Trazer o cadastro de Regionais para PACs Modo Web */
+  PROCEDURE pc_busca_qtd_regional(pr_cdcooprt IN crapcop.cdcooper%type -->Codigo Cooperativa
+                                 ,pr_xmllog   IN VARCHAR2 DEFAULT NULL -->XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          -->Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             -->Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    -->Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             -->Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2) IS         -->Saida OK/NOK
+                                       
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa: pc_busca_crapreg      Antiga: 
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+
+    Autor   : Andre Clemer (Supero)
+    Data    : 30/11/2018                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Diario (on-line)
+    Objetivo  : Trazer o cadastro de Regionais para PACs modo Web
+
+    Alteracoes: 
+                 
+  ---------------------------------------------------------------------------------------------------------------*/
+  
+   -- Verifica operadores das regionais da cooperativa
+   CURSOR cr_crapope(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+     SELECT COUNT(1)
+       FROM crapope
+      WHERE crapope.cdcooper = pr_cdcooper
+        AND crapope.cdsitope = 1
+        AND crapope.cdoperad IN (SELECT crapreg.cdopereg
+                                   FROM crapreg
+                                  WHERE crapreg.cdcooper = pr_cdcooper);
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Cursor generico de calendario
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+       
+    --Variaveis auxiliares
+    vr_qtregist INTEGER := 0;
+        
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;                                       
+    
+    BEGIN
+      
+      --Inicializar Variaveis
+      vr_cdcritic:= 0;                         
+      vr_dscritic:= null;
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Verificacao do calendario
+      OPEN BTCH0001.cr_crapdat(vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+            
+      --Consultar Regionais Cadastradas
+      OPEN cr_crapope(pr_cdcooper => pr_cdcooprt);
+      FETCH cr_crapope INTO vr_qtregist;
+      -- Fecha cursor
+      CLOSE cr_crapope;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'Dados'             --> Nome da TAG XML
+                               ,pr_atrib => 'qtregist'          --> Nome do atributo
+                               ,pr_atval => vr_qtregist         --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;  
+                                          
+      --Retorno
+      pr_des_erro:= 'OK';    
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';
+        
+        -- Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+        
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+        
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na RREG0001.pc_busca_crapreg_web --> '|| SQLERRM;
+        
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                         
+  END pc_busca_qtd_regional;
 END TELA_CADRES;
 /
