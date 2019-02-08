@@ -284,7 +284,7 @@ PROCEDURE pc_crps388_i(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa so
                    VALUES (pr_cdcooper
                           ,4
                           ,pr_rw_gnconve.cdconven
-                          ,rw_crapdat.dtmvtolt
+                          ,rw_crapdat.dtmvtopr
                           ,pr_nrseqarq);
     END IF;
     
@@ -523,7 +523,7 @@ PROCEDURE pc_crps388_i(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa so
        WHERE cdcooper = pr_cdcooper 
          AND tpdcontr = 4 
          AND cdconven = pr_rw_gnconve.cdconven
-         AND dtmvtolt = rw_crapdat.dtmvtolt
+         AND dtmvtolt = rw_crapdat.dtmvtopr
          AND nrsequen = pr_nrseqarq;
     END IF;
     
