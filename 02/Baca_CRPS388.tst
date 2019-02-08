@@ -639,14 +639,14 @@ PROCEDURE pc_crps388_i(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa so
     FOR rw_gnconve IN cr_gnconve (vr_cdconven) LOOP 
       -- Montagem da data de repassa
       /*IF rw_gnconve.tprepass = 1 THEN 
-        -- D+1
+        -- D+1*/
         vr_dtmvtopr := rw_crapdat.dtmvtopr;
-      ELSE*/
+      /*ELSE
         -- D+2 
         vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper 
                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtopr+1
                                                   ,pr_tipo => 'P') ;
-      --END IF;      
+      END IF;     */ 
       
       -- Reiniciar totais e controladores por convênio
       vr_flgfirst := TRUE;
