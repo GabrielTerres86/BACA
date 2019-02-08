@@ -943,15 +943,6 @@ EXCEPTION
        AND tpplaseg = 1
        AND cdsegura = 5011; -- SEGURADORA CHUBB                                     
 
-  CURSOR cr_crawepr (prc_cdcooper IN crawepr.cdcooper%TYPE,
-                     prc_nrdconta IN crawepr.nrdconta%TYPE,
-                     prc_nrctremp IN crawepr.nrctremp%TYPE) IS   
-    SELECT w.vlemprst
-      FROM crawepr w
-     WHERE w.cdcooper = prc_cdcooper
-       AND w.nrdconta = prc_nrdconta 
-       AND w.nrctremp = prc_nrctremp;                                           
-
   -- Tratamento de erros
   vr_exc_saida  EXCEPTION;
   vr_exc_fimprg EXCEPTION;
@@ -1061,12 +1052,6 @@ EXCEPTION
                          
     if pr_valida_proposta = 'N' then
       vr_valor_para_validacao := vr_sld_devempr; -- Valor somente dos emprestimos    
-    ELSIF pr_valida_proposta = 'E' THEN -- Usado na efetivação
-      FOR rw_crawepr IN cr_crawepr(pr_cdcooper,
-                                   pr_nrdconta,
-                                   pr_nrctremp) LOOP
-        vr_valor_para_validacao := vr_sld_devempr + rw_crawepr.vlemprst;
-      END LOOP;
     else
       vr_valor_para_validacao := vr_sld_devedor; -- Valor de emprestimos + proposta
     end if;
@@ -1312,7 +1297,7 @@ EXCEPTION
                                      , pr_cdoperad => pr_cdoperad
                                      , pr_nmdatela => pr_nmdatela
                                      , pr_idorigem => pr_idorigem
-                                     , pr_valida_proposta => 'E' --Na efetivação da proposta o emprestimo já esta efetivado
+                                     , pr_valida_proposta => 'N' --Na efetivação da proposta o emprestimo já esta efetivado
                                      , pr_sld_devedor => vr_vlproposta
                                      , pr_flgprestamista => vr_flgprestamista
                                      , pr_flgdps => vr_flgdps
