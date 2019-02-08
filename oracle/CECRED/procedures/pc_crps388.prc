@@ -276,6 +276,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
                            impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
 
+              08/02/2019 - Ajuste na declaracao da variavel vr_cdconven - Gabriel Marcos (Mouts).
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -350,7 +352,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltotarq     NUMBER;
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
-  vr_cdconven     gnconve.cdconven%type;
+  vr_cdconven     gnconve.cdconven%type := 0;
 
   ---------------------------------- CURSORES  ----------------------------------
   
