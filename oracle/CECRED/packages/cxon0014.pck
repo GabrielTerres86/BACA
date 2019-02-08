@@ -5011,7 +5011,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores dos titulos iptu
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/06/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 03/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -5083,6 +5083,8 @@ END pc_gera_titulos_iptu_prog;
   --               30/10/2017 - Nao validar valor maximo do boleto ao verificar multiplos pagamentos. (Rafael)
   --
   --               08/08/2018 - Adicionado teste para não permitir pagamentos vencidos de boletos da cobtit (Luis Fernando - GFT)
+  --
+  --			   03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -5251,6 +5253,7 @@ END pc_gera_titulos_iptu_prog;
       vr_tpdbaixa       INTEGER;
       vr_flcontig       INTEGER;
       vr_invalcon       INTEGER;
+	  vr_cdbancos crapprm.dsvlrprm%TYPE;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -6082,13 +6085,11 @@ END pc_gera_titulos_iptu_prog;
         --Fechar Cursor
         CLOSE cr_crapban;
 
-        /** Tratamento para banco **/
-        IF rw_crapban.cdbccxlt = 012 OR  -- Banco Standard
-           rw_crapban.cdbccxlt = 231 OR  -- Banco Boavista
-           rw_crapban.cdbccxlt = 353 OR  -- Banco Santander
-           rw_crapban.cdbccxlt = 356 OR  -- Banco Real
-           rw_crapban.cdbccxlt = 479     -- Itaubank
-        THEN
+		/* Bancos que não podemos mais aceitar o recebimento de titulos. */
+		vr_cdbancos := gene0001.fn_param_sistema('CRED',0,'BANCOS_BLQ_TIT');
+
+		/* Não permitir a inclusão de titulos para os bancos 012, 231, 353, 356, 409 e 479 */
+		IF INSTR(','||vr_cdbancos||',',','||rw_crapban.cdbccxlt||',') > 0 THEN
           --Criar erro
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
                                ,pr_cdagenci => pr_cod_agencia
@@ -10196,6 +10197,7 @@ END pc_gera_titulos_iptu_prog;
   --                            em outra singular para tratar como  "Liquidação Interbancária"
   --                            (AJFink - Chamado 792324)
   --
+  --               22/01/2019 - Gerar crítica 1462 quando boleto estiver bloqueado para pagamento (P352-Cechet)
   ---------------------------------------------------------------------------------------------------------------
     --
     procedure pc_convenio_outra_singular(pr_cdcooper in  crapceb.cdcooper%type
@@ -10362,6 +10364,7 @@ END pc_gera_titulos_iptu_prog;
               ,crapcob.incobran
               ,crapcob.dtretcob
               ,crapcob.nrdctabb
+              ,crapcob.dtbloque
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.cdbandoc = pr_cdbandoc
@@ -11298,6 +11301,29 @@ END pc_gera_titulos_iptu_prog;
                   --Levantar Excecao
                   RAISE vr_exc_erro;
                 END IF;
+             ELSIF rw_crapcob.dtbloque IS NOT NULL AND pr_flgcritica THEN
+               -- Criar erro
+               -- Boleto bloqueado para pagamento
+               CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                                    ,pr_cdagenci => pr_cod_agencia
+                                    ,pr_nrdcaixa => vr_nrdcaixa
+                                    ,pr_cod_erro => 1462
+                                    ,pr_dsc_erro => NULL
+                                    ,pr_flg_erro => TRUE
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+                                    
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                ELSE
+                  vr_cdcritic:= 1462;
+                  vr_dscritic:= NULL;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;                                   
+                
              END IF; /* excluido/pago e baixado */
              --Retornar valores
              pr_insittit:= 2;

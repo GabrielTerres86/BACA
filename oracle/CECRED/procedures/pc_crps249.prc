@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 18/01/2019
+   Data    : Novembro/98                     Ultima atualizacao: 23/01/2019
 
    Dados referentes ao programa:
 
@@ -656,6 +656,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             PRJ450 - Regulatorio(Odirlei-AMcom)
                             
                18/01/2019 - PRB0040545 (INC0030676) Correção de cursores para usarem os índices corretamente (Carlos)
+
+               23/01/2019 - Tratamento para histórico 2917 - Liq de boleto em cartório via DOC (P352 - Cechet)
 			   
 			   29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao em numeracao de contas,
 				            gerar lancamento IOF FINAME, lancamento provisao mensal historico 38.
@@ -2348,7 +2350,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 		 WHERE his.cdcooper = fin.cdcooper
 			 AND his.cdhistor = fin.cdhistor
 			 AND fin.vllanmto > 0
-			 AND fin.cdhistor IN(2622, 2642, 2646, 2663,2734)
+			 AND fin.cdhistor IN(2622, 2642, 2646, 2663, 2734, 2917)
 			 AND fin.cdcooper = pr_cdcooper
 			 AND fin.dtmvtolt = pr_dtmvtolt;
   --                        
@@ -15069,6 +15071,19 @@ BEGIN
 												 '"(crps249) PAGAMENTO DE TARIFA IEPTB - PROTESTO DE TITULO"';
 					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 					--
+				WHEN rw_finieptb.cdhistor = 2917 THEN -- liq de boleto em cartorio via DOC
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (1423)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (4887)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) LIQUIDACAO DE BOLETO EM CARTORIO - VIA DOC"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+          -- 
 			END CASE;
 			--
 		END LOOP;

@@ -147,6 +147,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                06/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom). 
 													
+               23/01/2019 - Tramento de DOCs recebidos para Liquidacao de Boletos em cartório (P352 - Cechet)
+													
   ............................................................................ */
 
 
@@ -1282,6 +1284,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     --Chamado 789851 - 24/11/2017
     vr_nmarquiv_indice VARCHAR2(200) := NULL;
     
+    CURSOR cr_banco (pr_cdbccxlt IN crapban.cdbccxlt%TYPE) IS
+      SELECT nrispbif 
+        FROM crapban
+       WHERE cdbccxlt = pr_cdbccxlt;
+    rw_banco cr_banco%ROWTYPE;    
+    
   BEGIN
 
     -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
@@ -1450,6 +1458,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             vr_nmemiten   VARCHAR2(100);
             vr_nrcpfemi   NUMBER;
 
+            -- variaveis de controle para conta de recebimento de boletos pagos em cartório            
+            vr_aux_nrseqdig   NUMBER;
+            vr_idlancto      tbfin_recursos_movimento.idlancto%TYPE;  
+            vr_stsnrcal    BOOLEAN;
+            vr_inpessoa    NUMBER;                      
+
           BEGIN
 
             -- Inicializar variável
@@ -1517,6 +1531,94 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               EXIT WHEN NOT vr_tbrelato.EXISTS(vr_indchave);
             END LOOP;
 
+           -- Se conta 10000003 ou 20000006 e Agencia 100, entao é
+           -- DOC recebida de boleto pago em cartório
+            IF vr_cdagercb = 100 AND
+               vr_nrdconta IN (10000003,20000006) THEN
+                       
+              vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
+                             'nrseqdig',''||3
+                             ||';'||vr_nrdconta||';'||to_char(vr_dtmvtolt,'dd/mm/yyyy')||'');
+              
+              vr_idlancto := fn_sequence(pr_nmtabela => 'TBFIN_RECURSOS_MOVIMENTO'
+                                        ,pr_nmdcampo => 'IDLANCTO'
+                                        ,pr_dsdchave => 'IDLANCTO');
+                                                            
+              -- Gerar lançamento em conta
+              BEGIN
+                   
+                -- buscar NRISPBIF pelo código do banco emitente      
+                OPEN cr_banco (pr_cdbccxlt => vr_cdbandoc);
+                FETCH cr_banco INTO rw_banco;
+                CLOSE cr_banco;
+                
+                -- Rotina para validar a informação de CPF ou CNPJ do emitente
+                gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrcpfemi
+                                           ,pr_stsnrcal => vr_stsnrcal
+                                           ,pr_inpessoa => vr_inpessoa);                
+                
+                -- criar lançamento na tabela de recurso financeiro
+                -- referente ao crédito de boleto pago em cartório por DOC
+                INSERT INTO tbfin_recursos_movimento
+                    (cdcooper
+                    ,nrdconta
+                    ,dtmvtolt
+                    ,nrdocmto
+                    ,nrseqdig
+                    ,cdhistor
+                    ,dsdebcre
+                    ,vllanmto
+                    ,nmif_debitada
+                    ,nrispbif
+                    ,nrcnpj_debitada
+                    ,nmtitular_debitada
+                    ,tpconta_debitada
+                    ,cdagenci_debitada
+                    ,dsconta_debitada
+                    ,hrtransa
+                    ,cdoperad
+                    ,idlancto
+                    ,inpessoa_debitada
+                    ,inpessoa_creditada
+                    ,CDAGENCI_CREDITADA
+                    ,DSCONTA_CREDITADA
+                    ,TPCONTA_CREDITADA
+                    ,NMTITULAR_CREDITADA)
+                VALUES
+                   (3
+                   ,vr_nrdconta
+                   ,vr_dtmvtolt
+                   ,vr_nrdocmto
+                   ,vr_aux_nrseqdig
+                   ,2917 -- boleto pago em cartório por DOC
+                   ,'C'
+                   ,vr_vllanmto
+                   ,rw_banco.nrispbif
+                   ,rw_banco.nrispbif
+                   ,vr_nrcpfemi
+                   ,vr_nmemiten
+                   ,'CC'
+                   ,vr_cdagedoc
+                   ,vr_nrctadoc
+                   ,to_char(SYSDATE,'SSSSS')
+                   ,'1'
+                   ,vr_idlancto
+                   ,vr_inpessoa
+                   ,2 -- Central sempre PJ
+                   ,vr_cdagercb
+                   ,vr_nrdconta
+                   ,'CC'
+                   ,vr_nmdestin
+                   );
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_movimento --> ' || SQLERRM;
+                 -- Sair da rotina
+                 RAISE vr_exc_saida;
+              END;               
+               
+            ELSE
+              
             pc_cria_ddc(pr_cdcooper => 3             -- cdcooper (CECRED)
                        ,pr_cdagenci => vr_cdagercb   -- cdagenci
                        ,pr_nrdocmto => vr_nrdocmto   -- nrdocmto
@@ -1550,6 +1652,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             vr_tbrelato(vr_indchave).nmdestin := vr_nmdestin;
             vr_tbrelato(vr_indchave).vllanmto := vr_vllanmto;
             vr_tbrelato(vr_indchave).nmarquiv := vr_nmsubrel||pr_tbarquiv(vr_nrindice);
+
+            END IF;
 
           END;
         END LOOP;  -- Linhas do arquivo

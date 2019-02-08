@@ -16,6 +16,9 @@
    Alteracoes: 16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
 
 			   12/10/2017 - Projeto 410 Inclusão do IOF Complementar atraso (Jean - MOut´S)
+                            
+               29/01/2019 - INC0031641 - Ajustes na exibiçao de contratos de empréstimo
+                            com mais de 8 digitos (Jefferson - MoutS)
 
 ..............................................................................*/
 
@@ -157,7 +160,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
 
             CREATE xml_operacao.
             ASSIGN xml_operacao.dslinxml =  "<PARCELA>"
-                   + "<nrctremp>" + TRIM(STRING(tt-pagamentos-parcelas.nrctremp,"zz,zzz,zz9")) + "</nrctremp>" 
+                   + "<nrctremp>" + TRIM(STRING(tt-pagamentos-parcelas.nrctremp,"zzz,zzz,zzz,zz9")) + "</nrctremp>" 
                    + "<nrparepr>" + STRING(tt-pagamentos-parcelas.nrparepr,"zz9") + "</nrparepr>"
                    + "<dtvencto>" + TRIM(STRING(tt-pagamentos-parcelas.dtvencto,"99/99/9999")) + "</dtvencto>" 
                    + "<vldespar>" + aux_vldespar + "</vldespar>"

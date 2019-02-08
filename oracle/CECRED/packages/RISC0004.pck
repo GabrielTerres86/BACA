@@ -830,7 +830,7 @@ END fn_busca_risco_melhora;
 
     -- Verificar Garantia Aplicação - Modelo novo
     -- Retornar o valor bloqueado em Garantia Aplicação
-    CECRED.BLOQ0001.pc_calc_bloqueio_garantia(pr_cdcooper        => pr_tab_contrato(1).cdcooper,
+    BLOQ0001.pc_calc_bloqueio_garantia(pr_cdcooper        => pr_tab_contrato(1).cdcooper,
                                               pr_nrdconta        => pr_tab_contrato(1).nrdconta,
                                               pr_vlbloque_aplica => vr_vlbloque_aplica,
                                               pr_vlbloque_poupa  => vr_vlbloque_poupa,
@@ -929,7 +929,7 @@ END fn_busca_risco_melhora;
     
     vr_vlgarantia := 0;
 
-    cecred.apli0002.pc_obtem_dados_aplicacoes(pr_cdcooper => pr_cdcooper,
+    apli0002.pc_obtem_dados_aplicacoes(pr_cdcooper => pr_cdcooper,
                                               pr_cdagenci => 1,
                                               pr_nrdcaixa => 1,
                                               pr_cdoperad => '1',
@@ -1064,7 +1064,6 @@ BEGIN
   IF  vr_tab_grupos.exists(vr_indice) THEN
     pr_numero_grupo := vr_tab_grupos(vr_indice).nrdgrupo;
     pr_risco_grupo  := vr_tab_grupos(vr_indice).inrisco_grupo;
-
   ELSE -- Se nao estiver, busca na tabela de Grupos (Tela)
   
     IF vr_execucao = 0 THEN    -- Não é pela OCR
@@ -2019,6 +2018,21 @@ END pc_carrega_tabela_riscos;
               END;
             END LOOP; -- FIM FOR rw_crapvri
           END LOOP; -- FIM FOR rw_crapris
+          
+          -- Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
+          BEGIN
+            UPDATE crapass
+               SET dsnivris = fn_traduz_risco(vr_maxrisco)
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = rw_contas_grupo.nrdconta;
+          EXCEPTION
+          WHEN OTHERS THEN
+		    --gera critica
+            vr_dscritic := 'Erro ao atualizar o nível de risco da conta conforme o maior risco do grupo (crapass). '||
+                           'Erro: '||SQLERRM;
+            RAISE vr_exc_erro;
+          END; -- Fim atualização do nível de risco do grupo
+          
         END LOOP; -- FIM FOR rw_contas_grupo
 
         -- Leitura de todos do grupo para atualizar o risco do grupo
@@ -2455,7 +2469,7 @@ END pc_carrega_tabela_riscos;
              END ) flgavali          -- Se tem avalista
           ,w.idcobope          -- Cobertura Aplicacao
       FROM crapepr e, crawepr w, crapbpr b
-         , cecred.tbrisco_operacoes t, craplcr l
+         , tbrisco_operacoes t, craplcr l
      WHERE e.rowid       = PR_ROWIDEPR  -- Rowid do Emprestimo
        AND W.CDCOOPER    = e.cdcooper
        AND W.NRDCONTA    = e.nrdconta

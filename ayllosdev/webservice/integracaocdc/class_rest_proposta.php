@@ -355,6 +355,20 @@ class RestCDC extends RestServerJson{
 				}
 				// Apenas enviar o json de retorno vazio
 				$dsjsonan = '';
+				
+				/*---------------------------------------------------------------*/
+				// Notificao de push de cancelamento
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+			    $xml .= "	<cdcooper>".$oDados->cooperativaAssociadoCodigo."</cdcooper>";
+			    $xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
+			    $xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
+			    $xml .= "	<insitpro>8</insitpro>";
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $pXmlResult = mensageria($xml, "EMPR0012", "REGISTRA_PUSH_PRP_CDC", 0, 0, 0, 5, 0, "</Root>");
+                $poRetorno  = simplexml_load_string($pXmlResult);
+				/*---------------------------------------------------------------*/
 
 			}else{
 			

@@ -863,6 +863,12 @@ PROCEDURE process-web-request :
                                        OUTPUT v_c3). 
             DELETE PROCEDURE h-b1crap51.
 
+			 IF  RETURN-VALUE = "NOK" THEN DO:
+                 {include/i-erro.i}
+                   
+             END. 
+             ELSE DO:
+			 
             FIND FIRST craperr WHERE
                           craperr.cdcooper = crapcop.cdcooper  AND
                           craperr.cdagenci = int(v_pac)        AND
@@ -1282,6 +1288,7 @@ PROCEDURE process-web-request :
                 END.
             END.
         END.
+		end.
     END.
 
     IF  GET-VALUE("dep") <> "" THEN DO:

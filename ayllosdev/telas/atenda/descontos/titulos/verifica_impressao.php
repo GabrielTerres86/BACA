@@ -63,7 +63,7 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit;
 	} else {
-		echo 'gerarImpressao('.$idimpres.','.$limorbor.','.$flgemail.','.$fnfinish.')';
+		echo 'gerarImpressao('.$idimpres.','.$limorbor.',"'.$flgemail.'")';
 		exit;
 	}
 

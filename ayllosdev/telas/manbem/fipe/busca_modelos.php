@@ -25,23 +25,27 @@
 
     /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
+    $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;
     $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ;
 	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
 	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
-    $urlServicoOperacao = $UrlFipe."ObterListaMarcaModelosFipe";
+    $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaMarcaModelosFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
                 "codigo":'.$cdMarcaVeiculo.'
+            },
+            "tipoVeiculo": {
+                "codigo":'.$cdTipoVeiculo.'
             }
         },
         "paginacao": {
-            "pagina": 1,
+            "posicaoPrimeiroRegistro": 1,
             "registrosPorPagina": 100
         }
     }';
 
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 

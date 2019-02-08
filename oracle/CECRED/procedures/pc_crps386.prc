@@ -195,6 +195,10 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                            
               08/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo
                            (Lucas Ranghetti #789879)
+
+              25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
+                           impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -207,7 +211,8 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
      where cdcooper = pr_cdcooper;
   rw_crapcop     cr_crapcop%rowtype;
   -- Buscar os convênios ativos por cooperativa
-  cursor cr_gnconve (pr_cdcooper in crapcop.cdcooper%type) is
+  cursor cr_gnconve (pr_cdcooper in crapcop.cdcooper%type
+                    ,pr_cdconven in gnconve.cdconven%type) is
     select gnconve.cdcooper,
            gnconve.nmempres,
            gnconve.cdhisdeb,
@@ -228,6 +233,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
            gnconve,
            gncvcop
      where gncvcop.cdcooper = pr_cdcooper     
+       and gnconve.cdconven = decode(pr_cdconven,0,gnconve.cdconven,pr_cdconven)
        and gnconve.cdconven = gncvcop.cdconven
        and gnconve.flgativo = 1
        and gnconve.cdhisdeb > 0 -- Somente arq.integracao
@@ -246,6 +252,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
            crapatr.dtinisus,  
            crapatr.cdrefere,
            crapatr.nrdconta,
+           crapatr.cdhistor,
            substr(crapatr.nmfatura, 1, 40) nmfatura,
            case 
                when crapatr.dtfimatr =  pr_dtmvtolt then 'CANCELAMENTOS'
@@ -292,6 +299,22 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
      FOR UPDATE; 
   rw_gbconve cr_gbconve%rowtype;
        
+  -- Utilizado apenas em homologacao de convenios
+  CURSOR cr_hconven (pr_cdcooper in crapass.cdcooper%TYPE) IS
+  SELECT prm.dsvlrprm
+    FROM crapprm prm
+   WHERE prm.cdcooper = pr_cdcooper
+     AND prm.nmsistem = 'CRED'
+     AND prm.cdacesso = 'PRM_HCONVE_CRPS386_IN';
+  rw_hconven cr_hconven%ROWTYPE;
+
+  -- Busca codigo do convenio a ser analisado
+  CURSOR cr_cdconve(pr_cdconven IN gnconve.cdconven%TYPE) IS
+  SELECT 1
+    FROM gnconve gnc
+   WHERE gnc.cdconven = pr_cdconven;
+  rw_cdconve cr_cdconve%ROWTYPE;
+
   rw_gncontr         cr_gncontr%rowtype;
   -- Informações de data
   rw_crapdat         btch0001.cr_crapdat%rowtype;
@@ -344,6 +367,9 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   vr_dtmovini        DATE;
   vr_nrrefere        VARCHAR2(25);
   vr_qtdigito        INTEGER;
+
+  vr_cdconven gnconve.cdconven%type := 0;
+  vr_dsvlrprm crapprm.dsvlrprm%type;
 
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
@@ -411,10 +437,33 @@ begin
   -- Adiciona mais um 1 dia na data inicial, para pegar finais de semana e feriados
   vr_dtmovini := vr_dtmovini + 1;
 
- -- Número sequencial para Movimento de Convenios Unificados
+  -- Número sequencial para Movimento de Convenios Unificados
   vr_concvuni := 0;
+
+  -- Analisa se esta sendo homologado 
+  -- algum convenio (busca parametros)
+  open cr_hconven (pr_cdcooper);
+  fetch cr_hconven into rw_hconven;
+  
+  -- Popula variaveis caso encontre
+  if cr_hconven%found then    
+    vr_cdconven := rw_hconven.dsvlrprm;  
+    -- Busca historico do convenio
+    open cr_cdconve (vr_cdconven);
+    fetch cr_cdconve into rw_cdconve;    
+    if cr_cdconve%notfound then
+      close cr_cdconve;
+      vr_dscritic := 'Código de convênio inválido.';
+      raise vr_exc_saida;
+    end if;    
+    close cr_cdconve;
+  end if;
+
+  close cr_hconven;
+
   -- Leitura dos convênios ativos para a cooperativa
-  for rw_gnconve in cr_gnconve (pr_cdcooper) loop
+  for rw_gnconve in cr_gnconve (pr_cdcooper
+                               ,vr_cdconven) loop
     -- Verifica se o convênio possui movimento
     -- Se não tem movimento, não precisa gerar os arquivos
     open cr_crapatr (pr_cdcooper,
@@ -800,6 +849,45 @@ begin
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_txt);
     dbms_lob.freetemporary(vr_des_txt);
+
+    -- Satisfazer condicao significa que execucao
+    -- esta homologando algum convenio. 
+    if nvl(vr_cdconven,0) > 0 then
+      BEGIN
+        -- Atribuicao de variavel
+        vr_dsvlrprm := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_nmsubdir => '/salvar')||'/'||vr_nmarqped;
+        INSERT 
+          INTO CRAPPRM (NMSISTEM
+                       ,CDCOOPER
+                       ,CDACESSO
+                       ,DSTEXPRM
+                       ,DSVLRPRM)
+                VALUES ('CRED'
+                       ,pr_cdcooper
+                       ,'PRM_HCONVE_CRPS386_OUT'
+                       ,'Nome do arquivo concatenado com o diretorio.'
+                       ,vr_dsvlrprm);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          BEGIN
+            UPDATE CRAPPRM PRM
+               SET PRM.DSVLRPRM = vr_dsvlrprm
+             WHERE PRM.CDCOOPER = pr_cdcooper
+               AND PRM.NMSISTEM = 'CRED'
+               AND PRM.CDACESSO = 'PRM_HCONVE_CRPS386_OUT';
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar dados da tabela crapprm: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir dados da tabela crapprm: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+    end if;
+
     -- Procedure atualiza_controle do progress
     if rw_gnconve.flgcvuni <> 1 then  -- Somente se nao for unificado
       vr_cdcritic := 657; -- Intranet - tpdenvio = 1

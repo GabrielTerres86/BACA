@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 25/07/2018
+   Data    : 16/05/2011                        Ultima atualizacao: 07/01/2019
 
    Dados referentes ao programa:
 
@@ -134,7 +134,10 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                             (Belli - Envolti - Chamado 828247)      
                       
                25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
-                            (Belli - Envolti - Chamado REQ0020667)       
+                            (Belli - Envolti - Chamado REQ0020667)   
+							
+			   07/01/2019 - Inclusão das rotinas para uso do serviço de "Reenvio cadastral"
+			                 (Jonata - Mouts - SCTASK0030602).    
                             
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -1099,6 +1102,22 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 																		,pr_cdcritic OUT INTEGER                            --> Cód. da crítica
 																		,pr_dscritic OUT VARCHAR2);                         --> Desc. da crítica
 	
+  /* Procedure para reenviar o cadastro do beneficiario */
+  PROCEDURE pc_reenviar_cadastro_benef(pr_cddopcao IN VARCHAR2                --Codigo Opcao
+                                      ,pr_nrdconta IN INTEGER                 --Número da conta
+                                      ,pr_dtmvtolt IN VARCHAR2                --Data de movimento
+                                      ,pr_cdorgins IN INTEGER                 --Codigo Orgao Pagador
+                                      ,pr_nrrecben IN NUMBER                  --Numero Recebimento Beneficio
+                                      ,pr_idseqttl IN INTEGER                 --Sequencial Titular
+                                      ,pr_nrcpfcgc IN NUMBER                  --Numero CPF/CNPJ
+                                      ,pr_flgerlog IN INTEGER                 --Gera log
+                                      ,pr_xmllog   IN VARCHAR2                --XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER            --Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2               --Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2               --Nome do Campo
+                                      ,pr_des_erro OUT VARCHAR2);             --Saida OK/NOK                                    
+	
 end INSS0001;
 /
 create or replace package body cecred.INSS0001 as
@@ -1109,7 +1128,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 25/07/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 07/01/2019
 
    Dados referentes ao programa:
 
@@ -1234,6 +1253,9 @@ create or replace package body cecred.INSS0001 as
          22/06/2018 - PRJ450 - Inclusao de chamada da LANC0001, para centralizar 
                             lancamentos CRAPLCM, nas procedures: pc_gera_credito_em_conta, 
                             pc_transfere_beneficio e pc_benef_inss_gera_credito (Teobaldo J, AMcom)
+
+		 07/01/2019 - Inclusão das rotinas para uso do serviço de "Reenvio cadastral"
+			          (Jonata - Mouts - SCTASK0030602).
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -6221,7 +6243,7 @@ create or replace package body cecred.INSS0001 as
 				             ' xmlns:rel="http://sicredi.com.br/convenios/cadastro/RelatorioAlteracaoBeneficiarioINSS"' ||
                      ' xmlns:dad="http://sicredi.com.br/convenios/cadastro/DadosBeneficiarioINSS">';
                 
-        ELSE 
+       ELSE 
           vr_xmlns:= NULL;
       END CASE;        
       
@@ -11838,6 +11860,257 @@ create or replace package body cecred.INSS0001 as
 
   END pc_solic_troca_domicilio;
 
+    
+  /* Procedure para reenviar o cadastro do beneficiario */
+  PROCEDURE pc_reenviar_cadastro_benef(pr_cddopcao IN VARCHAR2                --Codigo Opcao
+                                      ,pr_nrdconta IN INTEGER                 --Número da conta
+                                      ,pr_dtmvtolt IN VARCHAR2                --Data de movimento
+                                      ,pr_cdorgins IN INTEGER                 --Codigo Orgao Pagador
+                                      ,pr_nrrecben IN NUMBER                  --Numero Recebimento Beneficio
+                                      ,pr_idseqttl IN INTEGER                 --Sequencial Titular
+                                      ,pr_nrcpfcgc IN NUMBER                  --Numero CPF/CNPJ
+                                      ,pr_flgerlog IN INTEGER                 --Gera log
+                                      ,pr_xmllog   IN VARCHAR2                --XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER            --Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2               --Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2               --Nome do Campo
+                                      ,pr_des_erro OUT VARCHAR2) IS           --Saida OK/NOK
+                                      
+  
+  -- Busca dos dados da cooperativa
+  CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  SELECT cop.nmrescop
+        ,cop.nmextcop
+        ,cop.cdcooper
+        ,cop.dsdircop
+        ,cop.cdagesic
+    FROM crapcop cop
+   WHERE cop.cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
+  
+  -- Selecionar dados da agencia
+  CURSOR cr_crapage (pr_cdcooper IN crapcop.cdcooper%TYPE
+                    ,pr_cdorgins IN crapage.cdorgins%TYPE) IS
+    SELECT  crapage.cdcooper
+           ,crapage.cdorgins
+           ,crapage.cdagenci
+      FROM crapage
+      WHERE crapage.cdcooper = pr_cdcooper
+      AND   crapage.cdorgins = pr_cdorgins;
+  rw_crapage    cr_crapage%ROWTYPE;
+         
+  CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%type
+                   ,pr_nrdconta IN crapass.nrdconta%type) IS
+  SELECT crapass.cdcooper
+        ,crapass.nrdconta
+        ,crapass.cdsitdct
+    FROM crapass crapass
+   WHERE crapass.cdcooper = pr_cdcooper
+     AND crapass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000); 
+    
+  vr_nmdireto         VARCHAR2(1000);
+  vr_msgenvio         VARCHAR2(32767);
+  vr_msgreceb         VARCHAR2(32767);
+  vr_retorno          VARCHAR2(3) := NULL;
+  vr_coop_origem      NUMBER(10);
+    
+  vr_exc_erro         EXCEPTION;
+    
+  vr_xml_soap         XMLTYPE;
+  vr_xml_reto         CLOB;
+    
+  BEGIN
+    
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
+      
+  	  -- Incluir nome do módulo logado - Chamado 664301
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_reenviar_cadastro_benef');      
+            
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop (pr_cdcooper => vr_cdcooper);
+      
+      FETCH cr_crapcop INTO rw_crapcop;
+      
+      -- Se não encontrar
+      IF cr_crapcop%NOTFOUND THEN
+        
+        -- Fechar o cursor pois haverá raise
+        CLOSE cr_crapcop;
+        
+        -- Montar mensagem de critica
+        vr_cdcritic := 651;
+        -- Busca critica
+        vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+        
+       RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+      
+      --Selecionar Agencia
+      OPEN cr_crapage (pr_cdcooper => vr_cdcooper
+                      ,pr_cdorgins => pr_cdorgins);
+                      
+      FETCH cr_crapage INTO rw_crapage;
+      
+      IF cr_crapage%NOTFOUND THEN
+        
+        --Fechar Cursor
+        CLOSE cr_crapage;   
+                    
+        --Monta mensagem de critica 
+        vr_cdcritic:= 962;
+        vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+        pr_nmdcampo:= 'nrdconta';
+        
+        --Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        --Fechar Cursor
+        CLOSE cr_crapage;
+      END IF;   
+      
+      IF pr_nrrecben IS NULL THEN
+         vr_dscritic := 'Numero do beneficio nao informado';
+         RAISE vr_exc_erro; 
+      END IF;
+
+      -- Inicialização de variáveis
+      vr_msgenvio := NULL;
+        
+      -- Gera os caminhos dos arquivos XML de envio e retorno da requisição
+      INSS0004.pc_gerar_caminho_arquivos_req(vr_cdcooper,2, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
+
+      -- Verifica se ocorreu erro durante a geração do caminho dos arquivos da requisição
+      IF vr_retorno <> 'OK' THEN
+          vr_dscritic := 'Erro ao gerar caminho dos arquivos da requisicao (INSS0001.pc_gerar_caminho_arquivos_req)';
+          RAISE vr_exc_erro;
+      END IF;
+            
+
+      -- Cria arquivo XML que será utilizado na requisição
+      INSS0004.pc_criar_arq_xml_requisicao(pr_caminho => vr_msgenvio                           -- Diretório com o nome do arquivo que será salvo
+                                          ,pr_nmmetodo => 'reenviarCadastroBeneficiario'      -- Nome do método 
+                                          ,pr_nmmetodo_in => 'InReenviarCadastroBeneficiarioINSS'    -- Nome do método In
+                                          ,pr_canal => 'AIMARO'                                  -- Código do canal de atendimento
+                                          ,pr_tpservico => 2                               -- Tipo de servico
+                                          ,pr_coop_origem => vr_cdcooper                   -- Código da cooperativa que está realizando a consulta
+                                          ,pr_numero_beneficio => pr_nrrecben                 -- Número do benificiário
+                                          ,pr_orgao_pagador => pr_cdorgins                    -- Número do orgão pagador
+                                          ,pr_posto_origem => vr_cdagenci                     -- Número do posto/UA que está realizando a consulta
+                                          ,pr_usuario_origem => vr_cdoperad                   -- Código do usuário que está realizando a consulta
+                                          ,pr_retorno => vr_retorno                           -- Saída OK/NOK
+                                          ,pr_dsderror => vr_dscritic);                       -- Mensagem de erro
+        
+      -- Verifica se ocorreu erro durante a geração do arquivo XML de requisição
+      IF vr_retorno <> 'OK' THEN
+          vr_dscritic := 'Erro ao criar arquivos XML de requisicao (INSS0001.pc_criar_arq_xml_requisicao) - ' || vr_dscritic;
+          RAISE vr_exc_erro;
+      END IF;
+
+      -- Faz o envio da requisição SOAP, passando o caminho do arquivo XML
+      INSS0004.pc_envia_requisicao_soap(vr_msgenvio, 2,vr_xml_soap, vr_retorno, vr_dscritic);
+        
+      -- Verifica se ocorreu erro no envio da requisição SOAP
+      IF vr_retorno <> 'OK' THEN
+          vr_dscritic := 'Erro ao enviar requisicao SOAP (INSS0001.pc_envia_requisicao) - ' || vr_dscritic;
+          RAISE vr_exc_erro;    
+      END IF;
+
+      -- Faz a leitura do XML de retorno da requisição e monta o XML de retorno da consulta de margem consignável
+      inSS0004.pc_pegar_retorno_xml(pr_cdorgins, vr_xml_soap, vr_dscritic, vr_retorno);
+
+      -- Verifica se ocorreu erro durante a construção do XML de retorno da consulta de margem consignável
+      IF vr_retorno <> 'OK' THEN
+          vr_dscritic := 'Erro ao gerar XML consulta de margem consignavel (INSS0001.pc_gerar_xml_cons_marg_consig) - ' || vr_dscritic;
+          RAISE vr_exc_erro;    
+      END IF;
+      
+      -- Faz a exclusão do arquivo de requisição
+      INSS0004.pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
+
+      -- Verifica se conseguiu excluir o arquivo de requisição
+      IF vr_retorno <> 'OK' THEN
+          vr_dscritic := 'Erro ao excluir arquivo XML da requisicao (INSS0001.pc_excluir_arq_xml_requisicao)';
+          RAISE vr_exc_erro;    
+      END IF;
+ 
+      pr_des_erro := 'OK';
+      
+   EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';
+        
+        -- Faz a exclusão do arquivo de requisição
+        INSS0004.pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
+
+        -- Verifica se conseguiu excluir o arquivo de requisição
+        IF vr_retorno <> 'OK' THEN
+            pr_dscritic := 'Erro ao excluir arquivo XML da requisicao (INSS0001.pc_excluir_arq_xml_requisicao)';
+            RAISE vr_exc_erro;    
+        END IF;
+            
+        --Monta mensagem de erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+        
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+        
+        -- Faz a exclusão do arquivo de requisição
+        INSS0004.pc_excluir_arq_xml_requisicao(vr_msgenvio, vr_retorno);
+
+        -- Verifica se conseguiu excluir o arquivo de requisição
+        IF vr_retorno <> 'OK' THEN
+            pr_dscritic := 'Erro ao excluir arquivo XML da requisicao (INSS0001.pc_excluir_arq_xml_requisicao)';
+            RAISE vr_exc_erro;    
+        END IF;
+        
+        -- Chamar rotina de gravação de erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na inss0001.pc_reenviar_cadastro_benef --> '|| SQLERRM;
+        
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+                 
+  END pc_reenviar_cadastro_benef;
+  
   /* Procedure para Solicitar Demonstrativo de beneficio */
   PROCEDURE pc_solicita_demonstrativo  (pr_dtmvtolt IN VARCHAR2                --Data Movimento
                                        ,pr_cddopcao IN VARCHAR2                --Codigo Opcao

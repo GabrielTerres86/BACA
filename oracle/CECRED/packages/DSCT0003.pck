@@ -9643,21 +9643,22 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
     
-    
-    CURSOR cr_crapnrc(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE
-                     ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE) IS
-    SELECT nrc.tpctrrat
-          ,nrc.nrctrrat
-          ,nrc.dtmvtolt
-          ,nrc.insitrat
-          ,nrc.progress_recid
-      FROM crapnrc nrc
-     WHERE nrc.cdcooper = pr_cdcooper
-       AND nrc.nrdconta = pr_nrdconta
-       AND nrc.nrctrrat = pr_nrctrrat
-       AND nrc.tpctrrat = 3;
-    rw_crapnrc cr_crapnrc%ROWTYPE;
+    CURSOR cr_crawlim(pr_cdcooper IN crawlim.cdcooper%TYPE
+                     ,pr_nrdconta IN crawlim.nrdconta%TYPE
+                     ,pr_nrctrlim IN crawlim.nrctrlim%TYPE) IS
+    SELECT lim.nrinfcad
+          ,lim.nrgarope
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.nrperger
+      FROM crawlim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = 3
+       AND lim.nrgarope > 0
+       AND lim.nrliquid > 0;
+    rw_crawlim cr_crawlim%ROWTYPE;
     
     BEGIN
       pr_nmdcampo := NULL;
@@ -9678,21 +9679,18 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                 ,pr_action => vr_nmeacao);
                                 
                                 
-                                OPEN cr_crapnrc(pr_cdcooper => vr_cdcooper
+      OPEN cr_crawlim(pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrctrrat => pr_nrctrlim);  
-                      FETCH cr_crapnrc INTO rw_crapnrc;     
+                     ,pr_nrctrlim => pr_nrctrlim);  
+      FETCH cr_crawlim INTO rw_crawlim;     
                       
-            
-          
-        
-         IF cr_crapnrc%NOTFOUND THEN
+      IF cr_crawlim%NOTFOUND THEN
           -- Fechar o cursor
-          CLOSE cr_crapnrc; 
+        CLOSE cr_crawlim; 
           vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
           RAISE vr_exc_erro;
         ELSE
-          CLOSE cr_crapnrc;   
+        CLOSE cr_crawlim;   
         END IF;
 
       -- inicializar o clob

@@ -259,6 +259,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_spbmsg AS
                  AND zz.idreprocessa_mensagem = 1) <> (SELECT COUNT(*)
                                                          FROM tbspb_fase_mensagem mm
                                                         WHERE mm.idreprocessa_mensagem = 1)
+         /* Sprint D - Req58 - Não permitir selecionar mensagens de reprovação do OFSSA*/                                                        
+         AND NOT EXISTS (SELECT 1
+                         FROM TBSPB_MSG_ENVIADA_FASE TMEF
+                         WHERE TMEF.NRSEQ_MENSAGEM = A.NRSEQ_MENSAGEM
+                         AND   TMEF.NMMENSAGEM = 'Reprovada pelo OFSAA')                                                         
        ORDER BY 2 desc;
 
     rw_mensagem cr_mensagem%ROWTYPE;

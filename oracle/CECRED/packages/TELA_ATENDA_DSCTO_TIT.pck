@@ -4869,7 +4869,7 @@ END pc_obtem_proposta_aciona_web;
                
            vr_index := vr_tab_dados_pagador.next(vr_index);
          END LOOP;
-             END IF;
+        END IF;
        pr_qtregist := pr_qtregist;
 
     EXCEPTION

@@ -96,6 +96,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
     Observacao: -----
 
     Alteracoes:
+    --          29/01/2019 - Incluído filtro para somente pegar eventos do Progrid 
+    --          (Wagner - Sustentação - INC0031616)            
     ..............................................................................*/    
   
   
@@ -175,6 +177,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
             and cd.dtanoage = ce.dtanoage
             and cd.cdagenci = ce.cdagenci
             and ce.flgevsel = 1 -- Eventos Selecionados
+            AND ce.idevento = 1 -- Progrid
             and cd.cdevento = ce.cdevento
             and cd.tpcuseve = 1
             and cp.idevento = ce.idevento
@@ -233,6 +236,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
         and cp.idevento = cd.idevento
         and cp.cdcooper = 0
         and cp.dtanoage = 0
+        AND cd.idevento = 1 -- Progrid
         and cp.cdevento = cd.cdevento
         and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         and ct.nrseqtem(+) = cp.nrseqtem
@@ -285,6 +289,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos presenciais
       FOR rw_evenpre IN cr_evenpre(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenpre.eixo  := gene0007.fn_caract_controle(rw_evenpre.eixo);
+          rw_evenpre.tema  := gene0007.fn_caract_controle(rw_evenpre.tema);
+          rw_evenpre.evento:= gene0007.fn_caract_controle(rw_evenpre.evento);
+                                      
           pc_escreve_xml ('<evento pa="' || rw_evenpre.pa || '"' ||
                                  ' eixo="' || rw_evenpre.eixo || '"' ||
                                  ' tema="' || rw_evenpre.tema || '"' ||
@@ -312,6 +320,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos EAD
       FOR rw_evenead IN cr_evenead(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenead.eixo  := gene0007.fn_caract_controle(rw_evenead.eixo);
+          rw_evenead.tema  := gene0007.fn_caract_controle(rw_evenead.tema);
+          rw_evenead.evento:= gene0007.fn_caract_controle(rw_evenead.evento);
+       
           pc_escreve_xml ('<evento pa="' || rw_evenead.pa || '"' ||
                                  ' eixo="' || rw_evenead.eixo || '"' ||
                                  ' tema="' || rw_evenead.tema || '"' ||
@@ -396,6 +408,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
     Observacao: -----
 
     Alteracoes:
+    --          29/01/2019 - Incluído filtro para somente pegar eventos do Progrid 
+    --          (Wagner - Sustentação - INC0031616)        
     ..............................................................................*/    
   
   
@@ -431,7 +445,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           select Eixo,Tema,Evento,sum(Qt_De_Eventos) Qt_Eventos,Participacao_Por_Evento,Investimento_Por_Evento,
                  sum(Qt_De_Eventos) * Participacao_Por_Evento Participacao_total_prevista,
                  sum(Qt_De_Eventos) * Investimento_Por_Evento Investimento_Total,
-                 (sum(Qt_De_Eventos) * Investimento_Por_Evento) / (sum(Qt_De_Eventos) * Participacao_Por_Evento) Valor_Por_Pessoa
+                 CASE WHEN (sum(Qt_De_Eventos) * Investimento_Por_Evento) = 0 OR
+                           (sum(Qt_De_Eventos) * Participacao_Por_Evento) = 0 THEN
+                       0 -- evitar divisão por zero.
+                      ELSE          
+                       (sum(Qt_De_Eventos) * Investimento_Por_Evento) / 
+                       (sum(Qt_De_Eventos) * Participacao_Por_Evento) 
+                 END Valor_Por_Pessoa
           from (
           select cd.cdagenci,ge.dseixtem Eixo,ct.dstemeix Tema,cp.nmevento Evento,
                  decode(ce.qtocoeve,0,1,ce.qtocoeve) Qt_De_Eventos,                 
@@ -454,6 +474,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and cd.dtanoage = ce.dtanoage
           and cd.cdagenci = ce.cdagenci
           and ce.flgevsel = 1 -- Eventos Selecionados
+          AND ce.idevento = 1 -- Progrid
           and cd.cdevento = ce.cdevento
           and cd.tpcuseve = 1
           and cp.idevento = ce.idevento
@@ -509,6 +530,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and cp.idevento = cd.idevento
           and cp.cdcooper = 0
           and cp.dtanoage = 0
+          AND cd.idevento = 1 -- Progrid
           and cp.cdevento = cd.cdevento
           and ct.nrseqtem(+) = cp.nrseqtem
           and ge.idevento(+) = ct.idevento
@@ -562,6 +584,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
       
       -- percorre os eventos presenciais
       FOR rw_evenpre IN cr_evenpre(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenpre.eixo  := gene0007.fn_caract_controle(rw_evenpre.eixo);
+          rw_evenpre.tema  := gene0007.fn_caract_controle(rw_evenpre.tema);
+          rw_evenpre.evento:= gene0007.fn_caract_controle(rw_evenpre.evento);
+
           pc_escreve_xml ('<evento eixo="' || rw_evenpre.eixo || '"' ||
                                  ' tema="' || rw_evenpre.tema || '"' ||
                                  ' evento="' || replace(rw_evenpre.evento,'"','''' ) || '"' ||
@@ -583,6 +609,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           
       -- percorre os eventos EAD
       FOR rw_evenead IN cr_evenead(pr_cdcooper, pr_dtanoage, pr_cdagenci) LOOP
+          rw_evenead.eixo  := gene0007.fn_caract_controle(rw_evenead.eixo);
+          rw_evenead.tema  := gene0007.fn_caract_controle(rw_evenead.tema);
+          rw_evenead.evento:= gene0007.fn_caract_controle(rw_evenead.evento);
+        
           pc_escreve_xml ('<evento eixo="' || rw_evenead.eixo || '"' ||
                                  ' tema="' || rw_evenead.tema || '"' ||
                                  ' evento="' || replace(rw_evenead.evento,'"','''' ) || '"' ||

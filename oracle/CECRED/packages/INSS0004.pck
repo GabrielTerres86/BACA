@@ -26,6 +26,64 @@ PROCEDURE pc_extrato_emprestimo_inss(pr_cdcooper IN INTEGER             -- Codig
                                         ,pr_retorno OUT CLOB            -- XML do extrato de emprestimo
                                         ,pr_dsderror OUT VARCHAR2);     -- Descrição do erro                                                
 
+/* 
+    *   Executar um comando no Host usando a interface com saída 
+    */
+PROCEDURE pc_OScommand_SHELL_INSS(pr_des_comando IN VARCHAR2
+                                  ,pr_typ_saida  OUT VARCHAR2
+                                  ,pr_des_saida  OUT VARCHAR2);
+                                  
+/*  
+*   Realiza a requisição SOAP 
+*/
+PROCEDURE pc_envia_requisicao_soap (pr_xml_req IN VARCHAR2          -- Caminho do arquvio XML de requesição       
+                                    ,pr_tpservico IN INTEGER        -- Tipo do servico          
+                                    ,pr_xml_ret OUT XMLTYPE         -- XML de retorno da requisição
+                                    ,pr_retorno OUT VARCHAR2        -- Saída OK/NOK
+                                    ,pr_dsderror OUT VARCHAR2);   -- Mensagem de erro  
+/*
+*   Procedure para gerar os caminho dos arquivos XML da requisiçao (envio/retorno)
+*/
+PROCEDURE pc_gerar_caminho_arquivos_req(pr_cdcooper IN crapcop.cdcooper%type    -- Codigo Cooperativa
+                                        ,pr_nrdconta IN VARCHAR2                -- Numero da Conta
+                                        ,pr_tpservico IN INTEGER                -- Tipo do servico
+                                        ,pr_msgenvio OUT VARCHAR2               -- Caminho absoluto do arquivo de envio
+                                        ,pr_msgreceb OUT VARCHAR2               -- Caminho absoluto do arquivo de retorno
+                                        ,pr_nmdireto OUT VARCHAR2               -- Caminho do diretório dos arquvios de envio e retorno    
+                                        ,pr_retorno  OUT VARCHAR2);             -- Saída OK/NOK   
+                                        
+/* 
+*   Gera o arquivo XML da requisicão 
+*/
+PROCEDURE pc_criar_arq_xml_requisicao(pr_caminho IN VARCHAR2             -- Diretório com o nome do arquivo que será salvo
+                                     ,pr_nmmetodo IN VARCHAR2            -- Nome do método 
+                                     ,pr_nmmetodo_in IN VARCHAR2         -- Nome do método In
+                                     ,pr_canal IN VARCHAR2               -- Código do canal de atendimento
+                                     ,pr_tpservico IN INTEGER             -- Tipo de servico
+                                     ,pr_coop_origem IN NUMBER           -- Código da cooperativa que está realizando a consulta                                         
+                                     ,pr_numero_beneficio IN NUMBER      -- Número do benificiário
+                                     ,pr_orgao_pagador IN NUMBER         -- Número do orgão pagador
+                                     ,pr_posto_origem IN NUMBER          -- Número do posto/UA que está realizando a consulta
+                                     ,pr_usuario_origem IN VARCHAR2      -- Código do usuário que está realizando a consulta
+                                     ,pr_retorno  OUT VARCHAR2           -- Saída OK/NOK
+                                     ,pr_dsderror OUT VARCHAR2) ;        -- Mensagem de erro                                                             
+                                     
+/*
+*   Procedure para gerar os caminho dos arquivos XML da requisiçao (envio/retorno)
+*/
+PROCEDURE pc_excluir_arq_xml_requisicao(pr_caminho IN VARCHAR2,      -- Diretório com o nome do arquivo que será salvo
+                                        pr_retorno OUT VARCHAR2) ;  -- Saída OK/NOK                                     
+
+
+/*
+*   Procedure para pegar retorno xml
+*/
+PROCEDURE pc_pegar_retorno_xml(pr_orgao_pagador IN NUMBER          -- Código do orgão pagador
+                              ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisição
+                              ,pr_dscritic OUT VARCHAR2       --Descricao da critica
+                              ,pr_retorno OUT VARCHAR2);    -- Saída OK/NOK
+                                
+                                
 end INSS0004;
 /
 create or replace package body cecred.INSS0004 is
@@ -149,7 +207,8 @@ create or replace package body cecred.INSS0004 is
     /* 
     *   Procedure para obter o TOKEN para realização das requisições 
     */
-    PROCEDURE pc_obter_token(pr_token OUT VARCHAR2          -- TOKEN para realização das requisições
+    PROCEDURE pc_obter_token(pr_tpservico IN INTEGER        -- Tipo do servico          
+                            ,pr_token OUT VARCHAR2          -- TOKEN para realização das requisições
                             ,pr_token_type OUT VARCHAR2     -- Tipo do TOKEN retornado
                             ,pr_retorno OUT VARCHAR2) IS    -- Saída OK/NOK
         vr_comando_curl     VARCHAR2(5000);
@@ -157,17 +216,27 @@ create or replace package body cecred.INSS0004 is
         vr_token            VARCHAR2(1000) := '';
         vr_token_type       VARCHAR2(50)   := ''; 
 
-        vr_token_api_eco    VARCHAR2(200);
-
+        vr_token_api        VARCHAR2(200);
+        vr_cod_token_api    VARCHAR2(4000);
         vr_typ_saida        VARCHAR2(5000);
         vr_out              VARCHAR2(5000);
     BEGIN
-        vr_token_api_eco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+        vr_cod_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                        pr_cdcooper => 0,
+                                                      pr_cdacesso => 'COD_TOKEN_API_INSS');
+        
+        IF pr_tpservico = 1 THEN                                            
+          vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdcooper => 0,
                                                         pr_cdacesso => 'TOKEN_API_ECO_INSS');
+        ELSE
+          vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                    pr_cdcooper => 0,
+                                                    pr_cdacesso => 'TOKEN_API_REENV_CAD_INSS');
+        END IF;
 
         vr_comando_curl := 'curl -k -X POST ' 
-                            || '"'||vr_token_api_eco||'"'
+                            || '"'||vr_token_api||'"'
                             || ' -H "authorization: Basic eTFKZ05HYmNkcERmSzVMdXBxblY5c0l2aks4YTpFRUlIWGpfYnNmMEVMVk5CVjVuX0FrNVNmTThh"'
                             || ' -H "cache-control: no-cache"';
         
@@ -181,11 +250,11 @@ create or replace package body cecred.INSS0004 is
         
         -- Extrai TOKEN do JSON de retorno
         vr_token_type := regexp_replace(json(vr_out).get('token_type').to_char,'^\"|\"$','');
-        
+
         IF vr_token = '' THEN
             pr_retorno := 'NOK';
-        END IF;
-
+        END IF;   
+        
         IF vr_token_type = '' THEN
             pr_retorno := 'NOK';
         END IF;
@@ -202,6 +271,7 @@ create or replace package body cecred.INSS0004 is
                                          ,pr_nmmetodo IN VARCHAR2            -- Nome do método 
                                          ,pr_nmmetodo_in IN VARCHAR2         -- Nome do método In
                                          ,pr_canal IN VARCHAR2               -- Código do canal de atendimento
+                                         ,pr_tpservico IN INTEGER             -- Tipo de servico
                                          ,pr_coop_origem IN NUMBER           -- Código da cooperativa que está realizando a consulta
                                          ,pr_numero_beneficio IN NUMBER      -- Número do benificiário
                                          ,pr_orgao_pagador IN NUMBER         -- Número do orgão pagador
@@ -220,6 +290,7 @@ create or replace package body cecred.INSS0004 is
 
         vr_arquivo_saida := UTL_File.Fopen(vr_nmdireto, vr_nmarquiv, 'w');
         
+        IF pr_tpservico = 1 THEN
         UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eco="http://sicredi.com.br/inss/ws/v1/eco/">');
         UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Header/>');
         UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');
@@ -235,6 +306,19 @@ create or replace package body cecred.INSS0004 is
         UTL_File.Put_Line(vr_arquivo_saida, '</eco:'||pr_nmmetodo||'>');
         UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
         UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
+        
+        ELSE
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ben="http://sicredi.com.br/convenios/cadastro/BeneficiarioINSS">');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Header/>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');      
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:InReenviarCadastroBeneficiarioINSS>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:orgaoPagador>' || pr_orgao_pagador ||'</ben:orgaoPagador>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:codBeneficiario> ' || pr_numero_beneficio || '</ben:codBeneficiario>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</ben:InReenviarCadastroBeneficiarioINSS>'); 
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
+          UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
+          
+        END IF;
         
         UTL_File.Fclose(vr_arquivo_saida);
         pr_retorno := 'OK';
@@ -288,6 +372,7 @@ create or replace package body cecred.INSS0004 is
     */
     PROCEDURE pc_gerar_caminho_arquivos_req(pr_cdcooper IN crapcop.cdcooper%type    -- Codigo Cooperativa
                                             ,pr_nrdconta IN VARCHAR2                -- Numero da Conta
+                                            ,pr_tpservico IN INTEGER                -- Tipo do servico
                                             ,pr_msgenvio OUT VARCHAR2               -- Caminho absoluto do arquivo de envio
                                             ,pr_msgreceb OUT VARCHAR2               -- Caminho absoluto do arquivo de retorno
                                             ,pr_nmdireto OUT VARCHAR2               -- Caminho do diretório dos arquvios de envio e retorno    
@@ -309,6 +394,8 @@ create or replace package body cecred.INSS0004 is
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => null);
         
+        
+        IF pr_tpservico = 1 THEN
         -- Cria nome do arquivo de envio
         vr_msgenvio := vr_nmdireto 
                         || '/arq/INSS.SOAP.ERELAPG'
@@ -321,11 +408,27 @@ create or replace package body cecred.INSS0004 is
                         || vr_dtmvtolt
                         || vr_dstime
                         || pr_nrdconta;
+        ELSE
+          -- Cria nome do arquivo de envio
+          vr_msgenvio := vr_nmdireto 
+                          || '/arq/INSS.SOAP.EREVCAD'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta; 
 
+          --Determinar Nome do Arquivo de Recebimento    
+          vr_msgreceb:= vr_nmdireto||'/arq/INSS.SOAP.RREVCAD'
+                          || vr_dtmvtolt
+                          || vr_dstime
+                          || pr_nrdconta;
+        
+        END IF;
+                          
         pr_msgenvio := vr_msgenvio;
         pr_msgreceb := vr_msgreceb;
         pr_nmdireto := vr_nmdireto;
         pr_retorno := 'OK';
+        
     EXCEPTION 
         WHEN OTHERS THEN
             pr_retorno := 'NOK';
@@ -336,6 +439,7 @@ create or replace package body cecred.INSS0004 is
     *   Realiza a requisição SOAP 
     */
     PROCEDURE pc_envia_requisicao_soap (pr_xml_req IN VARCHAR2          -- Caminho do arquvio XML de requesição           
+                                        ,pr_tpservico IN INTEGER        -- Tipo do servico      
                                         ,pr_xml_ret OUT XMLTYPE         -- XML de retorno da requisição
                                         ,pr_retorno OUT VARCHAR2        -- Saída OK/NOK
                                         ,pr_dsderror OUT VARCHAR2) IS   -- Mensagem de erro 
@@ -345,12 +449,13 @@ create or replace package body cecred.INSS0004 is
         vr_token        VARCHAR2(200);      -- Armazena o TOKEN para a requsição SOAP       
         vr_token_type   VARCHAR2(50);       -- Armazena o tipo do TOKEN para a requisição SOAP
         
-        vr_link_api_eco VARCHAR2(200);
+        vr_link_api     VARCHAR2(200);
 
         vr_retorno      VARCHAR2(3);
         vr_exception    EXCEPTION;
     BEGIN    
-        pc_obter_token(pr_token => vr_token
+        pc_obter_token(pr_tpservico => pr_tpservico
+                        ,pr_token => vr_token
                         ,pr_token_type => vr_token_type
                         ,pr_retorno => vr_retorno);
 
@@ -359,17 +464,24 @@ create or replace package body cecred.INSS0004 is
             RAISE vr_exception;
         END IF;
 
-        vr_link_api_eco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+        IF pr_tpservico = 1 THEN
+          
+          vr_link_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdcooper => 0,
                                                         pr_cdacesso => 'LINK_API_ECO_INSS');
+        ELSE
+          vr_link_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                   pr_cdcooper => 0,
+                                                   pr_cdacesso => 'LINK_API_REENV_CAD_INSS'); 
+        END IF;
 
-        IF vr_link_api_eco = '' THEN
+        IF vr_link_api = '' THEN
             pr_dsderror := 'Erro ao obter API do servico SOAP';
             RAISE vr_exception;
         END IF;
 
         vr_comando_curl := 'curl -k -X POST ' 
-                            || '"'||vr_link_api_eco||'"'
+                            || '"'||vr_link_api||'"'
                             || ' -H "authorization: '||vr_token_type||' '|| vr_token ||'"'
                             || ' -H "cache-control: no-cache"'
                             || ' -H "content-type: text/xml"'
@@ -387,6 +499,74 @@ create or replace package body cecred.INSS0004 is
             pr_retorno := 'NOK';
     END pc_envia_requisicao_soap;
 
+    /*
+  *   Procedure para pegar retorno xml
+  */
+  PROCEDURE pc_pegar_retorno_xml(pr_orgao_pagador IN NUMBER          -- Código do orgão pagador
+                                ,pr_xml_req IN XMLTYPE          -- XML de retorno da requisição
+                                ,pr_dscritic OUT VARCHAR2       --Descricao da critica
+                                ,pr_retorno OUT VARCHAR2) IS    -- Saída OK/NOK
+                                          
+      -- Variável utilizada para montagem do XML
+      vr_des_retorno      VARCHAR2(5000);
+      -- Variaveis DOM
+      vr_xmldoc           XMLDOM.DOMDocument;
+      vr_lista_nodo       DBMS_XMLDOM.DOMNodelist;
+      vr_nodo             xmldom.DOMNode;
+      
+      vr_dscritic VARCHAR2(32767);
+      vr_cdderror VARCHAR2(32767);
+      vr_dsderror VARCHAR2(32767);
+      
+      --Variável controle do xml
+      vr_xmlparser  dbms_xmlparser.Parser;
+      
+      
+  BEGIN
+       
+      -- Realizar o parse do arquivo XML
+      vr_xmldoc := XMLDOM.newDOMDocument(pr_xml_req);
+
+      --Lista de nodos
+      vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'faultstring');
+      
+      -- Tratamento adicional para verificação se retornou falha, pois qnd retorna com sucesso
+      -- o arquivo ultrapassa o limite de tamanho suportado pelo dbms_xmlparser.parse;       
+      IF xmldom.getLength(vr_lista_nodo) > 0 THEN 
+          
+        --Buscar o item
+        vr_nodo:= DBMS_XMLDOM.item(vr_lista_nodo,0);
+          
+        --Buscar o Filho
+        vr_nodo:= xmldom.getFirstChild(vr_nodo);
+          
+        --Codigo do Erro
+        vr_cdderror:= SUBSTR(dbms_xmldom.getnodevalue(vr_nodo),1,4);
+          
+        --Descricao do erro
+        vr_dsderror:= dbms_xmldom.getnodevalue(vr_nodo);
+                    
+        --Se possui erro
+        IF vr_dsderror IS NOT NULL THEN 
+          pr_dscritic:= vr_dsderror;
+        ELSE
+          pr_dscritic:= NULL;
+        END IF;           
+
+        --Retorno Nao OK
+        pr_retorno:= 'NOK';
+           
+      ELSE                 
+        --Retorno OK  
+        pr_retorno:= 'OK';    
+      END IF;       
+    
+  EXCEPTION
+      WHEN OTHERS THEN
+          pr_retorno := 'NOK';
+
+  END pc_pegar_retorno_xml;
+  
     /*
     *   Procedure para montar o XML de retorno da consulta de margem consignável
     */
@@ -826,7 +1006,7 @@ create or replace package body cecred.INSS0004 is
         vr_msgenvio := NULL;
         
         -- Gera os caminhos dos arquivos XML de envio e retorno da requisição
-        pc_gerar_caminho_arquivos_req(pr_cdcooper, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
+        pc_gerar_caminho_arquivos_req(pr_cdcooper, 1, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
 
         -- Verifica se ocorreu erro durante a geração do caminho dos arquivos da requisição
         IF vr_retorno = 'NOK' THEN
@@ -842,6 +1022,7 @@ create or replace package body cecred.INSS0004 is
                                     ,pr_nmmetodo => 'consultaMargemConsignavel'         -- Nome do método 
                                     ,pr_nmmetodo_in => 'InConsultaMargemConsignavel'    -- Nome do método In
                                     ,pr_canal => 'ATM'                                  -- Código do canal de atendimento
+                                    ,pr_tpservico => 1                                  -- Tipo de servico
                                     ,pr_coop_origem => vr_coop_origem                   -- Código da cooperativa que está realizando a consulta
                                     ,pr_numero_beneficio => pr_nrbenefi                 -- Número do benificiário
                                     ,pr_orgao_pagador => pr_cdorgins                    -- Número do orgão pagador
@@ -857,7 +1038,7 @@ create or replace package body cecred.INSS0004 is
         END IF;
 
         -- Faz o envio da requisição SOAP, passando o caminho do arquivo XML
-        pc_envia_requisicao_soap(vr_msgenvio, vr_xml_soap, vr_retorno, vr_dsderror);
+        pc_envia_requisicao_soap(vr_msgenvio, 1, vr_xml_soap, vr_retorno, vr_dsderror);
         
         -- Verifica se ocorreu erro no envio da requisição SOAP
         IF vr_retorno = 'NOK' THEN
@@ -986,7 +1167,7 @@ create or replace package body cecred.INSS0004 is
         vr_msgenvio := NULL;
         
         -- Gera os caminhos dos arquivos XML de envio e retorno da requisição
-        pc_gerar_caminho_arquivos_req(pr_cdcooper, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
+        pc_gerar_caminho_arquivos_req(pr_cdcooper, 1, pr_nrdconta, vr_msgenvio, vr_msgreceb, vr_nmdireto, vr_retorno);
 
         -- Verifica se ocorreu erro durante a geração do caminho dos arquivos da requisição
         IF vr_retorno = 'NOK' THEN
@@ -1002,6 +1183,7 @@ create or replace package body cecred.INSS0004 is
                                     ,pr_nmmetodo => 'emiteExtratoEmprestimo'            -- Nome do método 
                                     ,pr_nmmetodo_in => 'InEmiteExtratoEmprestimo'       -- Nome do método In
                                     ,pr_canal => 'ATM'                                  -- Código do canal de atendimento
+                                    ,pr_tpservico => 1                                  -- Tipo de servico
                                     ,pr_coop_origem => vr_coop_origem                   -- Código da cooperativa que está realizando a consulta
                                     ,pr_numero_beneficio => pr_nrbenefi                 -- Número do benificiário
                                     ,pr_orgao_pagador => pr_cdorgins                    -- Número do orgão pagador
@@ -1017,7 +1199,7 @@ create or replace package body cecred.INSS0004 is
         END IF;
 
         -- Faz o envio da requisição SOAP, passando o caminho do arquivo XML
-        pc_envia_requisicao_soap(vr_msgenvio, vr_xml_soap, vr_retorno, vr_dsderror);
+        pc_envia_requisicao_soap(vr_msgenvio, 1, vr_xml_soap, vr_retorno, vr_dsderror);
         
         -- Verifica se ocorreu erro no envio da requisição SOAP
         IF vr_retorno = 'NOK' THEN

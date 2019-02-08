@@ -1178,7 +1178,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
           ,tbspb_msg_recebida_fase m
      WHERE l.nrcontrole_str_pag = pr_nrcontrole_str_pag
        AND m.nrseq_mensagem     = l.nrseq_mensagem
-       AND m.cdfase             = 115; -- Mensagem de crédito recebida pelo Ailos - R2;
+       AND m.cdfase             = 115 -- Mensagem de crédito recebida pelo Ailos - R2;
+    UNION
+    SELECT 1 idmsg_processada
+      FROM tbspb_msg_recebida l
+          ,tbspb_msg_recebida_fase m
+     WHERE l.nrcontrole_str_pag = pr_nrcontrole_str_pag
+       AND l.nmmensagem         = 'CIR0021'
+       AND m.nrseq_mensagem     = l.nrseq_mensagem
+       AND m.cdfase             = 992; -- Mensagem de crédito recebida pelo Ailos, tratada como 992. Sprint D - Req50
+       
     rw_ver_msg_processada cr_ver_msg_processada%ROWTYPE;
 
     vr_msg_processada BOOLEAN := FALSE;
@@ -1308,8 +1317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     vr_retorno := replace(regexp_substr(to_char(pr_retxml),'<'||pr_nrcampo||'>[^<]*'),'<'||pr_nrcampo||'>',null);
     --
     IF pr_indcampo = 'N' THEN
-       vr_retorno := trim(replace(vr_retorno,'.',','));
-       vr_retorno := trim(to_char(to_number(vr_retorno),'99999990.00'));
+       vr_retorno := trim(replace(vr_retorno,'.',','));  
+       vr_retorno := trim(to_char(to_number(vr_retorno),'9999999990.00')); --Sprint D - Aumentar mascara (Correção de Bug Prod)
     ELSIF pr_indcampo = 'D' THEN
        IF LENGTH(vr_retorno) > 10 THEN
          vr_retorno := TO_CHAR(TO_DATE(SUBSTR(vr_retorno,1,10)||' '||SUBSTR(vr_retorno,12,8),'yyyy-mm-dd hh24:mi:ss'),'dd-mm-yyyy hh24:mi:ss');
@@ -1438,7 +1447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
       AND pr_dsxml_completo    IS NULL
       THEN
         BEGIN
-          SELECT TO_NUMBER(sspb0003.fn_busca_conteudo_campo(dsxml_completo,'VlrLanc','N' ),'9999999990.00')
+          SELECT TO_NUMBER(sspb0003.fn_busca_conteudo_campo(dsxml_completo,'VlrLanc','N' ),'9999999990.00') --Sprint D - Aumentar mascara (Correção de Bug Prod)
                 ,sspb0003.fn_busca_conteudo_campo(dsxml_completo,'ISPBIFDebtd','C' )
                 ,sspb0003.fn_busca_conteudo_campo(dsxml_completo,'ISPBIFCredtd','C' )
             INTO pr_vlmensagem

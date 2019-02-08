@@ -211,7 +211,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                             que aparecem rapidamente no BD no inicio do batch.
                             (SCTASK0015571) - (Fabricio)
 
-			   28/08/2081 - Ajuste no cursor cr_crapreq (Andrey Formigari - Mouts) #PRB0040295
+			   28/08/2081 - Ajuste no cursor cr_crapreq (Andrey Formigari - Mouts) #PRB0040295	
+
+			   24/01/2019 - Retirado o ajuste no cursor cr_crapreq. 
+                            Acelera - Entrega de Talonarios no Ayllos (Lombardi)
  
 ............................................................................. */
 
@@ -417,10 +420,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
-             CASE 
+             /*CASE 
 			   WHEN NVL(crapreq.qtreqtal,0) = 0 THEN 1
 			   ELSE crapreq.qtreqtal
-			 END AS qtreqtal,
+			 END AS qtreqtal,*/
+             crapreq.qtreqtal,
              crapreq.tprequis,
              crapreq.insitreq,
              crapreq.tpformul
@@ -442,7 +446,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
          AND crapass.cdbcochq = pr_cdbanchq
-         AND NVL(crapreq.qtreqtal, 0) >= 0 -- Somente quando tiver solicitacao de talao
+--         AND NVL(crapreq.qtreqtal, 0) >= 0 -- Somente quando tiver solicitacao de talao
+         AND crapreq.qtreqtal > 0 -- Somente quando tiver solicitacao de talao
          AND crapreq.tprequis = pr_tprequis
        ORDER BY crapreq.cdagenci,
                 crapreq.nrdconta;

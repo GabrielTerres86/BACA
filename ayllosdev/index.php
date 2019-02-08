@@ -398,7 +398,7 @@ $(document).ready(function () {
 																<option value="10"<?php if ($cdcooper == "10") { echo " selected"; } ?>>Credicomin</option>
 																<option value="11"<?php if ($cdcooper == "11") { echo " selected"; } ?>>Credifoz</option>
 																<option value="12"<?php if ($cdcooper == "12") { echo " selected"; } ?>>Crevisc</option>
-																<option value="13"<?php if ($cdcooper == "13") { echo " selected"; } ?>>ScrCred</option>
+																<option value="13"<?php if ($cdcooper == "13") { echo " selected"; } ?>>Civia</option>
 																<option value="14"<?php if ($cdcooper == "14") { echo " selected"; } ?>>Evolua</option>
 																<option value="16"<?php if ($cdcooper == "16") { echo " selected"; } ?>>Viacredi Alto Vale</option>
 															</select>

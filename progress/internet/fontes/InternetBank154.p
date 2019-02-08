@@ -14,6 +14,9 @@
    
    Alteracoes: 08/11/2017 - Retornar nome do produto e separar codigo e descricao
                             da linha de credito e finalidade (David).
+                            
+               29/01/2019 - INC0031641 - Ajustes na exibiçao de contratos de empréstimo
+                            com mais de 8 digitos (Jefferson - MoutS)
 
 ..............................................................................*/
 
@@ -99,7 +102,7 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
            DO:
             CREATE xml_operacao.
             ASSIGN xml_operacao.dslinxml =  "<EMPRESTIMO>"
-                   + "<nrctremp>" + TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) + "</nrctremp>" 
+                   + "<nrctremp>" + TRIM(STRING(tt-dados-epr.nrctremp,"zzz,zzz,zzz,zz9")) + "</nrctremp>" 
                    + "<qtpreemp>" + STRING(tt-dados-epr.qtpreemp,"zz9") + "</qtpreemp>"
                    + "<vlemprst>" + TRIM(STRING(tt-dados-epr.vlemprst,"zzz,zzz,zzz,zz9.99")) + "</vlemprst>"
                    + "<vlpreemp>" + STRING(tt-dados-epr.vlpreemp,"zzz,zzz,zzz,zz9.99") + "</vlpreemp>"

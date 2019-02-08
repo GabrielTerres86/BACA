@@ -1638,7 +1638,7 @@ function verificarTipoVeiculo(){
 	var optionsModBem = $('#nrmodbem option');
 		$.each(optionsModBem, function(){
 			if($(this).text().toUpperCase().search('ZERO KM') != -1){
-				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
+				if(modeloBem == '' || modeloBem == null) { modeloBem = 3200; }
 				$(this).remove();
 			}
 		});

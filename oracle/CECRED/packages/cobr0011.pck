@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 16/12/2018
+  --  Data     : Março/2018.                   Ultima atualização: 24/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -295,6 +295,8 @@ create or replace package body cecred.cobr0011 IS
   --             10/12/2018 - Ajuste na sequence de lançamento na conta de recurso financeiro (P352 - Cechet).
   --
   --             16/12/2018 - Ao chamar as instruções da cobrança, deve-se utilizar as procedures da COBR0007 (P352 - Cechet).
+  --
+  --             24/01/2019 - Registrar código ISPB da Central no pagamento de boleto em cartório (P352 - Cechet).
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -3343,6 +3345,7 @@ create or replace package body cecred.cobr0011 IS
 			END IF;
 			-- Processar liquidacao
 			paga0001.pc_processa_liquidacao(pr_idtabcob            => rw_conciliados.crapcob_id               -- Rowid da Cobranca
+                                     ,pr_nrispbpg            => 5463212                                 -- ISPB da Central Ailos
 																		 ,pr_nrnosnum            => rw_conciliados.nrnosnum                 -- Nosso Numero
 																		 ,pr_cdbanpag            => rw_conciliados.cdbcoctl                 -- Codigo banco pagamento
 																		 ,pr_cdagepag            => rw_conciliados.cdagectl                 -- Codigo Agencia pagamento

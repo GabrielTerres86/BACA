@@ -5074,7 +5074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_analisar_bordero_cheques
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Novembro/2016                 Ultima atualizacao: 20/12/2017
+    Data    : Novembro/2016                 Ultima atualizacao: 03/01/2018
 
     Dados referentes ao programa:
 
@@ -5090,6 +5090,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
                 27/12/2017 - Ajuste para passar o parametro Numero da Agencia do Cheque para a procedure
                              pc_ver_fraude_chq_extern (Douglas - Chamado 820177)
+
+				03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -5116,8 +5118,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlperliq NUMBER;               -- Valor percentual de liquidez
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
-	
   vr_nrcpfcgc NUMBER;
+	vr_cdbancos crapprm.dsvlrprm%TYPE;
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -5669,7 +5671,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END IF;
 			
 		  -- Não permite data de pagamento para o último dia do ano
-		  IF pr_tab_cheques(vr_index).dtlibera > vr_dtdialim THEN
+		  IF pr_tab_cheques(vr_index).dtlibera > vr_dtdialim and
+			 extract(year from pr_tab_cheques(vr_index).dtlibera) = extract(year from vr_dtdialim) THEN
          -- Gerar ocorrencia 16 - Data de liberacao ultimo dia do ano
 			   pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 				                       ,pr_idx_cheques => vr_index
@@ -5678,8 +5681,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 															 ,pr_dsdetres => NULL);
 			END IF;
 			
-			-- Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409 e 479
-			IF substr(pr_tab_cheques(vr_index).dsdocmc7,01,03) IN ('012','231','353','356','409','479') THEN
+			/* Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409, 479 e 399 */
+			vr_cdbancos := gene0001.fn_param_sistema('CRED',0,'BANCOS_BLQ_CHQ');
+
+			-- Não permitir a inclusão de cheques para os bancos 012, 231, 353, 356, 409, 479 e 399
+			IF INSTR(','||vr_cdbancos||',',','||substr(pr_tab_cheques(vr_index).dsdocmc7,01,03)||',') > 0 THEN
 		     -- Gerar ocorrencia 17 - Banco nao permitido
 				 pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 																,pr_idx_cheques => vr_index

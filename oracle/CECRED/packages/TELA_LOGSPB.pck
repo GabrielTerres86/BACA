@@ -285,7 +285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       IF (vr_fase_20 = 1 AND vr_nmmensagem <> 'Reprovada pelo OFSAA')
       OR (vr_fase_20 = 0) THEN
         vr_return := 'EM PROCESSAMENTO';
-      END IF;  
+      END IF;
     ELSIF (vr_fase_40 = 1 AND vr_nmmensagem <> 'Retorno JD Rejeição' AND vr_fase_55 = 0 AND vr_fase_56 = 0 AND vr_fase_57 = 0)
       OR (vr_fase_40 = 1 AND vr_nmmensagem = 'Retorno JD') THEN
         vr_return := 'EM PROCESSAMENTO';
@@ -315,18 +315,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     END LOOP;
     --
     IF vr_fase_120 = 1 THEN
-      If pr_nmmensagem in ('STR0010','PAG0111') Then
-      /* Verifica se houve devolução na STR0010/PAG0111*/
+      /* Verifica se houve a confirmação da mensagem enviada (Fase 55)*/
       select count(*) into vr_fase_55
       from tbspb_msg_enviada a,
            tbspb_msg_enviada_fase b
       where a.nrseq_mensagem = b.nrseq_mensagem
       and   a.nrcontrole_str_pag_rec = pr_nrcontrole
       and   b.cdfase = 55;
-      End If;
       --
       IF vr_fase_55 = 1 THEN
-      vr_return := 'DEVOLVIDA';
+         vr_return := 'DEVOLVIDA';
       ELSE
          vr_return := 'EM DEVOLUÇÃO';
       END IF;      
@@ -466,27 +464,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
   BEGIN
     IF pr_intipo = 'R' THEN
       -- Busca o motivo da devolução de recebimento
-    FOR rdev IN (Select sspb0003.fn_busca_conteudo_campo(c.dsxml_completo,'CodDevTransf','S') CodDevTransf
-              From tbspb_msg_enviada a
-                   ,tbspb_msg_enviada_fase b
-                   ,tbspb_msg_xml c
-              Where a.nrcontrole_str_pag_rec = pr_nrcontrole
-              and   a.nrseq_mensagem = b.nrseq_mensagem
-              and   b.cdfase in (10,15)
-              and   b.nrseq_mensagem_xml = c.nrseq_mensagem_xml)
-    LOOP
-      vr_aux_CodDevTransf := rdev.coddevtransf;
-    END LOOP;
-    --
-    If vr_aux_CodDevTransf is not null then
-       vr_dsdevolucao:= tabe0001.fn_busca_dstextab(pr_cdcooper => 0
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'CDERROSSPB'
-                                                 ,pr_tpregist => vr_aux_CodDevTransf);
-       vr_dsdevolucao := substr(vr_dsdevolucao,1,44);
-    End If;
+      FOR rdev IN (Select sspb0003.fn_busca_conteudo_campo(c.dsxml_completo,'CodDevTransf','S') CodDevTransf
+                From tbspb_msg_enviada a
+                     ,tbspb_msg_enviada_fase b
+                     ,tbspb_msg_xml c
+                Where a.nrcontrole_str_pag_rec = pr_nrcontrole
+                and   a.nrseq_mensagem = b.nrseq_mensagem
+                and   b.cdfase in (10,15)
+                and   b.nrseq_mensagem_xml = c.nrseq_mensagem_xml)
+      LOOP
+        vr_aux_CodDevTransf := rdev.coddevtransf;
+      END LOOP;
+      --
+      If vr_aux_CodDevTransf is not null then
+         vr_dsdevolucao:= tabe0001.fn_busca_dstextab(pr_cdcooper => 0
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_tptabela => 'GENERI'
+                                                   ,pr_cdempres => 0
+                                                   ,pr_cdacesso => 'CDERROSSPB'
+                                                   ,pr_tpregist => vr_aux_CodDevTransf);
+         vr_dsdevolucao := substr(vr_dsdevolucao,1,44);
+      End If;
     ELSE
       -- Busca o motivo da devolução da enviada
       FOR rdev IN (Select sspb0003.fn_busca_conteudo_campo(c.dsxml_completo,'CodDevTransf','S') CodDevTransf
@@ -500,7 +498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       LOOP
         vr_aux_CodDevTransf := rdev.coddevtransf;
       END LOOP;
-    --
+      --
       If vr_aux_CodDevTransf is not null then
          vr_dsdevolucao:= tabe0001.fn_busca_dstextab(pr_cdcooper => 0
                                                    ,pr_nmsistem => 'CRED'
@@ -932,9 +930,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     IF pr_dtmensagem_de is null or pr_dtmensagem_ate is null THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Período DE e/ou  ATE deve ser informado!';
-      RAISE vr_exc_erro;    
+      RAISE vr_exc_erro;
     END IF;
-    --    
+    --
     Begin
       vr_dtmensagem_de := NVL(TO_DATE(pr_dtmensagem_de ,'dd/mm/yyyy'),TO_DATE('25-09-2018','dd-mm-yyyy'));
       vr_dtmensagem_ate:= NVL(TO_DATE(pr_dtmensagem_ate,'dd-mm-yyyy'),TO_DATE('01-12-2999','dd-mm-yyyy'));
@@ -954,7 +952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     IF vr_dtmensagem_de < TO_DATE('25-09-2018','dd-mm-yyyy') THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Período inicial deve ser maior que 24/09/2018!';
-      RAISE vr_exc_erro;    
+      RAISE vr_exc_erro;
     END IF;
     --
     IF vr_dtmensagem_de > vr_dtmensagem_ate THEN
@@ -1012,7 +1010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
          WHERE a.nrseq_mensagem_xml = rw_mensagem.nrseq_mensagem_xml;
         --
         IF vr_dsxml_completo IS NULL THEN
-          vr_dsxml_completo := 
+          vr_dsxml_completo :=
           '<XML>' ||
           '<TEXTO> XML muito extenso (maior que 32000 bytes)</TEXTO>'||
           '<TEXTO> para visualizar o seu conteudo solicite a TI </TEXTO>'||
@@ -1037,13 +1035,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         vr_CtDebtd := rw_mensagem.CtDebtd;
       END IF;
       --
-      IF rw_mensagem.idorigem = 'E' THEN              
+      IF rw_mensagem.idorigem = 'E' THEN
         vr_dsorigem := TELA_LOGSPB.fn_define_origem (rw_mensagem.nrcontrole,'DS',rw_mensagem.cdfase);
       ELSE
         vr_dsorigem := NULL;
       END IF;
       --
-      IF rw_mensagem.idorigem = 'E' THEN              
+      IF rw_mensagem.idorigem = 'E' THEN
         vr_insituac := TELA_LOGSPB.fn_define_situacao_enviada(rw_mensagem.nrseq_mensagem);
       ELSIF rw_mensagem.idorigem = 'R' Then
         vr_insituac := TELA_LOGSPB.fn_define_situacao_recebida(rw_mensagem.nrseq_mensagem, rw_mensagem.nrcontrole, rw_mensagem.nmmensagem);
@@ -1053,13 +1051,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       --
       vr_VlrLanc           := rw_mensagem.vlmensagem;
       vr_ISPBIFDebtd       := NVL(rw_mensagem.nrispb_deb,'999');
-      vr_AgDebtd           := sspb0003.fn_busca_conteudo_campo(vr_dsxml_completo,'AgDebtd','C' ); 
+      vr_AgDebtd           := sspb0003.fn_busca_conteudo_campo(vr_dsxml_completo,'AgDebtd','C' );
       vr_CNPJ_CPFCliDebtd  := TELA_LOGSPB.fn_define_cnpj_cpf_debito (vr_dsxml_completo);
       vr_NomCliDebtd       := TELA_LOGSPB.fn_define_nome_debito (vr_dsxml_completo);
       vr_ISPBIFCredtd      := NVL(rw_mensagem.nrispb_cre,'999');
       --
       If pr_opcao = 'C' then
-      vr_AgCredtd          := sspb0003.fn_busca_conteudo_campo(vr_dsxml_completo,'AgCredtd','C' ); 
+         vr_AgCredtd          := sspb0003.fn_busca_conteudo_campo(vr_dsxml_completo,'AgCredtd','C' );
       Else
          If rw_mensagem.cdcooper is not null then
            Begin 
@@ -1116,7 +1114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         END IF;
         -- Fecha cursor
         CLOSE cr_crapcop;
-          vr_tab_crapcop(rw_mensagem.cdcooper_migrada).nmrescop := rw_crapcop.nmrescop;
+        vr_tab_crapcop(rw_mensagem.cdcooper_migrada).nmrescop := rw_crapcop.nmrescop;
         vr_nmrescop_migrada := rw_crapcop.nmrescop;
         END IF;
       ELSE
@@ -1125,47 +1123,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       --
       -- buscar bancos
       vr_bancoremet := null;
-    IF rw_mensagem.nmmensagem <> 'SLC0001' THEN 
+      IF rw_mensagem.nmmensagem <> 'SLC0001' THEN
         IF Nvl(vr_ISPBIFDebtd,999) <> 999 THEN
           IF vr_tab_crapban.EXISTS(vr_ISPBIFDebtd) THEN
             vr_bancoremet := vr_tab_crapban(vr_ISPBIFDebtd).nmresbcc;
           ELSE
-        OPEN cr_crapban (vr_ISPBIFDebtd);
-      FETCH cr_crapban INTO rw_crapban;
-      -- Se não existe
-      IF cr_crapban%NOTFOUND THEN
-          vr_bancoremet := NULL;
-        ELSE
-          vr_bancoremet := substr(rw_crapban.nmresbcc,1,44);    
-        END IF;
-        -- Fecha cursor
-        CLOSE cr_crapban;
+            OPEN cr_crapban (vr_ISPBIFDebtd);
+            FETCH cr_crapban INTO rw_crapban;
+            -- Se não existe
+            IF cr_crapban%NOTFOUND THEN
+              vr_bancoremet := NULL;
+            ELSE
+              vr_bancoremet := substr(rw_crapban.nmresbcc,1,44);
+            END IF;
+            -- Fecha cursor
+            CLOSE cr_crapban;
             vr_tab_crapban(vr_ISPBIFDebtd).nmresbcc := vr_bancoremet;
           END IF;
         ELSE
             vr_ISPBIFDebtd:= NULL;
-      END IF;
-      --
+        END IF;
+        --
         vr_bancodest := null;
         IF NVL(vr_ISPBIFCredtd,999) <> 999 THEN
           IF vr_tab_crapban.EXISTS(vr_ISPBIFCredtd) THEN
             vr_bancodest := vr_tab_crapban(vr_ISPBIFCredtd).nmresbcc;
           ELSE
-        OPEN cr_crapban (vr_ISPBIFCredtd);
-      FETCH cr_crapban INTO rw_crapban;
-      -- Se não existe
-      IF cr_crapban%NOTFOUND THEN
-          vr_bancodest := NULL;
-        ELSE  
-          vr_bancodest := substr(rw_crapban.nmresbcc,1,44);
-        END IF;
-        -- Fecha cursor
-        CLOSE cr_crapban;
+            OPEN cr_crapban (vr_ISPBIFCredtd);
+            FETCH cr_crapban INTO rw_crapban;
+            -- Se não existe
+            IF cr_crapban%NOTFOUND THEN
+              vr_bancodest := NULL;
+            ELSE
+              vr_bancodest := substr(rw_crapban.nmresbcc,1,44);
+            END IF;
+            -- Fecha cursor
+            CLOSE cr_crapban;
             vr_tab_crapban(vr_ISPBIFCredtd).nmresbcc := vr_bancodest;
           END IF;
         ELSE
             vr_ISPBIFCredtd := NULL;
-      END IF;
+        END IF;
       ELSE
         vr_bancodest:= null;
         vr_bancoremet:= null;
@@ -1184,7 +1182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         -- Fecha cursor
         CLOSE cr_craptvl;
         --
-        If vr_insituac = 'DEVOLVIDA' Then
+        If vr_insituac in ('DEVOLVIDA','EM DEVOLUÇÃO') Then
            --
            vr_dsdevolucao := fn_busca_devolucao (rw_mensagem.nrcontrole,'E');
            --
@@ -1193,7 +1191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         rw_craptvl.cdbccxlt := NULL;
         rw_craptvl.cdoperad := NULL;
         --
-        If vr_insituac = 'DEVOLVIDA' Then
+        If vr_insituac in ('DEVOLVIDA','EM DEVOLUÇÃO') Then
            --
            vr_dsdevolucao := fn_busca_devolucao (rw_mensagem.nrcontrole,'R');
            --
@@ -1205,44 +1203,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       -- Tratar caracteres especiais vindos no xml (geram erro ao converter o clob no xml)
       vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&AMP;','e')); 
       vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&APOS;','''')); 
+      vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&LT;','<')); 
+      vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&GT;','>')); 
+      vr_NomCliCredtd := TRIM(Replace(vr_NomCliCredtd,'&QUOT;','"'));                   
+      --
       vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&AMP;','e')); 
       vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&APOS;','''')); 
+      vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&LT;','<')); 
+      vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&GT;','>')); 
+      vr_NomCliDebtd := TRIM(Replace(vr_NomCliDebtd,'&QUOT;','"')); 
       --        
       IF pr_dsendere IS NULL THEN
-      IF vr_nrregist > 0 THEN
-          vr_tab_txt(vr_contador+1).ds_txt :=
-                     '<item>'
-                  || '<idorigem>'       ||rw_mensagem.idorigem                                                       || '</idorigem>'
-                  || '<nrseq_mensagem>' || rw_mensagem.nrseq_mensagem                                                || '</nrseq_mensagem>'
-                  || '<datamsg>'        || TO_CHAR(rw_mensagem.dhmensagem,'dd-mm-yyyy')                              || '</datamsg>'
-                  || '<horamsg>'        || TO_CHAR(rw_mensagem.dhmensagem,'hh24:mi:ss')                              || '</horamsg>'
-                  || '<dsmensagem>'     || rw_mensagem.nmmensagem                                                    || '</dsmensagem>'
-                  || '<numcontrole>'    || rw_mensagem.nrcontrole                                                    || '</numcontrole>'
+        IF vr_nrregist > 0 THEN
+            vr_tab_txt(vr_contador+1).ds_txt :=
+                       '<item>'
+                    || '<idorigem>'       ||rw_mensagem.idorigem                                                       || '</idorigem>'
+                    || '<nrseq_mensagem>' || rw_mensagem.nrseq_mensagem                                                || '</nrseq_mensagem>'
+                    || '<datamsg>'        || TO_CHAR(rw_mensagem.dhmensagem,'dd-mm-yyyy')                              || '</datamsg>'
+                    || '<horamsg>'        || TO_CHAR(rw_mensagem.dhmensagem,'hh24:mi:ss')                              || '</horamsg>'
+                    || '<dsmensagem>'     || rw_mensagem.nmmensagem                                                    || '</dsmensagem>'
+                    || '<numcontrole>'    || rw_mensagem.nrcontrole                                                    || '</numcontrole>'
                     || '<valor>'          || TRIM(TO_CHAR(vr_VlrLanc,'FM99G999G999G990D00'))                           || '</valor>'
-                  || '<situacao>'       || vr_insituac                                                               || '</situacao>'
-                  || '<bancoremet>'     || TRIM(vr_bancoremet)                                                       || '</bancoremet>'
-                  || '<agenciaremet>'   || TRIM(vr_AgDebtd)                                                          || '</agenciaremet>'
-                  || '<contaremet>'     || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtDebtd))                   || '</contaremet>'
-                  || '<cooperativa>'    || vr_nmrescop                                                               || '</cooperativa>'
+                    || '<situacao>'       || vr_insituac                                                               || '</situacao>'
+                    || '<bancoremet>'     || TRIM(vr_bancoremet)                                                       || '</bancoremet>'
+                    || '<agenciaremet>'   || TRIM(vr_AgDebtd)                                                          || '</agenciaremet>'
+                    || '<contaremet>'     || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtDebtd))                   || '</contaremet>'
+                    || '<cooperativa>'    || vr_nmrescop                                                               || '</cooperativa>'
                     || '<nomeremet>'      || vr_NomCliDebtd                                                            || '</nomeremet>'
-                  || '<cpfcnpjremet>'   || TRIM(vr_CNPJ_CPFCliDebtd)                                                 || '</cpfcnpjremet>'
-                  || '<bancodest>'      || TRIM(vr_bancodest)                                                        || '</bancodest>'
-                  || '<agenciadest>'    || TRIM(vr_AgCredtd)                                                         || '</agenciadest>'
-                  || '<contadest>'      || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))                  || '</contadest>'
+                    || '<cpfcnpjremet>'   || TRIM(vr_CNPJ_CPFCliDebtd)                                                 || '</cpfcnpjremet>'
+                    || '<bancodest>'      || TRIM(vr_bancodest)                                                        || '</bancodest>'
+                    || '<agenciadest>'    || TRIM(vr_AgCredtd)                                                         || '</agenciadest>'
+                    || '<contadest>'      || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))                  || '</contadest>'
                     || '<nomedest>'       || vr_NomCliCredtd                                                           || '</nomedest>'
-                  || '<cpfcnpjdest>'    || vr_CNPJ_CPFCliCredtd                                                      || '</cpfcnpjdest>'
-                    || '<motdev>'         || vr_dsdevolucao                                                            || '</motdev>'
-                  || '<origem>'         || vr_dsorigem                                                               || '</origem>'
-                  || '<caixa>'          || rw_craptvl.cdbccxlt                                                       || '</caixa>'
-                  || '<operador>'       || rw_craptvl.cdoperad                                                       || '</operador>'
-                  || '<crise>'          || rw_mensagem.inestado_crise                                                || '</crise>'
-                  || '<coopmigrada>'    || TRIM(vr_nmrescop_migrada)                                                 || '</coopmigrada>'
-                  || '<nrcontamigrada>' || TRIM(gene0002.fn_mask_conta(pr_nrdconta => rw_mensagem.nrdconta_migrada)) || '</nrcontamigrada>'
-                  || '</item>'
-                  || CHR(13);
-        END IF;
-      --Diminuir registros
-      vr_nrregist:= nvl(vr_nrregist,0) - 1;
+                    || '<cpfcnpjdest>'    || vr_CNPJ_CPFCliCredtd                                                      || '</cpfcnpjdest>'
+                      || '<motdev>'         || vr_dsdevolucao                                                            || '</motdev>'
+                    || '<origem>'         || vr_dsorigem                                                               || '</origem>'
+                    || '<caixa>'          || rw_craptvl.cdbccxlt                                                       || '</caixa>'
+                    || '<operador>'       || rw_craptvl.cdoperad                                                       || '</operador>'
+                    || '<crise>'          || rw_mensagem.inestado_crise                                                || '</crise>'
+                    || '<coopmigrada>'    || TRIM(vr_nmrescop_migrada)                                                 || '</coopmigrada>'
+                    || '<nrcontamigrada>' || TRIM(gene0002.fn_mask_conta(pr_nrdconta => rw_mensagem.nrdconta_migrada)) || '</nrcontamigrada>'
+                    || '</item>'
+                    || CHR(13);
+          END IF;
+        --Diminuir registros
+        vr_nrregist:= nvl(vr_nrregist,0) - 1;
       ELSE
         IF vr_contador = 0 THEN
           vr_tab_txt(1).ds_txt := 'Data;Hora;Mensagem;"Num. Controle";Valor;Situação;'
@@ -1331,13 +1336,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
           IF vr_dscritic IS NOT NULL THEN
             vr_cdcritic := 0;
             RAISE vr_exc_erro;
-    END IF;
-    --
+          END IF;
+          --
           FOR i IN 1 .. vr_tab_txt.COUNT LOOP
             -- Adiciona a linha de log
             BEGIN
               gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_tab_txt(i).ds_txt);
-  EXCEPTION
+            EXCEPTION
             WHEN OTHERS THEN
               -- Retornar erro
               vr_dscritic := 'Problema ao escrever no arquivo <'||vr_dircop_txt||'/'||vr_nom_arquivo||'>: ' || sqlerrm;
@@ -1512,7 +1517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     --Variaveis de controle
     vr_nrregist INTEGER := nvl(pr_nrregist,9999); --> Quantidade de registros a sere processado
     vr_qtregist INTEGER;
-    
+
 
     BEGIN -- Inicio pc_buscar_mensagens_opcao_s
     -- valida data parametro
@@ -1523,9 +1528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     IF pr_dtmensagem_de is null or pr_dtmensagem_ate is null THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Período DE e/ou  ATE deve ser informado!';
-      RAISE vr_exc_erro;    
+      RAISE vr_exc_erro;
     END IF;
-    --    
+    --
     IF vr_dtmensagem_de > vr_dtmensagem_ate THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Data DE deve ser menor que o Data ATE!';
@@ -1544,11 +1549,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       vr_dscritic := 'Período informado deve ser igual ou inferior a 7 dias!';
       RAISE vr_exc_erro;
     End If;
-    
+
     --
     --Inicializar Variaveis
     vr_qtregist:= 0;
-    
+
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
     --
@@ -1569,7 +1574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                    ,pr_cdcooper       => pr_cdcooper
                                    )
     LOOP
-      
+
       --Incrementar Quantidade Registros do Parametro
       vr_qtregist:= nvl(vr_qtregist,0) + 1;
 
@@ -1579,7 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
          --Proximo Titular
         CONTINUE;
       END IF;
-    
+
       -- buscar cooperativa
       OPEN cr_crapban (pr_cdbccxlt => rw_mensagem.cdbanctl);
       FETCH cr_crapban INTO rw_crapban;
@@ -1603,7 +1608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'nrctrlif' , pr_tag_cont => rw_mensagem.nrctrlif, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'vltransa' , pr_tag_cont => rw_mensagem.vldocmto, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'dhtransa' , pr_tag_cont => To_char(rw_mensagem.dttransa,'dd-mm-yyyy'), pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'hrtransa' , pr_tag_cont => TO_CHAR(TO_DATE(rw_mensagem.hrtransa,'sssss'),'hh24:mi:ss'), pr_des_erro => vr_dscritic);      
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'hrtransa' , pr_tag_cont => TO_CHAR(TO_DATE(rw_mensagem.hrtransa,'sssss'),'hh24:mi:ss'), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'dsmotivo' , pr_tag_cont => rw_mensagem.dsmotivo, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'cdbanren' , pr_tag_cont => rw_mensagem.cdbandif, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item',pr_posicao => vr_contador,pr_tag_nova => 'cdispbren', pr_tag_cont => rw_mensagem.nrispbif, pr_des_erro => vr_dscritic);
@@ -1624,7 +1629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
 
       --Diminuir registros
       vr_nrregist:= nvl(vr_nrregist,0) - 1;
-      
+
     END LOOP;
     --
     IF vr_contador > 0 THEN
@@ -1746,24 +1751,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                      || 'BEGIN'||chr(13)
                      || '  cecred.tela_logspb.pc_buscar_mensagens_opcao_c_m '
                      || '               (pr_opcao           => '''||            pr_opcao||''''
-                     || '                               ,pr_dtmensagem_de   => '''||            pr_dtmensagem_de||''''
-                     || '                               ,pr_dtmensagem_ate  => '''||            pr_dtmensagem_ate||''''
-                     || '                               ,pr_vlmensagem_de   => '  ||NVL(TO_CHAR(pr_vlmensagem_de),'NULL')
-                     || '                               ,pr_vlmensagem_ate  => '  ||NVL(TO_CHAR(pr_vlmensagem_ate),'NULL')
-                     || '                               ,pr_nrdconta        => '  ||NVL(TO_CHAR(pr_nrdconta),'NULL')
-                     || '                               ,pr_inorigem        => '''||            pr_inorigem||''''
-                     || '                               ,pr_intipo          => '''||            pr_intipo||''''
-                     || '                               ,pr_cdcooper        => '  ||            pr_cdcooper
-                     || '                               ,pr_dsendere        => '''||            pr_dsendere||''''
+                     || '               ,pr_dtmensagem_de   => '''||            pr_dtmensagem_de||''''
+                     || '               ,pr_dtmensagem_ate  => '''||            pr_dtmensagem_ate||''''
+                     || '               ,pr_vlmensagem_de   => '  ||NVL(TO_CHAR(pr_vlmensagem_de),'NULL')
+                     || '               ,pr_vlmensagem_ate  => '  ||NVL(TO_CHAR(pr_vlmensagem_ate),'NULL')
+                     || '               ,pr_nrdconta        => '  ||NVL(TO_CHAR(pr_nrdconta),'NULL')
+                     || '               ,pr_inorigem        => '''||            pr_inorigem||''''
+                     || '               ,pr_intipo          => '''||            pr_intipo||''''
+                     || '               ,pr_cdcooper        => '  ||            pr_cdcooper
+                     || '               ,pr_dsendere        => '''||            pr_dsendere||''''
                      || '               ,pr_nrispbif        => NULL'
                      || '               ,pr_nrregist        => NULL'
-                     || '                               ,pr_nriniseq        => '  ||NVL(TO_CHAR(pr_nriniseq),'NULL')
+                     || '               ,pr_nriniseq        => '  ||NVL(TO_CHAR(pr_nriniseq),'NULL')
                      || '               ,pr_xmllog          => '  ||NVL(TO_CHAR(''''||pr_xmllog||''''),'NULL')
-                     || '                               ,pr_cdcritic        => vr_cdcritic'
-                     || '                               ,pr_dscritic        => vr_dscritic'
-                     || '                               ,pr_retxml          => vr_retxml  '
-                     || '                               ,pr_nmdcampo        => vr_nmdcampo'
-                     || '                               ,pr_des_erro        => vr_des_erro);'
+                     || '               ,pr_cdcritic        => vr_cdcritic'
+                     || '               ,pr_dscritic        => vr_dscritic'
+                     || '               ,pr_retxml          => vr_retxml  '
+                     || '               ,pr_nmdcampo        => vr_nmdcampo'
+                     || '               ,pr_des_erro        => vr_des_erro);'
                      || '  COMMIT;'
                      || 'END;';
           -- Montar o prefixo do código do programa para o jobname
@@ -1795,8 +1800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                    ,pr_cdcooper        => pr_cdcooper
                                      ,pr_dsendere        => pr_dsendere
                                    ,pr_nrispbif        => pr_nrispbif
-                                   ,pr_nrregist        => pr_nrregist                           
-                                   ,pr_nriniseq        => pr_nriniseq                           
+                                   ,pr_nrregist        => pr_nrregist
+                                   ,pr_nriniseq        => pr_nriniseq
                                    ,pr_xmllog          => pr_xmllog
                                    ,pr_cdcritic        => pr_cdcritic
                                    ,pr_dscritic        => pr_dscritic
@@ -1816,8 +1821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                    ,pr_cdcooper        => pr_cdcooper
                                    ,pr_dsendere        => pr_dsendere
                                    ,pr_nrispbif        => pr_nrispbif
-                                   ,pr_nrregist        => pr_nrregist                           
-                                   ,pr_nriniseq        => pr_nriniseq      
+                                   ,pr_nrregist        => pr_nrregist
+                                   ,pr_nriniseq        => pr_nriniseq
                                    ,pr_xmllog          => pr_xmllog
                                    ,pr_cdcritic        => pr_cdcritic
                                    ,pr_dscritic        => pr_dscritic
@@ -1835,8 +1840,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                  ,pr_intipo          => pr_intipo
                                  ,pr_cdcooper        => pr_cdcooper
                                  ,pr_nrispbif        => pr_nrispbif
-                                 ,pr_nrregist        => pr_nrregist                           
-                                 ,pr_nriniseq        => pr_nriniseq      
+                                 ,pr_nrregist        => pr_nrregist
+                                 ,pr_nriniseq        => pr_nriniseq
                                  ,pr_xmllog          => pr_xmllog
                                  ,pr_cdcritic        => pr_cdcritic
                                  ,pr_dscritic        => pr_dscritic
@@ -1988,7 +1993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
        WHERE a.nrseq_mensagem     = pr_nrseq_mensagem
          AND b.nrseq_mensagem     = a.nrseq_mensagem
          AND c.nrseq_mensagem_xml = b.nrseq_mensagem_xml
-         AND b.cdfase            IN (115, 992, 999) 
+         AND b.cdfase            IN (115, 992, 999)
          AND pr_idorigem          = 'R';
 
     CURSOR cr_layout_2(pr_nrseq_mensagem IN NUMBER
@@ -1997,14 +2002,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
           ,b.nmmensagem
           ,b.dhmensagem
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_2          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_3          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_4          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_5
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_6
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_7
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_8      
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 36001),'><','>' || CHR(10) || '<') dsxml_completo_9      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 4001),'><','>' || CHR(10) || '<') dsxml_completo_2          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_3          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_4          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_5
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_6
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_7
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_8      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_9      
           ,a.nrcontrole_str_pag_rec nrcontrole_dev
       FROM tbspb_msg_enviada a
           ,tbspb_msg_enviada_fase b
@@ -2018,14 +2023,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
           ,b.nmmensagem
           ,b.dhmensagem
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_2          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_3          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_4          
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_5
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_6
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_7
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_8      
-          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 36001),'><','>' || CHR(10) || '<') dsxml_completo_9      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 4001),'><','>' || CHR(10) || '<') dsxml_completo_2          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 8001),'><','>' || CHR(10) || '<') dsxml_completo_3          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 12001),'><','>' || CHR(10) || '<') dsxml_completo_4          
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 16001),'><','>' || CHR(10) || '<') dsxml_completo_5
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 20001),'><','>' || CHR(10) || '<') dsxml_completo_6
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 24001),'><','>' || CHR(10) || '<') dsxml_completo_7
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 28001),'><','>' || CHR(10) || '<') dsxml_completo_8      
+          ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 32001),'><','>' || CHR(10) || '<') dsxml_completo_9      
           ,nrcontrole_if_env nrcontrole_dev
       FROM tbspb_msg_recebida a
           ,tbspb_msg_recebida_fase b
@@ -2147,35 +2152,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       END IF;
       --
       IF rw_layout_1.nmmensagem <> 'SLC0001' THEN
-      -- buscar bancos
-      OPEN cr_crapban (rw_layout_1.ISPBIFDebtd);
-      FETCH cr_crapban INTO rw_crapban;
-      -- Se não existe
-      IF cr_crapban%NOTFOUND THEN
-          vr_bancoremet := null;
-        ELSE  
-      vr_bancoremet := rw_crapban.nmresbcc;
+        -- buscar bancos
+        OPEN cr_crapban (rw_layout_1.ISPBIFDebtd);
+        FETCH cr_crapban INTO rw_crapban;
+        -- Se não existe
+        IF cr_crapban%NOTFOUND THEN
+            vr_bancoremet := null;
+        ELSE
+            vr_bancoremet := rw_crapban.nmresbcc;
         END IF;
-        -- Fecha cursor
+          -- Fecha cursor
         CLOSE cr_crapban;
-      --
         --
-      OPEN cr_crapban (rw_layout_1.ISPBIFCredtd);
-      FETCH cr_crapban INTO rw_crapban;
-      -- Se não existe
-      IF cr_crapban%NOTFOUND THEN
+        --
+        OPEN cr_crapban (rw_layout_1.ISPBIFCredtd);
+        FETCH cr_crapban INTO rw_crapban;
+        -- Se não existe
+        IF cr_crapban%NOTFOUND THEN
           vr_bancodest := NULL;
-        ELSE  
-      vr_bancodest := rw_crapban.nmresbcc;
+        ELSE
+           vr_bancodest := rw_crapban.nmresbcc;
         END IF;
         -- Fecha cursor
         CLOSE cr_crapban;
         --
         -- Tratar caracteres especiais vindos no xml (geram erro ao converter o clob no xml)
-        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&AMP;','e')); 
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&AMP;','&')); 
         rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&APOS;','''')); 
-        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&AMP;','e')); 
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&LT;','<')); 
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&GT;','>')); 
+        rw_layout_1.NomCliDebtd := TRIM(Replace(rw_layout_1.NomCliDebtd,'&QUOT;','"'));                   
+        --
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&AMP;','&')); 
         rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&APOS;','''')); 
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&LT;','<')); 
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&GT;','>')); 
+        rw_layout_1.NomCliCredtd := TRIM(Replace(rw_layout_1.NomCliCredtd,'&QUOT;','"')); 
       ELSE
         rw_layout_1.AgCredtd := null;
         rw_layout_1.CtCredtd:= null;
@@ -2184,9 +2196,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         rw_layout_1.NomCliDebtd:= null;
         rw_layout_1.CNPJ_CPFCliDebtd:= null;
         rw_layout_1.CNPJ_CPFCliCredtd:= null;
-        rw_layout_1.NomCliCredtd:= null;  
-        rw_layout_1.dsxml_completo:= null;      
-      END IF;  
+        rw_layout_1.NomCliCredtd:= null;
+        rw_layout_1.dsxml_completo:= null;
+      END IF;
       --
       -- buscar caixa/operador
       IF rw_layout_1.idorigem = 'E' THEN
@@ -2201,7 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         -- Fecha cursor
         CLOSE cr_craptvl;
         --
-        If rw_layout_1.insituac = 'DEVOLVIDA' Then
+        If rw_layout_1.insituac in ('DEVOLVIDA','EM DEVOLUÇÃO') Then
            --
            vr_dsdevolucao := fn_busca_devolucao (rw_layout_1.nrcontrole,'E');
            --
@@ -2209,7 +2221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       ELSE
         rw_craptvl.cdbccxlt := NULL;
         rw_craptvl.cdoperad := NULL;
-        If rw_layout_1.insituac = 'DEVOLVIDA' Then
+        If rw_layout_1.insituac in ('DEVOLVIDA','EM DEVOLUÇÃO') Then
            --
            vr_dsdevolucao := fn_busca_devolucao (rw_layout_1.nrcontrole,'R');
            --
@@ -2236,7 +2248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'datamsg'       ,pr_tag_cont => TO_CHAR(rw_layout_1.dhmensagem,'dd-mm-yyyy hh24:mi:ss'),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'dsmensagem'    ,pr_tag_cont => rw_layout_1.nmmensagem,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'numcontrole'   ,pr_tag_cont => rw_layout_1.nrcontrole,pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'valor'         ,pr_tag_cont =>
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'valor'         ,pr_tag_cont => 
       TRIM(TO_CHAR(rw_layout_1.VlrLanc,'FM99G999G999G990D00')),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'situacao'      ,pr_tag_cont => rw_layout_1.insituac,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'bancoremet'    ,pr_tag_cont => TRIM(vr_bancoremet),pr_des_erro => vr_dscritic);

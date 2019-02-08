@@ -11,18 +11,21 @@ Alteracoes: 02/03/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
             09/02/2012 - Tratamento para estornar historico 1030 (Guilherme).
             
             21/05/2012 - substituição do FIND craptab para os registros 
-                            CONTACONVE pela chamada do fontes ver_ctace.p
-                            (Lucas R.)
+                         CONTACONVE pela chamada do fontes ver_ctace.p
+                         (Lucas R.)
             
             19/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
-                            norturno rodando (Douglas Pagel - AMcom).
-													
+                         norturno rodando (Douglas Pagel - AMcom).
+
             15/10/2018 - Troca DELETE CRAPLCM pela chamada da rotina estorna_lancamento_conta 
                          de dentro da b1wgen0200 
                          (Renato AMcom) 
-                         
+
             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
+                         Heitor (Mouts)
+
+            19/11/2018 - prj450 - história 10669:Crédito de Estorno de Saque em conta em Prejuízo
+                         (Fabio Adriano - AMcom).
 ........................................................................... **/
 
 {dbo/bo-erro1.i}
@@ -412,6 +415,56 @@ PROCEDURE estorna-cheque-avulso.
     IF  VALID-HANDLE(h-b1wgen0200) THEN
       DELETE PROCEDURE h-b1wgen0200.
    
+    
+    FIND craplcm WHERE craplcm.cdcooper = INT(p-cooper)  AND
+                       craplcm.cdagenci = p-cod-agencia     AND
+                       craplcm.cdbccxlt = 100               AND 
+                       craplcm.nrdconta = p-nro-conta       AND
+                       craplcm.cdhistor = 2720              AND
+                       craplcm.vllanmto = p-valor           AND
+                       craplcm.nrdocmto = 1  USE-INDEX craplcm1
+                       NO-ERROR NO-WAIT.
+                       
+    IF AVAILABLE craplcm THEN 
+    DO:
+    
+        IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+           RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                      
+        RUN pc_estorna_saque_conta_prej IN h-b1wgen0200 
+          (INPUT craplcm.cdcooper               /* par_cdcooper */
+          ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+          ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+          ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+          ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+          ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+          ,INPUT craplcm.cdhistor               /* par_cdhistor */
+          ,INPUT craplcm.nrdconta               /* PAR_nrdconta */
+          ,INPUT craplcm.nrseqdig               /* PAR_nrseqdig */
+          ,INPUT craplcm.vllanmto               /* PAR_vllanmto */
+          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+          ,OUTPUT aux_dscritic).
+     
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+        DO: 
+           /* Tratamento de erros conforme anteriores */
+           ASSIGN i-cod-erro  = aux_cdcritic
+                  c-desc-erro = aux_dscritic.
+                      
+           RUN cria-erro (INPUT p-cooper,
+                          INPUT p-cod-agencia,
+                          INPUT p-nro-caixa,
+                          INPUT i-cod-erro,
+                          INPUT c-desc-erro,
+                          INPUT YES).
+           RETURN "NOK".
+        END.   
+                
+    IF VALID-HANDLE(h-b1wgen0200) THEN
+       DELETE PROCEDURE h-b1wgen0200.               /* Descricao da critica                          */
+        
+    END.
+
    /* Remocao lotes
    IF  craplot.vlcompdb = 0 and
        craplot.vlinfodb = 0 and

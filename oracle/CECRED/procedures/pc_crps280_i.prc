@@ -822,7 +822,7 @@ BEGIN
          AND tco.tpctatrf <> 3
          AND tco.cdagenci = decode(pr_cdagenci, 0, tco.cdagenci, pr_cdagenci); -- Ligeirinho.
 
-    CURSOR cr_craptco_credimilsul_scrcred IS
+    CURSOR cr_craptco_credimilsul_civia IS /*Alteração scrcred civia - Paulo Martins - Mouts*/
       SELECT tco.nrdconta
         FROM craptco tco
        WHERE tco.cdcooper = pr_cdcooper
@@ -3537,7 +3537,7 @@ BEGIN
 				-- Incorporação da Credimil >> SCR
 		  ELSIF pr_cdcooper = 13 AND pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
 				-- Vindas da Credimil
-				FOR regs IN cr_craptco_credimilsul_scrcred LOOP
+				FOR regs IN cr_craptco_credimilsul_civia LOOP
 					vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
 				END LOOP;
 			END IF;

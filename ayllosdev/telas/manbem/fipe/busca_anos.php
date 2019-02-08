@@ -28,7 +28,7 @@
     $cdModeloVeiculo	= (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ;
     $nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
 
-    $urlServicoOperacao = $UrlFipe."ObterListaMarcaModeloAnosFipe";
+    $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaMarcaModeloAnosFipe";
     $data = '{
         "tabelaFIPE": {
             "marcaVeiculo": {
@@ -43,7 +43,7 @@
             "registrosPorPagina": 100
         }
     }';
-    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);
+    $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
     /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
 
