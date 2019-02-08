@@ -894,6 +894,13 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                          ,pr_cdcritic  OUT PLS_INTEGER
                                          ,pr_dscritic  OUT VARCHAR2
                                          ,pr_des_reto  OUT VARCHAR2 );
+                                         
+  -- Procedure para gravar data e hora no campo, visto que pelo progress estava gravando apenas a data.                                    
+  PROCEDURE pc_salva_dtassele(pr_cdcooper IN crapcrd.cdcooper%TYPE
+                             ,pr_nrdconta IN crapcrd.nrdconta%TYPE
+                             ,pr_nrcrcard IN VARCHAR2
+                             ,pr_dscritic OUT VARCHAR2);
+                             
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -13693,5 +13700,45 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
       pr_des_reto := 'NOK';
 
   END pc_bloquear_cartao_magnetico;
+  
+  /*****************************************************************************/
+  /**         Procedure para Salvar data da assinatura TA Online              **/
+  /*****************************************************************************/
+  PROCEDURE pc_salva_dtassele(pr_cdcooper  IN crapcrd.cdcooper%TYPE
+                             ,pr_nrdconta  IN crapcrd.nrdconta%TYPE
+                             ,pr_nrcrcard  IN VARCHAR2
+                             ,pr_dscritic OUT VARCHAR2) IS
+    /* ..........................................................................
+    --
+    --  Programa : pc_salva_dtassele        
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito 
+    --  Sigla    : CRED
+    --  Autor    : Anderson Alan (Supero)
+    --  Data     : Dezembro/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para gravar data e hora no campo, visto que pelo 
+    --               progress estava gravando apenas a data.
+    --
+    --  Alteração :
+    -- ..........................................................................*/
+      
+  BEGIN
+    
+    UPDATE crapcrd
+       SET crapcrd.dtassele = SYSDATE
+     WHERE crapcrd.cdcooper = pr_cdcooper
+       AND crapcrd.nrdconta = pr_nrdconta
+       AND crapcrd.nrcrcard = TO_NUMBER(pr_nrcrcard);
+    
+    COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina pc_salva_dtassele: '||SQLERRM;
+  END pc_salva_dtassele;
+  
 END CADA0004;
 /
