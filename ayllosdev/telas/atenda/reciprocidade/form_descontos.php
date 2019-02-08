@@ -473,7 +473,7 @@ cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 
-$('#vldesconto_cee, #vldesconto_coo, #txtjustificativa').bind('keypress', function (){
+$('#vldesconto_cee, #vldesconto_coo, #txtjustificativa').bind('keyup', function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 

@@ -2725,6 +2725,8 @@ function excluirConvenio(nrconven, confirm) {
 
 function validaEmiteExpede(limparCampos) {
     var cddopcao = $('#cddopcao').val();
+	var vJustificativaDescOld = $('#txtjustificativa_old', '.tabelaDesconto').val();
+
 	cee = false;
     cVldesconto_cee.desabilitaCampo();
     cDataFimAdicionalCee.desabilitaCampo();
@@ -2734,6 +2736,9 @@ function validaEmiteExpede(limparCampos) {
     cDataFimAdicionalCoo.desabilitaCampo();
 
     cJustificativaDesc.desabilitaCampo();
+    if (cddopcao && cddopcao == 'A' && vJustificativaDescOld) {
+        cJustificativaDesc.habilitaCampo();
+    }
     
     if (limparCampos) {
         if (sitflcee !== $("#flceeexp","#divOpcaoConsulta").prop('checked')) {
@@ -2756,13 +2761,11 @@ function validaEmiteExpede(limparCampos) {
 			coo = true;			
 			cVldesconto_coo.habilitaCampo();
 			cDataFimAdicionalCoo.habilitaCampo();
-            cJustificativaDesc.habilitaCampo();
 		}
 		if (descontoConvenios[i].flceeexp == 1) {
 			cee = true;			
 			cVldesconto_cee.habilitaCampo();
 			cDataFimAdicionalCee.habilitaCampo();
-            cJustificativaDesc.habilitaCampo();
 		}
 	}
 }
@@ -2884,6 +2887,11 @@ function incluiDesconto(houveAlteracao) {
         dtfimadicional_cee = 0;
     }
 
+    var descricaoJustificativaDesconto = vJustificativaDesc;
+    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0) {
+        descricaoJustificativaDesconto = "";
+    }
+
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -2904,7 +2912,7 @@ function incluiDesconto(houveAlteracao) {
             dtfimadicional_coo:      parseInt(dtfimadicional_coo),
             vldesconto_cee:          $('#vldesconto_cee', '.tabelaDesconto').val(),
             dtfimadicional_cee:      parseInt(dtfimadicional_cee),
-            txtjustificativa:        vJustificativaDesc,
+            txtjustificativa:        descricaoJustificativaDesconto,
             perdesconto:             JSON.stringify(perdescontos),
             vldescontoconcedido_coo: $('#vldescontoconcedido_coo', '.tabelaDesconto').val(),
             vldescontoconcedido_cee: $('#vldescontoconcedido_cee', '.tabelaDesconto').val(),
@@ -2978,7 +2986,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
-            (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ||
+            (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc && vJustificativaDescOld) ||
             (atualizacaoDesconto) ) {
 
         btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
@@ -2989,6 +2997,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
         btnAprovacao.prop('disabled', false);
         btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
+        cJustificativaDesc.habilitaCampo();
     } else {
         btnContinuar.removeClass('botaoDesativado');
         btnContinuar.prop('disabled', false);
@@ -2997,6 +3006,12 @@ function validaHabilitacaoCamposBtn(cddopcao) {
         btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
         btnAprovacao.prop('disabled', true);
         btnAprovacao.attr('onclick', 'return false;');
+
+        if (cddopcao && cddopcao == 'A' && vJustificativaDescOld && (vDataFimAdicionalCee || vDataFimAdicionalCoo || vVldesconto_coo || vVldesconto_cee)) {
+            cJustificativaDesc.habilitaCampo();
+        } else {
+            cJustificativaDesc.desabilitaCampo();
+        }
     }
 
 }
