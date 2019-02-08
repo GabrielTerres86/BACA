@@ -3,11 +3,11 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados.php                                             
 	  Autor: Guilherme                                                         
-	  Data : Maio/2008                   �ltima Altera��o: 12/07/2012         
+	  Data : Maio/2008                   Última Alteração: 12/07/2012         
 																			
-	  Objetivo  : Carregar dados para impress�es de cart�o de cr�dito       
+	  Objetivo  : Carregar dados para impressões de cartão de crédito       
 																			 
-	  Altera��es: 03/11/2010 - Adapta��es para cart�o PJ (David).
+	  Alterações: 03/11/2010 - Adaptações para cartão PJ (David).
 
 				  23/03/2011 - Adicionado condicao de $idimpres 16, 
 							   cancelamento de cartao de credito de PJ(Jorge).
@@ -23,24 +23,24 @@
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, vari�veis globais de controle, e biblioteca de fun��es	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo m�todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 	
-	// Verifica permiss�o
+	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
 
-	// Verifica se o n�mero da conta foi informado
+	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) || 		
 		!isset($_POST["nrctrcrd"]) || 
 		!isset($_POST["idimpres"]) || 
@@ -54,25 +54,25 @@
 	$idimpres = $_POST["idimpres"];
 	$cdmotivo = $_POST["cdmotivo"];
 
-	// Verifica se o n�mero da conta � um inteiro v�lido
+	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		?><script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
 		exit();
 	}
 	
-	// Verifica se n�mero do contrato � um inteiro v�lido
+	// Verifica se número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrcrd)) {
 		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
 		exit();
 	}
 	
-	// Verifica se identificador de impress�o � um inteiro v�lido
+	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($idimpres)) {
 		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}		
 	
-	// Verifica se c�digo do motivo da solicita��o de segunda via � um inteiro v�lido
+	// Verifica se código do motivo da solicitação de segunda via é um inteiro válido
 	if (!validaInteiro($cdmotivo)) {
 		?><script language="javascript">alert('C&oacute;digo da solicita&ccedil;&atilde;o de segunda via inv&aacute;lido.');</script><?php
 		exit();
@@ -98,7 +98,7 @@
 			default: exit();
 		}
 		
-		// Monta o xml de requisi��o
+		// Monta o xml de requisição
 		$xmlDadosImpres  = "";
 		$xmlDadosImpres .= "<Root>";
 		$xmlDadosImpres .= "	<Cabecalho>";
@@ -132,17 +132,17 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjDadosImpres = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra cr�tica
+		// Se ocorrer um erro, mostra cr?tica
 		if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 			exit();
 		}
 		
-		// Obt�m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+		// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 		$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
 		
-		// Chama fun��o para mostrar PDF do impresso gerado no browser
+		// Chama função para mostrar PDF do impresso gerado no browser
 		visualizaPDF($nmarqpdf);
 	} else if ($idimpres == 18) {
 
@@ -163,7 +163,7 @@
 		$layout = $validaxmlObj->roottag->cdata;
 		if ($layout == 0) {
 
-			// Monta o xml de requisi��o
+			// Monta o xml de requisição
 			$xmlDadosImpres  = "";
 			$xmlDadosImpres .= "<Root>";
 			$xmlDadosImpres .= "	<Cabecalho>";
@@ -197,14 +197,14 @@
 			// Cria objeto para classe de tratamento de XML
 			$xmlObjDadosImpres = getObjectXML($xmlResult);
 			
-			// Se ocorrer um erro, mostra cr�tica
+			// Se ocorrer um erro, mostra crítica
 			if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 				$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 				exit();
 			}
 			
-			// Obt�m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+			// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 			$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
 
 		} else {
@@ -217,23 +217,23 @@
 			$impresult = mensageria($xml, "ATENDA_CRD", "IMPRIMIR_PROTOCOLO_CARTAO_CREDITO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 			$impxmlObj = getObjectXML($impresult);
 
-			// Se ocorrer um erro, mostra cr�tica
+			// Se ocorrer um erro, mostra crítica
 			if ($impxmlObj->roottag->tags[0]->name == "ERRO") {
 				$msg = $impxmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 				exit();
 			}
 
-			//Obt�m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+			//Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 			$nmarqpdf = $impxmlObj->roottag->cdata;
 		}
 
-		// Chama fun��o para mostrar PDF do impresso gerado no browser
+		// Chama função para mostrar PDF do impresso gerado no browser
 		visualizaPDF($nmarqpdf);
 
 
 	} else {
-		// Monta o xml de requisi��o
+		// Monta o xml de requisição
 		$xmlDadosImpres  = "";
 		$xmlDadosImpres .= "<Root>";
 		$xmlDadosImpres .= "	<Cabecalho>";
@@ -266,7 +266,7 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjDadosImpres = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra cr�tica
+		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			?>
@@ -278,13 +278,13 @@
 			exit();
 		} 
 
-		// Armazena dados para impress�es
+		// Armazena dados para impressões
 		$xmlTagsProposta = $xmlObjDadosImpres->roottag->tags[0]->tags; // Dados para Proposta
 		$xmlTagsOCartoes = $xmlObjDadosImpres->roottag->tags[1]->tags; // Dados de outros cartoes
 		$xmlTagsCancBloq = $xmlObjDadosImpres->roottag->tags[2]->tags; // Dados do termo de cancelamento
 		$xmlTagsCtrCredi = $xmlObjDadosImpres->roottag->tags[3]->tags; // Dados para Contrato Credicard
 		$xmlTagsBdnCeVis = $xmlObjDadosImpres->roottag->tags[4]->tags; // Dados para Contrato Cecred/Visa e Bradesco/Visa
-		$xmlTags2viaCart = $xmlObjDadosImpres->roottag->tags[5]->tags; // Dados para termo de solicita��o de segunda via
+		$xmlTags2viaCart = $xmlObjDadosImpres->roottag->tags[5]->tags; // Dados para termo de solicitação de segunda via
 		$xmlTagsAvalista = $xmlObjDadosImpres->roottag->tags[6]->tags; // Dados dos Avalistas
 		$xmlTagsCtrBBras = $xmlObjDadosImpres->roottag->tags[7]->tags; // Dados dos contratos para ADM BB
 		$xmlTagsDtVctCrd = $xmlObjDadosImpres->roottag->tags[8]->tags; // Dados dos contratos para ADM BB
@@ -347,7 +347,7 @@
 			$dadosImpressos["BDNCEVIS"] = $dadosBdnCeVis;
 		}	
 		
-		// Armazena dados do termo de solicita��o de segunda via em array
+		// Armazena dados do termo de solicitação de segunda via em array
 		if (count($xmlTags2viaCart) > 0) {	
 			$xmlTags = $xmlTags2viaCart[0]->tags;
 			
@@ -393,19 +393,19 @@
 			$dadosImpressos["DTVCTCRD"] = $dadosDtVctCrd;
 		}	
 
-		// Classe para gera��o dos impressos em PDF
+		// Classe para geração dos impressos em PDF
 		require_once("imprimir_pdf.php");
 
 		// Instancia Objeto para gerar arquivo PDF
 		$pdf = new PDF("P","cm","A4");
 		
-		// Inicia gera��o do impresso
+		// Inicia geração do impresso
 		$pdf->geraImpresso($dadosImpressos,$idimpres);
 		
 		$navegador = CheckNavigator();
 		$tipo = $navegador['navegador'] == 'chrome' ? "I" : "D";
 		
-		// Gera sa�da do PDF para o Browser
+		// Gera saída do PDF para o Browser
 		$pdf->Output("cartao_credito.pdf",$tipo);	
 	}
 	
