@@ -507,7 +507,7 @@ PROCEDURE obtem_atualiza_sequencia:
                 ASSIGN gncontr.cdcooper = 3
                        gncontr.tpdcontr = 4
                        gncontr.cdconven = gnconve.cdconven 
-                       gncontr.dtmvtolt = glb_dtmvtolt 
+                       gncontr.dtmvtolt = glb_dtmvtopr 
                        gncontr.nrsequen = aux_nrseqarq.
             END.
 
