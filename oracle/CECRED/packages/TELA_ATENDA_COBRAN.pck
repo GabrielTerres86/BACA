@@ -9107,8 +9107,20 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                AND v.idvinculacao = s.cdvinculacao; /* FIXME */
         EXCEPTION
             WHEN no_data_found THEN
-                vr_idvinculacao := 0;
-                vr_nmvinculacao := '';
+							  BEGIN
+								--
+								SELECT tv.nmvinculacao
+								      ,tv.idvinculacao
+								  INTO vr_nmvinculacao
+                      ,vr_idvinculacao
+									FROM tbrecip_vinculacao tv
+								 WHERE tv.idvinculacao = 4;
+								--
+							EXCEPTION 
+								WHEN no_data_found THEN
+									vr_idvinculacao := 0;
+									vr_nmvinculacao := '';
+							END;
         END;
     
         -- Criar cabecalho do XML
