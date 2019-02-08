@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 19/11/2018
+    Data     : Novembro/2015.                   Ultima atualizacao: 18/01/2019
   
    Dados referentes ao programa:
   
@@ -6528,7 +6528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 18/01/2019
 
        Dados referentes ao programa:
 
@@ -6539,6 +6539,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   18/01/2019 - INC0027091 - Inclusão de motivo XW para SMS não contratado 
+                   (Douglas Pagel/ AMcom).
 
     ............................................................................ */   
     
@@ -6584,6 +6587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           pr_rec_cobranca.insmsvct := 0;
           pr_rec_cobranca.insmspos := 0;
           -- Insere como rejeitado
+          vr_rej_cdmotivo := 'XW';
           pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
                                    ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
                                    ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
@@ -6597,7 +6601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                    ,pr_dtmvtolt      => pr_dtmvtolt              --> Data de Movimento
                                    ,pr_cdoperad      => pr_cdoperad              --> Operador
                                    ,pr_cdocorre      => 26                       --> Codigo da Ocorrencia
-                                   ,pr_cdmotivo      => ' '                     --> Motivo da Rejeicao
+                                   ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
                                    ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
         ELSE
           pr_rec_cobranca.inavisms := pr_tab_linhas('INAVISMS').numero;
