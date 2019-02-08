@@ -1,4 +1,4 @@
-<? 
+<?php
  /*!
  * FONTE        : form_entrega_cartao_bancoob.php
  * CRIAÇÃO      : James Prust Júnior
@@ -7,7 +7,9 @@
  *
  * ALTERACAO    : 
  * 001: [24/06/2015] James 			(CECRED) : Criar o campo Conta Cartao
+ * 002  [06/12/2018] Anderson-Alan  (Supero) : Adicionado funcionalidade assinatura por senha - P432.
  */	
+
 ?>
 <form name="frmEntregaCartaoBancoob" id="frmEntregaCartaoBancoob" class="formulario">	
 
@@ -44,6 +46,28 @@
 	<a class="botao" onclick="voltaDiv(0,1,4); return false;" href="#">Voltar</a>
 	<a class="botao" id="btnLerCartaoChip" 		name="btnLerCartaoChip" 	 onclick="lerCartaoChip(); return false;" href="#"><? echo utf8ToHtml('Inserir o cartão') ?></a>
 	<a class="botao" id="btnLerCartaoMagnetico" name="btnLerCartaoMagnetico" onclick="lerCartaoMagnetico(); return false;" href="#"><? echo utf8ToHtml('Passar o cartão') ?></a>	
-	<a class="botao" id="btnImprimirTermoEntrega" name="btnImprimirTermoEntrega" onclick="imprimirTermoEntrega(); return false;" href="#"><? echo utf8ToHtml('Imprimir termo entrega') ?></a>	
+	<a class="botao" id="btnImprimirTermoEntrega" name="btnImprimirTermoEntrega" onclick="assinar(tipoAssinatura); tipoAssinatura = 'impressa'; return false;" href="#"><? echo utf8ToHtml('Imprimir termo entrega') ?></a>
+	<a class="botao" id="btnAssinaturaEletronica" name="btnAssinaturaEletronica" style="display:none" onclick="assinar('eletronica'); tipoAssinatura = 'eletronica'; return false;" href="#"><? echo utf8ToHtml('Assinatura Eletrônica') ?></a>
 	<a id="btnProsseguir" name="btnProsseguir" class="botao" href="#">Prosseguir</a>
 </div>
+<script>
+
+	if (dtassele instanceof Date && ! isNaN(dtassele.getTime())) {
+		tipoAssinatura = 'impressa';
+
+	} else if (dtinsori instanceof Date && ! isNaN(dtinsori.getTime()) &&
+			   dsvlrprm instanceof Date && ! isNaN(dsvlrprm.getTime())) {
+		if (dsvlrprm <= dtinsori) { /*Data da solicitação maior que a de corte*/
+			tipoAssinatura = 'eletronica';
+
+		} else {
+			tipoAssinatura = 'impressa';
+
+		}
+		
+	} else {
+		tipoAssinatura = 'impressa';
+		
+	}
+
+</script>

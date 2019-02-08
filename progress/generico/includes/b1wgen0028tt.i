@@ -76,6 +76,7 @@
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
                
+			   12/12/2018 - Adicionado campo flgprovi (Anderson-Alan Supero P432)
 ....................................................................................*/
 
 DEF TEMP-TABLE tt-lim_total NO-UNDO
@@ -91,7 +92,9 @@ DEF TEMP-TABLE tt-cartoes NO-UNDO
     FIELD insitcrd AS INTE
     FIELD nrctrcrd LIKE crawcrd.nrctrcrd
     FIELD cdadmcrd LIKE crawcrd.cdadmcrd
-    FIELD flgcchip LIKE crapadc.flgcchip.
+    FIELD dtinsori LIKE crawcrd.dtinsori
+    FIELD flgcchip LIKE crapadc.flgcchip
+    FIELD flgprovi AS INTE.
     
 DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD nrcrcard LIKE crawcrd.nrcrcard  
@@ -141,7 +144,8 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD dtrejeit LIKE crawcrd.dtrejeit
     FIELD nrcctitg LIKE crawcrd.nrcctitg
     FIELD dsdpagto AS CHAR
-    FIELD dsgraupr AS CHAR.
+    FIELD dsgraupr AS CHAR
+	FIELD flgprovi AS INTE.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc

@@ -692,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     CLOSE cr_craptfc;  
     
     -- Buscar assinatura
-    BEGIN
+   /* BEGIN
       select 'S'
       INTO  vr_existe_cartao
       from  crawcrd 
@@ -708,10 +708,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
         vr_dscritic := 'Erro ao verificar se o cartão já existe';
         RAISE vr_exc_erro;  
     END;
+	*/
     
+   /*
     IF vr_existe_cartao IS NOT NULL THEN
       vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
     ELSE
+	*/
       BEGIN
         vr_idxassinaturas := 0;
         FOR rw_tbaprc IN cr_tbaprc(pr_cdcooper
@@ -743,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
       END IF;
       
-    END IF;
+    /*END IF;*/
     
     -- Se for pessoa Juridica
     IF rw_crapass.inpessoa > 1 THEN

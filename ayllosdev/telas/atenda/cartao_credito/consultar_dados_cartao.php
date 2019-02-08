@@ -13,20 +13,23 @@
 	//***                                                                  ***//
 	//***             04/11/2010 - Adaptação Cartão PJ (David).            ***//
 	//***                                                                  ***//
-	//***             07/07/2011 - Alterado para layout padrão 			   ***//
-	//***                          (Gabriel - DB1)						   ***//
-	//***																   ***//
+	//***             07/07/2011 - Alterado para layout padrão 			       ***//
+	//***                          (Gabriel - DB1)						             ***//
+	//***																                                   ***//
 	//***             10/07/2012 - Incluído campo 'Nome no Plastico' no    ***//
-	//***             			   formulário (Guilherme Maba).            ***//
+	//***             			   formulário (Guilherme Maba).                ***//
 	//***                                                                  ***//
 	//***             24/08/2015 - Incluido os campos referente ao acesso  ***//
-	//***             			   do Sistema do TAA. (James)              ***//
+	//***             			   do Sistema do TAA. (James)                  ***//
 	//***                                                                  ***//
 	//***             14/10/2015 - Desenvolvimento do projeto 126. (James) ***//
 	//***                                                                  ***//
 	//***             31/08/2017 - Alterar os botões da tela e incluir o   ***//
 	//***                          novo botão de histórico de alteração    ***//
 	//***                          de limite de crédito (Renato - Prj360)  ***//
+  //***                                                                  ***//
+  //***             12/12/2018 - Adicionado flag cartão provisorio.      ***//
+  //***                          (P432)                                  ***//
 	//************************************************************************//			
 	
 	session_start();
@@ -141,6 +144,7 @@
     $nrcctitg = getByTagName($dados,"nrcctitg");
     $dsdpagto = getByTagName($dados,"dsdpagto");
     $dsgraupr = getByTagName($dados,"dsgraupr");
+	$flgprovi = getByTagName($dados,"flgprovi");
 		   
 	if (getByTagName($dados,"DDDEBANT") == 0){
 		$dddebant = "";
@@ -331,7 +335,10 @@
 				
 				<label for="nrctamae"><? echo utf8ToHtml('Conta-Mãe:') ?></label>
 				<input type="text" name="nrctamae" id="nrctamae" value="<?php echo formataNumericos("9999.9999.9999.9999",$nrctamae,"."); ?>" />
-			
+				
+				<label for="flgprovi"><? echo utf8ToHtml('Cartão Provisório:') ?></label>
+				<input type="text" name="flgprovi" id="flgprovi" value="<?php echo $flgprovi == 1 ? "Sim" : "N&#227;o"; ?>" />
+
 			</fieldset>
 		</form>
 	</div>

@@ -113,6 +113,7 @@
  * 099: [16/04/2018] Lombardi 		  (CECRED) : Adicionado função validaValorProduto para verificar se o tipo de conta permite o valor da contratação do produto. (PRJ366)
  * 100: [26/04/2018] Christian		  (CECRED) : Tratativas no controle de tecla ESC. Chamadas a metodos indevidos, causando erros apenas na execucao do Ayllos embarcado no CRM.
  * 101: [27/08/2018] Marco Amorim     (Mout'S) : Criada a Função para remover Todos os Caracteres epeciais e acentos.
+ * 102: [12/12/2018] Anderson-Alan    (Supero) : Criado funções para controle do novo formulário de Assinatura Eletronica com Senha do TA ou Internet. (P432)
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -2896,6 +2897,127 @@ function validaSenhaMagnetico() {
         url: UrlSite + 'includes/senha_magnetico/valida_senha_magnetico.php',
         data: {
             nrdconta: nrdconta,
+            cddsenha: cddsenha,
+            retorno: retorno,
+			validainternet:validainternet,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    if (response.indexOf(""))
+                        $('#divUsoGenerico').html(response);
+                    else
+                        eval(response);
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+
+function formataVerificaSenhaTAOnline() {
+
+    //Campo
+    cCddsenha = $('#cddsenha', '#divSolicitaSenhaTAOnline');
+    cCddsenha.css('width', '172px').attr('maxlength', '8');
+	cCddsenha.css('margin-left', '112px');
+    cCddsenha.addClass('campo');
+    cCddsenha.focus();
+
+	bBtVoltar = $('#btVoltar', '#divBotoesSenhaTAOnline');
+	bBtVoltar.css('margin-right', '36px');
+
+	bBtValidar = $('#btValidar', '#divBotoesSenhaTAOnline');
+	bBtValidar.css('margin-right', '-2px');
+
+    ajustarCentralizacao();
+
+    layoutPadrao();
+
+    return false;
+}
+
+//Solicita senha do cartao online ao cooperado
+function solicitaSenhaTAOnline(retorno, nrdconta, nrcrcard) {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando tela de senha...");
+
+    // Carrega conteudo da opção atraves de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_ta_online/form_senha_ta_online.php',
+        data: {
+            nrdconta: nrdconta,
+            retorno: retorno,
+            redirect: 'html_ajax', // Tipo de retorno do ajax
+			nrcrcard : nrcrcard
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    exibeRotina($('#divUsoGenerico'));
+                    $('#divUsoGenerico').html(response);
+                    $('#divUsoGenerico').css({ 'width': '410px' });//css({'left':'340px','top':'91px'});
+
+                    bloqueiaFundo($('#divUsoGenerico'));
+                    formataVerificaSenhaTAOnline();
+
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+//Valida se a senha esta correta
+function validaSenhaTAOnline() {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, Validando senha cooperado...");
+
+    var cddsenha = $('#cddsenha', '#divSolicitaSenhaTAOnline').val();
+    var retorno = $('#retorno', '#divSolicitaSenhaTAOnline').val();
+    var nrdconta = $('#nrdconta', '#divSolicitaSenhaTAOnline').val();
+	var nrcrcard = $('#nrcrcard', '#divSolicitaSenhaTAOnline').val();
+	var validainternet = $('#validainternet', '#divSolicitaSenhaTAOnline').val();
+
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_ta_online/valida_senha_ta_online.php',
+        data: {
+            nrdconta: nrdconta,
+			nrcrcard: nrcrcard,
             cddsenha: cddsenha,
             retorno: retorno,
 			validainternet:validainternet,

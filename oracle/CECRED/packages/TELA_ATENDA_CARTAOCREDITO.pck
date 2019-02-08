@@ -322,7 +322,23 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2) ;         --> Erros do processo                                       
 
-END tela_atenda_cartaocredito;
+   PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
+																					 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																					 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																					 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																					 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																					 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																					 ,pr_des_erro OUT VARCHAR2);
+																					 
+   PROCEDURE pc_imprimir_protocolo_entrega(pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE
+																					,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																					,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																					,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																					,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																					,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																					,pr_des_erro OUT VARCHAR2);																					 																			 
+
+END TELA_ATENDA_CARTAOCREDITO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
   ---------------------------------------------------------------------------
@@ -3185,7 +3201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         vr_dscritic := 'Erro ao inserir Proposta de Alteração de Limite. Erro: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
-
+    
     IF pr_idorigem = 15 THEN
       vr_dsorigem := 'BANCOOB';
     ELSE
@@ -4934,6 +4950,390 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ROLLBACK;
 
   END pc_valida_alt_nome_empr;
+
+	PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
+																				 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																				 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																				 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2) IS
+    /* .............................................................................
+    
+    Programa: pc_valida_dtcorte_prot_entrega
+    Sistema : Ayllos Web
+    Autor   : Augusto (Supero)
+    Data    : Dezembro/2018                 Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Rotina para retornar os dados para o termo/protocolo
+		            de entrega do cartao de credito ao cooperado
+    
+    Alteracoes:
+    ..............................................................................*/
   
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_tab_erro gene0001.typ_tab_erro;
+    vr_des_reto VARCHAR2(10);
+  
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+		
+		--  Variaveis
+		vr_dtinsori DATE;
+		vr_dtcorte  DATE;
+		vr_layout   INTEGER;
+		
+		
+		CURSOR cr_proposta(pr_cdcooper crawcrd.cdcooper%TYPE
+		                  ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE) IS
+      SELECT crd.dtinsori
+			  FROM crawcrd crd
+			 WHERE crd.nrctrcrd = pr_nrctrcrd
+			   AND crd.cdcooper = pr_cdcooper;
+				 
+    CURSOR cr_parametro IS
+		   SELECT to_date(prm.dsvlrprm, 'DD/MM/YYYY')
+			   FROM crapprm prm
+				WHERE prm.nmsistem = 'CRED'
+				  AND prm.cdacesso = 'ASS_ELET_CARTAO_TERMO';
+		
+  BEGIN
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    
+		
+		OPEN cr_proposta(pr_cdcooper => vr_cdcooper
+		                ,pr_nrctrcrd => pr_nrctrcrd);
+    FETCH cr_proposta INTO vr_dtinsori;
+		
+		IF cr_proposta%NOTFOUND THEN
+      vr_dscritic := 'Solicitacao nao encontrada.';
+      RAISE vr_exc_saida;		   
+		END IF;
+		
+		OPEN cr_parametro;
+    FETCH cr_parametro INTO vr_dtcorte;
+		
+		IF cr_parametro%NOTFOUND THEN
+      vr_dscritic := 'Parametro da data de corte nao encontrada.';
+      RAISE vr_exc_saida;		   
+		END IF;		
+		
+		vr_layout := 0; -- 0: antigo; 1: novo
+		IF vr_dtinsori IS NOT NULL THEN
+			IF vr_dtinsori >= vr_dtcorte THEN
+				vr_layout := 1;
+			END IF;
+		END IF;
+		
+		-- Criar XML de retorno
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><layout>' || vr_layout || '</layout>');
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em pc_valida_dtcorte_prot_entrega: ' || SQLERRM;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_valida_dtcorte_prot_entrega;														 
+
+	PROCEDURE pc_imprimir_protocolo_entrega(pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE
+																				 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+																				 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																				 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2) IS
+    /* .............................................................................
+    
+    Programa: pc_imprimir_protocolo_entrega
+    Sistema : Ayllos Web
+    Autor   : Augusto (Supero)
+    Data    : Dezembro/2018                 Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Rotina para retornar os dados para o termo/protocolo
+		            de entrega do cartao de credito ao cooperado
+    
+    Alteracoes:
+    ..............................................................................*/
+  
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_tab_erro gene0001.typ_tab_erro;
+    vr_des_reto VARCHAR2(10);
+  
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+  
+    -- Variaveis
+    vr_xml_temp    VARCHAR2(32726) := '';
+    vr_clob        CLOB;
+		vr_telefone    VARCHAR(50)     := '';
+		vr_dataass     VARCHAR(50)     := '';
+		vr_horaass     VARCHAR(50)     := '';
+		vr_local       VARCHAR(300)    := '';
+		vr_nrcrcard    VARCHAR(50);
+		
+		-- Variaveis para flag do tipo
+		vr_flgprovi    VARCHAR(3)      := '  ';
+		vr_flgdefin    VARCHAR(3)      := '  ';
+		vr_flgtitul    VARCHAR(3)      := '  ';
+		vr_flgadici    VARCHAR(3)      := '  ';
+  
+    vr_nom_direto VARCHAR2(200); --> Diretório para gravação do arquivo
+    vr_dsjasper   VARCHAR2(100); --> nome do jasper a ser usado
+    vr_nmarqim    VARCHAR2(70); --> nome do arquivo PDF
+  
+    CURSOR cr_protocolo (pr_nrctrcrd crapcrd.nrctrcrd%TYPE
+		                    ,pr_cdcooper crapcrd.cdcooper%TYPE) IS
+      SELECT gene0002.fn_mask_cpf_cnpj(crd.nrcpftit, 1) nrcpfcnpj
+						,to_char(crd.nrcrcard) nrcrcard
+						,to_char(TRUNC(SYSDATE), 'DD/MM/YYYY') AS data
+						,crd.nmtitcrd
+						,crd.dtassele
+						,crd.nrdconta
+						,crd.flgprovi
+						,wrd.flgprcrd
+			 FROM crapcrd crd
+			     ,crawcrd wrd
+			WHERE crd.nrctrcrd = wrd.nrctrcrd
+		    AND crd.cdcooper = wrd.cdcooper
+			  AND crd.nrctrcrd = pr_nrctrcrd
+			  AND crd.cdcooper = pr_cdcooper;
+    rw_protocolo cr_protocolo%ROWTYPE;
+		
+    -- Selecionar DDD + telefone
+		CURSOR cr_craptfc(pr_cdcooper IN crapass.cdcooper%TYPE
+										 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+			SELECT nrdddtfc
+						,nrtelefo
+				FROM (SELECT craptfc.nrdddtfc
+										,craptfc.nrtelefo
+								FROM craptfc
+							 WHERE craptfc.cdcooper = pr_cdcooper
+								 AND craptfc.nrdconta = pr_nrdconta
+								 AND craptfc.tptelefo IN (1, 2, 3)
+							 ORDER BY CASE tptelefo
+													WHEN 2 THEN -- priorizar celular
+													 0
+													ELSE -- demais telefones
+													 tptelefo
+												END ASC)
+			 WHERE rownum = 1; -- retorna apenas uma ocorrencia conforme prioridade na ordenacao
+		rw_craptfc cr_craptfc%ROWTYPE;
+		
+		CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE
+		                 ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
+		  SELECT e.nmcidade 
+			  FROM crapage e 
+			 WHERE e.cdcooper = pr_cdcooper 
+			   AND e.cdagenci = pr_cdagenci;
+  
+  BEGIN
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+  
+    -- Abre o cursor com os dados do termo
+    OPEN cr_protocolo(pr_nrctrcrd => pr_nrctrcrd
+		                 ,pr_cdcooper => vr_cdcooper);
+    FETCH cr_protocolo
+      INTO rw_protocolo;
+  
+    IF cr_protocolo%NOTFOUND THEN
+      CLOSE cr_protocolo;
+      vr_dscritic := 'Solicitacao nao encontrada.';
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_protocolo;
+		
+		OPEN cr_craptfc(pr_nrdconta => rw_protocolo.nrdconta
+		               ,pr_cdcooper => vr_cdcooper);
+		FETCH cr_craptfc INTO rw_craptfc;
+		
+    IF cr_craptfc%FOUND THEN
+       vr_telefone := rw_craptfc.nrdddtfc || ' - ' || rw_craptfc.nrtelefo;
+    END IF;
+    CLOSE cr_craptfc;
+		
+		OPEN cr_crapage(pr_cdcooper => vr_cdcooper
+		               ,pr_cdagenci => vr_cdagenci);
+		FETCH cr_crapage INTO vr_local;
+		CLOSE cr_crapage;
+		
+		vr_nrcrcard := rw_protocolo.nrcrcard;
+		
+		IF rw_protocolo.nrcrcard > 0 THEN
+			vr_nrcrcard := SUBSTR(rw_protocolo.nrcrcard, 1,4)||'.'||
+			SUBSTR(rw_protocolo.nrcrcard, 5,4)||'.'||
+			SUBSTR(rw_protocolo.nrcrcard, 9,4)||'.'||
+			SUBSTR(rw_protocolo.nrcrcard,13,4);
+		END IF;
+		
+    vr_dsjasper := 'protocolo_entrega_cartao_fisico.jasper';
+    vr_nmarqim  := '/ProtocoloEntregaCartaoFisico_' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';		
+		
+		-- Se já foi assinado eletronicamente
+		IF rw_protocolo.dtassele IS NOT NULL THEN
+		   vr_dataass := to_char(rw_protocolo.dtassele, 'DD/MM/YYYY');
+			 vr_horaass := to_CHAR(rw_protocolo.dtassele, 'HH24"h"MI"min"');
+       --
+			 vr_dsjasper := 'protocolo_entrega_cartao_eletronico.jasper';
+       vr_nmarqim  := '/ProtocoloEntregaCartaoEletronico_' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';			 
+	  END IF;		
+
+    --busca diretorio padrao da cooperativa
+    vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                          ,pr_cdcooper => vr_cdcooper
+                                          ,pr_nmsubdir => 'rl');
+  
+    -- Monta documento XML de Dados
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+  
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><protocolo>');
+
+  
+    IF nvl(rw_protocolo.flgprovi, 0) = 1 THEN
+			vr_flgprovi := 'X';
+		ELSE
+			vr_flgdefin := 'X';
+		END IF;
+    
+		IF nvl(rw_protocolo.flgprcrd, 0) = 1 THEN
+			vr_flgtitul := 'X';
+		ELSE
+			vr_flgadici := 'X';
+		END IF;		
+
+		gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<nrcpfcnpj>' || rw_protocolo.nrcpfcnpj ||' </nrcpfcnpj>'
+																							|| '<nrcrcard>' || vr_nrcrcard ||' </nrcrcard>'
+																							|| '<telefone>' || vr_telefone ||' </telefone>'
+																							|| '<dsagencia>' || vr_local ||' </dsagencia>'
+																							|| '<data>' || rw_protocolo.data ||' </data>'
+																							|| '<dataass>' || vr_dataass ||' </dataass>'
+																							|| '<horaass>' || vr_horaass ||' </horaass>'
+																							|| '<titular>' || vr_flgtitul ||' </titular>'
+																							|| '<adicional>' || vr_flgadici ||' </adicional>'
+																							|| '<provisorio>' || vr_flgprovi ||' </provisorio>'
+																							|| '<definitivo>' || vr_flgdefin ||' </definitivo>'
+																							|| '<nmprimtl>' || rw_protocolo.nmtitcrd ||' </nmprimtl>');
+
+	
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '</protocolo>',
+                            pr_fecha_xml      => TRUE);
+  
+    -- Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper,
+                                pr_cdprogra  => 'ATENDA',
+                                pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                                pr_dsxml     => vr_clob,
+                                pr_dsxmlnode => '/protocolo',
+                                pr_dsjasper  => vr_dsjasper,
+                                pr_dsparams  => NULL,
+                                pr_dsarqsaid => vr_nom_direto || vr_nmarqim,
+                                pr_cdrelato  => 733,
+                                pr_flg_gerar => 'S',
+                                pr_qtcoluna  => 80,
+                                pr_sqcabrel  => 1,
+                                pr_flg_impri => 'N',
+                                pr_nmformul  => ' ',
+                                pr_nrcopias  => 1,
+                                pr_parser    => 'R',
+                                pr_nrvergrl  => 1,
+                                pr_des_erro  => vr_dscritic);
+  
+    -- copia contrato pdf do diretorio da cooperativa para servidor web
+    gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper,
+                                 pr_cdagenci => NULL,
+                                 pr_nrdcaixa => NULL,
+                                 pr_nmarqpdf => vr_nom_direto || vr_nmarqim,
+                                 pr_des_reto => vr_des_reto,
+                                 pr_tab_erro => vr_tab_erro);
+  
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+  
+    -- Criar XML de retorno
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
+                                   vr_nmarqim || '</nmarqpdf>');
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em pc_imprimir_protocolo_entrega: ' || SQLERRM;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_imprimir_protocolo_entrega;
+
 END TELA_ATENDA_CARTAOCREDITO;
 /
