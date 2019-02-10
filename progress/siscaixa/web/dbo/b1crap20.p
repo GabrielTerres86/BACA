@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 26/10/2018
+    Ultima Atualizacao: 02/02/2019
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -275,6 +275,10 @@
         
         16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+							 
+				02/02/2019 - Correção para o tipo de documento "TED C":
+							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
+						    (Jonata - Mouts PRB0040337).
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
@@ -451,6 +455,102 @@ PROCEDURE retorna-conta-de:
     
 END PROCEDURE.
 
+
+PROCEDURE verifica_cooperado:
+
+    DEFINE INPUT  PARAMETER p-cooper        AS CHAR         NO-UNDO.    
+    DEFINE INPUT  PARAMETER p-cod-agencia   AS INTEGER      NO-UNDO.
+    DEFINE INPUT  PARAMETER p-nro-caixa     AS INTEGER      NO-UNDO.
+    DEFINE INPUT  PARAMETER p-cpfcnpj-de    AS CHAR         NO-UNDO. /*CPF/CNPJ De */
+
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+ 
+    RUN elimina-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia, 
+                      INPUT p-nro-caixa).
+
+	ASSIGN  p-cpfcnpj-de    = REPLACE(p-cpfcnpj-de,"/","")
+            p-cpfcnpj-de    = REPLACE(p-cpfcnpj-de,".","")
+            p-cpfcnpj-de    = REPLACE(p-cpfcnpj-de,"-","").
+                            
+    IF  p-cpfcnpj-de = "0" THEN
+        ASSIGN  p-cpfcnpj-de = REPLACE(p-cpfcnpj-de,"0","").
+   
+    in01  = 1.
+	ASSIGN c-desc-erro = " "
+		   i-cod-erro  = 0.
+	DO  WHILE in01 LE LENGTH(p-cpfcnpj-de):
+		IF  SUBSTR(p-cpfcnpj-de,in01,1) <> "0"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "1"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "2"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "3"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "4"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "5"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "6"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "7"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "8"  AND
+			SUBSTR(p-cpfcnpj-de,in01,1) <> "9"  THEN 
+			DO:
+				ASSIGN  i-cod-erro = 27.
+				LEAVE.
+			END.    
+		in01 = in01 + 1.
+	END. /* fim do DO  WHILE in01 */
+	
+	IF  i-cod-erro > 0 THEN 
+		DO:
+			RUN cria-erro (INPUT p-cooper,
+						   INPUT p-cod-agencia,
+						   INPUT p-nro-caixa, 
+						   INPUT i-cod-erro,
+						   INPUT c-desc-erro,
+						   INPUT YES).
+			RETURN "NOK".
+		END.   
+
+	RUN dbo/pcrap06.p (INPUT  p-cpfcnpj-de,
+					   OUTPUT p-retorno,
+					   OUTPUT p-pessoa).
+ 
+	IF  NOT p-retorno THEN 
+		DO:
+			ASSIGN i-cod-erro  = 27
+				   c-desc-erro = "". 
+			RUN cria-erro (INPUT p-cooper,
+						   INPUT p-cod-agencia,
+						   INPUT p-nro-caixa,
+						   INPUT i-cod-erro,
+						   INPUT c-desc-erro,
+						   INPUT YES).
+						   
+			RETURN "NOK".
+			
+		END.
+			
+    FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
+					   crapass.nrcpfcgc = dec(p-cpfcnpj-de) AND
+					   crapass.dtdemiss = ? 
+					   NO-LOCK NO-ERROR.
+					   
+	IF  AVAIL crapass THEN 
+		DO:
+			ASSIGN i-cod-erro  = 0
+				   c-desc-erro = "Opção exclusiva para não cooperados. O CNPJ/CPF" + 
+				                 " do remetente tem conta corrente ativa na cooperativa." + 
+								 " Utilize o Débito em C/C como forma de pagamento da TED.".
+			RUN cria-erro (INPUT p-cooper,
+						   INPUT p-cod-agencia,
+						   INPUT p-nro-caixa,
+						   INPUT i-cod-erro,
+						   INPUT c-desc-erro,
+						   INPUT YES).
+			RETURN 'NOK'.
+		END.       
+
+    RETURN "OK".
+    
+END PROCEDURE.
+
 PROCEDURE valida-valores:
 
     /* Procedure validar-ted foi criada nessa BO para InternetBank 
@@ -525,6 +625,42 @@ PROCEDURE valida-valores:
                       INPUT p-cod-agencia,
                       INPUT p-nro-caixa).
 
+    IF  p-cpfcnpj-de <> ''   AND 
+		p-tipo-doc = 'TEDC'  AND 
+		p-tipo-pag = 'E'     THEN 
+	DO:	
+	
+		RUN verifica_cooperado (INPUT p-cooper,
+								p-cod-agencia,
+								p-nro-caixa,
+								p-cpfcnpj-de).
+	
+		IF RETURN-VALUE <> "OK" THEN
+		DO:    
+		    FIND craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+			 				   craperr.cdagenci = p-cod-agencia    AND
+							   craperr.nrdcaixa = p-nro-caixa
+							   NO-LOCK NO-ERROR.
+
+		    IF NOT AVAIL craperr THEN
+			DO:
+			     ASSIGN i-cod-erro  = 0
+                        c-desc-erro = "Não foi possível verificar o CPF/CNPJ.". 
+         
+                 RUN cria-erro (INPUT p-cooper,
+                                INPUT p-cod-agencia,
+                                INPUT p-nro-caixa,
+                                INPUT i-cod-erro,
+                                INPUT c-desc-erro,
+                                INPUT YES).
+                 
+			END.
+			
+		    RETURN "NOK".
+
+		END.
+		
+	END.
     
     
     IF (p-tipo-doc = 'TEDC' OR p-tipo-doc = 'TEDD')  THEN
@@ -3415,6 +3551,8 @@ PROCEDURE valida-saldo:
    DEFINE OUTPUT PARAMETER p-mensagem AS CHARACTER NO-UNDO.
    DEFINE OUTPUT PARAMETER p-saldo-disponivel AS DEC NO-UNDO.
 
+   FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
+   
    RUN elimina-erro (INPUT p-cooper,
                      INPUT p-cod-agencia,
                      INPUT p-nro-caixa).
@@ -3436,8 +3574,10 @@ PROCEDURE valida-saldo:
 
            DELETE PROCEDURE h-b1crap56.
            
-           IF   p-mensagem <> ' ' THEN
+		   IF RETURN-VALUE = "OK" THEN
                 DO:
+		      if  p-mensagem <> ' '     THEN
+				   do:
                    ASSIGN i-cod-erro  = 0
                           c-desc-erro =  "Alerta - " + p-mensagem. 
                    RUN cria-erro (INPUT p-cooper,
@@ -3446,10 +3586,38 @@ PROCEDURE valida-saldo:
                                   INPUT i-cod-erro,
                                   INPUT c-desc-erro,
                                   INPUT YES).
+				  end.		   
+		   
                 END.
+		   ELSE
+		   DO:
+		      FIND craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+								 craperr.cdagenci = p-cod-agencia    AND
+								 craperr.nrdcaixa = p-nro-caixa
+								 NO-LOCK NO-ERROR.
+
+			  IF NOT AVAIL craperr     THEN
+			  DO:
+				 ASSIGN i-cod-erro  = 0
+						c-desc-erro = "Não foi possível validar saldo da conta.". 
+		 
+				 RUN cria-erro (INPUT p-cooper,
+								INPUT p-cod-agencia,
+								INPUT p-nro-caixa,
+								INPUT i-cod-erro,
+								INPUT c-desc-erro,
+								INPUT YES).
+					 
+			  END.
+			  
+			  RETURN "NOK".
+		   
+		   END.
+		   
         END.
 
     RETURN 'OK'.
+	
 END.
 
 

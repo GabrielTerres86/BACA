@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap020.w
    Sistema : Caixa On-Line
    Sigla   : CRED
-                                                Ultima atualizacao: 26/10/2018
+                                                Ultima atualizacao: 02/02/2019
 
    Dados referentes ao programa:
 
@@ -66,6 +66,10 @@
 				26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido 
 				             a finalidade 400 - Tributos Municipais ISS - LCP 157
                              (Jonata  - Mouts / INC0024119).
+							  
+				02/02/2019 - Correção para o tipo de documento "TED C":
+							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
+						   (Jonata - Mouts PRB0040337).
 							  
 ----------------------------------------------------------------------------- **/
 
@@ -1212,6 +1216,27 @@ PROCEDURE process-web-request :
                     
             END.
 
+			IF  v_cpfcgcde1 <> '' AND 
+			    TpDocto = 'TEDC'  AND 
+				TpPagto = 'E'     THEN DO:
+            
+                RUN dbo/b1crap20.p PERSISTENT SET h-b1crap20.
+                
+                RUN verifica_cooperado
+                           IN h-b1crap20 (INPUT v_coop,
+                                          v_pac,
+                                          v_caixa,
+                                          v_cpfcgcde1).
+
+                    IF RETURN-VALUE <> 'OK' THEN DO:
+                        ASSIGN l-houve-erro = YES
+                               v_btn_ok     = ''
+                               v_btn_cancela    = ''.
+                        {include/i-erro.i}
+                    END.
+                                    
+            END.
+
             IF Titular = 'Y' THEN DO:
                ASSIGN v_nomepara1 = v_nomede1
                       v_nomepara2 = v_nomede2
@@ -1293,12 +1318,21 @@ PROCEDURE process-web-request :
                                                   OUTPUT aux_mensagem,
                                                   OUTPUT aux_vlsddisp).
 
+				  IF RETURN-VALUE <> "OK" THEN
+				    DO:
+					   ASSIGN v_btn_ok = ''
+                             v_btn_cancela = ''.
+                      {include/i-erro.i} 
 
+				  END.
+				  ELSE
+				  DO:
                   /* Cooperado tem saldo */
                   IF   aux_mensagem = ' ' THEN
                        ASSIGN v_msgsaldo = 'false'.
 
-                  IF  v_msgsaldo = ''  THEN DO:
+				  IF  v_msgsaldo = ''  THEN 
+				  DO:
                       ASSIGN v_msgsaldo = 'false'.
 
                       /* Caso o cooperado nao tenha saldo */
@@ -1306,6 +1340,7 @@ PROCEDURE process-web-request :
                            DO:
                               {include/i-erro.i}
                            END.
+					
                   END.
                   ELSE DO:
 
@@ -1544,7 +1579,7 @@ PROCEDURE process-web-request :
                             ASSIGN l-recibo  = YES.
                             ASSIGN lOpenAutentica = YES.
                         END.
-                     
+					   end.	 
                      END.
                   END.
                 END.
