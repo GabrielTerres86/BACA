@@ -16,7 +16,9 @@
 							
 				30/04/2015 - Evitar erros no ENTER de campos que nao tem eventos (Gabriel-RKAM).			
 							
-                24/10/2017 - Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
+                24/10/2017 - Ajustes ao carregar dados do avalista e controle de altera??o. PRJ339 CRM (Odirlei-AMcom)                      
+				
+				11/02/2019 - INC0031809 - Yuri (Mouts). Alteração de regra de acesso por dentro do CRM - avalista de limite de crédito
 							
  */	 
 function formataAvalista() {
@@ -226,11 +228,12 @@ function pesquisaCpfAvalista(i) {
 		showError("error","CPF/CNPJ inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");				
 	} else {
 		carregaAvalista(i);
+		// INC0030819
         // Se nao for acessado via CRM, pode habilitar os campos
-        if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+        //if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
             $('input, select','.fsAvalista:eq('+(i-1)+')').habilitaCampo();		
             $('#ende1av'+i+',#ende2av'+i+',#cdufava'+i+',#nmcidav'+i,'#'+nomeForm).desabilitaCampo();
-        }
+        //}
 	}
 	return false;
 }
