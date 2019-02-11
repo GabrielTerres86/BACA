@@ -978,6 +978,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
   --                            pc_carrega_dados_atenda (Claudio CIS Corporate)
+															    --
+  --               05/12/2018 - SCTASK0038225 (Yuri - Mouts)
+  --                            substituição do método XSLProcessor pela chamada da GENE0002
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -10498,7 +10501,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225 (Yuri - Mouts)
+    -- Com a migração para versão Oracle 12C necessário alteração no procedimento de gerar arquivo
+    --Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml 
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => vr_arq_temp
+                                 ,pr_des_erro => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       vr_dscritic := 'Problemas ao gerar o arquivo no servidor. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+
+/*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));*/
+    -- Fim SCTASK38225
+    --
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);   
@@ -11693,7 +11710,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225 (Yuri - Mouts)
+    -- Com a migração para versão Oracle 12C necessário alteração no procedimento de gerar arquivo
+    --Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml 
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => vr_arq_temp
+                                 ,pr_des_erro => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       vr_dscritic := 'Problemas ao gerar o arquivo no servidor. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+
+/*  DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));*/
+    -- Fim SCTASK0038225
+    --
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);   

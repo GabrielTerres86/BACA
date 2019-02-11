@@ -202,9 +202,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.json0001 IS
     IF vr_dscritic IS NOT NULL THEN
        RAISE vr_exc_saida;
     END IF;
-    
+    -- SCTASK0038225
+    -- Alterado para utilizar a rotina genérica
     -- Obtem o arquivo com o JSON de resposta e popula um CLOB
-    vr_clob_response := DBMS_XSLPROCESSOR.read2clob(pr_diretorio_log, vr_file_response, 0);
+    vr_clob_response := GENE0002.fn_arq_para_clob(pr_caminho => pr_diretorio_log
+                                                      ,pr_arquivo => vr_file_response);
+/*  vr_clob_response := DBMS_XSLPROCESSOR.read2clob(pr_diretorio_log, vr_file_response, 0);*/
+    -- Fim SCTASK38225
 
     -- Converte CLOB para JSON
     vr_json_response := json(vr_clob_response);

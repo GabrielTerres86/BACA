@@ -55,6 +55,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
   --             
   --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para buscar o nome do departamento
   --                          na tabela CRAPDPO, e não mais diretamente da CRAPOPE (Renato Darosci - Supero)
+  --             04/12/2018 - SCTASK0038255 - Yuri Mouts
+  --                          substituido o uso do dbms_xlsprocessor pela chamada da gene0002.pc_clob_para_arquivo
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure que gera uma lista de operadores em determinada pasta */
@@ -102,6 +104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
   
     vr_linha    VARCHAR2(4000);
     vr_arq_path VARCHAR2(1000); --> Diretorio que sera criado o relatorio
+    vr_dscritic VARCHAR2(4000);           --> Retorna critica Caso ocorra    
   
     vr_des_xml        CLOB;
     vr_texto_completo VARCHAR2(32600);
@@ -239,10 +242,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     END LOOP;
   
     pc_escreve_xml(' ', TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,
+    -- SCTASK0035225 (Yuri - Mouts)
+/*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,
                                 vr_arq_path,
                                 'LISTA_OPERADORES_OPERAD'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.txt',
-                                NLS_CHARSET_ID('UTF8'));
+                                NLS_CHARSET_ID('UTF8'));*/
+    --Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => 'LISTA_OPERADORES_OPERAD'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.txt'
+                                 ,pr_des_erro => vr_dscritic);
+    -- em caso de crítica
+    IF vr_dscritic IS NOT NULL THEN
+    -- RAISE vr_exc_erro;
+    -- Como todas procedures desta PCK não possuem tratamento de erros, esta também será mantida desta forma
+       NULL;
+    END IF;
+	  -- Fim SCTASK0038225
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
@@ -319,7 +335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
      
     vr_des_xml         CLOB;
     vr_texto_completo  VARCHAR2(32600);
-
+    vr_dscritic VARCHAR2(4000);           --> Retorna critica Caso ocorra    
     
     -- Subrotina para escrever texto na variável CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
@@ -327,7 +343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     BEGIN
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
     END;
-  
+    --
   BEGIN  
     vr_tab_tela.delete;
 
@@ -418,10 +434,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225
+/*  DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));*/
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.txt'
+                                 ,pr_des_erro => vr_dscritic);
+    -- em caso de crítica
+    IF vr_dscritic IS NOT NULL THEN
+--     RAISE vr_exc_erro;
+--     Como todas procedures desta PCK não possuem tratamento de erros, esta também será mantida desta forma
+       NULL;
+    END IF;
+	  -- Fim SCTASK0038225
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
+    --
   END pc_lista_permissoes_operadores;
     
 
@@ -586,7 +615,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
         
         pc_escreve_xml('COMMIT;');
         pc_escreve_xml(' ',TRUE);
-        DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_dsdireto, 'ACESSO_OPERADORES_DELETADOS_'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));
+        -- SCTASK0038225
+/*      DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_dsdireto, 'ACESSO_OPERADORES_DELETADOS_'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));*/
+        gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml
+                                     ,pr_caminho  => vr_dsdireto
+                                     ,pr_arquivo  => 'ACESSO_OPERADORES_DELETADOS_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.txt'
+                                     ,pr_des_erro => vr_dscritic);
+        -- em caso de crítica
+        IF vr_dscritic IS NOT NULL THEN
+    --     RAISE vr_exc_erro;
+    --     Como todas procedures desta PCK não possuem tratamento de erros, esta também será mantida desta forma
+           NULL;
+        END IF;
+        -- Fim SCTASK0038225
+
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_des_xml);
         dbms_lob.freetemporary(vr_des_xml);
@@ -703,7 +745,7 @@ PROCEDURE pc_exc_permis_ope_tela(
      
     vr_des_xml         CLOB;
     vr_texto_completo  VARCHAR2(32600);
-
+    vr_dscritic VARCHAR2(4000);           --> Retorna critica Caso ocorra    
     
     -- Subrotina para escrever texto na variável CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
@@ -800,7 +842,20 @@ PROCEDURE pc_exc_permis_ope_tela(
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225
+/*  DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')|| '.txt', NLS_CHARSET_ID('UTF8'));*/
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => 'LISTA_ACESSO_OPERADORES'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.txt'
+                                 ,pr_des_erro => vr_dscritic);
+    -- em caso de crítica
+    IF vr_dscritic IS NOT NULL THEN
+--     RAISE vr_exc_erro;
+--     Como todas procedures desta PCK não possuem tratamento de erros, esta também será mantida desta forma
+       NULL;
+    END IF;
+	  -- Fim SCTASK0038225
+
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);

@@ -192,6 +192,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
 
 			   22/06/2017 - Incluido novas regras para validação das informações recebidas (Joanta - RKAM).
 			              
+			         05/12/2018 - SCTASK0038225 (Yuri - Mouts)
+                            Substituição método XLSPROCESSOR pela chamada da GENE0002
   ---------------------------------------------------------------------------------------------------------------*/
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
   SELECT crapcop.cdcooper
@@ -986,9 +988,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                   vr_cdoperad                           ||
                   Trunc(DBMS_RANDOM.Value(50000,99999)) || '.csv';
         
-    
-    
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_dsarquiv, vr_nmdireto, vr_nmarquiv, 0);
+    -- SCTASK0038225
+    -- Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_dsarquiv 
+                                 ,pr_caminho  => vr_nmdireto 
+                                 ,pr_arquivo  => vr_nmarquiv 
+                                 ,pr_des_erro => vr_dscritic); 
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;         
+/*  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dsarquiv, vr_nmdireto, vr_nmarquiv, 0);*/
+    -- Fim SCTASK0038225
 
     -- Envia-lo ao servidor web.           
     gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
