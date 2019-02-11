@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 19/10/2018
+    Data      : Marco/2008                    Ultima Atualizacao: 11/02/2019
     
     Dados referentes ao programa:
 
@@ -551,6 +551,9 @@
                              
                23/01/2018 - Alteraçao na rotina de alterar_administradora para contemplar o insitdec (deciçao da esteira).
                             INC0027746 Augusto - Supero
+                            
+               11/02/2019 - Validacao para nao permitir exclusao de cartao quando o mesmo estiver em uso
+                            (Lucas Ranghetti #PRB0040556)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -14526,6 +14529,12 @@ PROCEDURE exclui_cartao:
                   ASSIGN aux_dscritic = "Cartao ja solicitado.".
                   LEAVE.
               END.               
+          
+          IF  crawcrd.insitcrd = 4 THEN
+              DO:
+                 ASSIGN aux_dscritic = "Cartao em uso. Exclusao nao permitida.".
+                 LEAVE.
+              END.
           
           /* Para cartoes Cecred (Bancoob) verifica se existem cartoes adicionais
 		     (Fabricio). */
