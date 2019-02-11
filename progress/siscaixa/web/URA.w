@@ -457,7 +457,7 @@ PROCEDURE p_imprime_cabec:
         aux_dsdlinha = "@@imagem /dg/som/crevisc.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 13  THEN
-        aux_dsdlinha = "@@imagem /dg/som/scrcred.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/civia.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 14  THEN
         aux_dsdlinha = "@@imagem /dg/som/evolua.bmp,16,0".
