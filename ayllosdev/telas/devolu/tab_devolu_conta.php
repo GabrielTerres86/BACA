@@ -11,6 +11,11 @@
  *
  *                07/12/2018 - Melhoria no processo de devoluções de cheques.
  *                             Alcemir Mout's (INC0022559).
+ *
+ *                23/01/2019 - Alteracao na rotina de alteracao de alinea e
+ *                             melhoria na gravacao do log na verlog.
+ *                             Chamado - PRB0040476 - Gabriel Marcos (Mouts).
+ *
  * --------------
  */
 ?>
@@ -55,10 +60,10 @@
 						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this,<?php echo $inprejuz; ?>)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1  || 
 																																		      getByTagName($lancamento->tags,'cdalinea') == 0  || 
 																																			  getByTagName($lancamento->tags,'cdalinea') == 20 || 
-																																			  getByTagName($lancamento->tags,'cdalinea') == 21 || 																																			  
+																																		   /* getByTagName($lancamento->tags,'cdalinea') == 21 || */																																			  
 																																			  getByTagName($lancamento->tags,'cdalinea') == 28 || 
-																																			  getByTagName($lancamento->tags,'cdalinea') == 49 ||
-																																			  getByTagName($lancamento->tags,'cdalinea') == 70){ ?> disabled <? } ?> />
+																																			  getByTagName($lancamento->tags,'cdalinea') == 49    /* ||
+																																		      getByTagName($lancamento->tags,'cdalinea') == 70    */){ ?> disabled <? } ?> />
 							<script>
 								var id_reg = arrayRegLinha.length;																	
 								arrayRegLinha[id_reg] = new Array();                                                                

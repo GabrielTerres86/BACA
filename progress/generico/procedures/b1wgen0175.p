@@ -131,6 +131,10 @@
    07/12/2018 - Melhoria no processo de devoluções de cheques.
                 Alcemir Mout's (INC0022559).
 
+   23/01/2019 - Alteracao na rotina de alteracao de alinea e
+                melhoria na gravacao do log na verlog.
+                Chamado - PRB0040476 - Gabriel Marcos (Mouts).
+
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -3062,7 +3066,7 @@ PROCEDURE geracao-devolu:
                                      OUTPUT TABLE tt-erro).
                    
                     IF  RETURN-VALUE <> "OK"   THEN
-                        NEXT DESMARCAR.
+                        RETURN "NOK".
                     
                 END.
                 ELSE DO:
@@ -8134,47 +8138,176 @@ PROCEDURE altera-alinea:
     DEF INPUT PARAM par_cdbandep AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdagedep AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrctadep AS DECI                               NO-UNDO.
-	DEF INPUT PARAM par_vlcheque AS DECI                               NO-UNDO.	
-    DEF OUTPUT PARAM TABLE FOR tt-erro.    
+    DEF INPUT PARAM par_vllanmto AS DECI                               NO-UNDO.	
+    DEF INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                 NO-UNDO.
+    DEF INPUT PARAM par_nmdatela LIKE craptel.nmdatela                 NO-UNDO.
+    	
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
     
-    DO  WHILE TRUE:    
-                                                  
-        FIND FIRST crapdev WHERE crapdev.cdcooper = par_cdcooper
-                             AND crapdev.cdbanchq = par_cdbanchq
-                             AND crapdev.cdagechq = par_cdagechq
-                             AND crapdev.nrctachq = par_nrctachq
-                             AND crapdev.nrcheque = par_nrdocmto
-							 AND crapdev.vllanmto = par_vlcheque
-                             AND crapdev.cdhistor <> 46
-							 AND crapdev.cdbandep = (IF par_cdbandep = ?
-						                         THEN crapdev.cdbandep
-												 ELSE par_cdbandep) 
-						     AND crapdev.cdagedep = (IF par_cdagedep = ?
-												 THEN crapdev.cdagedep
-												 ELSE par_cdagedep)
-						     AND crapdev.nrctadep = (IF par_nrctadep = ?
-						                         THEN crapdev.nrctadep
-												 ELSE par_nrctadep)
-                             AND crapdev.nrcheque = par_nrdocmto
-                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    DEF VAR aux_nmoperad AS CHAR                                       NO-UNDO.
+    DEF BUFFER craqdev     FOR crapdev.
+    
+    /* Ao entrar no loop esta critica eh limpa */
+    ASSIGN aux_dscritic = "Cheque não encontrado."
+           flg_devolbcb = FALSE.
+
+    /* Buscar todas as devolucoes do lancamento */
+    FOR EACH crapdev WHERE crapdev.cdcooper = par_cdcooper
+                       AND crapdev.cdbanchq = par_cdbanchq
+                       AND crapdev.cdagechq = par_cdagechq
+                       AND crapdev.nrctachq = par_nrctachq
+                       AND crapdev.nrcheque = par_nrdocmto
+                       AND crapdev.vllanmto = par_vllanmto
+                       AND crapdev.cdbandep = (IF par_cdbandep = ?
+                                             THEN crapdev.cdbandep
+                                             ELSE par_cdbandep) 
+                       AND crapdev.cdagedep = (IF par_cdagedep = ?
+                                             THEN crapdev.cdagedep
+                                             ELSE par_cdagedep)
+                       AND crapdev.nrctadep = (IF par_nrctadep = ?
+                                             THEN crapdev.nrctadep
+                                             ELSE par_nrctadep):
                              
-        IF  AVAILABLE crapdev THEN        
-            ASSIGN crapdev.cdalinea = par_cdalinea.
+        ASSIGN aux_dscritic = "".
+
+        FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper
+                                                    NO-LOCK NO-ERROR.
+							   
+        IF NOT flg_devolbcb THEN
+            DO:
+                /* Cursor que cddepart parametrizado */
+                FIND FIRST crapprm WHERE crapprm.cdcooper = 0
+                                     AND crapprm.nmsistem = "CRED"
+                                     AND crapprm.cdacesso = "EXCLUIR_DEVOLU_CDDEPART"
+                                     NO-LOCK NO-ERROR.
+
+                /* Se nao encontrar aborta operacao */
+                IF NOT AVAILABLE crapprm THEN
+                    ASSIGN aux_dscritic = "Parametrizacao de departamento nao encontrada.".
+
+                /* Cursor que busca operadores */
+                FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                     AND crapope.cdoperad = par_cdoperad
+                                     AND crapope.cdsitope = 1 
+                                     NO-LOCK NO-ERROR.
+
+                /* Se operador nao possui permissoes retorna critica */
+                IF NOT AVAILABLE crapope THEN
+                    ASSIGN aux_dscritic = "Operador nao existe ou esta inativo.".
+                ELSE
+                    DO:
+                        /* Nivel de operador deve ser 2 ou 3 */
+                        IF crapope.nvoperad < 2 THEN
+                            ASSIGN aux_dscritic = "Nivel de operador nao permitido.". 
+                        ELSE
+                            DO:
+                                /* Inicialmente departamentos 4 e 20 sao permitidos */
+                                IF NOT CAN-DO(crapprm.dsvlrprm,STRING(crapope.cddepart)) THEN
+                                    ASSIGN aux_dscritic = "Departamento de operador nao permitido.". 
+                            END.
+                    END.
+					
+                IF  aux_dscritic <> "" THEN
+                    DO:
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,
+                                       INPUT 0,
+                                       INPUT-OUTPUT aux_dscritic).
+                        RETURN "NOK".
+                    END.
+
+                /* Grava log apenas uma vez */
+                ASSIGN flg_devolbcb = TRUE.
         
-        LEAVE.
-    END.
-    
+                UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " 
+                                + STRING(TIME,"HH:MM:SS") + " - Coop: " + STRING(par_cdcooper,"99") 
+                                + " - Processar: " + par_nmdatela 
+                                + "' --> '" + STRING(par_cdoperad) 
+                                + "-" + TRIM(aux_nmoperad) + ", " 
+                                + " alterou a alinea do cheque " 
+                                + STRING(par_nrdocmto,"zzz,zz9") 
+                                + " da conta/dv " + STRING(par_nrctachq,"zzzz,zzz,9") 
+                                + " do Banco " + string(par_cdbanchq, "zz9") 
+                                + ", valor " + string(par_vllanmto, "zzz,zz9.99") 
+                                + " com alinea "+ string(crapdev.cdalinea,"z9") 
+                                + " para alinea " + string(par_cdalinea,"z9") 
+                                + " >> /usr/coop/" + TRIM(crapcop.dsdircop) 
+                                + "/log/devolu.log" ). 
+
+            END.
+
+        IF (par_cdalinea > 40 AND 
+            par_cdalinea < 50) OR 
+           (par_cdalinea = 20) OR 
+           (par_cdalinea = 28) OR 
+           (par_cdalinea = 30) OR 
+           (par_cdalinea = 31) OR 
+           (par_cdalinea = 32) OR 
+           (par_cdalinea = 35) OR 
+           (par_cdalinea = 37) OR 
+           (par_cdalinea = 39) OR 
+           (par_cdalinea = 72) THEN 
+            DO:
+                IF crapdev.cdhistor = 47 THEN
+                    ASSIGN crapdev.cdalinea = par_cdalinea.
+                ELSE 
+                    DELETE crapdev.
+                END.
+        ELSE
+            DO:
+                IF (crapdev.cdalinea > 40 AND 
+                    crapdev.cdalinea < 50) OR 
+                   (crapdev.cdalinea = 20) OR 
+                   (crapdev.cdalinea = 28) OR 
+                   (crapdev.cdalinea = 30) OR 
+                   (crapdev.cdalinea = 31) OR 
+                   (crapdev.cdalinea = 32) OR 
+                   (crapdev.cdalinea = 35) OR 
+                   (crapdev.cdalinea = 37) OR 
+                   (crapdev.cdalinea = 39) OR 
+                   (crapdev.cdalinea = 72) THEN 
+                    DO:				   
+                        CREATE craqdev.
+                        ASSIGN craqdev.cdcooper = crapdev.cdcooper
+                               craqdev.dtmvtolt = crapdev.dtmvtolt
+                               craqdev.cdbccxlt = crapdev.cdbccxlt
+                               craqdev.nrdconta = crapdev.nrdconta
+                               craqdev.nrdctabb = crapdev.nrctachq
+                               craqdev.nrdctitg = crapdev.nrdctitg
+                               craqdev.nrcheque = crapdev.nrcheque
+                               craqdev.vllanmto = crapdev.vllanmto
+                               craqdev.cdalinea = par_cdalinea
+                               craqdev.cdoperad = crapdev.cdoperad
+                               craqdev.cdhistor = 46 
+                               craqdev.cdpesqui = crapdev.cdpesqui
+                               craqdev.insitdev = crapdev.insitdev
+                               craqdev.cdbanchq = crapdev.cdbanchq
+                               craqdev.cdagechq = crapdev.cdagechq 
+                               craqdev.nrctachq = crapdev.nrctachq
+                               craqdev.cdcooper = crapdev.cdcooper
+                               craqdev.cdbandep = crapdev.cdbandep
+                               craqdev.cdagedep = crapdev.cdagedep
+                               craqdev.nrctadep = crapdev.nrctadep.
+                        VALIDATE craqdev.
+                    END.
+                ASSIGN crapdev.cdalinea = par_cdalinea.
+            END.			
+			
+    END. /* Fim do FOR EACH crapdev */
+
     IF  aux_dscritic <> "" THEN
         DO:
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT 0,
                            INPUT 0,
-                           INPUT 1, /*sequencia*/
-                           INPUT aux_cdcritic,
+                           INPUT 1,
+                           INPUT 0,
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
         END.
-    
+
     RETURN "OK".
 
 END PROCEDURE.

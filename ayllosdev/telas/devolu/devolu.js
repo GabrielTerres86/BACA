@@ -26,6 +26,9 @@
  *                07/12/2018 - Melhoria no processo de devoluções de cheques.
  *                             Alcemir Mout's (INC0022559).
  *  
+ *                23/01/2019 - Alteracao na rotina de alteracao de alinea e
+ *                             melhoria na gravacao do log na verlog.
+ *                             Chamado - PRB0040476 - Gabriel Marcos (Mouts).
  */
 
 // Definição de algumas variáveis globais
@@ -751,7 +754,8 @@ function marcar_cheque_devolu() {
 	//Adquire as informações das checkbox selecionadas
 	$('#indice','#tabDevoluConta').each(function() { 
 		if ($(this).prop('checked')) { 
-			arrayRegDados[arrayRegDados.length] = arrayRegLinha[$(this).val()];
+		    arrayRegDados[arrayRegDados.length] = arrayRegLinha[$(this).val()];
+            arrayRegDados[arrayRegDados.length - 1].cdalinea = $('#cdalinea', $(this).closest('tr')).val();
 		}
 	});
 		
