@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 03/01/2019
+  Data    : Abril/2004                          Ultima atualizacao: 07/11/2017
 
   Dados referentes ao programa:
 
@@ -276,6 +276,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
                            impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
 
+              08/02/2019 - Ajuste na declaracao da variavel vr_cdconven - Gabriel Marcos (Mouts).
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -350,7 +352,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltotarq     NUMBER;
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
-  vr_cdconven     gnconve.cdconven%type;
+  vr_cdconven     gnconve.cdconven%type := 0;
 
   ---------------------------------- CURSORES  ----------------------------------
   
@@ -881,7 +883,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
     -- Montagem de auxiliares para os arquivos 
     vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'rrrrmmdd');
     vr_flgfirst := true;
-
+    
     -- Analisa se esta sendo homologado 
     -- algum convenio (busca parametros)
     open cr_hconven (pr_cdcooper);
@@ -1456,7 +1458,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
             IF rw_gnconve.cdconven IN(127,128) THEN 
             
               -- Todos outros casos 
-              -- Enviar linha ao arquivo 
+            -- Enviar linha ao arquivo 
               vr_dslinreg := 'F'
                           ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
                           ||LPAD(' ',3,' ')
@@ -1660,7 +1662,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||RPAD(' ',12,' ')||'0';              
           END IF;
         END IF;
-          
+        
         
         -- Enviar para o arquivo 
         gene0002.pc_escreve_xml(vr_clobarqu
