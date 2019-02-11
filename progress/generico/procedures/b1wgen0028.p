@@ -546,8 +546,11 @@
 							 anotacoes de trabalho do Incidente em questao.
                              Chamado PRB0040351 - Gabriel (Mouts).
 
-                19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
-                             conta cartão for zerada (Lucas Ranghetti INC0024543)
+                19/10/2018 - Permitir a inclusÃ£o de cartÃ£o quando situaÃ§Ã£o = 6 ou 
+                             conta cartÃ£o for zerada (Lucas Ranghetti INC0024543)
+                             
+               23/01/2018 - Alteraçao na rotina de alterar_administradora para contemplar o insitdec (deciçao da esteira).
+                            INC0027746 Augusto - Supero
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -24080,6 +24083,7 @@ PROCEDURE altera_administradora:
 
           ASSIGN crabcrd.cdadmcrd = par_codnadmi
                  crabcrd.insitcrd = 1
+                 crabcrd.insitdec = 1              /* Inclusao Augusto - Supero - 23/01/2019 */
                  crabcrd.dtpropos = par_dtmvtolt   /* Inclusao Renato - Supero - 07/11/2014 */
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1
