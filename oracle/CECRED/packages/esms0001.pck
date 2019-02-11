@@ -55,7 +55,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
    Sigla   : CRED
   
    Autor   : Dionathan
-   Data    : 14/04/2016                        Ultima atualizacao: 23/10/2018
+   Data    : 14/04/2016                        Ultima atualizacao: 11/02/2019
    
    Objetivo  : Envio de SMS (Package Genérica)
   
@@ -65,6 +65,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                 - Pc_set_modulo, cecred.pc_internal_exception
                 - Tratamento erros others
                  (Ana - Envolti - Chamado 788828)
+                 
+     11/02/2019 - Ajustar gravacao da vr_dsparame pois estava estourando
+                  erro oracle ao acumular no loop (Lucas Ranghetti PRB0040603)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Grava informações para resolver erro de programa/ sistema
@@ -1593,7 +1596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Anderson Fossa
-       Data    : Setembro/2017                     Ultima atualizacao: 29/11/2017
+       Data    : Setembro/2017                     Ultima atualizacao: 11/02/2019
 
        Dados referentes ao programa:
 
@@ -1609,6 +1612,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                           (Ana - Envolti - Chamado 788828)
               16/05/2018 - Inclusão parâmetros no log
                           (Ana - Envolti - Chamado PRB0040049)
+                          
+              11/02/2019 - Ajustar gravacao da vr_dsparame pois estava estourando
+                           erro oracle ao acumular no loop (Lucas Ranghetti PRB0040603)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
@@ -1673,7 +1679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         vr_cdretorn := vr_tab_campos(vr_idx)('StatusCode');  
         vr_Detail   := vr_tab_campos(vr_idx)('Detail');
         
-        vr_dsparame := vr_dsparame||
+        vr_dsparame := 'pr_idlotsms:'  ||pr_idlotsms||
                        ', vr_idsms:'   ||vr_idsms||
                        ', vr_cdretorn:'||vr_cdretorn||
                        ', vr_detail:'  ||vr_detail;
