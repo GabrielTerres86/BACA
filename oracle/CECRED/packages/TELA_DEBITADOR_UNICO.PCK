@@ -169,7 +169,7 @@ PROCEDURE pc_exclui_debitador_hr_proces(pr_cdprocesso           IN TBGEN_DEBITAD
 ----------------------- INÍCIO EXECUÇÃO EMERGENCIAL ------------------------
 
 PROCEDURE pc_valida_debitador_proc_exec(pr_cdcooper   IN NUMBER
-	                                    , pr_cdprocesso IN VARCHAR2
+	                                    , pr_cdprocesso IN VARCHAR2 
 																			, pr_xmllog     IN VARCHAR2
                                       , pr_cdcritic   OUT PLS_INTEGER          --> Código da crítica
                                       , pr_dscritic   OUT VARCHAR2             --> Descrição da crítica
@@ -289,7 +289,7 @@ BEGIN
 				);
 
         IF pr_inexecuta_commit = 'S' THEN
-  				COMMIT;
+				COMMIT;
         END IF;
 	 EXCEPTION
       WHEN OTHERS THEN
@@ -740,16 +740,16 @@ DECLARE
                               pr_tag_nova => 'Dados',
                               pr_tag_cont => NULL,
                               pr_des_erro => vr_dscritic);
-
+															
 			OPEN cr_hor_duplicado;
 			FETCH cr_hor_duplicado INTO vr_tem_duplicado;
-
+			
 			IF cr_hor_duplicado%FOUND THEN
 				CLOSE cr_hor_duplicado;
-
+				
 				RAISE vr_exc_hordup;
 			END IF;
-
+			
 			CLOSE cr_hor_duplicado;
 
       -- Obtém o próximo ID para inserir na tabela
@@ -1524,7 +1524,7 @@ DECLARE
 		 WHERE hp.cdprocesso = pr_cdprocesso
 		   AND hr.idhora_processamento = hp.idhora_processamento
 			 AND (pr_idhora_processamento = 0 OR hr.idhora_processamento = pr_idhora_processamento)
-		 ORDER BY hr.dhprocessamento;
+		 ORDER BY to_char(hr.dhprocessamento, 'HH24:MI');
 		rw_horarios_proc cr_horarios_proc%ROWTYPE;
 
 		-- Recupera o maior valor definido para prioridade na tabela
@@ -2912,14 +2912,14 @@ DECLARE
 			OPEN cr_horario;
 			FETCH cr_horario INTO vr_dhprocessamento;
 			CLOSE cr_horario;
-
+			
 			vr_ds_erro := NULL;
-
+			
 			gen_debitador_unico.pc_valida_hora_processo(pr_dhprocessamento => vr_dhprocessamento
-                         ,pr_cdprocesso => pr_cdprocesso
+                         ,pr_cdprocesso => pr_cdprocesso     
                          ,pr_ininterromper => vr_ininterromper
-                         ,pr_ds_erro => vr_ds_erro);
-
+                         ,pr_ds_erro => vr_ds_erro);    
+												 
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_nrprioridade;
 			CLOSE cr_prioridade;
@@ -3331,9 +3331,9 @@ DECLARE
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
+ 
   vr_ds_erro crapcri.dscritic%TYPE := NULL;
-
+    
   BEGIN
 		pr_des_erro := 'OK';
 
@@ -3362,15 +3362,15 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-
+															
 		gen_debitador_unico.pc_valida_exec_emergencial_prg (pr_cdcooper => pr_cdcooper
 		                              , pr_cdprocesso => pr_cdprocesso
 																	, pr_ds_erro => vr_ds_erro);
-
+																	
 		IF vr_ds_erro IS NOT NULL THEN
 			RAISE vr_exc_invalido;
 		END IF;
-
+		
 		-- Inclui dados no XML de retorno
 		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 													 pr_tag_pai  => 'Dados',
@@ -3462,13 +3462,13 @@ DECLARE
 		SELECT par.nrprioridade
 		  FROM tbgen_debitador_param par
 		 WHERE par.cdprocesso = pr_processos;
-
+		 
 		CURSOR cr_crapcop IS
 		SELECT cop.nmrescop
 		  FROM crapcop cop
 		 WHERE cop.cdcooper = pr_cdcooper;
 
-		vr_nmrescop  crapcop.nmrescop%TYPE;
+		vr_nmrescop  crapcop.nmrescop%TYPE;	
 
    BEGIN
 			pr_des_erro := 'OK';
@@ -3498,7 +3498,7 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-
+															
 			OPEN cr_crapcop;
 			FETCH cr_crapcop INTO vr_nmrescop;
 			CLOSE cr_crapcop;
