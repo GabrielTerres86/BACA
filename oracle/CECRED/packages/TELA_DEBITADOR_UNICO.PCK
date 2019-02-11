@@ -1524,7 +1524,7 @@ DECLARE
 		 WHERE hp.cdprocesso = pr_cdprocesso
 		   AND hr.idhora_processamento = hp.idhora_processamento
 			 AND (pr_idhora_processamento = 0 OR hr.idhora_processamento = pr_idhora_processamento)
-		 ORDER BY hr.dhprocessamento;
+		 ORDER BY to_char(hr.dhprocessamento, 'HH24:MI');
 		rw_horarios_proc cr_horarios_proc%ROWTYPE;
 
 		-- Recupera o maior valor definido para prioridade na tabela
