@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/12/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 11/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -115,6 +115,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                         - Incluir a critica 143 - conta duplicada junto da critica 080
   --                           para não prosseguirmos com a inclusão do cartão pois o mesmo
   --                           ja possui cartão (Lucas Ranghetti #PRB0040493)
+  --
+  --             11/02/2019 - Tratamento para flgprcrd quando incluir segunda via 
+  --                          (Lucas Ranghetti #PRB0040597)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -8464,7 +8467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 21/12/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 11/02/2019
 
        Dados referentes ao programa:
 
@@ -8621,7 +8624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    13/11/2018 - Criado uma nova regra onde gera lote a cada mil mensagem sms 
                                 (Douglas Mouts PRB0040381)
 				   
-				   10/12/2018 - foi feito a validação do codigo de administrador, caso o mesmo esteja zerado
+                   10/12/2018 - foi feito a validação do codigo de administrador, caso o mesmo esteja zerado
                                 será usado o cdgrafin do arquivo para fazer a validação (Bruno Cardoso,PRB0040377, Mout'S).
                                 
                    21/12/2018 - Efetuado ajuste para caso seja efetuado um upgrade ele atualize
@@ -8631,7 +8634,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 para não prosseguirmos com a inclusão do cartão pois o mesmo
                                 ja possui cartão (Lucas Ranghetti #PRB0040493)
 
-				   16/01/2019 - Adicionar ordenacao no cursor cr_crawcrd (Anderson).
+                   16/01/2019 - Adicionar ordenacao no cursor cr_crawcrd (Anderson).
+                   
+                   11/02/2019 - Tratamento para flgprcrd quando incluir segunda via 
+                                (Lucas Ranghetti #PRB0040597)
     ............................................................................ */
 
     DECLARE
@@ -12175,6 +12181,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         vr_flgdebit := 1;
                       END IF;
                   
+                      -- Verifica se é o primeiro cartão bancoob da empresa desta administradora
+                      OPEN cr_crawcrd_flgprcrd(pr_cdcooper => vr_cdcooper,
+                                               pr_nrdconta => vr_nrdconta,
+                                               pr_cdadmcrd => rw_crawcrd.cdadmcrd);
+                      FETCH cr_crawcrd_flgprcrd INTO rw_crawcrd_flgprcrd;
+                      IF cr_crawcrd_flgprcrd%FOUND THEN
+                        -- Verificar se o CPF do titular do primeiro cartão é o mesmo que esta sendo validado
+                        IF rw_crawcrd_flgprcrd.nrcpftit = rw_crawcrd.nrcpftit THEN
+                          vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
+                        ELSE
+                          vr_flgprcrd := 0; -- Não é o primeiro
+                        END IF;
+                      ELSE
+                         vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
+                      END IF;
+                      
+                      IF cr_crawcrd_flgprcrd%ISOPEN THEN                        
+                        -- fecha cursor
+                        CLOSE cr_crawcrd_flgprcrd;
+                      END IF;
+                  
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
                         INSERT INTO crawcrd
@@ -12214,7 +12241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.flgctitg,
                             rw_crawcrd.dtmvtolt,
                             rw_crawcrd.nmextttl,
-                            rw_crawcrd.flgprcrd, -- Não é primeiro cartão Bancoob
+                            vr_flgprcrd, 
                             rw_crawcrd.tpdpagto,
                             rw_crawcrd.flgdebcc,
                             rw_crawcrd.tpenvcrd,
