@@ -17,7 +17,8 @@
 
 	<fieldset name="fieldResidencial" id="fieldResidencial">
 	
-		<legend> Residencial </legend>
+		<legend> <?php if ($tpendass ==  9) { echo 'Comercial'; }
+		          else if ($tpendass == 10) { echo 'Residencial'; } ?></legend>
 
 		<label for="incasprp"><? echo utf8ToHtml(' Tipo do Imóvel:') ?></label>
 		<select name="incasprp" id="incasprp" >

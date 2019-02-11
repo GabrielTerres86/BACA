@@ -122,6 +122,7 @@ $dsdpagto = getByTagName($dados,"dsdpagto");
 $dsgraupr = getByTagName($dados,"dsgraupr");
 $nrdoccrd = getByTagName($dados,"nrdoccrd");
 $nmresadm = getByTagName($dados,"nmresadm");
+$tpenvcrd = getByTagName($dados,"TPENVCRD");
         
 if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = "";
@@ -239,12 +240,12 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     </select>
                     <label for="tpenvcrd"><?php echo utf8ToHtml('Envio:') ?></label>
                     <select class='campo' disabled id='tpenvcrd' name='tpenvcrd'>
-                        <option value='1' selected>Cooperativa</option>
-                        <!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
+                        <option <?php if ($tpenvcrd > 0) { echo "selected"; } ?> value="0">Cooperado</option>
+                        <option <?php if ($tpenvcrd == 0) { echo "selected"; } ?> value="1">Cooperativa</option>
                     </select>
                     <br />
                 </fieldset>
-                <div id="divBotoes" >
+                <div id="divBotoes">
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
                     <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao(); return false;" />

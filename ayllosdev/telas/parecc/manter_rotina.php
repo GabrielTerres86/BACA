@@ -1,9 +1,9 @@
 <? 
 /*!
  * FONTE        : manter_rotina.php
- * CRIAÇÃO      : Lucas Afonso
- * DATA CRIAÇÃO : 05/10/2017
- * OBJETIVO     : Rotina para alteração dos parametros da tela PARGOC
+ * CRIAÇÃO      : Luis Fernando (Supero)
+ * DATA CRIAÇÃO : 28/01/2019
+ * OBJETIVO     : Rotina para alteração dos parametros da tela PARECC
  * --------------
  * ALTERAÇÕES   : 
  * -------------- 
@@ -23,10 +23,11 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 	
-	$cdcooper = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : ""; // Cooperativa selecionada
-	$inresgate_automatico = isset($_POST["inresgate_automatico"]) ? $_POST["inresgate_automatico"] : ""; // Resgate Automático
-	$qtdias_atraso_permitido = isset($_POST["qtdias_atraso_permitido"]) ? $_POST["qtdias_atraso_permitido"] : ""; // Dias de atraso p/ resgate automático
-	$peminimo_cobertura = isset($_POST["peminimo_cobertura"]) ? $_POST["peminimo_cobertura"] : ""; // % Mín Cobertura p/ Garantia
+	$cdcooperativa = isset($_POST["cdcooperativa"]) ? $_POST["cdcooperativa"] : ""; // Cooperativa selecionada
+	$flghabilitar = isset($_POST["flghabilitar"]) ? $_POST["flghabilitar"] : ""; // Habilitar cooperativa para envio ao endereço do cooperado
+	$idfuncionalidade = isset($_POST["idfuncionalidade"]) ? $_POST["idfuncionalidade"] : ""; // Funcionalidade
+	$idtipoenvio = isset($_POST["idtipoenvio"]) ? $_POST["idtipoenvio"] : ""; // Tipo de envio
+	$cdcooppodenviar = isset($_POST["cdcooppodenviar"]) ? $_POST["cdcooppodenviar"] : ""; // Lista de cooperativas que podem enviar
 	
 	// MESAGERIA
 	
@@ -34,16 +35,17 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <cddopcao>".$cddopcao."</cddopcao>";
-	$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
-	$xml .= "   <inresgate_automatico>".$inresgate_automatico."</inresgate_automatico>";
-	$xml .= "   <qtdias_atraso_permitido>".$qtdias_atraso_permitido."</qtdias_atraso_permitido>";
-	$xml .= "   <peminimo_cobertura>".$peminimo_cobertura."</peminimo_cobertura>";
+	$xml .= "   <cdcooperativa>".$cdcooperativa."</cdcooperativa>";
+	$xml .= "   <idfuncionalidade>".$idfuncionalidade."</idfuncionalidade>";
+	$xml .= "   <flghabilitar>".$flghabilitar."</flghabilitar>";
+	$xml .= "   <idtipoenvio>".$idtipoenvio."</idtipoenvio>";
+	$xml .= "   <cdcooppodenviar>".$cdcooppodenviar."</cdcooppodenviar>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, "TELA_PARGOC", "ALTERA_PARAMS_PARGOC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);		
-		
+	$xmlResult = mensageria($xml, "TELA_PARECC", "ALTERA_PARAMS_PARECC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
 	//-----------------------------------------------------------------------------------------------
 	// Controle de Erros
 	//-----------------------------------------------------------------------------------------------

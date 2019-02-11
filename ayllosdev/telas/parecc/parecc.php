@@ -1,8 +1,8 @@
 <? 
 /*!
  * FONTE        : parecc.php
- * CRIAÇÃO      : Luís Fernando Moraes
- * DATA CRIAÇÃO : 11/01/2018
+ * CRIAÇÃO      : Luis Fernando (Supero)
+ * DATA CRIAÇÃO : 28/01/2019
  * OBJETIVO     : Mostrar tela parecc
  * --------------
  * ALTERAÇÕES   : 
@@ -87,13 +87,8 @@
 																					<!-- Formulario para o cabecalho -->
 																					<? include('form_cabecalho.php'); ?>
 
-																					<!-- Formulario para editar os valores dos horarios -->
+																					<!-- Formulario para editar os PAs para envio -->
 																					<? include('form_cadastro.php'); ?>
-																					
-																					<div id="divBotoes" style="display:none">
-																						<a href="#" class="botao" id="btVoltar">Voltar</a>
-																						<a href="#" class="botao" id="btSalvar">Continuar</a>
-																					</div>
 																					
 																				</div>
 																			</td>

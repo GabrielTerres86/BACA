@@ -114,6 +114,12 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     // Identifica se o cartao possui a opcao debito habilitada
     $flgdebit = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[5]->cdata;
 
+	if ($tpenvcrd > 0) {
+		$tpenv = 0;
+	} else {
+		$tpenv = 1;
+	}
+
     echo 'bloqueiaFundo(divRotina);';
 
     if ($inpessoa == 1) {
@@ -133,10 +139,8 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
             echo '$("#tpdpagto","#frmNovoCartao").val(3);';
         }
 
-        /*Como foi removido a opcao cooperado no campo Envio
-          neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-        echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-        echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
+        echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenv.'");';
+        echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
         echo "$('#dddebito').attr('disabled', true);";
         echo "$('#tpenvcrd').attr('disabled', true);";
         if (!($cdadmcrd > 10 && $cdadmcrd < 18))
@@ -207,9 +211,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
                 echo '$("#tpdpagto","#frmNovoCartao").val("3");';
             }
 
-            /*Como foi removido a opcao cooperado no campo Envio
-              neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-            echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
+            echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenv.'");';
 
             echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
 			if($glbadc == 'n' || $cdadmcrd!="15") {

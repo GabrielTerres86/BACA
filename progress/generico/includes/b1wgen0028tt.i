@@ -141,7 +141,8 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD dtrejeit LIKE crawcrd.dtrejeit
     FIELD nrcctitg LIKE crawcrd.nrcctitg
     FIELD dsdpagto AS CHAR
-    FIELD dsgraupr AS CHAR.
+    FIELD dsgraupr AS CHAR
+    FIELD tpenvcrd AS INTE.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc
@@ -209,7 +210,8 @@ DEF TEMP-TABLE tt-nova_proposta NO-UNDO
     FIELD dsrepinc AS CHAR
     FIELD nmbandei AS CHAR
     FIELD dslimite AS CHAR
-    FIELD dsoutros AS CHAR.
+    FIELD dsoutros AS CHAR
+    FIELD tpenvcrd AS INTE.
     
 DEF TEMP-TABLE tt-ult_deb NO-UNDO
     FIELD dtdebito LIKE crapdcd.dtdebito

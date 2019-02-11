@@ -101,6 +101,11 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0001" AS
                                     ,pr_nrdconta   IN crapass.nrdconta%type
                                         ,pr_vllimtot   OUT NUMBER) ;
 
+  PROCEDURE pc_retorna_tipoenvio (pr_cdcooper   IN  tbcrd_tipo_envio_cartao.cdcooper%TYPE
+                                 ,pr_idfuncio   IN  tbcrd_tipo_envio_cartao.idfuncionalidade%TYPE
+                                 ,pr_cdagenci   IN  tbcrd_pa_envio_cartao.cdagencia%TYPE
+                                 ,pr_tpdenvio   OUT tbcrd_tipo_envio_cartao.idtipoenvio%TYPE);
+
 END CCRD0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
@@ -467,6 +472,47 @@ PROCEDURE pc_retorna_limite_conta (pr_cdcooper   IN crapcop.cdcooper%type
 
   END pc_retorna_limite_conta; -- pc_retorna_limite_conta
 
+  PROCEDURE pc_retorna_tipoenvio (pr_cdcooper   IN  tbcrd_tipo_envio_cartao.cdcooper%TYPE
+                                 ,pr_idfuncio   IN  tbcrd_tipo_envio_cartao.idfuncionalidade%TYPE
+                                 ,pr_cdagenci   IN  tbcrd_pa_envio_cartao.cdagencia%TYPE
+                                 ,pr_tpdenvio   OUT tbcrd_tipo_envio_cartao.idtipoenvio%TYPE) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_retorna_tipoenvio
+  --  Sigla    : CRED
+  --  Autor    : Anderson-Alan (Supero)
+  --  Data     : Fevereiro/2019.                   Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Retorna os limites dos cartoes referente a conta
+  --
+  -- Alteracoes: 
+  ---------------------------------------------------------------------------------------------------------------
+  
+  -- Dados de Arquivo auxiliar de controle de cartoes de credito
+    CURSOR cr_tipo_envio_cartao IS
+      SELECT tpec.idtipoenvio
+        FROM tbcrd_pa_envio_cartao tpec
+       WHERE tpec.cdcooper IN (SELECT tec.cdcooper
+                                 FROM tbcrd_envio_cartao tec
+                                WHERE tec.cdcooper = pr_cdcooper
+                                  AND tec.idfuncionalidade = pr_idfuncio
+                                  AND tec.flghabilitar = 1)
+         AND tpec.idfuncionalidade = pr_idfuncio
+         AND tpec.cdagencia = 61;
+    rw_tipo_envio_cartao cr_tipo_envio_cartao%ROWTYPE;
+  
+  BEGIN
+    
+    OPEN cr_tipo_envio_cartao;
+    FETCH cr_tipo_envio_cartao INTO rw_tipo_envio_cartao;
+    CLOSE cr_tipo_envio_cartao;
+    
+    pr_tpdenvio := rw_tipo_envio_cartao.idtipoenvio;
+    
+  END pc_retorna_tipoenvio;
 
 END CCRD0001;
 /

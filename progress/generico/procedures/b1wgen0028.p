@@ -1040,6 +1040,7 @@ PROCEDURE carrega_dados_inclusao:
     DEF VAR aux_cdgraupr AS CHAR                                    NO-UNDO.
     DEF VAR aux_dscartao AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsoutros AS CHAR                                    NO-UNDO.
+    DEF VAR aux_tpenvcrd AS INTE                                    NO-UNDO.
     DEF VAR aux_cdcartao AS CHAR                                    NO-UNDO.
     DEF VAR aux_cddopcao AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgfirst AS LOGI                                    NO-UNDO.
@@ -1076,11 +1077,29 @@ PROCEDURE carrega_dados_inclusao:
     
     ASSIGN aux_dscartao = "NACIONAL,INTERNACIONAL,GOLD"
            aux_cdcartao = "1,2,3"
-           aux_dsgraupr = 
-                  "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
+           aux_dsgraupr = "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
            aux_cdgraupr = "1,3,4,5,6,7,8"       
            aux_flgfirst = TRUE
            aux_vlrftbru = 0.
+    
+    /* Mantem relacionamento conta x conta cartao */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_retorna_tipoenvio
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                         INPUT 1,
+                                         INPUT par_cdagenci,
+                                         OUTPUT 0).
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_retorna_tipoenvio
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_tpenvcrd = 0
+           aux_tpenvcrd = pc_retorna_tipoenvio.pr_tpdenvio WHEN pc_retorna_tipoenvio.pr_tpdenvio <> ?.
     
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc cdtipcta cdsitdct cdsitdtl dtdemiss 
                              vledvmto cdcooper nmprimtl dtnasctl nrdocptl)
@@ -1846,7 +1865,8 @@ PROCEDURE carrega_dados_inclusao:
            tt-nova_proposta.nrrepinc = aux_nrrepinc
            tt-nova_proposta.nmbandei = aux_nmbandei
            tt-nova_proposta.dslimite = aux_dslimite
-           tt-nova_proposta.dsoutros = aux_dsoutros.
+           tt-nova_proposta.dsoutros = aux_dsoutros
+           tt-nova_proposta.tpenvcrd = aux_tpenvcrd.
 
     RETURN "OK".       
     
@@ -5084,6 +5104,7 @@ PROCEDURE consulta_dados_cartao:
     DEF VAR aux_lbcanblq AS CHAR NO-UNDO.
     DEF VAR aux_vllimdeb AS DECI NO-UNDO.
     DEF VAR aux_nrcpfrep AS DECI NO-UNDO.
+    DEF VAR aux_tpenvcrd AS INTE NO-UNDO.
     
     DEF VAR aux_inacetaa LIKE crapcrd.inacetaa NO-UNDO.
     DEF VAR aux_dtacetaa LIKE crapcrd.dtacetaa NO-UNDO.
@@ -5103,6 +5124,25 @@ PROCEDURE consulta_dados_cartao:
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Consultar dados cartao de credito.".
+
+    /* Mantem relacionamento conta x conta cartao */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_retorna_tipoenvio
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                         INPUT 1,
+                                         INPUT par_cdagenci,
+                                         OUTPUT 0).
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_retorna_tipoenvio
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_tpenvcrd = 0
+           aux_tpenvcrd = pc_retorna_tipoenvio.pr_tpdenvio WHEN pc_retorna_tipoenvio.pr_tpdenvio <> ?.
 
     FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper   AND
                        crawcrd.nrdconta = par_nrdconta   AND
@@ -5513,7 +5553,8 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.dtrejeit = crawcrd.dtrejeit
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
-           tt-dados_cartao.dsgraupr = aux_dstitula.
+           tt-dados_cartao.dsgraupr = aux_dstitula
+           tt-dados_cartao.tpenvcrd = aux_tpenvcrd.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,

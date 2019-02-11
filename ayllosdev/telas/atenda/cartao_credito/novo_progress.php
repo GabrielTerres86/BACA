@@ -124,6 +124,7 @@
 	$inpessoa = getByTagName($dados,"INPESSOA");
 	$cdtipcta = getByTagName($dados,"CDTIPCTA");
 	$nmbandei = getByTagName($dados,"NMBANDEI");
+	$tpenvcrd = getByTagName($dados,"TPENVCRD");
 	
 	// Primeiro Titular
     $nmtitcrd = getByTagName($dados,"NMTITCRD");
@@ -144,6 +145,7 @@
 	// Representantes
 	$nrrepinc = getByTagName($dados,"NRREPINC");    
     $dsrepinc = getByTagName($dados,"DSREPINC");    
+    $tpenvcrd = getByTagName($dados,"TPENCVRD");    
 
     // Administradoras que possuem débito	
 	// Buscar dias do débito da Administradora que aparece por 1º
@@ -387,10 +389,10 @@
 						<option value='3'>Boleto</option>
 					</select>
 			<label for="tpenvcrd"><? echo utf8ToHtml('Envio:') ?></label>
-			<select class='campo' id='tpenvcrd' name='tpenvcrd'>
-						<option value='1' selected>Cooperativa</option>
-						<!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
-					</select>				
+			<select class="campo" id="tpenvcrd" name="tpenvcrd">
+				<option <?php if ($tpenvcrd > 0) { echo "selected"; } ?> value="0">Cooperado</option>
+				<option <?php if ($tpenvcrd == 0) { echo "selected"; } ?> value="1">Cooperativa</option>
+			</select>				
 			<br />
 		</fieldset>
 		
@@ -426,7 +428,6 @@
 
     </div>
 <script type="text/javascript">
-
 
 	function prosseguir(){
 		$('#nmtitcrd').click(); 

@@ -937,7 +937,7 @@ function controlaLayout(nomeForm) {
         Lflgimpnp.addClass('rotulo').css('width', '130px');
         Lvllimdeb.css('width', '95px');
         Lflgdebit.addClass('rotulo-linha').css('width', '170px');
-        Ltpenvcrd.css('width', '95px');
+        Ltpenvcrd.css('width', '90px');
         Ltpdpagto.addClass('rotulo').css('width', '130px');
         Lnmempres.addClass('rotulo').css('width', '130px');
         Lnmprimtl.addClass('rotulo').css('width', '130px');
@@ -4416,7 +4416,7 @@ function CarregaTitulares(codAdministradora) {
             sel.find("option[value='7']").attr('disabled', false);
             sel.find("option[value='8']").attr('disabled', false);
             /*        $("#tpdpagto").attr('disabled', false); */
-            $("#tpenvcrd").attr('disabled', false);
+            $("#tpenvcrd").attr('disabled', true);
             $("#dscartao").attr('disabled', true);
 
         } else if (codAdministradora >= 83 && codAdministradora <= 88) {
@@ -6354,9 +6354,6 @@ function enviarBancoob(nrctrcrd){
         });
 
     });
-
-
-
 }
 
 function reenviarBancoob(nrctrcrd){
@@ -6419,7 +6416,6 @@ function verificaRetornoBancoob(nrctrcrd){
 
 function alterarBancoob(autorizado,inpessoa,tipo, contrato){
     
-
     var vlnovlim = $("#vlnovlim").val();
     if(vlnovlim == undefined)
         vlnovlim = '100,00';
@@ -6672,7 +6668,7 @@ function alterarCartaoProposta() {
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
-							
+		
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
@@ -6737,7 +6733,7 @@ function opcaoAlterarProposta() {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
             },
             success: function (response) {
-                hideMsgAguardo();                
+                hideMsgAguardo();
                 blockBackground(parseInt($("#divRotina").css("z-index")));
                 if (response.tipoProposta == 0) {
                     showError("error", "Edi&ccedil;&atilde;o de proposta n&atilde;o permitida, somente para situa&ccedil;&atilde;o em estudo.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");

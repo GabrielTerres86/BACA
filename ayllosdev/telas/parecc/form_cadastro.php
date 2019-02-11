@@ -1,8 +1,8 @@
 <?php
 /*!
  * FONTE        : form_cadastro.php
- * CRIAÇÃO      : Lucas Afonso
- * DATA CRIAÇÃO : 06/10/2017
+ * CRIAÇÃO      : Luis Fernando (Supero)
+ * DATA CRIAÇÃO : 28/01/2019
  * OBJETIVO     : Formulario com os parametros
  * --------------
  * ALTERAÇÕES   :
@@ -18,42 +18,25 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 ?>
+<br/>
+<form id="frmCadsoa" name="frmCadsoa" class="formulario">
 
-<form id="frmParametros" name="frmParametros" class="formulario condensado">
-	<div id="divParametros" >
-
-		<fieldset id="fsetParametrosGerais" name="fsetParametrosGerais" style="padding-bottom:10px;">
-			
-			<legend align="center">Par&acirc;metros Gerais</legend>
-
-			<table width="100%">
-				<tr>
-					<td>
-						<label for="inresgate_automatico"><? echo utf8ToHtml('Resgate Autom&aacute;tico?') ?></label>
-						<input type="checkbox" id="inresgate_automatico" name="inresgate_automatico" onChange="verificaCampoQtDias(this)">
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<label for="qtdias_atraso_permitido"><? echo utf8ToHtml('Dias de atraso p/ resgate autom&aacute;tico:') ?></label>
-						<input id="qtdias_atraso_permitido" name="qtdias_atraso_permitido" type="text"/>
-					</td>
-				</tr>
-			</table>
-		</fieldset>
+	<a href="#" style="text-decoration: underline;" id="btSelecioneDisponiveis"><? echo utf8ToHtml('Selecionar todos'); ?></a>
+	<a href="#" style="text-decoration: underline;" id="btSelecioneAderidos"><? echo utf8ToHtml('Selecionar todos'); ?></a>
+	<label for="dsservico"> <? echo utf8ToHtml('Não podem enviar'); ?></label>
+	<label for="dsaderido"> <? echo utf8ToHtml('Podem enviar'); ?> </label>
+    <br/><br/>
+	<select id= "dsservico" name="dsservico" multiple>
+	</select>	
+	<a href="#" id="btLeft" class="botao">&#9668;</a>
+	<a href="#" id="btRigth" class="botao">&#9658;</a>
 	
-		<fieldset id="fsetParametrosLinhasGenericas" name="fsetParametrosLinhasGenericas" style="padding-bottom:10px;">
-			
-			<legend align="center">Par&acirc;metros para Linhas Gen&eacute;ricas</legend>
+	<select id= "dsaderido" name="dsaderido" multiple>
+	</select>	
+	<br/>
+	<br/>
+	
+	<a href="#" id="btVoltar" class="botao">Voltar</a>
+	<a href="#" id="btSalvar" class="botao">Salvar</a>
 
-			<table width="100%">
-				<tr>
-					<td>
-						<label for="peminimo_cobertura"><? echo utf8ToHtml('% M&iacute;n. Cobertura p/ Garantia:') ?></label>
-						<input id="peminimo_cobertura" name="peminimo_cobertura" type="text"/> <label><? echo utf8ToHtml('&nbsp;%') ?></label>
-					</td>
-				</tr>
-			</table>
-		</fieldset>
-	</div>
 </form>

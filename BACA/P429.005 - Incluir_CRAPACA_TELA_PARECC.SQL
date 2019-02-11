@@ -31,7 +31,8 @@ BEGIN
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCA_COOP_PARECC', 'TELA_PARECC', 'pc_busca_coop_parecc', '', vr_nrseqrdr);
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCA_PA_PARECC', 'TELA_PARECC', 'pc_busca_pa_coop', 'pr_cdcooperativa,pr_idfuncionalidade,pr_idtipoenvio', vr_nrseqrdr);
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('ALTERA_PARAMS_PARECC', 'TELA_PARECC', 'pc_altera_params_parecc', 'pr_cdcooperativa,pr_idfuncionalidade,pr_flghabilitar,pr_idtipoenvio,pr_cdcooppodenviar', vr_nrseqrdr);
-  
+  INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCA_FLGHABILITAR', 'TELA_PARECC', 'pc_busca_flghabilitar', 'pr_cdcooperativa,pr_idfuncionalidade', vr_nrseqrdr);
+
   COMMIT;
   
   -- Apresenta uma mensagem de ok
