@@ -1,8 +1,8 @@
 UPDATE crapbdt bdt
-   SET bdt.nrctrlim = 8555
- WHERE bdt.cdcooper = 1
-   AND bdt.nrdconta = 8973709
-   AND bdt.nrborder = 550499
-   AND bdt.nrctrlim = 7073;
+   SET bdt.nrctrlim = 230
+ WHERE bdt.cdcooper = 5
+   AND bdt.nrdconta = 121525
+   AND bdt.nrborder = 13718
+   AND bdt.nrctrlim = 64;
 
 COMMIT;
