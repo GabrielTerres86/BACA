@@ -246,6 +246,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 							
 							 05/11/2018 - Correção na chamada da "PREJ0003.fn_verifica_preju_conta"
 							              (Reginaldo / AMcom / P450)
+
+               12/02/2019 - Ajuste feito para melhorar o desempenho do programa. (Kelvin - PRB0040461)
 							
      ............................................................................. */
 
@@ -323,6 +325,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          TABLE OF typ_reg_craphis
          INDEX BY BINARY_INTEGER;
 
+       -- Definicao do tipo de registro de tarifas
+       TYPE typ_reg_tarifas IS  
+       RECORD (cdcooper	    tbgen_iof_lancamento.cdcooper%TYPE    
+              ,nrdconta     tbgen_iof_lancamento.nrdconta%TYPE    
+              ,dtmvtolt     tbgen_iof_lancamento.dtmvtolt%TYPE    
+              ,tpproduto    tbgen_iof_lancamento.tpproduto%TYPE   
+              ,nrcontrato   tbgen_iof_lancamento.nrcontrato%TYPE  
+              ,idlautom     tbgen_iof_lancamento.idlautom%TYPE    
+              ,cdagenci_lcm tbgen_iof_lancamento.cdagenci_lcm%TYPE
+              ,cdbccxlt_lcm tbgen_iof_lancamento.cdbccxlt_lcm%TYPE
+              ,nrdolote_lcm tbgen_iof_lancamento.nrdolote_lcm%TYPE
+              ,nrseqdig_lcm tbgen_iof_lancamento.nrseqdig_lcm%TYPE);
+              
+        -- Definicao do tipo de tabela de associados
+       TYPE typ_tab_tarifas IS
+         TABLE OF typ_reg_tarifas
+         INDEX BY BINARY_INTEGER;
 
        -- Definicao do tipo de registro de associados
        TYPE typ_reg_crapass IS
@@ -387,6 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
        -- Definicao do vetor de memoria
        vr_tab_craphis  typ_tab_craphis;
+       vr_tab_tarifas  typ_tab_tarifas;       
        vr_tab_crapass  typ_tab_crapass;
        vr_tab_crapjur  typ_tab_crapjur;
        vr_tab_crapsda  typ_tab_crapsda;
@@ -789,6 +809,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_des_erro  VARCHAR2(100);
        vr_vlresgat  NUMBER;
        vr_vlsomvld  NUMBER;
+       vr_tarindic  NUMBER := 0;
+       vr_result    VARCHAR2(2000);
 
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
@@ -1257,6 +1279,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      vr_inddebit := 1;
                    END IF;
                  END IF;
+                 
+                 vr_tarindic := vr_tarindic + 1;
+                 
                  -- Criado tratamento para vr_inddebit decorrente da nova regra debito IOF
                  CASE vr_inddebit
                    WHEN 1 THEN
@@ -1369,10 +1394,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        RAISE vr_exc_saida;
                    END;
 
+                                        
+                   --Populando a tabela temporaria com os dados
+                   vr_tab_tarifas(vr_tarindic).cdcooper     := pr_cdcooper;
+                   vr_tab_tarifas(vr_tarindic).nrdconta     := rw_crapsld.nrdconta;
+                   vr_tab_tarifas(vr_tarindic).dtmvtolt     := rw_craplot.dtmvtolt;
+                   vr_tab_tarifas(vr_tarindic).tpproduto    := 5;
+                   vr_tab_tarifas(vr_tarindic).nrcontrato   := 0;
+                   vr_tab_tarifas(vr_tarindic).idlautom     := NULL;
+                   vr_tab_tarifas(vr_tarindic).cdagenci_lcm := rw_craplot.cdagenci;
+                   vr_tab_tarifas(vr_tarindic).cdbccxlt_lcm := rw_craplot.cdbccxlt;
+                   vr_tab_tarifas(vr_tarindic).nrdolote_lcm := rw_craplot.nrdolote;
+                   vr_tab_tarifas(vr_tarindic).nrseqdig_lcm := vr_nrseqdig;
+                   
                    --------------------------------------------------------------------------------------------------
                    -- Atualizar os dados do IOF
                    --------------------------------------------------------------------------------------------------
-                   TIOF0001.pc_altera_iof(pr_cdcooper     => pr_cdcooper
+                   /*TIOF0001.pc_altera_iof(pr_cdcooper     => pr_cdcooper
                                          ,pr_nrdconta     => rw_crapsld.nrdconta
                                          ,pr_dtmvtolt     => rw_craplot.dtmvtolt
                                          ,pr_tpproduto    => 5
@@ -1387,7 +1425,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    -- Condicao para verificar se houve critica                             
                    IF vr_dscritic IS NOT NULL THEN
                      RAISE vr_exc_saida;
-                   END IF;
+                   END IF;*/
                      
                    --Incrementar a quantidade de lancamentos no mes
                    rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
@@ -1476,10 +1514,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        CLOSE cr_tbcc_lautom_controle;
                  END IF;
 
+                     --Populando a tabela temporaria com os dados
+                     vr_tab_tarifas(vr_tarindic).cdcooper     := pr_cdcooper;
+                     vr_tab_tarifas(vr_tarindic).nrdconta     := rw_crapsld.nrdconta;
+                     vr_tab_tarifas(vr_tarindic).dtmvtolt     := rw_craplot.dtmvtolt;
+                     vr_tab_tarifas(vr_tarindic).tpproduto    := 5;
+                     vr_tab_tarifas(vr_tarindic).nrcontrato   := 0;
+                     vr_tab_tarifas(vr_tarindic).idlautom     := vr_idlancto;
+                     vr_tab_tarifas(vr_tarindic).cdagenci_lcm := NULL;
+                     vr_tab_tarifas(vr_tarindic).cdbccxlt_lcm := NULL;
+                     vr_tab_tarifas(vr_tarindic).nrdolote_lcm := NULL;
+                     vr_tab_tarifas(vr_tarindic).nrseqdig_lcm := NULL;
+                     
                      --------------------------------------------------------------------------------------------------
                      -- Atualizar os dados do IOF
                      --------------------------------------------------------------------------------------------------
-                     TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
+                     /*TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
                                            ,pr_nrdconta   => rw_crapsld.nrdconta
                                            ,pr_dtmvtolt   => vr_dtmvtolt
                                            ,pr_tpproduto  => 5
@@ -1491,7 +1541,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      -- Condicao para verificar se houve critica
                      IF vr_dscritic IS NOT NULL THEN
                        RAISE vr_exc_saida;
-                 END IF;
+                 END IF;*/
 
                      --Zerar valor iof no mes
                      rw_crapsld.vliofmes:= 0;
@@ -3259,6 +3309,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          END;
        END LOOP; --rw_crapsld
 
+       BEGIN
+        FORALL vr_tarindic IN INDICES OF vr_tab_tarifas SAVE EXCEPTIONS
+          UPDATE tbgen_iof_lancamento SET
+                 tbgen_iof_lancamento.idlautom     = vr_tab_tarifas(vr_tarindic).idlautom
+                ,tbgen_iof_lancamento.dtmvtolt_lcm = vr_tab_tarifas(vr_tarindic).dtmvtolt
+                ,tbgen_iof_lancamento.cdagenci_lcm = vr_tab_tarifas(vr_tarindic).cdagenci_lcm
+                ,tbgen_iof_lancamento.cdbccxlt_lcm = vr_tab_tarifas(vr_tarindic).cdbccxlt_lcm
+                ,tbgen_iof_lancamento.nrdolote_lcm = vr_tab_tarifas(vr_tarindic).nrdolote_lcm
+                ,tbgen_iof_lancamento.nrseqdig_lcm = vr_tab_tarifas(vr_tarindic).nrseqdig_lcm
+           WHERE tbgen_iof_lancamento.cdcooper   = vr_tab_tarifas(vr_tarindic).cdcooper
+             AND tbgen_iof_lancamento.nrdconta   = vr_tab_tarifas(vr_tarindic).nrdconta
+             AND tbgen_iof_lancamento.nrcontrato = vr_tab_tarifas(vr_tarindic).nrcontrato
+             AND tbgen_iof_lancamento.tpproduto  = vr_tab_tarifas(vr_tarindic).tpproduto
+             AND tbgen_iof_lancamento.idlautom     IS NULL
+             AND tbgen_iof_lancamento.dtmvtolt_lcm IS NULL
+             AND tbgen_iof_lancamento.cdagenci_lcm IS NULL
+             AND tbgen_iof_lancamento.cdbccxlt_lcm IS NULL
+             AND tbgen_iof_lancamento.nrdolote_lcm IS NULL
+             AND tbgen_iof_lancamento.nrseqdig_lcm IS NULL;
+      EXCEPTION
+        WHEN OTHERS THEN 
+           FOR i IN 1..SQL%BULK_EXCEPTIONS.count LOOP
+              -- Montar Mensagem
+              vr_result:= 'Erro: '||i|| ' Indice: '||SQL%BULK_EXCEPTIONS(i).error_index ||' - '|| 
+                          SQLERRM(-SQL%BULK_EXCEPTIONS(i).ERROR_CODE);     
+              -- Iniciar LOG de execução
+              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratado
+                                        ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra ||' --> '||vr_result); --> Log específico deste programa
+
+           END LOOP;
+          
+           RAISE vr_exc_saida;            
+      END;
+       
        -- Atualizar tabela crapsda
        BEGIN
          FORALL idx IN INDICES OF vr_tab_crapsda2 SAVE EXCEPTIONS
