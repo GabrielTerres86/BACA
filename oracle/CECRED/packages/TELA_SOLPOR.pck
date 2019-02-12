@@ -151,7 +151,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 08/02/2019 - Ajustados para utilizar o CNPJ do banco nos filtros, 
+                                   quando for ISPB igual a zero, que é o caso do Banco
+                                   do Brasil (Renato - Supero).
         ..............................................................................*/
     
         -- Tratamento de erros
@@ -204,6 +206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                               ,tbcc_dominio_campo        dom
                               ,tbcc_dominio_campo        dcp
                          WHERE tpr.nrispb_destinataria = ban.nrispbif
+                           AND (tpr.nrcnpj_destinataria = ban.nrcnpjif OR ban.nrispbif > 0) -- Considerar o CNPJ apenas para Banco do Brasil - ISPB = 0
                            AND tpr.idsituacao = dom.cddominio
                            AND dom.nmdominio = 'SIT_PORTAB_SALARIO_RECEBE'
                            AND dcp.nmdominio(+) = tpr.dsdominio_motivo
@@ -694,7 +697,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 08/02/2019 - Ajustados para utilizar o CNPJ do banco nos filtros, 
+                                   quando for ISPB igual a zero, que é o caso do Banco
+                                   do Brasil (Renato - Supero).
         ..............................................................................*/
     
         -- Tratamento de erros
@@ -718,7 +723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpr.dtsolicitacao
 								,tpr.nrnu_portabilidade nusolicitacao
-								,GENE0002.fn_mask_conta(tpr.nrdconta) nrdconta
+								,GENE0002.fn_mask_conta(DECODE(tpr.nrdconta,0, NULL,tpr.nrdconta)) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcpfcgc, 1) nrcpfcgc
 								,tpr.dstelefone telefone
 								,tpr.dsdemail email
@@ -738,6 +743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,tbcc_dominio_campo        dom
 								,tbcc_dominio_campo        dcp
 					 WHERE tpr.nrispb_destinataria = ban.nrispbif
+             AND (tpr.nrcnpj_destinataria = ban.nrcnpjif OR ban.nrispbif > 0) -- Considerar o CNPJ apenas para Banco do Brasil - ISPB = 0 
 						 AND tpr.idsituacao = dom.cddominio
 						 AND dom.nmdominio = 'SIT_PORTAB_SALARIO_RECEBE'
 						 AND dcp.nmdominio(+) = tpr.dsdominio_motivo
@@ -984,7 +990,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 08/02/2019 - Ajustados para utilizar o CNPJ do banco nos filtros, 
+                                   quando for ISPB igual a zero, que é o caso do Banco
+                                   do Brasil (Renato - Supero).
         ..............................................................................*/
     
         -- Tratamento de erros
@@ -1008,7 +1016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpe.dtsolicitacao
 								,tpe.nrnu_portabilidade nusolicitacao
-								,tpe.nrdconta
+								,decode(tpe.nrdconta, 0, NULL, tpe.nrdconta) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
 								,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
 								,tpe.nmprimtl
@@ -1029,6 +1037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 							,tbcc_dominio_campo       dom
 							,tbcc_dominio_campo       dcp
 					WHERE tpe.nrispb_banco_folha = ban.nrispbif
+           AND (tpe.nrcnpj_banco_folha = ban.nrcnpjif OR ban.nrispbif > 0) -- Considerar o CNPJ apenas para Banco do Brasil - ISPB = 0
 					 AND tpe.idsituacao = dom.cddominio
 					 AND dom.nmdominio = 'SIT_PORTAB_SALARIO_ENVIA'
 					 AND dcp.nmdominio(+) = tpe.dsdominio_motivo
