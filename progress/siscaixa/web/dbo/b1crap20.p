@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 26/10/2018
+    Ultima Atualizacao: 02/06/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -241,41 +241,9 @@
 						
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                             crapass, crapttl, crapjur (Adriano - P339). 
-
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 									 		 
-			    23/08/2017 - Alterado para validar as informacoes do operador 
-							 pelo AD. (PRJ339 - Reinert)
-                             
-                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
-                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
-
-			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
-
-                             
-                13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
-                             norturno rodando (Douglas Pagel - AMcom).
-
-				29/09/2018 -  Correcao para TED de titularidade diferente, sempre que for em especie nao deve 
-	                          gerar cobranca de tarifa e, em caso de devolucao por qualquer motivo, 
-	                          tambem nao devera ser feito estorno na conta do cooperado
-							  (Jonata - Mouts / PRB0040337).
-
-
-				
-			    26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a
- 				             finalidade 400 - Tributos Municipais ISS - LCP 157
-                             (Jonata  - Mouts / INC0024119).
-
-				13/11/2018 - Adicionada parametros a procedure 
-							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
-        
-        16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
------------------------------------------------------------------------------ **/
+-----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -416,31 +384,26 @@ PROCEDURE retorna-conta-de:
             ELSE
                 DO:
                     ASSIGN p-nome-de1    = crapass.nmprimtl
+                           p-nome-de2    = crapass.nmsegntl
+                           
                            p-pessoa-de   = IF crapass.inpessoa = 1 THEN 
                                               'V1' 
                                            ELSE 'V2'.
 
                     IF   crapass.inpessoa = 1   THEN
-					   DO:
-					       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999")
-                                  p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
-
-					       FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
-						                      WHERE crapttl.cdcooper = crapass.cdcooper AND
-											        crapttl.nrdconta = crapass.nrdconta AND
-											        crapttl.idseqttl = 2
-											        NO-LOCK:
-						   
-						      ASSIGN p-cpfcnpj-de2 = STRING(crapttl.nrcpfcgc,"99999999999")
-				                     p-cpfcnpj-de2 = STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx")
-									 p-nome-de2    = crapttl.nmextttl.
-
-						   END.
-
-					   END.
+                         ASSIGN p-cpfcnpj-de1 = 
+                                   STRING(crapass.nrcpfcgc,"99999999999")
+                                p-cpfcnpj-de1 =
+                                   STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
                     ELSE
-                       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999999")
-                              p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
+                         ASSIGN p-cpfcnpj-de1 = 
+                                   STRING(crapass.nrcpfcgc,"99999999999999")
+                                p-cpfcnpj-de1 = 
+                                   STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
+
+                    IF   crapass.nrcpfstl <> 0   THEN
+                         ASSIGN p-cpfcnpj-de2 =
+                                     STRING(crapass.nrcpfstl,"99999999999")
 
                                 p-cpfcnpj-de2 = 
                                      STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx").
@@ -484,7 +447,7 @@ PROCEDURE valida-valores:
     DEFINE INPUT PARAMETER p-cod-finalidade   AS INT  NO-UNDO. /*Cod.Finalidade*/
     DEFINE INPUT PARAMETER p-dsc-historico    AS CHAR NO-UNDO. /*Descriçao do Histórico*/
     DEFINE INPUT PARAMETER p-ispb-if          AS CHAR   NO-UNDO.  /* ISPB Banco    */
-	DEFINE INPUT PARAMETER p-cdidtran         AS CHAR NO-UNDO.
+
 
     DEF VAR aux_flestcri AS INTE                    NO-UNDO.
 
@@ -650,7 +613,7 @@ PROCEDURE valida-valores:
          DO:
             ASSIGN i-cod-erro  = 0.
                    c-desc-erro = "Nao é posssivel efetuar transferencia entre "
-                                 + "IFs do Sistema AILOS".
+                                 + "IFs do Sistema CECRED".
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
                            INPUT p-nro-caixa,
@@ -1041,7 +1004,7 @@ PROCEDURE valida-valores:
                                    c-desc-erro = 
                                          "Preenchimento de campo agencia nao e permitido para o " +
                                          "tipo de conta: Conta de Pagamento.". 
-
+                             
                             RUN cria-erro (INPUT p-cooper,
                                            INPUT p-cod-agencia,
                                            INPUT p-nro-caixa,
@@ -1323,7 +1286,8 @@ PROCEDURE valida-valores:
                 END. 
         END. 
       
-    IF  (INT(p-cod-finalidade) = 99 OR INT(p-cod-finalidade) = 99999 OR INT(p-cod-finalidade) = 999) AND p-dsc-historico = '' THEN
+        IF  (INT(p-cod-finalidade) = 99 OR INT(p-cod-finalidade) = 99999 OR INT(p-cod-finalidade) = 999) AND p-dsc-historico = ''
+          THEN 
           DO:
                ASSIGN i-cod-erro  = 0
                       c-desc-erro = "Informe a descriçao do histórico". 
@@ -1334,37 +1298,6 @@ PROCEDURE valida-valores:
                               INPUT c-desc-erro,
                               INPUT YES).
           END. 
-	/* Quando informado a finalidade “400 - Tributos Municipais ISS - LCP 157" deve ser validado
-       o código identificador onde pode conter apenas números e ter no máximo 11 posições.*/
-    ELSE IF int(p-cod-finalidade) = 400 THEN
-	  DO:
-	    DEC(p-cdidtran) NO-ERROR.
-
-        IF ERROR-STATUS:ERROR THEN    
-           DO:
-			 ASSIGN i-cod-erro  = 0
-                    c-desc-erro = "Codigo identificador deve conter apenas caracteres numericos.". 
-             RUN cria-erro (INPUT p-cooper,
-                            INPUT p-cod-agencia,
-                            INPUT p-nro-caixa,
-                            INPUT i-cod-erro,
-                            INPUT c-desc-erro,
-                            INPUT YES).
-		   END.
-        ELSE IF LENGTH(TRIM(p-cdidtran)) > 11 THEN
-          DO:
-		     ASSIGN i-cod-erro  = 0
-                    c-desc-erro = "Codigo identificador deve conter no maximo 11 caracteres.". 
-					
-             RUN cria-erro (INPUT p-cooper,
-                            INPUT p-cod-agencia,
-                            INPUT p-nro-caixa,
-                            INPUT i-cod-erro,
-                            INPUT c-desc-erro,
-                            INPUT YES).
-	  	  END.
-		
-	  END.
     
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -1463,14 +1396,10 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     DEF VAR aux_nmdBanco AS CHAR                  NO-UNDO.
     DEF VAR aux_cddBanco AS CHAR                  NO-UNDO.   
 
-    DEF VAR aux_tpsconta AS CHAR                  NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR                  NO-UNDO.
-
     DEF VAR aux_qtacobra AS INTE                  NO-UNDO.
     DEF VAR aux_fliseope AS INTE                  NO-UNDO.
     DEF VAR aux_cdcritic AS INTE                  NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                  NO-UNDO.
-    DEF VAR aux_nrseqdig AS INTE                  NO-UNDO.
 
     DEF BUFFER crabhis FOR craphis.
 
@@ -1545,12 +1474,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
             RETURN "NOK".
         END.
 
-	IF int(p-cod-finalidade) = 400 THEN
-	  DO:
-	     ASSIGN p-cod-id-transf = STRING(dec(p-cod-id-transf),"99999999999").
-		
-	  END.
-
     /* Lote para craptvl e para autenticacao */
     IF  p-tipo-doc = 3 OR p-tipo-doc = 4  THEN
         DO:
@@ -1595,29 +1518,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    craplot.cdopecxa = p-cod-operador.
          
         END.
-
-    ASSIGN aux_nrseqdig = craplot.nrseqdig + 1.
-
-    IF i-cdhistor = 523 THEN
-		DO:
-			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-			/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
-			RUN STORED-PROCEDURE pc_sequence_progress
-			aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-							,INPUT "NRSEQDIG"
-							,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
-							,INPUT "N"
-							,"").
-
-			CLOSE STORED-PROC pc_sequence_progress
-			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-			ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
-						WHEN pc_sequence_progress.pr_sequence <> ?.
-		END.
 
     ASSIGN in99 = 0.
 
@@ -1666,46 +1566,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
             IF   p-tipo-pessoa-de = 1  THEN
                  DO:
                     aux_contador = 0.
-                    
-                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                    RUN STORED-PROCEDURE pc_lista_tipo_modalidade
-                      aux_handproc = PROC-HANDLE NO-ERROR
-                                              (INPUT 1,     /* Tipo de pessoa */
-                                               INPUT "2,3", /* Tipo de conta */
-                                              OUTPUT "",    /* Descriçao do Tipo de conta */
-                                              OUTPUT "",    /* Flag Erro */
-                                              OUTPUT "").   /* Descriçao da crítica */
-                    
-                    CLOSE STORED-PROC pc_lista_tipo_modalidade
-                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                    
-                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                    
-                    ASSIGN aux_tpsconta = ""
-                           aux_des_erro = ""
-                           aux_dscritic = ""
-                           aux_tpsconta = pc_lista_tipo_modalidade.pr_tpcontas 
-                                           WHEN pc_lista_tipo_modalidade.pr_tpcontas <> ?
-                           aux_des_erro = pc_lista_tipo_modalidade.pr_des_erro 
-                                           WHEN pc_lista_tipo_modalidade.pr_des_erro <> ?
-                           aux_dscritic = pc_lista_tipo_modalidade.pr_dscritic
-                                           WHEN pc_lista_tipo_modalidade.pr_dscritic <> ?.
-                    
-                    IF aux_des_erro = "NOK"  THEN
-                         DO:
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = aux_dscritic.
-                                 
-                            RUN cria-erro (INPUT p-cooper,
-                                           INPUT p-cod-agencia,
-                                           INPUT p-nro-caixa,
-                                           INPUT i-cod-erro,
-                                           INPUT c-desc-erro,
-                                           INPUT YES).
-                            
-                            RETURN "NOK".
-                         END.
-                    
                     FOR EACH crapttl WHERE 
                              crapttl.cdcooper = crapcop.cdcooper  AND
                              crapttl.nrcpfcgc = DEC(p-cpfcnpj-de) NO-LOCK,
@@ -1713,7 +1573,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                               crapass.cdcooper = crapcop.cdcooper  AND
                               crapass.nrdconta = crapttl.nrdconta  AND
                               crapass.dtdemiss = ?                 AND
-                              NOT CAN-DO(aux_tpsconta, STRING(crapass.cdtipcta))
+                              NOT CAN-DO("5,6,7,17,18",STRING(crapass.cdtipcta))
                               NO-LOCK:
 
                         ASSIGN aux_contador   = aux_contador + 1
@@ -1740,14 +1600,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     ELSE
          ASSIGN p-nro-conta-rm = p-nro-conta-de.
     
-	/* TED de titularidade diferente, sempre que for em especie nao deve 
-	   gerar cobranca de tarifa e, em caso de devolucao por qualquer motivo, 
-	   tambem nao devera ser feito estorno na conta do cooperado.	*/
-	IF p-tipo-doc = 3 AND p-tipo-pag = 'E' THEN
-	   ASSIGN p-nro-conta-rm = 0
-	          p-aviso-cx = FALSE.
-	   
-
     ASSIGN aux_nrdctitg = " "
            aux_cdagenci = " ".
     IF  p-nro-conta-rm > 0 THEN
@@ -1875,7 +1727,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
            craptvl.cdagenci = p-cod-agencia
            craptvl.cdbccxlt = 11 /* Fixo */
            craptvl.nrdocmto = i-nro-docto
-           craptvl.nrseqdig = aux_nrseqdig
+           craptvl.nrseqdig = craplot.nrseqdig + 1   
            craptvl.nrcctrcb = p-nro-conta-para             
            craptvl.cdfinrcb = p-cod-finalidade
            craptvl.tpdctacr = p-tipo-conta-cr
@@ -1908,8 +1760,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     ELSE 
         ASSIGN craptvl.flgpescr = NO.
                
-    IF i-cdhistor <> 523 THEN
-    DO:
     ASSIGN craplot.qtcompln = craplot.qtcompln + 1
            craplot.vlcompcr = craplot.vlcompcr + p-val-doc
            craplot.qtinfoln = craplot.qtinfoln + 1
@@ -1918,7 +1768,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
            p-nro-docmto     = craptvl.nrdocmto.
 
     VALIDATE craplot.
-    END.
 
     /*--- Grava Autenticacao Arquivo/Spool --*/
     RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
@@ -1965,24 +1814,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                   craplot.nrdcaixa = p-nro-caixa
                   craplot.cdopecxa = p-cod-operador.
         END.
-   
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-    /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
-    RUN STORED-PROCEDURE pc_sequence_progress
-    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-                      ,INPUT "NRSEQDIG"
-                      ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote-lcm)
-                      ,INPUT "N"
-                      ,"").
-
-    CLOSE STORED-PROC pc_sequence_progress
-    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
-                WHEN pc_sequence_progress.pr_sequence <> ?.
    
     IF   p-nro-conta-rm <> 0   THEN
          DO:
@@ -2157,13 +1988,22 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                    STRING(p-nro-conta-rm,"99999999")
                                               craplcm.nrdocmto = i-nro-docto
                                               craplcm.cdhistor = craphis.cdhistor
-                                              craplcm.nrseqdig = aux_nrseqdig
+                                              craplcm.nrseqdig = craplot.nrseqdig 
+                                                                 + 1
                                               craplcm.vllanmto = aux_vllanmto
                                               craplcm.vldoipmf = 0
                                               craplcm.nrautdoc = 
                                                               p-ult-sequencia-lcm
-                                              craplcm.cdpesqbb = "CRAP020".
+                                              craplcm.cdpesqbb = "CRAP020"
                                                
+                                          /* ATUALIZAR LOTE */
+                                          craplot.nrseqdig  = craplot.nrseqdig + 1 
+                                          craplot.qtcompln  = craplot.qtcompln + 1
+                                          craplot.qtinfoln  = craplot.qtinfoln + 1
+                                          craplot.vlcompdb  = craplot.vlcompdb + 
+                                                              aux_vllanmto
+                                          craplot.vlinfodb  = craplot.vlinfodb + 
+                                                              aux_vllanmto.                                                                           
                                           VALIDATE craplcm.
                                     END.
                                 ELSE
@@ -2212,15 +2052,13 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                             ,INPUT p-cod-operador       /* Operador */
                                                             ,INPUT p-cod-agencia        /* PA */ 
                                                             ,INPUT 100                  /* Banco */
-                                                            ,INPUT crapdat.dtmvtocd     /* Data de movimento */
+                                                            ,INPUT crapdat.dtmvtolt     /* Data de movimento */
                                                             ,INPUT "b1crap20"           /* Cód. programa */
                                                             ,INPUT 2                    /* Id. Origem*/
                                                             ,INPUT p-nro-conta-rm       /* Nr. da conta */
                                                             ,INPUT IF p-tipo-doc = 1 OR p-tipo-doc = 2 THEN 10 ELSE 11 /* Tipo de tarifa DOC = 14/TED = 15 */
                                                             ,INPUT 0                    /* Tipo TAA */
                                                             ,INPUT 1                    /* Quantidade de operacoes */
-															,INPUT 0					/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
-															,INPUT 0					/* hora de realização da operação -adicionado por Valeria Supero */  
                                                             ,OUTPUT 0                   /* Quantidade de operações a serem cobradas */
                                                             ,OUTPUT 0                   /* Indicador de isencao de tarifa (0 - nao isenta, 1 - isenta) */
                                                             ,OUTPUT 0    /* Código da crítica */
@@ -2287,7 +2125,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                     INPUT 7999,            /* nrdolote */        
                                     INPUT i-tipo-lote,     /* tpdolote */         
                                     INPUT p-cod-operador,
-                                    INPUT crapdat.dtmvtocd,
+                                    INPUT crapdat.dtmvtolt,
                                     INPUT crapdat.dtmvtocd,
                                     INPUT p-nro-conta-rm,
                                     INPUT STRING(p-nro-conta-rm,"99999999"),
@@ -2359,7 +2197,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                  INPUT p-idtipcar, 
                                  INPUT i-nro-docto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT STRING(p-nrcartao),
+                                 INPUT p-nrcartao,
                                  INPUT aux_vllanmto,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT p-cod-banco,
@@ -3009,53 +2847,47 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     /* Gera um arquivo do TED on-line - SPB */
     IF (c-tipo-docto = 'TED C' OR c-tipo-docto = 'TED D') AND aux_flgopspb  THEN
         DO:        
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-          RUN STORED-PROCEDURE pc_proc_envia_tec_ted_prog 
-          aux_handproc = PROC-HANDLE NO-ERROR
-                                     (INPUT crapcop.cdcooper /* Cooperativa */
-                                     ,INPUT p-cod-agencia    /* Cod. Agencia */
-                                     ,INPUT p-nro-caixa      /* Numero  Caixa */
-                                     ,INPUT p-cod-operador   /* Operador */
-                                     ,INPUT 1                /* Mesmo Titular */
-                                     ,INPUT p-val-doc        /* Vlr. DOCMTO */
-                                     ,INPUT aux_nrctrlif     /* NumCtrlIF */
-                                     ,INPUT p-nro-conta-de   /* Nro Conta */
-                                     ,INPUT p-cod-banco      /* Codigo Banco */
-                                     ,INPUT p-cod-agencia-banco /* Cod Agencia */
-                                     ,INPUT p-nro-conta-para /* Nr.Ct.destino  */
-                                     ,INPUT p-cod-finalidade /* Finalidade  */
-                                     ,INPUT p-tipo-conta-db /* Tp. conta deb */
-                                     ,INPUT p-tipo-conta-cr /* Tp conta cred  */
-                                     ,INPUT p-nome-de /* Nome Do titular */
-                                     ,INPUT p-nome-de1 /* Nome De 2TTT */
-                                     ,INPUT DECIMAL(p-cpfcnpj-de) /* CPF/CNPJ Do titular */
-                                     ,INPUT DECIMAL(p-cpfcnpj-de1) /* CPF sec TTL */
-                                     ,INPUT p-nome-para /* Nome Para */
-                                     ,INPUT p-nome-para1 /* Nome Para 2TTL */
-                                     ,INPUT DECIMAL(p-cpfcnpj-para) /* CPF/CNPJ Para */
-                                     ,INPUT DECIMAL(p-cpfcnpj-para1) /* CPF Para 2TTL */
-                                     ,INPUT p-tipo-pessoa-de /* Tp. pessoa De  */
-                                     ,INPUT p-tipo-pessoa-para /* Tp. pessoa Para */
-                                     ,INPUT 0 /* FALSE - Conta Salario */
-                                     ,INPUT p-cod-id-transf /* tipo de transferencia */
-                                     ,INPUT 2 /* origem 2 = Caixa Online */   
-                                     ,INPUT ? /* data egendamento */
-                                     ,INPUT 0 /* nr. seq arq. */
-                                     ,INPUT 0 /* Cod. Convenio */
-                                     ,INPUT p-desc-hist /* Dsc do Hist.*/
-                                     ,INPUT aux_hrtransa /* Hora transacao */
-                                     ,INPUT p-ispb-if /* ISPB Banco */
-                                     ,INPUT 1 /* DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED */
-                                     ,OUTPUT 0    /* Codigo do erro */
-                                     ,OUTPUT ""). /* Descriçao da crítica */
-                  CLOSE STORED-PROC pc_proc_envia_tec_ted_prog
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-            
-                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            RUN sistema/generico/procedures/b1wgen0046.p
+                PERSISTENT SET h-b1wgen0046.
 
-                  ASSIGN c-desc-erro = ""
-                         c-desc-erro = pc_proc_envia_tec_ted_prog.pr_dscritic
-                                         WHEN pc_proc_envia_tec_ted_prog.pr_dscritic <> ?.
+            RUN proc_envia_tec_ted IN h-b1wgen0046
+                                      (INPUT crapcop.cdcooper,
+                                       INPUT p-cod-agencia,
+                                       INPUT p-nro-caixa,
+                                       INPUT p-cod-operador,
+                                       INPUT p-titular,
+                                       INPUT p-val-doc,
+                                       INPUT aux_nrctrlif,
+                                       INPUT p-nro-conta-de,
+                                       INPUT p-cod-banco,
+                                       INPUT p-cod-agencia-banco,
+                                       INPUT p-nro-conta-para,  
+                                       INPUT p-cod-finalidade,
+                                       INPUT p-tipo-conta-db,
+                                       INPUT p-tipo-conta-cr,
+                                       INPUT p-nome-de,
+                                       INPUT p-nome-de1,
+                                       INPUT DECIMAL(p-cpfcnpj-de),
+                                       INPUT DECIMAL(p-cpfcnpj-de1),
+                                       INPUT p-nome-para,
+                                       INPUT p-nome-para1,
+                                       INPUT DECIMAL(p-cpfcnpj-para),
+                                       INPUT DECIMAL(p-cpfcnpj-para1),
+                                       INPUT p-tipo-pessoa-de,
+                                       INPUT p-tipo-pessoa-para,
+                                       INPUT FALSE,/*Conta Salario*/
+                                       INPUT p-cod-id-transf,
+                                       INPUT 2, /* origem 2 = Caixa Online */
+                                       INPUT ?,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT p-desc-hist,
+                                       INPUT aux_hrtransa,
+                                       INPUT p-ispb-if,
+                                       OUTPUT c-desc-erro).
+            
+            DELETE PROCEDURE h-b1wgen0046.
+
             IF   c-desc-erro <> ""   THEN
                  DO: 
                     ASSIGN i-cod-erro  = 0.
@@ -3097,7 +2929,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                            INPUT NO).
          END.
 
-    IF AVAIL craplot THEN
     RELEASE craplot.
     RELEASE craptvl.
 
@@ -3207,50 +3038,16 @@ PROCEDURE verifica-operador:
              RETURN "NOK".
          END.
 
-/* PRJ339 - REINERT (INICIO) */         
-    /* Validacao de senha do usuario no AD somente no ambiente de producao */
-    IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-         DO:
-      
-       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-       /* Efetuar a chamada da rotina Oracle */ 
-       RUN STORED-PROCEDURE pc_valida_senha_AD
-           aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                               INPUT p-cod-operador,   /*Operador   */
-                                               INPUT p-senha-operador, /*Nr.da Senha*/
-                                              OUTPUT 0,                /*Cod. critica */
-                                              OUTPUT "").              /*Desc. critica*/
-
-       /* Fechar o procedimento para buscarmos o resultado */ 
-       CLOSE STORED-PROC pc_valida_senha_AD
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-       HIDE MESSAGE NO-PAUSE.
-
-       /* Busca possíveis erros */ 
-       ASSIGN i-cod-erro  = 0
-              c-desc-erro = ""
-              i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                            WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-              c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                            WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                            
-      /* Apresenta a crítica */
-      IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
+    IF   crapope.cddsenha <> p-senha-operador   THEN
          DO:
              RUN cria-erro (INPUT p-cooper,        
                             INPUT p-cod-agencia,
                             INPUT p-nro-caixa,
-                             INPUT i-cod-erro,
+                            INPUT 003,
                             INPUT "",
                             INPUT YES).
              RETURN "NOK".
          END.
-    END.
-/* PRJ339 - REINERT (FIM) */
 
     /* Nivel 2-Coordenador / 3-Gerente */
     IF   crapope.nvoperad < 2   THEN
@@ -3339,51 +3136,16 @@ PROCEDURE verifica-operador-ted:
     IF  TRIM(p-cod-operador) <> ""   AND
         TRIM(p-senha-operador) <> "" THEN
         DO:
-      /* PRJ339 - REINERT (INICIO) */         
-          /* Validacao de senha do usuario no AD somente no ambiente de producao */
-          IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-            DO:
-            
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-             /* Efetuar a chamada da rotina Oracle */ 
-             RUN STORED-PROCEDURE pc_valida_senha_AD
-                 aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                                     INPUT p-cod-operador,   /*Operador   */
-                                                     INPUT p-senha-operador, /*Nr.da Senha*/
-                                                    OUTPUT 0,                /*Cod. critica */
-                                                    OUTPUT "").              /*Desc. critica*/
-
-             /* Fechar o procedimento para buscarmos o resultado */ 
-             CLOSE STORED-PROC pc_valida_senha_AD
-                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-             HIDE MESSAGE NO-PAUSE.
-
-             /* Busca possíveis erros */ 
-             ASSIGN i-cod-erro  = 0
-                    c-desc-erro = ""
-                    i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                                  WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                    c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                                  WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                                  
-            /* Apresenta a crítica */
-            IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-            DO:
+            IF  crapope.cddsenha <> p-senha-operador THEN
+                DO:
                     RUN cria-erro (INPUT p-cooper,        
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
-                                   INPUT i-cod-erro,
+                                   INPUT 003,
                                    INPUT "",
                                    INPUT YES).
                     RETURN "NOK".
                 END.
-          END.
-      /* PRJ339 - REINERT (FIM) */
-
         END.
 
     /* Validar quando o valor do TED ultrapassar o limite 
@@ -3597,7 +3359,7 @@ END.
      RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                          INPUT 0,
                                          INPUT aux_dscartao, 
-                                         INPUT crapdat.dtmvtocd,
+                                         INPUT crapdat.dtmvtolt,
                                         OUTPUT p-nro-conta,
                                         OUTPUT aux_cdcooper,
                                         OUTPUT p-nrcartao,

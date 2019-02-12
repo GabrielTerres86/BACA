@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 21/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 06/02/2018
 
    Dados referentes ao programa:
 
@@ -98,17 +98,6 @@
 
 			   06/02/2018 - Adicionado novo historico. (SD 838581 - Kelvin)
 
-               16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
-                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-                            
-         21/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                      norturno rodando (Douglas Pagel - AMcom).
-
-               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
-               
-               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
-                     Heitor (Mouts)
-
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap56.p - Outros                                                */
@@ -116,7 +105,6 @@
 
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
-{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 
@@ -164,13 +152,6 @@ DEF  VAR glb_stsnrcal      AS LOGI                              NO-UNDO.
 DEF  VAR aux_ponteiro      AS INTE                              NO-UNDO.
 DEF  VAR aux_hrlimfol      AS CHAR                              NO-UNDO.
 
-/* Variáveis de uso da BO 200 */
-DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
-DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
-DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
-DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.
-
-
 DEF BUFFER b-craphis FOR craphis.
 
 DEF TEMP-TABLE tt-conta                                         NO-UNDO
@@ -215,9 +196,6 @@ PROCEDURE valida-outros-conta:
     
     DEF VAR aux_dshistor AS CHAR                    NO-UNDO.
     DEF VAR aux_flestcri AS INTE                    NO-UNDO.
-    DEF VAR aux_cdmodali AS INTE                    NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR                    NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR                    NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
      
@@ -276,19 +254,6 @@ PROCEDURE valida-outros-conta:
                           INPUT c-desc-erro,
                           INPUT YES).
            RETURN "NOK".
-       END.
-
-   IF  p-cdhistor = 2553 THEN
-       DO:
-         ASSIGN i-cod-erro  = 0 
-                c-desc-erro = "Pagamentos no caixa devem ser realizados na rotina 54.".           
-         RUN cria-erro (INPUT p-cooper,
-                        INPUT p-cod-agencia,
-                        INPUT p-nro-caixa,
-                        INPUT i-cod-erro,
-                        INPUT c-desc-erro,
-                        INPUT YES).
-         RETURN "NOK".   
        END.
 
    FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
@@ -558,47 +523,10 @@ PROCEDURE valida-outros-conta:
    ASSIGN p-nome-titular = crapass.nmprimtl.
 
    IF   craphis.indebcre = "C"   THEN 
-        DO:
-            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
-            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                                 INPUT crapass.cdtipcta, /* Tipo de conta */
-                                                OUTPUT 0,                /* Modalidade */
-                                                OUTPUT "",               /* Flag Erro */
-                                                OUTPUT "").              /* Descriçao da crítica */
-
-            CLOSE STORED-PROC pc_busca_modalidade_tipo
-                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-            ASSIGN aux_cdmodali = 0
-                   aux_des_erro = ""
-                   aux_dscritic = ""
-                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
-                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
-                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
-                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
-                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
-            
-            IF aux_des_erro = "NOK"  THEN
-                DO:
-                    ASSIGN i-cod-erro  = 0
-                           c-desc-erro = aux_dscritic.
-                    RUN cria-erro (INPUT p-cooper,
-                                   INPUT p-cod-agencia,
-                                   INPUT p-nro-caixa,
-                                   INPUT i-cod-erro,
-                                   INPUT c-desc-erro,
-                                   INPUT YES).
-                    RETURN "NOK".
-                END.
-            
-            IF   aux_cdmodali = 3 THEN  /* Conta tipo Poupan‡a */
+        IF   crapass.cdtipcta = 6   OR
+             crapass.cdtipcta = 7   THEN  /* Conta tipo Poupan‡a */
              ASSIGN p-poupanca = YES.
-        END.
+
    RETURN "OK".
 
 END PROCEDURE.
@@ -915,8 +843,8 @@ PROCEDURE valida-outros:
                   END.
              ELSE 
                   DO:
-                      IF   p-liberacao <= crapdat.dtmvtocd      OR
-                           p-liberacao > crapdat.dtmvtocd + 30  OR
+                      IF   p-liberacao <= crapdat.dtmvtolt      OR
+                           p-liberacao > crapdat.dtmvtolt + 30  OR
                           (CAN-DO("1,7",STRING(weekday(p-liberacao))))   THEN
                            DO:
                                ASSIGN i-cod-erro  = 13  
@@ -956,7 +884,7 @@ PROCEDURE valida-outros:
          DO:
              FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper     AND
                                 craplcm.nrdconta = p-conta-atualiza     AND
-                                craplcm.dtmvtolt = crapdat.dtmvtocd     AND
+                                craplcm.dtmvtolt = crapdat.dtmvtolt     AND
                                 craplcm.cdhistor = 26                   AND
                                 craplcm.nrdocmto = p-nro-docto 
                                 USE-INDEX craplcm2 NO-LOCK NO-ERROR.
@@ -1011,7 +939,7 @@ PROCEDURE valida-outros:
         
              FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper    AND
                                     craplcm.nrdconta  = crapsld.nrdconta    AND
-                                    craplcm.dtmvtolt  = crapdat.dtmvtocd    AND
+                                    craplcm.dtmvtolt  = crapdat.dtmvtolt    AND
                                     craplcm.cdhistor <> 289 USE-INDEX craplcm2
                                     NO-LOCK:
                                     
@@ -1060,10 +988,9 @@ PROCEDURE valida-outros:
              FIND FIRST crapdpb WHERE crapdpb.cdcooper = crapcop.cdcooper   AND 
                                       crapdpb.nrdconta = aux_nrdconta       AND
                                       crapdpb.nrdocmto = p-nro-docto        AND
-                                      crapdpb.dtliblan > crapdat.dtmvtocd   AND
+                                      crapdpb.dtliblan > crapdat.dtmvtolt   AND
                                       crapdpb.inlibera  = 1  
                                       USE-INDEX crapdpb2 NO-LOCK NO-ERROR.
-         
              IF   NOT AVAIL crapdpb   THEN 
                   DO: 
                       ASSIGN i-cod-erro  = 82
@@ -1123,7 +1050,7 @@ PROCEDURE valida-outros:
 
              FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper    AND
                                     craplcm.nrdconta  = crapsld.nrdconta    AND
-                                    craplcm.dtmvtolt  = crapdat.dtmvtocd    AND
+                                    craplcm.dtmvtolt  = crapdat.dtmvtolt    AND
                                     craplcm.cdhistor <> 289
                                     USE-INDEX craplcm2 NO-LOCK:
 
@@ -1214,12 +1141,12 @@ PROCEDURE valida-outros:
    
     IF   p-nro-docto > 0 THEN 
          DO:
-             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper     AND
-                                craplcm.dtmvtolt = crapdat.dtmvtocd     AND
-                                craplcm.cdagenci = p-cod-agencia        AND
-                                craplcm.cdbccxlt = 11                   AND /*Fixo*/
-                                craplcm.nrdolote = i-nro-lote           AND
-                                craplcm.nrdctabb = aux_nrdconta         AND
+             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+                                craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                                craplcm.cdagenci = p-cod-agencia    AND
+                                craplcm.cdbccxlt = 11               AND /*Fixo*/
+                                craplcm.nrdolote = i-nro-lote       AND
+                                craplcm.nrdctabb = aux_nrdconta     AND
                                 craplcm.nrdocmto = p-nro-docto      
                                 USE-INDEX craplcm1 NO-ERROR.
                                 
@@ -1273,15 +1200,15 @@ PROCEDURE valida-outros:
     IF   craphis.inavisar = 1   THEN  
          DO:
              IF   CAN-FIND(crapavs WHERE 
-                           crapavs.cdcooper = crapcop.cdcooper    AND
-                           crapavs.dtmvtolt = crapdat.dtmvtocd    AND
-                           crapavs.cdempres = 0                   AND
-                           crapavs.cdagenci = crapass.cdagenci    AND
-                           crapavs.cdsecext = crapass.cdsecext    AND
-                           crapavs.nrdconta = crapass.nrdconta    AND
-                           crapavs.dtdebito = crapdat.dtmvtocd    AND
-                           crapavs.cdhistor = craphis.cdhistor    AND
-                           crapavs.nrdocmto = p-nro-docto)        THEN  
+                           crapavs.cdcooper = crapcop.cdcooper  AND
+                           crapavs.dtmvtolt = crapdat.dtmvtolt  AND
+                           crapavs.cdempres = 0                 AND
+                           crapavs.cdagenci = crapass.cdagenci  AND
+                           crapavs.cdsecext = crapass.cdsecext  AND
+                           crapavs.nrdconta = crapass.nrdconta  AND
+                           crapavs.dtdebito = crapdat.dtmvtolt  AND
+                           crapavs.cdhistor = craphis.cdhistor  AND
+                           crapavs.nrdocmto = p-nro-docto)      THEN  
                   DO:
                       ASSIGN i-cod-erro  = 22
                              c-desc-erro = " ".           
@@ -1322,10 +1249,8 @@ PROCEDURE atualiza-outros:
     DEFINE  VARIABLE c-nome-titular1    AS CHAR NO-UNDO.
     DEFINE  VARIABLE c-nome-titular2    AS CHAR NO-UNDO.
     DEFINE  VARIABLE i                  AS INTE NO-UNDO.
-    DEFINE  VARIABLE aux_nrseqdig       AS INTE NO-UNDO.
  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
-     
      
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -1409,7 +1334,7 @@ PROCEDURE atualiza-outros:
         END.
  
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
+                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -1419,7 +1344,7 @@ PROCEDURE atualiza-outros:
          DO:
              CREATE craplot.
              ASSIGN craplot.cdcooper = crapcop.cdcooper
-                    craplot.dtmvtolt = crapdat.dtmvtocd
+                    craplot.dtmvtolt = crapdat.dtmvtolt
                     craplot.cdagenci = p-cod-agencia   
                     craplot.cdbccxlt = 11              
                     craplot.nrdolote = i-nro-lote
@@ -1481,9 +1406,9 @@ PROCEDURE atualiza-outros:
                   LEAVE.
              END. /* DO WHILE*/
 
-             IF  (MONTH(crapatr.dtultdeb) <> MONTH(crapdat.dtmvtocd)    OR
-                 (YEAR(crapatr.dtultdeb) <> YEAR(crapdat.dtmvtocd)))   THEN
-                     ASSIGN crapatr.dtultdeb = crapdat.dtmvtocd.
+             IF  (MONTH(crapatr.dtultdeb) <> MONTH(crapdat.dtmvtolt)    OR
+                  (YEAR(crapatr.dtultdeb) <> YEAR(crapdat.dtmvtolt)))   THEN
+                  ASSIGN crapatr.dtultdeb = crapdat.dtmvtolt.
 
              RELEASE crapatr.
 
@@ -1491,41 +1416,19 @@ PROCEDURE atualiza-outros:
 
     IF   craphis.inavisar = 1   THEN  
          DO:
-             /* Revitalizacao - Remocao de lotes */
-             IF p-cdhistor <> 561 THEN
-             DO:
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-                /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
-                RUN STORED-PROCEDURE pc_sequence_progress
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-                                  ,INPUT "NRSEQDIG"
-                                  ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
-                                  ,INPUT "N"
-                                  ,"").
-
-                CLOSE STORED-PROC pc_sequence_progress
-                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-                ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
-                            WHEN pc_sequence_progress.pr_sequence <> ?.
-             END.
-      
              CREATE crapavs.
              ASSIGN crapavs.cdcooper = crapcop.cdcooper
                     crapavs.cdagenci = crapass.cdagenci
                     crapavs.cdempres = 0
                     crapavs.cdhistor = craphis.cdhistor
                     crapavs.cdsecext = crapass.cdsecext
-                    crapavs.dtdebito = crapdat.dtmvtocd
-                    crapavs.dtmvtolt = crapdat.dtmvtocd
-                    crapavs.dtrefere = crapdat.dtmvtocd
+                    crapavs.dtdebito = crapdat.dtmvtolt
+                    crapavs.dtmvtolt = crapdat.dtmvtolt
+                    crapavs.dtrefere = crapdat.dtmvtolt
                     crapavs.insitavs = 0
                     crapavs.nrdconta = crapass.nrdconta
                     crapavs.nrdocmto = p-nro-docto
-                    crapavs.nrseqdig = (IF p-cdhistor = 561 THEN craplot.nrseqdig + 1 ELSE aux_nrseqdig)
+                    crapavs.nrseqdig = craplot.nrseqdig + 1
                     crapavs.tpdaviso = 2
                     crapavs.vldebito = 0
                     crapavs.vlestdif = 0
@@ -1546,101 +1449,33 @@ PROCEDURE atualiza-outros:
                                 OUTPUT glb_dsdctitg,
                                 OUTPUT glb_stsnrcal).
           
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-            /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
-            RUN STORED-PROCEDURE pc_sequence_progress
-            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-                              ,INPUT "NRSEQDIG"
-                              ,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
-                              ,INPUT "N"
-                              ,"").
-
-            CLOSE STORED-PROC pc_sequence_progress
-            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-            ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
-                        WHEN pc_sequence_progress.pr_sequence <> ?.
-          
-          /* BLOCO DA INSERÇAO DA CRAPLCM */
-          IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
-            RUN sistema/generico/procedures/b1wgen0200.p 
-              PERSISTENT SET h-b1wgen0200.
-
-           RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-            (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
-            ,INPUT p-cod-agencia                  /* par_cdagenci */
-            ,INPUT 11                             /* par_cdbccxlt */
-            ,INPUT i-nro-lote                     /* par_nrdolote */
-            ,INPUT aux_nrdconta                   /* par_nrdconta */
-            ,INPUT p-nro-docto                    /* par_nrdocmto */
-            ,INPUT p-cdhistor                     /* par_cdhistor */
-            ,INPUT aux_nrseqdig                   /* par_nrseqdig */
-            ,INPUT p-valor                        /* par_vllanmto */
-            ,INPUT aux_nrdconta                   /* par_nrdctabb */
-            ,INPUT "CRAP056," + p-cod-liberador   /* par_cdpesqbb */
-            ,INPUT 0                              /* par_vldoipmf */
-            ,INPUT 0                              /* par_nrautdoc */
-            ,INPUT 0                              /* par_nrsequni */
-            ,INPUT 0                              /* par_cdbanchq */
-            ,INPUT 0                              /* par_cdcmpchq */
-            ,INPUT 0                              /* par_cdagechq */
-            ,INPUT 0                              /* par_nrctachq */
-            ,INPUT 0                              /* par_nrlotchq */
-            ,INPUT 0                              /* par_sqlotchq */
-            ,INPUT ""                             /* par_dtrefere */
-            ,INPUT ""                             /* par_hrtransa */
-            ,INPUT 0                              /* par_cdoperad */
-            ,INPUT 0                              /* par_dsidenti */
-            ,INPUT crapcop.cdcooper               /* par_cdcooper */
-            ,INPUT glb_dsdctitg                   /* par_nrdctitg */
-            ,INPUT ""                             /* par_dscedent */
-            ,INPUT 0                              /* par_cdcoptfn */
-            ,INPUT 0                              /* par_cdagetfn */
-            ,INPUT 0                              /* par_nrterfin */
-            ,INPUT 0                              /* par_nrparepr */
-            ,INPUT 0                              /* par_nrseqava */
-            ,INPUT 0                              /* par_nraplica */
-            ,INPUT 0                              /* par_cdorigem */
-            ,INPUT 0                              /* par_idlautom */
-            /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-            ,INPUT 0                              /* Processa lote                                 */
-            ,INPUT 0                              /* Tipo de lote a movimentar                     */
-            /* CAMPOS DE SAÍDA                                                                     */                                            
-            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
-            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
-            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
-            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-            
-            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-              DO:  
-				ASSIGN i-cod-erro  = aux_cdcritic
-                       c-desc-erro = aux_dscritic.           
-                RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                RETURN "NOK".					
-              END.   
-              
-           FIND FIRST tt-ret-lancto NO-LOCK NO-ERROR.
-
-           FIND FIRST craplcm
-                WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
-              EXCLUSIVE-LOCK NO-ERROR.
-              
+           CREATE craplcm.
+           ASSIGN craplcm.cdcooper = crapcop.cdcooper
+                  craplcm.dtmvtolt = crapdat.dtmvtolt
+                  craplcm.cdagenci = p-cod-agencia
+                  craplcm.cdbccxlt  = 11
+                  craplcm.nrdolote = i-nro-lote
+                  craplcm.nrdconta = aux_nrdconta
+                  craplcm.nrdocmto = p-nro-docto
+                  craplcm.vllanmto = p-valor
+                  craplcm.cdhistor = p-cdhistor
+                  craplcm.nrseqdig = craplot.nrseqdig + 1 
+                  craplcm.nrdctabb = aux_nrdconta
+                  craplcm.nrdctitg = glb_dsdctitg
+                  craplcm.cdpesqbb = "CRAP056," + p-cod-liberador.
            
-            IF  VALID-HANDLE(h-b1wgen0200) THEN
-                DELETE PROCEDURE h-b1wgen0200.
+           ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
+                  craplot.qtcompln  = craplot.qtcompln + 1
+                  craplot.qtinfoln  = craplot.qtinfoln + 1.
 
            IF   craphis.indebcre = "D" THEN 
-                ASSIGN p-pg              = YES.
+                ASSIGN craplot.vlcompdb  = craplot.vlcompdb + p-valor
+                       craplot.vlinfodb  = craplot.vlinfodb + p-valor
+                       p-pg              = YES.
            ELSE
-                ASSIGN p-pg              = NO.
+                ASSIGN craplot.vlcompcr  = craplot.vlcompcr + p-valor
+                       craplot.vlinfocr  = craplot.vlinfocr + p-valor
+                       p-pg              = NO.
 
            IF   craphis.inhistor >= 13   AND
                 craphis.inhistor <= 15   THEN 
@@ -1679,7 +1514,7 @@ PROCEDURE atualiza-outros:
                              crapdpb.dtliblan = p-dtliblan
                              crapdpb.cdhistor = p-cdhistor
                              crapdpb.nrdocmto = p-nro-docto
-                             crapdpb.dtmvtolt = crapdat.dtmvtocd
+                             crapdpb.dtmvtolt = crapdat.dtmvtolt
                              crapdpb.cdagenci = p-cod-agencia
                              crapdpb.cdbccxlt = 11     /* Fixo */
                              crapdpb.nrdolote = i-nro-lote
@@ -1698,7 +1533,7 @@ PROCEDURE atualiza-outros:
           
            CREATE craplcs.
            ASSIGN craplcs.cdcooper = crapcop.cdcooper
-                  craplcs.dtmvtolt = crapdat.dtmvtocd
+                  craplcs.dtmvtolt = crapdat.dtmvtolt
                   craplcs.nrdolote = i-nro-lote
                   craplcs.nrdconta = aux_nrdconta
                   craplcs.nrdocmto = p-nro-docto
@@ -1818,7 +1653,7 @@ PROCEDURE atualiza-outros:
              ASSIGN c-literal-compr[01] = TRIM(crapcop.nmrescop) +  " - " +
                                           TRIM(crapcop.nmextcop) 
                     c-literal-compr[02] = " "
-                    c-literal-compr[03] = STRING(crapdat.dtmvtocd,"99/99/99")
+                    c-literal-compr[03] = STRING(crapdat.dtmvtolt,"99/99/99")
                                           + " " + STRING(TIME,"HH:MM:SS") +
                                           " PA  " + 
                                           STRING(p-cod-agencia,"999") +
@@ -2000,7 +1835,6 @@ PROCEDURE atualiza-outros:
 
     RELEASE craplcm.
     RELEASE craplot.
-    
     RELEASE craplcs.
     RETURN "OK".
 END PROCEDURE.
