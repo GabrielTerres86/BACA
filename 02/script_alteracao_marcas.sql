@@ -1,7 +1,7 @@
 
 -- Mudanças de Marcas
 -- SCRCRED para CIVIA, a RODOCREDITO para EVOLUA e a CECRISACRED para ACENTRA
--- Alteração marcas
+-- Alteração marcas 
 
 /*SCRCRED*/   
 update crapprm p
