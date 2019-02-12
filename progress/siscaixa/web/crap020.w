@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap020.w
    Sistema : Caixa On-Line
    Sigla   : CRED
-                                                Ultima atualizacao: 02/06/2017
+                                                Ultima atualizacao: 26/10/2018
 
    Dados referentes ao programa:
 
@@ -59,7 +59,15 @@
 							               senha esta informada (Lucas Ranghetti #597410)
                 
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
------------------------------------------------------------------------------*/
+
+                13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                             norturno rodando (Douglas Pagel - AMcom).
+                             
+				26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido 
+				             a finalidade 400 - Tributos Municipais ISS - LCP 157
+                             (Jonata  - Mouts / INC0024119).
+							  
+----------------------------------------------------------------------------- **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -1059,7 +1067,7 @@ PROCEDURE process-web-request :
             RUN carregaFinalidade   IN THIS-PROCEDURE ('C').
         END.
         ELSE DO:
-          RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+          RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                              INPUT v_pac,
                                              INPUT v_caixa).
           
@@ -1262,7 +1270,8 @@ PROCEDURE process-web-request :
                                                   INTEGER(v_tpctcredito),
                                                   INTEGER(v_codfin),
                                                   v_deschistorico,
-                                                  STRING(v_ispbif)).
+                                                  STRING(v_ispbif),
+												  v_cdidtran).
 
                 IF  RETURN-VALUE = "NOK" THEN DO:
                     ASSIGN v_btn_ok = ''
