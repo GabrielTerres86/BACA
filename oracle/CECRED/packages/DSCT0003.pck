@@ -7319,12 +7319,16 @@ EXCEPTION
     -- CALCULO  DA LIQUIDEZ GERAL
     CURSOR cr_liquidez_geral IS
       SELECT COUNT(1) AS qtd_titulos,
-             (SUM(CASE WHEN (    cob.dtdpagto IS NOT NULL 
-                             AND tit.nrdconta IS NULL 
-                             AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
-             (SUM(CASE WHEN (    cob.dtdpagto IS NOT NULL 
-                             AND tit.nrdconta IS NULL 
-                             AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN cob.vltitulo ELSE 0 END)/SUM(cob.vltitulo))*100 AS pc_geral
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
+        FROM (SELECT cob.dtdpagto,
+                     tit.nrdconta nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
        FROM   crapcob cob -- Titulos do Bordero
   INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
    LEFT JOIN craptit tit ON tit.cdcooper = cob.cdcooper
@@ -7339,7 +7343,19 @@ EXCEPTION
          AND cob.cdcooper = pr_cdcooper
          AND cob.nrdconta = pr_nrdconta
          AND cob.vltitulo >= nvl(pr_vlmintcl,0)
-    ;
+                 AND cob.cdbanpag = 85
+        UNION ALL 
+              SELECT cob.dtdpagto,
+                     null nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
+                FROM crapcob cob -- Titulos do Bordero
+          INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+               WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                 AND cob.cdcooper = pr_cdcooper
+                 AND cob.nrdconta = pr_nrdconta 
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 and cob.cdbanpag <> 85);
     rw_liquidez_geral cr_liquidez_geral%ROWTYPE;
 
   BEGIN
@@ -7380,12 +7396,16 @@ EXCEPTION
     -- CALCULO DA LIQUIDEZ CEDENTE PAGADOR
     CURSOR cr_liquidez_pagador IS
       SELECT COUNT(1) AS qtd_titulos,
-             (SUM(CASE WHEN (    cob.dtdpagto IS NOT NULL 
-                             AND tit.nrdconta IS NULL 
-                             AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
-             (SUM(CASE WHEN (    cob.dtdpagto IS NOT NULL 
-                             AND tit.nrdconta IS NULL 
-                             AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN cob.vltitulo ELSE 0 END)/SUM(cob.vltitulo))*100 AS pc_cedpag
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
+        FROM (SELECT cob.dtdpagto,
+                     tit.nrdconta nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
        FROM   crapcob cob -- Titulos do Bordero
   INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
    LEFT JOIN craptit tit ON tit.cdcooper = cob.cdcooper
@@ -7400,7 +7420,21 @@ EXCEPTION
          AND cob.cdcooper = pr_cdcooper
          AND cob.nrdconta = pr_nrdconta
          AND cob.nrinssac = pr_nrinssac
-         AND cob.vltitulo >= nvl(pr_vlmintcl,0);
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 AND cob.cdbanpag = 85
+        UNION ALL 
+              SELECT cob.dtdpagto,
+                     null nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
+                FROM crapcob cob -- Titulos do Bordero
+          INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+               WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                 AND cob.cdcooper = pr_cdcooper
+                 AND cob.nrdconta = pr_nrdconta 
+                 AND cob.nrinssac = pr_nrinssac
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 and cob.cdbanpag <> 85);
     rw_liquidez_pagador cr_liquidez_pagador%ROWTYPE;
     
   BEGIN
