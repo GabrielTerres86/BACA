@@ -223,7 +223,7 @@ function voltarParaTelaPrincipal(){
 									<?php echo formataNumericos("zzzz.zzz-9",getByTagName($ccredito[$i]->tags,"NRDCONTA"),".-"); ?></td>
 							<?php } 																		
 							?>
-							<td><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
+							<td width="110"><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
 							<td ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
