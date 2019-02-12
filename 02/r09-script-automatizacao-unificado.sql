@@ -784,8 +784,6 @@ begin
 
   end loop;
 
-  commit;
-
   dbms_output.put_line('Sucesso!');
 
   -- Gera log no início da execução
@@ -794,6 +792,8 @@ begin
                  ,pr_cdcooper   => 0
                  ,pr_tpexecucao => 0     
                  ,pr_idprglog   => vr_idprglog);
+
+  commit;
   
 exception
   
