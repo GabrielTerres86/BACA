@@ -1095,7 +1095,7 @@ function controlaLayout(nomeForm) {
             arrayLargura[0] = '58px';
             arrayLargura[1] = '114px';
             arrayLargura[2] = '108px';
-            arrayLargura[3] = '101px';
+            arrayLargura[3] = '105px';
 			arrayLargura[4] = '60px';
             arrayLargura[5] = '60px';
             arrayLargura[6] = '112px';
