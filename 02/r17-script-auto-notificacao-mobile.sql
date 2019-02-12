@@ -949,8 +949,6 @@ begin
 
   end loop;
 
-  commit;
-  
   -- Gera log no início da execução
   pc_log_programa(pr_dstiplog   => 'F'         
                  ,pr_cdprograma => 'BACA-ACP-NOTIF'
@@ -959,6 +957,8 @@ begin
                  ,pr_idprglog   => vr_idprglog);
                  
   dbms_output.put_line('Sucesso');
+
+  commit;
   
 exception
   
