@@ -31,19 +31,14 @@
                07/02/2019 - Inclusao parametro FLGRESTA na chamada do Oracle
                           (Renato Raul Cordeiro - AMCom)
                       
+               11/02/2019 - Tratamento de saldo para cheque depósito em conta em prejuízo
+                            Adequações email Guilherme/Jaison
+                          (Renato Raul Cordeiro - AMCom)
+                      
 ............................................................................. */
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_oracle.i }
-
-DEF        VAR aux_vlsdbloq AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-DEF        VAR aux_vlsdblpr AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-DEF        VAR aux_vlsdblfp AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-
-DEF        VAR aux_inhistor AS INT     FORMAT "99"                   NO-UNDO.
-DEF        VAR aux_cdhistor AS INT     FORMAT "9999"                 NO-UNDO.
-DEF        VAR aux_nrdconta AS INT     FORMAT "zzzz,zz9,9"           NO-UNDO.
-DEF        VAR aux_flgfirst AS LOGICAL                               NO-UNDO.
 
 ASSIGN glb_cdprogra = "crps002"
        glb_cdcritic = 0
@@ -63,7 +58,7 @@ ETIME(TRUE).
        
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-RUN STORED-PROCEDURE pc_crps002 NO-ERROR
+RUN STORED-PROCEDURE pc_crps002 aux_handproc = PROC-HANDLE
     (
     INPUT glb_cdcooper,
     INPUT glb_dtmvtolt,
@@ -87,7 +82,7 @@ IF  ERROR-STATUS:ERROR  THEN DO:
     RETURN.
 END.
 
-CLOSE STORED-PROCEDURE pc_crps002.
+CLOSE STORED-PROCEDURE pc_crps002 WHERE PROC-HANDLE = aux_handproc.
 
 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
@@ -114,7 +109,5 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/proc_batch.log").
-                  
-glb_cdcritic = 0.
 
 RUN fontes/fimprg.p.
