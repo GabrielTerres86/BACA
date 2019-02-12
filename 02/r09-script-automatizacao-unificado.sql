@@ -26,6 +26,7 @@ declare
        , age.cdagenci
        , age.nrdgrupo
     from tbevento_grupos age
+   where age.cdagenci > 3
    order
       by age.cdcooper
        , age.cdagenci
@@ -757,7 +758,7 @@ begin
                     ,pr_dsmensagem_acao_banner  => null
                     ,pr_tpfiltro                => 1
                     ,pr_inexibir_quando         => 1
-                    ,pr_dtexibir_de             => trunc(sysdate)
+                    ,pr_dtexibir_de             => to_date('01/12/2018','dd/mm/yyyy')
                     ,pr_dtexibir_ate            => vr_dtexibir_ate
                     ,pr_nmarquivo_upload        => vr_nmarquivo_upload
                     ,pr_caminho_arq_upload      => vr_caminho_arq_upload
@@ -784,6 +785,8 @@ begin
 
   end loop;
 
+  commit;
+
   dbms_output.put_line('Sucesso!');
 
   -- Gera log no início da execução
@@ -792,8 +795,6 @@ begin
                  ,pr_cdcooper   => 0
                  ,pr_tpexecucao => 0     
                  ,pr_idprglog   => vr_idprglog);
-
-  commit;
   
 exception
   
