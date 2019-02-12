@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2006.                    Ultima atualizacao: 10/10/2016
+   Data    : Janeiro/2006.                    Ultima atualizacao: 29/05/2018
       
    Dados referentes ao programa:
 
@@ -73,6 +73,18 @@
 
 			   10/10/2016 - Ajuste referente Projeto 291 (Daniel)	
                             
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)        
+               12/03/2018 - #856961 Correção das imagens das cooperativas na
+                            rotina p_imprime_cabec, incluindo a Altovale, 
+                            retirando as inativas e atualizando os novos 
+                            nomes (Acredicoop e Acentra) (Carlos)
+  
+		       29/05/2018 - Ajustes referente alteracao da nova marca (Jonata Mouts - P413 ).					  
+                            
+               30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
+			               (Alcemir Mout's - Prj. 467).							  
+                            
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
@@ -124,6 +136,9 @@ DEF VAR aux_vlsdrdca AS DECI FORMAT "zzz,zzz,zzz,zz9.99-"              NO-UNDO.
 DEF VAR aux_vlsdrdpp AS DECI DECIMALS 8                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.            
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.            
+DEF VAR aux_dscomple AS CHAR                                           NO-UNDO.
+DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.          
 
 DEF VAR aux_vlsldapl AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldtot AS DECI                                           NO-UNDO.
@@ -131,12 +146,14 @@ DEF VAR aux_vlsldrgt AS DECI                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_cdcritic LIKE crapcri.cdcritic                             NO-UNDO.
 DEF VAR aux_dscritic LIKE crapcri.dscritic                             NO-UNDO.
+DEF VAR aux_dsmsgerr AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen01   AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen04   AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen06   AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -412,14 +429,11 @@ PROCEDURE p_imprime_cabec:
    IF   aux_cdcooper = 1   THEN
         aux_dsdlinha = "@@imagem /dg/som/viacredi.bmp,16,0".
    ELSE
-   IF   aux_cdcooper = 2   THEN                             
-        aux_dsdlinha = "@@imagem /dg/som/creditextil.bmp,16,0".
-   ELSE
-   IF   aux_cdcooper = 4   THEN                
-        aux_dsdlinha = "@@imagem /dg/som/concredi.bmp,16,0".
+   IF   aux_cdcooper = 2   THEN 
+	    aux_dsdlinha = "@@imagem /dg/som/acredicoop.bmp,16,0".
    ELSE                       
    IF   aux_cdcooper = 5   THEN 
-        aux_dsdlinha = "@@imagem /dg/som/cecrisacred.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/acentra.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 6   THEN
         aux_dsdlinha = "@@imagem /dg/som/credifiesc.bmp,16,0".
@@ -443,12 +457,13 @@ PROCEDURE p_imprime_cabec:
         aux_dsdlinha = "@@imagem /dg/som/crevisc.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 13  THEN
-        aux_dsdlinha = "@@imagem /dg/som/scrcred.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/civia.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 14  THEN
-        aux_dsdlinha = "@@imagem /dg/som/rodocredito.bmp,16,0".
-  
-     
+        aux_dsdlinha = "@@imagem /dg/som/evolua.bmp,16,0".
+   ELSE
+   IF   aux_cdcooper = 16  THEN
+        aux_dsdlinha = "@@imagem /dg/som/altovale.bmp,16,0".
      
    /* Configura 66 linhas por página */
    {&OUT} CHR(27) + CHR(67) + CHR(66) '"' aux_dsdlinha '"\n'.
@@ -643,36 +658,85 @@ PROCEDURE p_validasenha:
   Purpose:     Runs procedure to associate each HTML field with its
                corresponding widget name and handle.
   Parameters:  
-  Notes:       
+  Notes: 
 ------------------------------------------------------------------------------*/
-
-   FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
-                            crapsnh.nrdconta = aux_nrdconta  AND
-                            crapsnh.tpdsenha = 2
-                            USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
-
-   IF   NOT AVAILABLE crapsnh THEN
-        {&OUT} "falso".
-   ELSE                    
-        DO: 
-            IF   INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN
-            DO:
-				FIND FIRST crapass WHERE crapass.cdcooper = crapsnh.cdcooper  AND
-										 crapass.nrdconta = crapsnh.nrdconta
-									     NO-LOCK NO-ERROR.
-
-			   IF   NOT AVAILABLE crapass THEN
-					{&OUT} "falso". 
-			   ELSE
-					{&OUT} "ok|" + STRING(crapass.cdcooper) + "|" + STRING(crapass.nrdconta) + "|" + STRING(crapass.cdagenci). 
-			END.
+   FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper
+                        AND crapass.nrdconta = aux_nrdconta
+   NO-LOCK NO-ERROR.
+   IF NOT AVAILABLE crapass THEN
+   DO:
+     FIND crapcri WHERE crapcri.cdcritic = 564 NO-LOCK NO-ERROR.
+     IF AVAILABLE crapcri THEN
+       ASSIGN aux_cdcritic = 564
+              aux_dscritic = TRIM(crapcri.dscritic).
+     ELSE
+       ASSIGN aux_cdcritic = 0
+              aux_dscritic =  "Conta invalida".
+              
+       ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                             "</pr_dscritic>"+
+                             "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                             "</pr_cdmsgerr></CECRED>".
+           
+       {&OUT} aux_dsmsgerr.
+   END.
+   ELSE
+   DO: 
+     FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
+                              crapsnh.nrdconta = aux_nrdconta  AND
+                              crapsnh.tpdsenha = 2
+                              USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
+     
+     IF NOT AVAILABLE crapsnh THEN
+     DO:
+       FIND crapcri WHERE crapcri.cdcritic = 1125 NO-LOCK NO-ERROR.
+         IF AVAILABLE crapcri THEN
+           ASSIGN aux_cdcritic = 1125
+                  aux_dscritic = TRIM(crapcri.dscritic).
+         ELSE
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic =  "Falha ao buscar senha".
+                  
+         ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                               "</pr_dscritic>"+
+                               "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                               "</pr_cdmsgerr></CECRED>".
+          
+         {&OUT} aux_dsmsgerr.
+     END.
+     ELSE
+     DO:
+       /*Verificar a senha*/
+       IF INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN 
+       DO: /*Se a senha informada existir*/
+         {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
+       END.
+       ELSE
+       DO: /*Caso a senha seja diferente*/
+         /* Conta Teste */
+         IF   aux_nmprimtl = "CONTA  TESTE"   THEN
+         DO:
+           {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
+         END.
+         ELSE
+         DO: /*Apresentar erro generico*/
+           FIND crapcri WHERE crapcri.cdcritic = 3 NO-LOCK NO-ERROR.
+           IF AVAILABLE crapcri THEN
+             ASSIGN aux_cdcritic = 3
+                    aux_dscritic = TRIM(crapcri.dscritic).
             ELSE
-            /* Conta Teste */
-            IF   aux_nmprimtl = "CONTA  TESTE"   THEN
-                 {&OUT} "ok|1|999|1".
-            ELSE
-                 {&OUT} "falso".
-        END.
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic =  "Senha invalida".
+              ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
+                                    "</pr_dscritic>"+
+                                    "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
+                                    "</pr_cdmsgerr></CECRED>".
+                 
+           {&OUT} aux_dsmsgerr.
+         END.       
+       END.
+     END.
+   END.
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
@@ -1082,9 +1146,15 @@ PROCEDURE p_extrato_mes:
                                       BY tt-extrato_conta.dtmvtolt
                                          BY tt-extrato_conta.nrsequen:
 
+						 
+                         ASSIGN aux_dscomple = "".
+                         IF tt-extrato_conta.dscomple <> ?  AND  
+                            tt-extrato_conta.dscomple <> "" THEN						 						
+						    aux_dscomple =  STRING(" - " + tt-extrato_conta.dscomple).    
+						                           
                          aux_dsdlinha = STRING(tt-extrato_conta.dtmvtolt,
                                                "99/99/99") + " " +
-                                        STRING(tt-extrato_conta.dsextrat,
+                                        STRING(tt-extrato_conta.dsextrat + aux_dscomple,
                                                "x(21)") + " " +
                                         STRING(SUBSTR(tt-extrato_conta.dtliblan,2,5),
                                               "X(05)") + " " +
@@ -1174,7 +1244,9 @@ PROCEDURE p_extrato_apl:
            aux_flgregis = FALSE
            aux_dsdlinha = ""
            aux_vlblqjud = 0
-           aux_vlresblq = 0.
+           aux_vlresblq = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0.
 
     /*** Busca Saldo Bloqueado Judicial ***/
     FIND FIRST crapdat WHERE crapdat.cdcooper = aux_cdcooper 
@@ -1196,6 +1268,30 @@ PROCEDURE p_extrato_apl:
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
 
+    /*** Busca Saldo Bloqueado Garantia ***/
+    IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+        RUN sistema/generico/procedures/b1wgen0112.p 
+            PERSISTENT SET h-b1wgen0112.
+
+    RUN calcula_bloq_garantia IN h-b1wgen0112
+                             ( INPUT aux_cdcooper,
+                               INPUT aux_nrdconta,                                             
+                              OUTPUT aux_vlblqapl_gar,
+                              OUTPUT aux_vlblqpou_gar,
+                              OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+    DO:
+       
+        CREATE tt-erro.
+        ASSIGN tt-erro.cdcritic = aux_cdcritic 
+               tt-erro.dscritic = aux_dscritic. 
+        RUN p_trataerro.
+        LEAVE.         
+    END.
+        
+    IF  VALID-HANDLE(h-b1wgen0112) THEN
+        DELETE PROCEDURE h-b1wgen0112. 
 
     /********NOVA CONSULTA APLICACOOES*********/
     /** Saldo das aplicacoes **/
@@ -1495,6 +1591,14 @@ PROCEDURE p_extrato_apl:
         DO:
             aux_dsdlinha = "Valor Bloqueado Judicialmente e de: " + 
                            STRING(aux_vlblqjud,"zzz,zzz,zzz,zz9.99").
+
+            {&OUT} aux_dsdlinha '\n'.
+        END.
+
+    IF aux_vlblqapl_gar > 0 THEN 
+        DO: 
+            aux_dsdlinha = "Valor Bloqueado Cobertura de Garantia e de: " + 
+                           STRING(aux_vlblqapl_gar,"zzz,zzz,zzz,zz9.99"). 
 
             {&OUT} aux_dsdlinha '\n'.
         END.
