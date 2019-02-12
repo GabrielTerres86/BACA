@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 11/02/2018  
+  Data    : Maio/2018                   Ultima atualizacao: 11/02/2019  
     
   Dados referentes ao programa:
   
@@ -54,7 +54,7 @@ BEGIN
                          - (Envolti - Belli - Chamado - REQ0033876)
                            
               11/02/2019 - Deu um erro de programa e foi ajustado
-                         - (Envolti - Belli - Chamado - REQ0039739)
+                         - (Envolti - Belli - Chamado - REQ0040359)
               
   ....................................................................................... */
     
@@ -1861,26 +1861,26 @@ DECLARE
     AND      t1.cdcooper          = vr_cdcooper 
     AND      t1.cdprograma        = vr_cdproctl
     AND      NVL(t2.cdmensagem,0) = 1229
-    AND      TRUNC(t1.dhinicio)   = TRUNC(vr_dtmovime) -- REQ0039739 - 11/02/2019
+    AND      TRUNC(t1.dhinicio)   = TRUNC(vr_dtmovime) -- REQ0040359 - 11/02/2019
     ORDER BY t1.dhinicio desc  , t2.dhocorrencia
     ) T4;
     rw_erro_tipo_cad_paralela    cr_erro_tipo_cad_paralela%ROWTYPE; 
   --  
   CURSOR cr_erro_programa_na_paralela
     IS
-    SELECT DISTINCT T10.cdprogra, T10.dsprogra FROM ( -- REQ0039739 - 11/02/2019
+    SELECT DISTINCT T10.cdprogra, T10.dsprogra FROM ( -- REQ0040359 - 11/02/2019
     SELECT  t1.cdprograma  cdprogra
            ,RPAD(t3.dsprogra##1 ||
                  t3.dsprogra##2 ||
                  t3.dsprogra##3 ||
-                 t3.dsprogra##4,93,' ' ) dsprogra,  t2.dhocorrencia -- REQ0039739 - 11/02/2019
+                 t3.dsprogra##4,93,' ' ) dsprogra,  t2.dhocorrencia -- REQ0040359 - 11/02/2019
     FROM   tbgen_prglog             t1
           ,tbgen_prglog_ocorrencia  t2
           ,crapprg                  t3
     WHERE    t2.idprglog          = t1.idprglog
     AND      t1.cdcooper          = vr_cdcooper 
     AND      NVL(t2.cdmensagem,0) = 1278 
-    AND      TRUNC(t1.dhinicio)                   = TRUNC(vr_dtmovime) -- REQ0039739 - 11/02/2019
+    AND      TRUNC(t1.dhinicio)                   = TRUNC(vr_dtmovime) -- REQ0040359 - 11/02/2019
     AND      TO_CHAR(t2.dhocorrencia,'HH24MISS') >= vr_hrinicio
     AND      TO_CHAR(t2.dhocorrencia,'HH24MISS') <= vr_hrfim
     AND      t3.cdcooper          = t1.cdcooper  
@@ -1988,7 +1988,7 @@ DECLARE
           vr_dslispl1 := NULL;
         END IF; 
         
-        IF vr_ctprogra > 0 THEN  -- REQ0039739
+        IF vr_ctprogra > 0 THEN  -- REQ0040359
           
         -- Tratar programa exclusivo retirado da cadeia e não reexecutado - 01/11/2018 - REQ0032025             
         IF rw_erro_tipo_cad_paralela.dtreinicio IS NOT NULL THEN
@@ -2059,7 +2059,7 @@ DECLARE
           vr_dslisexe := vr_dslisexe || '<br>' || vr_dslispla;  
         END IF;
         
-        END IF; -- vr_ctprogra -- REQ0039739          
+        END IF; -- vr_ctprogra -- REQ0040359          
         
         -- atributo vr_hrinicio foi movido daqui e incluido pouco mais acima - 01/11/2018 - REQ0032025
         
@@ -2162,7 +2162,7 @@ DECLARE
                          - (Envolti - Belli - Chamado - REQ0033876)
                            
               11/02/2019 - Deu um erro de programa e foi ajustado
-                         - (Envolti - Belli - Chamado - REQ0039739)
+                         - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */   
     
@@ -2192,7 +2192,7 @@ DECLARE
             AND    t4.idprglog        = t3.idprglog
             AND    t4.cdmensagem      = 1229
           ) dtpar002
-         ,( SELECT MIN(REPLACE(t3.cdprograma,'.P','')) cdproant -- Ajuste - REQ0039739 11/02/2019
+         ,( SELECT MIN(REPLACE(t3.cdprograma,'.P','')) cdproant -- Ajuste - REQ0040359 11/02/2019
             FROM   tbgen_prglog             t3
                   ,tbgen_prglog_ocorrencia  t4
             WHERE  TRUNC(t3.dhinicio) = TRUNC(t10.dhinicio)
@@ -2224,7 +2224,7 @@ DECLARE
       AND      t1.cdcooper          = vr_cdcooper 
       AND      t1.cdprograma        NOT IN ('CRPS359.P', 'CRPS000.P')
       AND      NVL(t2.cdmensagem,0) = 1231 
-      AND      trunc(t1.dhinicio)   = vr_dtmovime -- Ajuste - REQ0039739 11/02/2019
+      AND      trunc(t1.dhinicio)   = vr_dtmovime -- Ajuste - REQ0040359 11/02/2019
       ORDER BY t1.dhinicio desc  
              , t2.dhocorrencia
     ) T10
