@@ -972,7 +972,7 @@ PROCEDURE lista_cartoes:
             
         END.
         
-        FIND crapprm WHERE crapprm.cdacesso = "ASS_ELET_CARTAO_TERMO".
+        FIND crapprm WHERE crapprm.cdacesso = "ASS_ELET_CARTAO_TERMO" NO-LOCK NO-ERROR.
         
         IF AVAILABLE crapprm THEN
         DO:
