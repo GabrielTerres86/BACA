@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 21/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 02/02/2019
 
    Dados referentes ao programa:
 
@@ -109,6 +109,9 @@
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
+				02/02/2019 - Correção para o tipo de documento "TED C":
+							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
+						   (Jonata - Mouts PRB0040337).
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap56.p - Outros                                                */
@@ -1545,7 +1548,7 @@ PROCEDURE atualiza-outros:
            RUN fontes/digbbx.p (INPUT  aux_nrdconta,
                                 OUTPUT glb_dsdctitg,
                                 OUTPUT glb_stsnrcal).
-          
+
           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
             /* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
@@ -1633,10 +1636,10 @@ PROCEDURE atualiza-outros:
                 WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
               EXCLUSIVE-LOCK NO-ERROR.
               
-           
+              
             IF  VALID-HANDLE(h-b1wgen0200) THEN
                 DELETE PROCEDURE h-b1wgen0200.
-
+           
            IF   craphis.indebcre = "D" THEN 
                 ASSIGN p-pg              = YES.
            ELSE
@@ -2058,6 +2061,18 @@ PROCEDURE valida-saldo-conta:
          IF   crapass.dtelimin <> ?   THEN 
               DO:
                   ASSIGN i-cod-erro  = 410
+                         c-desc-erro = " ".           
+                  RUN cria-erro (INPUT p-cooper,
+                                 INPUT p-cod-agencia,
+                                 INPUT p-nro-caixa,
+                                 INPUT i-cod-erro,
+                                 INPUT c-desc-erro,
+                                 INPUT YES).
+                  RETURN "NOK".
+              END.
+		 IF   crapass.cdsitdct = 4 THEN 
+              DO:
+                  ASSIGN i-cod-erro  = 723
                          c-desc-erro = " ".           
                   RUN cria-erro (INPUT p-cooper,
                                  INPUT p-cod-agencia,
