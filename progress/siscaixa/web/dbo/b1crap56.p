@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 02/02/2019
+   Data    : Marco/2001                      Ultima atualizacao: 21/05/2018
 
    Dados referentes ao programa:
 
@@ -109,9 +109,6 @@
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
-				02/02/2019 - Correção para o tipo de documento "TED C":
-							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
-						   (Jonata - Mouts PRB0040337).
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap56.p - Outros                                                */
@@ -2061,18 +2058,6 @@ PROCEDURE valida-saldo-conta:
          IF   crapass.dtelimin <> ?   THEN 
               DO:
                   ASSIGN i-cod-erro  = 410
-                         c-desc-erro = " ".           
-                  RUN cria-erro (INPUT p-cooper,
-                                 INPUT p-cod-agencia,
-                                 INPUT p-nro-caixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-              END.
-		 IF   crapass.cdsitdct = 4 THEN 
-              DO:
-                  ASSIGN i-cod-erro  = 723
                          c-desc-erro = " ".           
                   RUN cria-erro (INPUT p-cooper,
                                  INPUT p-cod-agencia,

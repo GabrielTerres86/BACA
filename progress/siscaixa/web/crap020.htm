@@ -45,10 +45,6 @@
               02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 			  
 			  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)			   			  
-
-			  02/02/2019 - Correção para o tipo de documento "TED C":
-							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
-						   (Jonata - Mouts PRB0040337).
 -->
 
 
@@ -91,8 +87,14 @@ function selectOpcao (opcao) {
     formataOpcao(opcao,true);
 }
 
-function limpaCampos(limpa){
+function formataOpcao(opcao, limpa) {
 
+	var desabilita;
+	var exibe = (opcao == "R" ) ? "none" : "block";
+	
+    document.getElementById('divCartao').style.display = exibe;
+    document.getElementById('divSenhaCartao').style.display = exibe;
+	
     // Limpar campos 
 	for(var i=0;i<document.action.elements.length;i++) {
 			if (document.action.elements[i].type == "text" || 
@@ -106,53 +108,16 @@ function limpaCampos(limpa){
 			}
 	}
                 
-}
-
-function formataOpcao(opcao, limpa) {
-
-	var desabilita;
-	var exibe = (opcao == "R" ) ? "none" : "block";
-	
-    document.getElementById('divCartao').style.display = exibe;
-    document.getElementById('divSenhaCartao').style.display = exibe;
-	
-    limpaCampos(limpa);
-                
     desabilita = (document.action.v_nrocontade.value == "");
-	document.action.v_dssencrd.disabled = (opcao == 'C') ? desabilita : false;
-    document.action.v_nrocontade.disabled = true;
 	
-	if (document.action.TpDocto[2].checked){
-	
-		if (document.action.TpPagto[0].checked){
-		
     document.action.v_nrocontade.disabled = (opcao == 'C') ? true : false;
+	document.action.v_dssencrd.disabled = (opcao == 'C') ? desabilita : false;
                 
     if  (opcao == "R") {
 		document.action.v_nrocontade.focus();
 	} else {
 		document.action.v_cartao.focus();
     }
-			
-		}else if (document.action.TpPagto[1].checked){	 
-		
-			document.action.v_nrocontade.disabled = true;
-				 
-			document.action.v_nomede1.focus();
-			
-}
-	}else{
-
-		document.action.v_nrocontade.disabled = (opcao == 'C') ? true : false;
-			
-		if  (opcao == "R") {
-			document.action.v_nrocontade.focus();
-		} else {
-			document.action.v_cartao.focus();
-		}
-	}
-	
-	
 }
 
 /*************** ROTINAS PINPAD NOVO ********************************/
@@ -253,9 +218,13 @@ function callfin(e) {
    }
 }
 
-function controlaCampos(UsrEvent,TipoDocto){
-
-	document.getElementById('label2').innerHTML = 'Espécie';
+/*
+Lógica para controle de acesso aos campos da página
+Desenvolvido por Robinson Rafael Koprowski
+Obs: há um comentário na sessão "definitions" do arquivo crap020.w com os possíveis
+     controles de acesso.
+*/
+function selectDocto(UsrEvent, TipoDocto) {
 
    switch (TipoDocto) {
    case "C":        
@@ -281,8 +250,6 @@ function controlaCampos(UsrEvent,TipoDocto){
       document.action.v_cdidtran.value       = "";
       document.action.v_ispbif.disabled      = true;
       
-	  document.getElementById('label2').innerHTML = 'Espécie (somente para não cooperados)';
-	  
       if (UsrEvent)
          document.action.vh_foco.value = 19;
        break;
@@ -296,21 +263,6 @@ function controlaCampos(UsrEvent,TipoDocto){
       break;
    } 
    
-}
-   
-
-/*
-Lógica para controle de acesso aos campos da página
-Desenvolvido por Robinson Rafael Koprowski
-Obs: há um comentário na sessão "definitions" do arquivo crap020.w com os possíveis
-     controles de acesso.
-*/
-function selectDocto(UsrEvent, TipoDocto) {
-   
-   document.action.v_nrocontade.disabled = false;
-   
-   controlaCampos(UsrEvent,TipoDocto);
-  
    // Fernando - desabilitar senha, pois quando troca de tela (DOC para TED) aparece a senha do coordenador
    if(document.action.v_senha != null && document.action.v_cod != null && (TipoDocto != "TEDD" && TipoDocto != "TEDC")){
        document.action.v_senha.value = "";
@@ -346,8 +298,6 @@ function selectDocto(UsrEvent, TipoDocto) {
       document.action.v_banco.value = "";
       doIt();
    }
-   
-    document.action.v_nrocontade.disabled = false;
 }
 
 
@@ -360,33 +310,16 @@ function selectTpPagto(TipoPagto) {
        if (document.action.TpDocto[2].checked) {
            document.action.v_cdidtran.value = "";
            document.action.v_cdidtran.readOnly = false;
-		   document.action.v_nrocontade.disabled = false;
-       }else{
-			document.action.v_nrocontade.disabled = false;
        }
-		
       break;
    
    case "E":
       if (document.action.TpDocto[2].checked) {
           document.action.v_cdidtran.value = "";
           document.action.v_cdidtran.readOnly = true;
-		  document.action.v_nrocontade.disabled = true;
-		  disableInfDe(false);
-      }else{ 
-			document.action.v_nrocontade.disabled = false;
       }
       break;
    }
-   
-   limpaCampos(true);
-      
-   for (var i=0;i<document.action.TpDocto.length;i++) {
-      if (document.action.TpDocto[i].checked) {
-         controlaCampos(false,document.action.TpDocto[i].value);
-      }
-   }
-   
 }
 
 
@@ -472,14 +405,6 @@ function changeContaPara() {
 
 function leaveContaPara() {
    if (lChangePara && (document.action.v_nrocontapara.value != "" || document.action.TpDocto[1].checked || document.action.TpDocto[3].checked)) {
-      document.action.vh_foco.value = 34;
-      doIt();
-   }
-}
-
-
-function leaveCpfCnpjDe() {
-   if (lChangePara && (document.action.v_cpfcgcde1.value != "" || document.action.TpDocto[2].checked)) {
       document.action.vh_foco.value = 34;
       doIt();
    }
@@ -682,10 +607,8 @@ function validaHistorico(obj,e,valid_value,replace){
                     <table cellspacing="0" cellpadding="0" width="100%">
                      <tr>
                        <td class="linhaform"> 
-                            <input type="radio" id="TpPagto1" name="TpPagto" value="D" onClick="JavaScript:selectTpPagto(this.value);" checked> 
-							<label for="TpPagto" id="label1">Débito em C/C</label>
-                            <input type="radio" id="TpPagto2" name="TpPagto" value="E" onClick="JavaScript:selectTpPagto(this.value);"        > 
-							<label for="TpPagto" id="label2">Espécie (somente para não cooperados)</label>
+                            <input type="radio" name="TpPagto" value="D" onClick="JavaScript:selectTpPagto(this.value);" checked>Débito em C/C
+                            <input type="radio" name="TpPagto" value="E" onClick="JavaScript:selectTpPagto(this.value);"        >Espécie
                        </td>
                      </tr>
                     </table>
@@ -737,7 +660,7 @@ function validaHistorico(obj,e,valid_value,replace){
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">CNPJ/CPF:&nbsp;</td>
-                  <td class="linhaform"><input type="text" name="v_cpfcgcde1"  maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" onChange="JavaScript:copyValuesDePara();lChangePara=true;leaveCpfCnpjDe();" class="input"></td>
+                  <td class="linhaform"><input type="text" name="v_cpfcgcde1"  maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" onChange="JavaScript:copyValuesDePara();" class="input"></td>
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">Tit2:&nbsp;</td>
