@@ -159,6 +159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   
   --              12/12/2018 - Ajuste para apresentar '0,00' nos dados de consulta de agendamentos.
   --                (Guilherme Kuhnen - INC0027494)
+  --
+  --              30-01-2019 - INC0031047 Permitir consultar agendamentos no IB (Jose Dill - Mouts)
   ---------------------------------------------------------------------------
 
 PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcooper%TYPE      -->CODIGO COOPER
@@ -821,6 +823,17 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
+      --
+      --INC0031047 
+      --Quando a consulta é feita através do IB, deve-se desconsiderar a agência passada por parâmetro,
+      --que neste caso é sempre a 90 (conta online). Quando é executada pelo Aimaro, considera a agência
+      --passada por parametro (caso seja diferente de nulo)
+      IF pr_idorigem = 3 and pr_cdagenci = 90 THEN
+        vr_cdagenci:= null;
+      ELSE
+        vr_cdagenci:= pr_cdagenci;
+      END IF;
+      -- Fim INC0031047  
 
       vr_insit_prov := pr_insit_prov;
       IF vr_insit_prov = 0 THEN -- Conta Online envia com valor 0 para todos
@@ -929,10 +942,9 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_nriniseq       => pr_nriniseq,
                                    pr_nrregist       => pr_nrregist,
                                    pr_cdopcao        => pr_cdopcao
-                                  ,pr_cdagenci       => pr_cdagenci         --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
+                                  ,pr_cdagenci       => vr_cdagenci         --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
                                   ,pr_nrcpf_sacador  => pr_nrcpf_sacador    --> CPF do sacador               -- Marcelo Telles Coelho - Projeto 420 - PLD
                                   ) LOOP
-
      vr_qtregist := nvl(vr_qtregist, 0) + 1;
 
       -- Controles da paginação
@@ -1262,7 +1274,6 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                              pr_tag_nova => 'qtregist',
                              pr_tag_cont => vr_qtregist,
                              pr_des_erro => vr_dscritic);
-
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -2246,6 +2257,8 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
     END;
 
     BEGIN
+      
+    
       pr_des_erro := 'OK';
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,

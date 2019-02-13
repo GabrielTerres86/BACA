@@ -335,6 +335,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                27/12/2018 - Inclusão de mensagem para a crítica 757 conforme 
                             instruções da requisição. Chamado SCTASK0029400 - Gabriel (Mouts).
+                            
+               01/02/2019 - Tratamento para gerar alinea 49 na segunda apresentação da alinea 28
+                            Chamado PRB0040576 - Jose Dill (Mouts).
 
 ............................................................................. */
 
@@ -344,7 +347,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
        vr_dsparame     VARCHAR2(4000);
        
-       -- variáveis para controle de arquivos
+      -- variáveis para controle de arquivos
        vr_dircon VARCHAR2(200);
        vr_arqcon VARCHAR2(200);
 
@@ -1026,7 +1029,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
              WHEN OTHERS THEN
                  cecred.pc_internal_exception;
                vr_dscritic:= 'Erro ao inserir craplcm na rotina pc_crps533.pc_processamento_tco: '||SQLERRM;
-                 RAISE vr_exc_erro;
+               RAISE vr_exc_erro;
            END;
 
              vr_flg_criou_lcm := TRUE;
@@ -2060,6 +2063,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND craplcm.cdhistor IN (47, 191, 338, 573)
                ORDER BY craplcm.progress_recid DESC;
             rw_craplcm2 cr_craplcm2%ROWTYPE;
+            
+            --Selecionar os lancamentos
+            CURSOR cr_craplcm_ali28 (pr_cdcooper IN craplcm.cdcooper%TYPE
+                               ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                               ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+              SELECT craplcm.dtmvtolt
+                FROM craplcm craplcm
+               WHERE craplcm.cdcooper = pr_cdcooper
+                 AND craplcm.nrdconta = pr_nrdconta
+                 AND craplcm.nrdocmto = pr_nrdocmto
+                 AND craplcm.cdpesqbb = '28'
+                 AND craplcm.cdhistor IN (47, 191, 338, 573)
+               ORDER BY craplcm.progress_recid DESC;
+            rw_cr_craplcm_ali28 cr_craplcm_ali28%ROWTYPE;            
 
             --Selecionar os lançamentos
             CURSOR cr_craplcm3 (pr_cdcooper IN craplcm.cdcooper%TYPE
@@ -3763,6 +3780,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 --Fechar cursor
                                 CLOSE cr_craplcm2;
                               END IF;
+                              
+                              -- PRB0040576
+                              IF  vr_cdalinea = 28 THEN
+                                /* Se ja existir devolucao com a alinea 28, devolver com a alinea 49 */
+                                --Selecionar os lancamentos
+                                OPEN cr_craplcm_ali28 (pr_cdcooper => pr_cdcooper
+                                                 ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                                 ,pr_nrdocmto => vr_nrdocmto);
+                                --Posicionar no proximo registro
+                                FETCH cr_craplcm_ali28 INTO rw_cr_craplcm_ali28;
+                                --Se encontrou registro
+                                IF cr_craplcm_ali28%FOUND THEN
+                                  vr_cdalinea:= 49;
+                                END IF;
+                                --Fechar cursor
+                                CLOSE cr_craplcm_ali28;
+                              END IF;
 
                               --Executar rotina para criar registros de devolucao/taxa de cheques.
                               cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
@@ -3988,7 +4022,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                         pr_des_reto => vr_dscritic, 
                                                         pr_tab_sald => vr_tab_saldo, 
                                                         pr_tab_erro => vr_tab_erro);
-
+                                                            
                             --Se ocorreu erro
                             IF vr_dscritic = 'NOK' THEN
                               -- Tenta buscar o erro no vetor de erro
@@ -4026,7 +4060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_vlsddisp := nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                              nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
                             END IF; 
-
+                            
                             --INC0027476
                             vr_dsparame := vr_dsparame||', Retorno: dtmvtolt:'||vr_tab_saldo(vr_tab_saldo.FIRST).dtmvtolt
                                            ||', vlsddisp:'||nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0)
@@ -4046,7 +4080,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             END LOOP;
                             
                             vr_vlsddisp := nvl(vr_vlsddisp,0) + nvl(vr_vldeplib,0);                            
-
+                            
                             --INC0027476
                             vr_dsparame := vr_dsparame||', vldeplib:'||nvl(vr_vldeplib,0)
                                            ||', vlsddisp Final:'||vr_vlsddisp;
@@ -4746,7 +4780,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           WHEN OTHERS THEN
                               cecred.pc_internal_exception;
                             vr_des_erro:= 'Erro ao inserir na tabela craplcm. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
-                              RAISE vr_exc_erro;
+                            RAISE vr_exc_erro;
                         END;
 
                           vr_flg_criou_lcm := TRUE;
@@ -4961,7 +4995,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                cecred.pc_internal_exception;
                              vr_des_erro:= 'Erro ao inserir na tabela craplcm (devolucao). Rotina'
                                            || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
-                               RAISE vr_exc_erro;
+                             RAISE vr_exc_erro;
                         END;
                         
                           vr_flg_criou_lcm := TRUE;
@@ -5151,7 +5185,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_dscritic:= rw_craprej.dshistor; -- Busca o motivo do cheque sinistrado
                     ELSIF vr_cdcritic = 757 THEN -- Requisicao XYZ
                       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' Conta 922.';
-					ELSE
+                    ELSE
                       --Selecionar a mensagem da critica
                       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                     END IF;
@@ -5900,7 +5934,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        /* A partir de 16/04/2018 nao havera mais Cheque VLB - Projeto Compe Sessao Unica */  
        --Buscar informormacoes da craptab para valores vlb
        vr_dstextab_vlb:= '';
-  	   vr_vlchqvlb:= 0;
+	   vr_vlchqvlb:= 0;
 
        ----- Gravar informações vindas do cadastro da cooperativa ----
        -- Inicializar contador de arquivos processados

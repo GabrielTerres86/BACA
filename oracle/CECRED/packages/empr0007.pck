@@ -1502,7 +1502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   
                   IF vr_vlabono > 0 THEN
                         -- Gerar abono
-										IF NOT vr_prejuzcc THEN
+		            IF NOT vr_prejuzcc THEN
                     EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                                   ,pr_dtmvtolt => pr_dtmvtolt     --> Movimento atual
                                                   ,pr_cdagenci => rw_cde.cdagenci --> Código da agência
@@ -2026,6 +2026,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
              RAISE vr_exc_saida;
           END IF;          
   																				 
+					-- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
+					IF vr_prejuzcc THEN
+					  PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+						                            , pr_nrdconta => pr_nrdconta
+																				, pr_dtmvtolt => pr_dtmvtolt
+																				, pr_vlrlanc  => vr_vldpagto
+																				, pr_cdcritic => vr_cdcritic
+																				, pr_dscritic => vr_dscritic);
+																				
+						IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+						  vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';
+							
+							RAISE vr_exc_saida;
+        END IF;
+					END IF;  																				 
         END IF;
       END IF;
  		EXCEPTION	
@@ -2409,6 +2424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_indoipmf PLS_INTEGER;
       vr_txdoipmf NUMBER;
 
+			vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo (Reginaldo/AMcom - P450)
+
       ----------------- SUBROTINAS INTERNAS --------------------
 
       -- Subrotina para checar a existência de lote cfme tipo passado
@@ -2518,6 +2535,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
+
+			-- Verifica se a conta corrente está em prejuízo (Reginaldo/AMcom)
+			vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+			                                              , pr_nrdconta => pr_nrdconta);
 
       -- Procedimento padrão de busca de informações de CPMF
       gene0005.pc_busca_cpmf(pr_cdcooper  => pr_cdcooper
@@ -2768,7 +2789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           -- Utilizar o quantidade de meses e parcelas calculadas para saber se esta em atraso
           -- Os campos da tabela podem esta desatualizados
           IF vr_qtprecal > vr_msdecatr AND NVL(vr_flgativo,0) = 0 
-					AND UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+					AND NOT vr_prejuzcc THEN
              vr_cdcritic := 0;
 						 vr_dscritic := 'Pagamento apenas para parcelas em atraso';
 						 RAISE vr_exc_undo;
@@ -2969,7 +2990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             -- Testar se já retornado o registro de capas de lote para o 8457
             IF rw_craplot_8457.rowid IS NULL THEN
               -- Chamar rotina para buscá-lo, e se não encontrar, irá criá-lo
-              IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+              IF NOT vr_prejuzcc THEN
               pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtolt
                              ,pr_nrdolote   => 8457
                              ,pr_tplotmov   => 1
@@ -2983,7 +3004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             END IF;
             END IF;
 
-		  IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+		  IF NOT vr_prejuzcc THEN
 
             vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
             

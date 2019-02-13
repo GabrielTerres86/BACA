@@ -84,11 +84,11 @@
 	
 	
 	function validaDados(){
-		IF($GLOBALS["dtde"] == '' ){ 
-			exibirErro('error','Informe uma data de inínicio.','Alerta - Ayllos','formataFiltro();focaCampoErro(\'dtde\',\'divFiltro\');',false);
+		IF($GLOBALS["dtde"] == '' || $GLOBALS["dtde"] == '0'){ 
+			exibirErro('error','Informe uma data de início.','Alerta - Ayllos','formataFiltro();focaCampoErro(\'dtde\',\'divFiltro\');',false);
 		}
 		
-		IF($GLOBALS["dtate"] == ''){ 
+		IF($GLOBALS["dtate"] == '' || $GLOBALS["dtate"] == '0'){ 
 			exibirErro('error','Informe uma data de fim.','Alerta - Ayllos','formataFiltro();focaCampoErro(\'dtate\',\'divFiltro\');',false);
 		}
 

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-12-19T14:18:34 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="1584"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="XML Adapter "/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/protocolo]]>
+	</queryString>
+	<field name="nrcpfcnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcnpj]]></fieldDescription>
+	</field>
+	<field name="nrcrcard" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcrcard]]></fieldDescription>
+	</field>
+	<field name="telefone" class="java.lang.String">
+		<fieldDescription><![CDATA[telefone]]></fieldDescription>
+	</field>
+	<field name="dsagencia" class="java.lang.String">
+		<fieldDescription><![CDATA[dsagencia]]></fieldDescription>
+	</field>
+	<field name="data" class="java.lang.String">
+		<fieldDescription><![CDATA[data]]></fieldDescription>
+	</field>
+	<field name="hora" class="java.lang.String">
+		<fieldDescription><![CDATA[hora]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="titular" class="java.lang.String">
+		<fieldDescription><![CDATA[titular]]></fieldDescription>
+	</field>
+	<field name="adicional" class="java.lang.String">
+		<fieldDescription><![CDATA[adicional]]></fieldDescription>
+	</field>
+	<field name="provisorio" class="java.lang.String">
+		<fieldDescription><![CDATA[provisorio]]></fieldDescription>
+	</field>
+	<field name="definitivo" class="java.lang.String">
+		<fieldDescription><![CDATA[definitivo]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="35">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="25">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<frame>
+				<reportElement x="0" y="0" width="595" height="25" uuid="8b4537de-13dd-4a21-9787-37f4747926e6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<staticText>
+					<reportElement x="0" y="0" width="595" height="25" uuid="56af50c3-d0a4-4493-acd5-b2b5a189ad9f"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="13" isBold="true"/>
+					</textElement>
+					<text><![CDATA[PROTOCOLO DE ENTREGA DO CARTÃO AILOS]]></text>
+				</staticText>
+			</frame>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="145">
+			<frame>
+				<reportElement x="65" y="20" width="465" height="90" uuid="fff740d4-b0ee-4cd3-8f05-337140d09b03">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<frame>
+					<reportElement mode="Transparent" x="0" y="0" width="465" height="30" forecolor="#000000" backcolor="#FFFFFF" uuid="e8c50638-3216-4793-8fea-42630cec3636">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.5" lineStyle="Solid" lineColor="#21869C"/>
+						<leftPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.5" lineStyle="Solid" lineColor="#21869C"/>
+						<rightPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textField>
+						<reportElement x="0" y="0" width="465" height="30" uuid="9864ed6b-492e-4822-8a2b-6e5583b7be9a"/>
+						<textElement verticalAlignment="Top" markup="styled">
+							<paragraph leftIndent="5" spacingBefore="2"/>
+						</textElement>
+						<textFieldExpression><![CDATA["1. " + $F{nmprimtl} + ", inscrito no CPF/CNPJ sob o nº " + $F{nrcpfcnpj} + ", <b>DECLARA</b> que recebeu, nesta data, o cartão identificado abaixo."]]></textFieldExpression>
+					</textField>
+				</frame>
+				<frame>
+					<reportElement mode="Transparent" x="0" y="30" width="465" height="15" forecolor="#000000" backcolor="#FFFFFF" uuid="96af9a80-fe62-4e4b-8478-8f5cc108d3d7">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<staticText>
+						<reportElement mode="Transparent" x="0" y="0" width="232" height="15" forecolor="#000000" uuid="0538b17c-c5ab-4e92-8287-40a8b7523008"/>
+						<textElement verticalAlignment="Middle">
+							<paragraph firstLineIndent="5"/>
+						</textElement>
+						<text><![CDATA[2. Cartão Ailos:]]></text>
+					</staticText>
+					<staticText>
+						<reportElement mode="Transparent" x="232" y="0" width="100" height="15" forecolor="#000000" uuid="48789ca8-4639-45c6-96a4-a8a83f745d3f">
+							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						</reportElement>
+						<box>
+							<leftPen lineWidth="1.0"/>
+						</box>
+						<textElement verticalAlignment="Middle">
+							<paragraph firstLineIndent="5"/>
+						</textElement>
+						<text><![CDATA[2.1 Tipo de Cartão:]]></text>
+					</staticText>
+				</frame>
+				<frame>
+					<reportElement mode="Transparent" x="0" y="45" width="465" height="30" forecolor="#000000" backcolor="#FFFFFF" uuid="7ae76575-b7d8-4b1c-b9bb-fc5ecda50efe"/>
+					<box>
+						<topPen lineWidth="0.5" lineStyle="Solid" lineColor="#21869C"/>
+						<leftPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.5" lineStyle="Solid" lineColor="#21869C"/>
+						<rightPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textField>
+						<reportElement x="0" y="0" width="232" height="15" uuid="290dc36d-af17-4bd7-ae5b-d1ed901d799b">
+							<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						</reportElement>
+						<textElement>
+							<paragraph firstLineIndent="5" spacingBefore="2"/>
+						</textElement>
+						<textFieldExpression><![CDATA["a. " + $F{nrcrcard}]]></textFieldExpression>
+					</textField>
+					<textField>
+						<reportElement x="232" y="0" width="185" height="45" uuid="86926c45-30a0-40ad-b262-7f0121aa3dd5">
+							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						</reportElement>
+						<box>
+							<leftPen lineWidth="1.0"/>
+						</box>
+						<textElement>
+							<paragraph lineSpacing="Double" lineSpacingSize="1.0" leftIndent="5" spacingBefore="2"/>
+						</textElement>
+						<textFieldExpression><![CDATA["( "+$F{titular}+") Titular          ( "+$F{adicional}+") Adicional\n"+
+"( "+$F{provisorio}+") Provisório    ( "+$F{definitivo}+") Definitivo"]]></textFieldExpression>
+					</textField>
+				</frame>
+				<frame>
+					<reportElement mode="Transparent" x="0" y="90" width="465" height="15" forecolor="#000000" backcolor="#FFFFFF" uuid="a0d1f99b-b29a-4d30-8271-e93872afbcfb">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<staticText>
+						<reportElement mode="Transparent" x="0" y="0" width="45" height="15" forecolor="#000000" uuid="4933aa4a-384d-4b78-a807-8bbaa38e9dac"/>
+						<textElement verticalAlignment="Middle">
+							<paragraph firstLineIndent="5"/>
+						</textElement>
+						<text><![CDATA[Local:]]></text>
+					</staticText>
+					<staticText>
+						<reportElement mode="Transparent" x="232" y="0" width="50" height="15" forecolor="#000000" uuid="fe157b77-2ef2-48c9-8224-1c5d80e39986">
+							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						</reportElement>
+						<textElement verticalAlignment="Middle">
+							<paragraph firstLineIndent="5"/>
+						</textElement>
+						<text><![CDATA[Data:]]></text>
+					</staticText>
+					<textField>
+						<reportElement x="45" y="0" width="187" height="15" uuid="8cb743cc-e0a5-4b7c-95d6-3d5c4501d7e0">
+							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						</reportElement>
+						<box>
+							<rightPen lineWidth="1.0"/>
+						</box>
+						<textElement verticalAlignment="Middle"/>
+						<textFieldExpression><![CDATA[$F{dsagencia}]]></textFieldExpression>
+					</textField>
+					<textField>
+						<reportElement x="282" y="0" width="100" height="15" uuid="5c80c607-877c-4555-b745-6ce291ee3fee">
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						</reportElement>
+						<textElement verticalAlignment="Middle"/>
+						<textFieldExpression><![CDATA[$F{data}]]></textFieldExpression>
+					</textField>
+				</frame>
+			</frame>
+		</band>
+		<band height="80">
+			<frame>
+				<reportElement x="0" y="10" width="595" height="70" uuid="8bb5d640-6653-4948-8ee9-87e49059bc82">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<line>
+					<reportElement x="147" y="40" width="300" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5"/>
+					</graphicElement>
+				</line>
+				<textField>
+					<reportElement x="0" y="28" width="595" height="42" uuid="5a879ce5-6329-4f9c-ad64-2dbea2b3498d">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<paragraph firstLineIndent="15"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+</jasperReport>

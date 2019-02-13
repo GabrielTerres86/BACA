@@ -1982,6 +1982,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																															,crapceb.nrdconta
 																													FROM crapceb
 																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr
+																										 UNION ALL
+																												SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
 																													 AND crapceb.idrecipr = pr_idrecipr)
 				 AND crapceb2.insitceb IN(1, 3) -- 1 = Ativo / 3 = Pendente
 			 UNION ALL

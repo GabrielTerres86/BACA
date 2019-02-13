@@ -9897,27 +9897,30 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
     rw_crapdat  btch0001.rw_crapdat%TYPE;
     
     CURSOR cr_crawlim IS
-    SELECT CASE WHEN lim.insitlim = 3 THEN 
-                     NVL(plim.dtcancel, NVL(lim.dtinivig, lim.dtpropos))
-                ELSE NVL(lim.dtinivig, lim.dtpropos) 
-           END as dtinivig
-          ,plim.dtfimvig
-          ,lim.vllimite
-          ,lim.insitlim
-          ,case when nvl(lim.nrctrmnt,0) > 0 then lim.nrctrmnt
-             else lim.nrctrlim 
+    SELECT NVL(NVL(ctr.dtinivig, mnt.dtinivig), pro.dtpropos) dtinivig
+          ,NVL(ctr.dtfimvig, mnt.dtfimvig) dtfimvig
+          ,pro.vllimite
+          ,pro.insitlim
+          ,case when nvl(pro.nrctrmnt,0) > 0 then pro.nrctrmnt
+             else pro.nrctrlim 
            end nrctrlim_nvl
-          ,lim.nrctrlim
-          ,lim.nrctrmnt
-      FROM crawlim lim
-      LEFT JOIN craplim plim
-        ON lim.cdcooper = plim.cdcooper
-       AND lim.nrdconta = plim.nrdconta
-       AND lim.nrctrlim = plim.nrctrlim
-     WHERE lim.cdcooper = pr_cdcooper
-       AND lim.nrdconta = pr_nrdconta
-       AND lim.tpctrlim = pr_tpctrlim
-       AND lim.nrctrlim = pr_nrctrlim;
+          ,pro.nrctrlim
+          ,pro.nrctrmnt
+      FROM crawlim pro -- Proposta do Limite (pro)
+      -- Contrato Principal do Limite (ctr)
+      LEFT JOIN craplim ctr ON ctr.cdcooper = pro.cdcooper
+                           AND ctr.nrdconta = pro.nrdconta
+                           AND ctr.nrctrlim = pro.nrctrLIM
+                           AND ctr.tpctrlim = pro.tpctrlim
+      -- Contrato de Majoração/Manutenção do Limite (mnt)
+      LEFT JOIN craplim mnt ON mnt.cdcooper = pro.cdcooper
+                           AND mnt.nrdconta = pro.nrdconta
+                           AND mnt.nrctrlim = pro.nrctrMNT
+                           AND mnt.tpctrlim = pro.tpctrlim
+     WHERE pro.cdcooper = pr_cdcooper
+       AND pro.nrdconta = pr_nrdconta
+       AND pro.tpctrlim = pr_tpctrlim
+       AND pro.nrctrlim = pr_nrctrlim;
     rw_crawlim cr_crawlim%ROWTYPE;
      
   BEGIN

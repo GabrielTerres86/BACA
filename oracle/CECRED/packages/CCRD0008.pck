@@ -692,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     CLOSE cr_craptfc;  
     
     -- Buscar assinatura
-    BEGIN
+   /* BEGIN
       select 'S'
       INTO  vr_existe_cartao
       from  crawcrd 
@@ -708,10 +708,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
         vr_dscritic := 'Erro ao verificar se o cartão já existe';
         RAISE vr_exc_erro;  
     END;
+	*/
     
+   /*
     IF vr_existe_cartao IS NOT NULL THEN
       vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
     ELSE
+	*/
       BEGIN
         vr_idxassinaturas := 0;
         FOR rw_tbaprc IN cr_tbaprc(pr_cdcooper
@@ -743,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
       END IF;
       
-    END IF;
+    /*END IF;*/
     
     -- Se for pessoa Juridica
     IF rw_crapass.inpessoa > 1 THEN
@@ -1148,7 +1151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
-
+                                        
     /* Caso o nome esteja vazio vamos setar algum valor para impedir 
        apagar todos os relatorios da pasta rl.
        Apesar disso, logamos para saber do ocorrido */
@@ -1168,7 +1171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                            pr_nrdconta => pr_nrdconta, 
                            pr_nrdrowid => vr_nrdrowid);  
     END IF;
-                                        
+    
     vr_nmendter := vr_dsdireto ||'/rl/' || vr_nmarquiv;
     
     vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
@@ -1506,7 +1509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
-
+                                         
     /* Caso o nome esteja vazio vamos setar algum valor para impedir 
        apagar todos os relatorios da pasta rl.
        Apesar disso, logamos para saber do ocorrido */

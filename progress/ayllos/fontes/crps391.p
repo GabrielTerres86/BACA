@@ -1537,7 +1537,7 @@ PROCEDURE enviar-ted:
                     aux_par_nrseqarq = STRING(par_nrseqarq).
              
           IF par_dtagendt = ? THEN
-             ASSIGN aux_dtarquivo_contabil = glb_dtmvtolt.
+             ASSIGN aux_dtarquivo_contabil = TODAY.
           ELSE
              ASSIGN aux_dtarquivo_contabil = par_dtagendt.
              

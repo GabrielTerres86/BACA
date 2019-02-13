@@ -68,11 +68,11 @@
 	
 	
 	function validaDados(){
-		IF($GLOBALS["dtde"] == '' ){ 
+		IF($GLOBALS["dtde"] == '' || $GLOBALS["dtde"] == '0'){ 
 			exibirErro('error','Informe uma data de inínicio.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'dtde\',\'divFiltro\');',false);
 		}
 		
-		IF($GLOBALS["dtate"] == ''){ 
+		IF($GLOBALS["dtate"] == '' || $GLOBALS["dtate"] == '0'){ 
 			exibirErro('error','Informe uma data de fim.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'dtate\',\'divFiltro\');',false);
 		}
 

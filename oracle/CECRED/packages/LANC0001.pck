@@ -238,6 +238,13 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
 
+FUNCTION fn_verifica_cred_bloq_futuro (pr_cdcooper IN  craplcm.cdcooper%TYPE 
+                                     , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                     , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
+                                     , pr_cdhistor IN  craplcm.cdhistor%TYPE			   
+                                     , pr_nrdocmto IN  craplcm.nrdocmto%type
+                                     ) return NUMBER;
+
 PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE 
                                     , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
                                     , pr_cdagenci IN  craplcm.cdagenci%TYPE 
@@ -725,6 +732,10 @@ BEGIN
 				-- Se há valor a transferir após verificação de bloqueio por BACENJUD
 				IF vr_vltransf > 0 THEN
           -- Calcula o "nrseqdig"
+
+          IF fn_verifica_cred_bloq_futuro (pr_cdcooper, pr_nrdconta, pr_dtmvtolt 
+                                     , pr_cdhistor, pr_nrdocmto) = 0 then
+                                               
           vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
                                     ,pr_nmdcampo => 'NRSEQDIG'
                                     ,pr_dsdchave => to_char(pr_cdcooper)||';'||
@@ -796,7 +807,7 @@ BEGIN
 					);
 				END IF;
 			END IF;
-		
+		 END IF;
     ELSIF vr_reg_historico.indebcre = 'D' THEN
     
       -- Realizar processo caso ocorra debito em conta em prejuizo
@@ -1630,6 +1641,34 @@ begin
 												 , pr_dscritic => pr_dscritic);
   
 end pc_estorna_lancto_prog;
+
+	  
+FUNCTION fn_verifica_cred_bloq_futuro (pr_cdcooper IN  craplcm.cdcooper%TYPE 
+                                     , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                     , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
+                                     , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                     , pr_nrdocmto IN  craplcm.nrdocmto%type
+                                     ) return NUMBER is
+   vr_existe number(1) := 0;
+begin
+
+   begin
+      select 1 into vr_existe  
+      from crapdpb a
+      where a.cdcooper = pr_cdcooper
+        and a.nrdconta = pr_nrdconta
+        and a.dtmvtolt = pr_dtmvtolt
+        and a.cdhistor = pr_cdhistor
+        and a.nrdocmto = pr_nrdocmto;
+   exception
+      when no_data_found then
+         vr_existe := 0;
+   end;
+
+   return (vr_existe);
+
+end FN_VERIFICA_CRED_BLOQ_FUTURO;
+
 
 
 -- Rotina para estorno de saque em conta em prejuizo

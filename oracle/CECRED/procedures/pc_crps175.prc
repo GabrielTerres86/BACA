@@ -923,13 +923,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
        --Atribuir data do ultimo dia util do mes anterior
        vr_dtutdmes:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                 ,pr_dtmvtolt => rw_crapdat.dtultdma
-                                                ,pr_tipo     => 'A');
+                                                ,pr_tipo     => 'A'
+												,pr_feriado  => true
+                                                ,pr_excultdia => true);
 
        --Carregar tabela de memoria de lancamentos aplicacoes rdca
        FOR rw_craplap IN cr_craplap (pr_cdcooper => pr_cdcooper
                                     ,pr_dtmvtolt => vr_dtutdmes) LOOP
          vr_tab_craplap(rw_craplap.nrdconta):= 0;
        END LOOP;
+
+       /* Devido INC0032174 - as provisões do dia 31/01/2019 não foram realizados, forçar com as provisões do dia 31/12/2018.
+          Pode ser removido apos programa rodar no dia 28/02/2019 */
+       if extract(month from rw_crapdat.dtmvtolt) = 2 and extract(year from rw_crapdat.dtmvtolt) = 2019 then 
+         vr_dtutdmes:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt => to_date('31/12/2018','dd/mm/rrrr')
+                                                  ,pr_tipo     => 'A'
+                                                  ,pr_feriado  => true
+                                                  ,pr_excultdia => true);
+
+         --Carregar tabela de memoria de lancamentos aplicacoes rdca
+         FOR rw_craplap IN cr_craplap (pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => vr_dtutdmes) LOOP
+           vr_tab_craplap(rw_craplap.nrdconta):= 0;
+         END LOOP;
+       END IF;
 
        --Implementacao chamado 240937
        IF pr_cdcooper = 1 THEN --apenas para cooperativa 1

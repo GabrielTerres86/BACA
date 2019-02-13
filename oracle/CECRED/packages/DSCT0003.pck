@@ -4148,6 +4148,7 @@ END pc_inserir_lancamento_bordero;
       Alterações:
                   27/04/2018 - Andrew Albuquerque (GFT) - Alterações para contemplar Mesa de Checagem e Esteira IBRATAN
          15/08/2018 - Vitor Shimada Assanuma (GFT) - Colocar validação se o borderô em análise está no contrato ativo.
+         06/02/2019 - Cássia de Oliveira (GFT) - Correção para não enviar para a imbratam caso esteja na mesa de checagem
 
     ---------------------------------------------------------------------------------------------------------------------*/
     DECLARE
@@ -4349,6 +4350,11 @@ END pc_inserir_lancamento_bordero;
       CLOSE cr_crapbdt;
       IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
         vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF rw_crapbdt.insitapr IN (1,2) THEN
+        vr_dscritic := 'Borderô em análise na mesa de checagem.';
         RAISE vr_exc_erro;
       END IF;
       --Iniciar variáveis e Parâmetros de Retorno
@@ -5232,6 +5238,7 @@ END pc_inserir_lancamento_bordero;
      Objetivo  : Procedure para laçamento de crédito de desconto de Título.
 
      Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
+                 05/02/2019 - Adicionado tratativa de confirmação de inserção na tabela craplot e craplcm (Cássia de Oliveira - GFT)
    ----------------------------------------------------------------------------------------------------------*/
     DECLARE
         
@@ -5274,6 +5281,35 @@ END pc_inserir_lancamento_bordero;
       FOR UPDATE;
     rw_craplot cr_craplot%ROWTYPE;
     
+    -- Cursor pra conferir se o lote foi inserido
+    CURSOR cr_lotconf(pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                     ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+      SELECT (1) 
+        FROM craplot 
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = pr_dtmvtolt 
+         AND cdagenci = pr_cdagenci
+         AND cdbccxlt = pr_cdbccxlt
+         AND nrdolote = pr_nrdolote;
+    rw_lotconf cr_lotconf%ROWTYPE;
+    
+    CURSOR cr_lcmconf(pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                     ,pr_cdagenci IN craplcm.cdagenci%TYPE
+                     ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
+                     ,pr_nrdolote IN craplcm.nrdolote%TYPE
+                     ,pr_nrdctabb IN craplcm.nrdctabb%TYPE
+                     ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+      SELECT (1) 
+        FROM craplcm 
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = pr_dtmvtolt
+         AND cdagenci = pr_cdagenci
+         AND cdbccxlt = pr_cdbccxlt
+         AND nrdolote = pr_nrdolote
+         AND nrdctabb = pr_nrdctabb
+         AND nrdocmto = pr_nrdocmto;
+    rw_lcmconf cr_lcmconf%ROWTYPE;
+
     -- Registros para armazenar dados do lancamento gerado
     rw_craplcm craplcm%ROWTYPE;    
     vr_flg_criou_lot BOOLEAN;
@@ -5298,10 +5334,7 @@ END pc_inserir_lancamento_bordero;
 
         FETCH cr_craplot INTO rw_craplot;
 
-        -- Gerar erro caso não encontre
         IF cr_craplot%NOTFOUND THEN
-           -- Fechar cursor pois teremos raise
-           CLOSE cr_craplot;
            BEGIN
              INSERT INTO craplot
                         (cdcooper
@@ -5348,10 +5381,23 @@ END pc_inserir_lancamento_bordero;
                RAISE vr_exc_erro;
 
            END;
+            -- Confirma inclusão na craplot
+            OPEN cr_lotconf(pr_cdbccxlt => 100
+                           ,pr_nrdolote => vr_nrdolote);
+            FETCH cr_lotconf INTO rw_lotconf;
+            -- Gerar erro caso não encontre
+            IF cr_lotconf%NOTFOUND THEN
+              CLOSE cr_lotconf;
+              -- Monta critica
+              vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
+              -- Gera exceção
+              RAISE vr_exc_erro;
         ELSE
            -- Apenas fechar o cursor
-           CLOSE cr_craplot;
+              CLOSE cr_lotconf;
+            END IF; 
         END IF;
+			CLOSE cr_craplot;  
         EXCEPTION
           WHEN DUP_VAL_ON_INDEX THEN
             CONTINUE;
@@ -5416,6 +5462,25 @@ END pc_inserir_lancamento_bordero;
           -- Gera exceção
           RAISE vr_exc_erro;
       END;
+      -- Confirma inclusão na craplcm
+      OPEN cr_lcmconf(pr_dtmvtolt => rw_craplot.dtmvtolt
+                     ,pr_cdagenci => rw_craplot.cdagenci
+                     ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                     ,pr_nrdolote => rw_craplot.nrdolote
+                     ,pr_nrdctabb => pr_nrdconta
+                     ,pr_nrdocmto => rw_craplot.nrseqdig +1);
+      FETCH cr_lcmconf INTO rw_lcmconf;
+      -- Gerar erro caso não encontre
+      IF cr_lcmconf%NOTFOUND THEN
+        CLOSE cr_lcmconf;
+        -- Monta critica
+        vr_dscritic := 'Erro ao inserir na tabela craplcm: ' || SQLERRM;
+        -- Gera exceção
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_lcmconf;
+      END IF;
 
       BEGIN
         UPDATE craplot
@@ -5448,7 +5513,7 @@ END pc_inserir_lancamento_bordero;
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica
-          vr_dscritic := 'Erro ao atualizar o Lote: ' || SQLERRM;
+          vr_dscritic := 'Erro ao atualizar o Lote' || SQLERRM;
 
           -- Gera exceção
           RAISE vr_exc_erro;
@@ -7253,25 +7318,44 @@ EXCEPTION
     ---------------------------------------------------------------------------------------------------------------------*/
     -- CALCULO  DA LIQUIDEZ GERAL
     CURSOR cr_liquidez_geral IS
-      SELECT 
-        COUNT(1) AS qtd_titulos,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
+      SELECT COUNT(1) AS qtd_titulos,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
+        FROM (SELECT cob.dtdpagto,
+                     tit.nrdconta nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
        FROM   crapcob cob -- Titulos do Bordero
-       WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
-       AND    cob.cdcooper = pr_cdcooper
-       AND    cob.nrdconta = pr_nrdconta
-       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
-       --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-       AND    NOT EXISTS( SELECT 1
-                          FROM   craptit tit
-                          WHERE  tit.cdcooper = cob.cdcooper
+  INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+   LEFT JOIN craptit tit ON tit.cdcooper = cob.cdcooper
                           AND    tit.dtmvtolt = cob.dtdpagto
+                        AND tit.nrdconta = cob.nrdconta 
                           AND    cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
                           AND    cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                        AND cob.nrdocmto = substr(upper(tit.dscodbar), 34, 9)
                           AND    tit.cdbandst = 85
-                          AND    tit.cdagenci IN (90,91) )
-    ;
+                        AND tit.cdagenci IN (90,91) 
+       WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+         AND cob.cdcooper = pr_cdcooper
+         AND cob.nrdconta = pr_nrdconta
+         AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 AND cob.cdbanpag = 85
+        UNION ALL 
+              SELECT cob.dtdpagto,
+                     null nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
+                FROM crapcob cob -- Titulos do Bordero
+          INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+               WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                 AND cob.cdcooper = pr_cdcooper
+                 AND cob.nrdconta = pr_nrdconta 
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 and cob.cdbanpag <> 85);
     rw_liquidez_geral cr_liquidez_geral%ROWTYPE;
 
   BEGIN
@@ -7311,26 +7395,46 @@ EXCEPTION
     ---------------------------------------------------------------------------------------------------------------------*/
     -- CALCULO DA LIQUIDEZ CEDENTE PAGADOR
     CURSOR cr_liquidez_pagador IS
-      SELECT 
-        COUNT(1) AS qtd_titulos,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
-        (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
+      SELECT COUNT(1) AS qtd_titulos,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
+             (SUM(CASE WHEN (    dtdpagto IS NOT NULL
+                             AND nrdconta_tit IS NULL
+                             AND (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
+        FROM (SELECT cob.dtdpagto,
+                     tit.nrdconta nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
        FROM   crapcob cob -- Titulos do Bordero
-       WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
-       AND    cob.cdcooper = pr_cdcooper
-       AND    cob.nrdconta = pr_nrdconta
-       AND    cob.nrinssac = pr_nrinssac
-       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
-       --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-       AND    NOT EXISTS( SELECT 1
-                          FROM   craptit tit
-                          WHERE  tit.cdcooper = cob.cdcooper
+  INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+   LEFT JOIN craptit tit ON tit.cdcooper = cob.cdcooper
                           AND    tit.dtmvtolt = cob.dtdpagto
+                        AND tit.nrdconta = cob.nrdconta 
                           AND    cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
                           AND    cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                        AND cob.nrdocmto = substr(upper(tit.dscodbar), 34, 9)
                           AND    tit.cdbandst = 85
-                          AND    tit.cdagenci IN (90,91) )
-    ;
+                        AND tit.cdagenci IN (90,91) 
+       WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+         AND cob.cdcooper = pr_cdcooper
+         AND cob.nrdconta = pr_nrdconta
+         AND cob.nrinssac = pr_nrinssac
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 AND cob.cdbanpag = 85
+        UNION ALL 
+              SELECT cob.dtdpagto,
+                     null nrdconta_tit,
+                     cob.dtvencto,
+                     cob.vltitulo
+                FROM crapcob cob -- Titulos do Bordero
+          INNER JOIN crapceb ceb ON cob.cdcooper = ceb.cdcooper AND cob.nrdconta = ceb.nrdconta AND cob.nrcnvcob = ceb.nrconven
+               WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                 AND cob.cdcooper = pr_cdcooper
+                 AND cob.nrdconta = pr_nrdconta 
+                 AND cob.nrinssac = pr_nrinssac
+                 AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                 and cob.cdbanpag <> 85);
     rw_liquidez_pagador cr_liquidez_pagador%ROWTYPE;
     
   BEGIN

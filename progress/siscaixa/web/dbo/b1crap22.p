@@ -527,7 +527,7 @@ PROCEDURE realiza-deposito:
             PERSISTENT SET h-b1wgen0200.
         
        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-         (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+         (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
          ,INPUT 1                              /* par_cdagenci */
          ,INPUT 100                            /* par_cdbccxlt */
          ,INPUT p-nro-lote                     /* par_nrdolote */
