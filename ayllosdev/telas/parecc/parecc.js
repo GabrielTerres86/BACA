@@ -115,12 +115,41 @@ function estadoInicial() {
 	$('#frmCab').css({ 'display': 'block' });
 	$('#divTela').css({ 'width': '510px', 'padding-bottom': '2px' });
 
+	desabilitaCampos();
+
 	// Adicionar o foco no campo de OPCAO 
 	$("#cddopcao", "#frmCab").val("A").focus();
 	$("#cdcooperativa", "#frmCab").val("0");
 	$("#idfuncionalidade", "#frmCab").val("0");
 	$("#idtipoenvio", "#frmCab").val("0");
+
 	carregarFlagHabilitar();
+}
+
+function desabilitaCampos() {
+    if ($("#cddopcao", "#frmCab").val() != "A") {
+        $('#btLeft', '#frmCadsoa').attr("disabled", "disabled");
+        $('#btRigth', '#frmCadsoa').attr("disabled", "disabled");
+
+        $('#dsservico', '#frmCadsoa').attr("disabled", "disabled");
+        $('#dsaderido', '#frmCadsoa').attr("disabled", "disabled");
+
+        $('#btSelecioneDisponiveis', '#frmCadsoa').attr("disabled", "disabled");
+        $('#btSelecioneAderidos', '#frmCadsoa').attr("disabled", "disabled");
+
+        $('#btSalvar', '#frmCadsoa').attr("disabled", "disabled");
+    } else {
+        $('#btLeft', '#frmCadsoa').removeAttr("disabled", "disabled");
+        $('#btRigth', '#frmCadsoa').removeAttr("disabled", "disabled");
+
+        $('#dsservico', '#frmCadsoa').removeAttr("disabled", "disabled");
+        $('#dsaderido', '#frmCadsoa').removeAttr("disabled", "disabled");
+
+        $('#btSelecioneDisponiveis', '#frmCadsoa').removeAttr("disabled", "disabled");
+        $('#btSelecioneAderidos', '#frmCadsoa').removeAttr("disabled", "disabled");
+
+        $('#btSalvar', '#frmCadsoa').removeAttr("disabled", "disabled");
+    }
 }
 
 /**
@@ -357,18 +386,7 @@ function carregarCoopMultSelect() {
 
 	showMsgAguardo("Aguarde, buscando parametros...");
 
-	if ($("#cddopcao", "#frmCab").val() != "A") {
-	    $('#btLeft', '#frmCadsoa').unbind('click');
-	    $('#btRigth', '#frmCadsoa').unbind('click');
-	    
-	    $('#dsservico', '#frmCadsoa').attr("disabled", "disabled");
-	    $('#dsaderido', '#frmCadsoa').attr("disabled", "disabled");
-
-	    $('#btSelecioneDisponiveis', '#frmCadsoa').unbind('click');
-	    $('#btSelecioneAderidos', '#frmCadsoa').unbind('click');
-
-	    $('#btSalvar', '#frmCadsoa').unbind('click');
-	}
+	desabilitaCampos();
 
 	// Desabilitar a opcao
 	$("#cddopcao", "#frmCab").desabilitaCampo();

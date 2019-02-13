@@ -92,7 +92,7 @@
 			<td>
 				<div>
 				<label for="cddopcao"><? echo utf8ToHtml('Op&ccedil;&atilde;o:') ?></label>
-				<select id="cddopcao" name="cddopcao">
+				<select id="cddopcao" name="cddopcao" onchange="desabilitaCampos()">
 					<option value="A"><? echo utf8ToHtml('A - Alterar Par&acirc;metros')?> </option>
 					<option value="C"><? echo utf8ToHtml('C - Consultar Par&acirc;metros')?> </option>
 				</select>
