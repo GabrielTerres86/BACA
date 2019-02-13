@@ -5462,6 +5462,7 @@ END pc_inserir_lancamento_bordero;
           -- Gera exceção
           RAISE vr_exc_erro;
       END;
+      /*
       -- Confirma inclusão na craplcm
       OPEN cr_lcmconf(pr_dtmvtolt => rw_craplot.dtmvtolt
                      ,pr_cdagenci => rw_craplot.cdagenci
@@ -5481,7 +5482,7 @@ END pc_inserir_lancamento_bordero;
         -- Apenas fechar o cursor
         CLOSE cr_lcmconf;
       END IF;
-
+      */
       BEGIN
         UPDATE craplot
            SET craplot.nrseqdig = rw_craplcm.nrseqdig
