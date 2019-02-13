@@ -72,19 +72,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARHPG AS
 END TELA_PARHPG;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
----------------------------------------------------------------------------------------------------------------
---
---    Programa: TELA_PARHPG
---    Autor   : Douglas Quisinski
---    Data    : Abril/2016                      Ultima Atualizacao:   /  /
---
---    Dados referentes ao programa:
---
---    Objetivo  : BO ref. a Mensageria da tela PARHPG (Parametrizacao de Horarios de Pagamento da COMPE)
---
---    Alteracoes: 
---
----------------------------------------------------------------------------------------------------------------
+/*---------------------------------------------------------------------------------------------------------------
+
+    Programa: TELA_PARHPG
+    Autor   : Douglas Quisinski
+    Data    : Abril/2016                      Ultima Atualizacao:   /  /
+
+    Dados referentes ao programa:
+
+    Objetivo  : BO ref. a Mensageria da tela PARHPG (Parametrizacao de Horarios de Pagamento da COMPE)
+
+    Alteracoes: 31/01/2019 - Correcao na atualizacao dos horarios de devolucao diurna e noturna.
+                             Nao estavam sendo considerados os 2 primeiros valores da lista, que estavam fixo 00000 na tab055.
+							 Heitor (Mouts) - PRB0040505
+
+---------------------------------------------------------------------------------------------------------------*/
   -- Rotina para buscar as cooperativas 
   PROCEDURE pc_busca_coop_parhpg(pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                 ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
@@ -1337,7 +1339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
       -- Percorrer todas as devolucoes
       FOR rw IN cr_craptab (pr_cdcooper => pr_cdcooper) LOOP
         -- Inicializa a novo valor
-        vr_dstextab := '';
+        vr_dstextab := '00000;00000;';
           
         -- Verificar se atualiza Horario DEVOLUCAO DIURNO
         IF pr_hrdiuatu = 'S' THEN
