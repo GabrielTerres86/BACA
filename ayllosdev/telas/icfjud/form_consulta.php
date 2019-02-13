@@ -36,7 +36,10 @@
 		<input id="cdagecon" name="cdagecon" type="text" maxlength="4"  />
 	
 		<label for="nrctacon"><? echo utf8ToHtml('Conta Requisitada:') ?></label>
-		<input id="nrctacon" name="nrctacon" type="text" maxlength="12"  />
+		<input id="nrctacon" name="nrctacon" type="text" maxlength="12"  /><br style="clear:both;" />
+	
+		<label for="dsdocmc7"><? echo utf8ToHtml('CMC7:') ?></label>
+		<input id="dsdocmc7" name="dsdocmc7" type="text" maxlength="50"/>
 	
 	</fieldset>
 	
@@ -50,6 +53,7 @@
 	<div id="divBotoes">
 		<a href="#" align="center" class="botao" id="btnVoltar" name="btnVoltar" onClick="estadoInicial();return false;">Voltar</a>
 		<a href="#" class="botao" id="btnConsultar" name="btnConsultar" onClick="consultaICF(); return false;">Consultar</a>
+		<a href="#" class="botao" id="btnReenviar" name="btnReenviar" onClick="reenviarICFs(); return false;">Reenviar</a>
 	</div>
 	
 </form>

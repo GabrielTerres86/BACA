@@ -26,6 +26,12 @@ DEF VAR aux_dacaojud AS CHAR NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR NO-UNDO.
 DEF VAR aux_cdtipcta AS INTE NO-UNDO.
+DEF VAR aux_dsdocmc7 AS CHAR NO-UNDO.
+DEF VAR aux_tpdconta AS CHAR NO-UNDO.
+DEF VAR aux_dtdtroca AS DATE NO-UNDO.
+DEF VAR aux_vldopera AS DECI NO-UNDO.
+DEF VAR aux_nrsctareq AS CHAR NO-UNDO.
+DEF VAR aux_listaacaojud AS CHAR NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -58,6 +64,12 @@ PROCEDURE valores_entrada:
             WHEN "nrctareq"  THEN aux_nrctareq =  DECI(tt-param.valorCampo).
             WHEN "cdtipcta"  THEN aux_cdtipcta =  INTE(tt-param.valorCampo).
             WHEN "dacaojud"  THEN aux_dacaojud =  tt-param.valorCampo.
+            WHEN "dsdocmc7"  THEN aux_dsdocmc7 =  tt-param.valorCampo.
+            WHEN "tpdconta"  THEN aux_tpdconta =  tt-param.valorCampo.
+            WHEN "dtdtroca"  THEN aux_dtdtroca =  DATE(tt-param.valorCampo).
+            WHEN "vldopera"  THEN aux_vldopera =  DECI(tt-param.valorCampo).
+            WHEN "nrsctareq"  THEN aux_nrsctareq =  tt-param.valorCampo.
+            WHEN "listaacaojud"  THEN aux_listaacaojud =  tt-param.valorCampo.
         END CASE.
     
     END. /** Fim do FOR EACH tt-param **/
@@ -104,6 +116,8 @@ PROCEDURE valores_entrada:
                         tt-consulta-icf.cdcritic = INTE(tt-param-i.valorCampo).
                     WHEN "cdtipcta" THEN
                         tt-consulta-icf.cdtipcta = INTE(tt-param-i.valorCampo).
+                    WHEN "dsdocmc7" THEN
+                        tt-consulta-icf.dsdocmc7 = tt-param-i.valorCampo.
                 END CASE.
             END.
         END CASE.
@@ -122,6 +136,10 @@ PROCEDURE inclui-registro-icf:
                                     INPUT aux_nrctareq,
                                     INPUT aux_dacaojud,
                                     INPUT aux_cdoperad,
+                                    INPUT aux_dsdocmc7,
+                                    INPUT aux_tpdconta,
+                                    INPUT aux_dtdtroca,
+                                    INPUT aux_vldopera,
                                    OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE = "NOK" THEN
@@ -132,6 +150,36 @@ PROCEDURE inclui-registro-icf:
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Nao foi possivel salvar o registro.".
+        END.
+
+        RUN piXmlNew.
+        RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+        RUN piXmlSave.
+
+    END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlSave.
+    END.
+
+END PROCEDURE.
+
+PROCEDURE reenviar-registros-icf:
+
+    RUN reenviar-registros-icf IN hBO (INPUT aux_cdcooper,
+                                       INPUT aux_nrsctareq,
+                                       INPUT aux_listaacaojud,
+                                       OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE = "NOK" THEN
+    DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF NOT AVAILABLE tt-erro THEN
+        DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = "Nao foi possivel reenviar os registros selecionados.".
         END.
 
         RUN piXmlNew.
@@ -190,6 +238,7 @@ PROCEDURE consulta-icf:
                              INPUT aux_cdbanreq,
                              INPUT aux_cdagereq,
                              INPUT aux_nrctareq,
+                             INPUT aux_dsdocmc7,
                             OUTPUT TABLE tt-consulta-icf,
                             OUTPUT TABLE tt-erro).
 

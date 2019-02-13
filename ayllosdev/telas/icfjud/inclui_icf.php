@@ -35,9 +35,12 @@
 	$nrctades = $_POST["nrctades"];
 	$dacaojud = $_POST["dacaojud"];
 	$cdoperad = $_POST["cdoperad"];
-	
+    $dsdocmc7 = htmlspecialchars($_POST["dsdocmc7"]);
+    $tpdconta = $_POST["tpdconta"];
+    $dtdtroca = $_POST["dtdtroca"];
+    $vldopera = $_POST["vldopera"];
 					
-	// Monta o xml de requisição
+	// Monta o xml de requisi??o
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
 	$xmlRegistro .= "	<Cabecalho>";
@@ -54,6 +57,10 @@
 	$xmlRegistro .= "		<nrctareq>".$nrctades."</nrctareq>";
 	$xmlRegistro .= "		<dacaojud>".$dacaojud."</dacaojud>";
 	$xmlRegistro .= "		<cdoperad>".$cdoperad."</cdoperad>";
+	$xmlRegistro .= "		<dsdocmc7>".$dsdocmc7."</dsdocmc7>";
+	$xmlRegistro .= "		<tpdconta>".$tpdconta."</tpdconta>";
+	$xmlRegistro .= "		<dtdtroca>".$dtdtroca."</dtdtroca>";
+	$xmlRegistro .= "		<vldopera>".$vldopera."</vldopera>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		

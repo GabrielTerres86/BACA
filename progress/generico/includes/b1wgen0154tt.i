@@ -26,6 +26,7 @@ DEF TEMP-TABLE tt-consulta-icf NO-UNDO
     FIELD dacaojud AS CHAR
     FIELD cdcritic AS INTE
     FIELD cdtipcta AS INTE
+	FIELD dsdocmc7 AS CHAR
     FIELD dsstatus AS CHAR.
 
 DEF VAR aux_dscpfcgc AS CHAR                                     NO-UNDO.
