@@ -1657,6 +1657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		vr_flgimped BOOLEAN;
 		vr_tab_msg_confirma cada0003.typ_tab_msg_confirma;
 		vr_tab_erro gene0001.typ_tab_erro;
+    vr_dtdiautl DATE;
         
     -- Tratamento de erros
 		vr_dscritic VARCHAR2(4000);
@@ -1674,6 +1675,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		-- Percorrer as cooperativas do cursor
 		FOR rw_crapcop IN cr_crapcop LOOP
 
+      -- Verifica se está rodando o job em um feriado
+      vr_dtdiautl := gene0005.fn_valida_dia_util(pr_cdcooper  => rw_crapcop.cdcooper
+                                                ,pr_dtmvtolt  => TRUNC(SYSDATE) -- Data do dia
+                                                ,pr_feriado   => TRUE );
+      
+      -- Se não for a mesma data indica que é feriado
+      IF vr_dtdiautl <> TRUNC(SYSDATE) THEN
+        -- Gera o log para a cooperativa
+        pc_gera_log_deslig_cta_sal(pr_nmdacao  => 'pc_deslig_conta_salario'
+														      ,pr_dsmsglog => 'COOPERATIVA '||rw_crapcop.cdcooper||' - '||rw_crapcop.nmrescop||', NÃO PROCESSOU DEVIDO A FERIADO REGISTRADO.' );
+      
+        -- Pula a cooperativa
+        CONTINUE;
+      END IF;
+      
 			-- Leitura do calendário da cooperativa
 			OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
 			FETCH btch0001.cr_crapdat INTO rw_crapdat;
