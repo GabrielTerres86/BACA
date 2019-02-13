@@ -883,7 +883,7 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd  
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
                             dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
                       WHERE crawcrd.cdcooper = par_cdcooper    AND
                             crawcrd.nrdconta = par_nrdconta    NO-LOCK:
