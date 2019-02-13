@@ -120,6 +120,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             11/02/2019 - Tratamento para flgprcrd quando incluir segunda via 
   --                          (Lucas Ranghetti #PRB0040597)
+  --                        - Limpar data de rejeicao ao alterar a situação para 
+  --                          3 - liberado (Lucas Ranghetti PRB0040596)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -8640,6 +8642,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    
                    11/02/2019 - Tratamento para flgprcrd quando incluir segunda via 
                                 (Lucas Ranghetti #PRB0040597)
+                              - Limpar data de rejeicao ao alterar a situação para 
+                                3 - liberado (Lucas Ranghetti PRB0040596)
     ............................................................................ */
 
     DECLARE
@@ -12404,6 +12408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                        , inanuida = 0
                        , qtanuida = 0
                        , dtlibera = trunc(SYSDATE)
+                       , dtrejeit = NULL
                        -- cdoperad = pr_cdoperad  -- Não deve sobrescrever o operador ( Renato - Supero )
                    WHERE ROWID = rw_crawcrd.rowid;
                 EXCEPTION
