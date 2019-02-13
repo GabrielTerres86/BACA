@@ -557,6 +557,7 @@
                             
                11/02/2019 - Validacao para nao permitir exclusao de cartao quando o mesmo estiver em uso
                             (Lucas Ranghetti #PRB0040556)
+                          - Validar titularidade na entrega da segunda via do cartao (Lucas Ranghetti #PRB0040597)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -11279,6 +11280,7 @@ PROCEDURE efetua_entrega2via_cartao:
     DEF  VAR   aux_nrctrcrd       AS INTE                           NO-UNDO.
   
     DEF  VAR   aux_flgtrans       AS LOGI                           NO-UNDO.
+    DEF  VAR   aux_flgprcrd       AS INTE INIT 1                    NO-UNDO.
 
     DEF BUFFER crabcrd FOR crawcrd.
     DEF BUFFER cratcrd FOR crapcrd.
@@ -11482,6 +11484,26 @@ PROCEDURE efetua_entrega2via_cartao:
                                        28,
                                        YEAR(aux_dtcalcu2)) + 4)).
         
+        /* Inicio - Busca primeiro cartao do cooperado - dentro da mesma adm */
+        FIND FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper 
+                             AND crawcrd.nrdconta = par_nrdconta  
+                             AND crawcrd.cdadmcrd = crabcrd.cdadmcrd 
+                             AND crawcrd.flgprcrd = 1
+                             NO-LOCK NO-ERROR NO-WAIT.
+
+        /* Verifica se registro foi encontrado */
+        IF AVAILABLE crawcrd THEN 
+          DO:
+            /* Verificar se o CPF do titular do primeiro cartao */
+            /* eh o mesmo que esta sendo validado */ 
+            IF crawcrd.nrcpftit = DECI(crabcrd.nrcpftit) THEN 
+              ASSIGN aux_flgprcrd = 1. /* Eh o primeiro cartao Bancoob */ 
+            ELSE 
+              ASSIGN aux_flgprcrd = 0. /* Nao eh o primeiro titular */ 
+          END.
+        /* Se nao encontrado eh o primeiro cartao Bancoob */
+        ELSE 
+          ASSIGN aux_flgprcrd = 1.  
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
         IF par_cdagenci = 0 THEN
@@ -11494,6 +11516,7 @@ PROCEDURE efetua_entrega2via_cartao:
         ASSIGN crawcrd.dtmvtolt = par_dtmvtolt
                crawcrd.nrdconta = par_nrdconta
                crawcrd.nrctrcrd = aux_nrctrcrd
+               crawcrd.flgprcrd = aux_flgprcrd
                crawcrd.nrcpftit = crabcrd.nrcpftit
                crawcrd.nmtitcrd = crabcrd.nmtitcrd
                crawcrd.cdgraupr = crabcrd.cdgraupr
