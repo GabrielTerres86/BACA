@@ -586,6 +586,9 @@ PROCEDURE busca-dados-impressao:
     DEF VAR par_flgativo AS LOGI                                    NO-UNDO.
     DEF VAR par_nrctrhcj AS INTE                                    NO-UNDO.
     DEF VAR par_flgliber AS logi                                    NO-UNDO.
+    
+    DEF VAR aux_dtassele AS DATE                                    NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                                    NO-UNDO. /* Data de corte */
 
     RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT
         SET h-b1wgen0001.
@@ -918,7 +921,9 @@ PROCEDURE busca-dados-impressao:
                                            INPUT par_flgerlog,  
                                           OUTPUT par_flgativo,  
                                           OUTPUT par_nrctrhcj,  
-                                          OUTPUT par_flgliber,  
+                                          OUTPUT par_flgliber,
+                                          OUTPUT aux_dtassele,
+                                          OUTPUT aux_dsvlrprm,
                                           OUTPUT TABLE tt-erro,
                                           OUTPUT TABLE tt-cartoes,
                                           OUTPUT TABLE tt-lim_total).

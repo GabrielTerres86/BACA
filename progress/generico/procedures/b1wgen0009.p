@@ -8153,6 +8153,9 @@ PROCEDURE carrega_dados_proposta_bordero:
     DEFINE VARIABLE aux_vlsldtot AS DEC                 NO-UNDO.
     DEFINE VARIABLE aux_vlsldapl AS DEC                 NO-UNDO.
     DEFINE VARIABLE h-b1wgen0081 AS HANDLE              NO-UNDO.  
+    
+    DEF VAR aux_dtassele AS DATE                        NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                        NO-UNDO. /* Data de corte */
 
     EMPTY TEMP-TABLE tt-proposta_bordero_dscchq.
     EMPTY TEMP-TABLE tt-emprsts.
@@ -8338,6 +8341,8 @@ PROCEDURE carrega_dados_proposta_bordero:
                                                OUTPUT aux_flgativo,
                                                OUTPUT aux_nrctrhcj,
                                                OUTPUT aux_flgliber,
+                                               OUTPUT aux_dtassele,
+                                               OUTPUT aux_dsvlrprm,
                                               OUTPUT TABLE tt-erro,
                                               OUTPUT TABLE tt-cartoes,
                                               OUTPUT TABLE tt-lim_total).
@@ -9031,6 +9036,9 @@ PROCEDURE carrega_dados_proposta_limite:
     DEF VAR aux_vlsldrgt AS DEC                        NO-UNDO.
     DEF VAR aux_vlsldtot AS DEC                        NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC                        NO-UNDO.    
+    
+    DEF VAR aux_dtassele AS DATE                       NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                       NO-UNDO. /* Data de corte */
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-emprsts.
@@ -9210,6 +9218,8 @@ PROCEDURE carrega_dados_proposta_limite:
                                            OUTPUT aux_flgativo,
                                            OUTPUT aux_nrctrhcj,
                                            OUTPUT aux_flgliber,
+                                           OUTPUT aux_dtassele,
+                                           OUTPUT aux_dsvlrprm,
                                           OUTPUT TABLE tt-erro,
                                           OUTPUT TABLE tt-cartoes,
                                           OUTPUT TABLE tt-lim_total).

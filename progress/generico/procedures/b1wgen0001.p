@@ -4346,6 +4346,9 @@ PROCEDURE carrega_dados_atenda:
     DEF VAR h-b1wgen0085 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen9998 AS HANDLE                                  NO-UNDO.
     
+    DEF VAR aux_dtassele AS DATE                                    NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                                    NO-UNDO. /* Data de corte */
+    
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-cabec.
     EMPTY TEMP-TABLE tt-comp_cabec.
@@ -4686,6 +4689,8 @@ PROCEDURE carrega_dados_atenda:
                                                OUTPUT aux_flgativo,
                                                OUTPUT aux_nrctrhcj,
                                                OUTPUT aux_flgliber,
+                                               OUTPUT aux_dtassele,
+                                               OUTPUT aux_dsvlrprm,
                                               OUTPUT TABLE tt-erro,
                                               OUTPUT TABLE tt-cartoes,
                                               OUTPUT TABLE tt-lim_total).
