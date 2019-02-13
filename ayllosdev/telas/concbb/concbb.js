@@ -7,10 +7,10 @@
  * ALTERAÇÕES   :
  * 000: [02/07/2012] Jorge Hamaguchi  (CECRED): Alterado funcao Gera_Impressao(), novo esquema para impressao
  * 001: [05/03/2013] Gabriel Ramirez  (CECRED): Novo padrao do layout (Gabriel) 
+ * 002: [08/01/2019] Christian Grauppe (Envolti): Alterações P510, campo Tipo Pgto.
  * --------------
  */
 
-//
 var cddopcao = '';
  
 //Formulários e Tabela
@@ -29,11 +29,9 @@ var mrsgetor		= '';
 var rCddopcao, rDtmvtolt, rCdagenci, rNrdcaixa, rValorpag, rInss, rRegistro,
 	cCddopcao, cDtmvtolt, cCdagenci, cNrdcaixa, cValorpag, cInss, cRegistro, cTodosCabecalho, btnOK;
 
-	
 $(document).ready(function() {
 	estadoInicial();
 });
-
 
 // seletores
 function estadoInicial() {
@@ -81,7 +79,6 @@ function estadoCabecalho() {
 	removeOpacidade('divTela');
 	return false;
 }
-
 
 // controle
 function controlaOperacao( nriniseq, nrregist, flggeren ) {
@@ -509,39 +506,45 @@ function formataTabela() {
 	// complemento linha 1
 	var linha1  = $('ul.complemento', '#linha1').css({'margin-left':'1px','width':'99.5%'});
 	
-	$('li:eq(0)', linha1).addClass('txtNormalBold').css({'width':'17%','text-align':'right'});
+	$('li:eq(0)', linha1).addClass('txtNormalBold').css({'width':'15%','text-align':'right'});
 	$('li:eq(1)', linha1).addClass('txtNormal').css({'width':'67%'});
 	$('li:eq(2)', linha1).addClass('txtNormal');
 
 	// complemento linha 2
 	var linha2  = $('ul.complemento', '#linha2').css({'clear':'both','border-top':'0','width':'99.5%'});
 	
-	$('li:eq(0)', linha2).addClass('txtNormalBold').css({'width':'17%','text-align':'right'});
-	$('li:eq(1)', linha2).addClass('txtNormal').css({'width':'52%'});
-	$('li:eq(2)', linha2).addClass('txtNormalBold').css({'width':'14%','text-align':'right'});
+	$('li:eq(0)', linha2).addClass('txtNormalBold').css({'width':'15%','text-align':'right'});
+	$('li:eq(1)', linha2).addClass('txtNormal').css({'width':'50%'});
+	$('li:eq(2)', linha2).addClass('txtNormalBold').css({'width':'13%','text-align':'right'});
 	$('li:eq(3)', linha2).addClass('txtNormal');
 
 	// complemento linha 3
 	var linha3  = $('ul.complemento', '#linha3').css({'clear':'both','border-top':'0','width':'99.5%'});
-	
+	/*
 	$('li:eq(0)', linha3).addClass('txtNormalBold').css({'width':'17%','text-align':'right'});
 	$('li:eq(1)', linha3).addClass('txtNormal').css({'width':'52%'});
 	$('li:eq(2)', linha3).addClass('txtNormalBold').css({'width':'14%','text-align':'right'});
 	$('li:eq(3)', linha3).addClass('txtNormal');
+	*/
+	$('li:eq(0)', linha3).addClass('txtNormalBold').css({'width':'15%','text-align':'right'});
+	$('li:eq(1)', linha3).addClass('txtNormal').css({'width':'18%'});
+	$('li:eq(2)', linha3).addClass('txtNormalBold').css({'width':'16%','text-align':'right'});
+	$('li:eq(3)', linha3).addClass('txtNormal').css({'width':'15%'});
+	$('li:eq(4)', linha3).addClass('txtNormalBold').css({'width':'13%','text-align':'right'});
 
 	// complemento linha 4
 	var linha4  = $('ul.complemento', '#linha4').css({'clear':'both','border-top':'0','width':'99.5%'});
 	
-	$('li:eq(0)', linha4).addClass('txtNormalBold').css({'width':'17%','text-align':'right'});
+	$('li:eq(0)', linha4).addClass('txtNormalBold').css({'width':'15%','text-align':'right'});
 	$('li:eq(1)', linha4).addClass('txtNormal').css({'width':'18%'});
-	$('li:eq(2)', linha4).addClass('txtNormalBold').css({'width':'10%','text-align':'right'});
-	$('li:eq(3)', linha4).addClass('txtNormal').css({'width':'22.8%'});
-	$('li:eq(4)', linha4).addClass('txtNormalBold').css({'width':'14%','text-align':'right'});
-
+	$('li:eq(2)', linha4).addClass('txtNormalBold').css({'width':'16%','text-align':'right'});//10
+	$('li:eq(3)', linha4).addClass('txtNormal').css({'width':'15%'});//22.8
+	$('li:eq(4)', linha4).addClass('txtNormalBold').css({'width':'13%','text-align':'right'});//14
+/*
 	if ( $.browser.msie ) {
 		$('li:eq(3)', linha4).addClass('txtNormal').css({'width':'24%'});
 	}
-	
+*/
 	/********************
 	  EVENTO COMPLEMENTO	
 	*********************/
@@ -578,6 +581,7 @@ function selecionaTabela(tr) {
 	$('#dtvencto','.complemento').html( $('#dtvencto', tr).val() );
 	$('#nrautdoc','.complemento').html( $('#nrautdoc', tr).val() );
 	$('#flgrgatv','.complemento').html( $('#flgrgatv', tr).val() );
+	$('#dstppgto','.complemento').html( $('#dstppgto', tr).val() );
 	
 	$('#registro','#'+frmCab).val( $('#registro', tr).val() );
 	return false;

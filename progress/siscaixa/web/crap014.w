@@ -398,6 +398,7 @@ DEFINE FRAME Web-Frame
      ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U 
            SIZE 20 BY 2
@@ -786,7 +787,7 @@ PROCEDURE process-web-request:
                             v_codbarras = ""
                             v_msg       = ""
                             vh_foco     = "7"
-                            /*v_tppagmto  = "0"*/
+                            v_tppagmto  = "2"
 							.
                  END.
              ELSE 
@@ -808,6 +809,33 @@ PROCEDURE process-web-request:
                      
                  ASSIGN aux_des_erro = "OK".
 
+                 /* Garantir a selecao de Especie ou Conta */ 
+                 IF v_tppagmto = "2" THEN
+                 DO:
+                    /* Limpar as criticas */
+                    RUN elimina-erro(INPUT glb_nmrescop,
+                                     INPUT glb_cdagenci,
+                                     INPUT glb_cdbccxlt).
+                    /* Criar o erro novo */
+                    ASSIGN aux_des_erro = "NOK"
+                           aux_dscritic = "É obrigatorio selecionar 'Conta' ou 'Espécie'."
+                           vh_foco = "8".
+                    RUN cria-erro(INPUT glb_nmrescop,
+                                  INPUT glb_cdagenci,
+                                  INPUT glb_cdbccxlt,
+                                  INPUT 0,
+                                  INPUT aux_dscritic,
+                                  INPUT YES).
+                    /* Exibir o erro */ 
+                    RUN gera-erro(INPUT glb_cdcooper,
+                                  INPUT glb_cdagenci,
+                                  INPUT glb_cdbccxlt).                                   
+                                  
+                 END.
+                  
+                 
+                 IF aux_des_erro = "OK" THEN
+                 DO:
                  /*se o cod barras estiver preenchido verifica o campo 
                    de valor e volta o foco para ele caso haja algum problema
                    ou o campo nao estiver preenchido*/
@@ -949,6 +977,7 @@ PROCEDURE process-web-request:
                                    END.
                             END.
                     END.
+                  END.
                 
                IF aux_des_erro = "OK" THEN
                DO:
@@ -1435,7 +1464,6 @@ PROCEDURE processa-titulo:
 		   RETURN "NOK".
 		 END.
 	   END.
-	   
 	
     /* ***Passou pelas validacoes*** */
     IF  par_titvenci = "no" AND 

@@ -106,6 +106,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                   ,pr_dshistor IN VARCHAR2 DEFAULT NULL     
                                   ,pr_iptransa IN VARCHAR2 DEFAULT NULL
                                   ,pr_iddispos IN VARCHAR2 DEFAULT NULL
+                                  ,pr_tppagmto IN NUMBER DEFAULT 0
                                   ,pr_dslitera OUT VARCHAR2
                                   ,pr_sequenci OUT NUMBER
                                   ,pr_nrseqaut OUT NUMBER
@@ -142,6 +143,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                     ,pr_dshistor IN VARCHAR2 DEFAULT NULL
                                     ,pr_iptransa IN VARCHAR2 DEFAULT NULL
                                     ,pr_iddispos IN VARCHAR2 DEFAULT NULL
+                                    ,pr_tppagmto IN NUMBER DEFAULT 0
                                     ,pr_dslitera OUT VARCHAR2
                                     ,pr_sequenci OUT NUMBER
                                     ,pr_nrseqaut OUT NUMBER
@@ -261,6 +263,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                              ,pr_dshistor   IN VARCHAR2 DEFAULT NULL
                              ,pr_iptransa   IN VARCHAR2 DEFAULT NULL
                              ,pr_iddispos   IN VARCHAR2 DEFAULT NULL
+                             ,pr_tppagmto   IN NUMBER DEFAULT 0
                              ,pr_dsprotoc  OUT VARCHAR2
                              ,pr_dslitera  OUT VARCHAR2
                              ,pr_cdultseq  OUT NUMBER
@@ -479,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 29/08/2018
+   Data     : 27/08/2015                        Ultima atualizacao: 25/01/2019
 
    Dados referentes ao programa:
 
@@ -566,6 +569,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                04/01/2019 - Centralizacao da verificacao de lancamento existente na nova rotina
 			                pc_gps_verificar_lancamento utilizada na validacao e no pagamento de GPS
                             PRB0040392 - (Jefferson - MoutS)
+							
+               25/01/2018 - P510 - Ajustes na pc_gps_pagamento para receber o tipo Especie ou COnta e 
+                            propagar para a gravacao na LGP passando por pc_gps_validar_sicredi, pc_gps_arrecadar_sicredi
+                            e pc_atualiza_pagamento (Marcos-Envolti)      
 							
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -736,6 +743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_inproces IN NUMBER
                                  ,pr_nrseqagp IN NUMBER
                                  ,pr_idanalis IN NUMBER
+                                 ,pr_tppagmto IN NUMBER DEFAULT 0
                                  ,pr_craplgp_rowid OUT ROWID
                                  ,pr_craplot OUT cr_craplot%ROWTYPE
                                  ,pr_dslitera   OUT VARCHAR2
@@ -1019,7 +1027,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                 ,dstiparr
                 ,nrseqagp
                 ,flgativo
-                ,idanafrd )
+                ,idanafrd
+                ,tppagmto
+                )
          VALUES (pr_cdcooper
                 ,pr_craplot.dtmvtolt
                 ,pr_craplot.cdagenci
@@ -1049,7 +1059,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                 ,pr_dstiparr
                 ,pr_nrseqagp
                 ,1 -- flgativo
-                ,nullif(pr_idanalis,0) )
+                ,nullif(pr_idanalis,0)
+                ,pr_tppagmto
+                )
               RETURNING ROWID
               INTO pr_craplgp_rowid;
     EXCEPTION
@@ -1141,6 +1153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_dshistor IN VARCHAR2 DEFAULT NULL
                                   ,pr_iptransa IN VARCHAR2 DEFAULT NULL
                                   ,pr_iddispos IN VARCHAR2 DEFAULT NULL
+                                  ,pr_tppagmto IN NUMBER DEFAULT 0
                                   ,pr_dslitera OUT VARCHAR2
                                   ,pr_sequenci OUT NUMBER
                                   ,pr_nrseqaut OUT NUMBER
@@ -2014,6 +2027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 							   ,pr_dshistor => pr_dshistor
                                  ,pr_iptransa => pr_iptransa
                                  ,pr_iddispos => pr_iddispos
+                               ,pr_tppagmto => pr_tppagmto
                                ,pr_dslitera => pr_dslitera
                                ,pr_sequenci => pr_sequenci
                                ,pr_nrseqaut => pr_nrseqaut
@@ -2083,6 +2097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_dshistor IN VARCHAR2 DEFAULT NULL
                                     ,pr_iptransa IN VARCHAR2 DEFAULT NULL
                                     ,pr_iddispos IN VARCHAR2 DEFAULT NULL
+                                    ,pr_tppagmto IN NUMBER DEFAULT 0
                                     ,pr_dslitera OUT VARCHAR2
                                     ,pr_sequenci OUT NUMBER
                                     ,pr_nrseqaut OUT NUMBER
@@ -2453,6 +2468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,pr_inproces => pr_inproces
                          ,pr_nrseqagp => pr_nrseqagp
                          ,pr_idanalis => vr_idanalise_fraude
+                         ,pr_tppagmto => pr_tppagmto
                          ,pr_craplgp_rowid => vr_craplgp_rowid
                          ,pr_craplot => rw_craplot
                          ,pr_dslitera => pr_dslitera
@@ -4697,6 +4713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_dshistor   IN VARCHAR2
                             ,pr_iptransa   IN VARCHAR2 DEFAULT NULL
                             ,pr_iddispos   IN VARCHAR2 DEFAULT NULL
+                            ,pr_tppagmto   IN NUMBER DEFAULT 0
                             ,pr_dsprotoc  OUT VARCHAR2
                             ,pr_dslitera  OUT VARCHAR2
                             ,pr_cdultseq  OUT NUMBER
@@ -5123,6 +5140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_dshistor => vr_dshistor
                                     ,pr_iptransa => pr_iptransa
                                     ,pr_iddispos => pr_iddispos
+                                    ,pr_tppagmto => pr_tppagmto
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic
                                     ,pr_des_reto => vr_dsretorn);
@@ -5907,13 +5925,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,lgp.hrtransa
               ,lgp.nrautdoc
               ,DECODE(lgp.inpesgps,1,'Pessoa Física','Pessoa Júridica')  inpesgps
-              , DECODE(lgp.nrseqagp,0
-                ,DECODE(lgp.nrctapag,0,'Em Espécie'
-                   ,DECODE(lgp.cdagenci,90,'Por Internet','Débito em Conta')
-                       )
-                   ,'Por Agendamento'
-                   ) nrseqagp
+              ,lgp.nrseqagp
+              ,lgp.tppagmto
               ,lgp.nrseqdig
+              ,lgp.dstiparr
           FROM craplgp lgp
               ,crapope ope
          WHERE lgp.cdcooper  = p_cdcooper
@@ -5944,6 +5959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_nrdcaixa    VARCHAR2(25);
      vr_idorigem    VARCHAR2(25);
      vr_cdoperad    VARCHAR2(500);
+     vr_tppagmto    VARCHAR2(500);
 
      vr_index PLS_INTEGER;
 
@@ -6026,6 +6042,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            vr_tab_dados(vr_index)('tpdpagto') := 'Sem Código de Barras/Manual';
         END IF;
 
+        -- Tratar tipo de pagamento
+        IF rw_craplgp.nrseqagp = 0 THEN
+          IF rw_craplgp.cdagenci = 90 THEN
+            vr_tppagmto := 'Por Internet';
+          ELSE
+            IF rw_craplgp.dstiparr IN('MANUAL BOCA DE CAIXA E RETAGUARDA','GPS COM CODIGO DE BARRAS GUICHE DE CAIXA') THEN
+              IF rw_craplgp.tppagmto = 1 THEN
+                vr_tppagmto := 'Em Espécie';
+              ELSE
+                vr_tppagmto := 'Débito em Conta';
+              END IF;
+            ELSE
+              IF rw_craplgp.nrctapag = 0 THEN
+                vr_tppagmto := 'Em Espécie';
+              ELSE
+                vr_tppagmto := 'Débito em Conta';
+              END IF;
+            END IF;
+          END IF;
+        ELSE
+          vr_tppagmto := 'Por Agendamento';
+        END IF;
+        
+        -- Enviar o restante das informações
         vr_tab_dados(vr_index)('cdbarras') := rw_craplgp.cdbarras;
         vr_tab_dados(vr_index)('nrctapag') := GENE0002.fn_mask_conta(rw_craplgp.nrctapag);
         vr_tab_dados(vr_index)('nmprimtl') := rw_craplgp.nmprimtl;
@@ -6038,7 +6078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         vr_tab_dados(vr_index)('hrtransa') := GENE0002.fn_converte_time_data(rw_craplgp.hrtransa);
         vr_tab_dados(vr_index)('nrautdoc') := rw_craplgp.nrautdoc;
         vr_tab_dados(vr_index)('inpesgps') := rw_craplgp.inpesgps;
-        vr_tab_dados(vr_index)('nrseqagp') := rw_craplgp.nrseqagp;
+        vr_tab_dados(vr_index)('nrseqagp') := vr_tppagmto;
         vr_tab_dados(vr_index)('nrseqdig') := rw_craplgp.nrseqdig;
      END LOOP;
 

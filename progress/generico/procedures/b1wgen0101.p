@@ -71,6 +71,8 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+			   26/12/2018 - Projeto 510 - Procedures consulta_titulos e consulta_faturas passam a retornar o novo campo tppagmto (craptit e craplft).
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i } 
@@ -151,7 +153,8 @@ PROCEDURE consulta_titulos:
                        tt-dados-pesqti.nrdolote = craptit.nrdolote
                        tt-dados-pesqti.vldpagto = craptit.vldpagto
                        tt-dados-pesqti.cdagenci = craptit.cdagenci
-                       tt-dados-pesqti.tpcptdoc = craptit.tpcptdoc.
+                       tt-dados-pesqti.tpcptdoc = craptit.tpcptdoc
+					   tt-dados-pesqti.tppagmto = craptit.tppagmto.
 
                 IF  tt-dados-pesqti.tpcptdoc = 1 THEN
                     DO:
@@ -365,6 +368,7 @@ PROCEDURE consulta_faturas:
                        tt-dados-pesqti.tpcptdoc = craplft.tpcptdoc
                        tt-dados-pesqti.dsnomfon = craplft.dsnomfon
                        tt-dados-pesqti.dtdpagto = craplft.dtmvtolt
+					   tt-dados-pesqti.tppagmto = craplft.tppagmto
                        .
 
                 IF  tt-dados-pesqti.tpcptdoc = 1 THEN

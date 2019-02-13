@@ -23,6 +23,8 @@
 				  
                   18/01/2018 - Alterações referentes ao PJ406.
 				  
+                  08/01/2019 - Alterações P510, campo Tipo Pgto (Christian Grauppe - Envolti).
+				  
  */	
 ?>
 
@@ -76,6 +78,16 @@
 		
 		<label for="dscptdoc"><? echo utf8ToHtml('Origem pagto:') ?></label>
 		<input name="dscptdoc" id="dscptdoc" type="text" />	
+		
+		<br/>
+
+		<label for="tppagmto"><? echo utf8ToHtml('Tipo pagto:') ?></label>    
+    <select name="tppagmto" id="tppagmto">
+      <option value="0">Conta</option>
+      <option value="1">Especie</option>
+    </select>
+
+		<br/>
 		
 		<label for="dsnomfon"><? echo utf8ToHtml('Nome/Telefone:') ?></label>
 		<input name="dsnomfon" id="dsnomfon" type="text" />	

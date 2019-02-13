@@ -4,7 +4,7 @@
    Sistema :                                        
    Sigla   :     
    Autor   : 
-   Data    :                                    Ultima atualizacao: 13/12/2013
+   Data    :                                    Ultima atualizacao: 02/01/2019
    
    Dados referentes ao programa:
 
@@ -25,6 +25,8 @@
                                  na procedure gera-autenticacao. (Reinert) 
 
                     13/12/2013 - Adicionado validate para tabela craperr (Tiago).
+                    
+                    02/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)
 ..............................................................................*/
     &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -45,6 +47,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valordoc AS CHARACTER FORMAT "X(256)":U .
@@ -144,8 +147,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_fat1 ab_unmap.v_fat2 ab_unmap.v_fat3 ab_unmap.v_fat4 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_fat1 ab_unmap.v_fat2 ab_unmap.v_fat3 ab_unmap.v_fat4 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_fat1 ab_unmap.v_fat2 ab_unmap.v_fat3 ab_unmap.v_fat4 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_fat1 ab_unmap.v_fat2 ab_unmap.v_fat3 ab_unmap.v_fat4 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -167,6 +170,7 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
+                   "radio 3", "3":U,
                    "radio 1", "1":U,
                    "radio 2", "2":U
           SIZE 20 BY 3
@@ -218,6 +222,13 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
      ab_unmap.v_valor AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -263,6 +274,7 @@ DEFINE FRAME Web-Frame
           FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
           FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valordoc AS CHARACTER FORMAT "X(256)":U 
@@ -325,6 +337,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_operador IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_pac IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
@@ -404,6 +418,8 @@ PROCEDURE htmOffsets :
     ("v_operador":U,"ab_unmap.v_operador":U,ab_unmap.v_operador:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_pac":U,"ab_unmap.v_pac":U,ab_unmap.v_pac:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -516,6 +532,7 @@ PROCEDURE process-web-request :
      
      ASSIGN
           v_cmc7     = get-value("v_pcmc7")
+          v_tppagmto = get-value("v_tppagmto")
           v_valor    = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1   = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
           radio       = get-value("v_pradio")
@@ -546,11 +563,21 @@ PROCEDURE process-web-request :
      ELSE DO:
          
          IF   c_codbarras = " " THEN
+              DO:
+                RUN valida_caracteres (INPUT get-value("v_fat1"),
+                                      OUTPUT v_fat1).
+                RUN valida_caracteres (INPUT get-value("v_fat2"),
+                                      OUTPUT v_fat2).
+                RUN valida_caracteres (INPUT get-value("v_fat3"),
+                                      OUTPUT v_fat3).
+                RUN valida_caracteres (INPUT get-value("v_fat4"),
+                                      OUTPUT v_fat4).
               ASSIGN p_codbarras =
-                 SUBSTR(STRING(DEC(get-value("v_fat1")),"999999999999"),1,11) + 
-                 SUBSTR(STRING(DEC(get-value("v_fat2")),"999999999999"),1,11) + 
-                 SUBSTR(STRING(DEC(get-value("v_fat3")),"999999999999"),1,11) + 
-                 SUBSTR(STRING(DEC(get-value("v_fat4")),"999999999999"),1,11).
+                   SUBSTR(STRING(DEC(v_fat1),"999999999999"),1,11) + 
+                   SUBSTR(STRING(DEC(v_fat2),"999999999999"),1,11) + 
+                   SUBSTR(STRING(DEC(v_fat3),"999999999999"),1,11) + 
+                   SUBSTR(STRING(DEC(v_fat4),"999999999999"),1,11).
+              END.
         ELSE
              ASSIGN p_codbarras = c_codbarras.
 
@@ -721,6 +748,7 @@ PROCEDURE process-web-request :
     
     ASSIGN 
           v_cmc7     = get-value("v_pcmc7")
+          v_tppagmto = get-value("v_tppagmto")
           v_valor    = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1   = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
           radio     = get-value("v_pradio")
@@ -793,6 +821,7 @@ PROCEDURE gera-faturas :
                                     INPUT  p-dsautent,
                                     INPUT  p-autchave,
                                     INPUT  p-cdchave,
+                                    INPUT  v_tppagmto,
                                     OUTPUT p-histor,
                                     OUTPUT p-pg,    
                                     OUTPUT p-docto,
@@ -953,9 +982,36 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE valida_caracteres w-html 
+PROCEDURE valida_caracteres:
+    /* Rotina de validacao de caracteres com base parametros informados */
 
+    /*  - par_validar  : Campo a ser validado.
+        - par_validado : Retorna campo sem caracteres especiais. */
 
+    DEF INPUT  PARAM par_validar     AS CHAR            NO-UNDO.
+    DEF OUTPUT PARAM par_validado    AS CHAR            NO-UNDO.
 
+    DEF VAR aux_numeros             AS CHAR             NO-UNDO.
+    DEF VAR aux_caracteres          AS CHAR             NO-UNDO.
+    DEF VAR aux_contador            AS INTE             NO-UNDO.
+    DEF VAR aux_posicao             AS CHAR             NO-UNDO.
+ 
+    ASSIGN aux_numeros  = "1234567890"
+   
+    aux_caracteres = aux_caracteres + aux_numeros.
 
+    DO aux_contador = 1 TO LENGTH(par_validar):
+    
+        ASSIGN aux_posicao = SUBSTRING(par_validar,aux_contador,1).
 
+        IF INDEX(aux_caracteres,aux_posicao) > 0 THEN DO:
+		  par_validado = par_validado + aux_posicao.
+		END.
 
+    END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Maio/2013                       Ultima atualizacao: 03/09/2018
+   Data    : Maio/2013                       Ultima atualizacao: 29/01/2019
 
    Dados referentes ao programa:
 
@@ -53,7 +53,9 @@
                              na CADCOP / CADPAC
                             (Diogo - MoutS)
                                  
-			   03/09/2018 - Correção para remover lote (Jonata - Mouts).
+			   03/09/2018 - Correção para remover lote (Jonata - Mouts).			
+
+			   29/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)
                                  
 ............................................................................ */
 
@@ -1002,6 +1004,7 @@ PROCEDURE paga-darf:
     DEF INPUT PARAM par_vllanmto   AS DECI                NO-UNDO.
     DEF INPUT PARAM par_vlrmulta   AS DECI                NO-UNDO.
     DEF INPUT PARAM par_vlrjuros   AS DECI                NO-UNDO.
+	DEF INPUT PARAM par_tppagmto   AS INTE                NO-UNDO.
                                                           
     DEF OUTPUT PARAM par_foco      AS CHAR                NO-UNDO.
     DEF OUTPUT PARAM p-literal-r   AS CHAR                NO-UNDO.
@@ -1241,7 +1244,8 @@ PROCEDURE paga-darf:
            craplft.nrseqdig = aux_nrseqdig
            craplft.cdseqfat = aux_cdseqfat
            craplft.insitfat = 1
-           craplft.cdhistor = 1154.   
+           craplft.cdhistor = 1154   
+		   craplft.tppagmto = par_tppagmto.
 
     VALIDATE craplot.
     
